@@ -1,0 +1,26 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root { color-scheme: dark; }
+html, body, #root { height: 100%; }
+body {
+  @apply bg-ink text-text font-sans antialiased;
+  background-image: radial-gradient(1200px 500px at 15% -10%, rgba(90, 160, 255, 0.06), transparent 60%);
+  background-attachment: fixed;
+}
+.num { @apply font-mono tabular-nums; }
+.panel { @apply rounded-lg border border-line bg-panel/80 backdrop-blur; }
+.label { @apply text-[11px] uppercase tracking-[0.08em] text-mute; }
+.btn { @apply inline-flex items-center justify-center gap-1.5 rounded-md border border-line bg-raised px-3 py-1.5 text-sm text-text transition-colors hover:border-accent/60 disabled:cursor-not-allowed disabled:opacity-50; }
+.btn-primary { @apply border-accent/50 bg-accent/15 text-accent hover:bg-accent/25; }
+.btn-on { @apply border-accent/60 bg-accent/15 text-accent; }
+.input { @apply w-full rounded-md border border-line bg-ink px-2.5 py-1.5 text-sm text-text outline-none placeholder:text-mute focus:border-accent/60; }
+table.grid-table { @apply w-full text-sm; }
+table.grid-table th { @apply whitespace-nowrap border-b border-line px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] text-mute; }
+table.grid-table td { @apply whitespace-nowrap border-b border-line/60 px-3 py-2; }
+table.grid-table tbody tr:hover { @apply bg-raised/60; }
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-thumb { background: #1e2835; border-radius: 8px; }
+:focus-visible { outline: 2px solid rgba(90, 160, 255, 0.6); outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }

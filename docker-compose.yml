@@ -1,0 +1,30 @@
+# docker compose up --build        -> http://localhost:8080
+# Default storage is SQLite on a named volume. For PostgreSQL / TimescaleDB add the override file:
+#   docker compose -f docker-compose.yml -f docker-compose.postgres.yml up --build
+services:
+  backend:
+    build: ./backend
+    env_file:
+      - path: ./backend/.env
+        required: false
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////srv/data/crypto_ai.db}
+      MODEL_DIR: /srv/data/models
+      CSV_DIR: /srv/data/csv
+      CORS_ORIGINS: http://localhost:8080
+    volumes:
+      - app-data:/srv/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped
+
+volumes:
+  app-data:
