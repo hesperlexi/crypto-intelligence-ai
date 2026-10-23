@@ -1,9 +1,0 @@
-__pycache__/
-*.pyc
-.env
-backend/data/
-node_modules/
-frontend/dist/
-.pytest_cache/
-*.joblib
-firestore.rules

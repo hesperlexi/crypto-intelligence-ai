@@ -5,12 +5,12 @@ export function Card({ title, right, children, className = "" }: { title?: React
   return (
     <section className={`panel ${className}`}>
       {(title || right) && (
-        <header className="flex items-center justify-between gap-3 border-b border-line px-4 py-2.5">
+        <header className="flex flex-wrap items-center justify-between gap-2 border-b border-white/[0.06] px-3 py-2.5 sm:px-4">
           <h2 className="label">{title}</h2>
           {right}
         </header>
       )}
-      <div className="p-4">{children}</div>
+      <div className="p-3 sm:p-4">{children}</div>
     </section>
   );
 }

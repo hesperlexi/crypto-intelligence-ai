@@ -11,3 +11,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
     </BrowserRouter>
   </React.StrictMode>,
 );
+
+// PWA: register the service worker in production builds (makes the app installable and the shell load offline)
+if ("serviceWorker" in navigator && import.meta.env?.PROD) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch(() => {});
+  });
+}

@@ -1,5 +1,0 @@
-# Optional: LSTM / GRU / Transformer models and SHAP values.
-# Install, then set ENABLE_DEEP_MODELS=true in .env.
-#   CPU-only wheel:  pip install torch --index-url https://download.pytorch.org/whl/cpu
-torch>=2.2
-shap>=0.45

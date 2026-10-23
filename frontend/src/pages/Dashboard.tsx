@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import MyCoins from "../components/MyCoins";
 import { TfTabs } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge, Stat } from "../components/ui";
 import { useApi } from "../lib/api";
@@ -37,7 +38,9 @@ export default function Dashboard() {
       {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
       {!d && dash.loading && <Loading what="Loading market overview" />}
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <MyCoins rows={d?.rows} />
+
+      <div className="grid gap-4 md:grid-cols-2">
         <Card title="Market status">
           {ms ? (
             <>
@@ -49,15 +52,6 @@ export default function Dashboard() {
             </>
           ) : <Empty>{DASH}</Empty>}
         </Card>
-        {["BTC/USDT", "ETH/USDT"].map((s) => {
-          const tk = tickers[s];
-          const row = (d?.rows ?? []).find((r: any) => r.symbol === s);   // REST fallback if the live socket is down
-          return (
-            <Card key={s} title={base(s)} right={<Link className="text-xs text-accent hover:underline" to={`/asset/${slug(s)}`}>Open</Link>}>
-              <Stat label="Price" value={fmtPrice(tk?.last ?? row?.price)} sub={<span className={tone(tk?.change_pct ?? row?.change_24h_pct)}>{fmtPctRaw(tk?.change_pct ?? row?.change_24h_pct)} 24h</span>} />
-            </Card>
-          );
-        })}
         <Card title="Total market">
           {market ? (
             <Stat label="Market cap (CoinGecko)" value={`$${fmtCompact(market.total_market_cap_usd)}`}

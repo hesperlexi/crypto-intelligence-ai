@@ -91,6 +91,11 @@ Paste the error into this chat and it can be fixed.
 unchanged documents are skipped. Adding many more coins can approach the limit. GitHub disables scheduled
 workflows in a repository with no commits for 60 days; re-enable them in the Actions tab if that happens.
 
+**Install it as an app (PWA).** Open the site in Chrome or Edge (computer or Android) and click **Install app**
+in the top bar, or the install icon in the address bar. On iPhone / iPad: open it in Safari → **Share** →
+**Add to Home Screen**. It then opens full-screen with its own icon. Live data still needs internet.
+On phones, the main sections are in the bottom bar; the rest are under **More**.
+
 ## 4. What has and has not been verified
 
 Written in a sandbox with no access to Binance, Firebase, GitHub, PyPI or npm, so:
