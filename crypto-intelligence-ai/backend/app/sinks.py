@@ -1,0 +1,168 @@
+"""Where the batch engine reads user configuration from and publishes results to.
+
+FirestoreSink : production (Firebase). Credentials from FIREBASE_SERVICE_ACCOUNT (the JSON key, as text)
+                or GOOGLE_APPLICATION_CREDENTIALS (a path).
+LocalSink     : same interface on a folder of JSON files - used by tests and for dry runs.
+
+Published views are stored as {"json": "<payload>", "updated_at": ms}. Keeping the payload as a JSON string
+sidesteps Firestore's restrictions (no nested arrays, no NaN, special characters in map keys) and lets the
+website receive exactly the same objects the local API returns.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any
+
+from .db import Database, dumps
+
+MAX_DOC_BYTES = 1_000_000
+
+
+def _now() -> int:
+    return int(time.time() * 1000)
+
+
+class BaseSink:
+    def __init__(self, db: Database | None = None):
+        self.db = db
+        self.pending: dict[str, dict[str, Any]] = {}
+        self.writes = 0
+        self.skipped = 0
+
+    # -- views (hash-deduplicated so unchanged documents cost no Firestore writes) ----------------------
+    def view(self, name: str, payload: Any, volatile: tuple[str, ...] = ("generated_at",)) -> None:
+        text = dumps(payload)
+        if len(text.encode()) > MAX_DOC_BYTES:
+            text = dumps({"error": "payload too large for one document", "bytes": len(text)})
+        stable = payload
+        if isinstance(payload, dict) and volatile:
+            stable = {k: v for k, v in payload.items() if k not in volatile}
+        digest = hashlib.sha1(dumps(stable).encode()).hexdigest()
+        if self.db is not None:
+            row = self.db.one("SELECT hash FROM published WHERE doc_id = ?", (name,))
+            if row and row["hash"] == digest:
+                self.skipped += 1
+                return
+        self.pending[f"views/{name}"] = {"json": text, "updated_at": _now(), "_hash": digest}
+
+    def flush(self) -> int:
+        docs = {k: {kk: vv for kk, vv in v.items() if kk != "_hash"} for k, v in self.pending.items()}
+        if docs:
+            self._write_many(docs)
+        if self.db is not None:
+            rows = [(k.split("/", 1)[1], v["_hash"], _now()) for k, v in self.pending.items() if "_hash" in v]
+            self.db.executemany("INSERT INTO published (doc_id, hash, ts) VALUES (?, ?, ?) "
+                                "ON CONFLICT (doc_id) DO UPDATE SET hash = excluded.hash, ts = excluded.ts", rows)
+        n = len(docs)
+        self.writes += n
+        self.pending.clear()
+        return n
+
+    # -- interface implemented by subclasses ---------------------------------------------------------------
+    def _write_many(self, docs: dict[str, dict[str, Any]]) -> None:
+        raise NotImplementedError
+
+    def get(self, path: str) -> dict[str, Any] | None:
+        raise NotImplementedError
+
+    def set(self, path: str, data: dict[str, Any], merge: bool = False) -> None:
+        raise NotImplementedError
+
+    def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
+        raise NotImplementedError
+
+    def queued_jobs(self) -> list[tuple[str, dict[str, Any]]]:
+        jobs = [(i, d) for i, d in self.list("jobs") if d.get("status") == "queued"]
+        return sorted(jobs, key=lambda j: j[1].get("created_at") or 0)
+
+    def delete(self, path: str) -> None:
+        raise NotImplementedError
+
+
+class LocalSink(BaseSink):
+    def __init__(self, root: str | Path, db: Database | None = None):
+        super().__init__(db)
+        self.root = Path(root)
+        self.root.mkdir(parents=True, exist_ok=True)
+
+    def _path(self, path: str) -> Path:
+        return self.root / (path + ".json")
+
+    def _write_many(self, docs: dict[str, dict[str, Any]]) -> None:
+        for path, data in docs.items():
+            self.set(path, data)
+
+    def get(self, path: str) -> dict[str, Any] | None:
+        p = self._path(path)
+        return json.loads(p.read_text()) if p.exists() else None
+
+    def set(self, path: str, data: dict[str, Any], merge: bool = False) -> None:
+        p = self._path(path)
+        p.parent.mkdir(parents=True, exist_ok=True)
+        if merge and p.exists():
+            data = {**json.loads(p.read_text()), **data}
+        p.write_text(dumps(data))
+
+    def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
+        d = self.root / collection
+        if not d.is_dir():
+            return []
+        return [(p.stem, json.loads(p.read_text())) for p in sorted(d.glob("*.json"))]
+
+    def delete(self, path: str) -> None:
+        self._path(path).unlink(missing_ok=True)
+
+
+class FirestoreSink(BaseSink):
+    def __init__(self, db: Database | None = None, project_id: str | None = None):
+        super().__init__(db)
+        import firebase_admin
+        from firebase_admin import credentials, firestore
+
+        raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "").strip()
+        if raw:
+            cred = credentials.Certificate(json.loads(raw))
+        elif os.environ.get("GOOGLE_APPLICATION_CREDENTIALS"):
+            cred = credentials.Certificate(os.environ["GOOGLE_APPLICATION_CREDENTIALS"])
+        else:
+            raise RuntimeError("set FIREBASE_SERVICE_ACCOUNT (service-account JSON) to publish to Firestore")
+        opts = {"projectId": project_id} if project_id else None
+        if not firebase_admin._apps:
+            firebase_admin.initialize_app(cred, opts)
+        self.fs = firestore.client()
+
+    def _write_many(self, docs: dict[str, dict[str, Any]]) -> None:
+        items = list(docs.items())
+        for i in range(0, len(items), 400):          # Firestore batches hold at most 500 writes
+            batch = self.fs.batch()
+            for path, data in items[i:i + 400]:
+                batch.set(self.fs.document(path), data)
+            batch.commit()
+
+    def get(self, path: str) -> dict[str, Any] | None:
+        snap = self.fs.document(path).get()
+        return snap.to_dict() if snap.exists else None
+
+    def set(self, path: str, data: dict[str, Any], merge: bool = False) -> None:
+        self.fs.document(path).set(json.loads(dumps(data)), merge=merge)
+        self.writes += 1
+
+    def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
+        return [(s.id, s.to_dict() or {}) for s in self.fs.collection(collection).stream()]
+
+    def queued_jobs(self) -> list[tuple[str, dict[str, Any]]]:
+        try:
+            from google.cloud.firestore_v1.base_query import FieldFilter
+
+            q = self.fs.collection("jobs").where(filter=FieldFilter("status", "==", "queued"))
+        except ImportError:
+            q = self.fs.collection("jobs").where("status", "==", "queued")
+        jobs = [(s.id, s.to_dict() or {}) for s in q.stream()]
+        return sorted(jobs, key=lambda j: j[1].get("created_at") or 0)
+
+    def delete(self, path: str) -> None:
+        self.fs.document(path).delete()
