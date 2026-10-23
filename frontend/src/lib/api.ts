@@ -68,10 +68,19 @@ function combine(parts: Record<string, Sub>, map: (v: Record<string, any>) => an
 function poll(fn: () => Promise<any>, ms: number): Sub {
   return (cb, err) => {
     let alive = true;
-    const run = () => fn().then((v) => alive && cb(v)).catch((e) => alive && err(e));
+    let last = 0;
+    const run = () => { last = Date.now(); fn().then((v) => alive && cb(v)).catch((e) => alive && err(e)); };
+    // pause while the app is in the background; refresh at once when it comes back or the network returns
+    const tickRun = () => { if (!document.hidden) run(); };
+    const wake = () => { if (!document.hidden && Date.now() - last > Math.min(ms, 5000)) run(); };
     run();
-    const t = ms ? window.setInterval(run, ms) : 0;
-    return () => { alive = false; if (t) window.clearInterval(t); };
+    const t = ms ? window.setInterval(tickRun, ms) : 0;
+    if (ms) { document.addEventListener("visibilitychange", wake); window.addEventListener("online", wake); }
+    return () => {
+      alive = false;
+      if (t) window.clearInterval(t);
+      if (ms) { document.removeEventListener("visibilitychange", wake); window.removeEventListener("online", wake); }
+    };
   };
 }
 

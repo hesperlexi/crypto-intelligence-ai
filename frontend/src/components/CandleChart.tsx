@@ -1,5 +1,6 @@
 import { ColorType, createChart, CrosshairMode, IChartApi, ISeriesApi, LineStyle } from "lightweight-charts";
 import { useEffect, useRef } from "react";
+import { chartColors, useAppearance } from "../lib/appearance";
 import { isNum, pricePrecision } from "../lib/format";
 
 export type Candle = [number, number, number, number, number, number]; // ts(ms), o, h, l, c, v
@@ -49,15 +50,17 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const lastRef = useRef<Candle | null>(null);
+  const { resolved } = useAppearance();
 
   useEffect(() => {
     if (!el.current || !candles.length) return;
+    const cc = chartColors();
     const chart = createChart(el.current, {
       autoSize: true,
-      layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: "#6f7e91", fontSize: 11 },
-      grid: { vertLines: { color: "rgba(30,40,53,0.5)" }, horzLines: { color: "rgba(30,40,53,0.5)" } },
-      rightPriceScale: { borderColor: "#1e2835" },
-      timeScale: { borderColor: "#1e2835", timeVisible: true, secondsVisible: false },
+      layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: cc.text, fontSize: 11 },
+      grid: { vertLines: { color: cc.grid }, horzLines: { color: cc.grid } },
+      rightPriceScale: { borderColor: cc.border },
+      timeScale: { borderColor: cc.border, timeVisible: true, secondsVisible: false },
       crosshair: { mode: CrosshairMode.Normal },
     });
     chartRef.current = chart;
@@ -120,7 +123,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
       chart.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candles, overlays, show.join(","), JSON.stringify(lines), JSON.stringify(markers), future]);
+  }, [candles, overlays, show.join(","), JSON.stringify(lines), JSON.stringify(markers), future, resolved]);
 
   // live tick: move the forming candle without rebuilding the chart
   useEffect(() => {

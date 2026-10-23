@@ -57,7 +57,7 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
           const row = rows?.find((r) => r.symbol === w.symbol);
           const ch = tk?.change_pct ?? row?.change_24h_pct;
           return (
-            <div key={w.symbol} className="relative rounded-xl border border-white/[0.07] bg-white/[0.03] p-3 transition-colors hover:border-accent/40">
+            <div key={w.symbol} className="relative tile p-3 transition-colors hover:border-accent/40">
               <Link to={`/asset/${slug(w.symbol)}`} className="block">
                 <div className="flex items-center gap-1 font-semibold">{w.pinned ? <span className="text-warn" aria-label="pinned">★</span> : null}{base(w.symbol)}</div>
                 <div className="num mt-1 truncate text-lg">{fmtPrice(tk?.last ?? row?.price)}</div>

@@ -17,6 +17,14 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
     <title>Crypto Intelligence AI</title>
+    <script>
+      // apply the saved theme before the first paint (no flash of the default colours)
+      try {
+        var a = JSON.parse(localStorage.getItem("cia-appearance") || "{}"), t = a.theme || "midnight";
+        if (t === "system") t = matchMedia("(prefers-color-scheme: light)").matches ? "light" : "midnight";
+        var d = document.documentElement; d.dataset.theme = t; d.dataset.density = a.density || "comfortable"; d.dataset.glass = a.glass === false ? "off" : "on";
+      } catch (e) {}
+    </script>
   </head>
   <body>
     <div id="root"></div>

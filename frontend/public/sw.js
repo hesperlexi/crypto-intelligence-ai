@@ -1,6 +1,6 @@
 // Service worker: makes the app installable and its shell load instantly / offline.
 // Only the app's own files are cached. Live data (Firestore, Binance, Google sign-in) always goes to the network.
-const CACHE = "cia-shell-v1";
+const CACHE = "cia-shell-__BUILD_ID__";   // replaced with the build id on every deploy, so old caches are dropped
 const SHELL = ["/", "/index.html", "/manifest.webmanifest", "/icons/icon-192.png", "/icons/icon-512.png", "/favicon.png"];
 
 self.addEventListener("install", (e) => {
@@ -34,3 +34,5 @@ self.addEventListener("fetch", (e) => {
     })));
   }
 });
+
+self.addEventListener("message", (e) => { if (e.data === "SKIP_WAITING") self.skipWaiting(); });

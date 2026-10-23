@@ -1,5 +1,6 @@
 import { ColorType, createChart } from "lightweight-charts";
 import { useEffect, useRef } from "react";
+import { chartColors, useAppearance } from "../lib/appearance";
 
 export interface Series {
   name: string;
@@ -11,15 +12,17 @@ export interface Series {
 /** Multi-line time-series chart (equity curves, replay paths). A text legend is rendered next to it. */
 export default function LineChart({ series, height = 260, percent = false }: { series: Series[]; height?: number; percent?: boolean }) {
   const el = useRef<HTMLDivElement>(null);
+  const { resolved } = useAppearance();
 
   useEffect(() => {
     if (!el.current) return;
+    const cc = chartColors();
     const chart = createChart(el.current, {
       autoSize: true,
-      layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: "#6f7e91", fontSize: 11 },
-      grid: { vertLines: { color: "rgba(30,40,53,0.5)" }, horzLines: { color: "rgba(30,40,53,0.5)" } },
-      rightPriceScale: { borderColor: "#1e2835" },
-      timeScale: { borderColor: "#1e2835", timeVisible: true, secondsVisible: false },
+      layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: cc.text, fontSize: 11 },
+      grid: { vertLines: { color: cc.grid }, horzLines: { color: cc.grid } },
+      rightPriceScale: { borderColor: cc.border },
+      timeScale: { borderColor: cc.border, timeVisible: true, secondsVisible: false },
     });
     for (const s of series) {
       const seen = new Set<number>();
@@ -35,7 +38,7 @@ export default function LineChart({ series, height = 260, percent = false }: { s
     }
     chart.timeScale().fitContent();
     return () => chart.remove();
-  }, [series, percent]);
+  }, [series, percent, resolved]);
 
   return (
     <div>

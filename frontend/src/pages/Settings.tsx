@@ -1,6 +1,9 @@
 import { useEffect, useState } from "react";
 import { SymbolSelect, TfTabs, useMeta, useSymbols } from "../components/Pickers";
+import { AppearancePanel } from "../components/AppearancePanel";
 import { Card, ErrorBox, Loading, Note, Row } from "../components/ui";
+import { checkForUpdate } from "../lib/updater";
+import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
 import { post, put, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
 
@@ -55,6 +58,10 @@ export default function Settings() {
       <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
       {msg && <p className="text-sm text-accent">{msg}</p>}
       {err && <ErrorBox error={err} />}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card title="Appearance"><AppearancePanel /></Card>
+        <AboutCard />
+      </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Risk profile">
           <div className="grid gap-3 sm:grid-cols-2">
@@ -112,5 +119,22 @@ export default function Settings() {
         </div>
       </Card>
     </div>
+  );
+}
+
+function AboutCard() {
+  const [msg, setMsg] = useState<string | null>(null);
+  return (
+    <Card title="About">
+      <Row k="App" v="Crypto Intelligence AI" />
+      <Row k="Version" v={`v${APP_VERSION}`} />
+      <Row k="Build" v={BUILD_ID} />
+      <Row k="Updates" v="automatic after every deploy" />
+      <div className="mt-3 flex items-center gap-3">
+        <button className="btn" onClick={async () => { setMsg("Checking…"); setMsg((await checkForUpdate(true)) ? "Updating…" : "You have the latest version."); }}>Check for updates</button>
+        {msg && <span className="text-sm text-mute">{msg}</span>}
+      </div>
+      <Note>{COPYRIGHT}</Note>
+    </Card>
   );
 }

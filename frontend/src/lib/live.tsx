@@ -1,6 +1,6 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
-import { bsym, toTicker } from "./binance";
+import { bsym, tickers as restTickers, toTicker } from "./binance";
 import { db } from "./firebase";
 
 export interface Ticker {
@@ -28,7 +28,8 @@ interface LiveState {
 export const latestPrices: Record<string, number> = {};
 
 const Ctx = createContext<LiveState>({ tickers: {}, connected: false, feed: null, alerts: [], refreshAt: 0, symbols: [], dismissAlert: () => {} });
-const WS_HOSTS = ["wss://stream.binance.com:9443", "wss://data-stream.binance.vision"];
+// several endpoints: some networks block port 9443 or one of the hosts
+const WS_HOSTS = ["wss://data-stream.binance.vision", "wss://stream.binance.com:443", "wss://stream.binance.com:9443"];
 
 /** Live tickers straight from Binance's public WebSocket, plus alert / refresh notices from Firestore. */
 export function LiveProvider({ children }: { children: ReactNode }) {
@@ -65,35 +66,81 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     } catch { /* ignore */ }
   }, () => {}), []);
 
+  // Live prices. Primary: Binance WebSocket. A watchdog reconnects a silent socket (phone sleep, Wi-Fi
+  // change, network switch), and while the socket is down prices keep updating over REST every 5 seconds.
+  const [mode, setMode] = useState<"ws" | "rest" | "down">("down");
+  const [online, setOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
   const key = symbols.join(",");
+  useEffect(() => {
+    const on = () => setOnline(true), off = () => setOnline(false);
+    window.addEventListener("online", on); window.addEventListener("offline", off);
+    return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
+  }, []);
   useEffect(() => {
     if (!symbols.length) return;
     let ws: WebSocket | null = null;
-    let closed = false;
-    let attempt = 0;
-    let timer = 0;
+    let closed = false, attempt = 0, timer = 0, lastFrame = 0, lastRest = 0, busy = false;
+    let cur: "ws" | "rest" | "down" = "down";
+    const setM = (m: typeof cur) => { if (m !== cur) { cur = m; setMode(m); setConnected(m === "ws"); } };
+    const take = (t: Ticker) => { pending.current[t.symbol] = t; if (t.last != null) latestPrices[t.symbol] = t.last; };
+
     const connect = () => {
+      window.clearTimeout(timer);
+      const old = ws;
       const host = WS_HOSTS[attempt % WS_HOSTS.length];
       const streams = symbols.map((s) => `${bsym(s).toLowerCase()}@ticker`).join("/");
-      ws = new WebSocket(`${host}/stream?streams=${streams}`);
-      ws.onopen = () => { setConnected(true); attempt = 0; };
-      ws.onmessage = (ev) => {
+      const sock = new WebSocket(`${host}/stream?streams=${streams}`);
+      ws = sock;
+      try { old?.close(); } catch { /* ignore */ }
+      sock.onmessage = (ev) => {
+        if (ws !== sock) return;
+        lastFrame = Date.now(); attempt = 0; setM("ws");
         try {
           const d = JSON.parse(ev.data).data;
           const sym = symbols.find((s) => bsym(s) === d.s);
-          if (!sym) return;
-          const t = toTicker(sym, +d.c, +d.b, +d.a, +d.P, +d.q, d.E);
-          pending.current[sym] = t;
-          latestPrices[sym] = t.last;
+          if (sym) take(toTicker(sym, +d.c, +d.b, +d.a, +d.P, +d.q, d.E));
         } catch { /* ignore malformed frames */ }
       };
-      ws.onclose = () => {
-        setConnected(false);
-        if (!closed) { attempt++; timer = window.setTimeout(connect, Math.min(15000, 1000 * 2 ** Math.min(attempt, 4))); }
+      sock.onclose = () => {
+        if (ws !== sock || closed) return;
+        if (cur === "ws") setM(Date.now() - lastRest < 15000 ? "rest" : "down");
+        attempt++;
+        timer = window.setTimeout(connect, Math.min(15000, 1000 * 2 ** Math.min(attempt, 4)));
       };
-      ws.onerror = () => ws?.close();
+      sock.onerror = () => { try { sock.close(); } catch { /* ignore */ } };
     };
+
+    const rest = async () => {
+      if (busy || document.hidden || Date.now() - lastFrame < 12000) return;   // socket is delivering: nothing to do
+      busy = true;
+      try {
+        const t = await restTickers(symbols);
+        Object.values(t).forEach((x: any) => take(x));
+        lastRest = Date.now();
+        if (Date.now() - lastFrame >= 12000) setM("rest");
+      } catch {
+        if (Date.now() - lastFrame >= 12000) setM("down");
+      } finally { busy = false; }
+    };
+
+    const watchdog = window.setInterval(() => {
+      if (document.hidden) return;
+      if (ws && ws.readyState === WebSocket.OPEN && lastFrame && Date.now() - lastFrame > 20000) {
+        try { ws.close(); } catch { /* onclose reconnects */ }
+      }
+      rest();
+    }, 5000);
+    const wake = () => {
+      if (document.hidden) return;
+      if (!ws || ws.readyState > WebSocket.OPEN || Date.now() - lastFrame > 10000) { attempt = 0; connect(); }
+      rest();
+    };
+    document.addEventListener("visibilitychange", wake);
+    window.addEventListener("online", wake);
+    window.addEventListener("focus", wake);
     connect();
+    window.setTimeout(rest, 4000);   // first prices over REST if the socket has not answered within 4 s
+
     const flush = window.setInterval(() => {   // at most 4 renders per second
       const p = pending.current;
       if (Object.keys(p).length) {
@@ -102,10 +149,20 @@ export function LiveProvider({ children }: { children: ReactNode }) {
         setLastMsg(Date.now());
       }
     }, 250);
-    return () => { closed = true; window.clearTimeout(timer); window.clearInterval(flush); ws?.close(); };
+    return () => {
+      closed = true;
+      window.clearTimeout(timer); window.clearInterval(flush); window.clearInterval(watchdog);
+      document.removeEventListener("visibilitychange", wake);
+      window.removeEventListener("online", wake); window.removeEventListener("focus", wake);
+      try { ws?.close(); } catch { /* ignore */ }
+    };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const feed = { status: connected ? "LIVE" : symbols.length ? "CONNECTING" : "IDLE", transport: "Binance WebSocket", last_update_ms: lastMsg };
+  const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 5s" : symbols.length ? "RECONNECTING" : "IDLE";
+  const feed = {
+    status, last_update_ms: lastMsg,
+    transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 5 s (stream reconnecting)" : "reconnecting to Binance…",
+  };
   const dismissAlert = (id: string) => setAlerts((a) => a.filter((x) => x.id !== id));
   return <Ctx.Provider value={{ tickers, connected, feed, alerts, refreshAt, symbols, dismissAlert }}>{children}</Ctx.Provider>;
 }
