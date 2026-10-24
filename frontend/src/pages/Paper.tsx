@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import FuturesPaper from "../components/FuturesPaper";
 import { SymbolSelect, useSymbols } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Note, Stat } from "../components/ui";
 import { post, useApi } from "../lib/api";
@@ -6,6 +8,26 @@ import { fmtNum, fmtPctRaw, fmtPrice, fmtTime, tone } from "../lib/format";
 import { useLive } from "../lib/live";
 
 export default function Paper() {
+  const [params, setParams] = useSearchParams();
+  const market = params.get("market") === "futures" ? "futures" : "spot";
+  return (
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-3">
+        <h1 className="text-xl font-semibold tracking-tight">Paper trading</h1>
+        <Badge tone="warn">Virtual money — no real orders</Badge>
+      </div>
+      <div className="flex gap-1" role="tablist" aria-label="Market">
+        {(["spot", "futures"] as const).map((m) => (
+          <button key={m} role="tab" aria-selected={market === m} className={`btn px-4 py-1.5 ${market === m ? "btn-on" : ""}`}
+            onClick={() => setParams(m === "futures" ? { market: "futures" } : {})}>{m === "spot" ? "Spot" : "Futures (long / short, leverage)"}</button>
+        ))}
+      </div>
+      {market === "futures" ? <FuturesPaper /> : <SpotPaper />}
+    </div>
+  );
+}
+
+function SpotPaper() {
   const symbols = useSymbols();
   const { tickers } = useLive();
   const st = useApi<any>("/paper", 15000);
@@ -38,10 +60,6 @@ export default function Paper() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold tracking-tight">Paper trading</h1>
-        <Badge tone="warn">Paper trading — virtual money, no real orders</Badge>
-      </div>
       {st.error && <ErrorBox error={st.error} retry={st.reload} />}
       {!d && st.loading && <Loading />}
       {d && (

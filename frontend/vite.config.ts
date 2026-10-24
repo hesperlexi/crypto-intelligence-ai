@@ -8,7 +8,7 @@ const backend = process.env.VITE_BACKEND || "http://localhost:8000";
 
 // Version shown in the app. Every build gets its own id; the running app compares it with /version.json
 // and reloads itself when a newer deploy is live.
-const APP_VERSION = "1.0";
+const APP_VERSION = "1.1";
 const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 12);
 const BUILD_ID = `${(process.env.GITHUB_SHA || "local").slice(0, 7)}-${stamp}`;
 

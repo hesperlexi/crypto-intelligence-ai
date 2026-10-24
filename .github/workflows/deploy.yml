@@ -18,8 +18,12 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-          cache-dependency-path: backend/requirements-worker.txt
+          cache-dependency-path: |
+            backend/requirements-worker.txt
+            backend/requirements-torch.txt
       - run: pip install -r requirements-worker.txt
+      - name: Install PyTorch (CPU) for the LSTM / GRU / Transformer models
+        run: pip install -r requirements-torch.txt
       - run: python -m pytest -q
 
   deploy:

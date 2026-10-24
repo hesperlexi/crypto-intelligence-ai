@@ -16,6 +16,7 @@ import Alerts from "./pages/Alerts";
 import Asset from "./pages/Asset";
 import Backtest from "./pages/Backtest";
 import Dashboard from "./pages/Dashboard";
+import Futures from "./pages/Futures";
 import Health from "./pages/Health";
 import History from "./pages/History";
 import Paper from "./pages/Paper";
@@ -27,6 +28,7 @@ import { APP_VERSION, COPYRIGHT } from "./lib/version";
 const NAV = [
   ["/", "Dashboard"],
   ["/scanner", "Scanner"],
+  ["/futures", "Futures"],
   ["/accuracy", "Accuracy"],
   ["/bots", "Demo bots"],
   ["/backtest", "Backtest"],
@@ -39,7 +41,7 @@ const NAV = [
 ] as const;
 
 // phone bottom bar: four main sections + "More" for the rest
-const PRIMARY: [string, string, string][] = [["/", "Home", "◧"], ["/scanner", "Scanner", "☰"], ["/bots", "Bots", "⚙"], ["/accuracy", "Accuracy", "◎"]];
+const PRIMARY: [string, string, string][] = [["/", "Home", "◧"], ["/futures", "Futures", "⇅"], ["/bots", "Bots", "⚙"], ["/paper", "Paper", "◎"]];
 
 function StatusPill({ user }: { user: User }) {
   const { connected, feed } = useLive();
@@ -173,6 +175,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/" element={<Dashboard />} />
             <Route path="/asset/:symbol" element={<Asset />} />
             <Route path="/scanner" element={<Scanner />} />
+            <Route path="/futures" element={<Futures />} />
             <Route path="/accuracy" element={<Accuracy />} />
             <Route path="/bots" element={<Bots />} />
             <Route path="/backtest" element={<Backtest />} />

@@ -141,3 +141,24 @@ def replay_ranges(rt: Runtime) -> dict[str, Any]:
 
 def settings_view(rt: Runtime) -> dict[str, Any]:
     return {"risk_profile": rt.risk_profile().__dict__, "signal_weights": rt.signal_weights(), "generated_at": now_ms()}
+
+
+# ---- futures -----------------------------------------------------------------------------------------------
+FUTURES_TIMEFRAMES = ("1h", "4h", "12h", "1d")
+
+
+def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) -> dict[str, Any]:
+    from .engine import futures as F
+
+    funding = getattr(rt, "funding_rates", None) or {}
+    rows = [F.futures_view(analyses[(s, timeframe)], funding.get(s)) for s in rt.symbols() if (s, timeframe) in analyses]
+    order = {"LONG": 0, "LONG ON PULLBACK": 0, "SHORT": 0, "NO TRADE": 1}
+    rows.sort(key=lambda r: (order.get(r.get("action"), 2), -(r.get("confidence") or 0)))
+    return {
+        "timeframe": timeframe, "rows": rows,
+        "funding_source": "Binance futures (live)" if funding else
+            f"assumed {F.DEFAULT_FUNDING_RATE * 100:.2f}% per 8h: Binance's futures API is not reachable from the engine's "
+            "server, your browser shows the live rate",
+        "assumptions": {"maintenance_margin": F.MAINTENANCE_MARGIN, "fee_rate": F.FUTURES_FEE_RATE,
+                        "max_suggested_leverage": 10, "liquidation_buffer": 1.5},
+    }

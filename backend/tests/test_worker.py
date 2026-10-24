@@ -31,7 +31,7 @@ def test_engine_cycle_publishes_views_runs_jobs_and_bots():
     assert len(d["bootstrap"]) >= 8                                    # missing models trained (fast set)
     a = _view(sink, "analysis_BTCUSDT_4h")
     assert a["status"] == "OK" and a["forecast"]["available"] and "NaN" not in sink.get("views/analysis_BTCUSDT_4h")["json"]
-    for name in ("meta", "health", "dashboard_4h", "models_BTCUSDT_4h", "perf_BTCUSDT_4h", "performance", "signals",
+    for name in ("futures_4h", "futures_1h", "meta", "health", "dashboard_4h", "models_BTCUSDT_4h", "perf_BTCUSDT_4h", "performance", "signals",
                  "alerts", "backtests", "bots", "settings", "models_status", "replay_ranges", "cross_asset_1d"):
         assert _view(sink, name) is not None, name
     assert sink.get("config/bots")["bots"] and sink.get("config/watchlist")["symbols"]
@@ -54,7 +54,10 @@ def test_engine_cycle_publishes_views_runs_jobs_and_bots():
     assert "NOPE/USDT" not in rt.symbols() and d2["config"]["rejected_symbols"] == ["NOPE/USDT"]
     assert rt.risk_profile().portfolio == 50_000 and rt.signal_weights()["trend"] == 0.5
     assert "a1" in _view(sink, "alerts")["state"]
-    sink.set("config/bots", {"bots": [{"id": "only", "mode": "prediction", "timeframe": "4h", "reset_token": "1"}]})
+    assert {b["id"] for b in sink.get("config/bots")["bots"]} >= {"futures-signal-4h", "futures-predict-1h"}
+    # the website replaces the list (keeping the other fields, as the site does): deleted defaults stay deleted
+    sink.set("config/bots", {**sink.get("config/bots"),
+                             "bots": [{"id": "only", "mode": "prediction", "timeframe": "4h", "reset_token": "1"}]})
     worker.tick(rt, sink, budget_s=900, fetch_context=False)
     assert [b["config"]["id"] for b in _view(sink, "bots")["bots"]] == ["only"]
 

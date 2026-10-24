@@ -33,6 +33,7 @@ class Runtime:
         self.training: dict[str, dict[str, Any]] = {}       # "SYMBOL|tf" -> status
         self.errors: list[dict[str, Any]] = []
         self.clock_skew_ms: int | None = None
+        self.funding_rates: dict[str, dict[str, Any]] = {}     # perpetual funding per symbol (engine only)
         self._seed()
 
     # -- bootstrap ------------------------------------------------------------------------------------

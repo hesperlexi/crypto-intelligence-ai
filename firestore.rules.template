@@ -19,5 +19,6 @@ service cloud.firestore {
     }
     match /paper/{id}        { allow read, write: if allowed(); }
     match /paper_trades/{id} { allow read, create: if allowed(); allow update, delete: if false; }
+    match /paper_futures_trades/{id} { allow read, create: if allowed(); allow update, delete: if false; }
   }
 }

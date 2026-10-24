@@ -6,12 +6,14 @@ training window (chronological split, no shuffling across the split).
 """
 from __future__ import annotations
 
+import os
+
 import numpy as np
 
 
 class SequenceClassifier:
     def __init__(self, kind: str = "lstm", seq_len: int = 32, hidden: int = 48, layers: int = 1,
-                 epochs: int = 30, patience: int = 5, lr: float = 1e-3, batch: int = 128,
+                 epochs: int = 25, patience: int = 4, lr: float = 1e-3, batch: int = 128,
                  dropout: float = 0.2, seed: int = 42):
         self.kind, self.seq_len, self.hidden, self.layers = kind, seq_len, hidden, layers
         self.epochs, self.patience, self.lr, self.batch, self.dropout, self.seed = epochs, patience, lr, batch, dropout, seed
@@ -59,6 +61,8 @@ class SequenceClassifier:
         from torch import nn
 
         torch.manual_seed(self.seed)
+        torch.set_num_threads(max(1, min(4, os.cpu_count() or 1)))
+        self.n_features_ = X.shape[1]
         self.mu_ = X.mean(axis=0)
         self.sd_ = X.std(axis=0) + 1e-8
         W = self._windows(np.clip((X - self.mu_) / self.sd_, -8, 8)).astype(np.float32)
@@ -104,3 +108,22 @@ class SequenceClassifier:
             for i in range(0, len(W), 2048):
                 out.append(torch.softmax(self.net_(torch.from_numpy(W[i:i + 2048].copy())), dim=1).numpy())
         return np.concatenate(out, axis=0)
+
+    # The network class is built inside _net(), so it cannot be pickled directly. Models are saved as plain
+    # weight arrays and the network is rebuilt when a saved model bundle is loaded.
+    def __getstate__(self):
+        d = self.__dict__.copy()
+        net = d.pop("net_", None)
+        if net is not None:
+            d["_weights"] = {k: v.detach().cpu().numpy() for k, v in net.state_dict().items()}
+        return d
+
+    def __setstate__(self, d):
+        weights = d.pop("_weights", None)
+        self.__dict__.update(d)
+        if weights is not None:
+            import torch
+
+            self.net_ = self._net(self.n_features_)
+            self.net_.load_state_dict({k: torch.from_numpy(v.copy()) for k, v in weights.items()})
+            self.net_.eval()

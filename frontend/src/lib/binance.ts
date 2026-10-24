@@ -119,3 +119,34 @@ export async function derivatives(symbol: string) {
     return { available: false, reason: e instanceof Error ? e.message : "futures data not reachable" };
   }
 }
+
+/** Live perpetual-futures context for several coins at once: funding, mark price, open-interest change
+ *  over 24h and the share of accounts that are long. Fetched by the browser from Binance USDⓈ-M futures. */
+export async function futuresMarket(symbols: string[]) {
+  const out: Record<string, any> = {};
+  if (!symbols.length) return { available: false, rows: out, reason: "no coins" };
+  let prem: any[];
+  try {
+    prem = await get<any[]>("/fapi/v1/premiumIndex", [FUTURES]);
+  } catch (e) {
+    return { available: false, rows: out, reason: e instanceof Error ? e.message : "Binance futures not reachable" };
+  }
+  const by = Object.fromEntries(prem.map((p) => [p.symbol, p]));
+  await Promise.all(symbols.map(async (s) => {
+    const p = by[bsym(s)];
+    if (!p) { out[s] = { listed: false }; return; }
+    const row: any = { listed: true, funding_rate: +p.lastFundingRate, next_funding: +p.nextFundingTime, mark: +p.markPrice, index: +p.indexPrice };
+    row.basis_pct = row.index ? (row.mark / row.index - 1) * 100 : null;
+    const [oi, ls] = await Promise.all([
+      get<any[]>(`/futures/data/openInterestHist?symbol=${bsym(s)}&period=1h&limit=25`, [FUTURES]).catch(() => []),
+      get<any[]>(`/futures/data/globalLongShortAccountRatio?symbol=${bsym(s)}&period=1h&limit=1`, [FUTURES]).catch(() => []),
+    ]);
+    if (oi.length >= 2) {
+      row.open_interest_usd = +oi[oi.length - 1].sumOpenInterestValue;
+      row.oi_change_24h = +oi[oi.length - 1].sumOpenInterest / +oi[0].sumOpenInterest - 1;
+    }
+    if (ls.length) { row.long_account_pct = +ls[0].longAccount * 100; row.long_short_ratio = +ls[0].longShortRatio; }
+    out[s] = row;
+  }));
+  return { available: true, rows: out, fetched_at: Date.now() };
+}

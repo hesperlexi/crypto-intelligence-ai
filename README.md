@@ -82,6 +82,17 @@ Paste the error into this chat and it can be fixed.
   every model call for exactly one bar, which measures the raw prediction accuracy. Each bot shows equity vs
   buy & hold of the same coins, win rate, direction accuracy with a confidence interval, accuracy by model
   probability, profit factor, drawdown, fees and every trade. You can pause, reset, edit, add or delete bots.
+* **Futures (v1.1):** a Futures page with a LONG / SHORT / NO TRADE call per coin and timeframe (1H, 4H, 12H, 1D),
+  the up / down probabilities, the trade plan (entry, stop, three targets), a suggested leverage that keeps the
+  liquidation price at least 1.5x the stop distance away (max 10x), the liquidation price, and live funding,
+  open interest and long/short ratios from Binance futures (fetched by your browser). A leverage & liquidation
+  calculator is included. **Futures demo bots** (signal 4H, signal 1H, prediction tracker 1H) trade the same calls
+  as perpetuals with isolated margin, 0.05% fees, 8-hourly funding and liquidation. **Futures paper trading**
+  (Paper → Futures) lets you open longs and shorts with 1-50x leverage, stop-loss and take-profit; triggers are
+  checked on every 15-minute candle, including while the app was closed. Virtual money only.
+* **Deep models:** LSTM, GRU and Transformer encoder models are trained by the daily training run (CPU PyTorch is
+  installed by the workflows). Existing models are retrained once to include them; this can take two or three
+  daily runs for all coins.
 * **Backtest, Replay, Retrain, Fit weights:** these are queued and run by the next engine cycle, so results
   arrive within about 15 minutes.
 * **Watchlist, settings, alert rules:** saved immediately; the engine applies them on its next cycle.
@@ -211,8 +222,9 @@ default `MIN_CONFIDENCE=0.45` is deliberately modest. Expect many `NO TRADE` dec
 | Backtest | any strategy vs Buy & Hold, SMA cross and random runs; gross -> fees -> slippage -> net |
 | Replay | rebuilds the past, forecasts, then reveals what happened, with a look-ahead audit |
 | Signals | history of logged signals with TP / stop outcomes |
-| Demo bots | automated virtual trading of signals and raw predictions, with accuracy statistics |
-| Paper | manual virtual account, clearly labelled PAPER TRADING |
+| Futures | long / short calls, trade plan, suggested leverage, liquidation, live funding / OI / long-short ratio, leverage calculator |
+| Demo bots | automated virtual trading (spot and futures) of signals and raw predictions, with accuracy statistics |
+| Paper | manual virtual accounts: spot, and futures with leverage, stop-loss, take-profit, liquidation and funding |
 | Alerts | 12 alert types with debounce and cooldown |
 | Health | feed, exchange, database, data quality per series, models, errors |
 | Settings | risk profile, signal weights (with a data-fitted suggestion), forecast refresh |

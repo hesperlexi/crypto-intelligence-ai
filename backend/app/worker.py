@@ -26,7 +26,7 @@ from .db import Database, dumps, get_db, loads, new_id, now_ms
 from .engine.signal import optimise_weights
 from .features.dataset import InsufficientData
 from .ml import trainer
-from .ml.models import model_status
+from .ml.models import default_models, model_status
 from .services import alerts, analysis, backtests, health, market, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -126,10 +126,18 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     # demo bots
     doc = sink.get("config/bots")
     if doc is None or not isinstance(doc.get("bots"), list):
-        sink.set("config/bots", {"bots": DEFAULT_BOTS, "updated_at": now_ms()})
+        sink.set("config/bots", {"bots": DEFAULT_BOTS, "updated_at": now_ms(),
+                                 "defaults_added": [b["id"] for b in DEFAULT_BOTS]})
         bots_cfg = DEFAULT_BOTS
     else:
         bots_cfg = doc["bots"]
+        # one-time additions: default bots introduced in a later version are added once (deleting them later sticks)
+        seen = set(doc.get("defaults_added") or [b.get("id") for b in bots_cfg])
+        new = [b for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}]
+        if new or not doc.get("defaults_added"):
+            bots_cfg = bots_cfg + new
+            sink.set("config/bots", {**doc, "bots": bots_cfg, "updated_at": now_ms(),
+                                     "defaults_added": sorted(seen | {b["id"] for b in DEFAULT_BOTS})})
     BotEngine(rt).sync_configs(bots_cfg)
     return notes
 
@@ -190,7 +198,8 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
 # ---- training ---------------------------------------------------------------------------------------------
 
 def pairs_needing_full(rt: Runtime) -> list[tuple[str, str]]:
-    """Models missing, trained with the fast set only, or older than RETRAIN_INTERVAL_H - oldest first."""
+    """Models missing, trained with the fast set only, missing a now-available model family, or older than
+    RETRAIN_INTERVAL_H - oldest first."""
     out = []
     for s in rt.symbols():
         for tf in MODEL_TIMEFRAMES:
@@ -199,9 +208,17 @@ def pairs_needing_full(rt: Runtime) -> list[tuple[str, str]]:
             v = trainer.active_version(s, tf, rt.db)
             if v is None:
                 out.append((0, s, tf))
-            elif (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > settings.retrain_interval_h * 3.6e6:
+            elif (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > settings.retrain_interval_h * 3.6e6 \
+                    or _missing_models(v.get("summary") or {}):
+                # also retrain when a model family became available after this bundle was trained (e.g. torch)
                 out.append((v["created_at"], s, tf))
     return [(s, tf) for _, s, tf in sorted(out)]
+
+
+def _missing_models(summary: dict[str, Any]) -> bool:
+    """A model family is installed now but this bundle has neither trained nor tried it."""
+    tried = set(summary.get("models") or []) | set((summary.get("failures") or {}).keys())
+    return bool(set(default_models()) - tried)
 
 
 def train_until(rt: Runtime, pairs: list[tuple[str, str]], fast: bool, deadline: float) -> list[dict[str, Any]]:
@@ -231,6 +248,9 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("replay_ranges", views.replay_ranges(rt))
     sink.view("cross_asset_1d", scanner.cross_asset(rt, "1d"))
     sink.view("bots", BotEngine(rt).report())
+    for tf in views.FUTURES_TIMEFRAMES:
+        if all((s, tf) in analyses for s in rt.symbols()):
+            sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))
     sink.view("settings", views.settings_view(rt))
     ctx = rt.context_cache[1] if rt.context_cache else {"enabled": False, "reason": "not fetched"}
     sink.view("context", ctx, volatile=("fetched_at",))
@@ -298,6 +318,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         for s in rt.symbols():
             asyncio.run(market.refresh_order_book(rt, s))
         asyncio.run(market.clock_skew(rt))
+        rt.funding_rates = market.funding_rates(rt.symbols())
     step("snapshot", snapshot)
     if fetch_context:
         step("context", lambda: asyncio.run(market.external_context(rt)))

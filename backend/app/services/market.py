@@ -194,3 +194,31 @@ async def gather_limited(coros: list, limit: int = 4) -> list:
             return await c
 
     return await asyncio.gather(*(run(c) for c in coros), return_exceptions=True)
+
+
+FUNDING_HOSTS = ("https://fapi.binance.com",)
+
+
+def funding_rates(symbols: list[str]) -> dict[str, dict[str, Any]]:
+    """Current perpetual funding rate per symbol from Binance USDT-M futures (public, no key).
+
+    Binance blocks its futures API for some server locations (e.g. US cloud runners). Then nothing is
+    returned and callers fall back to the documented base rate, labelled as an assumption."""
+    import requests
+
+    want = {s.replace("/", "").upper(): s for s in symbols}
+    for host in FUNDING_HOSTS:
+        try:
+            r = requests.get(f"{host}/fapi/v1/premiumIndex", timeout=8)
+            if r.status_code != 200:
+                continue
+            out = {}
+            for row in r.json():
+                s = want.get(row.get("symbol"))
+                if s and row.get("lastFundingRate") not in (None, ""):
+                    out[s] = {"rate": float(row["lastFundingRate"]), "mark": float(row.get("markPrice") or 0) or None,
+                              "next_funding_ms": int(row.get("nextFundingTime") or 0) or None, "source": "Binance futures"}
+            return out
+        except Exception:
+            continue
+    return {}

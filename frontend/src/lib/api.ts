@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import * as binance from "./binance";
 import { auth, db } from "./firebase";
 import * as paper from "./paper";
+import * as paperFutures from "./paperFutures";
 import { positionSize } from "./risk";
 
 export class ApiError extends Error {
@@ -137,7 +138,10 @@ function resolve(path: string, refreshMs: number): Sub {
           types: v?.types ?? {},
         };
       });
-    case "paper": return paper.subscribe;
+    case "paper": return p[1] === "futures" ? paperFutures.subscribe : paper.subscribe;
+    case "futures":
+      if (p[1] === "market") return poll(() => binance.futuresMarket((q.get("symbols") ?? "").split(",").filter(Boolean)), refreshMs);
+      return view(`futures_${tf}`);
     case "replay":
       return view("replay_ranges", (r) => r[`${slugOf(p[1])}_${tf}`] ?? { available: false, reason: `replay is available for 1h, 4h, 12h and 1d` });
     case "market": {
@@ -291,7 +295,7 @@ export async function api<T = any>(path: string, init?: { method?: string; body?
         return { trade, state: await first(paper.subscribe) } as T;
       }
       case "POST /paper/reset": await paper.reset(Number(body.starting_balance ?? 10000)); return (await first<T>(paper.subscribe));
-      case "PUT /bots": await setDoc(doc(db, "config", "bots"), { bots: body.bots, updated_at: Date.now() }); return { ok: true } as T;
+      case "PUT /bots": await setDoc(doc(db, "config", "bots"), { bots: body.bots, updated_at: Date.now() }, { merge: true }); return { ok: true } as T;
     }
     throw new ApiError(404, `unsupported action ${method} ${path}`);
   } catch (e) {
