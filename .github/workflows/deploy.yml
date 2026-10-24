@@ -123,7 +123,14 @@ jobs:
           if [ -z "$FIREBASE_SERVICE_ACCOUNT" ]; then echo "::error::Add the FIREBASE_SERVICE_ACCOUNT secret. See README."; exit 1; fi
           echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
-          npx --yes firebase-tools@13 deploy --only hosting,firestore --project crypapp-6a9b9 --non-interactive
+          set -o pipefail
+          if ! npx --yes firebase-tools@13 deploy --only hosting,firestore --project crypapp-6a9b9 --non-interactive 2>&1 | tee /tmp/deploy.log; then
+            git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+            ls -la frontend/dist frontend/dist/download frontend/dist/.well-known >> /tmp/deploy.log 2>&1 || true
+            git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports && tail -c 30000 /tmp/deploy.log > reports/deploy.log \
+              && git add reports && git commit -qm "Deploy log" && git push -q origin reports || true
+            exit 1
+          fi
           echo "Live at https://crypapp-6a9b9.web.app"
       - name: Check the live site serves this exact build (what the app's auto-update relies on)
         run: |
