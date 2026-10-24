@@ -68,8 +68,30 @@ def norm_symbol(raw: str) -> str:
 
 # ---- configuration from the website --------------------------------------------------------------------
 
+MEMBER_COIN_LIMIT = 5        # coins one member can add for themselves
+MEMBER_COINS_MAX = 25        # all members together, on top of the admin's list (keeps the engine within its time)
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
+    # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
+    users = dict(sink.list("users"))
+    now = now_ms()
+    inactive = membership.inactive_uids(users, now)
+    msgs, seen = membership.notifications(users, rt.db.get_setting("membership_notified", {}), now)
+    if msgs:
+        notes["membership_push"] = sink.send_push(msgs)
+    rt.db.set_setting("membership_notified", seen)
+    if inactive:
+        notes["inactive_members"] = len(inactive)
+    # coins members added for themselves (active members only, a few each, capped overall)
+    member_coins: list[str] = []
+    for uid, d in sink.list("user_coins"):
+        if uid in users and uid not in inactive:
+            for x in (d.get("symbols") or [])[:MEMBER_COIN_LIMIT]:
+                sym = norm_symbol(x)
+                if sym not in member_coins:
+                    member_coins.append(sym)
     # watchlist
     doc = sink.get("config/watchlist")
     if doc is None or not isinstance(doc.get("symbols"), list):
@@ -80,6 +102,11 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         for item in doc["symbols"]:
             sym = norm_symbol(item["symbol"] if isinstance(item, dict) else item)
             wanted[sym] = bool(item.get("pinned")) if isinstance(item, dict) else False
+        extra = [c for c in member_coins if c not in wanted][:MEMBER_COINS_MAX]
+        for sym in extra:
+            wanted[sym] = False
+        if extra:
+            notes["member_coins"] = extra
         current = set(rt.symbols())
         rejected = []
         for sym in set(wanted) - current:
@@ -107,16 +134,6 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         w = {k: max(0.0, float(v)) for k, v in doc["signal_weights"].items() if k in rt.signal_weights()}
         if sum(w.values()) > 0:
             rt.db.set_setting("signal_weights", w)
-    # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
-    users = dict(sink.list("users"))
-    now = now_ms()
-    inactive = membership.inactive_uids(users, now)
-    msgs, seen = membership.notifications(users, rt.db.get_setting("membership_notified", {}), now)
-    if msgs:
-        notes["membership_push"] = sink.send_push(msgs)
-    rt.db.set_setting("membership_notified", seen)
-    if inactive:
-        notes["inactive_members"] = len(inactive)
     # alert rules (website) -> local table, keeping the debounce state
     remote = dict(sink.list("alerts"))
     local = {a["id"]: a for a in rt.db.query("SELECT * FROM alerts")}

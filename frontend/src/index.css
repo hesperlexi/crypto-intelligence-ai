@@ -166,3 +166,62 @@ table.grid-table td.num, table.grid-table td .num { font-variant-numeric: tabula
 
 @keyframes slide-up { from { transform: translateY(12px); opacity: 0; } to { transform: none; opacity: 1; } }
 .animate-in { animation: slide-up 0.25s ease-out; }
+
+
+/* ---- premium polish ------------------------------------------------------------------------------- */
+.font-display { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
+h1 { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
+.text-gradient { background: linear-gradient(90deg, rgb(var(--accent-2)), rgb(var(--accent)) 60%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+
+/* card titles get a small accent mark */
+.card-head .label { display: inline-flex; align-items: center; gap: 0.5rem; }
+.card-head .label::before { content: ""; width: 6px; height: 6px; border-radius: 2px; background: rgb(var(--accent)); box-shadow: 0 0 10px rgb(var(--accent) / 0.7); }
+
+/* dashboard hero */
+.hero {
+  background:
+    radial-gradient(70% 120% at 100% 0%, rgb(var(--accent) / 0.20), transparent 60%),
+    radial-gradient(50% 80% at 0% 100%, rgb(var(--accent) / 0.08), transparent 70%),
+    linear-gradient(180deg, rgb(var(--panel-bg) / 0.85), rgb(var(--panel-bg) / 0.55));
+  border: 1px solid rgb(var(--accent) / 0.28);
+  box-shadow: 0 1px 0 rgb(var(--glass) / 0.06) inset, 0 20px 50px -20px var(--shadow);
+}
+.hero-line path:last-child { stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: draw-line 2.2s ease-out 0.2s forwards; }
+@keyframes draw-line { to { stroke-dashoffset: 0; } }
+.kpi { display: block; border-radius: 14px; background: rgb(var(--ink) / 0.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgb(var(--glass) / 0.08); transition: border-color .2s, transform .2s, box-shadow .2s; }
+a.kpi:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgb(var(--accent) / 0.45); }
+
+/* coin tiles */
+.coin-tile { border-radius: 14px; background: linear-gradient(180deg, rgb(var(--glass) / 0.05), rgb(var(--glass) / 0.015)); border: 1px solid rgb(var(--glass) / 0.08); transition: border-color .2s, transform .2s, box-shadow .2s; }
+.coin-tile:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px); box-shadow: 0 12px 30px -14px rgb(var(--accent) / 0.5); }
+.coin-tile-mine { border-color: rgb(var(--accent) / 0.3); background: linear-gradient(180deg, rgb(var(--accent) / 0.08), rgb(var(--glass) / 0.015)); }
+
+/* ticker tape */
+.ticker-tape { overflow: hidden; background: rgb(var(--ink) / 0.55); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.ticker-track { display: flex; width: max-content; padding: 7px 0; animation: ticker linear infinite; }
+.ticker-tape:hover .ticker-track { animation-play-state: paused; }
+@keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+/* skeletons */
+.skeleton { background: linear-gradient(90deg, rgb(var(--glass) / 0.05) 25%, rgb(var(--glass) / 0.11) 37%, rgb(var(--glass) / 0.05) 63%); background-size: 400% 100%; animation: shimmer 1.4s ease infinite; }
+@keyframes shimmer { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+
+/* pages ease in, sections one after another */
+.page-enter > * > * { animation: rise .45s cubic-bezier(.2,.7,.2,1) both; }
+.page-enter > * > *:nth-child(2) { animation-delay: .05s; } .page-enter > * > *:nth-child(3) { animation-delay: .1s; }
+.page-enter > * > *:nth-child(4) { animation-delay: .15s; } .page-enter > * > *:nth-child(n+5) { animation-delay: .2s; }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+/* landing page */
+.landing-bg {
+  background:
+    radial-gradient(60% 50% at 80% 0%, rgb(var(--accent) / 0.22), transparent 70%),
+    radial-gradient(50% 40% at 0% 40%, rgb(var(--accent) / 0.08), transparent 70%),
+    linear-gradient(rgb(var(--glass) / 0.035) 1px, transparent 1px) 0 0 / 48px 48px,
+    linear-gradient(90deg, rgb(var(--glass) / 0.035) 1px, transparent 1px) 0 0 / 48px 48px,
+    rgb(var(--ink));
+}
+.glow-ring { box-shadow: 0 0 0 1px rgb(var(--accent) / 0.45), 0 18px 50px -10px rgb(var(--accent) / 0.45); }
+.float-slow { animation: float 6s ease-in-out infinite; }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@media (prefers-reduced-motion: reduce) { .ticker-track, .hero-line path, .float-slow, .page-enter > * > * { animation: none !important; } .hero-line path:last-child { stroke-dashoffset: 0; } }

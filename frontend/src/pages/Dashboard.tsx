@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
+import { DashboardHero } from "../components/Polish";
 import { TfTabs } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge, Stat } from "../components/ui";
 import { useApi } from "../lib/api";
@@ -28,9 +29,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4">
+      <DashboardHero rows={d?.rows} status={ms} tf={tf} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Market overview</h1>
+          <h2 className="font-display text-lg font-semibold">Market overview</h2>
           <p className="text-sm text-mute">Signals and regimes on the {tf.toUpperCase()} timeframe{refreshAt ? " · forecasts refreshed just now" : ""}</p>
         </div>
         <TfTabs value={tf} onChange={setTf} />

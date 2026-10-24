@@ -49,6 +49,10 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     setSymbols(list.length ? list : []);
   }, () => {}), []);
 
+  // the member's own coins get live prices too
+  const [mine, setMine] = useState<string[]>([]);
+  useEffect(() => onSnapshot(doc(db, "user_coins", myUid()), (s) => setMine((s.data()?.symbols ?? []) as string[]), () => {}), []);
+
   useEffect(() => onSnapshot(doc(db, "views", "meta"), (s) => {
     const t = s.data()?.updated_at;
     if (t) setRefreshAt(t);
@@ -73,14 +77,16 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   // change, network switch), and while the socket is down prices keep updating over REST every 5 seconds.
   const [mode, setMode] = useState<"ws" | "rest" | "down">("down");
   const [online, setOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
-  const key = symbols.join(",");
+  const all = [...new Set([...symbols, ...mine])];
+  const key = all.join(",");
   useEffect(() => {
     const on = () => setOnline(true), off = () => setOnline(false);
     window.addEventListener("online", on); window.addEventListener("offline", off);
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
   useEffect(() => {
-    if (!symbols.length) return;
+    const syms = key ? key.split(",") : [];
+    if (!syms.length) return;
     let ws: WebSocket | null = null;
     let closed = false, attempt = 0, timer = 0, lastFrame = 0, lastRest = 0, busy = false;
     let cur: "ws" | "rest" | "down" = "down";
@@ -91,7 +97,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timer);
       const old = ws;
       const host = WS_HOSTS[attempt % WS_HOSTS.length];
-      const streams = symbols.map((s) => `${bsym(s).toLowerCase()}@ticker`).join("/");
+      const streams = syms.map((s) => `${bsym(s).toLowerCase()}@ticker`).join("/");
       const sock = new WebSocket(`${host}/stream?streams=${streams}`);
       ws = sock;
       try { old?.close(); } catch { /* ignore */ }
@@ -100,7 +106,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
         lastFrame = Date.now(); attempt = 0; setM("ws");
         try {
           const d = JSON.parse(ev.data).data;
-          const sym = symbols.find((s) => bsym(s) === d.s);
+          const sym = syms.find((s) => bsym(s) === d.s);
           if (sym) take(toTicker(sym, +d.c, +d.b, +d.a, +d.P, +d.q, d.E));
         } catch { /* ignore malformed frames */ }
       };
@@ -117,7 +123,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       if (busy || document.hidden || Date.now() - lastFrame < 12000) return;   // socket is delivering: nothing to do
       busy = true;
       try {
-        const t = await restTickers(symbols);
+        const t = await restTickers(syms);
         Object.values(t).forEach((x: any) => take(x));
         lastRest = Date.now();
         if (Date.now() - lastFrame >= 12000) setM("rest");
@@ -161,13 +167,13 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 5s" : symbols.length ? "RECONNECTING" : "IDLE";
+  const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 5s" : all.length ? "RECONNECTING" : "IDLE";
   const feed = {
     status, last_update_ms: lastMsg,
     transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 5 s (stream reconnecting)" : "reconnecting to Binance…",
   };
   const dismissAlert = (id: string) => setAlerts((a) => a.filter((x) => x.id !== id));
-  return <Ctx.Provider value={{ tickers, connected, feed, alerts, refreshAt, symbols, dismissAlert }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ tickers, connected, feed, alerts, refreshAt, symbols: all, dismissAlert }}>{children}</Ctx.Provider>;
 }
 
 export const useLive = () => useContext(Ctx);

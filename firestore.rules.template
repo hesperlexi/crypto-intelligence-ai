@@ -53,6 +53,13 @@ service cloud.firestore {
     }
     // coins, bots, settings: everyone signed in may read, only the admin may change
     match /config/{id}       { allow read: if allowed() || (signedIn() && id == 'membership'); allow write: if isAdmin(); }
+    // coins a member follows for themselves (the engine tracks them while the membership is active)
+    match /user_coins/{uid} {
+      allow read: if allowed() && (isAdmin() || me() == uid);
+      allow write: if allowed() && me() == uid
+        && request.resource.data.symbols is list && request.resource.data.symbols.size() <= 5;
+      allow delete: if isAdmin() || (allowed() && me() == uid);
+    }
     // per-user small state (e.g. which alerts were read)
     match /user_state/{uid}  { allow read, write: if allowed() && (isAdmin() || me() == uid); }
 

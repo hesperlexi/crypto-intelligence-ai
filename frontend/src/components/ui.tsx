@@ -26,7 +26,12 @@ export function Stat({ label, value, sub, className = "" }: { label: string; val
 }
 
 export function Loading({ what = "Loading" }: { what?: string }) {
-  return <div className="py-6 text-center text-sm text-mute">{what}…</div>;
+  return (
+    <div className="space-y-2.5 py-3" role="status">
+      <span className="sr-only">{what}…</span>
+      {[88, 72, 80].map((w, i) => <div key={i} aria-hidden="true" className="skeleton h-3.5 rounded-md" style={{ width: `${w}%` }} />)}
+    </div>
+  );
 }
 
 export function ErrorBox({ error, retry }: { error: string; retry?: () => void }) {

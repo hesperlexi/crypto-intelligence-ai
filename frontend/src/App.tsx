@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes } from "react-router-dom";
+import { NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
 import UpdateNotice from "./components/UpdateNotice";
@@ -28,6 +28,8 @@ import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 import { PaymentPanel, RenewBanner } from "./components/Membership";
+import { TickerTape } from "./components/Polish";
+import Landing from "./components/Landing";
 import { fmtDate, useMyRecord } from "./lib/membership";
 
 const NAV = [
@@ -68,24 +70,6 @@ function StatusPill({ user }: { user: User }) {
   );
 }
 
-function Login({ error }: { error: string | null }) {
-  const [err, setErr] = useState<string | null>(error);
-  return (
-    <div className="flex min-h-full items-center justify-center px-4">
-      <div className="panel w-full max-w-sm p-7 text-center">
-        <img src={`/icons/icon-512.png?v=${BUILD_ID}`} alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
-        <h1 className="text-xl font-semibold tracking-tight">Crypto Intelligence <span className="text-accent">AI</span></h1>
-        <p className="mt-2 text-sm text-mute">Sign in with Google. New accounts send an access request to the owner.</p>
-        <button className="btn btn-primary mt-5 w-full" onClick={() => signInWithPopup(auth, googleProvider).catch((e) => setErr(e.message))}>
-          Sign in with Google
-        </button>
-        {err && <p className="mt-3 text-xs text-bear">{err}</p>}
-        <p className="mt-5 text-xs text-mute">Analysis and demo trading only. No real orders are ever placed.</p>
-        <p className="mt-3 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
-      </div>
-    </div>
-  );
-}
 
 function Toasts() {
   const { alerts, dismissAlert } = useLive();
@@ -110,7 +94,7 @@ export default function App() {
   useEffect(() => onAuthStateChanged(auth, (u) => { setUser(u); setRole("loading"); }), []);
   useEffect(() => (user ? watchRole(user, setRole) : undefined), [user]);
   if (user === undefined || (user && role === "loading")) return <div className="py-20 text-center text-sm text-mute">Loading…</div>;
-  if (!user) return <Login error={null} />;
+  if (!user) return <Landing error={null} />;
   const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role };
   setSession(session);
   if (role === "pending" || role === "expired" || role === "blocked") return <AccessScreen user={user} role={role} />;
@@ -176,6 +160,7 @@ function usePendingCount(admin: boolean) {
 }
 
 function Shell({ user }: { user: User }) {
+  const loc = useLocation();
   const [more, setMore] = useState(false);
   const admin = useIsAdmin();
   const pending = usePendingCount(admin);
@@ -230,8 +215,10 @@ function Shell({ user }: { user: User }) {
             </nav>
           )}
         </header>
+        <TickerTape />
         {!admin && <RenewBanner />}
         <main className={`mx-auto w-full ${width} flex-1 px-3 py-4 sm:px-4`}>
+          <div key={loc.pathname} className="page-enter">
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/asset/:symbol" element={<Asset />} />
@@ -249,6 +236,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/users" element={<Users />} />
             <Route path="*" element={<div className="py-10 text-center text-mute">Page not found</div>} />
           </Routes>
+          </div>
         </main>
         <Footer className="pb-24 md:pb-3" />
       </div>

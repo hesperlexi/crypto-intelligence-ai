@@ -48,7 +48,7 @@ If a proof is not accepted, you see the reason on the same screen and can send i
 Do these once and the app works for you in the background.
 
 - ☐ **Install the app** on your phone (section 1).
-- ☐ **Look at your coins:** the **My coins** card on the Dashboard shows the coins the engine follows. The admin can search any coin there (e.g. PEPE), add it and pin favourites; a new coin gets full predictions after the next engine run (about 15 minutes).
+- ☐ **Add your own coins:** the **My coins** card on the Dashboard shows the shared coins plus your own. Tap **+ Add coin**, search any coin listed on Binance (e.g. PEPE, SOL, TON) and add up to **5 coins of your own**. Each gets a live price straight away, and signals, AI forecasts, alerts and paper trading within about 15–30 minutes. Remove one with ✕ in edit mode. (Admin: coins you add there are tracked for everyone.)
 - ☐ **Turn on notifications:** **Settings → Notifications → Turn on notifications**, then press **Send a test notification**. The test comes on the engine's next run (within about 15 minutes).
 - ☐ **Choose a look:** **Settings → Appearance**. Gold is the default; there are other themes and layouts, and a compact density for small screens.
 - ☐ **Set up a paper account:** open **Paper**, type a **Starting balance** close to what you would really trade (e.g. 1,000 USDT) and press **Reset account**.

@@ -110,14 +110,19 @@ function resolve(path: string, refreshMs: number): Sub {
   const tf = q.get("timeframe") ?? "4h";
   switch (p[0]) {
     case "meta":
-      return combine({ meta: view("meta"), wl: rawDoc(["config", "watchlist"]) }, ({ meta, wl }) => {
-        const m = meta ?? { watchlist: [], strategies: {}, alert_types: {} };
+      return combine({ meta: view("meta"), wl: rawDoc(["config", "watchlist"]), mine: rawDoc(["user_coins", myUid()]) }, ({ meta, wl, mine }) => {
+        const m = { ...(meta ?? { watchlist: [], strategies: {}, alert_types: {} }) };
         if (wl?.symbols) m.watchlist = wl.symbols.map((x: any) => (typeof x === "string" ? { symbol: x, pinned: 0 } : { symbol: x.symbol, pinned: x.pinned ? 1 : 0 }));
+        // the member's own coins come after the shared list, marked as theirs
+        const have = new Set((m.watchlist ?? []).map((w: any) => w.symbol));
+        m.watchlist = [...(m.watchlist ?? []), ...((mine?.symbols ?? []) as string[]).filter((s) => !have.has(s)).map((s) => ({ symbol: s, pinned: 0, mine: true }))];
+        m.my_coins = mine?.symbols ?? [];
         return m;
       });
     case "dashboard": return view(`dashboard_${tf}`);
     case "scanner":
-      return combine({ d: view(`dashboard_${tf}`), wl: rawDoc(["config", "watchlist"]) }, ({ d, wl }) => {
+      return combine({ d: view(`dashboard_${tf}`), wl0: rawDoc(["config", "watchlist"]), mine: rawDoc(["user_coins", myUid()]) }, ({ d, wl0, mine }) => {
+        const wl = wl0 ? { ...wl0, symbols: [...(wl0.symbols ?? []), ...((mine?.symbols ?? []) as string[]).map((s) => ({ symbol: s, pinned: false }))] } : wl0;
         const rows = [...(d?.rows ?? [])];
         const have = new Set(rows.map((r: any) => r.symbol));
         for (const x of wl?.symbols ?? []) {

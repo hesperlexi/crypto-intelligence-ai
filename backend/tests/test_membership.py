@@ -50,3 +50,31 @@ def test_worker_pauses_alerts_of_lapsed_members(tmp_path):
     enabled = {r["id"]: r["enabled"] for r in rt.db.query("SELECT id, enabled FROM alerts")}
     assert enabled == {"a1": 0, "a2": 1, "a3": 1}
     assert notes["inactive_members"] == 1
+
+
+def test_active_members_coins_are_tracked_and_lapsed_ones_dropped(tmp_path):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return [f"{q}/USDT"]
+
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    sink = LocalSink(tmp_path)
+    now = worker.now_ms()
+    sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})
+    sink.set("users/ok", {"status": "approved", "expires_at": now + 30 * DAY})
+    sink.set("users/old", {"status": "approved", "expires_at": now - DAY})
+    sink.set("user_coins/ok", {"symbols": ["PEPE/USDT", "BTC/USDT", "sol"]})
+    sink.set("user_coins/old", {"symbols": ["DOGE/USDT"]})
+    notes = worker.sync_config(rt, sink)
+    assert set(rt.symbols()) == {"BTC/USDT", "PEPE/USDT", "SOL/USDT"}
+    assert notes["member_coins"] == ["PEPE/USDT", "SOL/USDT"]
+    sink.set("user_coins/ok", {"symbols": []})
+    worker.sync_config(rt, sink)
+    assert rt.symbols() == ["BTC/USDT"]
