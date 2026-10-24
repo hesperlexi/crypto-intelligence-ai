@@ -118,11 +118,12 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         row = (a["type"], norm_symbol(a["symbol"]), a.get("timeframe", "4h"), dumps(a.get("params") or {}),
                int(a.get("cooldown_s", 3600)), int(bool(a.get("enabled", True))))
         if aid in local:
-            rt.db.execute("UPDATE alerts SET type = ?, symbol = ?, timeframe = ?, params = ?, cooldown_s = ?, enabled = ? "
-                          "WHERE id = ?", (*row, aid))
+            rt.db.execute("UPDATE alerts SET type = ?, symbol = ?, timeframe = ?, params = ?, cooldown_s = ?, enabled = ?, "
+                          "user_id = ? WHERE id = ?", (*row, a.get("owner_uid") or USER, aid))
         else:
             rt.db.execute("INSERT INTO alerts (id, user_id, type, symbol, timeframe, params, cooldown_s, enabled, created_at) "
-                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (aid, USER, *row, int(a.get("created_at") or now_ms())))
+                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                          (aid, a.get("owner_uid") or USER, *row, int(a.get("created_at") or now_ms())))
     # demo bots
     doc = sink.get("config/bots")
     if doc is None or not isinstance(doc.get("bots"), list):
@@ -149,8 +150,11 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
     if kind == "test_push":
         if sink is None:
             return {"ok": False, "reason": "no publisher"}
-        res = sink.send_push([{"title": "Test notification", "body": "Notifications from Crypto Intelligence AI work on this device.",
-                               "url": "/settings", "tag": "test"}])
+        m = {"title": "Test notification", "body": "Notifications from Crypto Intelligence AI work on this device.",
+             "url": "/settings", "tag": "test"}
+        if p.get("uid"):
+            m["uid"] = str(p["uid"])
+        res = sink.send_push([m])
         return {"ok": res.get("sent", 0) > 0, **res}
     if kind == "backtest":
         p = {**p, "symbol": norm_symbol(p["symbol"])}
@@ -241,11 +245,14 @@ def train_until(rt: Runtime, pairs: list[tuple[str, str]], fast: bool, deadline:
 
 # ---- publishing -------------------------------------------------------------------------------------------
 
-def push_message(ev: dict[str, Any]) -> dict[str, str]:
+def push_message(ev: dict[str, Any], owner: str | None = None) -> dict[str, str]:
     title = {"TRADE_SETUP": "Trade signal", "BUY_SIGNAL": "Buy signal", "SELL_SIGNAL": "Sell signal"}.get(
         ev.get("type"), (ev.get("type") or "Alert").replace("_", " ").title())
-    return {"title": f"{title} · {ev.get('symbol', '')}", "body": ev.get("message", ""), "url": "/alerts",
-            "tag": ev.get("id", "")}
+    msg = {"title": f"{title} · {ev.get('symbol', '')}", "body": ev.get("message", ""), "url": "/alerts",
+           "tag": ev.get("id", "")}
+    if owner and owner != USER:
+        msg["uid"] = owner            # only this member's devices; without it, the admins' devices
+    return msg
 
 
 def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analyses: dict[tuple[str, str], dict]) -> None:
@@ -256,7 +263,9 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     publish_models(rt, sink)
     sink.view("performance", views.performance_all(rt))
     sink.view("signals", views.signals(rt))
-    sink.view("alerts", views.alerts_view(rt))
+    sink.view("alerts", views.alerts_view(rt, USER))
+    for uid in {r["user_id"] for r in rt.db.query("SELECT DISTINCT user_id FROM alerts")} - {USER}:
+        sink.view(f"alerts_u_{uid}", views.alerts_view(rt, uid))    # each member reads only their own
     sink.view("backtests", views.backtest_history(rt))
     sink.view("replay_ranges", views.replay_ranges(rt))
     sink.view("cross_asset_1d", scanner.cross_asset(rt, "1d"))
@@ -367,7 +376,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
     if fired_events:
-        detail["push"] = step("push", lambda: sink.send_push([push_message(e) for e in fired_events]))
+        owners = {r["id"]: r["user_id"] for r in rt.db.query("SELECT id, user_id FROM alerts")}
+        detail["push"] = step("push", lambda: sink.send_push(
+            [push_message(e, owners.get(e.get("alert_id"))) for e in fired_events]))
     detail["written"] = sink.flush()
     detail["skipped_unchanged"] = sink.skipped
     status = "ok" if all(v["ok"] for v in detail["steps"].values()) else "partial"

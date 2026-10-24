@@ -8,13 +8,14 @@
  *   - live market data-> Binance public REST / WebSocket, straight from the browser
  *   - heavy work      -> Firestore jobs/* queue (backtests, replays, retraining), run by the next engine cycle
  */
-import { addDoc, collection, deleteDoc, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
 import * as binance from "./binance";
 import { auth, db } from "./firebase";
 import * as paper from "./paper";
 import * as paperFutures from "./paperFutures";
 import { positionSize } from "./risk";
+import { getSession, isAdmin, myUid } from "./session";
 
 export class ApiError extends Error {
   status: number;
@@ -42,7 +43,7 @@ function view(name: string, map: (v: any) => any = (v) => v): Sub {
 }
 
 function permissionHint(e: Error): string {
-  return /permission/i.test(e.message) ? "Access denied: this Google account is not on the app's allowed list (see README, step 'ADMIN_EMAILS')." : e.message;
+  return /permission/i.test(e.message) ? (isAdmin() ? "Access denied by the database rules (redeploy the website so the latest rules apply)." : "This needs the app owner's permission (members cannot change it).") : e.message;
 }
 
 function rawDoc(path: string[]): Sub {
@@ -82,6 +83,19 @@ function poll(fn: () => Promise<any>, ms: number): Sub {
       if (t) window.clearInterval(t);
       if (ms) { document.removeEventListener("visibilitychange", wake); window.removeEventListener("online", wake); }
     };
+  };
+}
+
+/** The signed-in user's own alert rules. An admin's older rules (made before member accounts) are adopted once. */
+function myAlertRules(): Sub {
+  return (cb, err) => {
+    const uid = myUid();
+    if (isAdmin()) {
+      getDocs(collection(db, "alerts")).then((q) => q.docs.filter((d) => !d.data().owner_uid)
+        .forEach((d) => updateDoc(d.ref, { owner_uid: uid }).catch(() => {}))).catch(() => {});
+    }
+    return onSnapshot(query(collection(db, "alerts"), where("owner_uid", "==", uid)),
+      (q) => cb(q.docs.map((d) => ({ id: d.id, ...d.data() }))), (e) => err(new Error(permissionHint(e))));
   };
 }
 
@@ -129,9 +143,9 @@ function resolve(path: string, refreshMs: number): Sub {
         forecast_refresh_s: 900, refresh_options_s: [900],
       }));
     case "alerts":
-      return combine({ rules: collectionSub("alerts"), v: view("alerts"), read: rawDoc(["config", "alerts_read"]) }, ({ rules, v, read }) => {
+      return combine({ rules: myAlertRules(), v: view(`alerts_u_${myUid()}`), read: rawDoc(["user_state", myUid()]) }, ({ rules, v, read }) => {
         const state = v?.state ?? {};
-        const before = read?.before ?? 0;
+        const before = read?.alerts_read_before ?? 0;
         return {
           alerts: rules.map((a: any) => ({ ...a, ...(state[a.id] ?? {}) })).sort((a: any, b: any) => (b.created_at ?? 0) - (a.created_at ?? 0)),
           events: (v?.events ?? []).map((e: any) => ({ ...e, is_read: e.created_at <= before ? 1 : 0 })),
@@ -258,10 +272,10 @@ export async function api<T = any>(path: string, init?: { method?: string; body?
       case "PUT /watchlist/:x/pin": return (await saveWatchlist((await watchlist()).map((w) => (w.symbol === toSymbol(p[1]) ? { ...w, pinned: !!body.pinned } : w)))) as T;
       case "POST /alerts":
         if (!body.type || !body.symbol) throw new ApiError(400, "type and symbol are required");
-        return { id: (await addDoc(collection(db, "alerts"), { type: body.type, symbol: toSymbol(body.symbol), timeframe: body.timeframe ?? "4h", params: body.params ?? {}, cooldown_s: Number(body.cooldown_s ?? 3600), enabled: true, created_at: Date.now() })).id } as T;
+        return { id: (await addDoc(collection(db, "alerts"), { type: body.type, symbol: toSymbol(body.symbol), timeframe: body.timeframe ?? "4h", params: body.params ?? {}, cooldown_s: Number(body.cooldown_s ?? 3600), enabled: true, created_at: Date.now(), owner_uid: myUid(), owner_email: getSession()?.email ?? null })).id } as T;
       case "PUT /alerts/:x": await updateDoc(doc(db, "alerts", p[1]), { enabled: !!body.enabled }); return { id: p[1] } as T;
       case "DELETE /alerts/:x": await deleteDoc(doc(db, "alerts", p[1])); return { deleted: p[1] } as T;
-      case "POST /alerts/read": await setDoc(doc(db, "config", "alerts_read"), { before: Date.now() }); return { ok: true } as T;
+      case "POST /alerts/read": await setDoc(doc(db, "user_state", myUid()), { alerts_read_before: Date.now() }, { merge: true }); return { ok: true } as T;
       case "PUT /settings": {
         const patch: any = {};
         if (body.risk_profile) patch.risk_profile = Object.fromEntries(Object.entries(body.risk_profile).map(([k, v]) => [k, Number(v)]));

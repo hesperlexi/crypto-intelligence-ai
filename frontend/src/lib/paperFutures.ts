@@ -9,8 +9,20 @@ import { addDoc, collection, doc, getDoc, onSnapshot, query, runTransaction, set
 import { derivatives, klines, tickers } from "./binance";
 import { db } from "./firebase";
 import { latestPrices } from "./live";
+import { isAdmin, myUid } from "./session";
 
-const ACC = doc(db, "paper", "futures");
+const ACC_REF = () => doc(db, "paper", `${myUid()}_futures`);   // one account per user
+let migrated = false;
+/** Accounts made before member accounts existed (paper/futures) move to the owner's own document once. */
+async function adoptLegacy() {
+  if (migrated || !isAdmin()) return;
+  migrated = true;
+  try {
+    if ((await getDoc(ACC_REF())).exists()) return;
+    const old = await getDoc(doc(db, "paper", "futures"));
+    if (old.exists()) await setDoc(ACC_REF(), old.data()!);
+  } catch { /* ignore */ }
+}
 const TRADES = "paper_futures_trades";
 export const FEE = 0.0005;             // 0.05% taker
 export const MMR = 0.005;              // maintenance margin (conservative tier-1)
@@ -40,28 +52,29 @@ export async function reset(startingBalance = 10000) {
   if (!(startingBalance > 0)) throw new Error("starting balance must be positive");
   const acc = { id: Math.random().toString(36).slice(2, 12), starting_balance: startingBalance, wallet: startingBalance, created_at: Date.now(),
     positions: {}, position_mode: "oneway", totals: { realized: 0, fees: 0, funding: 0, count: 0, wins: 0, liquidations: 0 } };
-  await setDoc(ACC, acc);
+  await setDoc(ACC_REF(), acc);
   return acc;
 }
 
 async function log(trade: any) {
-  await addDoc(collection(db, TRADES), { ...trade, created_at: trade.created_at ?? Date.now(), mode: "PAPER FUTURES" });
+  await addDoc(collection(db, TRADES), { ...trade, uid: myUid(), created_at: trade.created_at ?? Date.now(), mode: "PAPER FUTURES" });
 }
 
 export interface OpenOrder { symbol: string; side: 1 | -1; margin: number; leverage: number; stop?: number | null; take?: number | null }
 
 /** One-way: a coin holds either a long or a short. Hedge: a long and a short can be open on the same coin at once. */
 export async function setMode(mode: PositionMode) {
-  if (!(await getDoc(ACC)).exists()) await reset();
+  await adoptLegacy();
+  if (!(await getDoc(ACC_REF())).exists()) await reset();
   await runTransaction(db, async (tx) => {
-    const acc: any = (await tx.get(ACC)).data();
+    const acc: any = (await tx.get(ACC_REF())).data();
     if (mode === "oneway") {
       const sides: Record<string, Set<number>> = {};
       for (const p of Object.values<any>(acc.positions ?? {})) (sides[p.symbol] ??= new Set()).add(p.side);
       const both = Object.entries(sides).filter(([, v]) => v.size > 1).map(([k]) => k);
       if (both.length) throw new Error(`close one side of ${both.join(", ")} first: one-way mode allows only one direction per coin`);
     }
-    tx.update(ACC, { position_mode: mode });
+    tx.update(ACC_REF(), { position_mode: mode });
   });
 }
 
@@ -69,7 +82,8 @@ export async function open(o: OpenOrder) {
   const lev = Math.round(Number(o.leverage));
   if (!(lev >= 1 && lev <= MAX_LEV)) throw new Error(`leverage must be between 1x and ${MAX_LEV}x`);
   if (!(o.margin > 0)) throw new Error("enter a positive margin amount");
-  if (!(await getDoc(ACC)).exists()) await reset();
+  await adoptLegacy();
+  if (!(await getDoc(ACC_REF())).exists()) await reset();
   const mark = await price(o.symbol);
   const fill = mark * (1 + o.side * ADVERSE);
   const qty = (o.margin * lev) / fill;
@@ -78,7 +92,7 @@ export async function open(o: OpenOrder) {
   if (stop && o.side * (fill - stop) <= 0) throw new Error(`the stop-loss must be ${o.side > 0 ? "below" : "above"} the entry price`);
   if (take && o.side * (take - fill) <= 0) throw new Error(`the take-profit must be ${o.side > 0 ? "above" : "below"} the entry price`);
   const res = await runTransaction(db, async (tx) => {
-    const acc: any = (await tx.get(ACC)).data();
+    const acc: any = (await tx.get(ACC_REF())).data();
     if (o.margin + fee > acc.wallet + 1e-9) throw new Error(`not enough virtual balance: need $${(o.margin + fee).toFixed(2)}, have $${acc.wallet.toFixed(2)}`);
     const positions = { ...(acc.positions ?? {}) };
     const hedge = acc.position_mode === "hedge";
@@ -104,7 +118,7 @@ export async function open(o: OpenOrder) {
     }
     positions[key] = { ...pos, key };
     const t = acc.totals;
-    tx.update(ACC, { wallet: acc.wallet - o.margin - fee, positions, totals: { ...t, fees: t.fees + fee } });
+    tx.update(ACC_REF(), { wallet: acc.wallet - o.margin - fee, positions, totals: { ...t, fees: t.fees + fee } });
     return { account_id: acc.id, pos, hedge };
   });
   await log({ account_id: res.account_id, type: "OPEN", symbol: o.symbol, side: o.side, qty, price: fill, mark_price: mark,
@@ -114,12 +128,12 @@ export async function open(o: OpenOrder) {
 
 /** Close all or part of a position. `at` is a trigger level (stop / target / liquidation); otherwise the live price. */
 export async function close(key: string, fraction = 1, reason = "manual", at?: number, when?: number) {
-  const snap: any = (await getDoc(ACC)).data();
+  const snap: any = (await getDoc(ACC_REF())).data();
   const symbol: string | undefined = snap?.positions?.[key]?.symbol;
   if (!symbol) return null;
   const mark = at ?? (await price(symbol));
   const res = await runTransaction(db, async (tx) => {
-    const acc: any = (await tx.get(ACC)).data();
+    const acc: any = (await tx.get(ACC_REF())).data();
     const pos = acc?.positions?.[key];
     if (!pos) return null;                                    // already closed (e.g. by another check)
     const f = Math.min(1, Math.max(0, fraction));
@@ -142,7 +156,7 @@ export async function close(key: string, fraction = 1, reason = "manual", at?: n
     else positions[key] = { ...pos, qty: pos.qty - q, margin: pos.margin - marginPart, fees: (pos.fees ?? 0) - openFee };
     const t = acc.totals;
     const closingPnl = pnl;
-    tx.update(ACC, { wallet: acc.wallet + back, positions, totals: { ...t, realized: t.realized + closingPnl, fees: t.fees + fee,
+    tx.update(ACC_REF(), { wallet: acc.wallet + back, positions, totals: { ...t, realized: t.realized + closingPnl, fees: t.fees + fee,
       count: t.count + 1, wins: t.wins + (closingPnl > 0 ? 1 : 0), liquidations: t.liquidations + (reason === "liquidated" ? 1 : 0) } });
     return { account_id: acc.id, pos, q, fill, fee, pnl: closingPnl, marginPart };
   });
@@ -155,11 +169,11 @@ export async function close(key: string, fraction = 1, reason = "manual", at?: n
 
 export async function setOrders(key: string, stop: number | null, take: number | null) {
   await runTransaction(db, async (tx) => {
-    const acc: any = (await tx.get(ACC)).data();
+    const acc: any = (await tx.get(ACC_REF())).data();
     const pos = acc?.positions?.[key];
     if (!pos) throw new Error("no open position");
     if (stop && pos.side * (pos.entry - stop) <= 0 && pos.side * ((latestPrices[pos.symbol] ?? pos.entry) - stop) <= 0) throw new Error("the stop would trigger immediately");
-    tx.update(ACC, { positions: { ...acc.positions, [key]: { ...pos, stop: stop || null, take: take || null } } });
+    tx.update(ACC_REF(), { positions: { ...acc.positions, [key]: { ...pos, stop: stop || null, take: take || null } } });
   });
 }
 
@@ -181,7 +195,7 @@ export async function settle() {
   if (settling) return;
   settling = true;
   try {
-    const acc: any = (await getDoc(ACC)).data();
+    const acc: any = (await getDoc(ACC_REF())).data();
     if (!acc) return;
     const now = Date.now();
     for (const [posK, pos] of Object.entries<any>(acc.positions ?? {})) {
@@ -195,13 +209,13 @@ export async function settle() {
         const amount = n * pos.side * pos.qty * px * rate;
         const key = posK;
         await runTransaction(db, async (tx) => {
-          const a: any = (await tx.get(ACC)).data();
+          const a: any = (await tx.get(ACC_REF())).data();
           const p = a?.positions?.[key];
           if (!p || p.opened_at !== pos.opened_at || p.funded_until !== pos.funded_until) return;
           // funding comes out of the position's margin (isolated), which moves the liquidation price
           const margin = p.margin - amount;
           const lev = (p.qty * p.entry) / Math.max(margin, 1e-9);
-          tx.update(ACC, { positions: { ...a.positions, [key]: { ...p, margin, leverage: lev, liq: liqPrice(p.entry, p.side, lev),
+          tx.update(ACC_REF(), { positions: { ...a.positions, [key]: { ...p, margin, leverage: lev, liq: liqPrice(p.entry, p.side, lev),
             funding: (p.funding ?? 0) + amount, funded_until: first + (n - 1) * FUNDING_MS } },
             totals: { ...a.totals, funding: (a.totals.funding ?? 0) + amount, realized: a.totals.realized - amount } });
         });
@@ -227,9 +241,9 @@ export async function settle() {
       else if (now - pos.checked_at > STEP) {
         const key = posK;
         await runTransaction(db, async (tx) => {
-          const a: any = (await tx.get(ACC)).data();
+          const a: any = (await tx.get(ACC_REF())).data();
           const p = a?.positions?.[key];
-          if (p && p.opened_at === pos.opened_at) tx.update(ACC, { positions: { ...a.positions, [key]: { ...p, checked_at: now - (now % STEP) } } });
+          if (p && p.opened_at === pos.opened_at) tx.update(ACC_REF(), { positions: { ...a.positions, [key]: { ...p, checked_at: now - (now % STEP) } } });
         });
       }
     }
@@ -273,19 +287,24 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
       exposure: positions.reduce((s, p) => s + p.notional, 0),
     });
   };
-  const unsubAcc = onSnapshot(ACC, (s) => {
+  let unsubAcc = () => {};
+  let cancelled = false;
+  adoptLegacy().finally(() => {
+    if (cancelled) return;
+    unsubAcc = onSnapshot(ACC_REF(), (s) => {
     lastAcc = s.data() ?? null;
     if (lastAcc && lastAcc.id !== currentId) {
       currentId = lastAcc.id;
       unsubTrades();
-      unsubTrades = onSnapshot(query(collection(db, TRADES), where("account_id", "==", currentId)), (q) => {
+      unsubTrades = onSnapshot(query(collection(db, TRADES), where("account_id", "==", currentId), ...(isAdmin() ? [] : [where("uid", "==", myUid())])), (q) => {
         trades = q.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => b.created_at - a.created_at).slice(0, 300);
         build(lastAcc);
       }, err);
     }
     build(lastAcc);
-  }, err);
+    }, err);
+  });
   settle().catch(() => {});
   const timer = window.setInterval(() => { if (!document.hidden) { settle().catch(() => {}); if (lastAcc) build(lastAcc); } }, 15_000);
-  return () => { unsubAcc(); unsubTrades(); window.clearInterval(timer); };
+  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); };
 }

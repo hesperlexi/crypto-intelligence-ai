@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useIsAdmin } from "../lib/session";
 import { Link, useParams } from "react-router-dom";
 import CandleChart, { Marker, OVERLAY_COLORS, PriceLine } from "../components/CandleChart";
 import { MODEL_TFS, TfTabs } from "../components/Pickers";
@@ -234,7 +235,8 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
       setBusy(false);
     }
   };
-  const canTrain = MODEL_TFS.includes(tf as any);
+  const isAdm = useIsAdmin();
+  const canTrain = MODEL_TFS.includes(tf as any) && isAdm;
   return (
     <Card title="Model consensus" right={canTrain ? <button className="btn px-2 py-0.5 text-xs" disabled={busy} onClick={train}>Retrain</button> : undefined}>
       {msg && <p className="mb-2 text-xs text-accent">{msg}</p>}

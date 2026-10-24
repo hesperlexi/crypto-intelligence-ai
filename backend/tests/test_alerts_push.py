@@ -51,3 +51,29 @@ def test_engine_pushes_fired_alerts_to_devices():
     assert res == {"sent": 1, "devices": 1}
     line = json.loads(open(f"{root}/push_log.jsonl").read().splitlines()[0])
     assert line["title"] == "Trade signal · BTC/USDT" and line["body"] == "hello" and line["url"] == "/alerts"
+
+
+def test_member_alerts_are_private_and_pushed_to_their_devices():
+    from app.config import settings
+    from tests.helpers import ArrayProvider
+    import time
+
+    settings.symbols = ["BTC/USDT"]
+    root = tempfile.mkdtemp()
+    db = Database("sqlite:///:memory:")
+    now = int(time.time() * 1000)
+    rt = Runtime(db, ArrayProvider(("BTC/USDT",), base_bars=3000, end_ms=now - now % 900_000 + 900_000))
+    sink = LocalSink(root, db)
+    sink.set("alerts/m1", {"type": "PRICE_ABOVE", "symbol": "BTC/USDT", "timeframe": "4h", "params": {"level": 1e9},
+                           "owner_uid": "member1"})
+    sink.set("alerts/a1", {"type": "PRICE_ABOVE", "symbol": "BTC/USDT", "timeframe": "4h", "params": {"level": 1e9}})
+    worker.sync_config(rt, sink)
+    worker.publish(rt, sink, {"ticks": 1}, now, {})
+    sink.flush()
+    mine = json.loads(sink.get("views/alerts_u_member1")["json"])
+    admin = json.loads(sink.get("views/alerts")["json"])
+    assert set(mine["state"]) == {"m1"} and set(admin["state"]) == {"a1"}
+    sink.set("push_tokens/t1", {"token": "t1", "uid": "member1"})
+    sink.set("push_tokens/t2", {"token": "t2", "uid": "someone-else"})
+    res = sink.send_push([worker.push_message({"id": "e", "type": "PRICE_ABOVE", "symbol": "BTC/USDT", "message": "x"}, "member1")])
+    assert res["sent"] == 1

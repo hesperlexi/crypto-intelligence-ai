@@ -124,10 +124,13 @@ class LocalSink(BaseSink):
     def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
         tokens = self.list("push_tokens")
         log = self.root / "push_log.jsonl"
+        sent = 0
         with log.open("a") as f:
             for m in messages:
-                f.write(dumps({**m, "devices": len(tokens)}) + "\n")
-        return {"sent": len(messages) * len(tokens), "devices": len(tokens)}
+                to = [t for t, d in tokens if (d.get("uid") == m["uid"] if m.get("uid") else True)]
+                sent += len(to)
+                f.write(dumps({**m, "devices": len(to)}) + "\n")
+        return {"sent": sent, "devices": len(tokens)}
 
 
 class FirestoreSink(BaseSink):
@@ -186,14 +189,20 @@ class FirestoreSink(BaseSink):
         try:
             from firebase_admin import messaging
 
-            tokens = [d.get("token") or i for i, d in self.list("push_tokens")]
+            devices = [(d.get("token") or i, d.get("uid"), (d.get("email") or "").lower()) for i, d in self.list("push_tokens")]
         except Exception as exc:
             return {"sent": 0, "devices": 0, "error": f"{type(exc).__name__}: {exc}"[:200]}
-        if not tokens:
+        if not devices:
             return {"sent": 0, "devices": 0, "reason": "no device has turned notifications on"}
+        admins = {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()}
         sent, dead, errors = 0, set(), []
-        for m in messages[:20]:
-            data = {k: str(v)[:900] for k, v in m.items() if v is not None}
+        for m in messages[:30]:
+            to = m.get("uid")
+            # a member's alert goes to that member's devices only; an admin alert to the admins' devices
+            tokens = [t for t, uid, email in devices if (uid == to if to else (not admins or email in admins or uid is None))]
+            if not tokens:
+                continue
+            data = {k: str(v)[:900] for k, v in m.items() if v is not None and k != "uid"}
             msg = messaging.MulticastMessage(
                 tokens=tokens, data=data,
                 webpush=messaging.WebpushConfig(headers={"Urgency": "high", "TTL": "86400"}))
@@ -213,4 +222,4 @@ class FirestoreSink(BaseSink):
                 self.fs.document(f"push_tokens/{tok}").delete()
             except Exception:
                 pass
-        return {"sent": sent, "devices": len(tokens), "removed": len(dead), "errors": errors[:3]}
+        return {"sent": sent, "devices": len(devices), "removed": len(dead), "errors": errors[:3]}

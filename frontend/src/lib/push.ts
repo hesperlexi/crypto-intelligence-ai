@@ -6,6 +6,7 @@
 //   created once in the Firebase console and pasted into Settings → Notifications (stored in config/push).
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { app, db } from "./firebase";
+import { getSession, myUid } from "./session";
 
 const LS_TOKEN = "cia-push-token";
 
@@ -47,7 +48,7 @@ export async function enable(): Promise<string> {
   if (!(await isSupported())) return "Notifications are on while the app is open (this browser cannot receive push when closed).";
   const token = await getToken(getMessaging(app), { vapidKey: key, serviceWorkerRegistration: reg });
   if (!token) throw new Error("could not register this device for push");
-  await setDoc(doc(db, "push_tokens", token), { token, created_at: Date.now(), ua: navigator.userAgent.slice(0, 160) });
+  await setDoc(doc(db, "push_tokens", token), { token, uid: myUid(), email: getSession()?.email ?? null, created_at: Date.now(), ua: navigator.userAgent.slice(0, 160) });
   try { localStorage.setItem(LS_TOKEN, token); } catch { /* ignore */ }
   return "Done: this device will get alert notifications, also when the app is closed.";
 }

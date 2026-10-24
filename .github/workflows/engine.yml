@@ -21,6 +21,7 @@ jobs:
       ENABLE_DEEP_MODELS: "true"
       FIREBASE_PROJECT_ID: crypapp-6a9b9
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
       SYMBOLS: ${{ vars.SYMBOLS || 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,DOGE/USDT,AVAX/USDT,LINK/USDT,SUI/USDT' }}
     steps:
       - uses: actions/checkout@v4

@@ -3,6 +3,7 @@ import { createContext, ReactNode, useContext, useEffect, useRef, useState } fro
 import { bsym, tickers as restTickers, toTicker } from "./binance";
 import { db } from "./firebase";
 import { localNotify } from "./push";
+import { myUid } from "./session";
 
 export interface Ticker {
   symbol: string;
@@ -56,7 +57,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     }
   }, () => {}), []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => onSnapshot(doc(db, "views", "alerts"), (s) => {
+  useEffect(() => onSnapshot(doc(db, "views", `alerts_u_${myUid()}`), (s) => {
     try {
       const evs = (JSON.parse(s.data()?.json ?? "{}").events ?? []) as any[];
       const fresh = evs.filter((e) => e.created_at > started.current);

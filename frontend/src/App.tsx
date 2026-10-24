@@ -1,4 +1,5 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
@@ -7,7 +8,8 @@ import UpdateNotice from "./components/UpdateNotice";
 import { Badge } from "./components/ui";
 import { useApi } from "./lib/api";
 import { useAppearance } from "./lib/appearance";
-import { auth, googleProvider } from "./lib/firebase";
+import { Role, SessionCtx, setSession, useIsAdmin, watchRole } from "./lib/session";
+import { auth, db, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
 import Bots from "./pages/Bots";
@@ -23,6 +25,7 @@ import Paper from "./pages/Paper";
 import Replay from "./pages/Replay";
 import Scanner from "./pages/Scanner";
 import Settings from "./pages/Settings";
+import Users from "./pages/Users";
 import { APP_VERSION, COPYRIGHT } from "./lib/version";
 
 const NAV = [
@@ -68,9 +71,9 @@ function Login({ error }: { error: string | null }) {
   return (
     <div className="flex min-h-full items-center justify-center px-4">
       <div className="panel w-full max-w-sm p-7 text-center">
-        <img src="/icons/icon-192.png" alt="" className="mx-auto mb-4 h-16 w-16 rounded-2xl" />
+        <img src="/icons/icon-512.png" alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
         <h1 className="text-xl font-semibold tracking-tight">Crypto Intelligence <span className="text-accent">AI</span></h1>
-        <p className="mt-2 text-sm text-mute">Private research dashboard. Sign in with an allowed Google account.</p>
+        <p className="mt-2 text-sm text-mute">Sign in with Google. New accounts send an access request to the owner.</p>
         <button className="btn btn-primary mt-5 w-full" onClick={() => signInWithPopup(auth, googleProvider).catch((e) => setErr(e.message))}>
           Sign in with Google
         </button>
@@ -101,10 +104,34 @@ function Toasts() {
 
 export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
-  useEffect(() => onAuthStateChanged(auth, setUser), []);
-  if (user === undefined) return <div className="py-20 text-center text-sm text-mute">Loading…</div>;
+  const [role, setRole] = useState<Role>("loading");
+  useEffect(() => onAuthStateChanged(auth, (u) => { setUser(u); setRole("loading"); }), []);
+  useEffect(() => (user ? watchRole(user, setRole) : undefined), [user]);
+  if (user === undefined || (user && role === "loading")) return <div className="py-20 text-center text-sm text-mute">Loading…</div>;
   if (!user) return <Login error={null} />;
-  return <LiveProvider><Shell user={user} /></LiveProvider>;
+  const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role };
+  setSession(session);
+  if (role === "pending" || role === "blocked") return <AccessScreen user={user} role={role} />;
+  return <SessionCtx.Provider value={session}><LiveProvider><Shell user={user} /></LiveProvider></SessionCtx.Provider>;
+}
+
+function AccessScreen({ user, role }: { user: User; role: Role }) {
+  return (
+    <div className="flex min-h-full items-center justify-center px-4">
+      <div className="panel w-full max-w-sm p-7 text-center">
+        <img src="/icons/icon-512.png" alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
+        <h1 className="text-xl font-semibold tracking-tight">{role === "pending" ? "Request sent" : "No access"}</h1>
+        <p className="mt-2 text-sm text-mute">
+          {role === "pending"
+            ? <>Your access request for <span className="text-text">{user.email}</span> is waiting for the owner's approval. This page opens the app by itself as soon as you are approved.</>
+            : <>The account <span className="text-text">{user.email}</span> does not have access to this app. Ask the owner if you think this is a mistake.</>}
+        </p>
+        {role === "pending" && <div className="mx-auto mt-5 h-1.5 w-24 overflow-hidden rounded-full bg-raised"><div className="h-full w-1/2 animate-pulse rounded-full bg-accent" /></div>}
+        <button className="btn mt-5 w-full" onClick={() => signOut(auth)}>Use another account</button>
+        <p className="mt-5 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
+      </div>
+    </div>
+  );
 }
 
 function Footer({ className = "" }: { className?: string }) {
@@ -118,8 +145,17 @@ function Footer({ className = "" }: { className?: string }) {
   );
 }
 
+function usePendingCount(admin: boolean) {
+  const [n, setN] = useState(0);
+  useEffect(() => (admin ? onSnapshot(query(collection(db, "users"), where("status", "==", "pending")), (q) => setN(q.docs.length), () => setN(0)) : undefined), [admin]);
+  return n;
+}
+
 function Shell({ user }: { user: User }) {
   const [more, setMore] = useState(false);
+  const admin = useIsAdmin();
+  const pending = usePendingCount(admin);
+  const nav: (readonly [string, string])[] = [...NAV, ...(admin ? [["/users", pending ? `Users (${pending})` : "Users"] as const] : [])];
   const { a } = useAppearance();
   const side = a.nav === "side";
   const width = a.width === "wide" ? "max-w-none" : "max-w-[1600px]";
@@ -127,7 +163,7 @@ function Shell({ user }: { user: User }) {
     `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-glass/[0.08] text-text shadow-[inset_0_1px_0_rgb(var(--glass)/0.06)]" : "text-mute hover:text-text"}`;
   const brand = (
     <div className="flex min-w-0 items-center gap-2.5">
-      <img src="/icons/icon-192.png" alt="" className="h-7 w-7 rounded-lg" />
+      <img src="/icons/icon-192.png" alt="" className="h-8 w-8" />
       <NavLink to="/" className="truncate text-[15px] font-semibold tracking-tight text-text">
         Crypto Intelligence <span className="text-accent">AI</span>
       </NavLink>
@@ -140,7 +176,7 @@ function Shell({ user }: { user: User }) {
         <aside className="glass-bar sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r md:flex">
           <div className="px-4 py-3.5">{brand}</div>
           <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2" aria-label="Sections">
-            {NAV.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
+            {nav.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
           </nav>
           <div className="border-t border-glass/[0.06] px-4 py-3 text-xs text-mute">
             <div className="truncate">{user.email}</div>
@@ -164,7 +200,7 @@ function Shell({ user }: { user: User }) {
           </div>
           {!side && (
             <nav className={`mx-auto hidden ${width} gap-1 overflow-x-auto px-3 pb-2 md:flex`} aria-label="Sections">
-              {NAV.map(([to, label]) => (
+              {nav.map(([to, label]) => (
                 <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>
               ))}
             </nav>
@@ -185,6 +221,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/health" element={<Health />} />
             <Route path="/settings" element={<Settings />} />
+            <Route path="/users" element={<Users />} />
             <Route path="*" element={<div className="py-10 text-center text-mute">Page not found</div>} />
           </Routes>
         </main>
@@ -202,7 +239,7 @@ function Shell({ user }: { user: User }) {
           ))}
           <button onClick={() => setMore((v) => !v)} aria-expanded={more}
             className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${more ? "text-accent" : "text-mute"}`}>
-            <span className="text-lg leading-none" aria-hidden>⋯</span>More
+            <span className="relative text-lg leading-none" aria-hidden>⋯{pending > 0 && <span className="absolute -right-2 -top-1 h-2 w-2 rounded-full bg-warn" />}</span>More
           </button>
         </div>
       </nav>
@@ -211,7 +248,7 @@ function Shell({ user }: { user: User }) {
           <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" />
           <div className="panel safe-bottom animate-in absolute inset-x-3 bottom-20 p-2" onClick={(e) => e.stopPropagation()}>
             <div className="grid grid-cols-2 gap-1">
-              {NAV.filter(([to]) => !PRIMARY.some((p) => p[0] === to)).map(([to, label]) => (
+              {nav.filter(([to]) => !PRIMARY.some((p) => p[0] === to)).map(([to, label]) => (
                 <NavLink key={to} to={to} onClick={() => setMore(false)} className={navCls}>{label}</NavLink>
               ))}
             </div>

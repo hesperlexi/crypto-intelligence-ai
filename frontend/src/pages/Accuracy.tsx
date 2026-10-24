@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useIsAdmin } from "../lib/session";
 import { useSearchParams } from "react-router-dom";
 import { SymbolSelect, TfTabs, useSymbols } from "../components/Pickers";
 import { Badge, Card, Check, Empty, ErrorBox, Loading, Note, Row, Stat } from "../components/ui";
@@ -39,6 +40,7 @@ export default function Accuracy() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [job?.state, job?.version]);
 
+  const admin = useIsAdmin();
   const train = async (scope: "one" | "all") => {
     try {
       const r = await post<any>("/models/train", scope === "one" ? { symbol, timeframe: tf } : {});
@@ -64,8 +66,8 @@ export default function Accuracy() {
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        <button className="btn btn-primary" onClick={() => train("one")}>Train {symbol} {tf}</button>
-        <button className="btn" onClick={() => train("all")}>Train all</button>
+        {admin && <button className="btn btn-primary" onClick={() => train("one")}>Train {symbol} {tf}</button>}
+        {admin && <button className="btn" onClick={() => train("all")}>Train all</button>}
         {job && job.state !== "done" && <Badge tone={job.state === "failed" ? "bear" : job.state === "skipped" ? "warn" : "accent"}>{job.state}{isNum(job.progress) && job.state === "running" ? ` ${(job.progress * 100).toFixed(0)}%` : ""} · {job.error ?? job.message}</Badge>}
         {running.length > 0 && <span className="text-xs text-mute">{running.length} job(s) in the queue</span>}
         {msg && <span className="text-sm text-accent">{msg}</span>}

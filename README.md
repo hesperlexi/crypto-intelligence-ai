@@ -82,6 +82,10 @@ Paste the error into this chat and it can be fixed.
   every model call for exactly one bar, which measures the raw prediction accuracy. Each bot shows equity vs
   buy & hold of the same coins, win rate, direction accuracy with a confidence interval, accuracy by model
   probability, profit factor, drawdown, fees and every trade. You can pause, reset, edit, add or delete bots.
+* **Members (v1.2):** anyone can sign in with Google; new accounts see "Request sent" until you approve them on the
+  **Users** page (admins = the emails in ADMIN_EMAILS). Members see all predictions, Futures, Accuracy and the bots,
+  can run backtests / replays, and get their own spot and futures paper accounts, alerts and notifications.
+  Only admins change coins, bots, engine settings and users. Enforced by the Firestore rules, not just the UI.
 * **Futures (v1.1):** a Futures page with a LONG / SHORT / NO TRADE call per coin and timeframe (1H, 4H, 12H, 1D),
   the up / down probabilities, the trade plan (entry, stop, three targets), a suggested leverage that keeps the
   liquidation price at least 1.5x the stop distance away (max 10x), the liquidation price, and live funding,

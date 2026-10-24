@@ -4,10 +4,12 @@ import { Badge, Card, Empty, ErrorBox, Loading, Note, Row, Stat } from "../compo
 import { put, useApi } from "../lib/api";
 import { DASH, fmtNum, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
+import { useIsAdmin } from "../lib/session";
 
 const TFS = ["1h", "4h", "12h", "1d"];
 
 export default function Bots() {
+  const admin = useIsAdmin();
   const b = useApi<any>("/bots");
   const [editing, setEditing] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -46,12 +48,12 @@ export default function Bots() {
           <h1 className="text-xl font-semibold tracking-tight">Demo trading bots</h1>
           <Badge tone="warn">Demo only — virtual money</Badge>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {admin && <div className="flex flex-wrap gap-2">
           <button className="btn" onClick={() => add("decision")}>+ Signal bot</button>
           <button className="btn" onClick={() => add("prediction")}>+ Prediction tracker</button>
           <button className="btn" onClick={() => add("decision", "futures")}>+ Futures signal bot</button>
           <button className="btn" onClick={() => add("prediction", "futures")}>+ Futures tracker</button>
-        </div>
+        </div>}
       </div>
       <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Market">
         {(["all", "spot", "futures"] as const).map((m) => (
@@ -73,7 +75,7 @@ export default function Bots() {
       {!b.data && b.loading && <Loading what="Loading bots" />}
       {shown.map((bot: any) => (
         <BotCard key={bot.config.id} bot={bot} cfg={cfgList.find((c) => c.id === bot.config.id) ?? bot.config}
-          editing={editing === bot.config.id} onEdit={() => setEditing(editing === bot.config.id ? null : bot.config.id)}
+          admin={admin} editing={editing === bot.config.id} onEdit={() => setEditing(editing === bot.config.id ? null : bot.config.id)}
           onSave={(patch: any) => update(bot.config.id, patch, "Saved.")} onToggle={() => update(bot.config.id, { enabled: !bot.config.enabled }, bot.config.enabled ? "Paused." : "Resumed.")}
           onReset={() => reset(bot.config.id)} onDelete={() => remove(bot.config.id)} />
       ))}
@@ -85,7 +87,7 @@ export default function Bots() {
   );
 }
 
-function BotCard({ bot, cfg, editing, onEdit, onSave, onToggle, onReset, onDelete }: any) {
+function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, onDelete }: any) {
   const { tickers } = useLive();
   const s = bot.stats;
   const st = bot.state;
@@ -103,7 +105,7 @@ function BotCard({ bot, cfg, editing, onEdit, onSave, onToggle, onReset, onDelet
   });
   return (
     <Card title={<span className="flex items-center gap-2"><span className="text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "prediction tracker" : "signal bot"}</Badge><Badge tone="mute">{bot.config.timeframe}</Badge>{fut ? <Badge tone="warn">futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">spot</Badge>}{!bot.config.enabled && <Badge tone="warn">paused</Badge>}</span>}
-      right={<div className="flex gap-1">
+      right={!admin ? undefined : <div className="flex gap-1">
         <button className="btn px-2 py-0.5 text-xs" onClick={onToggle}>{bot.config.enabled ? "Pause" : "Resume"}</button>
         <button className="btn px-2 py-0.5 text-xs" onClick={onEdit}>{editing ? "Close" : "Settings"}</button>
         <button className="btn px-2 py-0.5 text-xs" onClick={onReset}>Reset</button>

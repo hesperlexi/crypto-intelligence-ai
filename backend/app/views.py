@@ -127,9 +127,14 @@ def signals(rt: Runtime) -> dict[str, Any]:
     return {"signals": tracking.signal_history(rt.db, None, 300), "summary": tracking.signal_summary(rt.db)}
 
 
-def alerts_view(rt: Runtime) -> dict[str, Any]:
-    state = {a["id"]: {"last_fired_at": a["last_fired_at"], "last_state": a["last_state"]} for a in alerts.list_alerts(rt.db)}
-    return {"events": alerts.events(rt.db, 100), "state": state, "types": alerts.ALERT_TYPES}
+def alerts_view(rt: Runtime, user_id: str | None = None) -> dict[str, Any]:
+    """Alert state and fired events. With `user_id`, only that user's rules (members never see each other's)."""
+    rows = rt.db.query("SELECT * FROM alerts" + (" WHERE user_id = ?" if user_id else ""), (user_id,) if user_id else ())
+    state = {a["id"]: {"last_fired_at": a["last_fired_at"], "last_state": a["last_state"]} for a in rows}
+    evs = alerts.events(rt.db, 400)
+    if user_id:
+        evs = [e for e in evs if e["alert_id"] in state][:100]
+    return {"events": evs[:100], "state": state, "types": alerts.ALERT_TYPES}
 
 
 def backtest_history(rt: Runtime) -> list[dict[str, Any]]:

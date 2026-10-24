@@ -3,11 +3,13 @@ import { Link } from "react-router-dom";
 import { api, del, post, put, useApi } from "../lib/api";
 import { base, fmtPctRaw, fmtPrice, slug, tone } from "../lib/format";
 import { useLive } from "../lib/live";
+import { useIsAdmin } from "../lib/session";
 import { Card } from "./ui";
 
 /** Live price tiles for every coin on the watchlist, with add / remove / pin in place. */
 export default function MyCoins({ rows }: { rows?: any[] }) {
   const { tickers } = useLive();
+  const admin = useIsAdmin();
   const meta = useApi<any>("/meta");
   const [edit, setEdit] = useState(false);
   const [query, setQuery] = useState("");
@@ -25,7 +27,7 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
   };
 
   return (
-    <Card title="My coins" right={
+    <Card title="My coins" right={!admin ? undefined :
       <button className={`btn px-2.5 py-1 text-xs ${edit ? "btn-on" : ""}`} onClick={() => { setEdit((v) => !v); setResults(null); setMsg(null); }}>
         {edit ? "Done" : "+ Add / edit"}
       </button>}>
@@ -74,7 +76,7 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
             </div>
           );
         })}
-        {!list.length && <p className="col-span-full text-sm text-mute">{meta.loading ? "Loading…" : "No coins yet. Tap “+ Add / edit”."}</p>}
+        {!list.length && <p className="col-span-full text-sm text-mute">{meta.loading ? "Loading…" : admin ? "No coins yet. Tap “+ Add / edit”." : "No coins yet."}</p>}
       </div>
     </Card>
   );

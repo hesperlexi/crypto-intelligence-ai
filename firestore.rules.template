@@ -1,25 +1,77 @@
 rules_version = '2';
 // Generated at deploy time from firestore.rules.template: __ADMIN_EMAILS__ is replaced with the
-// ADMIN_EMAILS repository variable. Only those Google accounts can read or change anything.
-// The engine writes with a service account, which bypasses these rules.
+// ADMIN_EMAILS repository variable. The engine writes with a service account, which bypasses these rules.
+//
+// Roles
+//   admin   - Google accounts listed in ADMIN_EMAILS: everything, including coins, bots, settings and users
+//   member  - anyone the admin approved (users/{uid}.status == 'approved'): reads the predictions, and has
+//             their own paper accounts, alerts and notification devices
+//   pending - signed in and asked for access; can only see their own request
 service cloud.firestore {
   match /databases/{database}/documents {
-    function allowed() {
-      return request.auth != null
-        && request.auth.token.email_verified == true
-        && request.auth.token.email.lower() in [__ADMIN_EMAILS__];
+    function signedIn() {
+      return request.auth != null && request.auth.token.email_verified == true;
     }
-    match /views/{id}        { allow read: if allowed(); allow write: if false; }
-    match /config/{id}       { allow read, write: if allowed(); }
-    match /alerts/{id}       { allow read, write: if allowed(); }
+    function isAdmin() {
+      return signedIn() && request.auth.token.email.lower() in [__ADMIN_EMAILS__];
+    }
+    function isMember() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/users/$(request.auth.uid))
+        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+    }
+    function allowed() { return isAdmin() || isMember(); }
+    function me() { return request.auth.uid; }
+
+    // admin probe: the website reads this to know whether the signed-in account is an admin
+    match /admin/{id}        { allow read: if isAdmin(); allow write: if false; }
+
+    // access requests and member records
+    match /users/{uid} {
+      allow read: if isAdmin() || (signedIn() && me() == uid);
+      allow create: if signedIn() && me() == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.email == request.auth.token.email;
+      allow update, delete: if isAdmin();
+    }
+
+    // engine output; per-member alert views are private to that member
+    match /views/{id} {
+      allow read: if allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me());
+      allow write: if false;
+    }
+    // coins, bots, settings: everyone signed in may read, only the admin may change
+    match /config/{id}       { allow read: if allowed(); allow write: if isAdmin(); }
+    // per-user small state (e.g. which alerts were read)
+    match /user_state/{uid}  { allow read, write: if allowed() && (isAdmin() || me() == uid); }
+
+    match /alerts/{id} {
+      allow read: if isAdmin() || (isMember() && resource.data.owner_uid == me());
+      allow create: if isAdmin() || (isMember() && request.resource.data.owner_uid == me());
+      allow update: if isAdmin() || (isMember() && resource.data.owner_uid == me() && request.resource.data.owner_uid == me());
+      allow delete: if isAdmin() || (isMember() && resource.data.owner_uid == me());
+    }
     match /jobs/{id} {
       allow read: if allowed();
-      allow create: if allowed() && request.resource.data.status == 'queued';
+      allow create: if request.resource.data.status == 'queued'
+        && (isAdmin() || (isMember() && request.resource.data.type in ['backtest', 'replay', 'test_push']));
       allow update, delete: if false;
     }
-    match /paper/{id}        { allow read, write: if allowed(); }
-    match /push_tokens/{id}  { allow read, write: if allowed(); }
-    match /paper_trades/{id} { allow read, create: if allowed(); allow update, delete: if false; }
-    match /paper_futures_trades/{id} { allow read, create: if allowed(); allow update, delete: if false; }
+    // paper accounts: members only touch documents named after their own uid
+    match /paper/{id}        { allow read, write: if isAdmin() || (isMember() && id.matches(me() + '_.*')); }
+    match /paper_trades/{id} {
+      allow read: if isAdmin() || (isMember() && resource.data.uid == me());
+      allow create: if isAdmin() || (isMember() && request.resource.data.uid == me());
+      allow update, delete: if false;
+    }
+    match /paper_futures_trades/{id} {
+      allow read: if isAdmin() || (isMember() && resource.data.uid == me());
+      allow create: if isAdmin() || (isMember() && request.resource.data.uid == me());
+      allow update, delete: if false;
+    }
+    match /push_tokens/{id} {
+      allow read, delete: if isAdmin() || (signedIn() && resource.data.uid == me());
+      allow create, update: if allowed() && request.resource.data.uid == me();
+    }
   }
 }

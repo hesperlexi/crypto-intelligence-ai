@@ -4,6 +4,7 @@ import { AppearancePanel } from "../components/AppearancePanel";
 import { Card, ErrorBox, Loading, Note, Row } from "../components/ui";
 import { checkForUpdate } from "../lib/updater";
 import * as push from "../lib/push";
+import { myUid, useIsAdmin } from "../lib/session";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
 import { post, put, queueJob, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
@@ -15,6 +16,25 @@ const RISK_FIELDS: [string, string][] = [
 const REFRESH_LABEL: Record<number, string> = { 60: "1 minute", 300: "5 minutes", 900: "15 minutes", 1800: "30 minutes", 3600: "1 hour" };
 
 export default function Settings() {
+  const admin = useIsAdmin();
+  if (!admin) return <MemberSettings />;
+  return <AdminSettings />;
+}
+
+function MemberSettings() {
+  return (
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <Card title="Appearance"><AppearancePanel /></Card>
+        <div className="space-y-4"><NotificationsCard /><AboutCard /></div>
+      </div>
+      <Note>Coins, bots, the risk profile and the signal weights are managed by the app owner.</Note>
+    </div>
+  );
+}
+
+function AdminSettings() {
   const st = useApi<any>("/settings");
   const meta = useMeta();
   const symbols = useSymbols();
@@ -141,6 +161,7 @@ function AboutCard() {
 }
 
 function NotificationsCard() {
+  const admin = useIsAdmin();
   const [perm, setPerm] = useState(push.permission());
   const [token, setToken] = useState(push.savedToken());
   const [key, setKey] = useState("");
@@ -161,10 +182,11 @@ function NotificationsCard() {
         <div className="mt-3 flex flex-wrap gap-2">
           {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy || perm === "denied"} onClick={() => act(push.enable)}>Turn on notifications</button>
             : <button className="btn" disabled={busy} onClick={() => act(async () => { await push.disable(); return "Notifications turned off on this device."; })}>Turn off on this device</button>}
-          <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", {}); return "Test queued: the engine sends it on its next run (within about 15 minutes)."; })}>Send a test notification</button>
+          <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: the engine sends it on its next run (within about 15 minutes)."; })}>Send a test notification</button>
         </div>
         {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
-        {!hasKey && (
+        {!hasKey && !admin && <p className="mt-3 text-xs text-mute">Notifications while the app is closed need a one-time setup by the app owner.</p>}
+        {!hasKey && admin && (
           <div className="mt-4 border-t border-glass/[0.06] pt-3">
             <p className="text-sm">One-time setup so alerts also arrive when the app is closed:</p>
             <ol className="mt-1 list-decimal pl-5 text-xs leading-relaxed text-mute">

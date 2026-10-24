@@ -5,6 +5,7 @@ import { Badge, Card, Empty, ErrorBox, Loading, RegimeBadge, SignalBadge, signal
 import { api, del, post, put, useApi } from "../lib/api";
 import { DASH, fmtCompact, fmtNum, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
 import { useLive } from "../lib/live";
+import { useIsAdmin } from "../lib/session";
 
 const SORTS: Record<string, { label: string; key: (r: any) => number }> = {
   confidence: { label: "Highest confidence", key: (r) => r.confidence ?? -1 },
@@ -17,6 +18,7 @@ const SORTS: Record<string, { label: string; key: (r: any) => number }> = {
 };
 
 export default function Scanner() {
+  const admin = useIsAdmin();
   const [tf, setTf] = useState("4h");
   const [sort, setSort] = useState("confidence");
   const [filter, setFilter] = useState("all");
@@ -62,7 +64,7 @@ export default function Scanner() {
         <h1 className="text-xl font-semibold tracking-tight">Scanner</h1>
         <TfTabs value={tf} onChange={setTf} />
       </div>
-      <Card title="Watchlist">
+      {admin && <Card title="Watchlist">
         <div className="flex flex-wrap items-center gap-2">
           <input className="input w-56" placeholder="Search a coin, e.g. PEPE" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} aria-label="Search cryptocurrency" />
           <button className="btn" onClick={search}>Search</button>
@@ -70,7 +72,7 @@ export default function Scanner() {
           {results && !results.length && <span className="text-sm text-mute">No USDT market found on this exchange</span>}
         </div>
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
-      </Card>
+      </Card>}
       <Card title="Universe" right={
         <div className="flex flex-wrap items-center gap-2">
           <select className="input w-40" value={filter} onChange={(e) => setFilter(e.target.value)} aria-label="Filter">
@@ -91,11 +93,11 @@ export default function Scanner() {
                 const tk = tickers[r.symbol];
                 if (r.status !== "OK") return (
                   <tr key={r.symbol}><td /><td className="font-medium">{r.symbol}</td><td colSpan={13}><Badge tone="warn">Insufficient data</Badge> <span className="text-xs text-mute">{r.reason}</span></td>
-                    <td><button className="text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button></td></tr>
+                    <td>{admin && <button className="text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button>}</td></tr>
                 );
                 return (
                   <tr key={r.symbol}>
-                    <td><button title={r.pinned ? "Unpin" : "Pin to top"} aria-pressed={r.pinned} className={r.pinned ? "text-warn" : "text-mute hover:text-warn"} onClick={() => act(() => put(`/watchlist/${slug(r.symbol)}/pin`, { pinned: !r.pinned }), r.pinned ? "Unpinned" : "Pinned")}>{r.pinned ? "★" : "☆"}</button></td>
+                    <td><button title={r.pinned ? "Unpin" : "Pin to top"} aria-pressed={r.pinned} disabled={!admin} className={r.pinned ? "text-warn" : "text-mute hover:text-warn"} onClick={() => act(() => put(`/watchlist/${slug(r.symbol)}/pin`, { pinned: !r.pinned }), r.pinned ? "Unpinned" : "Pinned")}>{r.pinned ? "★" : "☆"}</button></td>
                     <td><Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{r.symbol}</Link></td>
                     <td className="num text-right">{fmtPrice(tk?.last ?? r.price)}</td>
                     <td className={`num text-right ${tone(tk?.change_pct ?? r.change_24h_pct)}`}>{fmtPctRaw(tk?.change_pct ?? r.change_24h_pct)}</td>
@@ -108,7 +110,7 @@ export default function Scanner() {
                     <td className="num text-right">{fmtProb(r.confidence)}</td>
                     <td className="num text-right">{isNum(r.risk_reward) ? `1:${r.risk_reward.toFixed(1)}` : DASH}</td>
                     <td className="num text-right" title={`historical base rate, n=${r.breakout_n}`}>{fmtProb(r.breakout_base_rate)}</td>
-                    <td><button className="text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button></td>
+                    <td>{admin && <button className="text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button>}</td>
                   </tr>
                 );
               })}

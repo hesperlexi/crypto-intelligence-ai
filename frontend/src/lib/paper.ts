@@ -3,8 +3,20 @@ import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, query, runTransac
 import { tickers } from "./binance";
 import { db } from "./firebase";
 import { latestPrices } from "./live";
+import { isAdmin, myUid } from "./session";
 
-const ACC = doc(db, "paper", "current");
+const ACC_REF = () => doc(db, "paper", `${myUid()}_spot`);   // one account per user
+let migrated = false;
+/** Accounts made before member accounts existed (paper/current) move to the owner's own document once. */
+async function adoptLegacy() {
+  if (migrated || !isAdmin()) return;
+  migrated = true;
+  try {
+    if ((await getDoc(ACC_REF())).exists()) return;
+    const old = await getDoc(doc(db, "paper", "current"));
+    if (old.exists()) await setDoc(ACC_REF(), old.data()!);
+  } catch { /* ignore */ }
+}
 export interface Costs { fee_rate: number; slippage_bps: number; spread_bps: number }
 const DEFAULT_COSTS: Costs = { fee_rate: 0.001, slippage_bps: 2, spread_bps: 1 };
 
@@ -22,20 +34,21 @@ export async function reset(startingBalance = 10000) {
   try { bench = await price("BTC/USDT"); } catch { bench = null; }
   const acc = { id: Math.random().toString(36).slice(2, 12), starting_balance: startingBalance, cash: startingBalance, created_at: Date.now(),
     benchmark_symbol: "BTC/USDT", benchmark_price: bench, positions: {}, totals: { realized: 0, fees: 0, slippage: 0, count: 0 } };
-  await setDoc(ACC, acc);
+  await setDoc(ACC_REF(), acc);
   return acc;
 }
 
 export async function order(symbol: string, side: string, qty: number | null | undefined, notional: number | null | undefined, costs: Costs = DEFAULT_COSTS) {
   side = side.toUpperCase();
   if (side !== "BUY" && side !== "SELL") throw new Error("side must be BUY or SELL");
-  if (!(await getDoc(ACC)).exists()) await reset();
+  await adoptLegacy();
+  if (!(await getDoc(ACC_REF())).exists()) await reset();
   const mark = await price(symbol);
   const adverse = (costs.slippage_bps + costs.spread_bps / 2) / 1e4;
   const fill = side === "BUY" ? mark * (1 + adverse) : mark * (1 - adverse);
   const key = symbol.replace("/", "");
   const trade = await runTransaction(db, async (tx) => {
-    const snap = await tx.get(ACC);
+    const snap = await tx.get(ACC_REF());
     const acc: any = snap.data();
     const pos = acc.positions?.[key];
     const held = pos?.qty ?? 0;
@@ -60,10 +73,10 @@ export async function order(symbol: string, side: string, qty: number | null | u
       acc.cash += q * fill - fee;
     }
     const totals = acc.totals ?? { realized: 0, fees: 0, slippage: 0, count: 0 };
-    tx.update(ACC, { cash: acc.cash, positions, totals: { realized: totals.realized + realized, fees: totals.fees + fee, slippage: totals.slippage + slip, count: totals.count + 1 } });
+    tx.update(ACC_REF(), { cash: acc.cash, positions, totals: { realized: totals.realized + realized, fees: totals.fees + fee, slippage: totals.slippage + slip, count: totals.count + 1 } });
     return { account_id: acc.id, created_at: Date.now(), mode: "PAPER", symbol, side, qty: q, price: fill, mark_price: mark, fee, slippage_cost: slip, realized_pnl: realized };
   });
-  await addDoc(collection(db, "paper_trades"), trade);
+  await addDoc(collection(db, "paper_trades"), { ...trade, uid: myUid() });
   return { id: "", ...trade };
 }
 
@@ -99,28 +112,33 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
     });
   };
   let lastAcc: any = null;
-  const unsubAcc = onSnapshot(ACC, (s) => {
+  let unsubAcc = () => {};
+  let cancelled = false;
+  adoptLegacy().finally(() => {
+    if (cancelled) return;
+    unsubAcc = onSnapshot(ACC_REF(), (s) => {
     lastAcc = s.data() ?? null;
     if (lastAcc && lastAcc.id !== currentId) {
       currentId = lastAcc.id;
       unsubTrades();
-      unsubTrades = onSnapshot(query(collection(db, "paper_trades"), where("account_id", "==", currentId)), (q) => {
+      unsubTrades = onSnapshot(query(collection(db, "paper_trades"), where("account_id", "==", currentId), ...(isAdmin() ? [] : [where("uid", "==", myUid())])), (q) => {
         trades = q.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a: any, b: any) => b.created_at - a.created_at).slice(0, 200);
         build(lastAcc).catch(err);
       }, err);
     }
     build(lastAcc).catch(err);
-  }, err);
-  return () => { unsubAcc(); unsubTrades(); };
+    }, err);
+  });
+  return () => { cancelled = true; unsubAcc(); unsubTrades(); };
 }
 
 export async function openExposure(): Promise<{ exposure: number; today: number }> {
-  const snap = await getDoc(ACC);
+  const snap = await getDoc(ACC_REF());
   const acc: any = snap.data();
   if (!acc) return { exposure: 0, today: 0 };
   let exposure = 0;
   for (const p of Object.values<any>(acc.positions ?? {})) exposure += p.qty * (latestPrices[p.symbol] ?? p.avg_price);
-  const q = await getDocs(query(collection(db, "paper_trades"), where("account_id", "==", acc.id)));
+  const q = await getDocs(query(collection(db, "paper_trades"), where("account_id", "==", acc.id), ...(isAdmin() ? [] : [where("uid", "==", myUid())])));
   const dayAgo = Date.now() - 86_400_000;
   const today = q.docs.map((d) => d.data()).filter((t: any) => t.created_at >= dayAgo).reduce((s: number, t: any) => s + (t.realized_pnl ?? 0), 0);
   return { exposure, today };
