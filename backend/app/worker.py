@@ -144,8 +144,14 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
 
 # ---- jobs queued by the website ---------------------------------------------------------------------------
 
-def run_job(rt: Runtime, job: dict[str, Any], deadline: float) -> dict[str, Any]:
+def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | None = None) -> dict[str, Any]:
     kind, p = job.get("type"), job.get("params") or {}
+    if kind == "test_push":
+        if sink is None:
+            return {"ok": False, "reason": "no publisher"}
+        res = sink.send_push([{"title": "Test notification", "body": "Notifications from Crypto Intelligence AI work on this device.",
+                               "url": "/settings", "tag": "test"}])
+        return {"ok": res.get("sent", 0) > 0, **res}
     if kind == "backtest":
         p = {**p, "symbol": norm_symbol(p["symbol"])}
         return backtests.run(rt, p)
@@ -181,7 +187,7 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             break
         sink.set(f"jobs/{jid}", {"status": "running", "started_at": now_ms()}, merge=True)
         try:
-            result = run_job(rt, job, deadline)
+            result = run_job(rt, job, deadline, sink)
             sink.set(f"jobs/{jid}", {"status": "done", "json": dumps(result), "finished_at": now_ms()}, merge=True)
         except Exception as exc:
             log.exception("job %s failed", jid)
@@ -234,6 +240,13 @@ def train_until(rt: Runtime, pairs: list[tuple[str, str]], fast: bool, deadline:
 
 
 # ---- publishing -------------------------------------------------------------------------------------------
+
+def push_message(ev: dict[str, Any]) -> dict[str, str]:
+    title = {"TRADE_SETUP": "Trade signal", "BUY_SIGNAL": "Buy signal", "SELL_SIGNAL": "Sell signal"}.get(
+        ev.get("type"), (ev.get("type") or "Alert").replace("_", " ").title())
+    return {"title": f"{title} · {ev.get('symbol', '')}", "body": ev.get("message", ""), "url": "/alerts",
+            "tag": ev.get("id", "")}
+
 
 def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analyses: dict[tuple[str, str], dict]) -> None:
     for (s, tf), a in analyses.items():
@@ -328,6 +341,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["bootstrap"] = step("bootstrap", lambda: train_until(rt, missing, True, t0 + budget_s * 0.5))
 
     analyses: dict[tuple[str, str], dict] = {}
+    fired_events: list[dict[str, Any]] = []
 
     def analyse():
         hourly = (started // 900_000) % 4 == 0
@@ -339,7 +353,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                     continue
                 a = analysis.analyze(rt, s, tf, detail=True, use_cache=False)
                 analyses[(s, tf)] = a
-                fired += len(alerts.evaluate(rt.db, a))
+                evs = alerts.evaluate(rt.db, a)
+                fired += len(evs)
+                fired_events.extend(evs)
         return fired
     detail["alerts_fired"] = step("analyses", analyse)
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
@@ -350,6 +366,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
+    if fired_events:
+        detail["push"] = step("push", lambda: sink.send_push([push_message(e) for e in fired_events]))
     detail["written"] = sink.flush()
     detail["skipped_unchanged"] = sink.skipped
     status = "ok" if all(v["ok"] for v in detail["steps"].values()) else "partial"

@@ -64,6 +64,8 @@ export default function Asset() {
               <h1 className="text-2xl font-semibold tracking-tight">{symbol}</h1>
               {ok && <RegimeBadge regime={a.regime.regime} />}
               {ok && <SignalBadge signal={a.signal.signal} />}
+              <Link className="btn px-2.5 py-1 text-xs" to={`/alerts?symbol=${encodeURIComponent(symbol)}&timeframe=${["1h", "4h", "12h", "1d"].includes(tf) ? tf : "4h"}`}
+                title="Get an alert with entry, stop-loss and take-profits when a trade signal appears">🔔 Alert me</Link>
             </div>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
               <span className="num text-3xl">{fmtPrice(price)}</span>

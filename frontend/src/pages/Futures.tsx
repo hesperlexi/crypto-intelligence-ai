@@ -126,9 +126,11 @@ function FuturesCard({ r, m }: { r: any; m?: any }) {
           <Stat label="OI 24h" value={isNum(m?.oi_change_24h) ? fmtPctRaw(m.oi_change_24h * 100, 1) : DASH} sub={isNum(m?.open_interest_usd) ? `$${fmtCompact(m.open_interest_usd)}` : undefined} />
           <Stat label="Longs" value={isNum(m?.long_account_pct) ? `${m.long_account_pct.toFixed(0)}%` : DASH} sub={isNum(m?.long_short_ratio) ? `L/S ${m.long_short_ratio.toFixed(2)}` : undefined} />
         </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
           <button className="btn btn-primary py-2 text-sm" onClick={trade}>Paper trade this</button>
           <Link className="btn py-2 text-sm" to={`/asset/${slug(r.symbol)}`}>Full analysis</Link>
+          <Link className="btn px-3 py-2 text-sm" title="Get an alert with entry, stop-loss and take-profits when a trade signal appears"
+            to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=futures`} aria-label="Set an alert">🔔</Link>
         </div>
       </div>
     </Card>

@@ -54,6 +54,9 @@ DEFAULT_BOTS: list[dict[str, Any]] = [
     {"id": "predict-1h", "name": "Prediction tracker 1H", "enabled": True, "mode": "prediction", "timeframe": "1h",
      "symbols": "all", "starting_balance": 10_000.0, "position_pct": 10.0, "min_probability": 0.40,
      "allow_short": True, "reset_token": "1", "market": "spot", "leverage": 1.0},
+    {"id": "predict-confident-4h", "name": "Confident-call tracker 4H", "enabled": True, "mode": "prediction",
+     "timeframe": "4h", "symbols": "all", "starting_balance": 10_000.0, "position_pct": 10.0, "min_probability": 0.40,
+     "allow_short": True, "reset_token": "1", "market": "spot", "leverage": 1.0, "confident_only": True},
     {"id": "futures-signal-4h", "name": "Futures signal bot 4H", "enabled": True, "mode": "decision", "timeframe": "4h",
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
      "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1",
@@ -70,7 +73,7 @@ FIELDS = {"name": str, "enabled": bool, "mode": str, "timeframe": str, "symbols"
           "starting_balance": float, "risk_per_trade_pct": float, "max_position_pct": float,
           "max_open_positions": int, "allow_short": bool, "pending_bars": int, "max_hold_bars": int,
           "position_pct": float, "min_probability": float, "reset_token": str, "market": str, "leverage": float,
-          "safe_leverage": bool}
+          "safe_leverage": bool, "confident_only": bool}
 
 
 def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
@@ -110,6 +113,7 @@ def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
     out["market"] = "futures" if out.get("market") == "futures" else "spot"
     out["leverage"] = float(np.clip(out.get("leverage", 1.0), 1, F.MAX_LEVERAGE)) if out["market"] == "futures" else 1.0
     out["safe_leverage"] = bool(out.get("safe_leverage", True))
+    out["confident_only"] = bool(out.get("confident_only", False))
     return out
 
 
@@ -488,6 +492,8 @@ class BotEngine:
             side = 1 if cls == 2 else -1 if cls == 0 else 0
             if side == 0 or fc["p_max"] < cfg["min_probability"] or (side < 0 and not cfg.get("allow_short", True)):
                 continue
+            if cfg.get("confident_only") and not (fc.get("confident_call") or {}).get("is_confident"):
+                continue    # only calls above the model's out-of-sample confident-call threshold
             px = self._price(s)
             if px is None:
                 continue

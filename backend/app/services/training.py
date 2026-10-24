@@ -8,7 +8,7 @@ from typing import Any
 
 from ..config import MODEL_TIMEFRAMES, settings
 from ..db import now_ms
-from ..features.dataset import InsufficientData
+from ..features.dataset import HTF_OF, InsufficientData
 from ..ml import trainer
 from .runtime import Runtime
 
@@ -28,7 +28,10 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
     try:
         frame = rt.frame(symbol, timeframe)
         btc = None if symbol.startswith("BTC/") else _try_frame(rt, "BTC/USDT", timeframe)
-        bundle = trainer.train_bundle(symbol, timeframe, frame, btc, fast=fast, progress=progress)
+        htf = None
+        if settings.use_htf_features and timeframe in HTF_OF:
+            htf = _try_frame(rt, symbol, HTF_OF[timeframe])
+        bundle = trainer.train_bundle(symbol, timeframe, frame, btc, fast=fast, progress=progress, htf=htf)
         status.update(progress=0.95, message="saving")
         trainer.save_bundle(bundle, rt.db)
         rt.analysis_cache.clear()

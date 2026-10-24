@@ -94,6 +94,8 @@ class Settings:
 
     # modelling
     neutral_band_sigma: float = field(default_factory=lambda: _f("NEUTRAL_BAND_SIGMA", 0.25))
+    # add context from the next higher timeframe (e.g. the 4h trend for the 1h model) to the model features
+    use_htf_features: bool = field(default_factory=lambda: _b("USE_HTF_FEATURES", False))
     min_train_samples: int = field(default_factory=lambda: int(_f("MIN_TRAIN_SAMPLES", 150)))
     min_oos_for_edge: int = field(default_factory=lambda: int(_f("MIN_OOS_FOR_EDGE", 300)))
     edge_alpha: float = field(default_factory=lambda: _f("EDGE_ALPHA", 0.01))

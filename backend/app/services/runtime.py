@@ -25,7 +25,7 @@ class Runtime:
         self.feed: Any = None
         self.started_ms = now_ms()
         self._frames: dict[tuple[str, str], tuple[int, int, Frame]] = {}
-        self._datasets: dict[tuple[str, str, bool], tuple[int, Dataset]] = {}
+        self._datasets: dict[tuple, tuple] = {}
         self.analysis_cache: dict[tuple, tuple[float, dict[str, Any]]] = {}
         self.order_books: dict[str, tuple[float, dict[str, Any]]] = {}
         self.derivs_cache: dict[str, tuple[float, dict[str, Any]]] = {}
@@ -107,20 +107,22 @@ class Runtime:
         self._frames[key] = (sig[0], sig[1], fr)
         return fr
 
-    def dataset(self, symbol: str, timeframe: str, with_btc: bool, as_of: int | None = None) -> Dataset:
+    def dataset(self, symbol: str, timeframe: str, with_btc: bool, as_of: int | None = None,
+                htf_tf: str | None = None) -> Dataset:
         fr = self.frame(symbol, timeframe, as_of)
         btc = None
         if with_btc and not symbol.startswith("BTC/"):
             btc = self.frame("BTC/USDT", timeframe, as_of)
+        htf = self.frame(symbol, htf_tf, as_of) if htf_tf else None
         if as_of is not None:
-            return make_dataset(fr, btc)
-        key = (symbol, timeframe, with_btc)
+            return make_dataset(fr, btc, htf=htf)
+        key = (symbol, timeframe, with_btc, htf_tf)
         ts = int(fr.df["ts"].iloc[-1])
         hit = self._datasets.get(key)
-        if hit and hit[0] == ts:
+        if hit and hit[0] == ts and (htf is None or hit[2] == int(htf.df["ts"].iloc[-1])):
             return hit[1]
-        ds = make_dataset(fr, btc)
-        self._datasets[key] = (ts, ds)
+        ds = make_dataset(fr, btc, htf=htf)
+        self._datasets[key] = (ts, ds, int(htf.df["ts"].iloc[-1]) if htf is not None else None)
         return ds
 
     def live_price(self, symbol: str) -> float | None:

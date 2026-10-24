@@ -2,6 +2,7 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { bsym, tickers as restTickers, toTicker } from "./binance";
 import { db } from "./firebase";
+import { localNotify } from "./push";
 
 export interface Ticker {
   symbol: string;
@@ -62,6 +63,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       if (fresh.length) {
         started.current = Math.max(...fresh.map((e) => e.created_at));
         setAlerts((a) => [...fresh, ...a].slice(0, 5));
+        if (document.hidden) for (const e of fresh.slice(0, 3)) localNotify(`Alert · ${e.symbol ?? ""}`, e.message);
       }
     } catch { /* ignore */ }
   }, () => {}), []);

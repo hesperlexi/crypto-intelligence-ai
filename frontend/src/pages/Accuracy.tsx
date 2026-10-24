@@ -124,6 +124,21 @@ export default function Accuracy() {
             </Card>
           )}
 
+          {m.selective && (
+            <Card title="Confident calls · accuracy when the model is sure">
+              {m.selective.threshold != null ? (<>
+                <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+                  <Stat label="All up/down calls" value={fmtProb(m.selective.base?.hit_rate, 1)} sub={`${m.selective.base?.n ?? 0} calls`} />
+                  <Stat label={`Calls ≥ ${fmtProb(m.selective.threshold)}`} value={fmtProb(m.selective.hit_rate, 1)} className={m.selective.hit_rate > (m.selective.base?.hit_rate ?? 1) ? "text-bull" : ""}
+                    sub={`95% CI ${fmtProb(m.selective.ci95?.[0])}–${fmtProb(m.selective.ci95?.[1])}`} />
+                  <Stat label="How often it is that sure" value={fmtProb(m.selective.coverage, 0)} sub={`${m.selective.n} of the test bars`} />
+                  <Stat label="Higher-timeframe context" value={m.uses_htf ? `on (${m.uses_htf})` : "off"} />
+                </div>
+                <Note>Measured on walk-forward out-of-sample bars only: a call is right when the next bar moves in the called direction. The threshold is the one with the best lower 95% bound, so it is not picked for a lucky handful of calls. The Confident-call tracker bot and “confident calls only” alerts use it.</Note>
+              </>) : <Empty>{m.selective.reason ?? "Not enough out-of-sample calls to set a confident-call threshold."}</Empty>}
+            </Card>
+          )}
+
           <Card title="Model comparison (out-of-sample)" right={m.best_model?.name ? <span className="text-xs text-mute">best single model: <span className="text-text">{m.best_model.label}</span> {m.best_model.supported ? "(statistically supported)" : "(not significantly better than the prior)"}</span> : undefined}>
             <div className="overflow-x-auto">
               <table className="grid-table">

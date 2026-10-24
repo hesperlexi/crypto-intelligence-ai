@@ -46,7 +46,7 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
         return {"available": False, "status": "INSUFFICIENT DATA" if st.get("insufficient") else "MODEL NOT TRAINED",
                 "reason": reason}
     try:
-        ds = rt.dataset(symbol, timeframe, bundle["uses_btc"], as_of)
+        ds = rt.dataset(symbol, timeframe, bundle["uses_btc"], as_of, htf_tf=bundle.get("uses_htf"))
         mult = tracking.live_multipliers(rt.db, bundle) if as_of is None else {}
         fc = trainer.predict(bundle, ds, multipliers=mult)
     except InsufficientData as exc:

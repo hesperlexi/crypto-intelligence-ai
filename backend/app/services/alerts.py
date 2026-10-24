@@ -11,6 +11,7 @@ from ..db import Database, dumps, loads, new_id, now_ms
 from .runtime import USER
 
 ALERT_TYPES = {
+    "TRADE_SETUP": "Trade signal with entry, stop-loss and take-profits (params: side, market, min_confidence, confident_only)",
     "BUY_SIGNAL": "Decision turns BUY / BUY ON PULLBACK",
     "SELL_SIGNAL": "Decision turns SELL",
     "BULLISH_REGIME": "Regime changes to a bullish regime",
@@ -60,15 +61,59 @@ def mark_read(db: Database) -> None:
     db.execute("UPDATE alert_events SET is_read = 1 WHERE is_read = 0")
 
 
+def _fmt(v: float | None) -> str:
+    return "—" if v is None else f"{v:,.6g}"
+
+
+def trade_message(a: dict[str, Any], market: str = "spot") -> str:
+    """One readable line with everything needed to act on (or paper-trade) the call."""
+    sym, tf = a["symbol"], a["timeframe"]
+    st = a.get("setup") or {}
+    side = "LONG" if st.get("side_int", 1) > 0 else "SHORT"
+    if a.get("decision") == "BUY ON PULLBACK":
+        side = "LONG on pullback"
+    entry = st.get("ideal_entry") or a.get("price")
+    zone = st.get("entry_zone") or [entry, entry]
+    tps = " · ".join(f"TP{i + 1} {_fmt(t['price'])}" for i, t in enumerate(st.get("targets") or []))
+    probs = (a.get("forecast") or {}).get("probabilities") or {}
+    p_dir = probs.get("up") if st.get("side_int", 1) > 0 else probs.get("down")
+    msg = (f"{sym} {tf} {side}{' (futures)' if market == 'futures' else ''}: entry {_fmt(zone[0])}–{_fmt(zone[1])} "
+           f"(ideal {_fmt(entry)}), stop-loss {_fmt(st.get('stop'))} ({st.get('risk_pct', 0):.1f}%), {tps}, "
+           f"R:R 1:{st.get('risk_reward', 0):.1f}, confidence {(a.get('confidence') or 0):.0%}")
+    if p_dir is not None:
+        msg += f", P({'up' if st.get('side_int', 1) > 0 else 'down'}) {p_dir:.0%}"
+    if market == "futures" and st.get("stop") and entry:
+        from ..engine import futures as F
+
+        lev = F.safe_leverage(entry, st["stop"], 10)
+        msg += f", suggested leverage {lev}x (liquidation {_fmt(F.liquidation_price(entry, st.get('side_int', 1), lev))})"
+    return msg
+
+
 def _condition(alert: dict[str, Any], a: dict[str, Any], db: Database) -> tuple[bool, str]:
     t, p = alert["type"], alert["params"]
     sym, tf = a["symbol"], a["timeframe"]
     price = a.get("price")
     reg = a.get("regime") or {}
+    if t == "TRADE_SETUP":
+        st = a.get("setup") or {}
+        if a.get("decision") not in ("BUY", "BUY ON PULLBACK", "SELL") or not st.get("valid"):
+            return False, ""
+        side = st.get("side_int", 1)
+        want = str(p.get("side", "any")).lower()
+        if (want == "long" and side < 0) or (want == "short" and side > 0):
+            return False, ""
+        if (a.get("confidence") or 0) < float(p.get("min_confidence", 0) or 0):
+            return False, ""
+        if p.get("confident_only") and not ((a.get("forecast") or {}).get("confident_call") or {}).get("is_confident"):
+            return False, ""
+        return True, trade_message(a, "futures" if p.get("market") == "futures" else "spot")
     if t == "BUY_SIGNAL":
-        return a.get("decision") in ("BUY", "BUY ON PULLBACK"), f"{sym} {tf}: decision {a.get('decision')} at {price:,.6g}"
+        ok = a.get("decision") in ("BUY", "BUY ON PULLBACK")
+        return ok, (trade_message(a) if ok and (a.get("setup") or {}).get("valid") else f"{sym} {tf}: decision {a.get('decision')} at {price:,.6g}")
     if t == "SELL_SIGNAL":
-        return a.get("decision") == "SELL", f"{sym} {tf}: decision SELL at {price:,.6g}"
+        ok = a.get("decision") == "SELL"
+        return ok, (trade_message(a) if ok and (a.get("setup") or {}).get("valid") else f"{sym} {tf}: decision SELL at {price:,.6g}")
     if t == "BULLISH_REGIME":
         return reg.get("group") == "Bull", f"{sym} {tf}: regime is now {reg.get('regime')}"
     if t == "BEARISH_REGIME":

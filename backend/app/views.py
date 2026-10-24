@@ -57,6 +57,7 @@ def models(rt: Runtime, symbol: str, tf: str) -> dict[str, Any]:
         "folds": b["folds"], "live_fit": b["live_fit"], "sizes": b["sizes"], "fold_reports": b["fold_reports"][-20:],
         "interval_coverage": b["interval_coverage"], "reliability": b["reliability"], "importance": b["importance"],
         "failures": b["failures"], "libraries": b["model_status"], "features": len(b["feature_names"]),
+        "selective": b.get("selective"), "uses_htf": b.get("uses_htf"),
         "selection_note": "The best single model is only named as 'supported' if its out-of-sample Brier score is "
                           "significantly better than the class-prior baseline. Model choice never uses RMSE alone.",
     }

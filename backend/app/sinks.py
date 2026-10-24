@@ -82,6 +82,11 @@ class BaseSink:
     def delete(self, path: str) -> None:
         raise NotImplementedError
 
+    # -- phone notifications (web push through Firebase Cloud Messaging) -----------------------------------
+    def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+        """Send each {title, body, url, tag} to every registered device. Returns counts; never raises."""
+        return {"sent": 0, "devices": 0, "reason": "not supported by this sink"}
+
 
 class LocalSink(BaseSink):
     def __init__(self, root: str | Path, db: Database | None = None):
@@ -115,6 +120,14 @@ class LocalSink(BaseSink):
 
     def delete(self, path: str) -> None:
         self._path(path).unlink(missing_ok=True)
+
+    def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+        tokens = self.list("push_tokens")
+        log = self.root / "push_log.jsonl"
+        with log.open("a") as f:
+            for m in messages:
+                f.write(dumps({**m, "devices": len(tokens)}) + "\n")
+        return {"sent": len(messages) * len(tokens), "devices": len(tokens)}
 
 
 class FirestoreSink(BaseSink):
@@ -166,3 +179,38 @@ class FirestoreSink(BaseSink):
 
     def delete(self, path: str) -> None:
         self.fs.document(path).delete()
+
+    def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+        if not messages:
+            return {"sent": 0, "devices": 0}
+        try:
+            from firebase_admin import messaging
+
+            tokens = [d.get("token") or i for i, d in self.list("push_tokens")]
+        except Exception as exc:
+            return {"sent": 0, "devices": 0, "error": f"{type(exc).__name__}: {exc}"[:200]}
+        if not tokens:
+            return {"sent": 0, "devices": 0, "reason": "no device has turned notifications on"}
+        sent, dead, errors = 0, set(), []
+        for m in messages[:20]:
+            data = {k: str(v)[:900] for k, v in m.items() if v is not None}
+            msg = messaging.MulticastMessage(
+                tokens=tokens, data=data,
+                webpush=messaging.WebpushConfig(headers={"Urgency": "high", "TTL": "86400"}))
+            try:
+                res = messaging.send_each_for_multicast(msg)
+            except Exception as exc:
+                errors.append(f"{type(exc).__name__}: {exc}"[:200])
+                break
+            sent += res.success_count
+            for tok, r in zip(tokens, res.responses):
+                if not r.success and type(r.exception).__name__ in ("UnregisteredError", "SenderIdMismatchError"):
+                    dead.add(tok)
+                elif not r.success:
+                    errors.append(f"{type(r.exception).__name__}: {r.exception}"[:200])
+        for tok in dead:                       # devices that uninstalled / revoked permission
+            try:
+                self.fs.document(f"push_tokens/{tok}").delete()
+            except Exception:
+                pass
+        return {"sent": sent, "devices": len(tokens), "removed": len(dead), "errors": errors[:3]}

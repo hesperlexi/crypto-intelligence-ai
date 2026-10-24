@@ -22,6 +22,8 @@ from .structure import divergences, market_structure
 from .volatility import volatility_frame
 
 MIN_BARS = 60
+# the higher timeframe whose context is added to each model's features
+HTF_OF = {"15m": "1h", "1h": "4h", "4h": "1d", "12h": "1d", "1d": "3d"}
 
 
 class InsufficientData(Exception):
@@ -52,7 +54,30 @@ def build_frame(df: pd.DataFrame, timeframe: str, swing_k: int = 3) -> Frame:
     return Frame(timeframe, df, ind, swings)
 
 
-def make_features(frame: Frame, btc: Frame | None = None) -> pd.DataFrame:
+def htf_features(frame: Frame, htf: Frame) -> pd.DataFrame:
+    """Context from the higher timeframe, aligned without look-ahead: a base bar only sees higher-timeframe
+    candles that had CLOSED by the time the base bar closed (the forming higher-timeframe candle is never used)."""
+    from ..data.base import tf_ms
+
+    h = htf.ind
+    a = h["atr"].replace(0, np.nan)
+    hl = np.log(h["close"])
+    H = pd.DataFrame({
+        "close_ts": h["ts"] + tf_ms(htf.timeframe),
+        "htf_tech": h["tech_score"], "htf_trend": h["sc_trend"], "htf_momentum": h["sc_momentum"],
+        "htf_rsi": h["rsi"] / 100, "htf_adx": h["adx"] / 100,
+        "htf_ret_1": hl - hl.shift(1), "htf_ret_3": hl - hl.shift(3),
+        "htf_d_ema50": (h["close"] - h["ema_50"]) / a, "htf_regime": h["regime_score"],
+    }).dropna(subset=["close_ts"]).sort_values("close_ts")
+    base = pd.DataFrame({"close_ts": frame.ind["ts"] + tf_ms(frame.timeframe), "_i": np.arange(len(frame.ind))})
+    m = pd.merge_asof(base.sort_values("close_ts"), H, on="close_ts", direction="backward")
+    m = m.sort_values("_i")
+    out = m.drop(columns=["close_ts", "_i"])
+    out.index = frame.ind.index
+    return out
+
+
+def make_features(frame: Frame, btc: Frame | None = None, htf: Frame | None = None) -> pd.DataFrame:
     """Stationary feature matrix (ratios / oscillators / ATR-normalised distances - never raw prices)."""
     i = frame.ind
     c, a = i["close"], i["atr"].replace(0, np.nan)
@@ -112,6 +137,8 @@ def make_features(frame: Frame, btc: Frame | None = None) -> pd.DataFrame:
         X["btc_tech"] = b["tech_score"].reindex(X.index)
         X["corr_btc_30"] = X["ret_1"].rolling(30).corr(X["btc_ret_1"])
         X["rel_strength_20"] = X["ret_20"] - (blr - blr.shift(20)).reindex(X.index)
+    if htf is not None:
+        X = pd.concat([X, htf_features(frame, htf)], axis=1)
     return X.replace([np.inf, -np.inf], np.nan)
 
 
@@ -124,14 +151,15 @@ class Dataset:
     trainable: np.ndarray    # valid rows whose outcome is already known
 
 
-def make_dataset(frame: Frame, btc: Frame | None = None, neutral_band: float | None = None) -> Dataset:
+def make_dataset(frame: Frame, btc: Frame | None = None, neutral_band: float | None = None,
+                 htf: Frame | None = None) -> Dataset:
     """Target A: direction class (0 DOWN / 1 NEUTRAL / 2 UP) of the NEXT bar's close-to-close return.
 
     The neutral band is +/- neutral_band * sigma_bar, where sigma_bar is known at decision time.
     """
     band = settings.neutral_band_sigma if neutral_band is None else neutral_band
     i = frame.ind
-    X = make_features(frame, btc)
+    X = make_features(frame, btc, htf)
     c = i["close"]
     fwd = c.shift(-1) / c - 1
     thr = band * i["sigma_bar"]

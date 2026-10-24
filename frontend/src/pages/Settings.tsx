@@ -3,8 +3,9 @@ import { SymbolSelect, TfTabs, useMeta, useSymbols } from "../components/Pickers
 import { AppearancePanel } from "../components/AppearancePanel";
 import { Card, ErrorBox, Loading, Note, Row } from "../components/ui";
 import { checkForUpdate } from "../lib/updater";
+import * as push from "../lib/push";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
-import { post, put, useApi } from "../lib/api";
+import { post, put, queueJob, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
 
 const RISK_FIELDS: [string, string][] = [
@@ -60,7 +61,7 @@ export default function Settings() {
       {err && <ErrorBox error={err} />}
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
-        <AboutCard />
+        <div className="space-y-4"><NotificationsCard /><AboutCard /></div>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Risk profile">
@@ -136,5 +137,49 @@ function AboutCard() {
       </div>
       <Note>{COPYRIGHT}</Note>
     </Card>
+  );
+}
+
+function NotificationsCard() {
+  const [perm, setPerm] = useState(push.permission());
+  const [token, setToken] = useState(push.savedToken());
+  const [key, setKey] = useState("");
+  const [hasKey, setHasKey] = useState<boolean | null>(null);
+  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  useEffect(() => { push.vapidKey().then((k) => setHasKey(!!k)).catch(() => setHasKey(false)); }, []);
+  const act = async (fn: () => Promise<string | void>) => {
+    setBusy(true);
+    try { const t = await fn(); if (t) setMsg({ ok: true, text: t }); } catch (e: any) { setMsg({ ok: false, text: e.message }); }
+    finally { setBusy(false); setPerm(push.permission()); setToken(push.savedToken()); }
+  };
+  return (
+    <section id="notifications">
+      <Card title="Notifications">
+        <Row k="This device" v={perm === "granted" ? (token ? "on — also when the app is closed" : "on while the app is open") : perm === "denied" ? "blocked in browser settings" : perm === "unsupported" ? "not supported" : "off"} />
+        <Row k="Push key (Web Push certificate)" v={hasKey == null ? "…" : hasKey ? "added" : "not added yet"} />
+        <div className="mt-3 flex flex-wrap gap-2">
+          {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy || perm === "denied"} onClick={() => act(push.enable)}>Turn on notifications</button>
+            : <button className="btn" disabled={busy} onClick={() => act(async () => { await push.disable(); return "Notifications turned off on this device."; })}>Turn off on this device</button>}
+          <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", {}); return "Test queued: the engine sends it on its next run (within about 15 minutes)."; })}>Send a test notification</button>
+        </div>
+        {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
+        {!hasKey && (
+          <div className="mt-4 border-t border-glass/[0.06] pt-3">
+            <p className="text-sm">One-time setup so alerts also arrive when the app is closed:</p>
+            <ol className="mt-1 list-decimal pl-5 text-xs leading-relaxed text-mute">
+              <li>Open the Firebase console → your project → ⚙ Project settings → <b>Cloud Messaging</b>.</li>
+              <li>Under <b>Web Push certificates</b>, click <b>Generate key pair</b>.</li>
+              <li>Copy the long key shown there and paste it here, then press Save and “Turn on notifications”.</li>
+            </ol>
+            <div className="mt-2 flex gap-2">
+              <input className="input" placeholder="Paste the Web Push key (starts with B…)" value={key} onChange={(e) => setKey(e.target.value)} />
+              <button className="btn" disabled={busy || !key.trim()} onClick={() => act(async () => { await push.saveVapidKey(key); setHasKey(true); return "Key saved. Now press “Turn on notifications” on each device."; })}>Save</button>
+            </div>
+          </div>
+        )}
+        <Note>iPhone / iPad: notifications work only for the app added to the Home Screen (Safari → Share → Add to Home Screen), iOS 16.4 or newer. Turn them on separately on each device.</Note>
+      </Card>
+    </section>
   );
 }

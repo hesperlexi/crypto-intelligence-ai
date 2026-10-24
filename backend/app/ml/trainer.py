@@ -39,10 +39,10 @@ def _cost() -> float:
 
 def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = None,
                  model_names: list[str] | None = None, fast: bool = False,
-                 progress: Callable[[float, str], None] | None = None) -> dict[str, Any]:
+                 progress: Callable[[float, str], None] | None = None, htf: Frame | None = None) -> dict[str, Any]:
     if timeframe not in WALK_FORWARD:
         raise ValueError(f"no model is trained for timeframe {timeframe}")
-    ds = make_dataset(frame, btc)
+    ds = make_dataset(frame, btc, htf=htf)
     idx = np.where(ds.trainable)[0]
     if len(idx) < settings.min_train_samples + 60:
         raise InsufficientData(f"{len(idx)} usable training rows for {symbol} {timeframe}")
@@ -151,6 +151,8 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
     bundle: dict[str, Any] = {
         "version": version, "symbol": symbol, "timeframe": timeframe, "created_at": created,
         "feature_names": ds.feature_names, "uses_btc": btc is not None, "neutral_band": settings.neutral_band_sigma,
+        "uses_htf": htf.timeframe if htf is not None else None,
+        "selective": selective_threshold(wf.P_ens[oos], y[oos], fwd[oos]),
         "models": stage["models"], "calibrators": stage["calibrators"], "weights": stage["weights"],
         "calibration": {k: {kk: vv for kk, vv in v.items()} for k, v in stage["calibration"].items()},
         "prior": stage["prior"], "mu": mu, "feat_median": np.nanmedian(Xtr, axis=0),
@@ -267,7 +269,17 @@ def predict(bundle: dict[str, Any], ds: Dataset, pos: int = -1, multipliers: dic
         "touch": touch_probabilities(sigma, oos["z_mfe"].astype(float), oos["z_mae"].astype(float), oos["pred"], cls),
         "confidence": confidence_lookup(float(P[cls]), cls, vol_state, oos),
         "vol_state": vol_state,
+        "confident_call": _confident(bundle.get("selective"), cls, float(P[cls])),
     }
+
+
+def _confident(sel: dict[str, Any] | None, cls: int, p: float) -> dict[str, Any] | None:
+    """Is this an UP / DOWN call at or above the model's out-of-sample confident-call threshold?"""
+    if not sel or sel.get("threshold") is None:
+        return None
+    return {"is_confident": bool(cls != 1 and p >= sel["threshold"]), "threshold": sel["threshold"],
+            "hit_rate": sel["hit_rate"], "coverage": sel["coverage"], "n": sel["n"],
+            "base_hit_rate": (sel.get("base") or {}).get("hit_rate")}
 
 
 def explain_prediction(bundle: dict[str, Any], ds: Dataset, pos: int = -1) -> dict[str, Any] | None:
@@ -296,6 +308,7 @@ def _summary(bundle: dict[str, Any]) -> dict[str, Any]:
         "interval_coverage": bundle["interval_coverage"], "reliability": bundle["reliability"],
         "failures": bundle["failures"], "importance": bundle["importance"],
         "models": sorted(bundle["models"]), "uses_btc": bundle["uses_btc"], "fast": bundle.get("fast", False),
+        "uses_htf": bundle.get("uses_htf"), "selective": bundle.get("selective"),
     }
 
 
@@ -349,3 +362,45 @@ def metrics_table(version_id: str, db: Database) -> dict[str, dict[str, float]]:
     for r in db.query("SELECT model, metric, value FROM model_metrics WHERE model_version_id = ?", (version_id,)):
         out.setdefault(r["model"], {})[r["metric"]] = r["value"]
     return out
+
+
+def selective_threshold(P: np.ndarray, y: np.ndarray, fwd: np.ndarray | None = None, min_calls: int = 30,
+                        min_coverage: float = 0.08) -> dict[str, Any] | None:
+    """Out-of-sample "confident call" threshold.
+
+    A directional call is an UP or DOWN prediction; it is a hit when the next bar's return has that sign (the
+    same definition the demo bots use), or, without returns, when the class matches. For each threshold, the walk-forward
+    out-of-sample hit rate of the calls at or above it is measured; the threshold with the best lower 95%
+    (Wilson) bound is chosen, so a high hit rate on a handful of calls cannot win. Requires at least
+    `min_calls` calls and `min_coverage` of all bars. Everything is out-of-sample; nothing is fitted on the
+    bars it is scored on beyond picking this one number (reported with its sample size).
+    """
+    from .metrics import wilson
+
+    if P is None or len(P) < 100:
+        return None
+    pred = P.argmax(axis=1)
+    pmax = P.max(axis=1)
+    yy = y.astype(int)
+    directional = pred != 1
+    curve, best = [], None
+    for t in np.round(np.arange(0.34, 0.80, 0.02), 2):
+        sel = directional & (pmax >= t)
+        n = int(sel.sum())
+        if n == 0:
+            break
+        if fwd is not None:
+            k = int((np.sign(fwd[sel]) == np.where(pred[sel] == 2, 1.0, -1.0)).sum())
+        else:
+            k = int((pred[sel] == yy[sel]).sum())
+        lo, hi = wilson(k, n)
+        row = {"threshold": float(t), "n": n, "coverage": n / len(P), "hit_rate": k / n, "ci95": [lo, hi]}
+        curve.append(row)
+        if n >= min_calls and n / len(P) >= min_coverage and (best is None or lo > best["ci95"][0]):
+            best = row
+    base = curve[0] if curve else None
+    if best is None or base is None:
+        return {"threshold": None, "curve": curve, "base": base, "reason": "too few out-of-sample calls"}
+    return {"threshold": best["threshold"], "hit_rate": best["hit_rate"], "coverage": best["coverage"],
+            "n": best["n"], "ci95": best["ci95"], "base": base, "curve": curve,
+            "improvement": best["hit_rate"] - base["hit_rate"]}
