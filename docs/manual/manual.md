@@ -18,12 +18,14 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 Access to the app is by membership. Choose the plan that suits you:
 
-| Plan | Price | Per month |
-| --- | --- | --- |
-| 1 month | **$15** | $15.00 |
-| 3 months | **$30** | $10.00 |
-| 6 months | **$55** | $9.17 |
-| 1 year | **$150** | $12.50 |
+| Plan | Price | Per month | You save |
+| --- | --- | --- | --- |
+| 1 month | **$15** | $15.00 | — |
+| 3 months | **$40** | $13.33 | 11% |
+| 6 months | **$70** | $11.67 | 22% |
+| 1 year | **$130** | $10.83 | 28% |
+
+The longer the plan, the lower the monthly price.
 
 **How to pay (about 2 minutes):**
 

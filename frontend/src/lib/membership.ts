@@ -11,9 +11,9 @@ export interface MembershipConfig { plans: Plan[]; currency: string; pay_note: s
 export const DEFAULT_CONFIG: MembershipConfig = {
   plans: [
     { months: 1, price: 15, label: "1 month" },
-    { months: 3, price: 30, label: "3 months" },
-    { months: 6, price: 55, label: "6 months" },
-    { months: 12, price: 150, label: "1 year" },
+    { months: 3, price: 40, label: "3 months" },
+    { months: 6, price: 70, label: "6 months" },
+    { months: 12, price: 130, label: "1 year" },
   ],
   currency: "USDT",
   pay_note: "Pay with the Binance app: scan the QR code, send the exact amount, then upload the payment screenshot here.",
