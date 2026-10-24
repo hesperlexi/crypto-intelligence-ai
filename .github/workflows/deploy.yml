@@ -31,6 +31,8 @@ jobs:
     # newest version; rebuilt on every deploy so a changed name or icon reaches the APK too.
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -53,13 +55,16 @@ jobs:
           BUBBLEWRAP_KEY_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
         run: |
           set -o pipefail
+          exec > >(tee build.log) 2>&1
+          set -x
           ver="1.1.${GITHUB_RUN_NUMBER}"
           sed -e "s/__VERSION_NAME__/${ver}/g" -e "s/__VERSION_CODE__/${GITHUB_RUN_NUMBER}/" twa-manifest.template.json > twa-manifest.json
           mkdir -p ~/.bubblewrap
           echo "{\"jdkPath\": \"${JAVA_HOME}\", \"androidSdkPath\": \"${ANDROID_SDK_ROOT:-$ANDROID_HOME}\"}" > ~/.bubblewrap/config.json
           yes | "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           npm install -g @bubblewrap/cli@1.21.0 > /dev/null
-          ( bubblewrap update --skipVersionUpgrade && bubblewrap build --skipPwaValidation ) 2>&1 | tee build.log
+          bubblewrap update --skipVersionUpgrade
+          bubblewrap build --skipPwaValidation
           mkdir -p out/.well-known out/download
           cp app-release-signed.apk out/download/crypto-intelligence-ai.apk
           printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.hesper.cryptoai","sha256_cert_fingerprints":["%s"]}}]\n' "$SHA256_FINGERPRINT" > out/.well-known/assetlinks.json
