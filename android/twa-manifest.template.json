@@ -29,7 +29,7 @@
   "isChromeOSOnly": false,
   "isMetaQuest": false,
   "fullScopeUrl": "https://crypapp-6a9b9.web.app/",
-  "minSdkVersion": 21,
+  "minSdkVersion": 24,
   "orientation": "default",
   "fingerprints": [],
   "additionalTrustedOrigins": [],
