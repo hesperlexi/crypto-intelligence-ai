@@ -67,6 +67,9 @@ jobs:
           yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
           ls "$SDK/build-tools" | tail -3
           npm install -g @bubblewrap/cli@1.21.0 > /dev/null
+          # icons come from this commit's files (the live site may still have the previous ones during the build)
+          (cd ../frontend/public/icons && python3 -m http.server 8765 --bind 127.0.0.1 > /dev/null 2>&1 &)
+          sleep 1
           bubblewrap update --skipVersionUpgrade
           bubblewrap build --skipPwaValidation
           mkdir -p out/.well-known out/download
