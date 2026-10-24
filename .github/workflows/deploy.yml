@@ -61,7 +61,11 @@ jobs:
           sed -e "s/__VERSION_NAME__/${ver}/g" -e "s/__VERSION_CODE__/${GITHUB_RUN_NUMBER}/" twa-manifest.template.json > twa-manifest.json
           mkdir -p ~/.bubblewrap
           echo "{\"jdkPath\": \"${JAVA_HOME}\", \"androidSdkPath\": \"${ANDROID_SDK_ROOT:-$ANDROID_HOME}\"}" > ~/.bubblewrap/config.json
-          yes | "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          # Bubblewrap looks for the SDK tools in <sdk>/tools (older layout); point it at the runner's cmdline-tools
+          [ -e "$SDK/tools" ] || sudo ln -s "$SDK/cmdline-tools/latest" "$SDK/tools"
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          ls "$SDK/build-tools" | tail -3
           npm install -g @bubblewrap/cli@1.21.0 > /dev/null
           bubblewrap update --skipVersionUpgrade
           bubblewrap build --skipPwaValidation
