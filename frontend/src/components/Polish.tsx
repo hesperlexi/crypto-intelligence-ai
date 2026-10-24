@@ -97,10 +97,10 @@ export function DashboardHero({ rows, status, tf }: { rows?: any[]; status?: any
           <p className="mt-2 text-sm text-mute">
             {r.length ? <><span className="text-bull">{buys} buy</span> · <span className="text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
           </p>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Link to="/futures" className="btn btn-primary px-3.5 py-1.5 text-sm">Futures signals</Link>
-            <Link to="/alerts" className="btn px-3.5 py-1.5 text-sm">Set an alert</Link>
-            <Link to="/paper" className="btn px-3.5 py-1.5 text-sm">Paper trade</Link>
+          <div className="mt-4 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
+            <Link to="/futures" className="btn btn-primary justify-center px-2 py-2 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm"><span className="sm:hidden">Futures</span><span className="hidden sm:inline">Futures signals</span></Link>
+            <Link to="/alerts" className="btn justify-center px-2 py-2 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm">Set an alert</Link>
+            <Link to="/paper" className="btn justify-center px-2 py-2 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm">Paper trade</Link>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2.5">

@@ -159,16 +159,16 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
         <div>
           <div className="label mb-1">Accuracy by {s.confidence_key === "p_max" ? "model probability" : "signal confidence"}</div>
           {s.by_confidence?.length ? (
-            <table className="grid-table">
+            <div className="overflow-x-auto"><table className="grid-table">
               <thead><tr><th>Bucket</th><th className="text-right">Trades</th><th className="text-right">Predicted</th><th className="text-right">Direction right</th><th className="text-right">Avg return</th></tr></thead>
               <tbody>{s.by_confidence.map((r: any) => (
                 <tr key={r.lo}><td className="num">{fmtProb(r.lo)}–{fmtProb(r.hi)}</td><td className="num text-right">{r.n}</td><td className="num text-right">{fmtProb(r.mean, 1)}</td>
                   <td className="num text-right">{fmtProb(r.hit_rate, 1)}</td><td className={`num text-right ${tone(r.avg_return_pct)}`}>{fmtPctRaw(r.avg_return_pct)}</td></tr>
               ))}</tbody>
-            </table>
+            </table></div>
           ) : <Empty>Appears after the first closed trades.</Empty>}
           {s.trades > 0 && (
-            <div className="mt-3 grid grid-cols-2 gap-x-6">
+            <div className="mt-3 grid gap-x-6 sm:grid-cols-2">
               <Row k="Longs / shorts" v={`${s.longs} / ${s.shorts}`} />
               <Row k="Long / short accuracy" v={`${fmtProb(s.long_accuracy)} / ${fmtProb(s.short_accuracy)}`} />
               <Row k="Average trade" v={fmtPctRaw(s.avg_return_pct)} className={tone(s.avg_return_pct)} />

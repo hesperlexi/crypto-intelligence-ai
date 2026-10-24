@@ -156,11 +156,11 @@ function SpotPositions({ d, onClose }: { d: any; onClose: (symbol: string, qty: 
                 <div><div className="font-semibold">{p.symbol}</div><div className="num text-xs text-mute">{fmtNum(p.qty, 6)} coins</div></div>
                 <div className="text-right"><div className={`num text-lg ${tone(p.u)}`}>${fmtNum(p.u)}</div><div className={`num text-xs ${tone(p.u)}`}>{fmtPctRaw(p.pct)}</div></div>
               </div>
-              <div className="num mt-2 grid grid-cols-3 gap-2 text-xs">
-                <div><div className="text-mute">Avg price</div>{fmtPrice(p.avg_price)}</div>
-                <div><div className="text-mute">Mark</div>{fmtPrice(p.mark)}</div>
-                <div><div className="text-mute">Value</div>${fmtNum(p.value)}</div>
-              </div>
+              <dl className="mt-3 grid grid-cols-1 gap-y-1.5 border-t border-glass/[0.06] pt-2.5 text-xs">
+                {([["Avg price", fmtPrice(p.avg_price)], ["Mark price", fmtPrice(p.mark)], ["Value", `$${fmtNum(p.value)}`]] as const).map(([k, v]) => (
+                  <div key={k} className="flex items-baseline justify-between gap-2"><dt className="text-mute">{k}</dt><dd className="num text-right">{v}</dd></div>
+                ))}
+              </dl>
               <button className="btn mt-3 w-full py-1.5 text-xs" onClick={() => onClose(p.symbol, p.qty)}>Sell all {p.symbol}</button>
             </div>
           ))}

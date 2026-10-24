@@ -75,10 +75,10 @@ export default function Asset() {
               {isNum(tk?.spread_bps) && <span className="num text-sm text-mute">Spread {fmtNum(tk?.spread_bps, 2)} bps</span>}
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2">
+          <div className="flex w-full flex-col gap-3 sm:w-auto sm:items-end">
             <TfTabs value={tf} onChange={setTf} options={ASSET_TFS} />
             {ok && (
-              <div className="flex items-center gap-4 text-right">
+              <div className="grid grid-cols-3 gap-3 rounded-xl border border-glass/[0.08] bg-glass/[0.03] p-3 sm:flex sm:items-start sm:gap-5 sm:border-0 sm:bg-transparent sm:p-0 sm:text-right">
                 <Stat label="Decision" value={<Badge tone={signalTone(a.decision)}>{a.decision}</Badge>} />
                 <Stat label="Signal score" value={isNum(a.signal.score) ? `${a.signal.score.toFixed(0)}/100` : DASH} />
                 <Stat label="Confidence" value={isNum(a.confidence) ? `${(a.confidence * 100).toFixed(0)}/100` : DASH} />
@@ -197,7 +197,7 @@ function ForecastCard({ fc, tf, price }: { fc: any; tf: string; price: number })
   return (
     <Card title={`AI forecast · next ${tf.toUpperCase()} bar`} right={<span className="text-xs text-mute">from the close at {fmtPrice(price)}</span>}>
       <ProbBar up={p.up} neutral={p.neutral} down={p.down} />
-      <div className="mt-4 grid grid-cols-3 gap-4">
+      <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Stat label="Point forecast" value={d ? fmtPrice(d.expected_price) : DASH} sub={<span className={tone(fc.expected_return)}>{fmtPct(fc.expected_return)}</span>} />
         <Stat label="Raw → calibrated P(up)" value={`${fmtProb(raw.up)} → ${fmtProb(p.up)}`} sub="final uses calibrated" />
         <Stat label="Model confidence" value={isNum(fc.confidence?.confidence) ? fmtProb(fc.confidence.confidence) : DASH} sub={fc.confidence?.n ? `hit-rate of ${fc.confidence.n} similar past calls` : fc.confidence?.basis} />
@@ -211,7 +211,7 @@ function ForecastCard({ fc, tf, price }: { fc: any; tf: string; price: number })
         </div>
       ) : <Note>Too few out-of-sample errors to build a forecast range.</Note>}
       {fc.touch && (
-        <div className="mt-4 grid grid-cols-2 gap-x-6">
+        <div className="mt-4 grid gap-x-6 gap-y-3 sm:grid-cols-2">
           <div><div className="label mb-1">Chance of reaching (next bar)</div>{fc.touch.upside.map((u: any) => <Row key={u.move} k={fmtPct(u.move, 0)} v={fmtProb(u.probability)} className="text-bull" />)}</div>
           <div><div className="label mb-1">Chance of downside</div>{fc.touch.downside.map((u: any) => <Row key={u.move} k={fmtPct(u.move, 0)} v={fmtProb(u.probability)} className="text-bear" />)}</div>
         </div>
@@ -304,7 +304,7 @@ function SetupCard({ setup, decision }: { setup: any; decision: string }) {
       {!setup.valid && <p className="mb-3 text-sm text-warn">{setup.reason}</p>}
       {setup.ideal_entry != null && (
         <div className={setup.valid ? "" : "opacity-60"}>
-          <div className="grid grid-cols-2 gap-x-6">
+          <div className="grid gap-x-6 sm:grid-cols-2">
             <div>
               <Row k="Entry zone" v={`${fmtPrice(setup.entry_zone[0])} – ${fmtPrice(setup.entry_zone[1])}`} />
               <Row k="Ideal entry" v={fmtPrice(setup.ideal_entry)} className="text-accent" />
@@ -318,7 +318,7 @@ function SetupCard({ setup, decision }: { setup: any; decision: string }) {
               <Row k="Expectancy at TP2" v={isNum(setup.expectancy_r) ? `${setup.expectancy_r > 0 ? "+" : ""}${setup.expectancy_r.toFixed(2)} R` : DASH} className={tone(setup.expectancy_r)} />
             </div>
           </div>
-          <table className="grid-table mt-3">
+          <div className="mt-3 overflow-x-auto"><table className="grid-table">
             <thead><tr><th>Target</th><th className="text-right">Price</th><th className="text-right">Move</th><th className="text-right">R</th><th className="text-right">Reached before stop</th><th>Basis</th></tr></thead>
             <tbody>
               {setup.targets.map((t: any) => (
@@ -329,7 +329,7 @@ function SetupCard({ setup, decision }: { setup: any; decision: string }) {
                 </tr>
               ))}
             </tbody>
-          </table>
+          </table></div>
           <Note>Target probabilities are historical base rates within {setup.horizon_bars} bars ({setup.targets[0]?.probability_basis ?? "history"}), with the stop assumed first if both are touched in one bar. They are not model promises.</Note>
         </div>
       )}

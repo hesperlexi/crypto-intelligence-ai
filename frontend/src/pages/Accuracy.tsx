@@ -167,13 +167,13 @@ export default function Accuracy() {
           <div className="grid gap-4 xl:grid-cols-2">
             <Card title="Walk-forward timeline"><Timeline folds={m.folds} live={m.live_fit} sizes={m.sizes} /></Card>
             <Card title="Calibration · predicted confidence vs realised accuracy">
-              <table className="grid-table">
+              <div className="overflow-x-auto"><table className="grid-table">
                 <thead><tr><th>Confidence bin</th><th className="text-right">Predictions</th><th className="text-right">Mean predicted</th><th className="text-right">Actually correct</th><th className="text-right">Gap</th></tr></thead>
                 <tbody>{(m.reliability ?? []).map((b: any) => (
                   <tr key={b.lo}><td className="num">{fmtProb(b.lo)}–{fmtProb(b.hi)}</td><td className="num text-right">{b.n}</td><td className="num text-right">{fmtProb(b.mean_confidence, 1)}</td><td className="num text-right">{fmtProb(b.accuracy, 1)}</td>
                     <td className={`num text-right ${Math.abs(b.accuracy - b.mean_confidence) > 0.07 ? "text-warn" : "text-mute"}`}>{fmtPct(b.accuracy - b.mean_confidence, 1)}</td></tr>
                 ))}</tbody>
-              </table>
+              </table></div>
               <Note>A well-calibrated model is right about as often as it says it will be. Calibration (Platt or isotonic) is only applied where it improved held-out Brier score.</Note>
             </Card>
           </div>

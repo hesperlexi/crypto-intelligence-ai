@@ -225,3 +225,8 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px
 .float-slow { animation: float 6s ease-in-out infinite; }
 @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @media (prefers-reduced-motion: reduce) { .ticker-track, .hero-line path, .float-slow, .page-enter > * > * { animation: none !important; } .hero-line path:last-child { stroke-dashoffset: 0; } }
+
+/* ---- phone layout guards -------------------------------------------------------------------------- */
+/* grid / flex children may shrink below their content, so a wide table scrolls inside its card instead of
+   stretching the whole page */
+.panel, .card-body { min-width: 0; }
