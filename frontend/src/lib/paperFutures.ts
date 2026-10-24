@@ -24,6 +24,9 @@ export const liqPrice = (entry: number, side: number, lev: number) =>
   side > 0 ? Math.max(0, entry * (1 - 1 / Math.max(1, lev) + MMR)) : entry * (1 + 1 / Math.max(1, lev) - MMR);
 
 const keyOf = (s: string) => s.replace("/", "");
+/** Position key: one position per coin in one-way mode, one per coin AND side in hedge mode. */
+export const posKey = (symbol: string, side: number, hedge: boolean) => (hedge ? `${keyOf(symbol)}_${side > 0 ? "LONG" : "SHORT"}` : keyOf(symbol));
+export type PositionMode = "oneway" | "hedge";
 
 async function price(symbol: string): Promise<number> {
   if (latestPrices[symbol]) return latestPrices[symbol];
@@ -36,7 +39,7 @@ async function price(symbol: string): Promise<number> {
 export async function reset(startingBalance = 10000) {
   if (!(startingBalance > 0)) throw new Error("starting balance must be positive");
   const acc = { id: Math.random().toString(36).slice(2, 12), starting_balance: startingBalance, wallet: startingBalance, created_at: Date.now(),
-    positions: {}, totals: { realized: 0, fees: 0, funding: 0, count: 0, wins: 0, liquidations: 0 } };
+    positions: {}, position_mode: "oneway", totals: { realized: 0, fees: 0, funding: 0, count: 0, wins: 0, liquidations: 0 } };
   await setDoc(ACC, acc);
   return acc;
 }
@@ -46,6 +49,21 @@ async function log(trade: any) {
 }
 
 export interface OpenOrder { symbol: string; side: 1 | -1; margin: number; leverage: number; stop?: number | null; take?: number | null }
+
+/** One-way: a coin holds either a long or a short. Hedge: a long and a short can be open on the same coin at once. */
+export async function setMode(mode: PositionMode) {
+  if (!(await getDoc(ACC)).exists()) await reset();
+  await runTransaction(db, async (tx) => {
+    const acc: any = (await tx.get(ACC)).data();
+    if (mode === "oneway") {
+      const sides: Record<string, Set<number>> = {};
+      for (const p of Object.values<any>(acc.positions ?? {})) (sides[p.symbol] ??= new Set()).add(p.side);
+      const both = Object.entries(sides).filter(([, v]) => v.size > 1).map(([k]) => k);
+      if (both.length) throw new Error(`close one side of ${both.join(", ")} first: one-way mode allows only one direction per coin`);
+    }
+    tx.update(ACC, { position_mode: mode });
+  });
+}
 
 export async function open(o: OpenOrder) {
   const lev = Math.round(Number(o.leverage));
@@ -59,14 +77,19 @@ export async function open(o: OpenOrder) {
   const stop = o.stop || null, take = o.take || null;
   if (stop && o.side * (fill - stop) <= 0) throw new Error(`the stop-loss must be ${o.side > 0 ? "below" : "above"} the entry price`);
   if (take && o.side * (take - fill) <= 0) throw new Error(`the take-profit must be ${o.side > 0 ? "above" : "below"} the entry price`);
-  const key = keyOf(o.symbol);
   const res = await runTransaction(db, async (tx) => {
     const acc: any = (await tx.get(ACC)).data();
     if (o.margin + fee > acc.wallet + 1e-9) throw new Error(`not enough virtual balance: need $${(o.margin + fee).toFixed(2)}, have $${acc.wallet.toFixed(2)}`);
     const positions = { ...(acc.positions ?? {}) };
-    const cur = positions[key];
+    const hedge = acc.position_mode === "hedge";
     const now = Date.now();
-    if (cur && cur.side !== o.side) throw new Error(`you have a ${cur.side > 0 ? "LONG" : "SHORT"} ${o.symbol} position: close it first`);
+    if (!hedge) {
+      const opposite = Object.values<any>(positions).find((p) => p.symbol === o.symbol && p.side !== o.side);
+      if (opposite) throw new Error(`you have a ${opposite.side > 0 ? "LONG" : "SHORT"} ${o.symbol} position. Close it first, or switch to Hedge mode to hold both sides.`);
+    }
+    // same coin and side: add to the existing position (it may sit under the other mode's key)
+    const key = Object.keys(positions).find((k) => positions[k].symbol === o.symbol && positions[k].side === o.side) ?? posKey(o.symbol, o.side, hedge);
+    const cur = positions[key];
     let pos: any;
     if (cur) {   // add to the position: average entry, combined margin, effective leverage
       const q = cur.qty + qty;
@@ -76,22 +99,24 @@ export async function open(o: OpenOrder) {
       pos = { ...cur, qty: q, entry, margin, leverage: effLev, liq: liqPrice(entry, o.side, effLev), fees: cur.fees + fee,
         stop: stop ?? cur.stop ?? null, take: take ?? cur.take ?? null };
     } else {
-      pos = { symbol: o.symbol, side: o.side, qty, entry: fill, margin: o.margin, leverage: lev, liq: liqPrice(fill, o.side, lev),
+      pos = { key, symbol: o.symbol, side: o.side, qty, entry: fill, margin: o.margin, leverage: lev, liq: liqPrice(fill, o.side, lev),
         stop, take, opened_at: now, checked_at: now, funded_until: now, funding: 0, fees: fee };
     }
-    positions[key] = pos;
+    positions[key] = { ...pos, key };
     const t = acc.totals;
     tx.update(ACC, { wallet: acc.wallet - o.margin - fee, positions, totals: { ...t, fees: t.fees + fee } });
-    return { account_id: acc.id, pos };
+    return { account_id: acc.id, pos, hedge };
   });
   await log({ account_id: res.account_id, type: "OPEN", symbol: o.symbol, side: o.side, qty, price: fill, mark_price: mark,
-    leverage: lev, margin: o.margin, fee, liquidation_price: res.pos.liq, stop, take });
+    leverage: lev, margin: o.margin, fee, liquidation_price: res.pos.liq, stop, take, hedge: res.hedge });
   return res.pos;
 }
 
 /** Close all or part of a position. `at` is a trigger level (stop / target / liquidation); otherwise the live price. */
-export async function close(symbol: string, fraction = 1, reason = "manual", at?: number, when?: number) {
-  const key = keyOf(symbol);
+export async function close(key: string, fraction = 1, reason = "manual", at?: number, when?: number) {
+  const snap: any = (await getDoc(ACC)).data();
+  const symbol: string | undefined = snap?.positions?.[key]?.symbol;
+  if (!symbol) return null;
   const mark = at ?? (await price(symbol));
   const res = await runTransaction(db, async (tx) => {
     const acc: any = (await tx.get(ACC)).data();
@@ -128,13 +153,12 @@ export async function close(symbol: string, fraction = 1, reason = "manual", at?
   return res;
 }
 
-export async function setOrders(symbol: string, stop: number | null, take: number | null) {
-  const key = keyOf(symbol);
+export async function setOrders(key: string, stop: number | null, take: number | null) {
   await runTransaction(db, async (tx) => {
     const acc: any = (await tx.get(ACC)).data();
     const pos = acc?.positions?.[key];
     if (!pos) throw new Error("no open position");
-    if (stop && pos.side * (pos.entry - stop) <= 0 && pos.side * ((latestPrices[symbol] ?? pos.entry) - stop) <= 0) throw new Error("the stop would trigger immediately");
+    if (stop && pos.side * (pos.entry - stop) <= 0 && pos.side * ((latestPrices[pos.symbol] ?? pos.entry) - stop) <= 0) throw new Error("the stop would trigger immediately");
     tx.update(ACC, { positions: { ...acc.positions, [key]: { ...pos, stop: stop || null, take: take || null } } });
   });
 }
@@ -160,7 +184,7 @@ export async function settle() {
     const acc: any = (await getDoc(ACC)).data();
     if (!acc) return;
     const now = Date.now();
-    for (const pos of Object.values<any>(acc.positions ?? {})) {
+    for (const [posK, pos] of Object.entries<any>(acc.positions ?? {})) {
       // 1) funding payments since the last one
       const first = Math.floor(pos.funded_until / FUNDING_MS) * FUNDING_MS + FUNDING_MS;
       const n = first <= now ? Math.floor((now - first) / FUNDING_MS) + 1 : 0;
@@ -169,7 +193,7 @@ export async function settle() {
         try { const d = await derivatives(pos.symbol); if (d.available && Number.isFinite(d.funding?.rate)) rate = d.funding.rate; } catch { /* default */ }
         const px = latestPrices[pos.symbol] ?? pos.entry;
         const amount = n * pos.side * pos.qty * px * rate;
-        const key = keyOf(pos.symbol);
+        const key = posK;
         await runTransaction(db, async (tx) => {
           const a: any = (await tx.get(ACC)).data();
           const p = a?.positions?.[key];
@@ -199,9 +223,9 @@ export async function settle() {
         const t = px ? trigger(pos, px, px, px) : null;
         if (t) hit = { ...t, at: t.reason === "liquidated" ? pos.liq : px, ts: now };
       }
-      if (hit) await close(pos.symbol, 1, hit.reason, hit.at, hit.ts);
+      if (hit) await close(posK, 1, hit.reason, hit.at, hit.ts);
       else if (now - pos.checked_at > STEP) {
-        const key = keyOf(pos.symbol);
+        const key = posK;
         await runTransaction(db, async (tx) => {
           const a: any = (await tx.get(ACC)).data();
           const p = a?.positions?.[key];
@@ -222,17 +246,26 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
   let lastAcc: any = null;
   const build = (acc: any) => {
     if (!acc) { reset().catch(err); return; }
-    const positions = Object.values<any>(acc.positions ?? {}).map((p) => {
+    const positions = Object.entries<any>(acc.positions ?? {}).map(([key, p0]) => {
+      const p = { ...p0, key };
       const mark = latestPrices[p.symbol] ?? null;
       const upnl = mark != null ? p.side * p.qty * (mark - p.entry) : null;
       return { ...p, mark, upnl, roe_pct: upnl != null ? (upnl / p.margin) * 100 : null, notional: mark != null ? p.qty * mark : p.qty * p.entry };
+    });
+    const bySym: Record<string, any[]> = {};
+    for (const p of positions) (bySym[p.symbol] ??= []).push(p);
+    const hedges = Object.entries(bySym).filter(([, ps]) => ps.length > 1).map(([symbol, ps]) => {
+      const long = ps.filter((p) => p.side > 0).reduce((a, p) => a + p.notional, 0);
+      const short = ps.filter((p) => p.side < 0).reduce((a, p) => a + p.notional, 0);
+      const pnl = ps.reduce((a, p) => a + (p.upnl ?? 0), 0);
+      return { symbol, long, short, net: long - short, pnl, margin: ps.reduce((a, p) => a + p.margin, 0) };
     });
     const marginUsed = positions.reduce((s, p) => s + p.margin, 0);
     const upnl = positions.reduce((s, p) => s + (p.upnl ?? 0), 0);
     const equity = acc.wallet + positions.reduce((s, p) => s + Math.max(0, p.margin + (p.upnl ?? 0)), 0);
     const closes = trades.filter((t) => t.type === "CLOSE");
     cb({
-      account: acc, wallet: acc.wallet, margin_used: marginUsed, unrealized_pnl: upnl, equity,
+      account: acc, mode: acc.position_mode === "hedge" ? "hedge" : "oneway", hedges, wallet: acc.wallet, margin_used: marginUsed, unrealized_pnl: upnl, equity,
       return_pct: (equity / acc.starting_balance - 1) * 100, positions, trades,
       realized_pnl: acc.totals?.realized ?? 0, fees: acc.totals?.fees ?? 0, funding: acc.totals?.funding ?? 0,
       liquidations: acc.totals?.liquidations ?? 0, closed: closes.length,

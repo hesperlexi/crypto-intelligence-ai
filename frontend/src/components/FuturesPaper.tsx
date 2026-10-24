@@ -23,6 +23,7 @@ export default function FuturesPaper() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const d = st.data;
+  const mode: "oneway" | "hedge" = d?.mode ?? "oneway";
 
   useEffect(() => { if (params.get("symbol")) setMsg({ ok: true, text: "Order form filled from the Futures prediction. Check it, then place the virtual order." }); }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -79,6 +80,19 @@ export default function FuturesPaper() {
               <SymbolSelect stacked value={symbol} onChange={setSymbol} symbols={symbols.length ? symbols : [symbol]} />
               <div className="pb-1 text-right"><div className="label">Live price</div><div className="num text-xl leading-tight">{fmtPrice(px)}</div></div>
             </div>
+            <div>
+              <div className="mb-1 flex items-center justify-between text-xs text-mute"><span>Position mode</span>
+                <span>{mode === "hedge" ? "long and short can be open together" : "one direction per coin"}</span></div>
+              <div className="grid grid-cols-2 gap-1 rounded-lg border border-glass/10 p-1" role="group" aria-label="Position mode">
+                {(["oneway", "hedge"] as const).map((m) => (
+                  <button key={m} className={`rounded-md px-2 py-1.5 text-sm transition-colors ${mode === m ? "bg-accent/15 text-accent" : "text-mute hover:text-text"}`}
+                    aria-pressed={mode === m} disabled={busy}
+                    onClick={() => mode !== m && act(() => PF.setMode(m), m === "hedge" ? "Hedge mode on: you can now hold a long and a short on the same coin." : "One-way mode on.")}>
+                    {m === "oneway" ? "One-way" : "Hedge"}
+                  </button>
+                ))}
+              </div>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <button className={`btn py-2.5 ${side > 0 ? "border-bull/60 bg-bull/20 text-bull" : ""}`} aria-pressed={side > 0} onClick={() => setSide(1)}>▲ Long</button>
               <button className={`btn py-2.5 ${side < 0 ? "border-bear/60 bg-bear/20 text-bear" : ""}`} aria-pressed={side < 0} onClick={() => setSide(-1)}>▼ Short</button>
@@ -98,6 +112,9 @@ export default function FuturesPaper() {
               <span className="text-mute">Fee to open</span><span className="num text-right">${fmtNum(notional * PF.FEE)}</span>
               <span className="text-mute">Loss if stopped</span><span className="num text-right">{lossAtStop != null ? `$${fmtNum(lossAtStop)}` : DASH}</span>
             </div>
+            {mode === "oneway" && d?.positions?.some((p: any) => p.symbol === symbol && p.side !== side) && (
+              <p className="text-xs text-warn">You hold the opposite side of {symbol}. Switch to Hedge mode to open this side as well, or close that position first.</p>
+            )}
             {stopBeyondLiq && <p className="text-xs text-bear">Your stop is beyond the liquidation price: you would be liquidated first. Lower the leverage or move the stop.</p>}
             <button className={`btn w-full py-3 text-base font-medium ${side > 0 ? "border-bull/50 bg-bull/15 text-bull hover:bg-bull/25" : "border-bear/50 bg-bear/15 text-bear hover:bg-bear/25"}`} disabled={busy || !px} onClick={place}>
               Open virtual {side > 0 ? "LONG" : "SHORT"} {L}x
@@ -162,16 +179,32 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
   });
   const closeBtns = (p: any, wide = false) => (
     <div className={`flex gap-2 ${wide ? "" : "justify-end"}`}>
-      <button className={`btn px-3 py-1 text-xs ${wide ? "flex-1" : ""}`} disabled={busy} onClick={() => act(() => PF.close(p.symbol, 0.5), `Closed half of ${p.symbol}.`)}>Close ½</button>
-      <button className={`btn px-3 py-1 text-xs ${wide ? "flex-1 border-bear/40 text-bear" : ""}`} disabled={busy} onClick={() => act(() => PF.close(p.symbol, 1), `Closed ${p.symbol}.`)}>Close</button>
+      <button className={`btn px-3 py-1 text-xs ${wide ? "flex-1" : ""}`} disabled={busy} onClick={() => act(() => PF.close(p.key, 0.5), `Closed half of ${p.symbol} ${p.side > 0 ? "LONG" : "SHORT"}.`)}>Close ½</button>
+      <button className={`btn px-3 py-1 text-xs ${wide ? "flex-1 border-bear/40 text-bear" : ""}`} disabled={busy} onClick={() => act(() => PF.close(p.key, 1), `Closed ${p.symbol} ${p.side > 0 ? "LONG" : "SHORT"}.`)}>Close</button>
     </div>
   );
   return (
     <Card title={`Open positions${rows.length ? ` (${rows.length})` : ""}`}>
+      {d?.hedges?.length > 0 && (
+        <div className="mb-3 space-y-2">
+          {d.hedges.map((h: any) => (
+            <div key={h.symbol} className="rounded-xl border border-accent/30 bg-accent/[0.06] p-3 text-sm">
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-semibold">{h.symbol} <Badge tone="accent">hedged</Badge></span>
+                <span className={`num ${tone(h.pnl)}`}>${fmtNum(h.pnl)} combined</span>
+              </div>
+              <div className="num mt-1 text-xs text-mute">
+                long ${fmtNum(h.long, 0)} · short ${fmtNum(h.short, 0)} · net {h.net >= 0 ? "long" : "short"} ${fmtNum(Math.abs(h.net), 0)} · margin ${fmtNum(h.margin, 0)}
+              </div>
+              <div className="mt-1 text-xs text-mute">While both sides are open, price moves mostly cancel out; fees and funding still apply to each side.</div>
+            </div>
+          ))}
+        </div>
+      )}
       {!rows.length ? <Empty>No open futures positions. Use the order form, or tap “Paper trade this” on the Futures page.</Empty> : (<>
         <div className="space-y-3 sm:hidden">
           {rows.map((p: any) => (
-            <div key={p.symbol} className="tile p-3">
+            <div key={p.key} className="tile p-3">
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <div className="font-semibold">{p.symbol}</div>
@@ -197,7 +230,7 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
         <div className="hidden overflow-x-auto sm:block"><table className="grid-table">
           <thead><tr><th>Coin</th><th>Side</th><th className="hidden text-right 2xl:table-cell">Size</th><th className="text-right">Entry</th><th className="text-right">Mark</th><th className="text-right">Liq.</th><th className="text-right">Margin</th><th className="text-right">P&L (ROE)</th><th className="text-right">SL / TP</th><th /></tr></thead>
           <tbody>{rows.map((p: any) => (
-            <tr key={p.symbol}>
+            <tr key={p.key}>
               <td className="font-medium">{p.symbol}</td>
               <td className={p.side > 0 ? "text-bull" : "text-bear"}>{p.side > 0 ? "LONG" : "SHORT"} {fmtNum(p.leverage, 1)}x</td>
               <td className="num hidden text-right 2xl:table-cell">${fmtNum(p.size, 0)}</td>
