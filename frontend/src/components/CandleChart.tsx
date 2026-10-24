@@ -68,7 +68,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     const precision = pricePrecision(last[4]);
     const priceFormat = { type: "price" as const, precision, minMove: 1 / 10 ** precision };
     const series = chart.addCandlestickSeries({
-      upColor: "#2ebd85", downColor: "#f0506e", wickUpColor: "#2ebd85", wickDownColor: "#f0506e", borderVisible: false, priceFormat,
+      upColor: "#0ecb81", downColor: "#f6465d", wickUpColor: "#0ecb81", wickDownColor: "#f6465d", borderVisible: false, priceFormat,
     });
     series.setData(candles.map((c) => ({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] })));
     seriesRef.current = series;
@@ -76,15 +76,15 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
 
     if (future.length) {
       const fs = chart.addCandlestickSeries({
-        upColor: "rgba(46,189,133,0.35)", downColor: "rgba(240,80,110,0.35)", wickUpColor: "rgba(46,189,133,0.35)",
-        wickDownColor: "rgba(240,80,110,0.35)", borderVisible: false, priceFormat, priceLineVisible: false, lastValueVisible: false,
+        upColor: "rgba(14,203,129,0.35)", downColor: "rgba(246,70,93,0.35)", wickUpColor: "rgba(14,203,129,0.35)",
+        wickDownColor: "rgba(246,70,93,0.35)", borderVisible: false, priceFormat, priceLineVisible: false, lastValueVisible: false,
       });
       fs.setData(future.map((c) => ({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] })));
     }
 
     const volume = chart.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "", priceLineVisible: false, lastValueVisible: false });
     volume.priceScale().applyOptions({ scaleMargins: { top: 0.86, bottom: 0 } });
-    volume.setData(candles.map((c) => ({ time: t(c[0]), value: c[5], color: c[4] >= c[1] ? "rgba(46,189,133,0.3)" : "rgba(240,80,110,0.3)" })));
+    volume.setData(candles.map((c) => ({ time: t(c[0]), value: c[5], color: c[4] >= c[1] ? "rgba(14,203,129,0.3)" : "rgba(246,70,93,0.3)" })));
 
     if (overlays?.ts) {
       const first = candles[0][0];
@@ -112,7 +112,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
       .filter((m) => m.ts >= first)
       .sort((a, b) => a.ts - b.ts)
       .map((m) => ({
-        time: t(m.ts), position: (m.up ? "belowBar" : "aboveBar") as "belowBar" | "aboveBar", color: m.up ? "#2ebd85" : "#f0506e",
+        time: t(m.ts), position: (m.up ? "belowBar" : "aboveBar") as "belowBar" | "aboveBar", color: m.up ? "#0ecb81" : "#f6465d",
         shape: (m.up ? "arrowUp" : "arrowDown") as "arrowUp" | "arrowDown", text: m.text,
       }));
     if (ms.length) series.setMarkers(ms);

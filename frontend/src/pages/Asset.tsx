@@ -37,16 +37,16 @@ export default function Asset() {
     const out: PriceLine[] = [];
     if (!ok) return out;
     if (showLevels) {
-      (a.levels?.zones?.resistance ?? []).slice(0, 3).forEach((z: any) => out.push({ price: z.mid, title: "Resistance", color: "rgba(240,80,110,0.75)", dashed: true }));
-      (a.levels?.zones?.support ?? []).slice(0, 3).forEach((z: any) => out.push({ price: z.mid, title: "Support", color: "rgba(46,189,133,0.75)", dashed: true }));
+      (a.levels?.zones?.resistance ?? []).slice(0, 3).forEach((z: any) => out.push({ price: z.mid, title: "Resistance", color: "rgba(246,70,93,0.75)", dashed: true }));
+      (a.levels?.zones?.support ?? []).slice(0, 3).forEach((z: any) => out.push({ price: z.mid, title: "Support", color: "rgba(14,203,129,0.75)", dashed: true }));
       (a.levels?.liquidity ?? []).slice(0, 4).forEach((l: any) => out.push({ price: l.level, title: l.kind === "high" ? "Liquidity ↑" : "Liquidity ↓", color: "rgba(232,179,57,0.6)", dashed: true }));
-      (a.levels?.supply_demand?.demand ?? []).slice(-1).forEach((z: any) => out.push({ price: z.high, title: "Demand", color: "rgba(46,189,133,0.45)" }));
-      (a.levels?.supply_demand?.supply ?? []).slice(-1).forEach((z: any) => out.push({ price: z.low, title: "Supply", color: "rgba(240,80,110,0.45)" }));
+      (a.levels?.supply_demand?.demand ?? []).slice(-1).forEach((z: any) => out.push({ price: z.high, title: "Demand", color: "rgba(14,203,129,0.45)" }));
+      (a.levels?.supply_demand?.supply ?? []).slice(-1).forEach((z: any) => out.push({ price: z.low, title: "Supply", color: "rgba(246,70,93,0.45)" }));
     }
     if (showPlan && setup?.valid) {
       out.push({ price: setup.ideal_entry, title: "Entry", color: "#5aa0ff" });
-      out.push({ price: setup.stop, title: "Stop", color: "#f0506e" });
-      setup.targets.forEach((t: any) => out.push({ price: t.price, title: t.name, color: "#2ebd85" }));
+      out.push({ price: setup.stop, title: "Stop", color: "#f6465d" });
+      setup.targets.forEach((t: any) => out.push({ price: t.price, title: t.name, color: "#0ecb81" }));
     }
     return out;
   }, [a, ok, showLevels, showPlan, setup]);

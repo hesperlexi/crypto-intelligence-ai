@@ -179,8 +179,8 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
   });
   const closeBtns = (p: any, wide = false) => (
     <div className={`flex gap-2 ${wide ? "" : "justify-end"}`}>
-      <button className={`btn px-3 py-1 text-xs ${wide ? "flex-1" : ""}`} disabled={busy} onClick={() => act(() => PF.close(p.key, 0.5), `Closed half of ${p.symbol} ${p.side > 0 ? "LONG" : "SHORT"}.`)}>Close ½</button>
-      <button className={`btn px-3 py-1 text-xs ${wide ? "flex-1 border-bear/40 text-bear" : ""}`} disabled={busy} onClick={() => act(() => PF.close(p.key, 1), `Closed ${p.symbol} ${p.side > 0 ? "LONG" : "SHORT"}.`)}>Close</button>
+      <button className={`btn py-1 text-xs ${wide ? "flex-1 px-3" : "px-2"}`} title="Close half" disabled={busy} onClick={() => act(() => PF.close(p.key, 0.5), `Closed half of ${p.symbol} ${p.side > 0 ? "LONG" : "SHORT"}.`)}>{wide ? "Close ½" : "½"}</button>
+      <button className={`btn py-1 text-xs ${wide ? "flex-1 border-bear/40 px-3 text-bear" : "px-2"}`} disabled={busy} onClick={() => act(() => PF.close(p.key, 1), `Closed ${p.symbol} ${p.side > 0 ? "LONG" : "SHORT"}.`)}>Close</button>
     </div>
   );
   return (

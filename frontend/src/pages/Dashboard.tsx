@@ -12,7 +12,7 @@ const HORIZONS = ["1H", "4H", "12H", "24H", "3D", "7D"];
 function heatColor(pct: number | null | undefined): string {
   if (!isNum(pct)) return "rgba(111,126,145,0.12)";
   const a = Math.min(0.55, 0.1 + Math.abs(pct) / 12);
-  return pct >= 0 ? `rgba(46,189,133,${a})` : `rgba(240,80,110,${a})`;
+  return pct >= 0 ? `rgba(14,203,129,${a})` : `rgba(246,70,93,${a})`;
 }
 
 export default function Dashboard() {

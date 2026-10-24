@@ -45,8 +45,8 @@ export default function Replay() {
   const fc = a?.forecast;
   const setup = a?.setup;
   const lines: PriceLine[] = setup?.valid ? [
-    { price: setup.ideal_entry, title: "Entry", color: "#5aa0ff" }, { price: setup.stop, title: "Stop", color: "#f0506e" },
-    ...setup.targets.map((t: any) => ({ price: t.price, title: t.name, color: "#2ebd85" })),
+    { price: setup.ideal_entry, title: "Entry", color: "#5aa0ff" }, { price: setup.stop, title: "Stop", color: "#f6465d" },
+    ...setup.targets.map((t: any) => ({ price: t.price, title: t.name, color: "#0ecb81" })),
   ] : [];
 
   return (

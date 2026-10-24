@@ -2,45 +2,61 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ---- themes: colours are RGB triplets so Tailwind opacity (bg-accent/15 …) works with every theme ---- */
-:root, [data-theme="midnight"] {
-  --ink: 8 11 16; --panel: 14 19 26; --raised: 20 27 36; --line: 30 40 53;
-  --text: 205 214 225; --mute: 111 126 145;
-  --bull: 46 189 133; --bear: 240 80 110; --warn: 232 179 57; --accent: 90 160 255;
-  --glass: 255 255 255;            /* overlay tint for borders and hovers */
-  --panel-bg: 255 255 255; --panel-a: 0.035; --bar-a: 0.7;
-  --glow1: rgba(90, 160, 255, 0.16); --glow2: rgba(192, 132, 252, 0.10); --glow3: rgba(46, 189, 133, 0.09);
-  --shadow: rgba(0, 0, 0, 0.55);
+/* ---- themes: colours are RGB triplets so Tailwind opacity (bg-accent/15 …) works with every theme ----
+   --accent-2   lighter partner of the accent (gradients, shine)
+   --on-accent  text colour on a filled accent button */
+:root, [data-theme="gold"] {
+  /* exchange-style dark: near-black, gold accent, vivid green / red */
+  --ink: 11 14 17; --panel: 24 26 32; --raised: 30 35 41; --line: 43 49 57;
+  --text: 234 236 239; --mute: 132 142 156;
+  --bull: 14 203 129; --bear: 246 70 93; --warn: 240 185 11; --accent: 240 185 11; --accent-2: 252 213 53;
+  --on-accent: 24 26 32;
+  --glass: 255 255 255;
+  --panel-bg: 30 35 41; --panel-a: 0.55; --bar-a: 0.72;
+  --glow1: rgba(240, 185, 11, 0.13); --glow2: rgba(252, 213, 53, 0.06); --glow3: rgba(14, 203, 129, 0.07);
+  --shadow: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
+[data-theme="midnight"] {
+  --ink: 6 10 20; --panel: 13 20 34; --raised: 20 30 48; --line: 32 45 68;
+  --text: 220 230 245; --mute: 120 138 165;
+  --bull: 34 211 145; --bear: 251 76 112; --warn: 250 191 36; --accent: 77 163 255; --accent-2: 125 211 252;
+  --on-accent: 6 12 24;
+  --panel-bg: 20 30 52; --panel-a: 0.5;
+  --glow1: rgba(77, 163, 255, 0.22); --glow2: rgba(168, 85, 247, 0.14); --glow3: rgba(34, 211, 145, 0.10);
+}
 [data-theme="aurora"] {
-  --ink: 12 9 21; --panel: 22 17 36; --raised: 30 24 48; --line: 45 37 68;
-  --text: 222 216 240; --mute: 134 124 163; --accent: 167 139 250;
-  --glow1: rgba(167, 139, 250, 0.20); --glow2: rgba(45, 212, 191, 0.12); --glow3: rgba(244, 114, 182, 0.10);
+  --ink: 10 7 20; --panel: 22 16 38; --raised: 32 24 54; --line: 52 40 80;
+  --text: 236 230 252; --mute: 150 138 182; --accent: 192 132 252; --accent-2: 45 212 191; --on-accent: 18 10 32;
+  --panel-bg: 34 24 58; --panel-a: 0.5;
+  --glow1: rgba(192, 132, 252, 0.26); --glow2: rgba(45, 212, 191, 0.16); --glow3: rgba(244, 114, 182, 0.14);
 }
 [data-theme="ocean"] {
-  --ink: 4 18 26; --panel: 8 29 41; --raised: 11 38 54; --line: 20 55 74;
-  --text: 207 230 238; --mute: 106 142 158; --accent: 34 211 238;
-  --glow1: rgba(34, 211, 238, 0.16); --glow2: rgba(59, 130, 246, 0.14); --glow3: rgba(16, 185, 129, 0.08);
+  --ink: 2 14 22; --panel: 6 28 42; --raised: 9 40 58; --line: 18 62 84;
+  --text: 214 240 248; --mute: 110 156 174; --accent: 34 211 238; --accent-2: 59 130 246; --on-accent: 2 18 28;
+  --panel-bg: 10 42 62; --panel-a: 0.5;
+  --glow1: rgba(34, 211, 238, 0.22); --glow2: rgba(59, 130, 246, 0.18); --glow3: rgba(16, 185, 129, 0.10);
 }
 [data-theme="graphite"] {
-  --ink: 17 18 20; --panel: 25 26 29; --raised: 33 35 38; --line: 46 48 53;
-  --text: 226 228 232; --mute: 133 137 145; --accent: 203 213 225;
-  --glow1: rgba(255, 255, 255, 0.05); --glow2: rgba(255, 255, 255, 0.03); --glow3: rgba(255, 255, 255, 0.02);
+  --ink: 16 17 19; --panel: 26 27 30; --raised: 36 38 42; --line: 52 55 60;
+  --text: 232 234 238; --mute: 140 145 154; --accent: 226 232 240; --accent-2: 255 255 255; --on-accent: 20 21 24;
+  --panel-bg: 40 42 46; --panel-a: 0.55;
+  --glow1: rgba(255, 255, 255, 0.07); --glow2: rgba(255, 255, 255, 0.04); --glow3: rgba(255, 255, 255, 0.03);
 }
 [data-theme="oled"] {
-  --ink: 0 0 0; --panel: 8 8 10; --raised: 16 17 20; --line: 30 32 38;
-  --text: 220 224 230; --mute: 115 122 135;
-  --panel-a: 0.04; --bar-a: 0.85;
-  --glow1: transparent; --glow2: transparent; --glow3: transparent;
+  --ink: 0 0 0; --panel: 8 8 10; --raised: 16 17 20; --line: 34 36 42;
+  --text: 226 230 236; --mute: 120 128 140; --accent: 240 185 11; --accent-2: 252 213 53; --on-accent: 0 0 0;
+  --panel-bg: 18 19 22; --panel-a: 0.7; --bar-a: 0.88;
+  --glow1: rgba(240, 185, 11, 0.05); --glow2: transparent; --glow3: transparent;
 }
 [data-theme="light"] {
-  --ink: 238 242 248; --panel: 255 255 255; --raised: 228 234 243; --line: 211 219 231;
-  --text: 17 24 39; --mute: 88 102 124;
-  --bull: 4 150 105; --bear: 214 40 70; --warn: 176 118 0; --accent: 37 99 235;
+  --ink: 245 246 248; --panel: 255 255 255; --raised: 234 236 240; --line: 220 224 230;
+  --text: 24 26 32; --mute: 112 122 138;
+  --bull: 3 166 109; --bear: 207 48 74; --warn: 201 148 0; --accent: 201 148 0; --accent-2: 240 185 11;
+  --on-accent: 24 26 32;
   --glass: 15 23 42;
-  --panel-bg: 255 255 255; --panel-a: 0.62; --bar-a: 0.72;
-  --glow1: rgba(37, 99, 235, 0.14); --glow2: rgba(168, 85, 247, 0.10); --glow3: rgba(16, 185, 129, 0.10);
+  --panel-bg: 255 255 255; --panel-a: 0.72; --bar-a: 0.78;
+  --glow1: rgba(240, 185, 11, 0.16); --glow2: rgba(59, 130, 246, 0.08); --glow3: rgba(14, 203, 129, 0.08);
   --shadow: rgba(15, 23, 42, 0.12);
   color-scheme: light;
 }
@@ -52,20 +68,52 @@ body {
   @apply bg-ink text-text font-sans antialiased;
   /* soft colour fields behind the glass panels */
   background-image:
-    radial-gradient(900px 520px at 8% -6%, var(--glow1), transparent 62%),
-    radial-gradient(760px 520px at 100% 8%, var(--glow2), transparent 60%),
-    radial-gradient(900px 640px at 50% 110%, var(--glow3), transparent 62%);
+    radial-gradient(1000px 560px at 10% -8%, var(--glow1), transparent 62%),
+    radial-gradient(820px 560px at 100% 6%, var(--glow2), transparent 60%),
+    radial-gradient(1000px 700px at 50% 112%, var(--glow3), transparent 62%),
+    linear-gradient(rgb(var(--glass) / 0.018) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--glass) / 0.018) 1px, transparent 1px);
+  background-size: auto, auto, auto, 44px 44px, 44px 44px;
   background-attachment: fixed;
   -webkit-tap-highlight-color: transparent;
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 .num { @apply font-mono tabular-nums; }
 .panel {
-  @apply rounded-2xl border border-glass/[0.08] backdrop-blur-xl;
-  background: rgb(var(--panel-bg) / var(--panel-a));
-  box-shadow: 0 1px 0 0 rgb(var(--glass) / 0.06) inset, 0 12px 40px -12px var(--shadow);
+  @apply relative rounded-2xl border border-transparent;
+  background:
+    linear-gradient(180deg, rgb(var(--glass) / 0.055), rgb(var(--glass) / 0) 42%),
+    rgb(var(--panel-bg) / var(--panel-a));
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  backdrop-filter: blur(22px) saturate(160%);
+  box-shadow:
+    0 1px 0 0 rgb(var(--glass) / 0.10) inset,
+    0 -1px 0 0 rgb(0 0 0 / 0.25) inset,
+    0 18px 50px -18px var(--shadow),
+    0 0 0 1px rgb(var(--accent) / 0.02);
 }
-.glass-bar { @apply border-glass/[0.07] backdrop-blur-2xl; background: rgb(var(--ink) / var(--bar-a)); }
+/* light-catching rim: brighter at the top-left, a touch of the accent at the bottom-right */
+.panel::before {
+  content: ""; position: absolute; inset: -1px; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: linear-gradient(140deg, rgb(var(--glass) / 0.28), rgb(var(--glass) / 0.06) 32%, rgb(var(--glass) / 0.03) 60%, rgb(var(--accent) / 0.35));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor; mask-composite: exclude;
+}
+/* glossy sheen across the top edge */
+.panel::after {
+  content: ""; position: absolute; left: 8%; right: 8%; top: 0; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(var(--glass) / 0.45), transparent);
+}
+.glass-bar {
+  @apply border-glass/[0.06];
+  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+  background: linear-gradient(180deg, rgb(var(--glass) / 0.04), transparent), rgb(var(--ink) / var(--bar-a));
+}
+header.glass-bar { box-shadow: 0 1px 0 0 rgb(var(--accent) / 0.0); position: sticky; }
+header.glass-bar::after {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgb(var(--accent) / 0.55), rgb(var(--accent-2) / 0.35), transparent);
+}
 .popover { background: rgb(var(--panel) / 0.97) !important; }
 /* grid / flex children may shrink below their content, so wide tables scroll inside their card */
 main .grid > * { min-width: 0; }
@@ -74,8 +122,19 @@ main .grid > * { min-width: 0; }
 .safe-top { padding-top: env(safe-area-inset-top); }
 .label { @apply text-[11px] uppercase tracking-[0.08em] text-mute; }
 .btn { @apply inline-flex items-center justify-center gap-1.5 rounded-lg border border-glass/10 bg-glass/[0.05] px-3 py-1.5 text-sm text-text transition-colors hover:border-accent/60 disabled:cursor-not-allowed disabled:opacity-50; }
-.btn-primary { @apply border-accent/50 bg-accent/15 text-accent hover:bg-accent/25; }
-.btn-on { @apply border-accent/60 bg-accent/15 text-accent; }
+.btn { box-shadow: 0 1px 0 0 rgb(var(--glass) / 0.07) inset; }
+.btn-primary {
+  border-color: transparent; color: rgb(var(--on-accent)); font-weight: 600;
+  background: linear-gradient(180deg, rgb(var(--accent-2)), rgb(var(--accent)));
+  box-shadow: 0 1px 0 0 rgb(255 255 255 / 0.35) inset, 0 6px 18px -6px rgb(var(--accent) / 0.65);
+}
+.btn-primary:hover { filter: brightness(1.07); border-color: transparent; }
+.btn-on {
+  @apply text-accent;
+  border-color: rgb(var(--accent) / 0.55);
+  background: linear-gradient(180deg, rgb(var(--accent) / 0.22), rgb(var(--accent) / 0.08));
+  box-shadow: 0 0 0 1px rgb(var(--accent) / 0.15), 0 4px 14px -6px rgb(var(--accent) / 0.55), 0 1px 0 0 rgb(255 255 255 / 0.12) inset;
+}
 .input { @apply w-full rounded-lg border border-glass/10 bg-ink/40 px-2.5 py-1.5 text-sm text-text outline-none placeholder:text-mute focus:border-accent/60; }
 table.grid-table { @apply w-full text-sm; }
 table.grid-table th { @apply whitespace-nowrap border-b border-line px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] text-mute; }

@@ -160,7 +160,7 @@ function Shell({ user }: { user: User }) {
   const side = a.nav === "side";
   const width = a.width === "wide" ? "max-w-none" : "max-w-[1600px]";
   const navCls = ({ isActive }: { isActive: boolean }) =>
-    `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-glass/[0.08] text-text shadow-[inset_0_1px_0_rgb(var(--glass)/0.06)]" : "text-mute hover:text-text"}`;
+    `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-accent/10 font-medium text-accent shadow-[inset_0_-2px_0_rgb(var(--accent)),inset_0_1px_0_rgb(var(--glass)/0.06)]" : "text-mute hover:text-text"}`;
   const brand = (
     <div className="flex min-w-0 items-center gap-2.5">
       <img src={`/icons/icon-192.png?v=${BUILD_ID}`} alt="" className="h-8 w-8" />

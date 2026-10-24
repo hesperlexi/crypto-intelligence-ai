@@ -2,13 +2,14 @@ import { createContext, ReactNode, useContext, useEffect, useState } from "react
 
 /** Themes and layout preferences. Saved per device (browser storage); everything works without it. */
 export const THEMES = [
-  { id: "midnight", name: "Midnight", swatch: ["#080b10", "#5aa0ff", "#c084fc"] },
+  { id: "gold", name: "Gold (exchange)", swatch: ["#0b0e11", "#f0b90b", "#0ecb81"] },
+  { id: "midnight", name: "Midnight", swatch: ["#060a14", "#4da3ff", "#a855f7"] },
   { id: "aurora", name: "Aurora", swatch: ["#0c0915", "#a78bfa", "#2dd4bf"] },
   { id: "ocean", name: "Ocean", swatch: ["#04121a", "#22d3ee", "#3b82f6"] },
   { id: "graphite", name: "Graphite", swatch: ["#111214", "#e5e7eb", "#9ca3af"] },
-  { id: "oled", name: "OLED black", swatch: ["#000000", "#5aa0ff", "#1f2937"] },
-  { id: "light", name: "Light", swatch: ["#eef2f8", "#2563eb", "#ffffff"] },
-  { id: "system", name: "Auto (device)", swatch: ["#080b10", "#eef2f8", "#5aa0ff"] },
+  { id: "oled", name: "OLED black", swatch: ["#000000", "#f0b90b", "#1f2937"] },
+  { id: "light", name: "Light", swatch: ["#f5f6f8", "#c99400", "#ffffff"] },
+  { id: "system", name: "Auto (device)", swatch: ["#0b0e11", "#f5f6f8", "#f0b90b"] },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]["id"];
 
@@ -19,8 +20,8 @@ export interface Appearance {
   width: "contained" | "wide";
   glass: boolean;                  // frosted blur (switch off on slow phones)
 }
-const DEFAULTS: Appearance = { theme: "midnight", nav: "top", density: "comfortable", width: "contained", glass: true };
-const KEY = "cia-appearance";
+const DEFAULTS: Appearance = { theme: "gold", nav: "top", density: "comfortable", width: "contained", glass: true };
+const KEY = "cia-appearance-v2";     // v2: the new Gold look becomes everyone's starting theme once
 
 function load(): Appearance {
   try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") }; } catch { return DEFAULTS; }
@@ -31,17 +32,17 @@ const darkQuery = () => (typeof window !== "undefined" && window.matchMedia ? wi
 /** The concrete theme in use ("system" resolves to Midnight or Light). */
 export function resolveTheme(t: ThemeId): Exclude<ThemeId, "system"> {
   if (t !== "system") return t;
-  return darkQuery()?.matches === false ? "light" : "midnight";
+  return darkQuery()?.matches === false ? "light" : "gold";
 }
 
 const Ctx = createContext<{ a: Appearance; resolved: string; set: (p: Partial<Appearance>) => void }>({
-  a: DEFAULTS, resolved: "midnight", set: () => {},
+  a: DEFAULTS, resolved: "gold", set: () => {},
 });
 
 export function AppearanceProvider({ children }: { children: ReactNode }) {
   const [a, setA] = useState<Appearance>(load);
   const [osDark, setOsDark] = useState(darkQuery()?.matches ?? true);
-  const resolved = a.theme === "system" ? (osDark ? "midnight" : "light") : a.theme;
+  const resolved = a.theme === "system" ? (osDark ? "gold" : "light") : a.theme;
 
   useEffect(() => {
     const q = darkQuery();
