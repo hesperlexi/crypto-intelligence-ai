@@ -98,23 +98,6 @@
         ]
       },
       {
-        "source": "/download/*.apk",
-        "headers": [
-          {
-            "key": "Content-Type",
-            "value": "application/vnd.android.package-archive"
-          },
-          {
-            "key": "Cache-Control",
-            "value": "no-cache"
-          },
-          {
-            "key": "Content-Disposition",
-            "value": "attachment; filename=\"crypto-intelligence-ai.apk\""
-          }
-        ]
-      },
-      {
         "source": "/.well-known/assetlinks.json",
         "headers": [
           {

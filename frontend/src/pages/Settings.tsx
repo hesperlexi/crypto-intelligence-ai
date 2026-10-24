@@ -206,13 +206,15 @@ function NotificationsCard() {
   );
 }
 
+const APK_URL = "https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk";
+
 function AndroidCard() {
   const [info, setInfo] = useState<any>(undefined);
   useEffect(() => { fetch(`/download/android.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then(setInfo).catch(() => setInfo(null)); }, []);
   return (
     <Card title="Android app">
       {info === undefined ? <p className="text-sm text-mute">Checking…</p> : info ? (<>
-        <a className="btn btn-primary w-full sm:w-auto" href="/download/crypto-intelligence-ai.apk" download>Download the Android app (APK)</a>
+        <a className="btn btn-primary w-full sm:w-auto" href={info.url ?? APK_URL}>Download the Android app (APK)</a>
         <p className="mt-2 text-xs text-mute">Version {info.version} · {(info.bytes / 1e6).toFixed(1)} MB</p>
       </>) : <p className="text-sm text-mute">The Android app is being built; it appears here after the next deploy.</p>}
       <Note>On your phone: download, open the file, and allow “install unknown apps” for your browser when Android asks. The app opens this site in Chrome, so it always shows the newest version without reinstalling; you only reinstall to pick up a new app icon. Sign in once with Google inside the app.</Note>

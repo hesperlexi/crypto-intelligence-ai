@@ -256,7 +256,7 @@ function Shell({ user }: { user: User }) {
               <span className="truncate">{user.email}</span>
               <button className="text-text" onClick={() => signOut(auth)}>Sign out</button>
             </div>
-            <a className="mx-2 mt-2 block rounded-lg border border-glass/10 px-3 py-2 text-center text-sm text-accent" href="/download/crypto-intelligence-ai.apk" download>⬇ Download Android app (APK)</a>
+            <a className="mx-2 mt-2 block rounded-lg border border-glass/10 px-3 py-2 text-center text-sm text-accent" href="https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk">⬇ Download Android app (APK)</a>
             <p className="px-2 pt-2 text-[11px] text-mute">Research tool, not financial advice. No real orders are ever placed.</p>
             <p className="px-2 pt-1 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
           </div>

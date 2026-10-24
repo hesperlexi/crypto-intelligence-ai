@@ -72,7 +72,17 @@ jobs:
           mkdir -p out/.well-known out/download
           cp app-release-signed.apk out/download/crypto-intelligence-ai.apk
           printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.hesper.cryptoai","sha256_cert_fingerprints":["%s"]}}]\n' "$SHA256_FINGERPRINT" > out/.well-known/assetlinks.json
-          echo "{\"version\": \"${ver}\", \"code\": ${GITHUB_RUN_NUMBER}, \"bytes\": $(stat -c%s out/download/crypto-intelligence-ai.apk)}" > out/download/android.json
+          url="https://github.com/${GITHUB_REPOSITORY}/releases/download/android/crypto-intelligence-ai.apk"
+          echo "{\"version\": \"${ver}\", \"code\": ${GITHUB_RUN_NUMBER}, \"bytes\": $(stat -c%s out/download/crypto-intelligence-ai.apk), \"url\": \"${url}\"}" > out/download/android.json
+      - name: Publish the APK on the repository's Releases page (the free Firebase plan does not host APK files)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view android > /dev/null 2>&1 || gh release create android --title "Android app" \
+            --notes "Crypto Intelligence AI for Android. Install the APK on your phone; it always opens the newest version of the app."
+          gh release upload android android/out/download/crypto-intelligence-ai.apk --clobber
+          gh release edit android --notes "Crypto Intelligence AI for Android, version $(python3 -c 'import json;print(json.load(open("android/out/download/android.json"))["version"])'). Install the APK on your phone; it always opens the newest version of the app."
+          rm android/out/download/crypto-intelligence-ai.apk
       - name: Save the build log for troubleshooting
         if: failure()
         run: |
