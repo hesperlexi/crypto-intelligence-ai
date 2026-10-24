@@ -22,8 +22,13 @@ function editing(): boolean {
   return !!el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.tagName === "SELECT" || el.isContentEditable);
 }
 
-export function reloadNow(build?: string) {
+export async function reloadNow(build?: string) {
   try { sessionStorage.setItem(GUARD, JSON.stringify({ b: build, t: Date.now() })); } catch { /* ignore */ }
+  try {   // bring in the new service worker first, so the reload is served entirely by the new version
+    const r = reg ?? (await navigator.serviceWorker?.getRegistration());
+    await r?.update();
+    r?.waiting?.postMessage("SKIP_WAITING");
+  } catch { /* ignore */ }
   location.reload();
 }
 
@@ -54,7 +59,7 @@ export async function checkForUpdate(manual = false): Promise<boolean> {
 }
 
 export function startUpdater() {
-  if (started || !import.meta.env?.PROD) return;
+  if (started || !import.meta.env.PROD) return;
   started = true;
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("/sw.js", { updateViaCache: "none" }).then((r) => { reg = r; }).catch(() => {});

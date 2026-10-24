@@ -8,9 +8,13 @@ const backend = process.env.VITE_BACKEND || "http://localhost:8000";
 
 // Version shown in the app. Every build gets its own id; the running app compares it with /version.json
 // and reloads itself when a newer deploy is live.
-const APP_VERSION = "1.2";
+// The base version is set here; every deploy adds its own build number (GitHub run number), so each update
+// shows a new version, e.g. 1.1.42.
+const BASE_VERSION = "1.1";
+const APP_VERSION = `${BASE_VERSION}.${process.env.GITHUB_RUN_NUMBER || "0"}`;
 const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 12);
 const BUILD_ID = `${(process.env.GITHUB_SHA || "local").slice(0, 7)}-${stamp}`;
+const V = encodeURIComponent(BUILD_ID);
 
 function versionFiles(): Plugin {
   return {
@@ -19,9 +23,23 @@ function versionFiles(): Plugin {
     generateBundle() {
       this.emitFile({ type: "asset", fileName: "version.json", source: JSON.stringify({ version: APP_VERSION, build: BUILD_ID }) });
     },
+    // icons, favicon and manifest get ?v=<build> so phones and browsers fetch the new files after every deploy
+    // (this is also what makes an installed Android app pick up a changed icon)
+    transformIndexHtml(html) {
+      return html.replace(/(href="\/(?:manifest\.webmanifest|favicon\.png|icons\/[^"?]+))"/g, `$1?v=${V}"`);
+    },
     writeBundle(opts) {
-      const sw = path.join(opts.dir || "dist", "sw.js");
+      const dir = opts.dir || "dist";
+      const sw = path.join(dir, "sw.js");
       if (fs.existsSync(sw)) fs.writeFileSync(sw, fs.readFileSync(sw, "utf8").split("__BUILD_ID__").join(BUILD_ID));
+      const mf = path.join(dir, "manifest.webmanifest");
+      if (fs.existsSync(mf)) {
+        const m = JSON.parse(fs.readFileSync(mf, "utf8"));
+        const bump = (src: string) => `${src.split("?")[0]}?v=${V}`;
+        m.icons = (m.icons || []).map((i: any) => ({ ...i, src: bump(i.src) }));
+        m.shortcuts = (m.shortcuts || []).map((sc: any) => ({ ...sc, icons: (sc.icons || []).map((i: any) => ({ ...i, src: bump(i.src) })) }));
+        fs.writeFileSync(mf, JSON.stringify(m, null, 2));
+      }
     },
   };
 }

@@ -29,6 +29,8 @@ jobs:
   deploy:
     needs: test
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
@@ -53,3 +55,25 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
           npx --yes firebase-tools@13 deploy --only hosting,firestore --project crypapp-6a9b9 --non-interactive
           echo "Live at https://crypapp-6a9b9.web.app"
+      - name: Check the live site serves this exact build (what the app's auto-update relies on)
+        run: |
+          want=$(cat frontend/dist/version.json)
+          ok=""
+          for i in $(seq 1 12); do
+            got=$(curl -fsS "https://crypapp-6a9b9.web.app/version.json?t=$(date +%s%N)" || true)
+            if [ "$got" = "$want" ]; then ok=1; break; fi
+            sleep 10
+          done
+          {
+            echo "deployed: $want"; echo "live:     $got"; echo
+            for u in / /futures /sw.js /version.json /manifest.webmanifest /icons/icon-512.png; do
+              echo "== $u"; curl -sSI "https://crypapp-6a9b9.web.app$u" | grep -iE "^(HTTP|cache-control|content-type)" ; done
+            echo "== manifest icons"; curl -fsS "https://crypapp-6a9b9.web.app/manifest.webmanifest" | grep -o '"src": *"[^"]*"' | head -3
+            echo "== update check present in the bundle"; grep -l "version.json" frontend/dist/assets/*.js | head -1
+          } > /tmp/live.txt
+          cat /tmp/live.txt
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports && cp /tmp/live.txt reports/live-check.txt \
+            && git add reports && git commit -qm "Live check $(date -u +%FT%H:%M)" && git push -q origin reports || true
+          if [ -z "$ok" ]; then echo "::error::The live site does not serve the new build yet"; exit 1; fi
+

@@ -26,7 +26,7 @@ import Replay from "./pages/Replay";
 import Scanner from "./pages/Scanner";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
-import { APP_VERSION, COPYRIGHT } from "./lib/version";
+import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 
 const NAV = [
   ["/", "Dashboard"],
@@ -71,7 +71,7 @@ function Login({ error }: { error: string | null }) {
   return (
     <div className="flex min-h-full items-center justify-center px-4">
       <div className="panel w-full max-w-sm p-7 text-center">
-        <img src="/icons/icon-512.png" alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
+        <img src={`/icons/icon-512.png?v=${BUILD_ID}`} alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
         <h1 className="text-xl font-semibold tracking-tight">Crypto Intelligence <span className="text-accent">AI</span></h1>
         <p className="mt-2 text-sm text-mute">Sign in with Google. New accounts send an access request to the owner.</p>
         <button className="btn btn-primary mt-5 w-full" onClick={() => signInWithPopup(auth, googleProvider).catch((e) => setErr(e.message))}>
@@ -119,7 +119,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
   return (
     <div className="flex min-h-full items-center justify-center px-4">
       <div className="panel w-full max-w-sm p-7 text-center">
-        <img src="/icons/icon-512.png" alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
+        <img src={`/icons/icon-512.png?v=${BUILD_ID}`} alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
         <h1 className="text-xl font-semibold tracking-tight">{role === "pending" ? "Request sent" : "No access"}</h1>
         <p className="mt-2 text-sm text-mute">
           {role === "pending"
@@ -137,7 +137,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
 function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={`border-t border-glass/[0.06] px-4 py-3 text-center text-xs text-mute ${className}`}>
-      <div>{COPYRIGHT} · Crypto Intelligence AI <span className="num">v{APP_VERSION}</span></div>
+      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span></div>
       <div className="mt-1 hidden md:block">
         Research tool, not financial advice. Forecasts are probabilities with uncertainty, never certainties. No real orders are placed. Demo bots and paper trading use virtual money.
       </div>
@@ -163,7 +163,7 @@ function Shell({ user }: { user: User }) {
     `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-glass/[0.08] text-text shadow-[inset_0_1px_0_rgb(var(--glass)/0.06)]" : "text-mute hover:text-text"}`;
   const brand = (
     <div className="flex min-w-0 items-center gap-2.5">
-      <img src="/icons/icon-192.png" alt="" className="h-8 w-8" />
+      <img src={`/icons/icon-192.png?v=${BUILD_ID}`} alt="" className="h-8 w-8" />
       <NavLink to="/" className="truncate text-[15px] font-semibold tracking-tight text-text">
         Crypto Intelligence <span className="text-accent">AI</span>
       </NavLink>
