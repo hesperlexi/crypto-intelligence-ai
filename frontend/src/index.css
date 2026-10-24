@@ -140,6 +140,10 @@ table.grid-table { @apply w-full text-sm; }
 table.grid-table th { @apply whitespace-nowrap border-b border-line px-3 py-2 text-left text-[11px] font-medium uppercase tracking-[0.08em] text-mute; }
 table.grid-table td { @apply whitespace-nowrap border-b border-line/60 px-3 py-2; }
 table.grid-table tbody tr:hover { @apply bg-glass/[0.04]; }
+/* column alignment: the header follows its numbers (the rule above would otherwise force headers left) */
+table.grid-table th.text-right, table.grid-table td.text-right { text-align: right; }
+table.grid-table th.text-center, table.grid-table td.text-center { text-align: center; }
+table.grid-table td.num, table.grid-table td .num { font-variant-numeric: tabular-nums; }
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-thumb { background: rgb(var(--line)); border-radius: 8px; }
 :focus-visible { outline: 2px solid rgb(var(--accent) / 0.6); outline-offset: 1px; }

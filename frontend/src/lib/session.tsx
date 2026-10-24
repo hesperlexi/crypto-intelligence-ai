@@ -5,7 +5,7 @@ import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { createContext, useContext } from "react";
 import { db } from "./firebase";
 
-export type Role = "loading" | "admin" | "member" | "pending" | "blocked";
+export type Role = "loading" | "admin" | "member" | "pending" | "expired" | "blocked";
 export interface Session { uid: string; email: string; name: string; role: Role }
 
 let current: Session | null = null;
@@ -22,10 +22,19 @@ async function probeAdmin(): Promise<boolean> {
   try { await getDoc(doc(db, "admin", "probe")); return true; } catch { return false; }
 }
 
+/** approved + no end date = permanent member (people approved before memberships existed). */
+export function roleOf(d: any): Role {
+  if (d.status === "blocked") return "blocked";
+  if (d.status !== "approved") return "pending";
+  return d.expires_at && d.expires_at <= Date.now() ? "expired" : "member";
+}
+
 /** Watches the account's role. New non-admin accounts file an access request automatically. */
 export function watchRole(user: User, cb: (role: Role) => void): () => void {
   let stop = () => {};
   let alive = true;
+  let last: any = null;
+  let timer: any = null;
   probeAdmin().then((admin) => {
     if (!alive) return;
     if (admin) { cb("admin"); return; }
@@ -38,8 +47,11 @@ export function watchRole(user: User, cb: (role: Role) => void): () => void {
         cb("pending");
         return;
       }
-      cb(d.status === "approved" ? "member" : d.status === "blocked" ? "blocked" : "pending");
+      last = d;
+      cb(roleOf(d));
     }, () => cb("blocked"));
+    // memberships end while the app is open too
+    timer = setInterval(() => { if (last) cb(roleOf(last)); }, 60_000);
   });
-  return () => { alive = false; stop(); };
+  return () => { alive = false; stop(); if (timer) clearInterval(timer); };
 }

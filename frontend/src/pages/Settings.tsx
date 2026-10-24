@@ -6,6 +6,7 @@ import { checkForUpdate } from "../lib/updater";
 import * as push from "../lib/push";
 import { myUid, useIsAdmin } from "../lib/session";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
+import { MembershipCard } from "../components/Membership";
 import { post, put, queueJob, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
 
@@ -27,7 +28,7 @@ function MemberSettings() {
       <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
-        <div className="space-y-4"><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
+        <div className="space-y-4"><MembershipCard /><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
       <Note>Coins, bots, the risk profile and the signal weights are managed by the app owner.</Note>
     </div>

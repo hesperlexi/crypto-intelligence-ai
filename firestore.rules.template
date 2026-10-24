@@ -4,7 +4,7 @@ rules_version = '2';
 //
 // Roles
 //   admin   - Google accounts listed in ADMIN_EMAILS: everything, including coins, bots, settings and users
-//   member  - anyone the admin approved (users/{uid}.status == 'approved'): reads the predictions, and has
+//   member  - approved by the admin and membership not ended (users/{uid}.expires_at): reads the predictions, and has
 //             their own paper accounts, alerts and notification devices
 //   pending - signed in and asked for access; can only see their own request
 service cloud.firestore {
@@ -15,10 +15,15 @@ service cloud.firestore {
     function isAdmin() {
       return signedIn() && request.auth.token.email.lower() in [__ADMIN_EMAILS__];
     }
+    // approved and the membership has not ended (no end date = approved before memberships existed)
+    function activeRecord(u) {
+      return u.status == 'approved'
+        && (!('expires_at' in u) || u.expires_at == null || u.expires_at > request.time.toMillis());
+    }
     function isMember() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(request.auth.uid))
-        && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.status == 'approved';
+        && activeRecord(get(/databases/$(database)/documents/users/$(request.auth.uid)).data);
     }
     function allowed() { return isAdmin() || isMember(); }
     function me() { return request.auth.uid; }
@@ -26,13 +31,19 @@ service cloud.firestore {
     // admin probe: the website reads this to know whether the signed-in account is an admin
     match /admin/{id}        { allow read: if isAdmin(); allow write: if false; }
 
-    // access requests and member records
+    // access requests, membership and payment proofs
     match /users/{uid} {
       allow read: if isAdmin() || (signedIn() && me() == uid);
       allow create: if signedIn() && me() == uid
         && request.resource.data.status == 'pending'
-        && request.resource.data.email == request.auth.token.email;
-      allow update, delete: if isAdmin();
+        && request.resource.data.email == request.auth.token.email
+        && (!('payment' in request.resource.data) || request.resource.data.payment.status == 'submitted');
+      // the person may only send (or replace) a payment proof; status, end date and history stay with the admin
+      allow update: if isAdmin() || (signedIn() && me() == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['payment'])
+        && request.resource.data.payment.status == 'submitted'
+        && (request.resource.data.payment.proof == null || request.resource.data.payment.proof.size() < 900000));
+      allow delete: if isAdmin();
     }
 
     // engine output; per-member alert views are private to that member
@@ -41,7 +52,7 @@ service cloud.firestore {
       allow write: if false;
     }
     // coins, bots, settings: everyone signed in may read, only the admin may change
-    match /config/{id}       { allow read: if allowed(); allow write: if isAdmin(); }
+    match /config/{id}       { allow read: if allowed() || (signedIn() && id == 'membership'); allow write: if isAdmin(); }
     // per-user small state (e.g. which alerts were read)
     match /user_state/{uid}  { allow read, write: if allowed() && (isAdmin() || me() == uid); }
 

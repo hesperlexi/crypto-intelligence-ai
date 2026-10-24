@@ -10,11 +10,38 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 2. **Android or desktop, from Chrome:** open the site, then menu → **Install app** (or **Add to Home screen**).
 3. **iPhone or iPad:** open the site in **Safari**, tap **Share → Add to Home Screen**, and always open it from that icon. On iOS, notifications only work this way.
 
-**Access.** New accounts see a "waiting for approval" screen until the app owner approves them on the **Users** page. After approval you are in immediately.
+**Access.** After signing in, new accounts see the membership screen: choose a plan, pay, and send the proof (section 2). The app opens by itself as soon as the owner approves your payment.
 
 **Members vs. admin.** Members see every prediction, Futures, Accuracy and the demo bots, can run backtests and replays, and get their own paper accounts, alerts and notifications. Only the app owner (admin) can change the coin list, bots, engine settings and users.
 
-## 2. Your first 10 minutes: setup checklist
+## 2. Membership plans and payment
+
+Access to the app is by membership. Choose the plan that suits you:
+
+| Plan | Price | Per month |
+| --- | --- | --- |
+| 1 month | **$15** | $15.00 |
+| 3 months | **$30** | $10.00 |
+| 6 months | **$55** | $9.17 |
+| 1 year | **$150** | $12.50 |
+
+**How to pay (about 2 minutes):**
+
+1. Sign in. On the membership screen, tap the plan you want.
+2. Open the **Binance app → Pay → Scan** and scan the QR code shown in the app (tap it to open it full size). Send the **exact amount** in USDT.
+3. Take a screenshot of the Binance **payment successful** screen, showing the amount and the order ID.
+4. Back in the app, tap **Upload screenshot**, and paste the **Binance order ID** (Binance → Pay → History → the payment). Press **Send proof**.
+5. The screen shows *Payment proof sent · waiting for check*. The owner checks the payment in Binance and approves it, and the app opens by itself.
+
+If a proof is not accepted, you see the reason on the same screen and can send it again.
+
+**Renewing.** **Settings → Membership** shows your plan, the date it ends and the days left. A banner appears in the last 7 days, and you get phone notifications 3 days and 1 day before the end. Tap **Renew / extend** and pay the same way. Renewing early never loses days: the new time is added after your current end date.
+
+**When a membership ends,** the app locks until you renew. Your paper accounts, alerts and settings are kept and come back as soon as you renew; alerts pause while the membership is inactive.
+
+> **Tip:** always use the order ID as well as the screenshot. It is the fastest way for the owner to find your payment.
+
+## 3. Your first 10 minutes: setup checklist
 
 Do these once and the app works for you in the background.
 
@@ -23,10 +50,10 @@ Do these once and the app works for you in the background.
 - ☐ **Turn on notifications:** **Settings → Notifications → Turn on notifications**, then press **Send a test notification**. The test comes on the engine's next run (within about 15 minutes).
 - ☐ **Choose a look:** **Settings → Appearance**. Gold is the default; there are other themes and layouts, and a compact density for small screens.
 - ☐ **Set up a paper account:** open **Paper**, type a **Starting balance** close to what you would really trade (e.g. 1,000 USDT) and press **Reset account**.
-- ☐ **Create one alert** for your favourite coin (section 6), so the app tells you when a setup appears.
-- ☐ **Open Accuracy** and note today's hit rates. This is your baseline for deciding how much to trust the models (section 9).
+- ☐ **Create one alert** for your favourite coin (section 7), so the app tells you when a setup appears.
+- ☐ **Open Accuracy** and note today's hit rates. This is your baseline for deciding how much to trust the models (section 10).
 
-## 3. How to read a coin's prediction
+## 4. How to read a coin's prediction
 
 Tap any coin to open its page. Read it top to bottom in this order:
 
@@ -40,22 +67,22 @@ Tap any coin to open its page. Read it top to bottom in this order:
 
 > **Rule of thumb:** act only when the decision is a confident call, at least two timeframes agree, and the reward to the take profit is at least 1.5× the risk to the stop loss.
 
-## 4. A daily routine that gets the most out of it
+## 5. A daily routine that gets the most out of it
 
 About 10 minutes a day is enough. Prices update every few seconds and predictions refresh regularly, so you do not need to watch constantly.
 
 | When | Where | What to do |
 | --- | --- | --- |
 | Morning (5 min) | **Dashboard** | Scan your coins for BUY/SELL calls. Ignore HOLDs. |
-| Morning | **Coin page** | For each candidate, check timeframe agreement and the trade plan (section 3). |
-| Morning | **Futures** | Check funding and the long/short ratio before going against the crowd (section 5). |
+| Morning | **Coin page** | For each candidate, check timeframe agreement and the trade plan (section 4). |
+| Morning | **Futures** | Check funding and the long/short ratio before going against the crowd (section 6). |
 | When notified | **Alerts** | Open the alert, re-check the coin page, then place the trade on paper first. |
 | Evening (3 min) | **Paper** | Review open positions; move stops only in your favour. |
 | Weekly (10 min) | **Accuracy**, **Bots** | Compare models and bots over the last week and month. Keep what works. |
 
 > **Golden rule:** a new strategy runs on paper for at least 2–4 weeks and 30+ trades before you even think about real money.
 
-## 5. Futures: long, short and leverage
+## 6. Futures: long, short and leverage
 
 The **Futures** page turns the same predictions into perpetual-futures calls for every coin. Each coin card shows:
 
@@ -74,7 +101,7 @@ Use the filter buttons to show only longs or shorts, and tap a card's paper butt
 2. Stay at or below the suggested leverage; 2–5× is plenty for crypto.
 3. Skip trades where funding is strongly against you, unless you will hold only a few hours.
 
-## 6. Alerts and phone notifications
+## 7. Alerts and phone notifications
 
 Alerts let the app watch the market for you. Open **Alerts → New alert**:
 
@@ -90,7 +117,7 @@ When it fires, you get a notification with the side, entry, stop loss, take prof
 
 **Notifications on your phone:** **Settings → Notifications → Turn on notifications**, allow them when asked, then **Send a test notification**. On iPhone, open the app from the Home Screen icon first. *(App owner, one time only: Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair, then paste the key in Settings → Notifications. Without it, notifications arrive only while the app is open in the background.)*
 
-## 7. Paper trading: practise with virtual money
+## 8. Paper trading: practise with virtual money
 
 Open **Paper** and choose the **Spot** or **Futures** tab. Every account is yours alone; nothing touches a real exchange.
 
@@ -107,7 +134,7 @@ Open **Paper** and choose the **Spot** or **Futures** tab. Every account is your
 
 **How to practise properly:** take only trades you would really take, at the real size; write down why you took each one and compare after 30 trades; reset the account only when you change strategy.
 
-## 8. Demo bots: proof of whether the predictions work
+## 9. Demo bots: proof of whether the predictions work
 
 The **Bots** page runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
@@ -122,7 +149,7 @@ The **Bots** page runs automatic demo traders with virtual money around the cloc
 3. Look at the **win rate after costs**, **profit factor** (above 1.2 is good) and **max drawdown** (could you live with that drop on real money?).
 4. Compare spot vs futures and confident-only vs all calls; follow the style that wins over months, not days.
 
-## 9. When to trust the models: the Accuracy page
+## 10. When to trust the models: the Accuracy page
 
 The **Accuracy** page is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
 
@@ -136,17 +163,19 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 
 > **Practical rule:** trade a coin and timeframe only when its out-of-sample accuracy is above 52%, its confident calls are better still, and live predictions agree.
 
-## 10. Backtest and Replay: test ideas on the past
+## 11. Backtest and Replay: test ideas on the past
 
 **Backtest** runs a strategy over past data with fees and slippage. Choose the coin, timeframe, period and strategy under **Inputs** and run it. Read the verdict (*Beats buy & hold* or not), net return, win rate, profit factor, Sharpe and max drawdown. A strategy that only wins before costs does not win.
 
 **Replay** is the best way to build trust. Under **Choose a moment**, pick a coin and a past date and time. The app shows exactly what it knew and forecast then, without future data (the **Look-ahead audit** proves it). Decide what you would have done, then press **Reveal what happened next**. Do 10–20 replays across calm, rising and falling markets.
 
-## 11. For the app owner (admin)
+## 12. For the app owner (admin)
 
 | Task | Where | How often |
 | --- | --- | --- |
-| Approve or remove people | **Users** | When someone asks |
+| Check payment proofs and approve members | **Users → To check** (you also get a notification) | When a proof arrives |
+| Extend, block or remove members | **Users** | As needed |
+| Change membership prices | **Users → Membership prices & payment** | Rarely |
 | Add, remove or pin coins | Dashboard **My coins**, or **Scanner → Watchlist** | When interests change |
 | Create, edit, pause or reset bots | **Bots** | Monthly review |
 | Retrain models | **Accuracy → Train all**, or **Retrain** on a coin page | After drift or big market changes |
@@ -154,7 +183,9 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 | Signal scoring weights | **Settings → Signal scoring weights → Fit weights** | Every few months |
 | Check the engine | **Health** | If data looks stale |
 
-## 12. Rules for getting the most out of it
+**Checking a payment:** on **Users → To check**, tap the screenshot to open it full size, then find the same amount and order ID in your Binance app (**Pay → History**). If it is there, pick the plan and press **Accept**: the membership starts now, or is added after the current end date for renewals. If not, press **Reject proof** and write the reason; the member sees it and can send again. The page header shows how many proofs are waiting.
+
+## 13. Rules for getting the most out of it
 
 1. **Let the app find setups; you make the decision.** A second opinion, not an autopilot.
 2. **Prefer confident calls with timeframe agreement.** Fewer trades, better trades.
@@ -167,11 +198,13 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 9. **Be extra careful around big news:** models trained on normal markets can be wrong in sudden shocks.
 10. **Expect losing streaks.** At 55% accuracy, five losses in a row will happen regularly.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
-| "Waiting for approval" after sign-in | The app owner must press **Approve** on the Users page. |
+| "Payment proof sent · waiting for check" | The owner checks Binance and approves; the app opens by itself. Make sure the amount and order ID are visible. |
+| My proof was rejected | Read the reason on the membership screen, fix it (exact amount, right screenshot, order ID) and send again. |
+| The app says my membership has ended | Renew on the same screen; your data is kept. |
 | Header shows **RECONNECTING** instead of **LIVE** | It reconnects on its own within seconds. If it stays, check your internet, then reload. |
 | "Insufficient data" or no forecast | New coins need the next engine run (about 15 minutes) and enough history. |
 | The app looks old after an update | Close and reopen the app, or **Settings → About → Check for updates**. The version is shown at the bottom. |

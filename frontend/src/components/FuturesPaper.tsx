@@ -215,20 +215,29 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
                   <div className={`num text-xs ${tone(p.u)}`}>{fmtPctRaw(p.roe, 1)} on margin</div>
                 </div>
               </div>
-              <div className="num mt-2 grid grid-cols-3 gap-2 text-xs">
-                <div><div className="text-mute">Entry</div>{fmtPrice(p.entry)}</div>
-                <div><div className="text-mute">Mark</div>{fmtPrice(p.mark)}</div>
-                <div><div className="text-mute">Liq.</div><span className="text-warn">{fmtPrice(p.liq)}</span></div>
-                <div><div className="text-mute">Margin</div>${fmtNum(p.margin, 0)}</div>
-                <div><div className="text-mute">Size</div>${fmtNum(p.size, 0)}</div>
-                <div><div className="text-mute">SL / TP</div>{p.stop ? fmtPrice(p.stop) : "—"} / {p.take ? fmtPrice(p.take) : "—"}</div>
-              </div>
+              <dl className="mt-3 grid grid-cols-2 gap-x-5 gap-y-1.5 border-t border-glass/[0.06] pt-2.5 text-xs">
+                {([
+                  ["Entry", fmtPrice(p.entry), ""],
+                  ["Mark", fmtPrice(p.mark), ""],
+                  ["Margin", `$${fmtNum(p.margin, 0)}`, ""],
+                  ["Liq. price", fmtPrice(p.liq), "text-warn"],
+                  ["Size", `$${fmtNum(p.size, 0)}`, ""],
+                  ["Stop-loss", p.stop ? fmtPrice(p.stop) : "—", p.stop ? "text-bear" : "text-mute"],
+                  ["Leverage", `${fmtNum(p.leverage, 1)}x`, ""],
+                  ["Take-profit", p.take ? fmtPrice(p.take) : "—", p.take ? "text-bull" : "text-mute"],
+                ] as const).map(([k, v, c]) => (
+                  <div key={k} className="flex items-baseline justify-between gap-2">
+                    <dt className="text-mute">{k}</dt>
+                    <dd className={`num text-right ${c}`}>{v}</dd>
+                  </div>
+                ))}
+              </dl>
               <div className="mt-3">{closeBtns(p, true)}</div>
             </div>
           ))}
         </div>
         <div className="hidden overflow-x-auto sm:block"><table className="grid-table">
-          <thead><tr><th>Coin</th><th>Side</th><th className="hidden text-right 2xl:table-cell">Size</th><th className="text-right">Entry</th><th className="text-right">Mark</th><th className="text-right">Liq.</th><th className="text-right">Margin</th><th className="text-right">P&L (ROE)</th><th className="text-right">SL / TP</th><th /></tr></thead>
+          <thead><tr><th>Coin</th><th>Side</th><th className="hidden text-right 2xl:table-cell">Size</th><th className="text-right">Entry</th><th className="text-right">Mark</th><th className="text-right">Liq.</th><th className="text-right">Margin</th><th className="text-right">P&L / ROE</th><th className="text-right">SL / TP</th><th className="text-right">Close</th></tr></thead>
           <tbody>{rows.map((p: any) => (
             <tr key={p.key}>
               <td className="font-medium">{p.symbol}</td>
@@ -238,9 +247,12 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
               <td className="num text-right">{fmtPrice(p.mark)}</td>
               <td className="num text-right text-warn">{fmtPrice(p.liq)}</td>
               <td className="num text-right">${fmtNum(p.margin)}</td>
-              <td className={`num text-right ${tone(p.u)}`}>{p.u != null ? `$${fmtNum(p.u)} (${fmtPctRaw(p.roe, 1)})` : DASH}</td>
-              <td className="num text-right text-xs leading-tight text-mute"><div>{p.stop ? fmtPrice(p.stop) : "—"}</div><div>{p.take ? fmtPrice(p.take) : "—"}</div></td>
-              <td>{closeBtns(p)}</td>
+              <td className={`num text-right leading-tight ${tone(p.u)}`}>{p.u != null ? <><div>${fmtNum(p.u)}</div><div className="text-xs">{fmtPctRaw(p.roe, 1)}</div></> : DASH}</td>
+              <td className="num text-right text-xs leading-tight">
+                <div className="flex justify-end gap-1.5"><span className="text-mute">SL</span><span className={p.stop ? "text-bear" : "text-mute"}>{p.stop ? fmtPrice(p.stop) : "—"}</span></div>
+                <div className="flex justify-end gap-1.5"><span className="text-mute">TP</span><span className={p.take ? "text-bull" : "text-mute"}>{p.take ? fmtPrice(p.take) : "—"}</span></div>
+              </td>
+              <td className="text-right">{closeBtns(p)}</td>
             </tr>
           ))}</tbody>
         </table></div>

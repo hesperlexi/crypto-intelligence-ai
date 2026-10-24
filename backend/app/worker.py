@@ -27,7 +27,7 @@ from .engine.signal import optimise_weights
 from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
-from .services import alerts, analysis, backtests, health, market, replay, scanner, tracking, training
+from .services import alerts, analysis, backtests, health, market, membership, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -107,6 +107,16 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         w = {k: max(0.0, float(v)) for k, v in doc["signal_weights"].items() if k in rt.signal_weights()}
         if sum(w.values()) > 0:
             rt.db.set_setting("signal_weights", w)
+    # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
+    users = dict(sink.list("users"))
+    now = now_ms()
+    inactive = membership.inactive_uids(users, now)
+    msgs, seen = membership.notifications(users, rt.db.get_setting("membership_notified", {}), now)
+    if msgs:
+        notes["membership_push"] = sink.send_push(msgs)
+    rt.db.set_setting("membership_notified", seen)
+    if inactive:
+        notes["inactive_members"] = len(inactive)
     # alert rules (website) -> local table, keeping the debounce state
     remote = dict(sink.list("alerts"))
     local = {a["id"]: a for a in rt.db.query("SELECT * FROM alerts")}
@@ -116,7 +126,7 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         if a.get("type") not in alerts.ALERT_TYPES or not a.get("symbol"):
             continue
         row = (a["type"], norm_symbol(a["symbol"]), a.get("timeframe", "4h"), dumps(a.get("params") or {}),
-               int(a.get("cooldown_s", 3600)), int(bool(a.get("enabled", True))))
+               int(a.get("cooldown_s", 3600)), int(bool(a.get("enabled", True)) and a.get("owner_uid") not in inactive))
         if aid in local:
             rt.db.execute("UPDATE alerts SET type = ?, symbol = ?, timeframe = ?, params = ?, cooldown_s = ?, enabled = ?, "
                           "user_id = ? WHERE id = ?", (*row, a.get("owner_uid") or USER, aid))

@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
@@ -27,6 +27,8 @@ import Scanner from "./pages/Scanner";
 import Settings from "./pages/Settings";
 import Users from "./pages/Users";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
+import { PaymentPanel, RenewBanner } from "./components/Membership";
+import { fmtDate, useMyRecord } from "./lib/membership";
 
 const NAV = [
   ["/", "Dashboard"],
@@ -111,24 +113,45 @@ export default function App() {
   if (!user) return <Login error={null} />;
   const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role };
   setSession(session);
-  if (role === "pending" || role === "blocked") return <AccessScreen user={user} role={role} />;
+  if (role === "pending" || role === "expired" || role === "blocked") return <AccessScreen user={user} role={role} />;
   return <SessionCtx.Provider value={session}><LiveProvider><Shell user={user} /></LiveProvider></SessionCtx.Provider>;
 }
 
 function AccessScreen({ user, role }: { user: User; role: Role }) {
+  const rec = useMyRecord();
+  const logo = <img src={`/icons/icon-512.png?v=${BUILD_ID}`} alt="Crypto Intelligence AI logo" className="mx-auto mb-3 h-20 w-20 drop-shadow-[0_8px_24px_rgb(var(--accent)/0.35)]" />;
+  if (role === "blocked") {
+    return (
+      <div className="flex min-h-full items-center justify-center px-4">
+        <div className="panel w-full max-w-sm p-7 text-center">
+          {logo}
+          <h1 className="text-xl font-semibold tracking-tight">No access</h1>
+          <p className="mt-2 text-sm text-mute">The account <span className="text-text">{user.email}</span> does not have access to this app. Ask the owner if you think this is a mistake.</p>
+          <button className="btn mt-5 w-full" onClick={() => signOut(auth)}>Use another account</button>
+          <p className="mt-5 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
+        </div>
+      </div>
+    );
+  }
+  const expired = role === "expired";
   return (
-    <div className="flex min-h-full items-center justify-center px-4">
-      <div className="panel w-full max-w-sm p-7 text-center">
-        <img src={`/icons/icon-512.png?v=${BUILD_ID}`} alt="Crypto Intelligence AI logo" className="mx-auto mb-4 h-24 w-24 drop-shadow-[0_8px_24px_rgba(56,189,248,0.35)]" />
-        <h1 className="text-xl font-semibold tracking-tight">{role === "pending" ? "Request sent" : "No access"}</h1>
-        <p className="mt-2 text-sm text-mute">
-          {role === "pending"
-            ? <>Your access request for <span className="text-text">{user.email}</span> is waiting for the owner's approval. This page opens the app by itself as soon as you are approved.</>
-            : <>The account <span className="text-text">{user.email}</span> does not have access to this app. Ask the owner if you think this is a mistake.</>}
-        </p>
-        {role === "pending" && <div className="mx-auto mt-5 h-1.5 w-24 overflow-hidden rounded-full bg-raised"><div className="h-full w-1/2 animate-pulse rounded-full bg-accent" /></div>}
-        <button className="btn mt-5 w-full" onClick={() => signOut(auth)}>Use another account</button>
-        <p className="mt-5 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
+    <div className="flex min-h-full items-start justify-center px-3 py-6 sm:items-center sm:px-4">
+      <div className="panel w-full max-w-2xl p-5 sm:p-7">
+        <div className="text-center">
+          {logo}
+          <h1 className="text-xl font-semibold tracking-tight">{expired ? "Your membership has ended" : <>Become a member of Crypto Intelligence <span className="text-accent">AI</span></>}</h1>
+          <p className="mx-auto mt-2 max-w-md text-sm text-mute">
+            {expired
+              ? <>Membership for <span className="text-text">{user.email}</span> ended on {fmtDate(rec?.expires_at)}. Renew below to continue: your paper accounts, alerts and settings are kept.</>
+              : <>Signed in as <span className="text-text">{user.email}</span>. Choose a plan, pay with Binance and send the proof. The app opens by itself as soon as the owner approves.</>}
+          </p>
+        </div>
+        <div className="mt-6">{rec === undefined ? <p className="text-center text-sm text-mute">Loading…</p> : <PaymentPanel record={rec} />}</div>
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-glass/[0.06] pt-4 text-xs text-mute">
+          <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">What you get: read the user manual (PDF)</a>
+          <button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button>
+        </div>
+        <p className="mt-3 text-center text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION} · Analysis and demo trading only, not financial advice.</p>
       </div>
     </div>
   );
@@ -147,7 +170,8 @@ function Footer({ className = "" }: { className?: string }) {
 
 function usePendingCount(admin: boolean) {
   const [n, setN] = useState(0);
-  useEffect(() => (admin ? onSnapshot(query(collection(db, "users"), where("status", "==", "pending")), (q) => setN(q.docs.length), () => setN(0)) : undefined), [admin]);
+  // waiting = new requests plus payment proofs (new members and renewals) not yet checked
+  useEffect(() => (admin ? onSnapshot(collection(db, "users"), (q) => setN(q.docs.filter((d) => { const u = d.data(); return u.status === "pending" || u.payment?.status === "submitted"; }).length), () => setN(0)) : undefined), [admin]);
   return n;
 }
 
@@ -206,6 +230,7 @@ function Shell({ user }: { user: User }) {
             </nav>
           )}
         </header>
+        {!admin && <RenewBanner />}
         <main className={`mx-auto w-full ${width} flex-1 px-3 py-4 sm:px-4`}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
