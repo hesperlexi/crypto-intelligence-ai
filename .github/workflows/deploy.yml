@@ -26,8 +26,63 @@ jobs:
         run: pip install -r requirements-torch.txt
       - run: python -m pytest -q
 
+  android:
+    # Android app (Trusted Web Activity): a real APK that opens the live site in Chrome, so it always shows the
+    # newest version; rebuilt on every deploy so a changed name or icon reaches the APK too.
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - name: Signing key (created once, kept privately in Firestore)
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          pip install --quiet firebase-admin
+          python3 scripts/android_key.py android/android.keystore
+      - name: Build the APK
+        working-directory: android
+        env:
+          BUBBLEWRAP_KEYSTORE_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+          BUBBLEWRAP_KEY_PASSWORD: ${{ env.KEYSTORE_PASSWORD }}
+        run: |
+          set -o pipefail
+          ver="1.1.${GITHUB_RUN_NUMBER}"
+          sed -e "s/__VERSION_NAME__/${ver}/g" -e "s/__VERSION_CODE__/${GITHUB_RUN_NUMBER}/" twa-manifest.template.json > twa-manifest.json
+          mkdir -p ~/.bubblewrap
+          echo "{\"jdkPath\": \"${JAVA_HOME}\", \"androidSdkPath\": \"${ANDROID_SDK_ROOT:-$ANDROID_HOME}\"}" > ~/.bubblewrap/config.json
+          yes | "${ANDROID_SDK_ROOT:-$ANDROID_HOME}/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+          npm install -g @bubblewrap/cli@1.21.0 > /dev/null
+          ( bubblewrap update --skipVersionUpgrade && bubblewrap build --skipPwaValidation ) 2>&1 | tee build.log
+          mkdir -p out/.well-known out/download
+          cp app-release-signed.apk out/download/crypto-intelligence-ai.apk
+          printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.hesper.cryptoai","sha256_cert_fingerprints":["%s"]}}]\n' "$SHA256_FINGERPRINT" > out/.well-known/assetlinks.json
+          echo "{\"version\": \"${ver}\", \"code\": ${GITHUB_RUN_NUMBER}, \"bytes\": $(stat -c%s out/download/crypto-intelligence-ai.apk)}" > out/download/android.json
+      - name: Save the build log for troubleshooting
+        if: failure()
+        run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          cp android/build.log /tmp/android-build.log 2>/dev/null || echo "no build log" > /tmp/android-build.log
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports \
+            && tail -c 60000 /tmp/android-build.log > reports/android-build.log && git add reports \
+            && git commit -qm "Android build log" && git push -q origin reports || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: android
+          path: android/out
+          include-hidden-files: true
+          retention-days: 7
+
   deploy:
-    needs: test
+    needs: [test, android]
+    if: always() && needs.test.result == 'success'
+
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -42,6 +97,12 @@ jobs:
         run: |
           npm install --no-audit --no-fund
           npm run build
+      - name: Add the Android app (if it built)
+        if: needs.android.result == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          name: android
+          path: frontend/dist
       - name: Generate Firestore security rules
         env:
           ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}

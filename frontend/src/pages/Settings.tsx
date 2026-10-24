@@ -27,7 +27,7 @@ function MemberSettings() {
       <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
-        <div className="space-y-4"><NotificationsCard /><AboutCard /></div>
+        <div className="space-y-4"><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
       <Note>Coins, bots, the risk profile and the signal weights are managed by the app owner.</Note>
     </div>
@@ -81,7 +81,7 @@ function AdminSettings() {
       {err && <ErrorBox error={err} />}
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
-        <div className="space-y-4"><NotificationsCard /><AboutCard /></div>
+        <div className="space-y-4"><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Risk profile">
@@ -203,5 +203,19 @@ function NotificationsCard() {
         <Note>iPhone / iPad: notifications work only for the app added to the Home Screen (Safari → Share → Add to Home Screen), iOS 16.4 or newer. Turn them on separately on each device.</Note>
       </Card>
     </section>
+  );
+}
+
+function AndroidCard() {
+  const [info, setInfo] = useState<any>(undefined);
+  useEffect(() => { fetch(`/download/android.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then(setInfo).catch(() => setInfo(null)); }, []);
+  return (
+    <Card title="Android app">
+      {info === undefined ? <p className="text-sm text-mute">Checking…</p> : info ? (<>
+        <a className="btn btn-primary w-full sm:w-auto" href="/download/crypto-intelligence-ai.apk" download>Download the Android app (APK)</a>
+        <p className="mt-2 text-xs text-mute">Version {info.version} · {(info.bytes / 1e6).toFixed(1)} MB</p>
+      </>) : <p className="text-sm text-mute">The Android app is being built; it appears here after the next deploy.</p>}
+      <Note>On your phone: download, open the file, and allow “install unknown apps” for your browser when Android asks. The app opens this site in Chrome, so it always shows the newest version without reinstalling; you only reinstall to pick up a new app icon. Sign in once with Google inside the app.</Note>
+    </Card>
   );
 }
