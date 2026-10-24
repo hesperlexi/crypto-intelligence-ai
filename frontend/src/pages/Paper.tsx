@@ -37,10 +37,10 @@ function SpotPaper() {
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const d = st.data;
 
-  const order = async (side: "BUY" | "SELL", qty?: number) => {
+  const order = async (side: "BUY" | "SELL", qty?: number, sym: string = symbol) => {
     try {
-      const r = await post<any>("/paper/order", qty != null ? { symbol, side, qty } : { symbol, side, notional: Number(amount) });
-      setMsg({ ok: true, text: `PAPER ${side} ${fmtNum(r.trade.qty, 6)} ${symbol} at ${fmtPrice(r.trade.price)} (fee $${fmtNum(r.trade.fee)})` });
+      const r = await post<any>("/paper/order", qty != null ? { symbol: sym, side, qty } : { symbol: sym, side, notional: Number(amount) });
+      setMsg({ ok: true, text: `PAPER ${side} ${fmtNum(r.trade.qty, 6)} ${sym} at ${fmtPrice(r.trade.price)} (fee $${fmtNum(r.trade.fee)})` });
       st.reload();
     } catch (e: any) {
       setMsg({ ok: false, text: e.message });
@@ -65,7 +65,11 @@ function SpotPaper() {
       {d && (
         <>
           <Card title="Virtual account">
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <div className="mb-3 flex items-end justify-between gap-3 sm:hidden">
+              <div><div className="label">Equity</div><div className="num text-2xl">${fmtNum(d.equity)}</div></div>
+              <div className={`num text-lg ${tone(d.return_pct)}`}>{fmtPctRaw(d.return_pct)}</div>
+            </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3 lg:grid-cols-6 [&>*:nth-child(-n+2)]:hidden sm:[&>*:nth-child(-n+2)]:block">
               <Stat label="Equity" value={`$${fmtNum(d.equity)}`} sub={`started with $${fmtNum(d.account.starting_balance)}`} />
               <Stat label="Return" value={fmtPctRaw(d.return_pct)} className={tone(d.return_pct)} />
               <Stat label="Cash" value={`$${fmtNum(d.cash)}`} />
@@ -79,15 +83,19 @@ function SpotPaper() {
               <span className="text-mute"> · compare rule-based and AI strategies on the Backtest page.</span>
             </div>
           </Card>
-          <div className="grid gap-4 lg:grid-cols-[22rem_1fr]">
+          <div className="grid grid-cols-1 gap-4 items-start lg:grid-rows-[auto_1fr] lg:grid-cols-[22rem_minmax(0,1fr)]">
+            <div className="lg:col-start-2 lg:row-start-1"><SpotPositions d={d} onClose={(s: string, q: number) => order("SELL", q, s)} /></div>
+            <div className="lg:col-start-1 lg:row-span-2 lg:row-start-1">
             <Card title="Virtual order">
               <div className="space-y-3">
-                <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols.length ? symbols : [symbol]} />
-                <div className="num text-2xl">{fmtPrice(tickers[symbol]?.last)}</div>
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-3">
+                  <SymbolSelect stacked value={symbol} onChange={setSymbol} symbols={symbols.length ? symbols : [symbol]} />
+                  <div className="pb-1 text-right"><div className="label">Live price</div><div className="num text-xl leading-tight">{fmtPrice(tickers[symbol]?.last)}</div></div>
+                </div>
                 <label className="block text-xs text-mute">Amount (USDT)<input className="input mt-1" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} /></label>
                 <div className="grid grid-cols-2 gap-2">
-                  <button className="btn border-bull/50 bg-bull/15 text-bull hover:bg-bull/25" onClick={() => order("BUY")}>Virtual BUY</button>
-                  <button className="btn border-bear/50 bg-bear/15 text-bear hover:bg-bear/25" onClick={() => order("SELL")}>Virtual SELL</button>
+                  <button className="btn border-bull/50 bg-bull/15 py-2.5 text-bull hover:bg-bull/25" onClick={() => order("BUY")}>Virtual BUY</button>
+                  <button className="btn border-bear/50 bg-bear/15 py-2.5 text-bear hover:bg-bear/25" onClick={() => order("SELL")}>Virtual SELL</button>
                 </div>
                 {held && <button className="btn w-full" onClick={() => order("SELL", held.qty)}>Close whole {symbol} position</button>}
                 {msg && <p className={`text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
@@ -98,20 +106,22 @@ function SpotPaper() {
                 </div>
               </div>
             </Card>
-            <div className="space-y-4">
-              <Card title="Positions">
-                {d.positions.length ? (
-                  <div className="overflow-x-auto"><table className="grid-table">
-                    <thead><tr><th>Asset</th><th className="text-right">Quantity</th><th className="text-right">Avg price</th><th className="text-right">Mark</th><th className="text-right">Value</th><th className="text-right">Unrealized</th><th className="text-right">%</th></tr></thead>
-                    <tbody>{d.positions.map((p: any) => { const mark = tickers[p.symbol]?.last ?? p.mark; const u = mark != null ? p.qty * (mark - p.avg_price) : null; return (
-                      <tr key={p.symbol}><td className="font-medium">{p.symbol}</td><td className="num text-right">{fmtNum(p.qty, 6)}</td><td className="num text-right">{fmtPrice(p.avg_price)}</td><td className="num text-right">{fmtPrice(mark)}</td>
-                        <td className="num text-right">${fmtNum(mark != null ? p.qty * mark : null)}</td><td className={`num text-right ${tone(u)}`}>${fmtNum(u)}</td><td className={`num text-right ${tone(u)}`}>{fmtPctRaw(mark != null ? (mark / p.avg_price - 1) * 100 : null)}</td></tr>); })}</tbody>
-                  </table></div>
-                ) : <Empty>No open positions</Empty>}
-              </Card>
+            </div>
+            <div className="lg:col-start-2">
               <Card title={`Trades (${d.trade_count})`}>
-                {d.trades.length ? (
-                  <div className="max-h-80 overflow-auto"><table className="grid-table">
+                {d.trades.length ? (<>
+                  <ul className="divide-y divide-glass/[0.06] sm:hidden">
+                    {d.trades.slice(0, 60).map((t: any) => (
+                      <li key={t.id} className="py-2.5">
+                        <div className="flex items-center justify-between gap-2">
+                          <span><span className={`font-semibold ${t.side === "BUY" ? "text-bull" : "text-bear"}`}>{t.side}</span> <span className="font-medium">{t.symbol}</span></span>
+                          {t.side === "SELL" && <span className={`num text-sm ${tone(t.realized_pnl)}`}>${fmtNum(t.realized_pnl)}</span>}
+                        </div>
+                        <div className="num mt-0.5 text-xs text-mute">{fmtTime(t.created_at)} · {fmtNum(t.qty, 6)} @ {fmtPrice(t.price)} · fee {fmtNum(t.fee)}</div>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="hidden max-h-80 overflow-auto sm:block"><table className="grid-table">
                     <thead><tr><th>Time</th><th>Mode</th><th>Asset</th><th>Side</th><th className="text-right">Quantity</th><th className="text-right">Fill</th><th className="text-right">Fee</th><th className="text-right">Slippage</th><th className="text-right">Realized</th></tr></thead>
                     <tbody>{d.trades.map((t: any) => (
                       <tr key={t.id}><td className="text-mute">{fmtTime(t.created_at)}</td><td><Badge tone="warn">{t.mode}</Badge></td><td>{t.symbol}</td><td className={t.side === "BUY" ? "text-bull" : "text-bear"}>{t.side}</td>
@@ -119,12 +129,51 @@ function SpotPaper() {
                         <td className={`num text-right ${tone(t.realized_pnl)}`}>{t.side === "SELL" ? fmtNum(t.realized_pnl) : "—"}</td></tr>
                     ))}</tbody>
                   </table></div>
-                ) : <Empty>No paper trades yet</Empty>}
+                </>) : <Empty>No paper trades yet</Empty>}
               </Card>
             </div>
           </div>
         </>
       )}
     </div>
+  );
+}
+
+function SpotPositions({ d, onClose }: { d: any; onClose: (symbol: string, qty: number) => void }) {
+  const { tickers } = useLive();
+  const rows = (d?.positions ?? []).map((p: any) => {
+    const mark = tickers[p.symbol]?.last ?? p.mark;
+    const u = mark != null ? p.qty * (mark - p.avg_price) : null;
+    return { ...p, mark, u, value: mark != null ? p.qty * mark : null, pct: mark != null ? (mark / p.avg_price - 1) * 100 : null };
+  });
+  return (
+    <Card title={`Positions${rows.length ? ` (${rows.length})` : ""}`}>
+      {!rows.length ? <Empty>No open positions</Empty> : (<>
+        <div className="space-y-3 sm:hidden">
+          {rows.map((p: any) => (
+            <div key={p.symbol} className="tile p-3">
+              <div className="flex items-start justify-between gap-2">
+                <div><div className="font-semibold">{p.symbol}</div><div className="num text-xs text-mute">{fmtNum(p.qty, 6)} coins</div></div>
+                <div className="text-right"><div className={`num text-lg ${tone(p.u)}`}>${fmtNum(p.u)}</div><div className={`num text-xs ${tone(p.u)}`}>{fmtPctRaw(p.pct)}</div></div>
+              </div>
+              <div className="num mt-2 grid grid-cols-3 gap-2 text-xs">
+                <div><div className="text-mute">Avg price</div>{fmtPrice(p.avg_price)}</div>
+                <div><div className="text-mute">Mark</div>{fmtPrice(p.mark)}</div>
+                <div><div className="text-mute">Value</div>${fmtNum(p.value)}</div>
+              </div>
+              <button className="btn mt-3 w-full py-1.5 text-xs" onClick={() => onClose(p.symbol, p.qty)}>Sell all {p.symbol}</button>
+            </div>
+          ))}
+        </div>
+        <div className="hidden overflow-x-auto sm:block"><table className="grid-table">
+          <thead><tr><th>Asset</th><th className="text-right">Quantity</th><th className="text-right">Avg price</th><th className="text-right">Mark</th><th className="text-right">Value</th><th className="text-right">Unrealized</th><th className="text-right">%</th><th /></tr></thead>
+          <tbody>{rows.map((p: any) => (
+            <tr key={p.symbol}><td className="font-medium">{p.symbol}</td><td className="num text-right">{fmtNum(p.qty, 6)}</td><td className="num text-right">{fmtPrice(p.avg_price)}</td><td className="num text-right">{fmtPrice(p.mark)}</td>
+              <td className="num text-right">${fmtNum(p.value)}</td><td className={`num text-right ${tone(p.u)}`}>${fmtNum(p.u)}</td><td className={`num text-right ${tone(p.u)}`}>{fmtPctRaw(p.pct)}</td>
+              <td className="text-right"><button className="btn px-2 py-0.5 text-xs" onClick={() => onClose(p.symbol, p.qty)}>Sell all</button></td></tr>
+          ))}</tbody>
+        </table></div>
+      </>)}
+    </Card>
   );
 }

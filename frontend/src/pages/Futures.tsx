@@ -45,14 +45,14 @@ export default function Futures() {
         <TfTabs value={tf} onChange={setTf} options={TFS} />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card title="Calls now"><div className="flex gap-6"><Stat label="Long" value={nLong} className="text-bull" /><Stat label="Short" value={nShort} className="text-bear" /><Stat label="No trade" value={all.length - nLong - nShort} /></div></Card>
-        <Card title="Live futures data" className="md:col-span-2">
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
+        <Card title="Calls now"><div className="flex gap-6"><Stat label="Long" value={nLong} className="text-bull" /><Stat label="Short" value={nShort} className="text-bear" /><Stat label="Wait" value={all.length - nLong - nShort} /></div></Card>
+        <Card title="Live futures data" className="col-span-2 order-last md:order-none">
           {mkt.data?.available ? <p className="text-sm">Funding, open interest and long/short ratios come live from Binance USDⓈ-M futures in your browser · updated {ago(mkt.data.fetched_at)}.</p>
             : <p className="text-sm text-warn">{mkt.loading ? "Loading Binance futures data…" : `Binance futures data not reachable from this device (${mkt.data?.reason ?? mkt.error ?? "unknown"}). Calls still work; funding uses the standard 0.01% per 8h.`}</p>}
           <Note>{v.data?.funding_source ? `Engine funding: ${v.data.funding_source}.` : ""}</Note>
         </Card>
-        <Card title="Practise"><div className="flex flex-col gap-2"><Link className="btn btn-primary" to="/paper?market=futures">Futures paper trading</Link><Link className="btn" to="/bots">Futures demo bots</Link></div></Card>
+        <Card title="Practise"><div className="flex flex-col gap-2 [&>a]:py-1.5 [&>a]:text-sm"><Link className="btn btn-primary" to="/paper?market=futures">Paper trading</Link><Link className="btn" to="/bots">Demo bots</Link></div></Card>
       </div>
 
       <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Filter">
@@ -91,14 +91,20 @@ function FuturesCard({ r, m }: { r: any; m?: any }) {
     nav(`/paper?${q}`);
   };
   return (
-    <Card title={<span className="flex items-center gap-2"><Link to={`/asset/${slug(r.symbol)}`} className="text-text hover:text-accent">{base(r.symbol)}</Link><span className="num text-mute normal-case">{fmtPrice(px)}</span></span>}
-      right={<Badge tone={actionTone(r.action)}>{r.action === "SHORT" ? "▼ " : r.action?.startsWith("LONG") ? "▲ " : ""}{r.action}</Badge>}>
+    <Card>
       <div className="space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <Link to={`/asset/${slug(r.symbol)}`} className="min-w-0 hover:text-accent">
+            <div className="text-lg font-semibold leading-tight">{base(r.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
+            <div className="num text-sm text-mute">{fmtPrice(px)}</div>
+          </Link>
+          <Badge tone={actionTone(r.action)}>{r.action === "SHORT" ? "▼ " : r.action?.startsWith("LONG") ? "▲ " : ""}{r.action}</Badge>
+        </div>
         <ProbBar up={r.p_up} neutral={r.p_neutral} down={r.p_down} />
         <div className="grid grid-cols-3 gap-3">
           <Stat label="Confidence" value={fmtProb(r.confidence)} />
           <Stat label="Lean" value={r.lean ?? DASH} className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""} />
-          <Stat label="Next bar" value={isNum(r.expected_return) ? fmtPctRaw(r.expected_return * 100) : DASH} className={tone(r.expected_return)} sub={r.edge_confirmed ? "edge confirmed" : "no confirmed edge"} />
+          <Stat label="Next bar" value={isNum(r.expected_return) ? fmtPctRaw(r.expected_return * 100) : DASH} className={tone(r.expected_return)} sub={r.edge_confirmed ? "edge ✓" : "no edge yet"} />
         </div>
         {r.side === 0 && r.decision_reason && <p className="text-xs text-mute">No trade: {r.decision_reason}</p>}
         {p ? (
@@ -106,8 +112,8 @@ function FuturesCard({ r, m }: { r: any; m?: any }) {
             <div className="mb-2 flex items-center justify-between"><span className="label">{p.valid ? "Trade plan" : "Plan (not valid yet)"} · {p.side}</span><span className="num text-xs text-mute">R:R 1:{isNum(p.risk_reward) ? p.risk_reward.toFixed(1) : DASH}</span></div>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1">
               <span className="text-mute">Entry</span><span className="num text-right">{fmtPrice(p.entry)}</span>
-              <span className="text-mute">Stop</span><span className="num text-right text-bear">{fmtPrice(p.stop)} <span className="text-mute">({fmtPctRaw(-p.risk_pct, 1, false)})</span></span>
-              {p.targets.map((t: any) => <Fragment key={t.name}><span className="text-mute">{t.name}</span><span className="num text-right text-bull">{fmtPrice(t.price)}{isNum(t.probability) && <span className="text-mute"> · {fmtProb(t.probability)} hit</span>}</span></Fragment>)}
+              <span className="text-mute">Stop <span className="text-xs">({fmtPctRaw(-p.risk_pct, 1, false)})</span></span><span className="num text-right text-bear">{fmtPrice(p.stop)}</span>
+              {p.targets.map((t: any) => <Fragment key={t.name}><span className="text-mute">{t.name}{isNum(t.probability) && <span className="text-xs"> · {fmtProb(t.probability)} hit</span>}</span><span className="num text-right text-bull">{fmtPrice(t.price)}</span></Fragment>)}
               <span className="text-mute">Suggested leverage</span><span className="num text-right">{p.suggested_leverage}x</span>
               <span className="text-mute">Liquidation at {p.suggested_leverage}x</span><span className="num text-right text-warn">{fmtPrice(p.liquidation_at_suggested)}</span>
               <span className="text-mute">Margin lost at stop</span><span className="num text-right">{fmtPctRaw(-p.margin_loss_at_stop_pct, 0, false)}</span>
@@ -115,14 +121,14 @@ function FuturesCard({ r, m }: { r: any; m?: any }) {
             {!p.valid && p.reason && <p className="mt-2 text-xs text-mute">{p.reason}</p>}
           </div>
         ) : null}
-        <div className="grid grid-cols-3 gap-3 text-sm">
-          <Stat label="Funding / 8h" value={isNum(funding) ? fmtPctRaw(funding * 100, 4) : DASH} className={tone(-(funding ?? 0))} sub={m?.listed === false ? "not listed on futures" : isNum(funding) ? (funding > 0 ? "longs pay" : "shorts pay") : undefined} />
-          <Stat label="Open interest 24h" value={isNum(m?.oi_change_24h) ? fmtPctRaw(m.oi_change_24h * 100, 1) : DASH} sub={isNum(m?.open_interest_usd) ? `$${fmtCompact(m.open_interest_usd)}` : undefined} />
-          <Stat label="Accounts long" value={isNum(m?.long_account_pct) ? `${m.long_account_pct.toFixed(0)}%` : DASH} sub={isNum(m?.long_short_ratio) ? `L/S ${m.long_short_ratio.toFixed(2)}` : undefined} />
+        <div className="grid grid-cols-3 items-start gap-3 text-sm">
+          <Stat label="Funding 8h" value={isNum(funding) ? fmtPctRaw(funding * 100, 4) : DASH} className={tone(-(funding ?? 0))} sub={m?.listed === false ? "not listed on futures" : isNum(funding) ? (funding > 0 ? "longs pay" : "shorts pay") : undefined} />
+          <Stat label="OI 24h" value={isNum(m?.oi_change_24h) ? fmtPctRaw(m.oi_change_24h * 100, 1) : DASH} sub={isNum(m?.open_interest_usd) ? `$${fmtCompact(m.open_interest_usd)}` : undefined} />
+          <Stat label="Longs" value={isNum(m?.long_account_pct) ? `${m.long_account_pct.toFixed(0)}%` : DASH} sub={isNum(m?.long_short_ratio) ? `L/S ${m.long_short_ratio.toFixed(2)}` : undefined} />
         </div>
-        <div className="flex flex-wrap gap-2">
-          <button className="btn btn-primary px-3 py-1 text-xs" onClick={trade}>Paper trade this</button>
-          <Link className="btn px-3 py-1 text-xs" to={`/asset/${slug(r.symbol)}`}>Full analysis</Link>
+        <div className="grid grid-cols-2 gap-2">
+          <button className="btn btn-primary py-2 text-sm" onClick={trade}>Paper trade this</button>
+          <Link className="btn py-2 text-sm" to={`/asset/${slug(r.symbol)}`}>Full analysis</Link>
         </div>
       </div>
     </Card>

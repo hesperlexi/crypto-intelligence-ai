@@ -67,6 +67,8 @@ body {
 }
 .glass-bar { @apply border-glass/[0.07] backdrop-blur-2xl; background: rgb(var(--ink) / var(--bar-a)); }
 .popover { background: rgb(var(--panel) / 0.97) !important; }
+/* grid / flex children may shrink below their content, so wide tables scroll inside their card */
+main .grid > * { min-width: 0; }
 .tile { @apply rounded-xl border border-glass/[0.07] bg-glass/[0.03]; }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top { padding-top: env(safe-area-inset-top); }

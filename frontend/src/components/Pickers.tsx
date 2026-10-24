@@ -13,7 +13,17 @@ export function useSymbols(): string[] {
   return (meta.data?.watchlist ?? []).map((w: any) => w.symbol);
 }
 
-export function SymbolSelect({ value, onChange, symbols }: { value: string; onChange: (s: string) => void; symbols: string[] }) {
+export function SymbolSelect({ value, onChange, symbols, stacked = false }: { value: string; onChange: (s: string) => void; symbols: string[]; stacked?: boolean }) {
+  if (stacked) {
+    // form layout: label above a full-width select, like the other order-form fields
+    return (
+      <label className="block text-xs text-mute">Asset
+        <select className="input mt-1 h-10 text-base" value={value} onChange={(e) => onChange(e.target.value)}>
+          {symbols.map((s) => <option key={s} value={s}>{s}</option>)}
+        </select>
+      </label>
+    );
+  }
   return (
     <label className="flex items-center gap-2 text-sm">
       <span className="label">Asset</span>
