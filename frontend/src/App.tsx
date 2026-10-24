@@ -242,7 +242,7 @@ function Shell({ user }: { user: User }) {
       </div>
 
       {/* phone navigation */}
-      <nav className="glass-bar safe-bottom fixed inset-x-0 bottom-0 z-40 border-t md:hidden" aria-label="Main sections">
+      <nav className="glass-bar safe-bottom fixed inset-x-0 bottom-0 z-50 border-t md:hidden" aria-label="Main sections">
         <div className="grid grid-cols-5">
           {PRIMARY.map(([to, label, icon]) => (
             <NavLink key={to} to={to} end={to === "/"} onClick={() => setMore(false)}
@@ -257,9 +257,11 @@ function Shell({ user }: { user: User }) {
         </div>
       </nav>
       {more && (
-        <div className="fixed inset-0 z-30 md:hidden" onClick={() => setMore(false)}>
-          <div className="absolute inset-0 bg-ink/50 backdrop-blur-sm" />
-          <div className="panel safe-bottom animate-in absolute inset-x-3 bottom-20 p-2" onClick={(e) => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[45] md:hidden" onClick={() => setMore(false)}>
+          <div className="absolute inset-0 bg-ink/60 backdrop-blur-sm" />
+          {/* positioned wrapper: .panel sets its own position, so the sheet's placement lives on this div */}
+          <div className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-7rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div className="panel animate-in p-2">
             <div className="grid grid-cols-2 gap-1">
               {nav.filter(([to]) => !PRIMARY.some((p) => p[0] === to)).map(([to, label]) => (
                 <NavLink key={to} to={to} onClick={() => setMore(false)} className={navCls}>{label}</NavLink>
@@ -272,6 +274,7 @@ function Shell({ user }: { user: User }) {
             <a className="mx-2 mt-2 block rounded-lg border border-glass/10 px-3 py-2 text-center text-sm text-accent" href="https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk">⬇ Download Android app (APK)</a>
             <p className="px-2 pt-2 text-[11px] text-mute">Research tool, not financial advice. No real orders are ever placed.</p>
             <p className="px-2 pt-1 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
+          </div>
           </div>
         </div>
       )}
