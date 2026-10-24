@@ -18,7 +18,7 @@ self.addEventListener("fetch", (e) => {
   if (req.method !== "GET") return;
   const url = new URL(req.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/__/")) return;   // never touch data or auth
-  if (req.mode === "navigate") {
+  if (req.mode === "navigate" && !/\.[a-z0-9]+$/i.test(url.pathname)) {   // files such as /manual.pdf are left to the browser
     // pages: network first (always the newest deploy), cached shell when offline
     e.respondWith(fetch(req, { cache: "no-store" }).then((res) => {
       const copy = res.clone();

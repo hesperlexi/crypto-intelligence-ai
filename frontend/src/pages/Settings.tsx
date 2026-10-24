@@ -27,7 +27,7 @@ function MemberSettings() {
       <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
-        <div className="space-y-4"><NotificationsCard /><AndroidCard /><AboutCard /></div>
+        <div className="space-y-4"><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
       <Note>Coins, bots, the risk profile and the signal weights are managed by the app owner.</Note>
     </div>
@@ -81,7 +81,7 @@ function AdminSettings() {
       {err && <ErrorBox error={err} />}
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
-        <div className="space-y-4"><NotificationsCard /><AndroidCard /><AboutCard /></div>
+        <div className="space-y-4"><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Risk profile">
@@ -140,6 +140,22 @@ function AdminSettings() {
         </div>
       </Card>
     </div>
+  );
+}
+
+function ManualCard() {
+  const href = `/manual.pdf?v=${BUILD_ID}`;
+  return (
+    <Card title="User manual">
+      <div className="flex items-center gap-3">
+        <img src="/icons/icon-192.png" alt="" className="h-12 w-12 rounded-xl" />
+        <p className="text-sm text-mute">Step-by-step guide: reading signals, futures, alerts, paper trading, demo bots and how far to trust the models.</p>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2">
+        <a className="btn btn-primary" href={href} target="_blank" rel="noopener">Open manual</a>
+        <a className="btn" href={href} download="Crypto-Intelligence-AI-User-Manual.pdf">Download PDF</a>
+      </div>
+    </Card>
   );
 }
 

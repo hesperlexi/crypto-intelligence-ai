@@ -137,7 +137,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
 function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={`border-t border-glass/[0.06] px-4 py-3 text-center text-xs text-mute ${className}`}>
-      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span></div>
+      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual (PDF)</a></div>
       <div className="mt-1 hidden md:block">
         Research tool, not financial advice. Forecasts are probabilities with uncertainty, never certainties. No real orders are placed. Demo bots and paper trading use virtual money.
       </div>
