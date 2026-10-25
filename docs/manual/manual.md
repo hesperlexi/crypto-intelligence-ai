@@ -12,7 +12,9 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 **Access.** After signing in, new accounts see the membership screen: choose a plan, pay, and send the proof (section 2). The app opens by itself as soon as the owner approves your payment.
 
-**Members vs. admin.** Members see every prediction, Futures, Accuracy and the demo bots, can run backtests and replays, and get their own paper accounts, alerts and notifications. Only the app owner (admin) can change the coin list, bots, engine settings and users.
+**What you get.** Every prediction and trade signal (spot and futures), Accuracy and the demo bots, backtests and replays, your own practice accounts, alerts and phone notifications, and up to 5 coins of your own.
+
+**Need help?** Use **Contact support** (in **Settings → Help & support**, the **More** menu or the page footer) to email the app owner. Your account email is added for you.
 
 ## 2. Membership plans and payment
 
@@ -39,7 +41,7 @@ If a proof is not accepted, you see the reason on the same screen and can send i
 
 **Renewing.** **Settings → Membership** shows your plan, the date it ends and the days left. A banner appears in the last 7 days, and you get phone notifications 3 days and 1 day before the end. Tap **Renew / extend** and pay the same way. Renewing early never loses days: the new time is added after your current end date.
 
-**When a membership ends,** the app locks until you renew. Your paper accounts, alerts and settings are kept and come back as soon as you renew; alerts pause while the membership is inactive.
+**When a membership ends,** the app locks until you renew. Your practice accounts, alerts and settings are kept and come back as soon as you renew; alerts pause while the membership is inactive.
 
 > **Tip:** always use the order ID as well as the screenshot. It is the fastest way for the owner to find your payment.
 
@@ -48,16 +50,28 @@ If a proof is not accepted, you see the reason on the same screen and can send i
 Do these once and the app works for you in the background.
 
 - ☐ **Install the app** on your phone (section 1).
-- ☐ **Add your own coins:** the **My coins** card on the Dashboard shows the shared coins plus your own. Tap **+ Add coin**, search any coin listed on Binance (e.g. PEPE, SOL, TON) and add up to **5 coins of your own**. Each gets a live price straight away, and signals, AI forecasts, alerts and paper trading within about 15–30 minutes. Remove one with ✕ in edit mode. (Admin: coins you add there are tracked for everyone.)
+- ☐ **Add your own coins:** the **My coins** card on the Dashboard shows the shared coins plus your own. Tap **+ Add coin**, search any coin listed on Binance (e.g. PEPE, SOL, TON) and add up to **5 coins of your own**. Each gets a live price straight away, and signals, AI forecasts, alerts and practice trading within about 15–30 minutes. Remove one with ✕ in edit mode. The button shows how many you can still add.
 - ☐ **Turn on notifications:** **Settings → Notifications → Turn on notifications**, then press **Send a test notification**. The test comes on the engine's next run (within about 15 minutes).
 - ☐ **Choose a look:** **Settings → Appearance**. Gold is the default; there are other themes and layouts, and a compact density for small screens.
-- ☐ **Set up a paper account:** open **Paper**, type a **Starting balance** close to what you would really trade (e.g. 1,000 USDT) and press **Reset account**.
+- ☐ **Set up your practice account:** open **Trade → Assets**, type a **Starting balance** close to what you would really trade (e.g. 1,000 USDT) and press **Reset account**.
 - ☐ **Create one alert** for your favourite coin (section 7), so the app tells you when a setup appears.
 - ☐ **Open Accuracy** and note today's hit rates. This is your baseline for deciding how much to trust the models (section 10).
 
-## 4. How to read a coin's prediction
+## 4. Trade signals: long, short, buy or wait
 
-Tap any coin to open its page. Read it top to bottom in this order:
+Open **Signals** (bottom bar on phones). Pick **Futures** or **Spot** and a timeframe (1H and 4H are the most useful), then tap a coin. You get one clear card:
+
+- **The call:** **GO LONG** / **GO SHORT** (futures), **BUY** / **SELL / STAY OUT** (spot), or **WAIT** when there is no trade. *On pullback* means: wait for a small dip to the entry before buying.
+- **Entry:** the ideal price and the entry zone. A line under the call tells you whether the price is inside the zone right now, or which price to wait for.
+- **Stop-loss** and **Take-profit 1 / 2 / 3**, each with the % distance; futures also show the **suggested leverage** and the **liquidation price**.
+- **The price ladder** puts every level in order, with the live price slotted in, so you see at a glance how far you are from the stop and the targets.
+- **Confidence** and the **up / down** chances behind the call.
+
+Buttons: **Practise this trade** opens it in the trading screen with stop and target filled in, the bell sets an alert, **Copy** copies the plan as text. The **All coins** list shows every coin's call with entry, stop and first target. The same card appears at the top of each coin's page and on the **Futures** page.
+
+### Reading the full coin page
+
+Tap any coin to open its page. Below the trade call, read it top to bottom in this order:
 
 1. **Decision: BUY, BUY ON PULLBACK, SELL or HOLD.** BUY ON PULLBACK means the direction is up but the price is stretched, so wait for the entry in the trade plan instead of chasing. HOLD means no edge worth trading. Most of the time HOLD is the right answer, and doing nothing is fine.
 2. **Confidence / probability up.** The chance the models give that the price is higher at the end of the horizon. 50% is a coin flip. Around 55–60% is a real lean for crypto; anything that claims 80%+ should make you more careful, not less.
@@ -75,25 +89,21 @@ About 10 minutes a day is enough. Prices update every few seconds and prediction
 
 | When | Where | What to do |
 | --- | --- | --- |
-| Morning (5 min) | **Dashboard** | Scan your coins for BUY/SELL calls. Ignore HOLDs. |
+| Morning (5 min) | **Signals** | See which coins have a GO LONG, GO SHORT or BUY call. Ignore WAIT. |
 | Morning | **Coin page** | For each candidate, check timeframe agreement and the trade plan (section 4). |
-| Morning | **Futures** | Check funding and the long/short ratio before going against the crowd (section 6). |
-| When notified | **Alerts** | Open the alert, re-check the coin page, then place the trade on paper first. |
-| Evening (3 min) | **Paper** | Review open positions; move stops only in your favour. |
+| Morning | **Futures** | Check funding before going against the crowd (section 6). |
+| When notified | **Alerts** | Open the alert, re-check the coin page, then practise the trade first. |
+| Evening (3 min) | **Trade** | Review open positions; move stops only in your favour. |
 | Weekly (10 min) | **Accuracy**, **Bots** | Compare models and bots over the last week and month. Keep what works. |
 
-> **Golden rule:** a new strategy runs on paper for at least 2–4 weeks and 30+ trades before you even think about real money.
+> **Golden rule:** a new strategy runs on the practice account for at least 2–4 weeks and 30+ trades before you even think about real money.
 
 ## 6. Futures: long, short and leverage
 
-The **Futures** page turns the same predictions into perpetual-futures calls for every coin. Each coin card shows:
+The **Futures** page shows every coin's futures call as a clear trade card: **GO LONG**, **GO SHORT** or **WAIT**, with the entry zone, stop-loss, take-profits, suggested leverage, liquidation price, confidence and funding. Use the filter buttons to show only trade calls, longs or shorts, and tap **Practise this trade** to open the setup in the trading screen.
 
-- **Action:** LONG, LONG ON PULLBACK, SHORT or NO TRADE. *Lean* shows which way the models tilt even when there is no trade.
-- **Suggested leverage and liquidation price** for the setup's stop. The liquidation price must always be further away than your stop.
-- **Funding 8h:** positive funding means longs pay shorts every 8 hours. High positive funding plus a crowded long ratio often comes before a drop; the opposite before a squeeze up.
-- **OI 24h (open interest)** and **longs/shorts:** rising OI with rising price confirms a move; rising OI with falling price means new shorts are piling in.
-
-Use the filter buttons to show only longs or shorts, and tap a card's paper button to open the setup straight in futures paper trading.
+- **Suggested leverage and liquidation price:** the liquidation price must always be further away than your stop.
+- **Funding 8h:** positive funding means longs pay shorts every 8 hours. High positive funding plus a crowded long side often comes before a drop; the opposite before a squeeze up.
 
 **Leverage & liquidation calculator** (bottom of the page). Enter entry, stop, leverage, balance and risk per trade. It gives the position size, margin, loss at the stop and the **max safe leverage**. If it says *liquidation BEFORE your stop*, lower the leverage.
 
@@ -117,22 +127,27 @@ Alerts let the app watch the market for you. Open **Alerts → New alert**:
 
 When it fires, you get a notification with the side, entry, stop loss, take profit and confidence, and it is listed under **Fired alerts**. The engine checks every 15 minutes, so allow a few minutes of delay and check the price before entering.
 
-**Notifications on your phone:** **Settings → Notifications → Turn on notifications**, allow them when asked, then **Send a test notification**. On iPhone, open the app from the Home Screen icon first. *(App owner, one time only: Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair, then paste the key in Settings → Notifications. Without it, notifications arrive only while the app is open in the background.)*
+**Notifications on your phone:** **Settings → Notifications → Turn on notifications**, allow them when asked, then **Send a test notification**. On iPhone, open the app from the Home Screen icon first.
 
-## 8. Paper trading: practise with virtual money
+## 8. Trade (paper trading): practise like on an exchange
 
-Open **Paper** and choose the **Spot** or **Futures** tab. Every account is yours alone; nothing touches a real exchange.
+Open **Trade** (bottom bar on phones). It works like Binance or MEXC, with virtual USDT; nothing touches a real exchange.
 
-**Spot:** pick a coin, enter an amount in USDT and press **Virtual BUY** or **Virtual SELL**. Positions show live profit and loss; **Sell all** closes one. Fees and slippage are included so results are realistic.
+**The screen:**
 
-**Futures:**
+- **Pair bar:** tap the coin to switch pairs; it shows the last price, 24h change and volume. Switch between **Futures** and **Spot** on the right.
+- **AI call strip:** the app's current call for this coin. **Use this plan** fills in the side, leverage, a limit at the entry price, the stop-loss and the take-profit for you.
+- **Chart:** live candles (1m to 1D). Your entry, take-profit, stop-loss, liquidation price and open limit orders are drawn on it.
+- **Order book** (computer): live bids and asks.
+- **Order form:** **Limit** (buy or sell at your price; it fills when the market gets there) or **Market** (now). Set the size with the amount box or the **25 / 50 / 75 / 100%** buttons.
 
-1. Choose the coin, **Long** or **Short**, the **Margin (USDT)** and the **leverage**.
-2. Fill in **Stop-loss** and **Take-profit**. They are optional, but always set them; the app warns you if your stop is beyond the liquidation price.
-3. Open the position. Stop loss, take profit, liquidation and funding are applied automatically.
-4. Manage it from the position card: **Close ½** to bank half the profit, or **Close**.
+**Futures:** choose the **leverage** (1x–50x), tick **TP / SL** and enter both prices, then press **Buy / Long** or **Sell / Short**. The form shows the position size, the estimated liquidation price and the fee. **One-way / Hedge** switches whether you can hold a long and a short on the same coin at once.
 
-**Hedge mode.** At the top of the futures account, switch **One-way** to **Hedge** to hold a long and a short on the same coin at once, e.g. to protect a long during an expected dip without closing it. In one-way mode, opening the opposite side is blocked until you close the first.
+**Spot:** choose **Buy** or **Sell**, enter the total (USDT) or the amount of coins, and press the button.
+
+**Below the chart:** **Positions** (live profit, ROE, liquidation; edit **TP / SL**, **Close 50%**, **Close all**), **Open orders** (cancel any time, the funds come back), **Order history**, and **Assets** (equity, return, fees, win rate, and **Reset account** with your own starting balance).
+
+Stop-loss, take-profit, liquidation and limit orders are checked on every 15-minute candle, also while the app is closed. Fees: spot 0.1%, futures 0.05% market and 0.02% limit, plus funding every 8 hours.
 
 **How to practise properly:** take only trades you would really take, at the real size; write down why you took each one and compare after 30 trades; reset the account only when you change strategy.
 
@@ -171,40 +186,24 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 
 **Replay** is the best way to build trust. Under **Choose a moment**, pick a coin and a past date and time. The app shows exactly what it knew and forecast then, without future data (the **Look-ahead audit** proves it). Decide what you would have done, then press **Reveal what happened next**. Do 10–20 replays across calm, rising and falling markets.
 
-## 12. For the app owner (admin)
-
-| Task | Where | How often |
-| --- | --- | --- |
-| Check payment proofs and approve members | **Users → To check** (you also get a notification) | When a proof arrives |
-| Extend, block or remove members | **Users** | As needed |
-| Change membership prices | **Users → Membership prices & payment** | Rarely |
-| Add, remove or pin coins | Dashboard **My coins**, or **Scanner → Watchlist** | When interests change |
-| Create, edit, pause or reset bots | **Bots** | Monthly review |
-| Retrain models | **Accuracy → Train all**, or **Retrain** on a coin page | After drift or big market changes |
-| Risk profile | **Settings → Risk profile** | Once |
-| Signal scoring weights | **Settings → Signal scoring weights → Fit weights** | Every few months |
-| Check the engine | **Health** | If data looks stale |
-
-**Checking a payment:** on **Users → To check**, tap the screenshot to open it full size, then find the same amount and order ID in your Binance app (**Pay → History**). If it is there, pick the plan and press **Accept**: the membership starts now, or is added after the current end date for renewals. If not, press **Reject proof** and write the reason; the member sees it and can send again. The page header shows how many proofs are waiting.
-
-## 13. Rules for getting the most out of it
+## 12. Rules for getting the most out of it
 
 1. **Let the app find setups; you make the decision.** A second opinion, not an autopilot.
 2. **Prefer confident calls with timeframe agreement.** Fewer trades, better trades.
 3. **Always use the stop loss** from the trade setup, and never move it further away.
 4. **Risk 1–2% of your account per trade.** Size from the stop, not from leverage.
-5. **Respect HOLD and NO TRADE.** Not trading is a position.
-6. **Prove it on paper first:** 30+ trades and 2–4 weeks before risking real money.
+5. **Respect WAIT and NO TRADE.** Not trading is a position.
+6. **Prove it on the practice account first:** 30+ trades and 2–4 weeks before risking real money.
 7. **Check the bots and Accuracy weekly** and follow what the numbers say, not what you hope.
-8. **Watch funding and the long/short ratio on futures;** avoid joining a crowded side.
+8. **Watch funding on futures;** avoid joining a crowded side.
 9. **Be extra careful around big news:** models trained on normal markets can be wrong in sudden shocks.
 10. **Expect losing streaks.** At 55% accuracy, five losses in a row will happen regularly.
 
-## 14. Troubleshooting
+## 13. Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
-| "Payment proof sent · waiting for check" | The owner checks Binance and approves; the app opens by itself. Make sure the amount and order ID are visible. |
+| "Payment proof sent · waiting for check" | The owner checks Binance and approves; the app opens by itself. Make sure the amount and order ID are visible. Waiting long? Use **Contact support**. |
 | My proof was rejected | Read the reason on the membership screen, fix it (exact amount, right screenshot, order ID) and send again. |
 | The app says my membership has ended | Renew on the same screen; your data is kept. |
 | Header shows **RECONNECTING** instead of **LIVE** | It reconnects on its own within seconds. If it stays, check your internet, then reload. |
@@ -215,5 +214,6 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 | No notifications when the app is closed | Allow notifications for the app in phone settings and make sure battery saver is not blocking it. On iPhone, open the app from the Home Screen icon. |
 | Alerts arrive late | The engine runs every 15 minutes; this is expected. |
 | Futures order refused: "opposite position" | Switch to **Hedge** mode, or close the other side first. |
+| Anything else | Use **Contact support** in Settings, the More menu or the footer, and describe what you see. |
 
 > **Important:** the app is for analysis and practice. It is not financial advice, all trading in it uses virtual money, and past accuracy does not guarantee future results.

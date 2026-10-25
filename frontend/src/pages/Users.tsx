@@ -5,6 +5,7 @@ import { db } from "../lib/firebase";
 import { fmtTime } from "../lib/format";
 import { daysLeft, fmtDate, grantMembership, MembershipConfig, planLabel, rejectPayment, saveMembershipConfig, useMembershipConfig } from "../lib/membership";
 import { roleOf, useIsAdmin } from "../lib/session";
+import { Limits, saveLimits, useLimits } from "../lib/limits";
 
 type Filter = "todo" | "members" | "ending" | "expired" | "blocked" | "all";
 
@@ -53,7 +54,7 @@ export default function Users() {
           {list.map((u) => <UserCard key={u.id} u={u} cfg={cfg} act={act} onZoom={setZoom} />)}
         </div>
       )}
-      <PricesCard cfg={cfg} act={act} />
+      <div className="grid gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
       <Note>Members pay with your Binance QR and upload a screenshot and/or the Binance order ID. Check the payment arrived in your Binance app (Pay → History) before approving. Approving adds the months after the current end date, so early renewals never lose days. When a membership ends, that person is locked out automatically until they renew; their paper accounts and alerts are kept. People approved before memberships existed have no end date until you give them a plan.</Note>
       {zoom && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)} role="dialog" aria-label="Payment proof">
@@ -139,7 +140,7 @@ function PricesCard({ cfg, act }: { cfg: MembershipConfig; act: (fn: () => Promi
   const c = draft ?? cfg;
   const setPrice = (m: number, v: string) => setDraft({ ...c, plans: c.plans.map((p) => (p.months === m ? { ...p, price: Number(v) || 0 } : p)) });
   return (
-    <Card title="Membership prices & payment">
+    <Card title="Membership prices, payment & support">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {c.plans.map((p) => (
           <label key={p.months} className="text-xs text-mute">{p.label} (USD)
@@ -150,10 +151,46 @@ function PricesCard({ cfg, act }: { cfg: MembershipConfig; act: (fn: () => Promi
       <label className="mt-3 block text-xs text-mute">Payment note shown to members
         <textarea className="input mt-1 min-h-[60px]" value={c.pay_note} onChange={(e) => setDraft({ ...c, pay_note: e.target.value })} />
       </label>
+      <label className="mt-3 block text-xs text-mute">Support email members can contact
+        <input className="input mt-1" type="email" inputMode="email" value={c.support_email} onChange={(e) => setDraft({ ...c, support_email: e.target.value.trim() })} />
+      </label>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <button className="btn btn-primary" disabled={!draft} onClick={() => act(async () => { await saveMembershipConfig(c); setDraft(null); }, "Prices saved.")}>Save prices</button>
+        <button className="btn btn-primary" disabled={!draft} onClick={() => act(async () => {
+          if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(c.support_email)) throw new Error("Enter a valid support email address.");
+          await saveMembershipConfig(c); setDraft(null);
+        }, "Saved.")}>Save</button>
         <img src={c.qr_url} alt="Your Binance Pay QR" className="h-16 rounded-md bg-white p-0.5" />
         <span className="text-xs text-mute">Your Binance Pay QR shown to members.</span>
+      </div>
+    </Card>
+  );
+}
+
+function LimitsCard({ act, total }: { act: (fn: () => Promise<any>, ok: string | ((res: any) => string)) => void; total: number }) {
+  const cur = useLimits();
+  const [draft, setDraft] = useState<Limits | null>(null);
+  const l = draft ?? cur;
+  const step = (k: keyof Limits, d: number, max: number) => setDraft({ ...l, [k]: Math.max(0, Math.min(max, Number(l[k]) + d)) });
+  const field = (k: keyof Limits, label: string, help: string, max: number) => (
+    <div>
+      <div className="text-xs text-mute">{label}</div>
+      <div className="mt-1 flex items-center gap-2">
+        <button className="btn h-10 w-10 justify-center p-0 text-lg" aria-label={`Decrease ${label}`} onClick={() => step(k, -1, max)}>−</button>
+        <input className="input num w-20 text-center" inputMode="numeric" aria-label={label} value={l[k]} onChange={(e) => setDraft({ ...l, [k]: Number(e.target.value.replace(/\D/g, "")) || 0 })} />
+        <button className="btn h-10 w-10 justify-center p-0 text-lg" aria-label={`Increase ${label}`} onClick={() => step(k, 1, max)}>+</button>
+      </div>
+      <p className="mt-1 text-xs text-mute">{help}</p>
+    </div>
+  );
+  return (
+    <Card title="Limits">
+      <div className="grid gap-4 sm:grid-cols-2">
+        {field("member_coin_limit", "Coins each member can add", "0 turns personal coins off. Lowering it keeps their first coins.", 50)}
+        {field("member_coins_max", "Member coins in total", "On top of your own list. More coins = longer engine runs.", 200)}
+      </div>
+      <div className="mt-4 flex flex-wrap items-center gap-3">
+        <button className="btn btn-primary" disabled={!draft} onClick={() => act(async () => { await saveLimits(l); setDraft(null); }, "Limits saved. The engine uses them on its next run.")}>Save limits</button>
+        <span className="text-xs text-mute">Users: no limit · {total} signed up so far</span>
       </div>
     </Card>
   );

@@ -25,22 +25,24 @@ import Paper from "./pages/Paper";
 import Replay from "./pages/Replay";
 import Scanner from "./pages/Scanner";
 import Settings from "./pages/Settings";
+import Signals from "./pages/Signals";
 import Users from "./pages/Users";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
-import { PaymentPanel, RenewBanner } from "./components/Membership";
+import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
 import Landing from "./components/Landing";
 import { fmtDate, useMyRecord } from "./lib/membership";
 
 const NAV = [
   ["/", "Dashboard"],
+  ["/signals", "Signals"],
   ["/scanner", "Scanner"],
   ["/futures", "Futures"],
   ["/accuracy", "Accuracy"],
   ["/bots", "Demo bots"],
   ["/backtest", "Backtest"],
   ["/replay", "Replay"],
-  ["/history", "Signals"],
+  ["/history", "Signal log"],
   ["/paper", "Paper"],
   ["/alerts", "Alerts"],
   ["/health", "Health"],
@@ -48,7 +50,7 @@ const NAV = [
 ] as const;
 
 // phone bottom bar: four main sections + "More" for the rest
-const PRIMARY: [string, string, string][] = [["/", "Home", "◧"], ["/futures", "Futures", "⇅"], ["/bots", "Bots", "⚙"], ["/paper", "Paper", "◎"]];
+const PRIMARY: [string, string, string][] = [["/", "Home", "◧"], ["/signals", "Signals", "◆"], ["/futures", "Futures", "⇅"], ["/paper", "Trade", "◎"]];
 
 function StatusPill({ user }: { user: User }) {
   const { connected, feed } = useLive();
@@ -112,6 +114,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
           <h1 className="text-xl font-semibold tracking-tight">No access</h1>
           <p className="mt-2 text-sm text-mute">The account <span className="text-text">{user.email}</span> does not have access to this app. Ask the owner if you think this is a mistake.</p>
           <button className="btn mt-5 w-full" onClick={() => signOut(auth)}>Use another account</button>
+          <SupportLink className="mt-3 block text-sm text-accent hover:underline" />
           <p className="mt-5 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
         </div>
       </div>
@@ -133,7 +136,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
         <div className="mt-6">{rec === undefined ? <p className="text-center text-sm text-mute">Loading…</p> : <PaymentPanel record={rec} />}</div>
         <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-glass/[0.06] pt-4 text-xs text-mute">
           <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">What you get: read the user manual (PDF)</a>
-          <button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button>
+          <span className="flex items-center gap-4"><SupportLink className="text-accent hover:underline" label="Problem? Contact support" /><button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button></span>
         </div>
         <p className="mt-3 text-center text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION} · Analysis and demo trading only, not financial advice.</p>
       </div>
@@ -144,7 +147,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
 function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={`border-t border-glass/[0.06] px-4 py-3 text-center text-xs text-mute ${className}`}>
-      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual (PDF)</a></div>
+      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual (PDF)</a> · <SupportLink className="text-accent hover:underline" /></div>
       <div className="mt-1 hidden md:block">
         Research tool, not financial advice. Forecasts are probabilities with uncertainty, never certainties. No real orders are placed. Demo bots and paper trading use virtual money.
       </div>
@@ -222,6 +225,7 @@ function Shell({ user }: { user: User }) {
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/asset/:symbol" element={<Asset />} />
+            <Route path="/signals" element={<Signals />} />
             <Route path="/scanner" element={<Scanner />} />
             <Route path="/futures" element={<Futures />} />
             <Route path="/accuracy" element={<Accuracy />} />
@@ -271,6 +275,7 @@ function Shell({ user }: { user: User }) {
               <span className="truncate">{user.email}</span>
               <button className="text-text" onClick={() => signOut(auth)}>Sign out</button>
             </div>
+            <SupportLink className="mx-2 mt-2 block rounded-lg border border-glass/10 px-3 py-2 text-center text-sm" label="✉ Contact support" />
             <a className="mx-2 mt-2 block rounded-lg border border-glass/10 px-3 py-2 text-center text-sm text-accent" href="https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk">⬇ Download Android app (APK)</a>
             <p className="px-2 pt-2 text-[11px] text-mute">Research tool, not financial advice. No real orders are ever placed.</p>
             <p className="px-2 pt-1 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>

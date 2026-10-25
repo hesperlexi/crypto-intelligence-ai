@@ -196,27 +196,29 @@ class FirestoreSink(BaseSink):
             return {"sent": 0, "devices": 0, "reason": "no device has turned notifications on"}
         admins = {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()}
         sent, dead, errors = 0, set(), []
-        for m in messages[:30]:
+        for m in messages:                     # no cap on messages or members; FCM takes up to 500 devices per call
             to = m.get("uid")
             # a member's alert goes to that member's devices only; an admin alert to the admins' devices
             tokens = [t for t, uid, email in devices if (uid == to if to else (not admins or email in admins or uid is None))]
             if not tokens:
                 continue
             data = {k: str(v)[:900] for k, v in m.items() if v is not None and k != "uid"}
-            msg = messaging.MulticastMessage(
-                tokens=tokens, data=data,
-                webpush=messaging.WebpushConfig(headers={"Urgency": "high", "TTL": "86400"}))
-            try:
-                res = messaging.send_each_for_multicast(msg)
-            except Exception as exc:
-                errors.append(f"{type(exc).__name__}: {exc}"[:200])
-                break
-            sent += res.success_count
-            for tok, r in zip(tokens, res.responses):
-                if not r.success and type(r.exception).__name__ in ("UnregisteredError", "SenderIdMismatchError"):
-                    dead.add(tok)
-                elif not r.success:
-                    errors.append(f"{type(r.exception).__name__}: {r.exception}"[:200])
+            for i in range(0, len(tokens), 500):
+                chunk = tokens[i:i + 500]
+                msg = messaging.MulticastMessage(
+                    tokens=chunk, data=data,
+                    webpush=messaging.WebpushConfig(headers={"Urgency": "high", "TTL": "86400"}))
+                try:
+                    res = messaging.send_each_for_multicast(msg)
+                except Exception as exc:
+                    errors.append(f"{type(exc).__name__}: {exc}"[:200])
+                    continue
+                sent += res.success_count
+                for tok, r in zip(chunk, res.responses):
+                    if not r.success and type(r.exception).__name__ in ("UnregisteredError", "SenderIdMismatchError"):
+                        dead.add(tok)
+                    elif not r.success:
+                        errors.append(f"{type(r.exception).__name__}: {r.exception}"[:200])
         for tok in dead:                       # devices that uninstalled / revoked permission
             try:
                 self.fs.document(f"push_tokens/{tok}").delete()

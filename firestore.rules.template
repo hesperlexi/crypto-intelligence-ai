@@ -52,12 +52,18 @@ service cloud.firestore {
       allow write: if false;
     }
     // coins, bots, settings: everyone signed in may read, only the admin may change
-    match /config/{id}       { allow read: if allowed() || (signedIn() && id == 'membership'); allow write: if isAdmin(); }
+    // membership: prices, payment note and support email are public (the landing page shows them)
+    match /config/{id}       { allow read: if allowed() || id == 'membership'; allow write: if isAdmin(); }
     // coins a member follows for themselves (the engine tracks them while the membership is active)
+    // how many coins one member may add: config/limits.member_coin_limit (set by the admin; default 5)
+    function coinLimit() {
+      return exists(/databases/$(database)/documents/config/limits)
+        ? get(/databases/$(database)/documents/config/limits).data.get('member_coin_limit', 5) : 5;
+    }
     match /user_coins/{uid} {
       allow read: if allowed() && (isAdmin() || me() == uid);
       allow write: if allowed() && me() == uid
-        && request.resource.data.symbols is list && request.resource.data.symbols.size() <= 5;
+        && request.resource.data.symbols is list && request.resource.data.symbols.size() <= coinLimit();
       allow delete: if isAdmin() || (allowed() && me() == uid);
     }
     // per-user small state (e.g. which alerts were read)

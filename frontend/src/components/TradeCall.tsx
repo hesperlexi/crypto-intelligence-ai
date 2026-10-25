@@ -1,0 +1,201 @@
+// One clear answer per coin: go long, go short, buy, sell or wait, at which prices, with what risk.
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { DASH, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug } from "../lib/format";
+import { useLive } from "../lib/live";
+import { CoinAvatar } from "./Polish";
+
+export type Market = "spot" | "futures";
+type Tone = "bull" | "bear" | "wait";
+
+interface Verdict { label: string; tone: Tone; headline: string }
+
+export function verdictOf(r: any, market: Market): Verdict {
+  const p = r?.plan;
+  if (market === "futures") {
+    if (r?.side > 0 && p?.valid) return r.action === "LONG ON PULLBACK"
+      ? { label: "LONG ON PULLBACK", tone: "bull", headline: "Wait for a small dip, then open a LONG" }
+      : { label: "GO LONG", tone: "bull", headline: "Open a LONG position" };
+    if (r?.side < 0 && p?.valid) return { label: "GO SHORT", tone: "bear", headline: "Open a SHORT position" };
+    return { label: "WAIT", tone: "wait", headline: "No trade right now" };
+  }
+  const d = r?.decision ?? "";
+  if (d === "BUY") return { label: "BUY", tone: "bull", headline: "Buy now, inside the entry zone" };
+  if (d === "BUY ON PULLBACK") return { label: "BUY ON DIP", tone: "bull", headline: "Wait for a small dip, then buy" };
+  if (d === "SELL") return { label: "SELL / STAY OUT", tone: "bear", headline: "Take profit or stay out — no new buys" };
+  return { label: "WAIT", tone: "wait", headline: "No trade right now" };
+}
+
+const TONE = {
+  bull: { pill: "bg-bull text-ink", ring: "border-bull/45", soft: "bg-bull/10", text: "text-bull" },
+  bear: { pill: "bg-bear text-white", ring: "border-bear/45", soft: "bg-bear/10", text: "text-bear" },
+  wait: { pill: "bg-glass/15 text-text", ring: "border-glass/15", soft: "bg-glass/[0.04]", text: "text-mute" },
+} as const;
+
+const pct = (a: number, b: number) => (isNum(a) && isNum(b) && b ? (a / b - 1) * 100 : null);
+
+function entryStatus(side: "LONG" | "SHORT", px: number, zone: [number, number]) {
+  const [lo, hi] = [Math.min(zone[0], zone[1]), Math.max(zone[0], zone[1])];
+  if (!isNum(px)) return null;
+  if (px >= lo && px <= hi) return { ok: true, text: "Price is inside the entry zone now" };
+  if (side === "LONG") return px > hi ? { ok: false, text: `Price is above the zone: wait for ${fmtPrice(hi)} or lower` } : { ok: false, text: `Price dipped below the zone: wait for it to recover to ${fmtPrice(lo)}` };
+  return px < lo ? { ok: false, text: `Price is below the zone: wait for ${fmtPrice(lo)} or higher` } : { ok: false, text: `Price rose above the zone: wait for it to fall back to ${fmtPrice(hi)}` };
+}
+
+/** Plain-text version of the plan, for copying into notes or an exchange. */
+function planText(r: any, market: Market, v: Verdict, plan: any) {
+  const parts = [`${r.symbol} ${market === "futures" ? "futures" : "spot"} · ${String(r.timeframe ?? "").toUpperCase()} · ${v.label}`];
+  if (plan) {
+    parts.push(`Entry ${fmtPrice(plan.entry_zone?.[0])}–${fmtPrice(plan.entry_zone?.[1])} (ideal ${fmtPrice(plan.entry)})`);
+    parts.push(`Stop-loss ${fmtPrice(plan.stop)}`);
+    parts.push((plan.targets ?? []).map((t: any) => `${t.name} ${fmtPrice(t.price)}`).join(", "));
+    if (market === "futures") parts.push(`Leverage ${plan.suggested_leverage}x (liquidation ${fmtPrice(plan.liquidation_at_suggested)})`);
+  }
+  parts.push(`Confidence ${fmtProb(r.confidence)} · Crypto Intelligence AI · not financial advice`);
+  return parts.join("\n");
+}
+
+export default function TradeCall({ r, market, m, compact = false }: { r: any; market: Market; m?: any; compact?: boolean }) {
+  const { tickers } = useLive();
+  const nav = useNavigate();
+  const [copied, setCopied] = useState(false);
+  if (!r) return null;
+  const px = tickers[r.symbol]?.last ?? r.price;
+  const v = verdictOf(r, market);
+  const t = TONE[v.tone];
+  const raw = r.plan;
+  // spot never shorts: a short plan has no spot meaning
+  const plan = raw && (market === "futures" || raw.side === "LONG") ? raw : null;
+  const active = v.tone !== "wait" && !!plan && (market === "futures" || v.tone === "bull");
+  const side: "LONG" | "SHORT" = plan?.side === "SHORT" ? "SHORT" : "LONG";
+  const status = active && plan?.entry_zone ? entryStatus(side, px, plan.entry_zone) : null;
+  const funding = m?.funding_rate ?? r.funding_rate;
+  const upPct = Math.round((r.p_up ?? 0) * 100), downPct = Math.round((r.p_down ?? 0) * 100);
+
+  // price ladder: every level sorted top to bottom, with the live price slotted in
+  const levels: { k: string; price: number; cls: string; note?: string }[] = [];
+  if (plan) {
+    for (const tg of [...(plan.targets ?? [])].reverse()) levels.push({ k: `Take-profit ${tg.name.replace("TP", "")}`, price: tg.price, cls: "text-bull", note: isNum(tg.probability) ? `${fmtProb(tg.probability)} reached before` : undefined });
+    levels.push({ k: "Entry (ideal)", price: plan.entry, cls: "text-accent", note: plan.entry_zone ? `zone ${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined });
+    levels.push({ k: "Stop-loss", price: plan.stop, cls: "text-bear", note: isNum(plan.risk_pct) ? `risk ${fmtPctRaw(plan.risk_pct, 1, false)}` : undefined });
+    if (market === "futures" && isNum(plan.liquidation_at_suggested)) levels.push({ k: `Liquidation at ${plan.suggested_leverage}x`, price: plan.liquidation_at_suggested, cls: "text-warn" });
+    if (isNum(px)) levels.push({ k: "Price now", price: px, cls: "text-text", note: "live" });
+    levels.sort((a, b) => b.price - a.price);
+  }
+
+  const paper = () => {
+    const q = new URLSearchParams({ market, symbol: r.symbol, side: market === "spot" ? "LONG" : side,
+      ...(market === "futures" && plan?.suggested_leverage ? { lev: String(plan.suggested_leverage) } : {}),
+      ...(plan?.stop ? { sl: String(plan.stop) } : {}), ...(plan?.targets?.[1]?.price ? { tp: String(plan.targets[1].price) } : {}) });
+    nav(`/paper?${q}`);
+  };
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(planText(r, market, v, plan)); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ }
+  };
+
+  if (r.status && r.status !== "OK") {
+    return (
+      <section className="panel p-4">
+        <div className="flex items-center gap-3"><CoinAvatar symbol={r.symbol} /><span className="font-semibold">{r.symbol}</span></div>
+        <p className="mt-3 text-sm text-mute">{r.reason ?? "Signals for this coin arrive after the next engine runs (about 15–30 minutes)."}</p>
+      </section>
+    );
+  }
+
+  return (
+    <section className={`panel overflow-hidden border ${t.ring}`}>
+      {/* header: coin, price, verdict */}
+      <div className={`flex items-center justify-between gap-3 px-4 py-3 ${t.soft}`}>
+        <Link to={`/asset/${slug(r.symbol)}`} className="flex min-w-0 items-center gap-3 hover:text-accent">
+          <CoinAvatar symbol={r.symbol} size={compact ? 32 : 40} />
+          <div className="min-w-0">
+            <div className="font-display text-lg font-bold leading-tight">{base(r.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
+            <div className="num text-sm text-mute">{fmtPrice(px)} · {String(r.timeframe ?? "").toUpperCase()} {market}</div>
+          </div>
+        </Link>
+        <span className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-extrabold tracking-wide ${t.pill}`}>
+          {v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}
+        </span>
+      </div>
+
+      <div className="space-y-3 p-4">
+        <div>
+          <div className={`text-base font-semibold ${v.tone === "wait" ? "" : t.text}`}>{v.headline}</div>
+          {active && status && (
+            <div className={`mt-1 flex items-center gap-1.5 text-sm ${status.ok ? "text-bull" : "text-warn"}`}>
+              <span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}
+            </div>
+          )}
+          {v.tone === "wait" && (
+            <p className="mt-1 text-sm text-mute">
+              Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}. Set an alert and the app tells you when a setup appears.
+            </p>
+          )}
+          {market === "spot" && v.tone === "bear" && <p className="mt-1 text-sm text-mute">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>}
+        </div>
+
+        {/* the numbers that matter */}
+        {active && plan && (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <Box k={market === "futures" ? (side === "LONG" ? "Long entry" : "Short entry") : "Buy at"} v={fmtPrice(plan.entry)} cls="text-accent" sub={plan.entry_zone ? `${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined} />
+            <Box k="Stop-loss" v={fmtPrice(plan.stop)} cls="text-bear" sub={pct(plan.stop, plan.entry) != null ? fmtPctRaw(pct(plan.stop, plan.entry)!, 1) : undefined} />
+            <Box k="Take-profit 1" v={fmtPrice(plan.targets?.[0]?.price)} cls="text-bull" sub={pct(plan.targets?.[0]?.price, plan.entry) != null ? fmtPctRaw(pct(plan.targets[0].price, plan.entry)!, 1) : undefined} />
+            {market === "futures"
+              ? <Box k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />
+              : <Box k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="at take-profit 2" />}
+          </div>
+        )}
+
+        {/* full ladder */}
+        {!compact && plan && levels.length > 0 && (
+          <div className={`rounded-xl border border-glass/[0.08] bg-ink/40 p-2 ${active ? "" : "opacity-70"}`}>
+            {!active && <div className="px-2 pb-1 text-xs text-mute">Watching a possible {plan.side} — not valid yet{plan.reason ? `: ${plan.reason}` : ""}</div>}
+            <ul>
+              {levels.map((l) => (
+                <li key={l.k} className={`flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 ${l.k === "Price now" ? "bg-glass/[0.06]" : ""}`}>
+                  <span className="min-w-0"><span className={`font-medium ${l.cls}`}>{l.k}</span>{l.note && <span className="ml-2 hidden text-xs text-mute sm:inline">{l.note}</span>}</span>
+                  <span className="num shrink-0 text-right"><span className={l.cls}>{fmtPrice(l.price)}</span>{l.k !== "Price now" && isNum(px) && <span className="ml-2 text-xs text-mute">{fmtPctRaw(pct(l.price, px)!, 1)}</span>}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {compact && active && plan && (
+          <div className="num flex flex-wrap gap-x-4 gap-y-1 text-xs text-mute">
+            {(plan.targets ?? []).slice(1).map((tg: any) => <span key={tg.name}>{tg.name} <span className="text-bull">{fmtPrice(tg.price)}</span></span>)}
+            {isNum(plan.risk_reward) && <span>R:R {plan.risk_reward.toFixed(1)}</span>}
+          </div>
+        )}
+
+        {/* confidence and context */}
+        <div className="grid grid-cols-3 gap-2 text-xs">
+          <div><div className="text-mute">Confidence</div><div className="num mt-0.5 text-sm font-semibold">{fmtProb(r.confidence)}</div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
+          <div><div className="text-mute">Up / down</div><div className="num mt-0.5 text-sm font-semibold"><span className="text-bull">{upPct}%</span> / <span className="text-bear">{downPct}%</span></div></div>
+          {market === "futures"
+            ? <div><div className="text-mute">Funding 8h</div><div className="num mt-0.5 text-sm font-semibold">{isNum(funding) ? fmtPctRaw(funding * 100, 3) : "0.010%"}</div></div>
+            : <div><div className="text-mute">Trend</div><div className="mt-0.5 text-sm font-semibold">{r.regime ?? DASH}</div></div>}
+        </div>
+
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+          <button className={`btn py-2 text-sm ${active ? "btn-primary" : ""}`} onClick={paper}>{active ? "Practise this trade" : "Paper trade"}</button>
+          <Link className="btn px-3 py-2 text-sm" to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=${market}`} aria-label="Set an alert" title="Alert me when a setup appears">
+            <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg>
+          </Link>
+          <button className="btn px-3 py-2 text-sm" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
+        </div>
+        {!compact && <p className="text-[11px] text-mute">Plan for the next {String(r.timeframe ?? "").toUpperCase()} candles, refreshed every 15 minutes. A probability, not a promise: always use the stop-loss.</p>}
+      </div>
+    </section>
+  );
+}
+
+function Box({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
+  return (
+    <div className="rounded-xl border border-glass/[0.08] bg-ink/40 px-3 py-2">
+      <div className="text-[11px] uppercase tracking-wide text-mute">{k}</div>
+      <div className={`num mt-0.5 truncate text-base font-semibold ${cls}`}>{v}</div>
+      {sub && <div className="num truncate text-[11px] text-mute">{sub}</div>}
+    </div>
+  );
+}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { compressImage, daysLeft, fmtDate, Plan, planLabel, submitPayment, useMembershipConfig, useMyRecord } from "../lib/membership";
+import { compressImage, daysLeft, fmtDate, Plan, planLabel, submitPayment, supportLink, useMembershipConfig, useMyRecord } from "../lib/membership";
 import { Badge, Card } from "./ui";
 
 /** Choose a plan → pay with the Binance QR → upload proof. Used on the access screen and in Settings. */
@@ -137,4 +137,26 @@ export function RenewBanner() {
       Your membership ends {left <= 1 ? "within a day" : `in ${left} days`} ({fmtDate(r.expires_at)}). Tap to renew in Settings.
     </a>
   );
+}
+
+/** "Need help?" card: email the app owner (address set on the Users page). */
+export function ContactCard() {
+  const { support_email } = useMembershipConfig();
+  const [copied, setCopied] = useState(false);
+  return (
+    <Card title="Help & support">
+      <p className="text-sm text-mute">A problem with your payment, your account or the app? Write to the app owner; your account email is added automatically.</p>
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        <a className="btn btn-primary" href={supportLink(support_email)}>Email support</a>
+        <button className="btn" onClick={async () => { try { await navigator.clipboard.writeText(support_email); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ } }}>{copied ? "Copied" : "Copy address"}</button>
+      </div>
+      <p className="num mt-2 break-all text-sm text-accent">{support_email}</p>
+    </Card>
+  );
+}
+
+/** One-line support link for small places (access screen, menus). */
+export function SupportLink({ className = "", label = "Contact support" }: { className?: string; label?: string }) {
+  const { support_email } = useMembershipConfig();
+  return <a className={className} href={supportLink(support_email)}>{label}</a>;
 }

@@ -4,15 +4,14 @@ import { Link } from "react-router-dom";
 import { api, del, post, put, useApi } from "../lib/api";
 import { db } from "../lib/firebase";
 import { base, fmtPctRaw, fmtPrice, slug } from "../lib/format";
+import { useLimits } from "../lib/limits";
 import { useLive } from "../lib/live";
 import { myUid, useIsAdmin } from "../lib/session";
 import { CoinAvatar } from "./Polish";
 import { Card, SignalBadge } from "./ui";
 
-export const MY_COIN_LIMIT = 5;
-
-async function saveMine(list: string[]) {
-  await setDoc(doc(db, "user_coins", myUid()), { symbols: list.slice(0, MY_COIN_LIMIT), updated_at: Date.now() });
+async function saveMine(list: string[], limit: number) {
+  await setDoc(doc(db, "user_coins", myUid()), { symbols: list.slice(0, limit), updated_at: Date.now() });
 }
 
 /** Live price tiles for the shared coins plus the member's own coins, with add / remove / pin in place. */
@@ -26,6 +25,7 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
   const list: { symbol: string; pinned: number; mine?: boolean }[] = [...(meta.data?.watchlist ?? [])]
     .sort((a, b) => b.pinned - a.pinned || Number(!!b.mine) - Number(!!a.mine));
   const mine: string[] = meta.data?.my_coins ?? [];
+  const MY_COIN_LIMIT = useLimits().member_coin_limit;
   const full = !admin && mine.length >= MY_COIN_LIMIT;
 
   const act = async (fn: () => Promise<any>, done: string) => {
@@ -38,9 +38,9 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
   };
   const add = (s: string) => admin
     ? act(() => post("/watchlist", { symbol: s }), `${s} added for everyone. Prices show now; forecasts follow within the next engine runs.`)
-    : act(() => saveMine([...mine, s]), `${s} added to your coins. Live price now; signals and AI forecasts arrive within about 15–30 minutes.`);
+    : act(() => saveMine([...mine, s], MY_COIN_LIMIT), `${s} added to your coins. Live price now; signals and AI forecasts arrive within about 15–30 minutes.`);
   const remove = (s: string, own: boolean) => own
-    ? act(() => saveMine(mine.filter((x) => x !== s)), `${s} removed from your coins.`)
+    ? act(() => saveMine(mine.filter((x) => x !== s), MY_COIN_LIMIT), `${s} removed from your coins.`)
     : act(() => del(`/watchlist/${slug(s)}`), `${s} removed`);
 
   return (

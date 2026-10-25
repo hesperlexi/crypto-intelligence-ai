@@ -101,22 +101,7 @@ export async function open(o: OpenOrder) {
       const opposite = Object.values<any>(positions).find((p) => p.symbol === o.symbol && p.side !== o.side);
       if (opposite) throw new Error(`you have a ${opposite.side > 0 ? "LONG" : "SHORT"} ${o.symbol} position. Close it first, or switch to Hedge mode to hold both sides.`);
     }
-    // same coin and side: add to the existing position (it may sit under the other mode's key)
-    const key = Object.keys(positions).find((k) => positions[k].symbol === o.symbol && positions[k].side === o.side) ?? posKey(o.symbol, o.side, hedge);
-    const cur = positions[key];
-    let pos: any;
-    if (cur) {   // add to the position: average entry, combined margin, effective leverage
-      const q = cur.qty + qty;
-      const entry = (cur.entry * cur.qty + fill * qty) / q;
-      const margin = cur.margin + o.margin;
-      const effLev = (q * entry) / margin;
-      pos = { ...cur, qty: q, entry, margin, leverage: effLev, liq: liqPrice(entry, o.side, effLev), fees: cur.fees + fee,
-        stop: stop ?? cur.stop ?? null, take: take ?? cur.take ?? null };
-    } else {
-      pos = { key, symbol: o.symbol, side: o.side, qty, entry: fill, margin: o.margin, leverage: lev, liq: liqPrice(fill, o.side, lev),
-        stop, take, opened_at: now, checked_at: now, funded_until: now, funding: 0, fees: fee };
-    }
-    positions[key] = { ...pos, key };
+    const { pos } = mergeFill(positions, o.symbol, o.side, qty, fill, lev, o.margin, fee, stop, take, now, hedge);
     const t = acc.totals;
     tx.update(ACC_REF(), { wallet: acc.wallet - o.margin - fee, positions, totals: { ...t, fees: t.fees + fee } });
     return { account_id: acc.id, pos, hedge };
@@ -124,6 +109,123 @@ export async function open(o: OpenOrder) {
   await log({ account_id: res.account_id, type: "OPEN", symbol: o.symbol, side: o.side, qty, price: fill, mark_price: mark,
     leverage: lev, margin: o.margin, fee, liquidation_price: res.pos.liq, stop, take, hedge: res.hedge });
   return res.pos;
+}
+
+
+/** Adds a fill to the positions map (same coin and side: average in). Mutates `positions`; returns the position. */
+function mergeFill(positions: Record<string, any>, symbol: string, side: number, qty: number, fill: number, lev: number, margin: number,
+  fee: number, stop: number | null, take: number | null, now: number, hedge: boolean) {
+  // same coin and side: add to the existing position (it may sit under the other mode's key)
+  const key = Object.keys(positions).find((k) => positions[k].symbol === symbol && positions[k].side === side) ?? posKey(symbol, side, hedge);
+  const cur = positions[key];
+  let pos: any;
+  if (cur) {   // add to the position: average entry, combined margin, effective leverage
+    const q = cur.qty + qty;
+    const entry = (cur.entry * cur.qty + fill * qty) / q;
+    const m = cur.margin + margin;
+    const effLev = (q * entry) / m;
+    pos = { ...cur, qty: q, entry, margin: m, leverage: effLev, liq: liqPrice(entry, side, effLev), fees: cur.fees + fee,
+      stop: stop ?? cur.stop ?? null, take: take ?? cur.take ?? null };
+  } else {
+    pos = { key, symbol, side, qty, entry: fill, margin, leverage: lev, liq: liqPrice(fill, side, lev),
+      stop, take, opened_at: now, checked_at: now, funded_until: now, funding: 0, fees: fee };
+  }
+  positions[key] = { ...pos, key };
+  return { pos, key };
+}
+
+const MAKER = 0.0002;                  // 0.02% maker fee for limit orders
+export interface LimitOrder extends OpenOrder { price: number }
+
+/** Limit order: the margin is set aside now; the position opens when the price reaches the limit. */
+export async function placeLimit(o: LimitOrder) {
+  const lev = Math.round(Number(o.leverage));
+  if (!(lev >= 1 && lev <= MAX_LEV)) throw new Error(`leverage must be between 1x and ${MAX_LEV}x`);
+  if (!(o.margin > 0)) throw new Error("enter a positive margin amount");
+  if (!(o.price > 0)) throw new Error("enter a limit price");
+  const stop = o.stop || null, take = o.take || null;
+  if (stop && o.side * (o.price - stop) <= 0) throw new Error(`the stop-loss must be ${o.side > 0 ? "below" : "above"} the limit price`);
+  if (take && o.side * (take - o.price) <= 0) throw new Error(`the take-profit must be ${o.side > 0 ? "above" : "below"} the limit price`);
+  await adoptLegacy();
+  if (!(await getDoc(ACC_REF())).exists()) await reset();
+  const mark = await price(o.symbol);
+  if (o.side > 0 ? o.price >= mark : o.price <= mark) throw new Error(`a ${o.side > 0 ? "buy" : "sell"} limit must be ${o.side > 0 ? "below" : "above"} the current price (${mark}); use Market to trade now`);
+  const reserve = o.margin * (1 + lev * MAKER);
+  await runTransaction(db, async (tx) => {
+    const acc: any = (await tx.get(ACC_REF())).data();
+    if (reserve > acc.wallet + 1e-9) throw new Error(`not enough virtual balance: need $${reserve.toFixed(2)}, have $${acc.wallet.toFixed(2)}`);
+    if (acc.position_mode !== "hedge") {
+      const opposite = Object.values<any>(acc.positions ?? {}).find((p) => p.symbol === o.symbol && p.side !== o.side);
+      if (opposite) throw new Error(`you have a ${opposite.side > 0 ? "LONG" : "SHORT"} ${o.symbol} position. Close it first, or switch to Hedge mode.`);
+    }
+    const now = Date.now();
+    const id = Math.random().toString(36).slice(2, 10);
+    tx.update(ACC_REF(), { wallet: acc.wallet - reserve, orders: { ...(acc.orders ?? {}), [id]: { id, symbol: o.symbol, side: o.side, price: o.price, margin: o.margin,
+      leverage: lev, stop, take, reserve, created_at: now, checked_at: now } } });
+  });
+}
+
+export async function cancelOrder(id: string) {
+  await runTransaction(db, async (tx) => {
+    const acc: any = (await tx.get(ACC_REF())).data();
+    const od = acc?.orders?.[id];
+    if (!od) return;
+    const orders = { ...acc.orders }; delete orders[id];
+    tx.update(ACC_REF(), { wallet: acc.wallet + od.reserve, orders });
+  });
+}
+
+async function fillOrder(id: string, at: number, when: number) {
+  const res = await runTransaction(db, async (tx) => {
+    const acc: any = (await tx.get(ACC_REF())).data();
+    const od = acc?.orders?.[id];
+    if (!od) return null;
+    const orders = { ...acc.orders }; delete orders[id];
+    const positions = { ...(acc.positions ?? {}) };
+    const hedge = acc.position_mode === "hedge";
+    if (!hedge && Object.values<any>(positions).some((p) => p.symbol === od.symbol && p.side !== od.side)) {
+      tx.update(ACC_REF(), { wallet: acc.wallet + od.reserve, orders });     // would flip a one-way position: cancel
+      return null;
+    }
+    const qty = (od.margin * od.leverage) / at;
+    const fee = qty * at * MAKER;
+    const { pos } = mergeFill(positions, od.symbol, od.side, qty, at, od.leverage, od.margin, fee, od.stop, od.take, when, hedge);
+    const t = acc.totals;
+    tx.update(ACC_REF(), { wallet: acc.wallet + od.reserve - od.margin - fee, positions, orders, totals: { ...t, fees: t.fees + fee } });
+    return { account_id: acc.id, od, qty, fee, pos, hedge };
+  });
+  if (res) await log({ account_id: res.account_id, type: "OPEN", order_type: "LIMIT", symbol: res.od.symbol, side: res.od.side, qty: res.qty, price: at,
+    mark_price: at, leverage: res.od.leverage, margin: res.od.margin, fee: res.fee, liquidation_price: res.pos.liq, stop: res.od.stop, take: res.od.take,
+    hedge: res.hedge, created_at: when });
+}
+
+/** Limit orders: filled when a closed 15m candle (or the live price) reaches the limit. A gap through it fills at the open. */
+async function settleOrders(acc: any, now: number) {
+  for (const od of Object.values<any>(acc.orders ?? {})) {
+    let hit: { at: number; ts: number } | null = null;
+    if (now - od.checked_at > STEP) {
+      try {
+        const need = Math.min(1000, Math.ceil((now - od.checked_at) / STEP) + 2);
+        for (const c of await klines(od.symbol, "15m", need)) {
+          if (c[0] + STEP <= od.created_at || c[0] + STEP > now) continue;
+          const touched = od.side > 0 ? c[3] <= od.price : c[2] >= od.price;
+          if (touched) { hit = { at: od.side > 0 ? Math.min(c[1], od.price) : Math.max(c[1], od.price), ts: c[0] + STEP }; break; }
+        }
+      } catch { /* next time */ }
+    }
+    if (!hit) {
+      const px = latestPrices[od.symbol];
+      if (px && (od.side > 0 ? px <= od.price : px >= od.price)) hit = { at: od.price, ts: now };
+    }
+    if (hit) await fillOrder(od.id, hit.at, hit.ts);
+    else if (now - od.checked_at > STEP) {
+      await runTransaction(db, async (tx) => {
+        const a: any = (await tx.get(ACC_REF())).data();
+        const o2 = a?.orders?.[od.id];
+        if (o2) tx.update(ACC_REF(), { orders: { ...a.orders, [od.id]: { ...o2, checked_at: now - (now % STEP) } } });
+      });
+    }
+  }
 }
 
 /** Close all or part of a position. `at` is a trigger level (stop / target / liquidation); otherwise the live price. */
@@ -195,10 +297,12 @@ export async function settle() {
   if (settling) return;
   settling = true;
   try {
-    const acc: any = (await getDoc(ACC_REF())).data();
-    if (!acc) return;
+    const acc0: any = (await getDoc(ACC_REF())).data();
+    if (!acc0) return;
     const now = Date.now();
-    for (const [posK, pos] of Object.entries<any>(acc.positions ?? {})) {
+    await settleOrders(acc0, now);
+    const acc: any = (await getDoc(ACC_REF())).data();
+    for (const [posK, pos] of Object.entries<any>(acc?.positions ?? {})) {
       // 1) funding payments since the last one
       const first = Math.floor(pos.funded_until / FUNDING_MS) * FUNDING_MS + FUNDING_MS;
       const n = first <= now ? Math.floor((now - first) / FUNDING_MS) + 1 : 0;
@@ -276,10 +380,12 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
     });
     const marginUsed = positions.reduce((s, p) => s + p.margin, 0);
     const upnl = positions.reduce((s, p) => s + (p.upnl ?? 0), 0);
-    const equity = acc.wallet + positions.reduce((s, p) => s + Math.max(0, p.margin + (p.upnl ?? 0)), 0);
+    const orders = Object.values<any>(acc.orders ?? {}).sort((a, b) => b.created_at - a.created_at);
+    const reserved = orders.reduce((s, o) => s + (o.reserve ?? 0), 0);
+    const equity = acc.wallet + reserved + positions.reduce((s, p) => s + Math.max(0, p.margin + (p.upnl ?? 0)), 0);
     const closes = trades.filter((t) => t.type === "CLOSE");
     cb({
-      account: acc, mode: acc.position_mode === "hedge" ? "hedge" : "oneway", hedges, wallet: acc.wallet, margin_used: marginUsed, unrealized_pnl: upnl, equity,
+      account: acc, mode: acc.position_mode === "hedge" ? "hedge" : "oneway", hedges, wallet: acc.wallet, orders, reserved, margin_used: marginUsed, unrealized_pnl: upnl, equity,
       return_pct: (equity / acc.starting_balance - 1) * 100, positions, trades,
       realized_pnl: acc.totals?.realized ?? 0, fees: acc.totals?.fees ?? 0, funding: acc.totals?.funding ?? 0,
       liquidations: acc.totals?.liquidations ?? 0, closed: closes.length,

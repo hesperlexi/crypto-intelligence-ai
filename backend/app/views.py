@@ -131,9 +131,13 @@ def alerts_view(rt: Runtime, user_id: str | None = None) -> dict[str, Any]:
     """Alert state and fired events. With `user_id`, only that user's rules (members never see each other's)."""
     rows = rt.db.query("SELECT * FROM alerts" + (" WHERE user_id = ?" if user_id else ""), (user_id,) if user_id else ())
     state = {a["id"]: {"last_fired_at": a["last_fired_at"], "last_state": a["last_state"]} for a in rows}
-    evs = alerts.events(rt.db, 400)
     if user_id:
-        evs = [e for e in evs if e["alert_id"] in state][:100]
+        # this member's own events, however many other members there are
+        ids = list(state)
+        evs = rt.db.query(f"SELECT * FROM alert_events WHERE alert_id IN ({','.join('?' * len(ids))}) "
+                          "ORDER BY created_at DESC LIMIT 100", tuple(ids)) if ids else []
+    else:
+        evs = alerts.events(rt.db, 100)
     return {"events": evs[:100], "state": state, "types": alerts.ALERT_TYPES}
 
 

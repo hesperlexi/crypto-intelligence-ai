@@ -6,6 +6,7 @@ import { MODEL_TFS, TfTabs } from "../components/Pickers";
 
 const ASSET_TFS = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"] as const;
 import { Badge, Card, Check, Empty, ErrorBox, FlagList, Loading, Meter, Note, ProbBar, RegimeBadge, Row, ScoreBar, SignalBadge, signalTone, Stat } from "../components/ui";
+import TradeCall, { Market } from "../components/TradeCall";
 import { post, useApi } from "../lib/api";
 import { DASH, fmtCompact, fmtNum, fmtPct, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, slug, tone } from "../lib/format";
 import { useTicker } from "../lib/live";
@@ -91,6 +92,7 @@ export default function Asset() {
       </div>
 
       {an.error && <ErrorBox error={an.error} retry={an.reload} />}
+      <AssetCall symbol={symbol} tf={tf} />
       {a && !ok && <Card title="Insufficient data"><Empty>{a.reason ?? "Not enough closed candles for this timeframe yet."} The system does not predict without data.</Empty></Card>}
 
       {/* ---- chart ---- */}
@@ -439,5 +441,28 @@ function LiquidityCard({ symbol, a }: { symbol: string; a: any }) {
         </div>
       ) : <Note>Funding / open interest: {d?.reason ?? "loading"}.</Note>}
     </Card>
+  );
+}
+
+/** The clear trade call for this coin, spot or futures, from the engine's futures view. */
+function AssetCall({ symbol, tf }: { symbol: string; tf: string }) {
+  const t = ["1h", "4h", "12h", "1d"].includes(tf) ? tf : "4h";
+  const v = useApi<any>(`/futures?timeframe=${t}`);
+  const [market, setMarket] = useState<Market>("futures");
+  const row = (v.data?.rows ?? []).find((r: any) => r.symbol === symbol);
+  if (!row) return null;
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="font-display text-lg font-semibold">Trade call{t !== tf ? <span className="ml-2 text-xs font-normal text-mute">(from the {t.toUpperCase()} chart)</span> : null}</h2>
+        <div className="inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Market">
+          {(["futures", "spot"] as const).map((k) => (
+            <button key={k} aria-pressed={market === k} onClick={() => setMarket(k)}
+              className={`rounded-lg px-3 py-1 text-xs font-semibold ${market === k ? "bg-accent text-ink" : "text-mute hover:text-text"}`}>{k === "futures" ? "Futures" : "Spot"}</button>
+          ))}
+        </div>
+      </div>
+      <TradeCall r={row} market={market} />
+    </div>
   );
 }

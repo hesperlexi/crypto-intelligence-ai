@@ -78,3 +78,28 @@ def test_active_members_coins_are_tracked_and_lapsed_ones_dropped(tmp_path):
     sink.set("user_coins/ok", {"symbols": []})
     worker.sync_config(rt, sink)
     assert rt.symbols() == ["BTC/USDT"]
+
+
+def test_admin_can_change_member_coin_limits(tmp_path):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return [f"{q}/USDT"]
+
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    sink = LocalSink(tmp_path)
+    now = worker.now_ms()
+    sink.set("config/watchlist", {"symbols": ["BTC/USDT"]})
+    sink.set("config/limits", {"member_coin_limit": 2, "member_coins_max": 3})
+    for u in ("a", "b"):
+        sink.set(f"users/{u}", {"status": "approved", "expires_at": now + 30 * DAY})
+    sink.set("user_coins/a", {"symbols": ["AAA", "BBB", "CCC"]})
+    sink.set("user_coins/b", {"symbols": ["DDD", "EEE"]})
+    notes = worker.sync_config(rt, sink)
+    assert notes["member_coins"] == ["AAA/USDT", "BBB/USDT", "DDD/USDT"]   # 2 each, 3 in total

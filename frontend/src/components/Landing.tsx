@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { tickers as restTickers } from "../lib/binance";
 import { auth, googleProvider } from "../lib/firebase";
 import { base, fmtPctRaw, fmtPrice } from "../lib/format";
-import { DEFAULT_CONFIG } from "../lib/membership";
+import { useMembershipConfig } from "../lib/membership";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
 import { CoinAvatar } from "./Polish";
 
@@ -39,7 +39,8 @@ export default function Landing({ error }: { error: string | null }) {
     try { await signInWithPopup(auth, googleProvider); } catch (e: any) { setErr(e.message); }
     setBusy(false);
   };
-  const plans = DEFAULT_CONFIG.plans;
+  const cfg = useMembershipConfig();
+  const plans = cfg.plans;
   const monthly = plans[0].price;
   const cta = (big = false) => (
     <button className={`btn btn-primary ${big ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"}`} onClick={signIn} disabled={busy}>
@@ -215,7 +216,7 @@ export default function Landing({ error }: { error: string | null }) {
       </main>
 
       <footer className="border-t border-glass/[0.06] px-4 py-6 text-center text-xs text-mute">
-        {COPYRIGHT} · Crypto Intelligence AI · <span className="num">v{APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual</a>
+        {COPYRIGHT} · Crypto Intelligence AI · <span className="num">v{APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual</a> · <a href={`mailto:${cfg.support_email}`} className="text-accent hover:underline">{cfg.support_email}</a>
         <div className="mt-1">Research tool, not financial advice. Forecasts are probabilities, never certainties. No real orders are placed.</div>
       </footer>
     </div>

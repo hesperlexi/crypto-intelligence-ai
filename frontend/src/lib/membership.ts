@@ -6,7 +6,7 @@ import { db } from "./firebase";
 import { getSession } from "./session";
 
 export interface Plan { months: number; price: number; label: string }
-export interface MembershipConfig { plans: Plan[]; currency: string; pay_note: string; qr_url: string }
+export interface MembershipConfig { plans: Plan[]; currency: string; pay_note: string; qr_url: string; support_email: string }
 
 export const DEFAULT_CONFIG: MembershipConfig = {
   plans: [
@@ -18,6 +18,7 @@ export const DEFAULT_CONFIG: MembershipConfig = {
   currency: "USDT",
   pay_note: "Pay with the Binance app: scan the QR code, send the exact amount, then upload the payment screenshot here.",
   qr_url: "/pay/binance-qr.png",
+  support_email: "hesper.soloist@live.com",
 };
 
 export const DAY = 86_400_000;
@@ -112,4 +113,11 @@ export async function grantMembership(uid: string, u: any, months: number, price
 
 export async function rejectPayment(uid: string, u: any, reason: string) {
   await updateDoc(doc(db, "users", uid), { payment: { ...u.payment, status: "rejected", reason: reason || null, decided_at: Date.now() } });
+}
+
+/** mailto: link to the app owner, with the person's account and the page they were on. */
+export function supportLink(email: string, subject = "Crypto Intelligence AI: help") {
+  const who = getSession()?.email ?? "";
+  const body = `Hello,\n\n[Describe the issue here]\n\n---\nAccount: ${who}\nPage: ${typeof location !== "undefined" ? location.pathname : ""}\n`;
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

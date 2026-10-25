@@ -68,8 +68,18 @@ def norm_symbol(raw: str) -> str:
 
 # ---- configuration from the website --------------------------------------------------------------------
 
-MEMBER_COIN_LIMIT = 5        # coins one member can add for themselves
-MEMBER_COINS_MAX = 25        # all members together, on top of the admin's list (keeps the engine within its time)
+MEMBER_COIN_LIMIT = 5        # default: coins one member can add for themselves (admin can change: config/limits)
+MEMBER_COINS_MAX = 25        # default: all members together, on top of the admin's list (keeps the engine within its time)
+
+
+def member_limits(sink: BaseSink) -> tuple[int, int]:
+    d = sink.get("config/limits") or {}
+    try:
+        per = max(0, min(50, int(d.get("member_coin_limit", MEMBER_COIN_LIMIT))))
+        total = max(0, min(200, int(d.get("member_coins_max", MEMBER_COINS_MAX))))
+    except (TypeError, ValueError):
+        per, total = MEMBER_COIN_LIMIT, MEMBER_COINS_MAX
+    return per, total
 
 
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
@@ -86,9 +96,10 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         notes["inactive_members"] = len(inactive)
     # coins members added for themselves (active members only, a few each, capped overall)
     member_coins: list[str] = []
+    per_member, all_members = member_limits(sink)
     for uid, d in sink.list("user_coins"):
         if uid in users and uid not in inactive:
-            for x in (d.get("symbols") or [])[:MEMBER_COIN_LIMIT]:
+            for x in (d.get("symbols") or [])[:per_member]:
                 sym = norm_symbol(x)
                 if sym not in member_coins:
                     member_coins.append(sym)
@@ -102,7 +113,7 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         for item in doc["symbols"]:
             sym = norm_symbol(item["symbol"] if isinstance(item, dict) else item)
             wanted[sym] = bool(item.get("pinned")) if isinstance(item, dict) else False
-        extra = [c for c in member_coins if c not in wanted][:MEMBER_COINS_MAX]
+        extra = [c for c in member_coins if c not in wanted][:all_members]
         for sym in extra:
             wanted[sym] = False
         if extra:

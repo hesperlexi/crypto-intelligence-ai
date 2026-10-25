@@ -1,20 +1,13 @@
-import { Fragment, useMemo, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { TfTabs, useSymbols } from "../components/Pickers";
-import { Badge, Card, Empty, ErrorBox, Loading, Note, ProbBar, Stat } from "../components/ui";
+import { Badge, Card, Empty, ErrorBox, Loading, Note, Stat } from "../components/ui";
 import { useApi } from "../lib/api";
-import { DASH, ago, base, fmtCompact, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
-import { useLive } from "../lib/live";
+import { ago, fmtCompact, fmtPrice } from "../lib/format";
+import TradeCall from "../components/TradeCall";
 import { liqPrice } from "../lib/paperFutures";
 
 const TFS = ["1h", "4h", "12h", "1d"] as const;
-
-function actionTone(a?: string) {
-  if (!a) return "mute" as const;
-  if (a.startsWith("LONG")) return "bull" as const;
-  if (a === "SHORT") return "bear" as const;
-  return "warn" as const;
-}
 
 export default function Futures() {
   const [tf, setTf] = useState<string>("4h");
@@ -65,75 +58,13 @@ export default function Futures() {
       {!v.data && v.loading && <Loading what="Loading futures predictions" />}
       {v.data === null && !v.loading && <Empty>Futures predictions appear after the next engine run (within about 15 minutes).</Empty>}
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
-        {rows.map((r) => <FuturesCard key={r.symbol} r={r} m={mkt.data?.rows?.[r.symbol]} />)}
+        {rows.map((r) => <TradeCall key={r.symbol} r={r} market="futures" m={mkt.data?.rows?.[r.symbol]} compact />)}
       </div>
       {v.data && !rows.length && <Empty>No coin matches this filter right now.</Empty>}
 
       <LeverageCalculator />
       <Note>Forecasts are probabilities, not certainties. Leverage multiplies both gains and losses; a liquidated position loses its whole margin. Suggested leverage keeps the liquidation price at least 1.5× the stop distance away and is capped at 10x. Everything here is analysis and virtual trading only — no real orders are placed.</Note>
     </div>
-  );
-}
-
-function FuturesCard({ r, m }: { r: any; m?: any }) {
-  const { tickers } = useLive();
-  const nav = useNavigate();
-  const px = tickers[r.symbol]?.last ?? r.price;
-  if (r.status !== "OK") {
-    return <Card title={r.symbol}><Empty>{r.reason ?? r.status ?? "Not available yet"}</Empty></Card>;
-  }
-  const p = r.plan;
-  const funding = m?.funding_rate ?? r.funding_rate;
-  const trade = () => {
-    const q = new URLSearchParams({ market: "futures", symbol: r.symbol, side: (p?.side ?? (r.lean === "SHORT" ? "SHORT" : "LONG")),
-      ...(p?.suggested_leverage ? { lev: String(p.suggested_leverage) } : {}), ...(p?.stop ? { sl: String(p.stop) } : {}),
-      ...(p?.targets?.[1]?.price ? { tp: String(p.targets[1].price) } : {}) });
-    nav(`/paper?${q}`);
-  };
-  return (
-    <Card>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between gap-3">
-          <Link to={`/asset/${slug(r.symbol)}`} className="min-w-0 hover:text-accent">
-            <div className="text-lg font-semibold leading-tight">{base(r.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
-            <div className="num text-sm text-mute">{fmtPrice(px)}</div>
-          </Link>
-          <Badge tone={actionTone(r.action)}>{r.action === "SHORT" ? "▼ " : r.action?.startsWith("LONG") ? "▲ " : ""}{r.action}</Badge>
-        </div>
-        <ProbBar up={r.p_up} neutral={r.p_neutral} down={r.p_down} />
-        <div className="grid grid-cols-3 gap-3">
-          <Stat label="Confidence" value={fmtProb(r.confidence)} />
-          <Stat label="Lean" value={r.lean ?? DASH} className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""} />
-          <Stat label="Next bar" value={isNum(r.expected_return) ? fmtPctRaw(r.expected_return * 100) : DASH} className={tone(r.expected_return)} sub={r.edge_confirmed ? "edge ✓" : "no edge yet"} />
-        </div>
-        {r.side === 0 && r.decision_reason && <p className="text-xs text-mute">No trade: {r.decision_reason}</p>}
-        {p ? (
-          <div className="tile p-3 text-sm">
-            <div className="mb-2 flex items-center justify-between"><span className="label">{p.valid ? "Trade plan" : "Plan (not valid yet)"} · {p.side}</span><span className="num text-xs text-mute">R:R 1:{isNum(p.risk_reward) ? p.risk_reward.toFixed(1) : DASH}</span></div>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1">
-              <span className="text-mute">Entry</span><span className="num text-right">{fmtPrice(p.entry)}</span>
-              <span className="text-mute">Stop <span className="text-xs">({fmtPctRaw(-p.risk_pct, 1, false)})</span></span><span className="num text-right text-bear">{fmtPrice(p.stop)}</span>
-              {p.targets.map((t: any) => <Fragment key={t.name}><span className="text-mute">{t.name}{isNum(t.probability) && <span className="text-xs"> · {fmtProb(t.probability)} hit</span>}</span><span className="num text-right text-bull">{fmtPrice(t.price)}</span></Fragment>)}
-              <span className="text-mute">Suggested leverage</span><span className="num text-right">{p.suggested_leverage}x</span>
-              <span className="text-mute">Liquidation at {p.suggested_leverage}x</span><span className="num text-right text-warn">{fmtPrice(p.liquidation_at_suggested)}</span>
-              <span className="text-mute">Margin lost at stop</span><span className="num text-right">{fmtPctRaw(-p.margin_loss_at_stop_pct, 0, false)}</span>
-            </div>
-            {!p.valid && p.reason && <p className="mt-2 text-xs text-mute">{p.reason}</p>}
-          </div>
-        ) : null}
-        <div className="grid grid-cols-3 items-start gap-3 text-sm">
-          <Stat label="Funding 8h" value={isNum(funding) ? fmtPctRaw(funding * 100, 4) : DASH} className={tone(-(funding ?? 0))} sub={m?.listed === false ? "not listed on futures" : isNum(funding) ? (funding > 0 ? "longs pay" : "shorts pay") : undefined} />
-          <Stat label="OI 24h" value={isNum(m?.oi_change_24h) ? fmtPctRaw(m.oi_change_24h * 100, 1) : DASH} sub={isNum(m?.open_interest_usd) ? `$${fmtCompact(m.open_interest_usd)}` : undefined} />
-          <Stat label="Longs" value={isNum(m?.long_account_pct) ? `${m.long_account_pct.toFixed(0)}%` : DASH} sub={isNum(m?.long_short_ratio) ? `L/S ${m.long_short_ratio.toFixed(2)}` : undefined} />
-        </div>
-        <div className="grid grid-cols-[1fr_1fr_auto] gap-2">
-          <button className="btn btn-primary py-2 text-sm" onClick={trade}>Paper trade this</button>
-          <Link className="btn py-2 text-sm" to={`/asset/${slug(r.symbol)}`}>Full analysis</Link>
-          <Link className="btn px-3 py-2 text-sm" title="Get an alert with entry, stop-loss and take-profits when a trade signal appears"
-            to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=futures`} aria-label="Set an alert">🔔</Link>
-        </div>
-      </div>
-    </Card>
   );
 }
 
