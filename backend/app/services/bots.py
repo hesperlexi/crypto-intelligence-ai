@@ -77,10 +77,17 @@ DEFAULT_BOTS: list[dict[str, Any]] = [
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
      "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1",
      "leverage": 5.0, "grades": "AB", **_FUT},
+    {"id": "futures-signal-ab-1h", "name": "Futures signal bot 1H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "1h",
+     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
+     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1",
+     "leverage": 5.0, "grades": "AB", **_FUT},
     {"id": "futures-predict-1h", "name": "Futures prediction tracker 1H", "enabled": True, "mode": "prediction",
      "timeframe": "1h", "symbols": "all", "starting_balance": 10_000.0, "position_pct": 5.0, "min_probability": 0.40,
      "allow_short": True, "reset_token": "1", "leverage": 3.0, **_FUT},
 ]
+# the bots that take exactly the calls members see on the Signals page (futures, grades A+B, every coin):
+# the app's own scorecard, shown first on the public track record
+SCORECARD_IDS = ("futures-signal-ab-1h", "futures-signal-ab-4h")
 FIELDS = {"name": str, "enabled": bool, "mode": str, "timeframe": str, "symbols": (str, list),
           "starting_balance": float, "risk_per_trade_pct": float, "max_position_pct": float,
           "max_open_positions": int, "allow_short": bool, "pending_bars": int, "max_hold_bars": int,

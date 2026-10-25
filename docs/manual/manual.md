@@ -71,6 +71,8 @@ Open **Signals** (bottom bar on phones). Pick **Futures** or **Spot** and a time
 
 Buttons: **Practise this trade** opens it in the trading screen with stop and target filled in, the bell sets an alert, **Copy** copies the plan as text. The **All coins** list shows every coin's call with entry, stop and first target. The same card appears at the top of each coin's page and on the **Futures** page.
 
+**Radar: coins to watch.** Every hour the engine screens all liquid Binance coins that are not in the app yet and ranks them by how strongly they outperform the market (against BTC over 7 and 30 days, trend, volume surge, breakouts). Coins that already went parabolic are shown apart with "wait for a pullback". Press **+ Add** to follow a coin; its AI long/short calls start once its model is trained. The Radar keeps its own record: every pick is scored 7 days later against BTC.
+
 ### Reading the full coin page
 
 Tap any coin to open its page. The chart has two modes: **AI chart** (the app's levels, trade plan and structure drawn in) and **Pro chart** (TradingView, with its full drawing tools and indicators). Below the trade call, read it top to bottom in this order:
@@ -168,7 +170,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 The **Bots** page runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
-- **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets, taking a third off at each target. After take-profit 2 the stop moves up to take-profit 1 (a trailing stop), so the last third can run without giving back the gains. The standard bots trade grade A calls only; the **A+B** bots also take grade B calls, so you can compare quality against quantity.
+- **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets, taking a third off at each target. After take-profit 2 the stop moves up to take-profit 1 (a trailing stop), so the last third can run without giving back the gains. The two **App scorecard** bots (futures, grades A+B, 1H and 4H) take exactly the calls members see on the Signals page, on every coin, so their result is the app's real performance; they are shown first on the Track record. The standard bots trade grade A calls only; the **A+B** bots also take grade B calls, so you can compare quality against quantity.
 - **Prediction trackers** take every raw model call for one bar, showing how good the raw predictions are.
 - **Futures bots** trade the same calls as perpetual futures with leverage, liquidation and funding.
 

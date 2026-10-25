@@ -28,7 +28,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import alerts, analysis, backtests, health, market, membership, news, replay, scanner, tracking, training
+from .services import alerts, analysis, backtests, health, market, membership, news, radar, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -432,6 +432,13 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
+    if fetch_context and hasattr(rt.provider, "_get_sync") and now_ms() - int(rt.db.get_setting("radar_at", 0) or 0) > 55 * 60_000:
+        def run_radar():
+            r = radar.scan(rt.db, rt.provider, rt.symbols())
+            rt.db.set_setting("radar_at", now_ms())
+            sink.view("radar", r)
+            return {"screened": r["screened"], "picks": [p["symbol"] for p in r["picks"][:5]]}
+        detail["radar"] = step("radar", run_radar)
     if fetch_context:
         step("news_publish", lambda: sink.view("news", news.news_view(rt.db, getattr(rt, "headlines", None),
                                                                         getattr(rt, "calendar_status", None))))

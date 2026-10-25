@@ -236,7 +236,8 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
         st, cfg = bt.get("stats") or {}, bt.get("config") or {}
         if not cfg.get("enabled", True):
             continue
-        bots.append({"name": cfg.get("name") or cfg.get("id"), "mode": cfg.get("mode"), "market": cfg.get("market", "spot"), "timeframe": cfg.get("timeframe"),
+        from .services.bots import SCORECARD_IDS
+        bots.append({"scorecard": cfg.get("id") in SCORECARD_IDS, "name": cfg.get("name") or cfg.get("id"), "mode": cfg.get("mode"), "market": cfg.get("market", "spot"), "timeframe": cfg.get("timeframe"),
                      "grades": cfg.get("grades"), "trades": st.get("trades"), "return_pct": st.get("return_pct"),
                      "benchmark_return_pct": st.get("benchmark_return_pct"), "win_rate": st.get("win_rate"),
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
@@ -244,7 +245,8 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
     return {"generated_at": now_ms(), "since": first, "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "signals": sigs[:limit]},
-            "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))), "bots": bots,
+            "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))),
+            "bots": sorted(bots, key=lambda b: not b["scorecard"]),
             "method": {"live": "Every trade signal the engine published, followed candle by candle: a third of the position "
                                "exits at each take-profit, the rest at the stop or after 30 candles. Fees not included.",
                        "tested": "Walk-forward test: the models are trained only on data before each test period and then "

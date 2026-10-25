@@ -10,7 +10,7 @@ import { myUid, useIsAdmin } from "../lib/session";
 import { CoinAvatar } from "./Polish";
 import { Card, SignalBadge } from "./ui";
 
-async function saveMine(list: string[], limit: number) {
+export async function saveMine(list: string[], limit: number) {
   await setDoc(doc(db, "user_coins", myUid()), { symbols: list.slice(0, limit), updated_at: Date.now() });
 }
 

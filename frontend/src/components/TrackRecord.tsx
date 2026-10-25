@@ -110,11 +110,12 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           )}
           {tab === "bots" && (
             <div className="overflow-x-auto">
+              <p className="px-3 pt-3 text-xs text-mute">Bots trade automatically with virtual money, around the clock, on every coin. The two <b className="text-accent">APP SCORECARD</b> bots take exactly the futures calls members see on the Signals page (grades A and B), with stop-loss, three targets and fees, so their result is the app's real performance.</p>
               <table className="w-full min-w-[560px] text-sm">
                 <thead><tr className="text-left text-[11px] uppercase tracking-wide text-mute"><th className="px-3 py-2">Bot (virtual money)</th><th>Trades</th><th>Win rate</th><th>Return</th><th>Buy &amp; hold</th><th className="pr-3 text-right">Max drop</th></tr></thead>
                 <tbody className="divide-y divide-glass/[0.06]">
                   {(d.bots ?? []).map((b: any, i: number) => (
-                    <tr key={i}><td className="px-3 py-2">{b.name}<div className="text-[11px] text-mute">{b.started_at ? `since ${fmtDate(b.started_at)}` : ""}</div></td>
+                    <tr key={i} className={b.scorecard ? "bg-accent/[0.05]" : ""}><td className="px-3 py-2">{b.name}{b.scorecard && <span className="ml-2 rounded bg-accent/15 px-1.5 text-[10px] font-bold text-accent">APP SCORECARD</span>}<div className="text-[11px] text-mute">{b.started_at ? `since ${fmtDate(b.started_at)}` : ""}</div></td>
                       <td className="num">{b.trades ?? 0}</td><td className="num">{rate(b.win_rate)}</td>
                       <td className={`num font-semibold ${tone(b.return_pct)}`}>{pct(b.return_pct)}</td>
                       <td className={`num ${tone(b.benchmark_return_pct)}`}>{pct(b.benchmark_return_pct)}</td>
