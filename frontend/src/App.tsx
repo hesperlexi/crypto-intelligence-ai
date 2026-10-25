@@ -24,6 +24,7 @@ import News from "./pages/News";
 import Track from "./pages/Track";
 import Radar from "./pages/Radar";
 import Report from "./pages/Report";
+import Achievements from "./pages/Achievements";
 import History from "./pages/History";
 import Paper from "./pages/Paper";
 import Replay from "./pages/Replay";
@@ -46,6 +47,7 @@ const NAV = [
   ["/news", "News"],
   ["/track", "Track record"],
   ["/report", "Weekly report"],
+  ["/achievements", "Achievements"],
   ["/accuracy", "Accuracy"],
   ["/bots", "Demo bots"],
   ["/backtest", "Backtest"],
@@ -240,6 +242,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/track" element={<Track />} />
             <Route path="/radar" element={<Radar />} />
             <Route path="/report" element={<Report />} />
+            <Route path="/achievements" element={<Achievements />} />
             <Route path="/accuracy" element={<Accuracy />} />
             <Route path="/bots" element={<Bots />} />
             <Route path="/backtest" element={<Backtest />} />

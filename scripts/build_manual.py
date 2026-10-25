@@ -19,6 +19,8 @@ SRC = ROOT / "docs" / "manual" / "manual.md"
 OUT = ROOT / "frontend" / "public" / "manual.pdf"
 LOGO = ROOT / "frontend" / "public" / "icons" / "icon-512.png"
 VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.0.0"
+import os
+HEAD_MM = float(os.environ.get("HEAD_MM", "22"))
 
 body = markdown.markdown(SRC.read_text(encoding="utf-8"), extensions=["tables", "sane_lists"])
 body = body.replace("<li>☐ ", "<li>")
@@ -34,10 +36,10 @@ lead, rest = body.split("</p>", 1)
 lead = lead.replace("<p>", "")
 
 CSS = """
-@page { size: A4; margin: 14mm 0 16mm; }
+@page { size: A4; margin: 21mm 0 20mm; }
 @page :first { margin: 0; }
 * { box-sizing: border-box; }
-html, body { margin: 0; background: #0b0e11; color: #eaecef; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+html, body { margin: 0; width: 100%; background: #0b0e11; color: #eaecef; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 body { font-family: Inter, "DejaVu Sans", Arial, sans-serif; font-size: 10.6pt; line-height: 1.58; }
 .gold { color: #f0b90b; }
 
@@ -74,8 +76,16 @@ body { font-family: Inter, "DejaVu Sans", Arial, sans-serif; font-size: 10.6pt; 
 h2 { font-size: 17pt; font-weight: 750; color: #fff; margin: 0 0 4mm; padding: 9mm 0 3mm; letter-spacing: -.01em;
   border-bottom: 1px solid rgba(240,185,11,.35); break-after: avoid; }
 h2::first-letter { color: #f0b90b; }
-.section { padding-top: 4mm; }
-.section:first-child { padding-top: 0; }
+/* chapters flow on; a heading always stays with its first lines, nothing is cut in half across a page break */
+.section { padding-top: 0; break-inside: auto; }
+.section + .section h2 { margin-top: 7mm; }
+h2 { padding-top: 0; break-after: avoid; page-break-after: avoid; }
+h2 + * { break-before: avoid; }
+h3 { font-size: 12.5pt; color: #fff; margin: 5mm 0 2mm; break-after: avoid; }
+p, li, blockquote, .check li, tr { break-inside: avoid; }
+p { orphans: 3; widows: 3; }
+table { break-inside: avoid; }
+p:has(+ ul), p:has(+ ol), p:has(+ table) { break-after: avoid; }
 .content ul li:has(> :first-child) {}
 .check { list-style: none; padding-left: 0; }
 .check li { padding: 2mm 3mm 2mm 9mm; position: relative; border-radius: 2.5mm; background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06); }
@@ -117,8 +127,8 @@ html = f"""<!doctype html><html><head><meta charset="utf-8"><style>{CSS}</style>
 html = html.replace('<div class="section">', '</div><div class="section">').replace('<main class="content"></div>', '<main class="content">').replace("</main>", "</div></main>")
 
 BAR = "-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#0b0e11;width:100%;margin:0;"
-HEAD = f"""<style>html,body{{margin:0;padding:0}}</style><div style="{BAR}height:22mm;margin-top:-6mm"></div>"""
-FOOT = f"""<style>html,body{{margin:0;padding:0}}</style><div style="{BAR}height:23mm;margin-bottom:-6.5mm;box-sizing:border-box;padding:5mm 20mm 0;
+HEAD = f"""<style>html,body{{margin:0;padding:0}}</style><div style="{BAR}height:{HEAD_MM}mm;margin-top:-6mm"></div>"""
+FOOT = f"""<style>html,body{{margin:0;padding:0}}</style><div style="{BAR}height:24mm;margin-bottom:-7.5mm;box-sizing:border-box;padding:5mm 20mm 0;
 font-family:Inter,Arial,sans-serif;font-size:7.5pt;color:#848e9c;display:flex;justify-content:space-between;align-items:flex-start;">
 <span><span style="color:#f0b90b;font-weight:600">Crypto Intelligence AI</span> · User manual</span>
 <span>© 2026 Hesper · page <span class="pageNumber"></span> / <span class="totalPages"></span></span></div>"""

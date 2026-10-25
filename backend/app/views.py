@@ -242,7 +242,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "benchmark_return_pct": st.get("benchmark_return_pct"), "win_rate": st.get("win_rate"),
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
-    return {"generated_at": now_ms(), "since": first, "live": {"summary": summ(closed), "by_timeframe": by_tf,
+    out = {"generated_at": now_ms(), "since": first, "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "signals": sigs[:limit]},
             "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))),
@@ -251,6 +251,8 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                                "exits at each take-profit, the rest at the stop or after 30 candles. Fees not included.",
                        "tested": "Walk-forward test: the models are trained only on data before each test period and then "
                                  "scored on the following period, which they never saw. A simulation, not live results."}}
+    out["achievements"] = achievements(rt, out, bot_report)
+    return out
 
 
 # ---- weekly report (marketing, built on the full record) ------------------------------------------------------
@@ -329,3 +331,82 @@ def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks:
             break
         out.append(weekly_report(rt, st, bot_report))
     return {"generated_at": now, "reports": out}
+
+
+# ---- achievements (marketing badges, computed from the real record only) ----------------------------------------
+
+def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] | None = None) -> list[dict[str, Any]]:
+    """Milestones the app has really reached. Locked ones show progress; nothing is unlocked by hand."""
+    import numpy as np
+
+    rows = rt.db.query("SELECT symbol, side, status, return_pct, closed_at FROM signals "
+                       "WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL ORDER BY closed_at")
+    out: list[dict[str, Any]] = []
+
+    def add(aid, title, unlocked, value, detail, at=None, progress=None):
+        out.append({"id": aid, "title": title, "unlocked": bool(unlocked), "value": value, "detail": detail,
+                    "achieved_at": at if unlocked else None, "progress": None if unlocked else progress})
+
+    n = len(rows)
+    for goal in (10, 50, 100, 250, 500, 1000):
+        hit = rows[goal - 1]["closed_at"] if n >= goal else None
+        add(f"signals_{goal}", f"{goal} signals delivered", n >= goal, f"{goal}", f"{goal} trade signals published and followed to the end", hit,
+            min(1.0, n / goal))
+        if n < goal:
+            break
+    if rows:
+        best = max(rows, key=lambda r: r["return_pct"])
+        add("best_trade", "Best signal", best["return_pct"] > 0, f"+{best['return_pct']:.1f}%",
+            f"{best['symbol'].split('/')[0]} {'long' if best['side'] > 0 else 'short'}", best["closed_at"])
+    streak = best_streak = 0
+    streak_end = None
+    for r in rows:
+        streak = streak + 1 if r["return_pct"] > 0 else 0
+        if streak > best_streak:
+            best_streak, streak_end = streak, r["closed_at"]
+    add("win_streak", "Winning streak", best_streak >= 3, f"{best_streak} in a row", "consecutive winning signals",
+        streak_end, min(1.0, best_streak / 3))
+    tp3 = [r for r in rows if r["status"] == "TP3"]
+    add("all_targets", "All targets hit", len(tp3) >= 1, f"{len(tp3)}x", "signals that reached take-profit 3",
+        tp3[-1]["closed_at"] if tp3 else None, 0.0)
+    weeks: dict[int, float] = {}
+    for r in rows:
+        weeks[week_start(int(r["closed_at"]))] = weeks.get(week_start(int(r["closed_at"])), 0.0) + r["return_pct"]
+    green = sorted(w for w, v in weeks.items() if v > 0)
+    if weeks:
+        bw = max(weeks.items(), key=lambda kv: kv[1])
+        add("best_week", "Best week", bw[1] > 0, f"+{bw[1]:.1f}%", "total of all signals closed that week", bw[0] + WEEK - 1)
+    add("green_weeks", "Profitable weeks", len(green) >= 2, f"{len(green)} of {len(weeks)}", "weeks that closed in profit",
+        green[-1] + WEEK - 1 if green else None, min(1.0, len(green) / 2))
+    recent = [r for r in rows if r["closed_at"] >= now_ms() - 30 * 86_400_000]
+    wr = float(np.mean([r["return_pct"] > 0 for r in recent])) if recent else 0.0
+    add("win_rate_30d", "55%+ win rate this month", len(recent) >= 20 and wr >= 0.55, f"{wr:.0%}",
+        f"over {len(recent)} signals in the last 30 days", now_ms(), min(1.0, len(recent) / 20) if len(recent) < 20 else wr / 0.55)
+    for b in (bot_report or {}).get("bots", []):
+        from .services.bots import SCORECARD_IDS
+        cfg, st = b.get("config") or {}, b.get("stats") or {}
+        if cfg.get("id") in SCORECARD_IDS and st.get("trades"):
+            beat = (st.get("return_pct") or 0) > (st.get("benchmark_return_pct") or 0) and (st.get("return_pct") or 0) > 0
+            add(f"bot_{cfg['id']}", f"Beat buy & hold · {cfg.get('timeframe', '').upper()}", beat and st["trades"] >= 10,
+                f"{st.get('return_pct', 0):+.1f}%", f"scorecard bot vs {st.get('benchmark_return_pct') or 0:+.1f}% for holding",
+                now_ms(), min(1.0, st["trades"] / 10))
+    try:
+        r = rt.db.one("SELECT symbol, ret_7d, btc_ret_7d, evaluated_at FROM radar_picks WHERE evaluated_at IS NOT NULL "
+                      "ORDER BY ret_7d - btc_ret_7d DESC LIMIT 1")
+        if r:
+            ex = (r["ret_7d"] - r["btc_ret_7d"]) * 100
+            add("radar_star", "Radar star pick", ex >= 10, f"+{r['ret_7d'] * 100:.0f}%",
+                f"{r['symbol'].split('/')[0]} in 7 days ({ex:+.0f}% vs BTC)", r["evaluated_at"], max(0.0, min(1.0, ex / 10)))
+    except Exception:
+        pass
+    edge = [t for t in track.get("tested", []) if t.get("edge")]
+    add("proven_edges", "Proven AI edges", len(edge) >= 5, f"{len(edge)}", "coin/timeframes where the AI beat a coin flip on unseen data",
+        now_ms(), min(1.0, len(edge) / 5))
+    if track.get("since"):
+        days = (now_ms() - track["since"]) / 86_400_000
+        for goal in (30, 90, 180, 365):
+            add(f"live_{goal}", f"{goal} days of public results", days >= goal, f"{int(days)} days", "every signal public since launch",
+                track["since"] + goal * 86_400_000, min(1.0, days / goal))
+            if days < goal:
+                break
+    return sorted(out, key=lambda a: (not a["unlocked"], -(a["achieved_at"] or 0)))

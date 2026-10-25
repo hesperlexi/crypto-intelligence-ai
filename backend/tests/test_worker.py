@@ -143,3 +143,23 @@ def test_weekly_report_shows_best_trades_and_the_full_totals():
     r = views.weekly_report(rt, st)
     assert r["closed"] == 2 and r["wins"] == 1 and r["losses"] == 1 and r["issued"] == 3
     assert r["best"][0]["symbol"] == "BTC/USDT" and r["worst"]["symbol"] == "ETH/USDT" and abs(r["total_return_pct"] - 5) < 1e-9
+
+
+def test_achievements_unlock_only_from_real_results():
+    from app import views
+    from app.db import Database
+    from app.services.runtime import Runtime
+
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    ins = ("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, stop, "
+           "tp1, tp2, tp3, status, return_pct, closed_at, payload) VALUES (?, ?, 'BTC/USDT', '4h', ?, 'BUY', 'BUY', 100, 1, "
+           "100, 95, 105, 110, 115, ?, ?, ?, '{}')")
+    now = views.now_ms()
+    for i, (st, r) in enumerate([("TP1", 1.0), ("TP3", 7.5), ("TP2", 3.0), ("STOPPED", -2.0)] * 3):
+        rt.db.execute(ins, (str(i), now - 1000 + i, i, st, r, now - 10 * 86_400_000 + i * 3_600_000))
+    v = views.track_record(rt, {"bots": []})
+    a = {x["id"]: x for x in v["achievements"]}
+    assert a["signals_10"]["unlocked"] and not a["signals_50"]["unlocked"] and 0 < a["signals_50"]["progress"] < 1
+    assert a["best_trade"]["value"] == "+7.5%" and a["win_streak"]["value"] == "3 in a row" and a["all_targets"]["unlocked"]
+    assert not a["win_rate_30d"]["unlocked"]                # 12 signals: fewer than the 20 required
+    assert v["achievements"][0]["unlocked"] and not v["achievements"][-1]["unlocked"]

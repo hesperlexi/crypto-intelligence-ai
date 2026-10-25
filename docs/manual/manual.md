@@ -191,6 +191,8 @@ The **Bots** page runs automatic demo traders with virtual money around the cloc
 
 **Weekly report** (menu) turns each week into a ready-to-post image (square post or 9:16 story) with the week's best signals, the full totals (wins and losses) and a link to the track record, plus a caption to copy. A new report is ready every Monday.
 
+**Achievements** (menu) shows the milestones the app has really reached (signals delivered, best signal, winning streaks, profitable weeks, the scorecard bot beating buy & hold, Radar star picks), worked out from the public record. Download any badge as an image, or all of them as one poster.
+
 The **Accuracy** page is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
 
 1. **The verdict** for the coin and timeframe: does the model beat a naive guess, and is the p-value below 0.05 (edge unlikely to be luck)?
