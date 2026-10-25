@@ -251,3 +251,81 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                                "exits at each take-profit, the rest at the stop or after 30 candles. Fees not included.",
                        "tested": "Walk-forward test: the models are trained only on data before each test period and then "
                                  "scored on the following period, which they never saw. A simulation, not live results."}}
+
+
+# ---- weekly report (marketing, built on the full record) ------------------------------------------------------
+
+WEEK = 7 * 86_400_000
+
+
+def week_start(ts: int) -> int:
+    """Monday 00:00 UTC of the week containing ts (1970-01-01 was a Thursday)."""
+    return ts - ((ts - 4 * 86_400_000) % WEEK)
+
+
+def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Signals that CLOSED in [start, start + 1 week): best trades first, but with the complete totals (wins and
+    losses), so the report can be posted as it is without misleading anyone."""
+    import numpy as np
+
+    from .services.bots import SCORECARD_IDS
+
+    end = start + WEEK
+    rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL "
+                       "AND closed_at >= ? AND closed_at < ? ORDER BY return_pct DESC", (start, end))
+    issued = rt.db.one("SELECT COUNT(*) AS n FROM signals WHERE status != 'INFO' AND created_at >= ? AND created_at < ?",
+                       (start, end))["n"]
+    trades = []
+    for r in rows:
+        p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
+        trades.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+                       "grade": p.get("grade"), "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"],
+                       "created_at": r["created_at"], "closed_at": r["closed_at"]})
+    rets = np.array([t["return_pct"] for t in trades], float)
+    wins = [t for t in trades if t["return_pct"] > 0]
+    by_coin: dict[str, float] = {}
+    for t in trades:
+        by_coin[t["symbol"]] = by_coin.get(t["symbol"], 0.0) + t["return_pct"]
+    bots = []
+    for bt in (bot_report or {}).get("bots", []):
+        cfg = bt.get("config") or {}
+        if cfg.get("id") not in SCORECARD_IDS:
+            continue
+        eq = rt.db.query("SELECT ts, equity FROM bot_equity WHERE bot_id = ? AND ts < ? ORDER BY ts", (cfg["id"], end))
+        before = [e for e in eq if e["ts"] < start]
+        e0 = before[-1]["equity"] if before else (eq[0]["equity"] if eq else None)
+        e1 = eq[-1]["equity"] if eq else None
+        bots.append({"name": cfg.get("name"), "week_return_pct": (e1 / e0 - 1) * 100 if e0 and e1 else None,
+                     "total_return_pct": (bt.get("stats") or {}).get("return_pct")})
+    radar_best = None
+    try:
+        r = rt.db.one("SELECT symbol, ret_7d, btc_ret_7d FROM radar_picks WHERE evaluated_at >= ? AND evaluated_at < ? "
+                      "ORDER BY ret_7d - btc_ret_7d DESC LIMIT 1", (start, end))
+        if r:
+            radar_best = {"symbol": r["symbol"], "ret_7d_pct": r["ret_7d"] * 100, "vs_btc_pct": (r["ret_7d"] - r["btc_ret_7d"]) * 100}
+    except Exception:
+        pass
+    return {"week_start": start, "week_end": end, "generated_at": now_ms(), "complete": now_ms() >= end,
+            "issued": issued, "closed": len(trades), "wins": len(wins), "losses": len(trades) - len(wins),
+            "win_rate": float(len(wins) / len(trades)) if trades else None,
+            "total_return_pct": float(rets.sum()) if len(rets) else None,
+            "avg_return_pct": float(rets.mean()) if len(rets) else None,
+            "best": trades[:5], "worst": trades[-1] if trades else None,
+            "best_coin": max(by_coin.items(), key=lambda kv: kv[1])[0] if by_coin else None,
+            "scorecard_bots": bots, "radar_best": radar_best,
+            "basis": "Signals that closed this week; each return assumes equal size, a third closed at each target, before fees."}
+
+
+def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks: int = 12) -> dict[str, Any]:
+    """This week so far, last week, and the archive (newest first)."""
+    now = now_ms()
+    cur = week_start(now)
+    first = rt.db.one("SELECT MIN(created_at) AS t FROM signals WHERE status != 'INFO'")
+    first_ts = int(first["t"]) if first and first["t"] else cur
+    out = []
+    for i in range(weeks):
+        st = cur - i * WEEK
+        if st + WEEK <= first_ts:
+            break
+        out.append(weekly_report(rt, st, bot_report))
+    return {"generated_at": now, "reports": out}

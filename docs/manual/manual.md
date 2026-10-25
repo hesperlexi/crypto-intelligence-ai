@@ -187,6 +187,8 @@ The **Bots** page runs automatic demo traders with virtual money around the cloc
 
 **Track record** (menu) lists every trade signal since launch with its real result (target hit, stopped or expired), the win rate and the running total, plus how each coin's AI scored on past data it never saw. Nothing is removed. The page is also public on the start page, so you can show it to friends before they join.
 
+**Weekly report** (menu) turns each week into a ready-to-post image (square post or 9:16 story) with the week's best signals, the full totals (wins and losses) and a link to the track record, plus a caption to copy. A new report is ready every Monday.
+
 The **Accuracy** page is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
 
 1. **The verdict** for the coin and timeframe: does the model beat a naive guess, and is the p-value below 0.05 (edge unlikely to be luck)?

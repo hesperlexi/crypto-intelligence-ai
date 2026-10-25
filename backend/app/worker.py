@@ -333,6 +333,7 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     bot_report = BotEngine(rt).report()
     sink.view("bots", bot_report)
     sink.view("track_record", views.track_record(rt, bot_report))
+    sink.view("weekly_report", views.weekly_reports(rt, bot_report))
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))
@@ -453,6 +454,15 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         due = news.due_notifications(rt.db)
         if due:
             detail["news_push"] = step("news_push", lambda: sink.send_push(due))
+    last_week = views.week_start(now_ms()) - views.WEEK
+    if int(rt.db.get_setting("weekly_report_notified", 0) or 0) < last_week and now_ms() - views.week_start(now_ms()) > 4 * 3_600_000:
+        def weekly_push():
+            r = views.weekly_report(rt, last_week)
+            rt.db.set_setting("weekly_report_notified", last_week)
+            body = (f"{r['closed']} signals closed, win rate {r['win_rate']:.0%}, total {r['total_return_pct']:+.1f}%. "
+                    "Open Report to download the post image.") if r["closed"] else "No signals closed last week. The report is ready to view."
+            return sink.send_push([{"title": "Your weekly report is ready", "body": body, "url": "/report", "tag": "weekly-report"}])
+        detail["weekly_push"] = step("weekly_push", weekly_push)
     if fired_events:
         owners = {r["id"]: r["user_id"] for r in rt.db.query("SELECT id, user_id FROM alerts")}
         detail["push"] = step("push", lambda: sink.send_push(

@@ -140,6 +140,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "news": return view("news");
     case "track-record": return view("track_record");
     case "radar": return view("radar");
+    case "weekly-report": return view("weekly_report");
     case "cross-asset": return view("cross_asset_1d");
     case "signals": return view("signals");
     case "backtests": return view("backtests");

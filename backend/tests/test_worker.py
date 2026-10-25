@@ -124,3 +124,22 @@ def test_track_record_view_is_honest_and_complete():
     assert s["closed"] == 2 and s["win_rate"] == 0.5 and abs(s["total_return_pct"] - 1.0) < 1e-9
     assert v["live"]["open"] == 1 and v["live"]["by_grade"]["A"]["closed"] == 1 and len(v["live"]["signals"]) == 3
     assert [p["cum_return_pct"] for p in v["live"]["curve"]] == [6.0, 1.0]
+
+
+def test_weekly_report_shows_best_trades_and_the_full_totals():
+    from app import views
+    from app.db import Database
+    from app.services.runtime import Runtime
+
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    st = views.week_start(1_793_000_000_000)
+    assert (st // 86_400_000 + 3) % 7 == 0 and st % 86_400_000 == 0          # a Monday, midnight UTC
+    ins = ("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, stop, "
+           "tp1, tp2, tp3, status, return_pct, closed_at, payload) VALUES (?, ?, ?, '4h', ?, 'BUY', 'BUY', 100, 1, 100, 95, "
+           "105, 110, 115, ?, ?, ?, '{}')")
+    rt.db.execute(ins, ("a", st + 1, "BTC/USDT", 1, "TP3", 9.0, st + 10))
+    rt.db.execute(ins, ("b", st + 2, "ETH/USDT", 2, "STOPPED", -4.0, st + 20))
+    rt.db.execute(ins, ("c", st + 3, "SOL/USDT", 3, "TP1", 2.0, st + views.WEEK + 5))     # closes next week
+    r = views.weekly_report(rt, st)
+    assert r["closed"] == 2 and r["wins"] == 1 and r["losses"] == 1 and r["issued"] == 3
+    assert r["best"][0]["symbol"] == "BTC/USDT" and r["worst"]["symbol"] == "ETH/USDT" and abs(r["total_return_pct"] - 5) < 1e-9
