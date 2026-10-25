@@ -16,7 +16,7 @@ const FEATURES: [string, string, string][] = [
   ["M12 2v20M5 9h14M7 15h10", "Ready-made trade plans", "Entry zone, stop-loss and three take-profit targets on every signal, sized from real volatility."],
   ["M3 17l6-6 4 4 8-8M15 7h6v6", "Spot & futures", "Long and short calls with safe leverage, liquidation price, funding and open interest built in."],
   ["M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0", "Instant phone alerts", "Pick a coin and a condition. Get a notification the moment a setup appears, with the full plan."],
-  ["M2 6h20v13H2zM2 10h20M6 15h4", "Practise risk-free", "Paper trading for spot and futures, hedge mode included, plus demo bots trading the signals 24/7."],
+  ["M2 6h20v13H2zM2 10h20M6 15h4", "Practise risk-free", "Paper trading for spot and futures with live prices, auto-trading of every signal, plus demo bots trading the signals 24/7."],
   ["M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5", "Honest accuracy", "Every model is scored on data it never saw. You see the real hit rate before you trust a call."],
 ];
 
@@ -83,7 +83,7 @@ export default function Landing({ error }: { error: string | null }) {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
-              <button className="btn px-5 py-3 text-base" onClick={() => setDemo(true)}>▶ Watch the 90-second demo</button>
+              <button className="btn px-5 py-3 text-base" onClick={() => setDemo(true)}>▶ Watch what's new in 2.0 (70 s)</button>
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
             <p className="mt-5 text-xs text-mute">No exchange keys needed · the app never places real orders · from ${(plans[plans.length - 1].price / 12).toFixed(2)}/month</p>
