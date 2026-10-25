@@ -65,7 +65,9 @@ Open **Signals** (bottom bar on phones). Pick **Futures** or **Spot** and a time
 - **Entry:** the ideal price and the entry zone. A line under the call tells you whether the price is inside the zone right now, or which price to wait for.
 - **Stop-loss** and **Take-profit 1 / 2 / 3**, each with the % distance; futures also show the **suggested leverage** and the **liquidation price**.
 - **The price ladder** puts every level in order, with the live price slotted in, so you see at a glance how far you are from the stop and the targets.
-- **Confidence** and the **up / down** chances behind the call.
+- **Grade:** every trade call carries a strength badge. **A · strong** means the trend, the AI models and the models' own track record all agree. **B · moderate** is an AI-led call: the trend is unclear, but the AI's lean is bigger than the threshold at which it has been right more often than not on past data it never trained on. Grade A is the safer pick; treat B as a smaller, more careful trade.
+- **Why:** one line saying what the call is based on.
+- **Hit rate (similar calls):** how often the AI was right in the past when it leaned the same way by a similar amount, measured on data it was not trained on. 50% is a coin flip; 53–60% is a real, useful edge in crypto. The **up / down** chances behind the call sit next to it.
 
 Buttons: **Practise this trade** opens it in the trading screen with stop and target filled in, the bell sets an alert, **Copy** copies the plan as text. The **All coins** list shows every coin's call with entry, stop and first target. The same card appears at the top of each coin's page and on the **Futures** page.
 
@@ -121,7 +123,7 @@ Alerts let the app watch the market for you. Open **Alerts → New alert**:
 2. **Coin** and **Timeframe** (1H or 4H are the best balance of speed and accuracy).
 3. **Direction:** long or short, long only, or short only.
 4. **Market:** Spot, or Futures (adds suggested leverage and liquidation to the message).
-5. **Minimum confidence** (optional, e.g. 55) and tick **Confident calls only** for fewer, better alerts.
+5. **Minimum confidence** (optional, e.g. 55). Tick **Strong signals only (grade A)** for fewer, higher-quality alerts, or leave it off to also get grade B calls; **Confident calls only** narrows further.
 6. **Cooldown:** minutes before the same alert can fire again (e.g. 240 for 4H).
 7. Press **Create alert**.
 
@@ -155,7 +157,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 The **Bots** page runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
-- **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets, taking a third off at each target.
+- **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets, taking a third off at each target. After take-profit 2 the stop moves up to take-profit 1 (a trailing stop), so the last third can run without giving back the gains. The standard bots trade grade A calls only; the **A+B** bots also take grade B calls, so you can compare quality against quantity.
 - **Prediction trackers** take every raw model call for one bar, showing how good the raw predictions are.
 - **Futures bots** trade the same calls as perpetual futures with leverage, liquidation and funding.
 
