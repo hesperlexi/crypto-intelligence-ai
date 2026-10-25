@@ -60,7 +60,7 @@ def scan(rt: Runtime, timeframe: str = "4h") -> list[dict[str, Any]]:
             "regime_confidence": a["regime"].get("confidence"),
             "signal": sig["signal"], "score": sig.get("score"), "bull_score": sig.get("bull_score"),
             "composite": sig.get("composite"), "decision": a["decision"], "decision_reason": a.get("decision_reason"),
-            "grade": a.get("grade"),
+            "grade": a.get("grade"), "news_risk": a.get("news_risk"),
             "confidence": a.get("confidence"), "risk_reward": setup.get("risk_reward") if setup.get("valid") else None,
             "mtf_alignment": a.get("mtf_alignment"), "volatility": a["volatility"]["state"],
             "breakout_base_rate": br["probability"], "breakout_n": br["n"], "flags": a.get("flags"),

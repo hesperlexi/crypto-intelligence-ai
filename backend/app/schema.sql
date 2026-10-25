@@ -247,3 +247,27 @@ CREATE TABLE IF NOT EXISTS bot_equity (
   benchmark DOUBLE PRECISION,
   PRIMARY KEY (bot_id, ts)
 );
+
+-- economic calendar (US data releases etc.), kept so past events stay known to replays
+CREATE TABLE IF NOT EXISTS econ_events (
+  id TEXT PRIMARY KEY,
+  ts BIGINT NOT NULL,
+  country TEXT NOT NULL,
+  title TEXT NOT NULL,
+  impact TEXT NOT NULL,
+  forecast TEXT,
+  previous TEXT,
+  actual TEXT,
+  notified_at BIGINT,
+  updated_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS ix_econ_events_ts ON econ_events (ts);
+
+-- futures-market history used as model features: funding rate events and the hourly premium index
+CREATE TABLE IF NOT EXISTS derivs (
+  symbol TEXT NOT NULL,
+  kind TEXT NOT NULL,              -- 'funding' (event time) | 'premium_1h' (bar open time)
+  ts BIGINT NOT NULL,
+  value DOUBLE PRECISION NOT NULL,
+  PRIMARY KEY (symbol, kind, ts)
+);

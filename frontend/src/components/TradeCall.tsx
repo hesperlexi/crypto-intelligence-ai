@@ -141,6 +141,11 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
               <span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}
             </div>
           )}
+          {r.news_risk && (
+            <div className="mt-1.5 rounded-lg border border-bear/40 bg-bear/[0.08] px-2.5 py-1.5 text-xs text-bear">
+              ⚠ Major US data ({r.news_risk.title}) {r.news_risk.when}: new entries pause until 30 min after the release.
+            </div>
+          )}
           {v.tone === "wait" && (
             <p className="mt-1 text-sm text-mute">
               Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}. Set an alert and the app tells you when a setup appears.

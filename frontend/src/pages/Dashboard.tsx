@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
 import { DashboardHero } from "../components/Polish";
+import NewsBanner from "../components/NewsBanner";
 import { TfTabs } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge, Stat } from "../components/ui";
 import { useApi } from "../lib/api";
@@ -29,6 +30,7 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-4">
+      <NewsBanner />
       <DashboardHero rows={d?.rows} status={ms} tf={tf} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>

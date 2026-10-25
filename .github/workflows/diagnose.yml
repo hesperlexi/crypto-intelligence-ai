@@ -35,11 +35,18 @@ jobs:
       - name: Install PyTorch (CPU) so models with LSTM / GRU / Transformer members load
         run: pip install -r requirements-torch.txt
       - name: Restore engine state (read-only)
+        id: state
         uses: actions/cache/restore@v4
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}
           restore-keys: engine-state-
+      - name: Restore from the encrypted backup if the cache is gone
+        if: steps.state.outputs.cache-matched-key == ''
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed; starting fresh"
       - name: Run the experiment
         run: python -m app.diagnose --days "${{ inputs.days }}" --timeframes 1h,4h,12h,1d --budget 2400 --out /tmp/report.json
       - name: Save the report to the reports branch

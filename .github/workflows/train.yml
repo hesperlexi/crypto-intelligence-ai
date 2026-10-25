@@ -12,6 +12,8 @@ concurrency:
 jobs:
   train:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write          # the daily encrypted backup is stored as a release asset
     timeout-minutes: 80
     defaults:
       run:
@@ -34,11 +36,18 @@ jobs:
       - run: pip install -r requirements-worker.txt
       - name: Install PyTorch (CPU) for the LSTM / GRU / Transformer models
         run: pip install -r requirements-torch.txt
-      - uses: actions/cache/restore@v4
+      - id: state
+        uses: actions/cache/restore@v4
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}
           restore-keys: engine-state-
+      - name: Restore from the encrypted backup if the cache is gone
+        if: steps.state.outputs.cache-matched-key == ''
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed; starting fresh"
       - name: Train / refresh models (full model set incl. LSTM / GRU / Transformer, 60-minute budget; the rest continues tomorrow)
         run: python -m app.worker train --budget 3600
       - if: always()
@@ -46,3 +55,9 @@ jobs:
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}
+      - name: Daily encrypted backup of the engine state
+        if: always()
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh save

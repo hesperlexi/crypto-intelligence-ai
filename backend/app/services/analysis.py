@@ -260,6 +260,20 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 decision = "SELL"
             if grade:
                 direction = side
+    # high-impact US data release (CPI, jobs report, Fed): pause fresh entries around it
+    news_risk = None
+    try:
+        from .news import event_risk
+        news_risk = event_risk(rt.db, (as_of if as_of is not None else int(time.time() * 1000)))
+    except Exception:
+        news_risk = None
+    if news_risk:
+        flags.append("NEWS RISK")
+        if decision in TRADE_DECISIONS:
+            held = decision
+            decision, why = "NO TRADE", news_risk["reason"]
+            basis = f"{held} paused for the news" if basis is None else f"{basis} (paused: {news_risk['title']})"
+            grade = None
     if decision == "NO TRADE":
         flags.append("NO TRADE")
 
@@ -278,7 +292,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             "bb_width_percentile": _n(last["bb_width_pct"]), "range_expansion": bool(last["range_expansion"]),
             "range_compression": bool(last["range_compression"])},
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)),
-        "grade": grade, "decision_basis": basis, "direction_view": dv,
+        "grade": grade, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
         "confidence": confidence, "confidence_detail": conf_detail,
         "forecast": fc, "mtf": matrix, "setup": setup, "risk": risk,
         "model_agreement": fc.get("model_agreement") if fc["available"] else None,

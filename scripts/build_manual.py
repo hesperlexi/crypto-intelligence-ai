@@ -18,7 +18,7 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC = ROOT / "docs" / "manual" / "manual.md"
 OUT = ROOT / "frontend" / "public" / "manual.pdf"
 LOGO = ROOT / "frontend" / "public" / "icons" / "icon-512.png"
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "1.1"
+VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.0.0"
 
 body = markdown.markdown(SRC.read_text(encoding="utf-8"), extensions=["tables", "sane_lists"])
 body = body.replace("<li>☐ ", "<li>")

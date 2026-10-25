@@ -8,10 +8,9 @@ const backend = process.env.VITE_BACKEND || "http://localhost:8000";
 
 // Version shown in the app. Every build gets its own id; the running app compares it with /version.json
 // and reloads itself when a newer deploy is live.
-// The base version is set here; every deploy adds its own build number (GitHub run number), so each update
-// shows a new version, e.g. 1.1.42.
-const BASE_VERSION = "1.1";
-const APP_VERSION = `${BASE_VERSION}.${process.env.GITHUB_RUN_NUMBER || "0"}`;
+// The release version is set here (also in package.json and the Android app). Updates are detected by the
+// build id, so every deploy still reaches phones without changing the version.
+const APP_VERSION = "2.0.0";
 const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 12);
 const BUILD_ID = `${(process.env.GITHUB_SHA || "local").slice(0, 7)}-${stamp}`;
 const V = encodeURIComponent(BUILD_ID);

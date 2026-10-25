@@ -75,6 +75,7 @@ def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage
         "lean": lean, "p_up": p_up, "p_down": p_down, "p_neutral": probs.get("neutral"),
         "confidence": a.get("confidence"), "model_agreement": a.get("model_agreement"),
         "confident_call": fc.get("confident_call"), "grade": a.get("grade"), "decision_basis": a.get("decision_basis"),
+        "news_risk": a.get("news_risk"),
         "policy_margin": (a.get("direction_view") or {}).get("policy_margin"), "margin": (a.get("direction_view") or {}).get("margin"),
         "edge_confirmed": fc.get("edge_confirmed"), "expected_return": fc.get("expected_return"),
         "regime": (a.get("regime") or {}).get("regime"), "volatility": (a.get("volatility") or {}).get("state"),

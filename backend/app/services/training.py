@@ -31,7 +31,18 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
         htf = None
         if settings.use_htf_features and timeframe in HTF_OF:
             htf = _try_frame(rt, symbol, HTF_OF[timeframe])
-        bundle = trainer.train_bundle(symbol, timeframe, frame, btc, fast=fast, progress=progress, htf=htf)
+        deriv, gate = None, None
+        if settings.use_deriv_features and not fast:
+            status.update(message="testing futures features")
+            try:
+                from ..ml import deriv_gate
+                gate = deriv_gate.decide(rt.db, symbol, timeframe, frame, btc, htf)
+                if gate.get("on"):
+                    deriv = rt.deriv_frame(symbol)
+            except Exception as exc:               # the gate must never stop training
+                log.warning("deriv gate failed for %s %s: %s", symbol, timeframe, exc)
+        bundle = trainer.train_bundle(symbol, timeframe, frame, btc, fast=fast, progress=progress, htf=htf, deriv=deriv)
+        bundle.setdefault("extras", {})["deriv_gate"] = gate
         status.update(progress=0.95, message="saving")
         trainer.save_bundle(bundle, rt.db)
         rt.analysis_cache.clear()

@@ -39,10 +39,11 @@ def _cost() -> float:
 
 def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = None,
                  model_names: list[str] | None = None, fast: bool = False,
-                 progress: Callable[[float, str], None] | None = None, htf: Frame | None = None) -> dict[str, Any]:
+                 progress: Callable[[float, str], None] | None = None, htf: Frame | None = None,
+                 deriv: Any = None) -> dict[str, Any]:
     if timeframe not in WALK_FORWARD:
         raise ValueError(f"no model is trained for timeframe {timeframe}")
-    ds = make_dataset(frame, btc, htf=htf)
+    ds = make_dataset(frame, btc, htf=htf, deriv=deriv)
     idx = np.where(ds.trainable)[0]
     if len(idx) < settings.min_train_samples + 60:
         raise InsufficientData(f"{len(idx)} usable training rows for {symbol} {timeframe}")

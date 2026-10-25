@@ -221,4 +221,22 @@ def funding_rates(symbols: list[str]) -> dict[str, dict[str, Any]]:
             return out
         except Exception:
             continue
-    return {}
+    return okx_funding(symbols)
+
+
+def okx_funding(symbols: list[str]) -> dict[str, dict[str, Any]]:
+    """Fallback when Binance futures are blocked: OKX USDT perpetuals (8-hour funding, same convention)."""
+    import requests
+
+    out: dict[str, dict[str, Any]] = {}
+    for s in symbols:
+        inst = f"{s.split('/')[0].upper()}-USDT-SWAP"
+        try:
+            r = requests.get("https://www.okx.com/api/v5/public/funding-rate", params={"instId": inst}, timeout=8)
+            d = (r.json().get("data") or [None])[0] if r.status_code == 200 else None
+        except Exception:
+            continue
+        if d and d.get("fundingRate") not in (None, ""):
+            out[s] = {"rate": float(d["fundingRate"]), "mark": None,
+                      "next_funding_ms": int(d.get("fundingTime") or d.get("nextFundingTime") or 0) or None, "source": "OKX perpetual"}
+    return out

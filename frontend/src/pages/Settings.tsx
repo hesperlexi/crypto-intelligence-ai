@@ -166,7 +166,7 @@ function AboutCard() {
   return (
     <Card title="About">
       <Row k="App" v="Crypto Intelligence AI" />
-      <Row k="Version" v={`v${APP_VERSION}`} />
+      <Row k="Version" v={`v${APP_VERSION} · build ${BUILD_ID}`} />
       <Row k="Build" v={BUILD_ID} />
       <Row k="Updates" v="automatic after every deploy" />
       <div className="mt-3 flex items-center gap-3">

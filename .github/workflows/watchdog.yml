@@ -1,0 +1,44 @@
+name: Engine watchdog
+
+# Every 30 minutes: phone notification to the admins when the engine has not published for 75 minutes
+# (and when it is back). Once a week it also re-enables the scheduled workflows, because GitHub switches
+# schedules off in public repositories after 60 days without activity.
+on:
+  schedule:
+    - cron: "7,37 * * * *"
+  workflow_dispatch:
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      actions: write           # to keep the schedules enabled
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      FIREBASE_PROJECT_ID: crypapp-6a9b9
+      FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-worker.txt
+      - run: pip install -r requirements-worker.txt
+      - name: Check the engine is publishing
+        run: python -m app.watchdog --stale-minutes 75
+      - name: Keep the scheduled workflows enabled (weekly)
+        if: always()
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          [ "$(date -u +%u%H)" = "103" ] || [ "${{ github.event_name }}" = "workflow_dispatch" ] || { echo "not the weekly slot"; exit 0; }
+          for wf in engine.yml train.yml watchdog.yml; do
+            gh api -X PUT "repos/${GITHUB_REPOSITORY}/actions/workflows/${wf}/enable" && echo "enabled $wf"
+          done

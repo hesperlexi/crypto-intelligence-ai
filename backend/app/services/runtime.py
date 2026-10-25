@@ -26,6 +26,7 @@ class Runtime:
         self.started_ms = now_ms()
         self._frames: dict[tuple[str, str], tuple[int, int, Frame]] = {}
         self._datasets: dict[tuple, tuple] = {}
+        self._derivs: dict[str, tuple[float, Any]] = {}
         self.analysis_cache: dict[tuple, tuple[float, dict[str, Any]]] = {}
         self.order_books: dict[str, tuple[float, dict[str, Any]]] = {}
         self.derivs_cache: dict[str, tuple[float, dict[str, Any]]] = {}
@@ -114,16 +115,35 @@ class Runtime:
         if with_btc and not symbol.startswith("BTC/"):
             btc = self.frame("BTC/USDT", timeframe, as_of)
         htf = self.frame(symbol, htf_tf, as_of) if htf_tf else None
+        # futures-positioning columns are always built (zeros when no data); each model version uses only
+        # the columns it was trained with, so versions with and without them work side by side
+        deriv = self.deriv_frame(symbol)
         if as_of is not None:
-            return make_dataset(fr, btc, htf=htf)
+            return make_dataset(fr, btc, htf=htf, deriv=deriv)
         key = (symbol, timeframe, with_btc, htf_tf)
         ts = int(fr.df["ts"].iloc[-1])
+        dts = int(deriv["ts"].iloc[-1]) if len(deriv) else 0
         hit = self._datasets.get(key)
-        if hit and hit[0] == ts and (htf is None or hit[2] == int(htf.df["ts"].iloc[-1])):
+        if hit and hit[0] == ts and hit[3] == dts and (htf is None or hit[2] == int(htf.df["ts"].iloc[-1])):
             return hit[1]
-        ds = make_dataset(fr, btc, htf=htf)
-        self._datasets[key] = (ts, ds, int(htf.df["ts"].iloc[-1]) if htf is not None else None)
+        ds = make_dataset(fr, btc, htf=htf, deriv=deriv)
+        self._datasets[key] = (ts, ds, int(htf.df["ts"].iloc[-1]) if htf is not None else None, dts)
         return ds
+
+    def deriv_frame(self, symbol: str):
+        """Hourly funding / premium history (data.derivs), cached for 10 minutes."""
+        from ..data import derivs
+
+        hit = self._derivs.get(symbol)
+        if hit and time.time() - hit[0] < 600:
+            return hit[1]
+        try:
+            df = derivs.load(self.db, symbol)
+        except Exception:                      # older database without the table
+            import pandas as pd
+            df = pd.DataFrame(columns=["ts", "funding", "premium"])
+        self._derivs[symbol] = (time.time(), df)
+        return df
 
     def live_price(self, symbol: str) -> float | None:
         t = self.feed.tickers.get(symbol) if self.feed is not None else None

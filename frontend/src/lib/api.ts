@@ -137,6 +137,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "performance": return p[1] ? view(`perf_${slugOf(p[1])}_${tf}`) : view("performance");
     case "system": return view("health");
     case "context": return view("context");
+    case "news": return view("news");
     case "cross-asset": return view("cross_asset_1d");
     case "signals": return view("signals");
     case "backtests": return view("backtests");

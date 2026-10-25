@@ -27,7 +27,8 @@ from .engine.signal import optimise_weights
 from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
-from .services import alerts, analysis, backtests, health, market, membership, replay, scanner, tracking, training
+from .data import derivs
+from .services import alerts, analysis, backtests, health, market, membership, news, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -382,6 +383,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     step("snapshot", snapshot)
     if fetch_context:
         step("context", lambda: asyncio.run(market.external_context(rt)))
+        detail["news"] = step("news", lambda: sync_news(rt))
+        detail["derivs"] = step("derivs", lambda: derivs.sync(rt.db, rt.symbols(), max_calls=40))
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt)))
     missing = [(s, tf) for s in rt.symbols() for tf in MODEL_TIMEFRAMES
                if trainer.active_version(s, tf, rt.db) is None and rt.store.is_current(rt.exchange, s, tf)]
@@ -413,6 +416,12 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
+    if fetch_context:
+        step("news_publish", lambda: sink.view("news", news.news_view(rt.db, getattr(rt, "headlines", None),
+                                                                        getattr(rt, "calendar_status", None))))
+        due = news.due_notifications(rt.db)
+        if due:
+            detail["news_push"] = step("news_push", lambda: sink.send_push(due))
     if fired_events:
         owners = {r["id"]: r["user_id"] for r in rt.db.query("SELECT id, user_id FROM alerts")}
         detail["push"] = step("push", lambda: sink.send_push(
@@ -425,10 +434,26 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     return detail
 
 
+def sync_news(rt: Runtime) -> dict[str, Any]:
+    """Calendar at most hourly (it changes slowly), headlines every cycle."""
+    last = int(rt.db.get_setting("calendar_synced_at", 0) or 0)
+    if now_ms() - last > 3_600_000:
+        rt.calendar_status = news.sync_calendar(rt.db)
+        if not rt.calendar_status.get("errors") or rt.calendar_status.get("events"):
+            rt.db.set_setting("calendar_synced_at", now_ms())
+    rt.headlines = news.headlines()
+    return {"calendar": getattr(rt, "calendar_status", None) or "fresh", "headlines": len(rt.headlines.get("items", [])),
+            "errors": rt.headlines.get("errors")}
+
+
 def train(rt: Runtime, sink: BaseSink, budget_s: float = 2700) -> dict[str, Any]:
     t0 = time.time()
     started = now_ms()
     asyncio.run(market.sync_all(rt))
+    try:                       # futures history for the models: plenty of requests allowed here (backfill)
+        log.info("derivs: %s", derivs.sync(rt.db, rt.symbols(), max_calls=600))
+    except Exception as exc:
+        log.warning("derivs sync failed: %s", exc)
     pairs = pairs_needing_full(rt)
     done = train_until(rt, pairs, False, t0 + budget_s)
     detail = {"trained": done, "remaining": max(0, len(pairs) - len(done)), "libraries": model_status()}

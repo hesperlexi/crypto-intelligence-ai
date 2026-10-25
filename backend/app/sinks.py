@@ -198,11 +198,15 @@ class FirestoreSink(BaseSink):
         sent, dead, errors = 0, set(), []
         for m in messages:                     # no cap on messages or members; FCM takes up to 500 devices per call
             to = m.get("uid")
-            # a member's alert goes to that member's devices only; an admin alert to the admins' devices
-            tokens = [t for t, uid, email in devices if (uid == to if to else (not admins or email in admins or uid is None))]
+            # a member's alert goes to that member's devices only; an admin alert to the admins' devices;
+            # a broadcast (market-wide news) to every device that turned notifications on
+            if m.get("broadcast"):
+                tokens = [t for t, _, _ in devices]
+            else:
+                tokens = [t for t, uid, email in devices if (uid == to if to else (not admins or email in admins or uid is None))]
             if not tokens:
                 continue
-            data = {k: str(v)[:900] for k, v in m.items() if v is not None and k != "uid"}
+            data = {k: str(v)[:900] for k, v in m.items() if v is not None and k not in ("uid", "broadcast")}
             for i in range(0, len(tokens), 500):
                 chunk = tokens[i:i + 500]
                 msg = messaging.MulticastMessage(

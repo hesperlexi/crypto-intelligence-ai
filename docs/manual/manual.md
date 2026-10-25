@@ -55,7 +55,7 @@ Do these once and the app works for you in the background.
 - ☐ **Choose a look:** **Settings → Appearance**. Gold is the default; there are other themes and layouts, and a compact density for small screens.
 - ☐ **Set up your practice account:** open **Trade → Assets**, type a **Starting balance** close to what you would really trade (e.g. 1,000 USDT) and press **Reset account**.
 - ☐ **Create one alert** for your favourite coin (section 7), so the app tells you when a setup appears.
-- ☐ **Open Accuracy** and note today's hit rates. This is your baseline for deciding how much to trust the models (section 10).
+- ☐ **Open Accuracy** and note today's hit rates. This is your baseline for deciding how much to trust the models (section 11).
 
 ## 4. Trade signals: long, short, buy or wait
 
@@ -131,13 +131,24 @@ When it fires, you get a notification with the side, entry, stop loss, take prof
 
 **Notifications on your phone:** **Settings → Notifications → Turn on notifications**, allow them when asked, then **Send a test notification**. On iPhone, open the app from the Home Screen icon first.
 
-## 8. Trade (paper trading): practise like on an exchange
+## 8. News and the economic calendar
+
+US data releases (inflation/CPI, the jobs report, Fed interest-rate decisions) can move crypto several percent within minutes, in either direction. Open **News** to see:
+
+- **The economic calendar** for this and next week in your local time, with the impact level, the forecast and the previous value, and one line on what each release usually means for crypto.
+- **Crypto headlines** from CoinDesk, Cointelegraph and Decrypt, for context.
+
+**How the app protects you:** from 45 minutes before a high-impact US release until 30 minutes after it, new trade signals are paused. A red **NEWS NOW** banner appears on the dashboard and the Signals page, and the trade cards show a warning. Members with notifications on get a heads-up 30 minutes before. Signals resume automatically after the release.
+
+**Tip:** if you already hold a position before a big release, consider tightening the stop or taking partial profit; avoid opening new positions right before it.
+
+## 9. Trade (paper trading): practise like on an exchange
 
 Open **Trade** (bottom bar on phones). It works like Binance or MEXC, with virtual USDT; nothing touches a real exchange.
 
 **The screen:**
 
-- **Pair bar:** tap the coin to switch pairs; it shows the last price, 24h change and volume. Switch between **Futures** and **Spot** on the right.
+- **Pair bar:** tap the coin to switch pairs; it shows the last price, 24h change and volume. Switch between **Futures** and **Spot** on the right. Prices and the chart update live on every trade; on the Futures tab they come from Binance Futures (the perpetual's own price, which differs slightly from spot), marked **live · futures price** under the price.
 - **AI call strip:** the app's current call for this coin. **Use this plan** fills in the side, leverage, a limit at the entry price, the stop-loss and the take-profit for you.
 - **Chart:** live candles (1m to 1D). Your entry, take-profit, stop-loss, liquidation price and open limit orders are drawn on it.
 - **Order book** (computer): live bids and asks.
@@ -153,13 +164,15 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 **How to practise properly:** take only trades you would really take, at the real size; write down why you took each one and compare after 30 trades; reset the account only when you change strategy.
 
-## 9. Demo bots: proof of whether the predictions work
+## 10. Demo bots: proof of whether the predictions work
 
 The **Bots** page runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
 - **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets, taking a third off at each target. After take-profit 2 the stop moves up to take-profit 1 (a trailing stop), so the last third can run without giving back the gains. The standard bots trade grade A calls only; the **A+B** bots also take grade B calls, so you can compare quality against quantity.
 - **Prediction trackers** take every raw model call for one bar, showing how good the raw predictions are.
 - **Futures bots** trade the same calls as perpetual futures with leverage, liquidation and funding.
+
+**Futures data in the AI (v2.0):** the models can also use futures-market positioning (funding rates and the perpetual premium, hourly). For every coin and timeframe the engine tests this on past data the model never saw, and only switches it on where it measurably improves accuracy. Where it doesn't help, the model keeps working without it.
 
 **How to judge a bot:**
 
@@ -168,7 +181,7 @@ The **Bots** page runs automatic demo traders with virtual money around the cloc
 3. Look at the **win rate after costs**, **profit factor** (above 1.2 is good) and **max drawdown** (could you live with that drop on real money?).
 4. Compare spot vs futures and confident-only vs all calls; follow the style that wins over months, not days.
 
-## 10. When to trust the models: the Accuracy page
+## 11. When to trust the models: the Accuracy page
 
 The **Accuracy** page is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
 
@@ -182,13 +195,13 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 
 > **Practical rule:** trade a coin and timeframe only when its out-of-sample accuracy is above 52%, its confident calls are better still, and live predictions agree.
 
-## 11. Backtest and Replay: test ideas on the past
+## 12. Backtest and Replay: test ideas on the past
 
 **Backtest** runs a strategy over past data with fees and slippage. Choose the coin, timeframe, period and strategy under **Inputs** and run it. Read the verdict (*Beats buy & hold* or not), net return, win rate, profit factor, Sharpe and max drawdown. A strategy that only wins before costs does not win.
 
 **Replay** is the best way to build trust. Under **Choose a moment**, pick a coin and a past date and time. The app shows exactly what it knew and forecast then, without future data (the **Look-ahead audit** proves it). Decide what you would have done, then press **Reveal what happened next**. Do 10–20 replays across calm, rising and falling markets.
 
-## 12. Rules for getting the most out of it
+## 13. Rules for getting the most out of it
 
 1. **Let the app find setups; you make the decision.** A second opinion, not an autopilot.
 2. **Prefer confident calls with timeframe agreement.** Fewer trades, better trades.
@@ -201,7 +214,7 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 9. **Be extra careful around big news:** models trained on normal markets can be wrong in sudden shocks.
 10. **Expect losing streaks.** At 55% accuracy, five losses in a row will happen regularly.
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 | Problem | Fix |
 | --- | --- |

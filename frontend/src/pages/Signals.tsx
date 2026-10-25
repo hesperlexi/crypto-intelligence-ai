@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { TfTabs, useSymbols } from "../components/Pickers";
 import { CoinAvatar } from "../components/Polish";
+import NewsBanner from "../components/NewsBanner";
 import TradeCall, { GradeBadge, Market, verdictOf } from "../components/TradeCall";
 import { Empty, ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
@@ -33,6 +34,7 @@ export default function Signals() {
 
   return (
     <div className="space-y-4">
+      <NewsBanner />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Trade signals</h1>
