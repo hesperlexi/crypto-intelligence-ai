@@ -1,0 +1,54 @@
+name: Diagnose signals (manual)
+
+# Diagnoses why signals are blocked and studies better thresholds on the engine's stored real candles and saves the report to the
+# `reports` branch (reports/latest.json). Read-only for the engine: its saved state is restored, never saved.
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Days to replay"
+        default: "3"
+
+permissions:
+  contents: write
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      EXCHANGE: binance_public
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements-worker.txt
+            backend/requirements-torch.txt
+      - run: pip install -r requirements-worker.txt
+      - name: Restore engine state (read-only)
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-${{ github.run_id }}
+          restore-keys: engine-state-
+      - name: Run the experiment
+        run: python -m app.diagnose --days "${{ inputs.days }}" --timeframes 1h,4h,12h,1d --budget 2400 --out /tmp/report.json
+      - name: Save the report to the reports branch
+        working-directory: .
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports || true
+          if git rev-parse --verify origin/reports >/dev/null 2>&1; then git switch -c reports origin/reports; else git switch --orphan reports; git rm -rf --quiet . || true; fi
+          mkdir -p reports
+          cp /tmp/report.json "reports/diagnose-$(date -u +%Y%m%d-%H%M).json"
+          cp /tmp/report.json reports/diagnose-latest.json
+          git add reports
+          git commit -m "Signal diagnosis $(date -u +%F)"
+          git push origin reports
