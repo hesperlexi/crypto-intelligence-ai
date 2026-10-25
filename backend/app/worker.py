@@ -117,7 +117,15 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             # v2.0: one-time expansion to the major coins (the admin can remove any of them afterwards;
             # coins without a proven edge get no AI-led signals, so quality is protected)
             have = {norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]}
-            add = [m for m in MAJOR_COINS if m not in have]
+            add = []
+            for m in MAJOR_COINS:
+                if m in have:
+                    continue
+                try:      # only coins the exchange really lists
+                    if m in asyncio.run(rt.provider.search_markets(m.split("/")[0], 50)):
+                        add.append(m)
+                except Exception:
+                    pass
             if add:
                 doc = {**doc, "symbols": list(doc["symbols"]) + [{"symbol": m, "pinned": False} for m in add],
                        "updated_at": now_ms()}

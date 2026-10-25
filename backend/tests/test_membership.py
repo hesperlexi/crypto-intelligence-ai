@@ -65,6 +65,7 @@ def test_active_members_coins_are_tracked_and_lapsed_ones_dropped(tmp_path):
             return [f"{q}/USDT"]
 
     rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.db.set_setting("watchlist_majors_v2", True)      # the one-time major-coin expansion is tested separately
     sink = LocalSink(tmp_path)
     now = worker.now_ms()
     sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})
@@ -103,3 +104,27 @@ def test_admin_can_change_member_coin_limits(tmp_path):
     sink.set("user_coins/b", {"symbols": ["DDD", "EEE"]})
     notes = worker.sync_config(rt, sink)
     assert notes["member_coins"] == ["AAA/USDT", "BBB/USDT", "DDD/USDT"]   # 2 each, 3 in total
+
+
+def test_major_coins_are_added_once_and_removals_stick(tmp_path):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return [] if q == "TON" else [f"{q}/USDT"]          # an unlisted coin is never added
+
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    sink = LocalSink(tmp_path)
+    sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})
+    worker.sync_config(rt, sink)
+    syms = set(rt.symbols())
+    assert {"ETH/USDT", "DOGE/USDT", "AAVE/USDT"} <= syms and "TON/USDT" not in syms
+    doc = sink.get("config/watchlist")
+    sink.set("config/watchlist", {**doc, "symbols": [x for x in doc["symbols"] if x["symbol"] != "DOGE/USDT"]})
+    worker.sync_config(rt, sink)
+    assert "DOGE/USDT" not in rt.symbols()                    # the admin removed it: not re-added
