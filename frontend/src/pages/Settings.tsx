@@ -195,14 +195,15 @@ function NotificationsCard() {
   return (
     <section id="notifications">
       <Card title="Notifications">
-        <Row k="This device" v={perm === "granted" ? (token ? "on — also when the app is closed" : "on while the app is open") : perm === "denied" ? "blocked in browser settings" : perm === "unsupported" ? "not supported" : "off"} />
+        <Row k="This device" v={perm === "granted" ? (token ? "on — also when the app is closed" : "on while the app is open") : perm === "denied" ? (push.inAndroidApp() ? "blocked in phone settings" : "blocked in browser settings") : perm === "unsupported" ? "not supported" : "off"} />
         <Row k="Push key (Web Push certificate)" v={hasKey == null ? "…" : hasKey ? "added" : "not added yet"} />
         <div className="mt-3 flex flex-wrap gap-2">
-          {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy || perm === "denied"} onClick={() => act(push.enable)}>Turn on notifications</button>
+          {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy} onClick={() => act(push.enable)}>{perm === "denied" ? "Try again" : "Turn on notifications"}</button>
             : <button className="btn" disabled={busy} onClick={() => act(async () => { await push.disable(); return "Notifications turned off on this device."; })}>Turn off on this device</button>}
           <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: the engine sends it on its next run (within about 15 minutes)."; })}>Send a test notification</button>
         </div>
         {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
+        {perm === "denied" && !msg && <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 p-2 text-sm text-warn">{push.blockedHelp()}</p>}
         {!hasKey && !admin && <p className="mt-3 text-xs text-mute">Notifications while the app is closed need a one-time setup by the app owner.</p>}
         {!hasKey && admin && (
           <div className="mt-4 border-t border-glass/[0.06] pt-3">

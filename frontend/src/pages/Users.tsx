@@ -19,6 +19,8 @@ export default function Users() {
   const [filter, setFilter] = useState<Filter>("todo");
   const [zoom, setZoom] = useState<string | null>(null);
   useEffect(() => (admin ? onSnapshot(collection(db, "users"), (q) => setRows(q.docs.map((d) => ({ id: d.id, ...d.data() }))), (e) => setErr(e.message)) : undefined), [admin]);
+  const [states, setStates] = useState<Record<string, any>>({});
+  useEffect(() => (admin ? onSnapshot(collection(db, "user_state"), (q) => setStates(Object.fromEntries(q.docs.map((d) => [d.id, d.data()]))), () => {}) : undefined), [admin]);
   if (!admin) return <Empty>Only the app owner can manage users.</Empty>;
 
   const all = rows ?? [];
@@ -51,7 +53,7 @@ export default function Users() {
         <Card><Empty>{filter === "todo" ? "Nothing to check. New payment proofs appear here, and you get a notification." : "No one here."}</Empty></Card>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
-          {list.map((u) => <UserCard key={u.id} u={u} cfg={cfg} act={act} onZoom={setZoom} />)}
+          {list.map((u) => <UserCard key={u.id} u={u} st={states[u.id]} cfg={cfg} act={act} onZoom={setZoom} />)}
         </div>
       )}
       <div className="grid gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
@@ -65,7 +67,7 @@ export default function Users() {
   );
 }
 
-function UserCard({ u, cfg, act, onZoom }: { u: any; cfg: MembershipConfig; act: (fn: () => Promise<any>, ok: string | ((res: any) => string)) => void; onZoom: (s: string) => void }) {
+function UserCard({ u, st, cfg, act, onZoom }: { u: any; st?: any; cfg: MembershipConfig; act: (fn: () => Promise<any>, ok: string | ((res: any) => string)) => void; onZoom: (s: string) => void }) {
   const p = u.payment;
   const r = roleOf(u);
   const [months, setMonths] = useState<number>(p?.months ?? 1);
@@ -92,9 +94,15 @@ function UserCard({ u, cfg, act, onZoom }: { u: any; cfg: MembershipConfig; act:
         <dt className="text-mute">Asked</dt><dd className="text-right">{fmtTime(u.requested_at)}</dd>
         {u.expires_at && <><dt className="text-mute">Active until</dt><dd className="text-right">{fmtDate(u.expires_at)}</dd></>}
         {u.plan_months && <><dt className="text-mute">Last plan</dt><dd className="text-right">{planLabel(u.plan_months)}</dd></>}
+        <dt className="text-mute">Notifications</dt><dd className={`text-right ${st?.push_error ? "text-bear" : st?.push_ok_at ? "text-bull" : "text-mute"}`}>{st?.push_error ? `failed ${fmtTime(st.push_error.at)}` : st?.push_ok_at ? `on since ${fmtDate(st.push_ok_at)}` : "not turned on"}</dd>
         {u.history?.length > 0 && <><dt className="text-mute">Payments</dt><dd className="num text-right">{u.history.length} · ${u.history.reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0)}</dd></>}
       </dl>
 
+      {st?.push_error && (
+        <p className="mt-2 rounded-lg border border-bear/30 bg-bear/10 px-2 py-1.5 text-[11px] text-bear">
+          Notification error ({st.push_error.app}, step: {st.push_error.stage}): {st.push_error.code ? `${st.push_error.code} · ` : ""}{st.push_error.message}
+        </p>
+      )}
       {p && (
         <div className={`mt-3 rounded-xl border p-3 ${p.status === "submitted" ? "border-accent/40 bg-accent/[0.06]" : "border-glass/10 bg-glass/[0.02]"}`}>
           <div className="flex items-center justify-between gap-2 text-sm">
