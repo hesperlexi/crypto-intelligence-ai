@@ -21,7 +21,7 @@ from ..features.dataset import InsufficientData
 from ..features.liquidity import order_book_metrics
 from ..features.structure import fib_levels, liquidity_zones, sr_zones, supply_demand_zones
 from ..features.volatility import vol_state_name
-from ..ml import trainer
+from ..ml import direction as dirview, trainer
 from . import tracking
 from .runtime import Runtime, ttl_get
 
@@ -185,51 +185,81 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     if vol_state == "EXTREME":
         flags.append("UNSTABLE MARKET — REDUCED CONFIDENCE")
 
-    # ---- confidence: realised hit-rate of comparable past out-of-sample predictions --------------------
-    confidence, conf_detail = None, None
+    # ---- confidence -------------------------------------------------------------------------------------
+    # engine v2: the confidence quoted for a long / short call is DIRECTIONAL: how often comparable past
+    # out-of-sample calls (same side, similar UP-vs-DOWN margin) got the direction right. The old 3-class figure
+    # (exact class incl. "neutral") is kept as class_confidence for reference.
+    confidence, conf_detail, dv = None, None, None
     if fc["available"]:
-        conf_detail = dict(fc["confidence"])
-        confidence = conf_detail["confidence"]
-        if confidence is not None and vol_state == "HIGH" and not conf_detail["vol_conditioned"]:
-            confidence *= 0.85    # policy haircut when there were too few high-volatility cases to measure it
-            conf_detail["volatility_haircut"] = 0.85
-        model_dir = {2: 1, 0: -1}.get(fc["predicted_class"], 0)
-        if direction and model_dir != direction:
-            # the figure describes the ensemble's own call; it cannot be quoted as confidence in the opposite signal
-            confidence = None
-            conf_detail["note"] = f"the ensemble predicts {fc['predicted']}, which does not confirm this signal"
+        bun = bundle if bundle is not None else trainer.load_bundle(symbol, timeframe, rt.db)
+        dv = dirview.view(fc, bun)
+        conf_detail = {"class_confidence": fc["confidence"].get("confidence"), "class_basis": fc["confidence"].get("basis")}
+        if dv and dv.get("confidence") is not None:
+            confidence = float(dv["confidence"])
+            if vol_state == "HIGH":
+                confidence = 0.5 + (confidence - 0.5) * 0.85     # shrink towards a coin flip in turbulent markets
+                conf_detail["volatility_haircut"] = 0.85
+            conf_detail.update({"basis": dv["confidence_detail"].get("basis"), "n": dv["confidence_detail"].get("n"),
+                                "ci95": dv["confidence_detail"].get("ci95"), "side": dv["side"], "margin": dv["margin"]})
         conf_detail["applied"] = confidence
 
-    # ---- decision -------------------------------------------------------------------------------------
-    decision, why = "HOLD", None
+    # ---- decision (engine v2) ---------------------------------------------------------------------------
+    # A trade needs the technical tilt and the AI to point the same way (or, with no tilt, a model lean that clears
+    # its own out-of-sample threshold), a directional confidence above a coin flip and a valid trade plan.
+    #   grade A: firm technical tilt + model lean above its threshold + good model agreement + confidence >= A level
+    #   grade B: everything else that passes (weak tilt confirmed by the model, or a model-led call)
+    decision, why, grade, basis = "HOLD", None, None, None
     idx = sig.get("label_index")
+    weak = idx in (2, 4)
     if sig["signal"] == "INSUFFICIENT DATA":
         decision, why = "INSUFFICIENT DATA", "not enough closed candles"
-    elif direction == 0 or idx in (2, 4):
-        decision = "HOLD"
-        why = "no directional tilt" if direction == 0 else "the tilt is weak"
+    elif vol_state == "EXTREME":
+        decision, why = ("NO TRADE" if direction else "HOLD"), "volatility is extreme (above its 95th percentile)"
+    elif not fc["available"]:
+        decision, why = ("NO TRADE" if direction else "HOLD"), f"no validated model for {timeframe} ({fc['reason']})"
+    elif settings.require_edge_for_trade and not fc["edge_confirmed"]:
+        decision, why = "NO TRADE", "the model has no statistically confirmed edge"
     else:
-        model_dir = {2: 1, 0: -1}.get(fc.get("predicted_class"), 0) if fc["available"] else 0
-        if vol_state == "EXTREME":
-            decision, why = "NO TRADE", "volatility is extreme (above its 95th percentile)"
-        elif not fc["available"]:
-            decision, why = "NO TRADE", f"no validated model for {timeframe}, so confidence cannot be established ({fc['reason']})"
-        elif settings.require_edge_for_trade and not fc["edge_confirmed"]:
-            decision, why = "NO TRADE", "the model has no statistically confirmed edge"
-        elif model_dir != direction:
-            decision, why = "NO TRADE", f"the ensemble does not confirm the direction (it predicts {fc['predicted']})"
-        elif fc["model_agreement"] < settings.min_model_agreement:
-            decision, why = "NO TRADE", f"model agreement {fc['model_agreement']:.0%} is below {settings.min_model_agreement:.0%}"
-        elif confidence is None:
-            decision, why = "NO TRADE", "too few comparable out-of-sample predictions to state a confidence"
-        elif confidence < settings.min_confidence:
-            decision, why = "NO TRADE", f"confidence {confidence:.0%} is below the {settings.min_confidence:.0%} threshold"
-        elif not setup or not setup["valid"]:
-            decision, why = "NO TRADE", (setup or {}).get("reason") or "no valid trade setup"
-        elif direction > 0:
-            decision = "BUY ON PULLBACK" if setup["extended"] else "BUY"
+        mside = dv["side"] if dv else 0
+        clears = bool(dv and dv["clears_policy"])
+        model_led = direction == 0 and clears and bool(dv and dv["policy_edge"])
+        side = direction if direction and mside == direction else (mside if model_led else 0)
+        agree = fc["model_agreement"]
+        if side == 0:
+            if direction == 0:
+                why = "no directional tilt, and the AI lean is below its proven threshold"
+            else:
+                why = f"the AI leans {'up' if mside > 0 else 'down'}, against the {'bullish' if direction > 0 else 'bearish'} technical tilt"
         else:
-            decision = "SELL"
+            if side != direction:          # model-led call: build the plan on the model's side
+                setup = build_setup(ind, levels["zones"], side, settings.min_risk_reward, live_price=price)
+            firm = bool(direction) and not weak
+            conf_ok_a = confidence is not None and confidence >= settings.min_dir_confidence_a
+            conf_ok_b = confidence is not None and confidence >= settings.min_dir_confidence_b
+            if firm and clears and agree >= settings.min_model_agreement and conf_ok_a:
+                grade, basis = "A", "technical tilt and AI agree, AI lean above its proven threshold"
+            elif conf_ok_b and agree >= settings.min_agreement_b and (clears or firm):
+                grade = "B"
+                basis = ("AI-led: the AI lean clears its proven threshold" if model_led else
+                         "technical tilt confirmed by the AI lean" if not clears else "weak technical tilt, AI lean above its threshold")
+            if grade is None:
+                if confidence is None:
+                    why = "too few comparable out-of-sample calls to state a confidence"
+                elif not conf_ok_b:
+                    why = f"directional confidence {confidence:.0%} is not above a coin flip"
+                elif agree < settings.min_agreement_b:
+                    why = f"model agreement {agree:.0%} is too low"
+                else:
+                    why = "the tilt is weak and the AI lean is below its proven threshold"
+                decision = "HOLD" if weak or not direction else "NO TRADE"
+            elif not setup or not setup["valid"]:
+                decision, why, grade = "NO TRADE", (setup or {}).get("reason") or "no valid trade setup", None
+            elif side > 0:
+                decision = "BUY ON PULLBACK" if setup["extended"] else "BUY"
+            else:
+                decision = "SELL"
+            if grade:
+                direction = side
     if decision == "NO TRADE":
         flags.append("NO TRADE")
 
@@ -248,6 +278,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             "bb_width_percentile": _n(last["bb_width_pct"]), "range_expansion": bool(last["range_expansion"]),
             "range_compression": bool(last["range_compression"])},
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)),
+        "grade": grade, "decision_basis": basis, "direction_view": dv,
         "confidence": confidence, "confidence_detail": conf_detail,
         "forecast": fc, "mtf": matrix, "setup": setup, "risk": risk,
         "model_agreement": fc.get("model_agreement") if fc["available"] else None,

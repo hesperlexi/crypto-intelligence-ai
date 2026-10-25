@@ -20,6 +20,7 @@ function describe(a: any): string {
     const parts = [p.side && p.side !== "any" ? `${p.side} only` : "long or short", p.market === "futures" ? "futures" : "spot"];
     if (p.min_confidence) parts.push(`confidence ≥ ${Math.round(p.min_confidence * 100)}%`);
     if (p.confident_only) parts.push("confident calls only");
+    if (String(p.grade ?? "").toUpperCase() === "A") parts.push("strong (grade A) only");
     return `Trade signal (${parts.join(", ")})`;
   }
   const v = Object.values(p);
@@ -38,6 +39,7 @@ export default function Alerts() {
   const [market, setMarket] = useState(params.get("market") === "futures" ? "futures" : "spot");
   const [minConf, setMinConf] = useState("");
   const [confidentOnly, setConfidentOnly] = useState(false);
+  const [strongOnly, setStrongOnly] = useState(false);
   const [cooldown, setCooldown] = useState("60");
   const [err, setErr] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
@@ -53,7 +55,7 @@ export default function Alerts() {
   };
   const create = () => {
     if (need && !param) return setErr(`${need.label} is required`);
-    const p = isTrade ? { side, market, min_confidence: minConf ? Number(minConf) / 100 : 0, confident_only: confidentOnly }
+    const p = isTrade ? { side, market, min_confidence: minConf ? Number(minConf) / 100 : 0, confident_only: confidentOnly, grade: strongOnly ? "A" : "any" }
       : need ? { [need.key]: Number(param) } : {};
     run(() => post("/alerts", { type, symbol, timeframe: tf, cooldown_s: Math.max(1, Number(cooldown)) * 60, params: p }),
       `Alert created for ${symbol} ${tf.toUpperCase()}. It fires when the condition next turns true (checked every engine run, about every 15 minutes).`);
@@ -100,6 +102,7 @@ export default function Alerts() {
             </label>
             <label className="text-xs text-mute">Minimum confidence (%, optional)<input className="input mt-1" inputMode="numeric" placeholder="e.g. 55" value={minConf} onChange={(e) => setMinConf(e.target.value)} /></label>
             <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={confidentOnly} onChange={(e) => setConfidentOnly(e.target.checked)} />Confident calls only</label>
+            <label className="flex items-center gap-2 self-end pb-2 text-sm" title="Grade A: trend, AI models and their track record all agree. Leave off to also get grade B (moderate) signals."><input type="checkbox" checked={strongOnly} onChange={(e) => setStrongOnly(e.target.checked)} />Strong signals only (grade A)</label>
           </>)}
           {need && <label className="text-xs text-mute">{need.label}<input className="input mt-1" inputMode="decimal" placeholder={need.placeholder} value={param} onChange={(e) => setParam(e.target.value)} /></label>}
           <label className="text-xs text-mute">Cooldown (minutes)<input className="input mt-1" inputMode="numeric" value={cooldown} onChange={(e) => setCooldown(e.target.value)} /></label>

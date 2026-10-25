@@ -10,6 +10,18 @@ type Tone = "bull" | "bear" | "wait";
 
 interface Verdict { label: string; tone: Tone; headline: string }
 
+/** Signal strength: A = strong (trend, AI and track record agree), B = moderate (AI-led, proven out-of-sample edge). */
+export function GradeBadge({ grade, small = false }: { grade?: string | null; small?: boolean }) {
+  if (grade !== "A" && grade !== "B") return null;
+  const a = grade === "A";
+  return (
+    <span title={a ? "Strong signal: trend, AI models and their track record all agree" : "Moderate signal: AI-led call where the model's out-of-sample record shows an edge"}
+      className={`inline-flex items-center rounded-md border font-bold ${small ? "px-1.5 py-0 text-[10px]" : "px-2 py-0.5 text-xs"} ${a ? "border-accent/60 bg-accent/15 text-accent" : "border-warn/50 bg-warn/10 text-warn"}`}>
+      {a ? "A · strong" : "B · moderate"}
+    </span>
+  );
+}
+
 export function verdictOf(r: any, market: Market): Verdict {
   const p = r?.plan;
   if (market === "futures") {
@@ -51,7 +63,7 @@ function planText(r: any, market: Market, v: Verdict, plan: any) {
     parts.push((plan.targets ?? []).map((t: any) => `${t.name} ${fmtPrice(t.price)}`).join(", "));
     if (market === "futures") parts.push(`Leverage ${plan.suggested_leverage}x (liquidation ${fmtPrice(plan.liquidation_at_suggested)})`);
   }
-  parts.push(`Confidence ${fmtProb(r.confidence)} · Crypto Intelligence AI · not financial advice`);
+  parts.push(`${r.grade ? `Grade ${r.grade} · ` : ""}Hit rate ${fmtProb(r.confidence)} · Crypto Intelligence AI · not financial advice`);
   return parts.join("\n");
 }
 
@@ -113,8 +125,11 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             <div className="num text-sm text-mute">{fmtPrice(px)} · {String(r.timeframe ?? "").toUpperCase()} {market}</div>
           </div>
         </Link>
-        <span className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-extrabold tracking-wide ${t.pill}`}>
-          {v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}
+        <span className="flex shrink-0 flex-col items-end gap-1">
+          <span className={`rounded-lg px-3 py-1.5 text-sm font-extrabold tracking-wide ${t.pill}`}>
+            {v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}
+          </span>
+          {v.tone !== "wait" && <GradeBadge grade={r.grade} small />}
         </span>
       </div>
 
@@ -131,6 +146,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
               Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}. Set an alert and the app tells you when a setup appears.
             </p>
           )}
+          {v.tone !== "wait" && r.decision_basis && <p className="mt-1 text-xs text-mute">Why: {r.decision_basis}</p>}
           {market === "spot" && v.tone === "bear" && <p className="mt-1 text-sm text-mute">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>}
         </div>
 
@@ -169,7 +185,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
 
         {/* confidence and context */}
         <div className="grid grid-cols-3 gap-2 text-xs">
-          <div><div className="text-mute">Confidence</div><div className="num mt-0.5 text-sm font-semibold">{fmtProb(r.confidence)}</div>
+          <div title="How often the AI was right in past out-of-sample calls leaning the same way by a similar margin"><div className="text-mute">Hit rate (similar calls)</div><div className="num mt-0.5 text-sm font-semibold">{fmtProb(r.confidence)}</div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
           <div><div className="text-mute">Up / down</div><div className="num mt-0.5 text-sm font-semibold"><span className="text-bull">{upPct}%</span> / <span className="text-bear">{downPct}%</span></div></div>
           {market === "futures"

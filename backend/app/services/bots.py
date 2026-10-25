@@ -11,7 +11,7 @@ Two kinds of bot, both run by the engine on every cycle, on either market:
 
 * decision   - trades only the engine's final decisions (BUY / BUY ON PULLBACK / SELL) with the trade plan's
                entry, stop and three targets, risk-based sizing, a third of the position closed at each
-               target and the stop moved to break-even after TP1. Measures what following the signals earns.
+               target, the stop moved to break-even after TP1 and trailed to TP1 after TP2. Measures what following the signals earns.
 * prediction - trades every ensemble call (UP -> long, DOWN -> short) for exactly one bar of its timeframe,
                with no other filter. Measures the raw accuracy and payoff of the model's predictions.
 
@@ -65,6 +65,18 @@ DEFAULT_BOTS: list[dict[str, Any]] = [
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
      "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1",
      "leverage": 5.0, **_FUT},
+    {"id": "signal-ab-4h", "name": "Signal bot 4H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "4h",
+     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 25.0,
+     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1", "market": "spot",
+     "leverage": 1.0, "grades": "AB"},
+    {"id": "signal-ab-1h", "name": "Signal bot 1H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "1h",
+     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 25.0,
+     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1", "market": "spot",
+     "leverage": 1.0, "grades": "AB"},
+    {"id": "futures-signal-ab-4h", "name": "Futures signal bot 4H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "4h",
+     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
+     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1",
+     "leverage": 5.0, "grades": "AB", **_FUT},
     {"id": "futures-predict-1h", "name": "Futures prediction tracker 1H", "enabled": True, "mode": "prediction",
      "timeframe": "1h", "symbols": "all", "starting_balance": 10_000.0, "position_pct": 5.0, "min_probability": 0.40,
      "allow_short": True, "reset_token": "1", "leverage": 3.0, **_FUT},
@@ -73,7 +85,7 @@ FIELDS = {"name": str, "enabled": bool, "mode": str, "timeframe": str, "symbols"
           "starting_balance": float, "risk_per_trade_pct": float, "max_position_pct": float,
           "max_open_positions": int, "allow_short": bool, "pending_bars": int, "max_hold_bars": int,
           "position_pct": float, "min_probability": float, "reset_token": str, "market": str, "leverage": float,
-          "safe_leverage": bool, "confident_only": bool}
+          "safe_leverage": bool, "confident_only": bool, "grades": str}
 
 
 def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
@@ -362,7 +374,7 @@ class BotEngine:
                 if stop_hit:
                     px = min(op, pos["stop"]) if side > 0 else max(op, pos["stop"])
                     self._reduce(state, pos, pos["qty_open"], px, True)
-                    done = ("breakeven stop" if pos["tp_hit"] else "stop", ts + step)
+                    done = ("trailing stop" if pos["tp_hit"] >= 2 else "breakeven stop" if pos["tp_hit"] else "stop", ts + step)
                     break
                 while pos["tp_hit"] < len(pos["targets"]):
                     tp = pos["targets"][pos["tp_hit"]]
@@ -374,6 +386,8 @@ class BotEngine:
                     pos["tp_hit"] += 1
                     if pos["tp_hit"] == 1:
                         pos["stop"] = pos["entry"]            # protect the rest at break-even
+                    elif pos["tp_hit"] == 2 and pos["targets"]:
+                        pos["stop"] = pos["targets"][0]       # trail: after TP2 the last third is locked in at TP1
                 if pos["qty_open"] <= pos["qty"] * 1e-9:
                     done = (f"TP{pos['tp_hit']}", ts + step)
                     break
@@ -394,6 +408,8 @@ class BotEngine:
                 continue
             a = analysis.analyze(self.rt, s, cfg["timeframe"], detail=False)
             if a.get("status") != "OK" or a.get("decision") not in analysis.TRADE_DECISIONS:
+                continue
+            if a.get("grade") and a["grade"] not in str(cfg.get("grades") or "A"):
                 continue
             setup = a.get("setup") or {}
             if not setup.get("valid") or state["last_entry_bar"].get(s) == a["bar_ts"]:

@@ -11,7 +11,7 @@ from ..db import Database, dumps, loads, new_id, now_ms
 from .runtime import USER
 
 ALERT_TYPES = {
-    "TRADE_SETUP": "Trade signal with entry, stop-loss and take-profits (params: side, market, min_confidence, confident_only)",
+    "TRADE_SETUP": "Trade signal with entry, stop-loss and take-profits (params: side, market, min_confidence, confident_only, grade A|any)",
     "BUY_SIGNAL": "Decision turns BUY / BUY ON PULLBACK",
     "SELL_SIGNAL": "Decision turns SELL",
     "BULLISH_REGIME": "Regime changes to a bullish regime",
@@ -77,7 +77,8 @@ def trade_message(a: dict[str, Any], market: str = "spot") -> str:
     tps = " · ".join(f"TP{i + 1} {_fmt(t['price'])}" for i, t in enumerate(st.get("targets") or []))
     probs = (a.get("forecast") or {}).get("probabilities") or {}
     p_dir = probs.get("up") if st.get("side_int", 1) > 0 else probs.get("down")
-    msg = (f"{sym} {tf} {side}{' (futures)' if market == 'futures' else ''}: entry {_fmt(zone[0])}–{_fmt(zone[1])} "
+    grade = f" [grade {a['grade']}]" if a.get("grade") else ""
+    msg = (f"{sym} {tf} {side}{' (futures)' if market == 'futures' else ''}{grade}: entry {_fmt(zone[0])}–{_fmt(zone[1])} "
            f"(ideal {_fmt(entry)}), stop-loss {_fmt(st.get('stop'))} ({st.get('risk_pct', 0):.1f}%), {tps}, "
            f"R:R 1:{st.get('risk_reward', 0):.1f}, confidence {(a.get('confidence') or 0):.0%}")
     if p_dir is not None:
@@ -106,6 +107,8 @@ def _condition(alert: dict[str, Any], a: dict[str, Any], db: Database) -> tuple[
         if (a.get("confidence") or 0) < float(p.get("min_confidence", 0) or 0):
             return False, ""
         if p.get("confident_only") and not ((a.get("forecast") or {}).get("confident_call") or {}).get("is_confident"):
+            return False, ""
+        if str(p.get("grade", "any")).upper() == "A" and a.get("grade") != "A":
             return False, ""
         return True, trade_message(a, "futures" if p.get("market") == "futures" else "spot")
     if t == "BUY_SIGNAL":

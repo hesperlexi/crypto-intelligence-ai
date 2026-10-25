@@ -105,6 +105,10 @@ class Settings:
     # signal policy
     min_confidence: float = field(default_factory=lambda: _f("MIN_CONFIDENCE", 0.45))
     min_model_agreement: float = field(default_factory=lambda: _f("MIN_MODEL_AGREEMENT", 0.60))
+    # engine v2: directional confidence (hit rate of comparable out-of-sample UP-vs-DOWN calls)
+    min_dir_confidence_a: float = field(default_factory=lambda: _f("MIN_DIR_CONFIDENCE_A", 0.53))
+    min_dir_confidence_b: float = field(default_factory=lambda: _f("MIN_DIR_CONFIDENCE_B", 0.505))
+    min_agreement_b: float = field(default_factory=lambda: _f("MIN_AGREEMENT_B", 0.50))
     min_risk_reward: float = field(default_factory=lambda: _f("MIN_RISK_REWARD", 1.5))
 
     # costs (defaults for backtests / paper trading)

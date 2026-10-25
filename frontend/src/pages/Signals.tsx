@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { TfTabs, useSymbols } from "../components/Pickers";
 import { CoinAvatar } from "../components/Polish";
-import TradeCall, { Market, verdictOf } from "../components/TradeCall";
+import TradeCall, { GradeBadge, Market, verdictOf } from "../components/TradeCall";
 import { Empty, ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
 import { base, fmtPrice } from "../lib/format";
@@ -23,7 +23,7 @@ export default function Signals() {
   const { tickers } = useLive();
   const rows: any[] = useMemo(() => {
     const r = [...(v.data?.rows ?? [])];
-    const rank = (x: any) => (verdictOf(x, market).tone === "wait" ? 1 : 0);
+    const rank = (x: any) => (verdictOf(x, market).tone === "wait" ? 2 : x.grade === "A" ? 0 : 1);
     return r.sort((a, b) => rank(a) - rank(b) || (b.confidence ?? 0) - (a.confidence ?? 0));
   }, [v.data, market]);
   const sel = params.get("symbol") ?? rows[0]?.symbol;
@@ -90,7 +90,7 @@ export default function Signals() {
                       <button onClick={() => pick(r.symbol)} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left hover:bg-glass/[0.04] ${r.symbol === row?.symbol ? "bg-accent/[0.06]" : ""}`}>
                         <CoinAvatar symbol={r.symbol} size={28} />
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2"><span className="font-semibold">{base(r.symbol)}</span><span className="num truncate text-xs text-mute">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</span></div>
+                          <div className="flex items-center gap-2"><span className="font-semibold">{base(r.symbol)}</span>{vv.tone !== "wait" && <GradeBadge grade={r.grade} small />}<span className="num truncate text-xs text-mute">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</span></div>
                           <div className="num truncate text-xs text-mute">{show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
                         </div>
                         <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${vv.tone === "bull" ? "bg-bull/15 text-bull" : vv.tone === "bear" ? "bg-bear/15 text-bear" : "bg-glass/10 text-mute"}`}>{vv.label}</span>
