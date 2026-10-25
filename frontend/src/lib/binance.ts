@@ -31,6 +31,29 @@ export async function klines(symbol: string, tf: string, limit = 500): Promise<C
   return rows.map((r) => [r[0], +r[1], +r[2], +r[3], +r[4], +r[5]] as Candle);
 }
 
+/** USDⓈ-M futures candles (the perpetual's own price); falls back to spot when futures are unreachable. */
+export async function fklines(symbol: string, tf: string, limit = 500): Promise<Candle[]> {
+  try {
+    const rows = await get<any[]>(`/fapi/v1/klines?symbol=${bsym(symbol)}&interval=${tf}&limit=${Math.min(limit, 1500)}`, [FUTURES]);
+    return rows.map((r) => [r[0], +r[1], +r[2], +r[3], +r[4], +r[5]] as Candle);
+  } catch (e) {
+    if (limit > 2) return klines(symbol, tf, limit);
+    throw e;
+  }
+}
+
+/** Last futures price for every listed perpetual, keyed by app symbol (empty when futures are unreachable). */
+export async function futuresPrices(symbols: string[]): Promise<Record<string, number>> {
+  if (!symbols.length) return {};
+  try {
+    const rows = await get<any[]>("/fapi/v1/ticker/price", [FUTURES]);
+    const want = Object.fromEntries(symbols.map((s) => [bsym(s), s]));
+    const out: Record<string, number> = {};
+    for (const r of rows) if (want[r.symbol]) out[want[r.symbol]] = +r.price;
+    return out;
+  } catch { return {}; }
+}
+
 export async function ohlcv(symbol: string, tf: string, limit = 500) {
   const candles = await klines(symbol, tf, limit);
   const step = TF_MS[tf];
@@ -80,8 +103,12 @@ export function bookMetrics(bids: [number, number][], asks: [number, number][], 
     imbalance: bv + av > 0 ? (bv - av) / (bv + av) : 0, walls: [...walls(bids, "bid"), ...walls(asks, "ask")] };
 }
 
-export async function orderbook(symbol: string) {
-  const ob = await get<any>(`/api/v3/depth?symbol=${bsym(symbol)}&limit=500`);
+export async function orderbook(symbol: string, market: "spot" | "futures" = "spot") {
+  let ob: any;
+  if (market === "futures") {
+    try { ob = await get<any>(`/fapi/v1/depth?symbol=${bsym(symbol)}&limit=500`, [FUTURES]); } catch { /* spot below */ }
+  }
+  ob ??= await get<any>(`/api/v3/depth?symbol=${bsym(symbol)}&limit=500`);
   const bids = ob.bids.map((x: string[]) => [+x[0], +x[1]]) as [number, number][];
   const asks = ob.asks.map((x: string[]) => [+x[0], +x[1]]) as [number, number][];
   const m = bookMetrics(bids, asks);

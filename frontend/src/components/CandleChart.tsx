@@ -36,6 +36,8 @@ interface Props {
   lines?: PriceLine[];
   markers?: Marker[];
   livePrice?: number | null;
+  /** the forming candle from a live stream: updated in place, and appended when a new period starts */
+  liveCandle?: Candle | null;
   height?: number;
   /** extra candles drawn dimmed after `candles` (used by Replay to reveal the future) */
   future?: Candle[];
@@ -45,11 +47,15 @@ const t = (ms: number) => Math.floor(ms / 1000) as any;
 const NONE: Candle[] = [];
 const NO_KEYS: string[] = [];
 
-export default function CandleChart({ candles, overlays, show = NO_KEYS, lines = [], markers = [], livePrice, height = 460, future = NONE }: Props) {
+export default function CandleChart({ candles, overlays, show = NO_KEYS, lines = [], markers = [], livePrice, liveCandle = null, height = 460, future = NONE }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const lastRef = useRef<Candle | null>(null);
+  // candles that arrived live after `candles` was loaded; kept so a rebuild (new lines, theme) does not drop them
+  const tailRef = useRef<Map<number, Candle>>(new Map());
+  const histRef = useRef<Candle[] | null>(null);
+  if (histRef.current !== candles) { histRef.current = candles; tailRef.current = new Map(); }
   const { resolved } = useAppearance();
 
   useEffect(() => {
@@ -70,9 +76,14 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     const series = chart.addCandlestickSeries({
       upColor: "#0ecb81", downColor: "#f6465d", wickUpColor: "#0ecb81", wickDownColor: "#f6465d", borderVisible: false, priceFormat,
     });
-    series.setData(candles.map((c) => ({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] })));
+    const all = tailRef.current.size ? (() => {
+      const m = new Map<number, Candle>(candles.map((c) => [c[0], c]));
+      tailRef.current.forEach((c, k) => m.set(k, c));
+      return [...m.values()].sort((a, b) => a[0] - b[0]);
+    })() : candles;
+    series.setData(all.map((c) => ({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] })));
     seriesRef.current = series;
-    lastRef.current = [...last] as Candle;
+    lastRef.current = [...all[all.length - 1]] as Candle;
 
     if (future.length) {
       const fs = chart.addCandlestickSeries({
@@ -125,8 +136,20 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [candles, overlays, show.join(","), JSON.stringify(lines), JSON.stringify(markers), future, resolved]);
 
+  // live stream: update or append the forming candle without rebuilding the chart
+  useEffect(() => {
+    const s = seriesRef.current;
+    if (!s || !liveCandle || future.length) return;
+    const c = liveCandle;
+    if (lastRef.current && c[0] < lastRef.current[0]) return;
+    tailRef.current.set(c[0], [...c] as Candle);
+    lastRef.current = [...c] as Candle;
+    s.update({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] });
+  }, [liveCandle, future.length]);
+
   // live tick: move the forming candle without rebuilding the chart
   useEffect(() => {
+    if (liveCandle) return;
     const s = seriesRef.current;
     const last = lastRef.current;
     if (!s || !last || !isNum(livePrice) || future.length) return;

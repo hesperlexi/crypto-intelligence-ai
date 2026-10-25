@@ -6,7 +6,8 @@
 // price while it is open. When one candle touches both the stop and the target, the stop counts first.
 // Funding is charged every 8 hours (00:00, 08:00, 16:00 UTC) at Binance's current rate for the coin.
 import { addDoc, collection, doc, getDoc, onSnapshot, query, runTransaction, setDoc, where } from "firebase/firestore";
-import { derivatives, klines, tickers } from "./binance";
+import { derivatives, fklines as klines, futuresPrices, tickers } from "./binance";
+import { futuresLast } from "./stream";
 import { db } from "./firebase";
 import { latestPrices } from "./live";
 import { isAdmin, myUid } from "./session";
@@ -40,8 +41,26 @@ const keyOf = (s: string) => s.replace("/", "");
 export const posKey = (symbol: string, side: number, hedge: boolean) => (hedge ? `${keyOf(symbol)}_${side > 0 ? "LONG" : "SHORT"}` : keyOf(symbol));
 export type PositionMode = "oneway" | "hedge";
 
+/** Futures prices from REST, refreshed on every settle; the trading screen's stream is fresher still. */
+const futPx: Record<string, { px: number; ts: number }> = {};
+/** Best current futures price: live stream (< 15 s old), then the futures REST price (< 60 s), then spot. */
+function fpx(symbol: string): number | undefined {
+  const now = Date.now();
+  const a = futuresLast[symbol], b = futPx[symbol];
+  if (a && now - a.ts < 15_000) return a.px;
+  if (b && now - b.ts < 60_000) return b.px;
+  return latestPrices[symbol];
+}
+async function refreshFutures(symbols: string[]) {
+  const p = await futuresPrices([...new Set(symbols)]);
+  const now = Date.now();
+  for (const [k, v] of Object.entries(p)) futPx[k] = { px: v, ts: now };
+}
+
 async function price(symbol: string): Promise<number> {
-  if (latestPrices[symbol]) return latestPrices[symbol];
+  if (!(futuresLast[symbol] && Date.now() - futuresLast[symbol].ts < 15_000)) await refreshFutures([symbol]);
+  const f = fpx(symbol);
+  if (f) return f;
   const t = await tickers([symbol]);
   if (!t[symbol]?.last) throw new Error(`no market price available for ${symbol}`);
   latestPrices[symbol] = t[symbol].last;
@@ -214,7 +233,7 @@ async function settleOrders(acc: any, now: number) {
       } catch { /* next time */ }
     }
     if (!hit) {
-      const px = latestPrices[od.symbol];
+      const px = fpx(od.symbol);
       if (px && (od.side > 0 ? px <= od.price : px >= od.price)) hit = { at: od.price, ts: now };
     }
     if (hit) await fillOrder(od.id, hit.at, hit.ts);
@@ -274,7 +293,7 @@ export async function setOrders(key: string, stop: number | null, take: number |
     const acc: any = (await tx.get(ACC_REF())).data();
     const pos = acc?.positions?.[key];
     if (!pos) throw new Error("no open position");
-    if (stop && pos.side * (pos.entry - stop) <= 0 && pos.side * ((latestPrices[pos.symbol] ?? pos.entry) - stop) <= 0) throw new Error("the stop would trigger immediately");
+    if (stop && pos.side * (pos.entry - stop) <= 0 && pos.side * ((fpx(pos.symbol) ?? pos.entry) - stop) <= 0) throw new Error("the stop would trigger immediately");
     tx.update(ACC_REF(), { positions: { ...acc.positions, [key]: { ...pos, stop: stop || null, take: take || null } } });
   });
 }
@@ -299,6 +318,7 @@ export async function settle() {
   try {
     const acc0: any = (await getDoc(ACC_REF())).data();
     if (!acc0) return;
+    await refreshFutures([...Object.values<any>(acc0.positions ?? {}), ...Object.values<any>(acc0.orders ?? {})].map((x) => x.symbol));
     const now = Date.now();
     await settleOrders(acc0, now);
     const acc: any = (await getDoc(ACC_REF())).data();
@@ -309,7 +329,7 @@ export async function settle() {
       if (n > 0) {
         let rate = 0.0001;
         try { const d = await derivatives(pos.symbol); if (d.available && Number.isFinite(d.funding?.rate)) rate = d.funding.rate; } catch { /* default */ }
-        const px = latestPrices[pos.symbol] ?? pos.entry;
+        const px = fpx(pos.symbol) ?? pos.entry;
         const amount = n * pos.side * pos.qty * px * rate;
         const key = posK;
         await runTransaction(db, async (tx) => {
@@ -337,7 +357,7 @@ export async function settle() {
         } catch { /* try again next time */ }
       }
       if (!hit) {
-        const px = latestPrices[pos.symbol];
+        const px = fpx(pos.symbol);
         const t = px ? trigger(pos, px, px, px) : null;
         if (t) hit = { ...t, at: t.reason === "liquidated" ? pos.liq : px, ts: now };
       }
@@ -366,7 +386,7 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
     if (!acc) { reset().catch(err); return; }
     const positions = Object.entries<any>(acc.positions ?? {}).map(([key, p0]) => {
       const p = { ...p0, key };
-      const mark = latestPrices[p.symbol] ?? null;
+      const mark = fpx(p.symbol) ?? null;
       const upnl = mark != null ? p.side * p.qty * (mark - p.entry) : null;
       return { ...p, mark, upnl, roe_pct: upnl != null ? (upnl / p.margin) * 100 : null, notional: mark != null ? p.qty * mark : p.qty * p.entry };
     });
@@ -411,6 +431,8 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
     }, err);
   });
   settle().catch(() => {});
-  const timer = window.setInterval(() => { if (!document.hidden) { settle().catch(() => {}); if (lastAcc) build(lastAcc); } }, 15_000);
-  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); };
+  const timer = window.setInterval(() => { if (!document.hidden) settle().catch(() => {}); }, 15_000);
+  // P&L follows the live price every second (no network: it reads the prices already streaming in)
+  const pnl = window.setInterval(() => { if (!document.hidden && lastAcc) build(lastAcc); }, 1000);
+  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); window.clearInterval(pnl); };
 }

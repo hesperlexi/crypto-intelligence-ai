@@ -1,14 +1,15 @@
 // Exchange-style paper trading (Binance / MEXC layout): pair bar, live candle chart with your levels,
 // order book, order form (limit / market, leverage, size %, TP/SL) and positions / orders / history / assets.
 // Virtual money only: nothing is ever sent to an exchange.
-import { useEffect, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CandleChart, { Candle, PriceLine } from "./CandleChart";
 import { useSymbols } from "./Pickers";
 import { CoinAvatar } from "./Polish";
 import { verdictOf } from "./TradeCall";
 import { useApi } from "../lib/api";
-import { klines, orderbook } from "../lib/binance";
+import { orderbook } from "../lib/binance";
+import { StreamState, useMarketStream } from "../lib/stream";
 import { base, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
 import * as SP from "../lib/paper";
@@ -17,6 +18,14 @@ import * as PF from "../lib/paperFutures";
 type Mkt = "spot" | "futures";
 const CHART_TFS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
 const LEVS = [1, 2, 3, 5, 10, 20, 50];
+
+/** The live stream of the coin on screen (futures price on the Futures tab), shared by every panel. */
+const StreamCtx = createContext<StreamState | null>(null);
+function useLastPrice(symbol: string): number | null {
+  const st = useContext(StreamCtx);
+  const { tickers } = useLive();
+  return st?.last ?? tickers[symbol]?.last ?? null;
+}
 
 function useAccount(m: Mkt) {
   const [d, setD] = useState<any>(null);
@@ -42,8 +51,11 @@ export default function TradeTerminal() {
   };
   const positions: any[] = d?.positions ?? [];
   const orders: any[] = d?.orders ?? [];
+  const [tf, setTf] = useState<string>("15m");
+  const stream = useMarketStream(symbol, market, tf);
 
   return (
+    <StreamCtx.Provider value={stream}>
     <div className="space-y-3">
       <PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })} onMarket={(m) => setQ({ market: m, symbol })} />
       <SignalStrip symbol={symbol} market={market} />
@@ -51,8 +63,8 @@ export default function TradeTerminal() {
       {err && <div className="rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">{err}</div>}
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_320px]">
-        <ChartPanel symbol={symbol} market={market} positions={positions} orders={orders} />
-        <OrderBook symbol={symbol} />
+        <ChartPanel symbol={symbol} market={market} positions={positions} orders={orders} tf={tf} setTf={setTf} />
+        <OrderBook symbol={symbol} market={market} />
         <OrderForm symbol={symbol} market={market} d={d} act={act} />
       </div>
 
@@ -73,6 +85,7 @@ export default function TradeTerminal() {
       </section>
       <p className="text-xs text-mute">Practice account with virtual USDT. Market orders fill at the live price plus a small spread and slippage; limit orders fill when the price reaches them (checked on every 15-minute candle, also while the app is closed). Fees: spot 0.1%, futures 0.05% market / 0.02% limit.</p>
     </div>
+    </StreamCtx.Provider>
   );
 }
 
@@ -80,6 +93,8 @@ export default function TradeTerminal() {
 function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: string; symbols: string[]; market: Mkt; onSymbol: (s: string) => void; onMarket: (m: Mkt) => void }) {
   const { tickers } = useLive();
   const t = tickers[symbol];
+  const last = useLastPrice(symbol);
+  const st = useContext(StreamCtx);
   const [open, setOpen] = useState(false);
   return (
     <div className="panel flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-2.5 sm:px-4">
@@ -104,10 +119,14 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
           </div>
         )}
       </div>
-      <div><div className={`num text-xl font-semibold ${tone(t?.change_pct)}`}>{fmtPrice(t?.last)}</div><div className="text-[11px] text-mute">last price</div></div>
+      <div><div className={`num text-xl font-semibold ${tone(t?.change_pct)}`}>{fmtPrice(last)}</div>
+        <div className="flex items-center gap-1 text-[11px] text-mute">
+          <span className={`h-1.5 w-1.5 rounded-full ${st?.status === "live" ? "bg-bull" : st?.status === "polling" ? "bg-warn" : "bg-glass/30"}`} aria-hidden="true" />
+          {st?.status === "live" ? "live" : st?.status === "polling" ? "reconnecting" : "last price"}{market === "futures" ? (st?.source === "spot" ? " · spot price (futures unreachable)" : " · futures price") : ""}
+        </div></div>
       <div><div className={`num text-sm ${tone(t?.change_pct)}`}>{fmtPctRaw(t?.change_pct)}</div><div className="text-[11px] text-mute">24h change</div></div>
       <div className="hidden sm:block"><div className="num text-sm">{t?.quote_volume != null ? `${fmtNum(t.quote_volume / 1e6, 1)}M` : "—"}</div><div className="text-[11px] text-mute">24h volume (USDT)</div></div>
-      <div className="hidden md:block"><div className="num text-sm">{fmtPrice(t?.bid)} / {fmtPrice(t?.ask)}</div><div className="text-[11px] text-mute">bid / ask</div></div>
+      {market === "spot" && <div className="hidden md:block"><div className="num text-sm">{fmtPrice(t?.bid)} / {fmtPrice(t?.ask)}</div><div className="text-[11px] text-mute">bid / ask</div></div>}
       <div className="ml-auto inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Market">
         {(["futures", "spot"] as const).map((k) => (
           <button key={k} aria-pressed={market === k} onClick={() => onMarket(k)}
@@ -147,18 +166,9 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
 }
 
 /* ---------------------------------------------------------------- chart */
-function ChartPanel({ symbol, market, positions, orders }: { symbol: string; market: Mkt; positions: any[]; orders: any[] }) {
-  const [tf, setTf] = useState<string>("15m");
-  const [candles, setCandles] = useState<Candle[]>([]);
-  const [err, setErr] = useState<string | null>(null);
-  const { tickers } = useLive();
-  useEffect(() => {
-    let alive = true;
-    const load = () => klines(symbol, tf, 300).then((c: any) => { if (alive) { setCandles(c as Candle[]); setErr(null); } }).catch((e: any) => alive && setErr(e.message));
-    setCandles([]); load();
-    const id = window.setInterval(load, tf === "1m" ? 15_000 : 45_000);
-    return () => { alive = false; window.clearInterval(id); };
-  }, [symbol, tf]);
+function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: string; market: Mkt; positions: any[]; orders: any[]; tf: string; setTf: (t: string) => void }) {
+  const st = useContext(StreamCtx);
+  const candles = st?.candles ?? [];
   const lines: PriceLine[] = useMemo(() => {
     const out: PriceLine[] = [];
     for (const p of positions.filter((x) => x.symbol === symbol)) {
@@ -184,24 +194,25 @@ function ChartPanel({ symbol, market, positions, orders }: { symbol: string; mar
         </div>
         <span className="hidden text-[11px] text-mute sm:inline">your entry, SL, TP, liquidation and limit orders are drawn on the chart</span>
       </div>
-      {err ? <p className="p-4 text-sm text-bear">Chart unavailable: {err}</p>
-        : candles.length ? <CandleChart candles={candles} lines={lines} livePrice={tickers[symbol]?.last ?? null} height={380} />
+      {st?.error ? <p className="p-4 text-sm text-bear">Chart unavailable: {st.error}</p>
+        : candles.length ? <CandleChart candles={candles} lines={lines} liveCandle={st?.live ?? null} height={380} />
         : <div className="skeleton m-3 h-[340px] rounded-lg" />}
     </section>
   );
 }
 
 /* ---------------------------------------------------------------- order book */
-function OrderBook({ symbol }: { symbol: string }) {
+function OrderBook({ symbol, market }: { symbol: string; market: Mkt }) {
   const [ob, setOb] = useState<any>(null);
   const { tickers } = useLive();
+  const last = useLastPrice(symbol);
   useEffect(() => {
     let alive = true;
-    const load = () => { if (!document.hidden) orderbook(symbol).then((x: any) => alive && setOb(x)).catch(() => {}); };
+    const load = () => { if (!document.hidden) orderbook(symbol, market).then((x: any) => alive && setOb(x)).catch(() => {}); };
     setOb(null); load();
-    const id = window.setInterval(load, 4000);
+    const id = window.setInterval(load, 2000);
     return () => { alive = false; window.clearInterval(id); };
-  }, [symbol]);
+  }, [symbol, market]);
   const asks: [number, number][] = (ob?.asks ?? []).slice(0, 9).reverse();
   const bids: [number, number][] = (ob?.bids ?? []).slice(0, 9);
   const max = Math.max(1, ...[...asks, ...bids].map((x) => x[0] * x[1]));
@@ -218,7 +229,7 @@ function OrderBook({ symbol }: { symbol: string }) {
       {!ob ? <div className="skeleton m-2 h-80 rounded" /> : (
         <>
           {asks.map((x) => row(x, "a"))}
-          <div className={`num border-y border-glass/[0.06] px-2 py-1.5 text-base font-semibold ${tone(tickers[symbol]?.change_pct)}`}>{fmtPrice(tickers[symbol]?.last)}</div>
+          <div className={`num border-y border-glass/[0.06] px-2 py-1.5 text-base font-semibold ${tone(tickers[symbol]?.change_pct)}`}>{fmtPrice(last)}</div>
           {bids.map((x) => row(x, "b"))}
         </>
       )}
@@ -229,8 +240,7 @@ function OrderBook({ symbol }: { symbol: string }) {
 /* ---------------------------------------------------------------- order form */
 function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d: any; act: (fn: () => Promise<any>, ok: string) => Promise<void> }) {
   const [params] = useSearchParams();
-  const { tickers } = useLive();
-  const px = tickers[symbol]?.last ?? null;
+  const px = useLastPrice(symbol);
   const [type, setType] = useState<"limit" | "market">("market");
   const [limit, setLimit] = useState("");
   const [lev, setLev] = useState(5);

@@ -235,8 +235,9 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
     }, err);
   });
   settle().catch(() => {});
-  const timer = window.setInterval(() => { if (!document.hidden) { settle().catch(() => {}); if (lastAcc) build(lastAcc).catch(() => {}); } }, 15_000);
-  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); };
+  const timer = window.setInterval(() => { if (!document.hidden) settle().catch(() => {}); }, 15_000);
+  const pnl = window.setInterval(() => { if (!document.hidden && lastAcc) build(lastAcc).catch(() => {}); }, 1000);
+  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); window.clearInterval(pnl); };
 }
 
 export async function openExposure(): Promise<{ exposure: number; today: number }> {
