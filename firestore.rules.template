@@ -82,6 +82,9 @@ service cloud.firestore {
         && (isAdmin() || (isMember() && request.resource.data.type in ['backtest', 'replay', 'test_push']));
       allow update, delete: if false;
     }
+    // auto-trading of signals into the member's own paper account: settings by the member, log by the engine
+    match /auto_paper/{uid}       { allow read, write: if isAdmin() || (isMember() && uid == me()); }
+    match /auto_paper_state/{uid} { allow read: if isAdmin() || (isMember() && uid == me()); allow write: if false; }
     // paper accounts: members only touch documents named after their own uid
     match /paper/{id}        { allow read, write: if isAdmin() || (isMember() && id.matches(me() + '_.*')); }
     match /paper_trades/{id} {

@@ -28,7 +28,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import alerts, analysis, backtests, health, market, membership, news, radar, replay, scanner, tracking, training
+from .services import alerts, analysis, autopaper, backtests, health, market, membership, news, radar, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -441,6 +441,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
+    if analyses:
+        res = step("auto_paper", lambda: _auto_paper(rt, sink, analyses))
+        detail["auto_paper"] = res
     if fetch_context and hasattr(rt.provider, "_get_sync") and now_ms() - int(rt.db.get_setting("radar_at", 0) or 0) > 55 * 60_000:
         def run_radar():
             r = radar.scan(rt.db, rt.provider, rt.symbols())
@@ -473,6 +476,16 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     _record(rt, "tick", started, status, detail)
     detail["status"], detail["seconds"] = status, round(time.time() - t0, 1)
     return detail
+
+
+def _auto_paper(rt: Runtime, sink: BaseSink, analyses: dict[tuple[str, str], dict]) -> dict[str, Any]:
+    """New futures signals into the paper accounts of members who switched auto-trading on."""
+    rows = {tf: views.futures(rt, tf, analyses)["rows"] for tf in ("1h", "4h", "12h", "1d") if any(k[1] == tf for k in analyses)}
+    r = autopaper.run(sink, rows)
+    msgs = r.pop("push")
+    if msgs:
+        r["push"] = sink.send_push(msgs)
+    return r
 
 
 def sync_news(rt: Runtime) -> dict[str, Any]:

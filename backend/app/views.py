@@ -166,7 +166,7 @@ def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) 
     rows.sort(key=lambda r: (order.get(r.get("action"), 2), -(r.get("confidence") or 0)))
     return {
         "timeframe": timeframe, "rows": rows,
-        "funding_source": "Binance futures (live)" if funding else
+        "funding_source": f"{next(iter(funding.values())).get('source') or 'Binance futures'} (live)" if funding else
             f"assumed {F.DEFAULT_FUNDING_RATE * 100:.2f}% per 8h: Binance's futures API is not reachable from the engine's "
             "server, your browser shows the live rate",
         "assumptions": {"maintenance_margin": F.MAINTENANCE_MARGIN, "fee_rate": F.FUTURES_FEE_RATE,

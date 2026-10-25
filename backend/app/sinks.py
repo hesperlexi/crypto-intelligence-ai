@@ -82,6 +82,19 @@ class BaseSink:
     def delete(self, path: str) -> None:
         raise NotImplementedError
 
+    def transact(self, path: str, fn) -> Any:
+        """Read-modify-write one document: fn(current or None) -> (new data or None to leave it, result)."""
+        new, result = fn(self.get(path))
+        if new is not None:
+            self.set(path, new)
+        return result
+
+    def add(self, collection: str, data: dict[str, Any]) -> str:
+        from .db import new_id
+        doc_id = new_id()
+        self.set(f"{collection}/{doc_id}", data)
+        return doc_id
+
     # -- phone notifications (web push through Firebase Cloud Messaging) -----------------------------------
     def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
         """Send each {title, body, url, tag} to every registered device. Returns counts; never raises."""
@@ -182,6 +195,26 @@ class FirestoreSink(BaseSink):
 
     def delete(self, path: str) -> None:
         self.fs.document(path).delete()
+
+    def transact(self, path: str, fn) -> Any:
+        from google.cloud import firestore as gfs
+
+        ref = self.fs.document(path)
+
+        @gfs.transactional
+        def run(tx):
+            snap = ref.get(transaction=tx)
+            new, result = fn(snap.to_dict() if snap.exists else None)
+            if new is not None:
+                tx.set(ref, json.loads(dumps(new)))
+            return result
+
+        return run(self.fs.transaction())
+
+    def add(self, collection: str, data: dict[str, Any]) -> str:
+        _, ref = self.fs.collection(collection).add(json.loads(dumps(data)))
+        self.writes += 1
+        return ref.id
 
     def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
         if not messages:

@@ -5,6 +5,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CandleChart, { Candle, PriceLine } from "./CandleChart";
 import TVChart from "./TVChart";
+import AutoTrade from "./AutoTrade";
 import { useSymbols } from "./Pickers";
 import { CoinAvatar } from "./Polish";
 import { verdictOf } from "./TradeCall";
@@ -60,6 +61,7 @@ export default function TradeTerminal() {
     <div className="space-y-3">
       <PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })} onMarket={(m) => setQ({ market: m, symbol })} />
       <SignalStrip symbol={symbol} market={market} />
+      {market === "futures" && <AutoTrade />}
       {msg && <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-bull/40 bg-bull/10 text-bull" : "border-bear/40 bg-bear/10 text-bear"}`}>{msg.text}</div>}
       {err && <div className="rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">{err}</div>}
 
@@ -376,6 +378,7 @@ function FutPositions({ rows, act, hedges }: { rows: any[]; act: (fn: () => Prom
               <span className={`h-8 w-1 rounded-full ${p.side > 0 ? "bg-bull" : "bg-bear"}`} />
               <span className="font-semibold">{p.symbol}</span>
               <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${p.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{p.side > 0 ? "Long" : "Short"} {fmtNum(p.leverage, 1)}x</span>
+              {p.auto && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-accent" title="Opened automatically from an app signal">AUTO</span>}
             </div>
             <div className="text-right"><div className={`num font-semibold ${tone(p.upnl)}`}>{p.upnl != null ? `${p.upnl >= 0 ? "+" : ""}${fmtNum(p.upnl)} USDT` : "—"}</div><div className={`num text-xs ${tone(p.upnl)}`}>{fmtPctRaw(p.roe_pct, 1)} ROE</div></div>
           </div>
@@ -429,7 +432,7 @@ function Orders({ rows, market, act }: { rows: any[]; market: Mkt; act: (fn: () 
       <tbody>{rows.map((o) => {
         const buy = o.side === "BUY" || o.side > 0;
         return (
-          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium">{o.symbol}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
+          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium">{o.symbol}{o.auto && <span className="ml-1 rounded bg-accent/15 px-1 text-[10px] font-bold text-accent">AUTO</span>}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
             <td className={buy ? "text-bull" : "text-bear"}>{market === "futures" ? (buy ? "Long" : "Short") : buy ? "Buy" : "Sell"}</td>
             <td className="num text-right">{fmtPrice(o.price)}</td><td className="num text-right">{market === "futures" ? `${fmtNum(o.margin)} USDT` : fmtNum(o.qty, 6)}</td>
             <td className="text-right"><button className="btn px-2 py-0.5 text-xs" onClick={() => act(() => (market === "futures" ? PF.cancelOrder(o.id) : SP.cancelOrder(o.id)), "Order cancelled; the funds are back.")}>Cancel</button></td></tr>

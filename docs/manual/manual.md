@@ -166,6 +166,8 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 **How to practise properly:** take only trades you would really take, at the real size; write down why you took each one and compare after 30 trades; reset the account only when you change strategy.
 
+**Auto-trade signals (Futures tab).** Press **Turn on** and the app places its futures signals in your practice account by itself, also while the app is closed. In **Settings** choose the **margin per trade** (USDT), the leverage (the signal's suggested leverage is the safest; any higher choice is capped so liquidation stays beyond the stop), the timeframes, grade A only or A+B, which target to take profit at, the maximum number of open trades and all coins or only your own. Inside the entry zone the trade opens at market; otherwise a limit order waits at the ideal entry and is cancelled after 6 candles if it never fills. Auto-trades are marked **AUTO** and you get a notification for each. It is the easiest way to see what following every signal would really do to an account.
+
 ## 10. Demo bots: proof of whether the predictions work
 
 The **Bots** page runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.

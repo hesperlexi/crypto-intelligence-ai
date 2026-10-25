@@ -208,7 +208,8 @@ async function fillOrder(id: string, at: number, when: number) {
     }
     const qty = (od.margin * od.leverage) / at;
     const fee = qty * at * MAKER;
-    const { pos } = mergeFill(positions, od.symbol, od.side, qty, at, od.leverage, od.margin, fee, od.stop, od.take, when, hedge);
+    const { pos, key } = mergeFill(positions, od.symbol, od.side, qty, at, od.leverage, od.margin, fee, od.stop, od.take, when, hedge);
+    if (od.auto) positions[key] = { ...positions[key], auto: true };
     const t = acc.totals;
     tx.update(ACC_REF(), { wallet: acc.wallet + od.reserve - od.margin - fee, positions, orders, totals: { ...t, fees: t.fees + fee } });
     return { account_id: acc.id, od, qty, fee, pos, hedge };
@@ -237,6 +238,7 @@ async function settleOrders(acc: any, now: number) {
       if (px && (od.side > 0 ? px <= od.price : px >= od.price)) hit = { at: od.price, ts: now };
     }
     if (hit) await fillOrder(od.id, hit.at, hit.ts);
+    else if (od.expires_at && now > od.expires_at) await cancelOrder(od.id);     // an auto-trade entry that never filled
     else if (now - od.checked_at > STEP) {
       await runTransaction(db, async (tx) => {
         const a: any = (await tx.get(ACC_REF())).data();
