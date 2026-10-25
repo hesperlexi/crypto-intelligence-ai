@@ -21,6 +21,7 @@ jobs:
         working-directory: backend
     env:
       EXCHANGE: binance_public
+      ENABLE_DEEP_MODELS: "true"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -31,6 +32,8 @@ jobs:
             backend/requirements-worker.txt
             backend/requirements-torch.txt
       - run: pip install -r requirements-worker.txt
+      - name: Install PyTorch (CPU) so models with LSTM / GRU / Transformer members load
+        run: pip install -r requirements-torch.txt
       - name: Restore engine state (read-only)
         uses: actions/cache/restore@v4
         with:
