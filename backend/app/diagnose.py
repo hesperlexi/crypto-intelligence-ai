@@ -138,6 +138,26 @@ def run(rt: Runtime, symbols: list[str], tfs: list[str], days: float, deadline: 
     return out
 
 
+def model_inventory(rt: Runtime) -> dict[str, Any]:
+    import os
+    inv: dict[str, Any] = {}
+    for r in rt.db.query("SELECT symbol, timeframe, COUNT(*) AS n, SUM(active) AS active, MAX(created_at) AS last FROM model_versions GROUP BY symbol, timeframe"):
+        a = trainer.active_version(r["symbol"], r["timeframe"], rt.db)
+        inv[f"{r['symbol']} {r['timeframe']}"] = {"versions": r["n"], "active": r["active"], "last_created": r["last"],
+                                                  "active_path_exists": bool(a and a.get("path") and os.path.exists(a["path"])),
+                                                  "active_path": a.get("path") if a else None}
+    runs = [{"kind": x["kind"], "started_at": x["started_at"], "status": x["status"], "detail": (x["detail"] or "")[:1500]}
+            for x in rt.db.query("SELECT * FROM engine_runs WHERE kind = 'train' ORDER BY started_at DESC LIMIT 3")]
+    ticks = [{"started_at": x["started_at"], "status": x["status"], "detail": (x["detail"] or "")[:1200]}
+             for x in rt.db.query("SELECT * FROM engine_runs WHERE kind = 'tick' ORDER BY started_at DESC LIMIT 2")]
+    files = []
+    for root, _, fs in os.walk("data"):
+        files += [os.path.join(root, f) for f in fs]
+    return {"models": inv, "train_runs": runs, "ticks": ticks, "n_files": len(files),
+            "model_files": sorted(f for f in files if f.endswith((".joblib", ".pkl")))[:200],
+            "data_mb": round(sum(os.path.getsize(f) for f in files) / 1e6, 1)}
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(prog="python -m app.diagnose")
@@ -147,7 +167,8 @@ def main() -> None:
     ap.add_argument("--out", default="diagnose.json")
     a = ap.parse_args()
     rt = Runtime(get_db(), market.make_provider())
-    rep = run(rt, rt.symbols(), [t for t in a.timeframes.split(",") if t], a.days, time.time() + a.budget)
+    rep = {"inventory": model_inventory(rt)}
+    rep.update(run(rt, rt.symbols(), [t for t in a.timeframes.split(",") if t], a.days, time.time() + a.budget))
     with open(a.out, "w") as f:
         json.dump(rep, f, indent=1, default=float)
     print(json.dumps(rep["reasons_total"], indent=1))
