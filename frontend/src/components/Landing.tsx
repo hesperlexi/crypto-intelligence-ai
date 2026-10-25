@@ -27,6 +27,7 @@ export default function Landing({ error }: { error: string | null }) {
   const [err, setErr] = useState<string | null>(error);
   const [busy, setBusy] = useState(false);
   const [px, setPx] = useState<Record<string, any>>({});
+  const [demo, setDemo] = useState(false);
   useEffect(() => {
     let alive = true;
     const load = () => restTickers(COINS).then((t) => alive && setPx(t)).catch(() => {});
@@ -80,7 +81,7 @@ export default function Landing({ error }: { error: string | null }) {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
-              <a href="#how" className="btn px-5 py-3 text-base">How it works</a>
+              <button className="btn px-5 py-3 text-base" onClick={() => setDemo(true)}>▶ Watch the 90-second demo</button>
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
             <p className="mt-5 text-xs text-mute">No exchange keys needed · the app never places real orders · from ${(plans[plans.length - 1].price / 12).toFixed(2)}/month</p>
@@ -215,6 +216,14 @@ export default function Landing({ error }: { error: string | null }) {
         </section>
       </main>
 
+      {demo && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setDemo(false)} role="dialog" aria-label="Demo video">
+          <div className="relative h-full max-h-[90vh] w-auto" onClick={(e) => e.stopPropagation()}>
+            <video src={`/demo.mp4?v=${BUILD_ID}`} className="h-full max-h-[90vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />
+            <button className="absolute -right-2 -top-2 h-9 w-9 rounded-full bg-panel text-lg" aria-label="Close video" onClick={() => setDemo(false)}>✕</button>
+          </div>
+        </div>
+      )}
       <footer className="border-t border-glass/[0.06] px-4 py-6 text-center text-xs text-mute">
         {COPYRIGHT} · Crypto Intelligence AI · <span className="num">v{APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual</a> · <a href={`mailto:${cfg.support_email}`} className="text-accent hover:underline">{cfg.support_email}</a>
         <div className="mt-1">Research tool, not financial advice. Forecasts are probabilities, never certainties. No real orders are placed.</div>
