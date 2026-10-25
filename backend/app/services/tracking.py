@@ -162,7 +162,8 @@ def log_signal(db: Database, a: dict[str, Any]) -> bool:
          setup.get("stop") if tradable else None, tps[0], tps[1], tps[2],
          setup.get("risk_reward") if tradable else None, "OPEN" if tradable else "INFO",
          fc.get("model_version"), dumps({"reasons": sig.get("reasons"), "warnings": sig.get("warnings"),
-                                         "flags": a.get("flags"), "decision_reason": a.get("decision_reason")})))
+                                         "flags": a.get("flags"), "decision_reason": a.get("decision_reason"),
+                                         "grade": a.get("grade")})))
     return n > 0
 
 

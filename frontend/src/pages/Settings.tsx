@@ -100,7 +100,7 @@ function AdminSettings() {
               <button key={s} className={`btn ${st.data.forecast_refresh_s === s ? "btn-on" : ""}`} aria-pressed={st.data.forecast_refresh_s === s} onClick={() => save({ forecast_refresh_s: s }, `Forecasts now refresh every ${REFRESH_LABEL[s]}`)}>{REFRESH_LABEL[s]}</button>
             ))}
           </div>
-          <Note>The engine re-scores every asset every 15 minutes (its schedule is set in the GitHub workflow). Refreshing never retrains; models are retrained by a separate daily run. Saved settings are picked up by the next cycle.</Note>
+          <Note>The engine re-scores every asset about every 5–10 minutes (its schedule is set in the GitHub workflow). Refreshing never retrains; models are retrained by a separate daily run. Saved settings are picked up by the next cycle.</Note>
           {policy && (
             <div className="mt-4">
               <div className="label mb-1">Signal policy (set in the backend .env)</div>
@@ -200,7 +200,7 @@ function NotificationsCard() {
         <div className="mt-3 flex flex-wrap gap-2">
           {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy} onClick={() => act(push.enable)}>{perm === "denied" ? "Try again" : "Turn on notifications"}</button>
             : <button className="btn" disabled={busy} onClick={() => act(async () => { await push.disable(); return "Notifications turned off on this device."; })}>Turn off on this device</button>}
-          <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: the engine sends it on its next run (within about 15 minutes)."; })}>Send a test notification</button>
+          <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: the engine sends it on its next run (within about 10 minutes)."; })}>Send a test notification</button>
         </div>
         {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
         {perm === "denied" && !msg && <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 p-2 text-sm text-warn">{push.blockedHelp()}</p>}

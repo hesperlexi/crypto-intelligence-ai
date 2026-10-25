@@ -105,3 +105,22 @@ def test_binance_provider_falls_back_between_hosts_and_parses():
         raise AssertionError("no reachable host must raise")
     except ConnectionError:
         assert down.errors == 1 and down.last_error
+
+
+def test_track_record_view_is_honest_and_complete():
+    from app import views
+    from app.db import Database
+    from app.services.runtime import Runtime
+
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    ins = ("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, stop, "
+           "tp1, tp2, tp3, status, return_pct, closed_at, payload) VALUES (?, ?, 'BTC/USDT', '4h', ?, 'BUY', 'BUY', 100, 1, "
+           "100, 95, 105, 110, 115, ?, ?, ?, ?)")
+    rt.db.execute(ins, ("a", 1, 1, "TP2", 6.0, 10, '{"grade": "A"}'))
+    rt.db.execute(ins, ("b", 2, 2, "STOPPED", -5.0, 20, '{"grade": "B"}'))
+    rt.db.execute(ins, ("c", 3, 3, "OPEN", None, None, '{}'))
+    v = views.track_record(rt, {"bots": []})
+    s = v["live"]["summary"]
+    assert s["closed"] == 2 and s["win_rate"] == 0.5 and abs(s["total_return_pct"] - 1.0) < 1e-9
+    assert v["live"]["open"] == 1 and v["live"]["by_grade"]["A"]["closed"] == 1 and len(v["live"]["signals"]) == 3
+    assert [p["cum_return_pct"] for p in v["live"]["curve"]] == [6.0, 1.0]

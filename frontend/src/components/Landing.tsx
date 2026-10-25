@@ -5,6 +5,7 @@ import { tickers as restTickers } from "../lib/binance";
 import { auth, googleProvider } from "../lib/firebase";
 import { base, fmtPctRaw, fmtPrice } from "../lib/format";
 import { useMembershipConfig } from "../lib/membership";
+import TrackRecord from "./TrackRecord";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
 import { CoinAvatar } from "./Polish";
 
@@ -59,6 +60,7 @@ export default function Landing({ error }: { error: string | null }) {
             <span className="font-display text-[15px] font-bold sm:text-base">Crypto Intelligence <span className="text-accent">AI</span></span>
           </div>
           <div className="flex items-center gap-2">
+            <a href="#track" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Track record</a>
             <a href="#pricing" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Pricing</a>
             <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Manual</a>
             <button className="btn px-3 py-1.5 text-sm" onClick={signIn} disabled={busy}>Sign in</button>
@@ -150,6 +152,13 @@ export default function Landing({ error }: { error: string | null }) {
               </div>
             ))}
           </div>
+        </section>
+
+        {/* public track record */}
+        <section id="track" className="scroll-mt-20 py-8">
+          <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Check our track record first</h2>
+          <p className="mx-auto mt-2 max-w-2xl text-center text-sm text-mute">Every signal since launch with its real result, nothing removed. Plus how the AI scored on past data it never saw.</p>
+          <div className="mt-8"><TrackRecord /></div>
         </section>
 
         {/* how it works */}

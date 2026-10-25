@@ -69,6 +69,9 @@ def norm_symbol(raw: str) -> str:
 
 # ---- configuration from the website --------------------------------------------------------------------
 
+MAJOR_COINS = ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "SOL/USDT", "DOGE/USDT", "TRX/USDT", "ADA/USDT",
+               "LINK/USDT", "AVAX/USDT", "SUI/USDT", "XLM/USDT", "TON/USDT", "HBAR/USDT", "BCH/USDT", "LTC/USDT",
+               "DOT/USDT", "UNI/USDT", "NEAR/USDT", "APT/USDT", "AAVE/USDT"]
 MEMBER_COIN_LIMIT = 5        # default: coins one member can add for themselves (admin can change: config/limits)
 MEMBER_COINS_MAX = 25        # default: all members together, on top of the admin's list (keeps the engine within its time)
 
@@ -110,6 +113,17 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         sink.set("config/watchlist", {"symbols": [{"symbol": w["symbol"], "pinned": bool(w["pinned"])}
                                                   for w in rt.watchlist()], "updated_at": now_ms()})
     else:
+        if not rt.db.get_setting("watchlist_majors_v2", False):
+            # v2.0: one-time expansion to the major coins (the admin can remove any of them afterwards;
+            # coins without a proven edge get no AI-led signals, so quality is protected)
+            have = {norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]}
+            add = [m for m in MAJOR_COINS if m not in have]
+            if add:
+                doc = {**doc, "symbols": list(doc["symbols"]) + [{"symbol": m, "pinned": False} for m in add],
+                       "updated_at": now_ms()}
+                sink.set("config/watchlist", doc)
+                notes["majors_added"] = add
+            rt.db.set_setting("watchlist_majors_v2", True)
         wanted = {}
         for item in doc["symbols"]:
             sym = norm_symbol(item["symbol"] if isinstance(item, dict) else item)
@@ -308,7 +322,9 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("backtests", views.backtest_history(rt))
     sink.view("replay_ranges", views.replay_ranges(rt))
     sink.view("cross_asset_1d", scanner.cross_asset(rt, "1d"))
-    sink.view("bots", BotEngine(rt).report())
+    bot_report = BotEngine(rt).report()
+    sink.view("bots", bot_report)
+    sink.view("track_record", views.track_record(rt, bot_report))
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))

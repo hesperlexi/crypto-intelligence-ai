@@ -4,6 +4,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import CandleChart, { Candle, PriceLine } from "./CandleChart";
+import TVChart from "./TVChart";
 import { useSymbols } from "./Pickers";
 import { CoinAvatar } from "./Polish";
 import { verdictOf } from "./TradeCall";
@@ -169,6 +170,7 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
 function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: string; market: Mkt; positions: any[]; orders: any[]; tf: string; setTf: (t: string) => void }) {
   const st = useContext(StreamCtx);
   const candles = st?.candles ?? [];
+  const [pro, setPro] = useState(false);
   const lines: PriceLine[] = useMemo(() => {
     const out: PriceLine[] = [];
     for (const p of positions.filter((x) => x.symbol === symbol)) {
@@ -192,9 +194,16 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
         <div className="flex gap-0.5" role="group" aria-label="Chart timeframe">
           {CHART_TFS.map((t) => <button key={t} aria-pressed={tf === t} onClick={() => setTf(t)} className={`rounded-md px-2.5 py-1 text-xs ${tf === t ? "bg-accent/15 font-semibold text-accent" : "text-mute hover:text-text"}`}>{t}</button>)}
         </div>
-        <span className="hidden text-[11px] text-mute sm:inline">your entry, SL, TP, liquidation and limit orders are drawn on the chart</span>
+        <span className="flex items-center gap-2">
+          <span className="hidden text-[11px] text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your entry, SL, TP, liquidation and limit orders are drawn on the chart"}</span>
+          <span className="inline-flex rounded-lg border border-glass/10 p-0.5">
+            <button className={`rounded-md px-2 py-0.5 text-xs ${!pro ? "bg-accent font-semibold text-ink" : "text-mute"}`} aria-pressed={!pro} onClick={() => setPro(false)}>AI</button>
+            <button className={`rounded-md px-2 py-0.5 text-xs ${pro ? "bg-accent font-semibold text-ink" : "text-mute"}`} aria-pressed={pro} onClick={() => setPro(true)}>Pro</button>
+          </span>
+        </span>
       </div>
-      {st?.error ? <p className="p-4 text-sm text-bear">Chart unavailable: {st.error}</p>
+      {pro ? <div className="p-1"><TVChart symbol={symbol} market={market} tf={tf} height={400} /></div>
+        : st?.error ? <p className="p-4 text-sm text-bear">Chart unavailable: {st.error}</p>
         : candles.length ? <CandleChart candles={candles} lines={lines} liveCandle={st?.live ?? null} height={380} />
         : <div className="skeleton m-3 h-[340px] rounded-lg" />}
     </section>

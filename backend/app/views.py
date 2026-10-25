@@ -10,7 +10,7 @@ import numpy as np
 
 from .backtest.strategies import STRATEGIES
 from .config import HORIZONS, MODEL_TIMEFRAMES, MTF_TIMEFRAMES, TIMEFRAMES, settings
-from .db import now_ms
+from .db import loads, now_ms
 from .ml import trainer
 from .ml.drift import drift_report
 from .ml.models import REGISTRY, model_status
@@ -172,3 +172,80 @@ def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) 
         "assumptions": {"maintenance_margin": F.MAINTENANCE_MARGIN, "fee_rate": F.FUTURES_FEE_RATE,
                         "max_suggested_leverage": 10, "liquidation_buffer": 1.5},
     }
+
+
+# ---- public track record ---------------------------------------------------------------------------------------
+
+def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: int = 150) -> dict[str, Any]:
+    """Everything a visitor needs to judge the app honestly, readable without an account (views/track_record):
+    every trade signal since launch with its real outcome, the models' results on past data they never trained on
+    (clearly a simulation), and the demo bots' results. Nothing is filtered for looks."""
+    import numpy as np
+
+    from .ml import direction as dirview, trainer
+
+    rows = rt.db.query("SELECT * FROM signals WHERE status != 'INFO' ORDER BY created_at DESC")
+    sigs = []
+    for r in rows:
+        p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
+        sigs.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+                     "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
+                     "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
+                     "closed_at": r["closed_at"], "return_pct": r["return_pct"]})
+    closed = [x for x in sigs if x["status"] not in ("OPEN",) and x["return_pct"] is not None]
+
+    def summ(xs: list[dict[str, Any]]) -> dict[str, Any]:
+        r = np.array([x["return_pct"] for x in xs], float)
+        if not len(r):
+            return {"closed": 0}
+        wins = r[r > 0]
+        losses = r[r <= 0]
+        return {"closed": int(len(r)), "win_rate": float((r > 0).mean()), "avg_return_pct": float(r.mean()),
+                "total_return_pct": float(r.sum()), "best_pct": float(r.max()), "worst_pct": float(r.min()),
+                "profit_factor": float(wins.sum() / -losses.sum()) if len(losses) and losses.sum() < 0 else None}
+
+    by_tf = {tf: summ([x for x in closed if x["timeframe"] == tf]) for tf in sorted({x["timeframe"] for x in closed})}
+    by_grade = {g: summ([x for x in closed if (x["grade"] or "-") == g]) for g in sorted({x["grade"] or "-" for x in closed})}
+    curve, acc = [], 0.0
+    for x in sorted(closed, key=lambda x: x["closed_at"] or x["created_at"]):
+        acc += x["return_pct"]
+        curve.append({"ts": x["closed_at"] or x["created_at"], "cum_return_pct": acc})
+
+    tested = []
+    for s in rt.symbols():
+        for tf in MODEL_TIMEFRAMES:
+            try:
+                b = trainer.load_bundle(s, tf, rt.db)
+            except Exception:
+                b = None
+            if not b:
+                continue
+            pol = dirview.direction_policy(b.get("oos") or {}, b.get("version"))
+            if not pol:
+                continue
+            best = pol.get("best") or {}
+            o = b.get("oos") or {}
+            ts = o.get("ts")
+            days = (int(ts[-1]) - int(ts[0])) / 86_400_000 if ts is not None and len(ts) > 1 else None
+            tested.append({"symbol": s, "timeframe": tf, "edge": pol.get("edge"), "all_calls_hit_rate": pol.get("base_hit_rate"),
+                           "selective_hit_rate": best.get("hit_rate"), "selective_ci95": best.get("ci95"),
+                           "selective_calls": best.get("n"), "coverage": best.get("coverage"), "tested_days": days,
+                           "calls_per_day": (best.get("n") / days) if best.get("n") and days else None})
+    bots = []
+    for bt in (bot_report or {}).get("bots", []):
+        st, cfg = bt.get("stats") or {}, bt.get("config") or {}
+        if not cfg.get("enabled", True):
+            continue
+        bots.append({"name": cfg.get("name") or cfg.get("id"), "mode": cfg.get("mode"), "market": cfg.get("market", "spot"), "timeframe": cfg.get("timeframe"),
+                     "grades": cfg.get("grades"), "trades": st.get("trades"), "return_pct": st.get("return_pct"),
+                     "benchmark_return_pct": st.get("benchmark_return_pct"), "win_rate": st.get("win_rate"),
+                     "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
+    first = min((x["created_at"] for x in sigs), default=None)
+    return {"generated_at": now_ms(), "since": first, "live": {"summary": summ(closed), "by_timeframe": by_tf,
+            "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
+            "signals": sigs[:limit]},
+            "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))), "bots": bots,
+            "method": {"live": "Every trade signal the engine published, followed candle by candle: a third of the position "
+                               "exits at each take-profit, the rest at the stop or after 30 candles. Fees not included.",
+                       "tested": "Walk-forward test: the models are trained only on data before each test period and then "
+                                 "scored on the following period, which they never saw. A simulation, not live results."}}

@@ -56,7 +56,7 @@ export default function Futures() {
 
       {v.error && <ErrorBox error={v.error} retry={v.reload} />}
       {!v.data && v.loading && <Loading what="Loading futures predictions" />}
-      {v.data === null && !v.loading && <Empty>Futures predictions appear after the next engine run (within about 15 minutes).</Empty>}
+      {v.data === null && !v.loading && <Empty>Futures predictions appear after the next engine run (within about 10 minutes).</Empty>}
       <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
         {rows.map((r) => <TradeCall key={r.symbol} r={r} market="futures" m={mkt.data?.rows?.[r.symbol]} compact />)}
       </div>

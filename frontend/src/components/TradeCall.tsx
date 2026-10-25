@@ -205,7 +205,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </Link>
           <button className="btn px-3 py-2 text-sm" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
         </div>
-        {!compact && <p className="text-[11px] text-mute">Plan for the next {String(r.timeframe ?? "").toUpperCase()} candles, refreshed every 15 minutes. A probability, not a promise: always use the stop-loss.</p>}
+        {!compact && <p className="text-[11px] text-mute">Plan for the next {String(r.timeframe ?? "").toUpperCase()} candles, refreshed every few minutes. A probability, not a promise: always use the stop-loss.</p>}
       </div>
     </section>
   );

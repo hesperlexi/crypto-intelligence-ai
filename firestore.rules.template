@@ -47,8 +47,9 @@ service cloud.firestore {
     }
 
     // engine output; per-member alert views are private to that member
+    // track_record is public: visitors can judge every signal's real outcome before they pay
     match /views/{id} {
-      allow read: if allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me());
+      allow read: if id == 'track_record' || (allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
       allow write: if false;
     }
     // coins, bots, settings: everyone signed in may read, only the admin may change

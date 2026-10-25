@@ -1,6 +1,7 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useIsAdmin } from "../lib/session";
 import { Link, useParams } from "react-router-dom";
+import TVChart from "../components/TVChart";
 import CandleChart, { Marker, OVERLAY_COLORS, PriceLine } from "../components/CandleChart";
 import { MODEL_TFS, TfTabs } from "../components/Pickers";
 
@@ -25,6 +26,8 @@ export default function Asset() {
   const [groups, setGroups] = useState<string[]>(["EMA", "VWAP"]);
   const [showLevels, setShowLevels] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
+  const [pro, setPro] = useState(() => { try { return localStorage.getItem("chart_pro") === "1"; } catch { return false; } });
+  useEffect(() => { try { localStorage.setItem("chart_pro", pro ? "1" : "0"); } catch { /* ignore */ } }, [pro]);
   const tk = useTicker(symbol);
   const an = useApi<any>(`/analysis/${s}?timeframe=${tf}`, 60000);
   const oh = useApi<any>(`/market/${s}/ohlcv?timeframe=${tf}&limit=500`, 60000);
@@ -98,13 +101,17 @@ export default function Asset() {
       {/* ---- chart ---- */}
       <Card title={`${symbol} · ${tf.toUpperCase()} · ${oh.data?.exchange ?? ""}`} right={
         <div className="flex flex-wrap items-center gap-1">
-          {Object.keys(OVERLAY_GROUPS).map((g) => (
+          <span className="mr-1 inline-flex rounded-lg border border-glass/10 p-0.5">
+            <button className={`rounded-md px-2 py-0.5 text-xs ${!pro ? "bg-accent text-ink font-semibold" : "text-mute"}`} aria-pressed={!pro} onClick={() => setPro(false)}>AI chart</button>
+            <button className={`rounded-md px-2 py-0.5 text-xs ${pro ? "bg-accent text-ink font-semibold" : "text-mute"}`} aria-pressed={pro} onClick={() => setPro(true)}>Pro chart</button>
+          </span>
+          {!pro && Object.keys(OVERLAY_GROUPS).map((g) => (
             <button key={g} className={`btn px-2 py-0.5 text-xs ${groups.includes(g) ? "btn-on" : ""}`} aria-pressed={groups.includes(g)} onClick={() => toggle(g)}>{g}</button>
           ))}
-          <button className={`btn px-2 py-0.5 text-xs ${showLevels ? "btn-on" : ""}`} aria-pressed={showLevels} onClick={() => setShowLevels(!showLevels)}>Structure</button>
-          <button className={`btn px-2 py-0.5 text-xs ${showPlan ? "btn-on" : ""}`} aria-pressed={showPlan} onClick={() => setShowPlan(!showPlan)}>Trade plan</button>
+          {!pro && <button className={`btn px-2 py-0.5 text-xs ${showLevels ? "btn-on" : ""}`} aria-pressed={showLevels} onClick={() => setShowLevels(!showLevels)}>Structure</button>}
+          {!pro && <button className={`btn px-2 py-0.5 text-xs ${showPlan ? "btn-on" : ""}`} aria-pressed={showPlan} onClick={() => setShowPlan(!showPlan)}>Trade plan</button>}
         </div>}>
-        {oh.error ? <ErrorBox error={oh.error} retry={oh.reload} /> : !oh.data ? <Loading what="Loading candles" /> : (
+        {pro ? <TVChart symbol={symbol} tf={tf} /> : oh.error ? <ErrorBox error={oh.error} retry={oh.reload} /> : !oh.data ? <Loading what="Loading candles" /> : (
           <>
             <CandleChart candles={oh.data.candles} overlays={oh.data.overlays} show={show} lines={lines} markers={markers} livePrice={tk?.last} />
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-mute">
@@ -230,7 +237,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
     setBusy(true);
     try {
       await post("/models/train", { symbol, timeframe: tf });
-      setMsg("Training queued. It runs in the next engine cycle (within about 15 minutes); this panel updates by itself.");
+      setMsg("Training queued. It runs in the next engine cycle (within about 10 minutes); this panel updates by itself.");
     } catch (e: any) {
       setMsg(e.message);
     } finally {

@@ -1,8 +1,8 @@
-name: Engine (every 15 minutes)
+name: Engine (every 5 minutes)
 
 on:
   schedule:
-    - cron: "*/15 * * * *"
+    - cron: "*/5 * * * *"     # a run starts as soon as the previous one ends (about every 5-8 minutes)
   workflow_dispatch:
 
 concurrency:
@@ -57,7 +57,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed; starting fresh"
       - name: Run one engine cycle
-        run: python -m app.worker tick --budget 840
+        run: python -m app.worker tick --budget 300
       - name: Save engine state
         if: always()
         uses: actions/cache/save@v4

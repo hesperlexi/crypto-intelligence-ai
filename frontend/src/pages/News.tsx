@@ -91,7 +91,7 @@ export default function News() {
 
         <section className="panel self-start p-0">
           <div className="card-head border-b border-glass/[0.06] px-4 py-2.5"><h2 className="label">Crypto headlines</h2></div>
-          {!heads.length && <p className="px-4 py-6 text-sm text-mute">Headlines arrive with the next engine run (about every 15 minutes).</p>}
+          {!heads.length && <p className="px-4 py-6 text-sm text-mute">Headlines arrive with the next engine run (about every 5–10 minutes).</p>}
           <ul className="divide-y divide-glass/[0.06]">
             {heads.slice(0, 25).map((h) => (
               <li key={h.url}>

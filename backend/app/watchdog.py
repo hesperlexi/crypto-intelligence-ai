@@ -27,7 +27,7 @@ def check(sink, stale_minutes: float, now_ms: int | None = None) -> dict:
     if down and (not was_down or now_ms - int(state.get("notified_at") or 0) > 12 * 3_600_000):
         hrs = "never" if last == 0 else (f"{age_min / 60:.1f} hours" if age_min >= 90 else f"{age_min:.0f} minutes")
         msg = {"title": "Engine stopped", "url": "/health", "tag": "engine-watchdog",
-               "body": f"No new signals for {hrs}. Open GitHub > Actions > 'Engine (every 15 minutes)' to see why, "
+               "body": f"No new signals for {hrs}. Open GitHub > Actions > 'Engine (every 5 minutes)' to see why, "
                        f"or run it once by hand. Signals and bots are paused until it runs again."}
     elif not down and was_down:
         msg = {"title": "Engine running again", "url": "/", "tag": "engine-watchdog",

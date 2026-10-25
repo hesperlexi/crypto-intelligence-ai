@@ -60,7 +60,7 @@ You need a Google account (the one that owns the Firebase project) and a free Gi
    * *Variables* tab → New repository variable → name `ADMIN_EMAILS`, value = the Google e-mail(s) allowed to
      use the site, comma-separated. Optional: `SYMBOLS` to change the starting coin list.
 8. Actions tab → enable workflows if asked → run **Test and deploy website** (or push any change), then run
-   **Engine (every 15 minutes)** once by hand with *Run workflow*.
+   **Engine (every 5 minutes)** once by hand with *Run workflow*.
 
 Open **https://crypapp-6a9b9.web.app** and sign in with Google.
 

@@ -55,7 +55,7 @@ export default function Signals() {
 
       {v.error && <ErrorBox error={v.error} retry={v.reload} />}
       {!v.data && v.loading && <Loading what="Loading signals" />}
-      {v.data === null && !v.loading && <Empty>Signals appear after the next engine run (within about 15 minutes).</Empty>}
+      {v.data === null && !v.loading && <Empty>Signals appear after the next engine run (within about 10 minutes).</Empty>}
 
       {rows.length > 0 && (
         <>

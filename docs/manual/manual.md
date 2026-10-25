@@ -51,7 +51,7 @@ Do these once and the app works for you in the background.
 
 - ☐ **Install the app** on your phone (section 1).
 - ☐ **Add your own coins:** the **My coins** card on the Dashboard shows the shared coins plus your own. Tap **+ Add coin**, search any coin listed on Binance (e.g. PEPE, SOL, TON) and add up to **5 coins of your own**. Each gets a live price straight away, and signals, AI forecasts, alerts and practice trading within about 15–30 minutes. Remove one with ✕ in edit mode. The button shows how many you can still add.
-- ☐ **Turn on notifications:** **Settings → Notifications → Turn on notifications**, then press **Send a test notification**. The test comes on the engine's next run (within about 15 minutes).
+- ☐ **Turn on notifications:** **Settings → Notifications → Turn on notifications**, then press **Send a test notification**. The test comes on the engine's next run (within about 10 minutes).
 - ☐ **Choose a look:** **Settings → Appearance**. Gold is the default; there are other themes and layouts, and a compact density for small screens.
 - ☐ **Set up your practice account:** open **Trade → Assets**, type a **Starting balance** close to what you would really trade (e.g. 1,000 USDT) and press **Reset account**.
 - ☐ **Create one alert** for your favourite coin (section 7), so the app tells you when a setup appears.
@@ -73,7 +73,7 @@ Buttons: **Practise this trade** opens it in the trading screen with stop and ta
 
 ### Reading the full coin page
 
-Tap any coin to open its page. Below the trade call, read it top to bottom in this order:
+Tap any coin to open its page. The chart has two modes: **AI chart** (the app's levels, trade plan and structure drawn in) and **Pro chart** (TradingView, with its full drawing tools and indicators). Below the trade call, read it top to bottom in this order:
 
 1. **Decision: BUY, BUY ON PULLBACK, SELL or HOLD.** BUY ON PULLBACK means the direction is up but the price is stretched, so wait for the entry in the trade plan instead of chasing. HOLD means no edge worth trading. Most of the time HOLD is the right answer, and doing nothing is fine.
 2. **Confidence / probability up.** The chance the models give that the price is higher at the end of the horizon. 50% is a coin flip. Around 55–60% is a real lean for crypto; anything that claims 80%+ should make you more careful, not less.
@@ -127,7 +127,7 @@ Alerts let the app watch the market for you. Open **Alerts → New alert**:
 6. **Cooldown:** minutes before the same alert can fire again (e.g. 240 for 4H).
 7. Press **Create alert**.
 
-When it fires, you get a notification with the side, entry, stop loss, take profit and confidence, and it is listed under **Fired alerts**. The engine checks every 15 minutes, so allow a few minutes of delay and check the price before entering.
+When it fires, you get a notification with the side, entry, stop loss, take profit and confidence, and it is listed under **Fired alerts**. The engine checks about every 5–10 minutes, so allow a few minutes of delay and check the price before entering.
 
 **Notifications on your phone:** **Settings → Notifications → Turn on notifications**, allow them when asked, then **Send a test notification**. On iPhone, open the app from the Home Screen icon first.
 
@@ -183,6 +183,8 @@ The **Bots** page runs automatic demo traders with virtual money around the cloc
 
 ## 11. When to trust the models: the Accuracy page
 
+**Track record** (menu) lists every trade signal since launch with its real result (target hit, stopped or expired), the win rate and the running total, plus how each coin's AI scored on past data it never saw. Nothing is removed. The page is also public on the start page, so you can show it to friends before they join.
+
 The **Accuracy** page is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
 
 1. **The verdict** for the coin and timeframe: does the model beat a naive guess, and is the p-value below 0.05 (edge unlikely to be luck)?
@@ -222,12 +224,12 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 | My proof was rejected | Read the reason on the membership screen, fix it (exact amount, right screenshot, order ID) and send again. |
 | The app says my membership has ended | Renew on the same screen; your data is kept. |
 | Header shows **RECONNECTING** instead of **LIVE** | It reconnects on its own within seconds. If it stays, check your internet, then reload. |
-| "Insufficient data" or no forecast | New coins need the next engine run (about 15 minutes) and enough history. |
+| "Insufficient data" or no forecast | New coins need the next engine run (about 10 minutes) and enough history. |
 | The app looks old after an update | Close and reopen the app, or **Settings → About → Check for updates**. The version is shown at the bottom. |
 | The home-screen icon did not change | Phones cache icons; remove and re-add the app, or reinstall the newest APK. |
 | APK says "App not installed" | Uninstall the older copy first, then install the new APK. |
 | No notifications when the app is closed | Allow notifications for the app in phone settings and make sure battery saver is not blocking it. On iPhone, open the app from the Home Screen icon. |
-| Alerts arrive late | The engine runs every 15 minutes; this is expected. |
+| Alerts arrive late | The engine runs about every 5–10 minutes; a short delay is expected. |
 | Futures order refused: "opposite position" | Switch to **Hedge** mode, or close the other side first. |
 | Anything else | Use **Contact support** in Settings, the More menu or the footer, and describe what you see. |
 
