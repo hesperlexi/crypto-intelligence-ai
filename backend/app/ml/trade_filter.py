@@ -2,7 +2,7 @@
 
 The direction models answer "is the next candle up or down?". A trade is decided over many candles: does the price
 reach the targets before the stop? For every out-of-sample bar where the ensemble leaned one way, the trade the app
-would take is replayed under the bots' own rules (stop ~1.5 ATR, targets at 1.5R / 2.5R / 4R, a third at each,
+would take is replayed under the bots' own rules (stop ~1.5 ATR, targets at 0.5R / 0.75R / 1R - a 1:1 final target - a third at each,
 break-even after target 1, trailing to target 1 after target 2, time exit after `HORIZON` bars, costs included) and
 labelled by its result in R. A gradient-boosting classifier learns which setups tend to pay.
 
@@ -21,7 +21,7 @@ import numpy as np
 log = logging.getLogger(__name__)
 HORIZON = 30
 STOP_ATR = 1.5
-R_MULTIPLES = (1.5, 2.5, 4.0)
+R_MULTIPLES = (0.5, 0.75, 1.0)     # same as engine/setup.py (1:1 final target)
 MIN_MARGIN = 0.02
 KEEP_GRID = (0.3, 0.4, 0.5, 0.6, 0.7, 0.8)
 MIN_GAIN_R = 0.03

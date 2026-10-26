@@ -5,7 +5,7 @@ import { Badge, Card, Empty, ErrorBox, Note, Row, Stat } from "../components/ui"
 import { post, useApi } from "../lib/api";
 import { DASH, fmtDate, fmtNum, fmtPct, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from "../lib/format";
 
-const TFS = ["15m", "1h", "4h", "12h", "1d"];
+const TFS = ["15m", "1h", "4h"];
 
 export default function Backtest() {
   const meta = useMeta();

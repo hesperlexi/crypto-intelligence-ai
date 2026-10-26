@@ -66,6 +66,7 @@ def test_active_members_coins_are_tracked_and_lapsed_ones_dropped(tmp_path):
 
     rt = Runtime(Database("sqlite:///:memory:"), _P())
     rt.db.set_setting("watchlist_majors_v2", True)      # the one-time major-coin expansion is tested separately
+    rt.db.set_setting("gold_paxg_v21", True)            # and so is the one-time gold addition
     sink = LocalSink(tmp_path)
     now = worker.now_ms()
     sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})
@@ -151,3 +152,26 @@ def test_renamed_coin_moves_to_its_new_pair(tmp_path):
     assert "GRAM/USDT" in rt.symbols() and "TON/USDT" not in rt.symbols()
     assert {"symbol": "GRAM/USDT", "pinned": True} in sink.get("config/watchlist")["symbols"]
     assert "renamed" not in worker.sync_config(rt, sink)          # done once
+
+
+def test_gold_is_added_once_and_can_be_removed(tmp_path):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return [f"{q}/USDT"]
+
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.db.set_setting("watchlist_majors_v2", True)
+    sink = LocalSink(tmp_path)
+    sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})
+    assert worker.sync_config(rt, sink)["gold_added"] == "PAXG/USDT" and "PAXG/USDT" in rt.symbols()
+    doc = sink.get("config/watchlist")
+    sink.set("config/watchlist", {**doc, "symbols": [x for x in doc["symbols"] if x["symbol"] != "PAXG/USDT"]})
+    worker.sync_config(rt, sink)
+    assert "PAXG/USDT" not in rt.symbols()                    # removed by the admin: stays removed

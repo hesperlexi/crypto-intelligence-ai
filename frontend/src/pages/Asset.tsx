@@ -6,7 +6,7 @@ import { useMarketStream } from "../lib/stream";
 import CandleChart, { Marker, OVERLAY_COLORS, PriceLine } from "../components/CandleChart";
 import { MODEL_TFS, TfTabs } from "../components/Pickers";
 
-const ASSET_TFS = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"] as const;
+const ASSET_TFS = ["15m", "1h", "4h", "1d"] as const;
 import { Badge, Card, Check, Empty, ErrorBox, FlagList, Loading, Meter, Note, ProbBar, RegimeBadge, Row, ScoreBar, SignalBadge, signalTone, Stat } from "../components/ui";
 import TradeCall, { Market } from "../components/TradeCall";
 import { post, useApi } from "../lib/api";
@@ -71,7 +71,7 @@ export default function Asset() {
               <h1 className="text-2xl font-semibold tracking-tight">{symbol}</h1>
               {ok && <RegimeBadge regime={a.regime.regime} />}
               {ok && <SignalBadge signal={a.signal.signal} />}
-              <Link className="btn px-2.5 py-1 text-xs" to={`/alerts?symbol=${encodeURIComponent(symbol)}&timeframe=${["1h", "4h", "12h", "1d"].includes(tf) ? tf : "4h"}`}
+              <Link className="btn px-2.5 py-1 text-xs" to={`/alerts?symbol=${encodeURIComponent(symbol)}&timeframe=${["15m", "1h", "4h"].includes(tf) ? tf : "4h"}`}
                 title="Get an alert with entry, stop-loss and take-profits when a trade signal appears">🔔 Alert me</Link>
             </div>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
@@ -200,7 +200,7 @@ export default function Asset() {
 
 function ForecastCard({ fc, tf, price }: { fc: any; tf: string; price: number }) {
   if (!fc?.available) {
-    return <Card title="AI forecast"><Empty><Badge tone="warn">{fc?.status ?? "NO FORECAST"}</Badge><div className="mt-2">{fc?.reason}</div>{!MODEL_TFS.includes(tf as any) && <div className="mt-1">Pick 1h, 4h, 12h, 1d, 3d or 1w for a model forecast.</div>}</Empty></Card>;
+    return <Card title="AI forecast"><Empty><Badge tone="warn">{fc?.status ?? "NO FORECAST"}</Badge><div className="mt-2">{fc?.reason}</div>{!MODEL_TFS.includes(tf as any) && <div className="mt-1">Pick 15m, 1h or 4h for a model forecast.</div>}</Empty></Card>;
   }
   const d = fc.distribution;
   const p = fc.probabilities;
@@ -325,8 +325,8 @@ function SetupCard({ setup, decision }: { setup: any; decision: string }) {
             <div>
               <Row k={`Stop (${setup.stop_basis})`} v={fmtPrice(setup.stop)} className="text-bear" />
               <Row k="Risk to stop" v={fmtPctRaw(setup.risk_pct, 2, false)} />
-              <Row k="Risk / reward (TP2)" v={`1 : ${fmtNum(setup.risk_reward, 1)}`} />
-              <Row k="Expectancy at TP2" v={isNum(setup.expectancy_r) ? `${setup.expectancy_r > 0 ? "+" : ""}${setup.expectancy_r.toFixed(2)} R` : DASH} className={tone(setup.expectancy_r)} />
+              <Row k="Risk / reward (final target)" v={`1 : ${fmtNum(setup.risk_reward, 1)}`} />
+              <Row k="Expectancy at the final target" v={isNum(setup.expectancy_r) ? `${setup.expectancy_r > 0 ? "+" : ""}${setup.expectancy_r.toFixed(2)} R` : DASH} className={tone(setup.expectancy_r)} />
             </div>
           </div>
           <div className="mt-3 overflow-x-auto"><table className="grid-table">
@@ -455,7 +455,7 @@ function LiquidityCard({ symbol, a }: { symbol: string; a: any }) {
 
 /** The clear trade call for this coin, spot or futures, from the engine's futures view. */
 function AssetCall({ symbol, tf }: { symbol: string; tf: string }) {
-  const t = ["1h", "4h", "12h", "1d"].includes(tf) ? tf : "4h";
+  const t = ["15m", "1h", "4h"].includes(tf) ? tf : "4h";
   const v = useApi<any>(`/futures?timeframe=${t}`);
   const [market, setMarket] = useState<Market>("futures");
   const row = (v.data?.rows ?? []).find((r: any) => r.symbol === symbol);

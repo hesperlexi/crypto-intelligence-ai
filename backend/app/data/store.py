@@ -74,6 +74,8 @@ class CandleStore:
         else:
             since = last  # re-fetch the last candle: it may have been forming when stored
         written = 0
+        if last is not None and have >= min(bars, 200) and have < 0.9 * bars:
+            written += await self._deepen(provider, symbol, timeframe, bars, step, now, page)
         # exchanges cap a page at very different sizes (100-1000), so paging continues until the present
         # is reached or no progress is made, not until a short page comes back
         for _ in range(bars // 100 + 5):
@@ -85,6 +87,46 @@ class CandleStore:
             if newest + step > now or newest < since or (newest == since and len(rows) == 1):
                 break
             since = newest + step
+        return written
+
+    BACKFILL_PAGES_PER_RUN = 120         # older-history pages fetched per process run (keeps one engine cycle short)
+    _pages_used = 0
+
+    async def _deepen(self, provider: MarketDataProvider, symbol: str, timeframe: str, bars: int, step: int,
+                      now: int, page: int) -> int:
+        """Fetch history older than what is stored when HISTORY_BARS was raised (e.g. 15m for the quick-trade
+        models). Spread over several runs; marked done once the exchange has nothing older."""
+        key = f"deep:{provider.name}:{symbol}:{timeframe}:{bars}"
+        if self.db.get_setting(key, False):
+            return 0
+        row = self.db.one("SELECT MIN(ts) AS ts FROM market_data WHERE exchange = ? AND symbol = ? AND timeframe = ?",
+                          (provider.name, symbol, timeframe))
+        oldest = int(row["ts"]) if row and row["ts"] is not None else now
+        since = now - bars * step
+        if oldest <= since + 10 * step:
+            self.db.set_setting(key, True)
+            return 0
+        written, first = 0, True
+        while since < oldest and CandleStore._pages_used < self.BACKFILL_PAGES_PER_RUN:
+            rows = await provider.fetch_ohlcv(symbol, timeframe, since=since, limit=page)
+            CandleStore._pages_used += 1
+            if not rows:
+                self.db.set_setting(key, True)
+                break
+            if first and int(rows[0][0]) > since + 50 * step and int(rows[0][0]) >= oldest - step:
+                self.db.set_setting(key, True)        # nothing older on the exchange (coin listed later)
+                break
+            first = False
+            written += self.upsert(provider.name, symbol, timeframe, [r for r in rows if int(r[0]) < oldest])
+            newest = int(rows[-1][0])
+            if newest <= since:
+                break
+            since = newest + step
+        else:
+            if since >= oldest:
+                self.db.set_setting(key, True)
+        if written:
+            log.info("deepened %s %s by %d candles", symbol, timeframe, written)
         return written
 
     def is_current(self, exchange: str, symbol: str, timeframe: str, now_ms: int | None = None) -> bool:

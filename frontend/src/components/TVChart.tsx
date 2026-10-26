@@ -8,7 +8,8 @@ const INTERVAL: Record<string, string> = { "1m": "1", "5m": "5", "15m": "15", "3
 
 export default function TVChart({ symbol, market = "spot", tf = "1h", height = 520 }: { symbol: string; market?: "spot" | "futures"; tf?: string; height?: number }) {
   const { resolved } = useAppearance();
-  const tvSymbol = `BINANCE:${symbol.replace("/", "").toUpperCase()}${market === "futures" ? ".P" : ""}`;
+  // gold (PAXG in the app) shows forex.com's spot gold price, XAU/USD
+  const tvSymbol = symbol.startsWith("PAXG/") ? "FOREXCOM:XAUUSD" : `BINANCE:${symbol.replace("/", "").toUpperCase()}${market === "futures" ? ".P" : ""}`;
   const src = useMemo(() => {
     const dark = resolved !== "light";
     const q = new URLSearchParams({

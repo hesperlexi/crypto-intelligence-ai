@@ -19,6 +19,12 @@ export function CoinAvatar({ symbol, size = 34 }: { symbol: string; size?: numbe
   const b = base(symbol);
   const [failed, setFailed] = useState(false);
   const h = hue(b);
+  if (b === "GOLD") {
+    return (
+      <span aria-hidden="true" className="flex shrink-0 items-center justify-center rounded-full font-bold ring-1 ring-[#f0b90b]/40"
+        style={{ width: size, height: size, fontSize: size * 0.38, color: "#3b2a00", background: "radial-gradient(circle at 35% 30%, #fff1b8, #f0b90b 55%, #b8860b)" }}>Au</span>
+    );
+  }
   if (!failed) {
     return <img src={`${ICONS}/${b.toLowerCase()}.svg`} alt="" width={size} height={size} loading="lazy" onError={() => setFailed(true)}
       className="shrink-0 rounded-full bg-glass/[0.04] ring-1 ring-glass/10" style={{ width: size, height: size }} />;

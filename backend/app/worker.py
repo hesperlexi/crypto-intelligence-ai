@@ -75,6 +75,7 @@ MAJOR_COINS = ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "SOL/USDT", "DOGE
 # coins the exchange renamed: the old pair stops trading, the new one continues the same asset
 # (Binance: Toncoin TON -> Gram GRAM, trading as GRAM/USDT from 2026-07-02)
 RENAMED = {"TON/USDT": "GRAM/USDT"}
+GOLD = "PAXG/USDT"           # gold (tracks XAU/USD); added to the watchlist once in v2.1
 MEMBER_COIN_LIMIT = 5        # default: coins one member can add for themselves (admin can change: config/limits)
 MEMBER_COINS_MAX = 25        # default: all members together, on top of the admin's list (keeps the engine within its time)
 
@@ -136,6 +137,20 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/watchlist", doc)
                 notes["majors_added"] = add
             rt.db.set_setting("watchlist_majors_v2", True)
+        if not rt.db.get_setting("gold_paxg_v21", False):
+            # v2.1: gold signals. Forex.com has no free data feed; PAXG (one token = one troy ounce of gold, Binance
+            # spot) tracks XAU/USD closely, so the models train on it and the website labels it as gold.
+            have = {norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]}
+            if GOLD not in have:
+                try:
+                    listed = GOLD in asyncio.run(rt.provider.search_markets("PAXG", 50))
+                except Exception:
+                    listed = False
+                if listed:
+                    doc = {**doc, "symbols": list(doc["symbols"]) + [{"symbol": GOLD, "pinned": True}], "updated_at": now_ms()}
+                    sink.set("config/watchlist", doc)
+                    notes["gold_added"] = GOLD
+            rt.db.set_setting("gold_paxg_v21", True)
         # renamed coins: rewrite the watchlist once so the website shows the new name too
         names = [norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]]
         if any(n in RENAMED for n in names):
@@ -510,7 +525,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
 
 def _auto_paper(rt: Runtime, sink: BaseSink, analyses: dict[tuple[str, str], dict]) -> dict[str, Any]:
     """New futures signals into the paper accounts of members who switched auto-trading on."""
-    rows = {tf: views.futures(rt, tf, analyses)["rows"] for tf in ("1h", "4h", "12h", "1d") if any(k[1] == tf for k in analyses)}
+    rows = {tf: views.futures(rt, tf, analyses)["rows"] for tf in views.FUTURES_TIMEFRAMES if any(k[1] == tf for k in analyses)}
     r = autopaper.run(sink, rows)
     msgs = r.pop("push")
     if msgs:

@@ -109,8 +109,8 @@ def test_setup_is_refused_when_reward_does_not_justify_risk():
     last = fr.ind.iloc[-1]
     price, atr = float(last["close"]), float(last["atr"])
     wall = {"support": [], "resistance": [{"low": price + 0.2 * atr, "high": price + 0.4 * atr, "mid": price + 0.3 * atr}]}
-    s = build_setup(fr.ind, wall, 1, min_rr=1.5)
-    assert s["valid"] is False and "Resistance" in s["reason"]
+    s = build_setup(fr.ind, wall, 1, min_rr=1.0)
+    assert s["valid"] is False and ("Resistance" in s["reason"] or "expectancy" in s["reason"])
     assert build_setup(fr.ind, {"support": [], "resistance": []}, 1, min_rr=50)["valid"] is False
 
 

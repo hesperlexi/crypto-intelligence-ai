@@ -12,10 +12,12 @@ import pandas as pd
 
 from ..ml.distribution import first_passage_base_rate
 
-R_MULTIPLES = (1.5, 2.5, 4.0)
+# v2.1: quick trades with a 1:1 risk/reward - the final target sits exactly one stop-distance away;
+# a third of the position is taken at 0.5R and 0.75R on the way (then the stop moves to break-even).
+R_MULTIPLES = (0.5, 0.75, 1.0)
 
 
-def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_rr: float = 1.5,
+def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_rr: float = 1.0,
                 horizon: int = 30, live_price: float | None = None) -> dict[str, Any]:
     """side = +1 (long) or -1 (short). Returns {'valid': False, 'reason': ...} when reward does not justify risk."""
     last = ind.iloc[-1]
@@ -53,22 +55,8 @@ def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_
     stop = ideal - side * dist
     stop_basis = "structure" if struct and 1.0 * atr <= side * (ideal - raw_stop) <= 3.0 * atr else "ATR bound"
 
-    # --- targets: structure levels ahead, filled with R-multiples -----------------------------------------
-    levels = sorted({(z["low"] if side > 0 else z["high"]) for z in ahead}, reverse=side < 0)
-    levels = [lv for lv in levels if side * (lv - ideal) >= 1.0 * dist]
-    targets: list[tuple[float, str]] = []
-    for i, mult in enumerate(R_MULTIPLES):
-        floor = ideal + side * mult * dist
-        prev = targets[-1][0] if targets else ideal
-        if targets and side * (floor - prev) < 0.75 * dist:      # keep targets strictly ordered and spaced
-            floor = prev + side * 0.75 * dist
-        pick = next((lv for lv in levels if side * (lv - prev) > 0.5 * dist
-                     and -0.5 * dist <= side * (lv - floor) <= 1.5 * dist), None)
-        if pick is not None:
-            targets.append((float(pick), "structure level"))
-            levels = [lv for lv in levels if side * (lv - pick) > 0]
-        else:
-            targets.append((float(floor), f"{side * (floor - ideal) / dist:.1f}R"))
+    # --- targets: fixed R-multiples (1:1 final target) ------------------------------------------------------
+    targets: list[tuple[float, str]] = [(float(ideal + side * m * dist), f"{m:g}R") for m in R_MULTIPLES]
     tps = [t[0] for t in targets]
     rr = [side * (tp - ideal) / dist for tp in tps]
 
@@ -93,7 +81,7 @@ def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_
             blocker = {"level": float(first), "distance_pct": float(gap / price * 100),
                        "note": f"{'Resistance' if side > 0 else 'Support'} {abs(gap / price * 100):.1f}% away, "
                                f"closer than 1R"}
-    main_rr = float(rr[1])
+    main_rr = float(rr[-1])
     out = {
         "side": "LONG" if side > 0 else "SHORT", "side_int": side, "price": price, "atr": atr,
         "entry_zone": [float(min(conservative, aggressive)), float(max(conservative, aggressive))],
@@ -104,17 +92,17 @@ def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_
                      "move_pct": float(side * (tps[i] / ideal - 1) * 100),
                      "probability": probs[i]["probability"], "probability_n": probs[i]["n"],
                      "probability_basis": probs[i].get("basis"), "ci95": probs[i].get("ci95")} for i in range(3)],
-        "risk_reward": main_rr, "risk_reward_basis": "TP2 vs stop, from the ideal entry",
+        "risk_reward": main_rr, "risk_reward_basis": "final target (TP3) vs stop, from the ideal entry",
         "horizon_bars": horizon, "blocker": blocker,
         "extended": bool(abs(price - ideal) >= 0.4 * atr),
     }
     # expected value per unit risk using the base rates (target before stop within the horizon)
-    p2 = probs[1]["probability"]
-    out["expectancy_r"] = float(p2 * rr[1] - probs[1]["stopped_first"]) if p2 is not None else None
+    p3 = probs[-1]["probability"]
+    out["expectancy_r"] = float(p3 * rr[-1] - probs[-1]["stopped_first"]) if p3 is not None else None
     if out["expectancy_r"] is not None and out["expectancy_r"] < -0.15:
         return {**out, "valid": False,
-                "reason": f"historical base rate implies negative expectancy ({out['expectancy_r']:+.2f}R at TP2)"}
-    if main_rr < min_rr:
+                "reason": f"historical base rate implies negative expectancy ({out['expectancy_r']:+.2f}R at the 1:1 target)"}
+    if main_rr < min_rr - 1e-6:          # tolerance: a 1:1 target computes as 0.9999999
         return {**out, "valid": False, "reason": f"risk/reward 1:{main_rr:.1f} is below the minimum 1:{min_rr:g}"}
     if blocker is not None:
         return {**out, "valid": False, "reason": blocker["note"] + ": reward does not justify the risk"}

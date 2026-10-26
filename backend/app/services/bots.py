@@ -130,7 +130,7 @@ def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
         out[k] = v
     if out["mode"] not in ("decision", "prediction"):
         out["mode"] = "decision"
-    if out["timeframe"] not in ("1h", "4h", "12h", "1d"):
+    if out["timeframe"] not in ("15m", "1h", "4h"):
         out["timeframe"] = "4h"
     out["starting_balance"] = max(100.0, out["starting_balance"])
     out["risk_per_trade_pct"] = float(np.clip(out.get("risk_per_trade_pct", 1.0), 0.05, 10))

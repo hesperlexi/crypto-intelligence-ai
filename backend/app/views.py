@@ -17,7 +17,7 @@ from .ml.models import REGISTRY, model_status
 from .services import alerts, backtests, replay, tracking
 from .services.runtime import Runtime
 
-ASSET_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"]
+ASSET_TIMEFRAMES = ["15m", "1h", "4h", "1d"]
 
 
 def slug(symbol: str) -> str:
@@ -146,7 +146,7 @@ def backtest_history(rt: Runtime) -> list[dict[str, Any]]:
 
 
 def replay_ranges(rt: Runtime) -> dict[str, Any]:
-    return {f"{slug(s)}_{tf}": replay.replay_range(rt, s, tf) for s in rt.symbols() for tf in ("1h", "4h", "12h", "1d")}
+    return {f"{slug(s)}_{tf}": replay.replay_range(rt, s, tf) for s in rt.symbols() for tf in FUTURES_TIMEFRAMES}
 
 
 def settings_view(rt: Runtime) -> dict[str, Any]:
@@ -154,7 +154,7 @@ def settings_view(rt: Runtime) -> dict[str, Any]:
 
 
 # ---- futures -----------------------------------------------------------------------------------------------
-FUTURES_TIMEFRAMES = ("1h", "4h", "12h", "1d")
+FUTURES_TIMEFRAMES = ("15m", "1h", "4h")
 
 
 def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) -> dict[str, Any]:

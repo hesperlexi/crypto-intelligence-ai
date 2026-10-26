@@ -53,7 +53,8 @@ def send(cfg: dict[str, Any], text: str, session: Any = None) -> dict[str, Any]:
 
 
 def _coin(sym: str) -> str:
-    return html.escape(sym.split("/")[0])
+    b = sym.split("/")[0]
+    return "GOLD" if b == "PAXG" else html.escape(b)      # PAXG tracks XAU/USD: shown as gold
 
 
 def _px(v: float | None) -> str:
@@ -94,7 +95,7 @@ def teaser_text(s: dict[str, Any]) -> str:
     mins = max(60, round((now_ms() - s["created_at"]) / 60_000))
     return "\n".join([
         f"⚡ <b>Free signal</b> · members got this {mins // 60} h {mins % 60:02d} min ago",
-        "", f"<b>{_coin(s['symbol'])}/USDT {side}</b> · {s['timeframe'].upper()} · grade A",
+        "", f"<b>{_coin(s['symbol'])}{'' if s['symbol'].startswith('PAXG/') else '/USDT'} {side}</b> · {s['timeframe'].upper()} · grade A",
         f"Entry: {_px(s['entry'])}", f"Stop-loss: {_px(s['stop'])}",
         f"Targets: {_px(s['tp1'])} · {_px(s['tp2'])} · {_px(s['tp3'])}",
         "", f"Members get every signal the moment it appears, with phone alerts 👉 {SITE}",

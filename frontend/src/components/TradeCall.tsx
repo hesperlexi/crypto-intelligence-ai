@@ -1,7 +1,7 @@
 // One clear answer per coin: go long, go short, buy, sell or wait, at which prices, with what risk.
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { DASH, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug } from "../lib/format";
+import { DASH, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, isGoldSignal } from "../lib/format";
 import { useLive } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 
@@ -98,7 +98,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   const paper = () => {
     const q = new URLSearchParams({ market, symbol: r.symbol, side: market === "spot" ? "LONG" : side,
       ...(market === "futures" && plan?.suggested_leverage ? { lev: String(plan.suggested_leverage) } : {}),
-      ...(plan?.stop ? { sl: String(plan.stop) } : {}), ...(plan?.targets?.[1]?.price ? { tp: String(plan.targets[1].price) } : {}) });
+      ...(plan?.stop ? { sl: String(plan.stop) } : {}), ...((plan?.targets?.[2] ?? plan?.targets?.[1])?.price ? { tp: String((plan.targets[2] ?? plan.targets[1]).price) } : {}) });
     nav(`/paper?${q}`);
   };
   const copy = async () => {
@@ -152,6 +152,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             </p>
           )}
           {v.tone !== "wait" && r.decision_basis && <p className="mt-1 text-xs text-mute">Why: {r.decision_basis}</p>}
+          {isGoldSignal(r.symbol) && <p className="mt-1 rounded-lg border border-accent/30 bg-accent/[0.06] px-2.5 py-1.5 text-xs text-mute"><span className="font-semibold text-accent">Gold (XAU/USD).</span> Levels are in PAXG, which follows the gold price closely. On forex.com, use the same % distances from your entry (shown under each level).</p>}
           {v.tone !== "wait" && isNum(r.filter_score) && <p className="mt-0.5 text-xs text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>}
           {market === "spot" && v.tone === "bear" && <p className="mt-1 text-sm text-mute">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>}
         </div>
@@ -161,10 +162,10 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Box k={market === "futures" ? (side === "LONG" ? "Long entry" : "Short entry") : "Buy at"} v={fmtPrice(plan.entry)} cls="text-accent" sub={plan.entry_zone ? `${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined} />
             <Box k="Stop-loss" v={fmtPrice(plan.stop)} cls="text-bear" sub={pct(plan.stop, plan.entry) != null ? fmtPctRaw(pct(plan.stop, plan.entry)!, 1) : undefined} />
-            <Box k="Take-profit 1" v={fmtPrice(plan.targets?.[0]?.price)} cls="text-bull" sub={pct(plan.targets?.[0]?.price, plan.entry) != null ? fmtPctRaw(pct(plan.targets[0].price, plan.entry)!, 1) : undefined} />
+            <Box k="Target (1:1)" v={fmtPrice(plan.targets?.[2]?.price ?? plan.targets?.[0]?.price)} cls="text-bull" sub={pct((plan.targets?.[2] ?? plan.targets?.[0])?.price, plan.entry) != null ? fmtPctRaw(pct((plan.targets[2] ?? plan.targets[0]).price, plan.entry)!, 1) : undefined} />
             {market === "futures"
               ? <Box k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />
-              : <Box k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="at take-profit 2" />}
+              : <Box k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="at the final target" />}
           </div>
         )}
 

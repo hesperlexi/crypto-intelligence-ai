@@ -7,7 +7,7 @@ import { ago, fmtCompact, fmtPrice } from "../lib/format";
 import TradeCall from "../components/TradeCall";
 import { liqPrice } from "../lib/paperFutures";
 
-const TFS = ["1h", "4h", "12h", "1d"] as const;
+const TFS = ["15m", "1h", "4h"] as const;
 
 export default function Futures() {
   const [tf, setTf] = useState<string>("4h");

@@ -143,6 +143,9 @@ def log_signal(db: Database, a: dict[str, Any]) -> bool:
     sig = a.get("signal") or {}
     if not sig.get("signal") or a.get("bar_ts") is None:
         return False
+    from ..config import MODEL_TIMEFRAMES
+    if a.get("timeframe") not in MODEL_TIMEFRAMES:      # daily charts are context only, never a signal
+        return False
     prev = db.one("SELECT signal, decision FROM signals WHERE symbol = ? AND timeframe = ? ORDER BY bar_ts DESC LIMIT 1",
                   (a["symbol"], a["timeframe"]))
     if prev and prev["signal"] == sig["signal"] and prev["decision"] == a["decision"]:

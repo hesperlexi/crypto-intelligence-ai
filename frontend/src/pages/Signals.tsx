@@ -9,7 +9,7 @@ import { useApi } from "../lib/api";
 import { base, fmtPrice } from "../lib/format";
 import { useLive } from "../lib/live";
 
-const TFS = ["1h", "4h", "12h", "1d"] as const;
+const TFS = ["15m", "1h", "4h"] as const;
 const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;
 const TXT = { bull: "text-bull", bear: "text-bear", wait: "text-mute" } as const;
 

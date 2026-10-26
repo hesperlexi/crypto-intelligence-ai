@@ -26,20 +26,22 @@ TF_SECONDS = {
 }
 # Forecast horizon -> the timeframe whose own model produces it (one bar ahead).
 # A 1h model is never extrapolated into a daily forecast.
-HORIZONS = {"1H": "1h", "4H": "4h", "12H": "12h", "24H": "1d", "3D": "3d", "7D": "1w"}
-MODEL_TIMEFRAMES = ["1h", "4h", "12h", "1d", "3d", "1w"]
+# v2.1: quick trades - signals and models on 15m, 1h and 4h only (daily / weekly stay as chart context)
+HORIZONS = {"15M": "15m", "1H": "1h", "4H": "4h"}
+MODEL_TIMEFRAMES = ["15m", "1h", "4h"]
 MTF_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "1w"]
 MTF_WEIGHTS = {"15m": 0.08, "1h": 0.14, "4h": 0.22, "12h": 0.16, "1d": 0.24, "1w": 0.16}
 
 # How many closed candles to keep per timeframe (history depth for training / charts).
 HISTORY_BARS = {
-    "1m": 1500, "5m": 1500, "15m": 3000, "30m": 2000, "1h": 20000, "4h": 12000,
+    "1m": 1500, "5m": 1500, "15m": 30000, "30m": 2000, "1h": 20000, "4h": 12000,
     "12h": 5000, "1d": 3000, "3d": 1200, "1w": 600,
 }
 
 # Walk-forward window sizes in bars: (train, validation, test).
 # 1h = 12m/1.5m/1.5m, 4h..1d = 24m/3m/3m, 3d ~ 2.5y/4m/4m, 1w = 3y/6m/6m.
 WALK_FORWARD = {
+    "15m": (17280, 2160, 2160),     # 6 months / 22.5 days / 22.5 days
     "1h": (8760, 1080, 1080),
     "4h": (4380, 540, 540),
     "12h": (1460, 180, 180),
@@ -111,7 +113,7 @@ class Settings:
     min_dir_confidence_a: float = field(default_factory=lambda: _f("MIN_DIR_CONFIDENCE_A", 0.53))
     min_dir_confidence_b: float = field(default_factory=lambda: _f("MIN_DIR_CONFIDENCE_B", 0.505))
     min_agreement_b: float = field(default_factory=lambda: _f("MIN_AGREEMENT_B", 0.50))
-    min_risk_reward: float = field(default_factory=lambda: _f("MIN_RISK_REWARD", 1.5))
+    min_risk_reward: float = field(default_factory=lambda: _f("MIN_RISK_REWARD", 1.0))
 
     # costs (defaults for backtests / paper trading)
     fee_rate: float = field(default_factory=lambda: _f("FEE_RATE", 0.001))
