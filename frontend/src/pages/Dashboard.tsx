@@ -94,14 +94,20 @@ export default function Dashboard() {
             {!d?.top_signals?.length && <Empty>No signals yet</Empty>}
           </div>
         </Card>
-        <Card title="Sentiment & context">
+        <Card title="Sentiment & context" right={<span className="text-[11px] text-mute">Fear &amp; Greed index</span>}>
           {sentiment ? (
             <div className="space-y-2">
               <FearGreed value={sentiment.value} label={sentiment.label} change7d={isNum(sentiment.change_7d) ? sentiment.change_7d : null} history={sentiment.history ?? []} />
               {sentiment.divergence && <Badge tone="warn">{sentiment.divergence}</Badge>}
             </div>
           ) : <Empty>{ctx.data?.reason ?? ctx.data?.sentiment_error ?? "Sentiment source unavailable"}</Empty>}
-          {(cross.data?.observations ?? []).map((o: string) => <p key={o} className="mt-2 text-sm text-text">• {o}</p>)}
+          {(cross.data?.observations ?? []).length > 0 && (
+            <ul className="mt-3 space-y-1.5 border-t border-glass/[0.06] pt-3">
+              {(cross.data?.observations ?? []).map((o: string) => (
+                <li key={o} className="flex gap-2 rounded-lg bg-glass/[0.03] px-2.5 py-1.5 text-sm text-text"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />{o}</li>
+              ))}
+            </ul>
+          )}
           <Note>Context only. Sentiment is never allowed to override price data.</Note>
         </Card>
       </div>
