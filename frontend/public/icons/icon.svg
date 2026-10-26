@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <radialGradient id="bg" cx="30%" cy="20%" r="95%">
+      <stop offset="0" stop-color="#1a2029"/><stop offset="0.55" stop-color="#0d1116"/><stop offset="1" stop-color="#06080b"/>
+    </radialGradient>
+    <linearGradient id="gold" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#fff2b0"/><stop offset="0.35" stop-color="#fcd535"/><stop offset="1" stop-color="#d99a00"/>
+    </linearGradient>
+    <linearGradient id="line" x1="0" y1="1" x2="1" y2="0">
+      <stop offset="0" stop-color="#f0b90b"/><stop offset="1" stop-color="#2ef2a8"/>
+    </linearGradient>
+    <filter id="glow" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="10"/></filter>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="url(#bg)"/>
+  <rect x="3" y="3" width="506" height="506" rx="113" fill="none" stroke="#f0b90b" stroke-opacity="0.22" stroke-width="3"/>
+  <!-- the C: an open ring, like a gauge -->
+  <path d="M 356 150 A 150 150 0 1 0 356 362" fill="none" stroke="url(#gold)" stroke-width="46" stroke-linecap="round"/>
+  <!-- rising signal line through the ring -->
+  <g filter="url(#glow)" opacity="0.55"><polyline points="168,318 228,262 268,292 352,198" fill="none" stroke="url(#line)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/></g>
+  <polyline points="168,318 228,262 268,292 352,198" fill="none" stroke="url(#line)" stroke-width="22" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="352" cy="198" r="26" fill="#0d1116" stroke="#2ef2a8" stroke-width="12"/>
+  <circle cx="352" cy="198" r="8" fill="#2ef2a8"/>
+</svg>

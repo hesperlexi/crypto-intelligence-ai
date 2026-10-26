@@ -407,10 +407,10 @@ function FutPositions({ rows, act, hedges }: { rows: any[]; act: (fn: () => Prom
             </div>
             <div className="text-right"><div className={`num font-semibold ${tone(p.upnl)}`}>{p.upnl != null ? `${p.upnl >= 0 ? "+" : ""}${fmtNum(p.upnl)} USDT` : "—"}</div><div className={`num text-xs ${tone(p.upnl)}`}>{fmtPctRaw(p.roe_pct, 1)} ROE</div></div>
           </div>
-          <dl className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1 text-xs sm:grid-cols-4">
+          <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4 xl:grid-cols-8">
             {([["Size", `${fmtNum(p.notional, 0)} USDT`], ["Entry", fmtPrice(p.entry)], ["Mark", fmtPrice(p.mark)], ["Liq. price", fmtPrice(p.liq)], ["Margin", `${fmtNum(p.margin)} USDT`],
               ["TP", p.take ? fmtPrice(p.take) : "—"], ["SL", p.stop ? fmtPrice(p.stop) : "—"], ["Funding", `${fmtNum(-(p.funding ?? 0), 3)} USDT`]] as const).map(([k, v]) => (
-              <div key={k} className="flex justify-between gap-2"><dt className="text-mute">{k}</dt><dd className={`num text-right ${k === "Liq. price" ? "text-warn" : k === "TP" ? "text-bull" : k === "SL" ? "text-bear" : ""}`}>{v}</dd></div>
+              <div key={k} className="min-w-0"><dt className="text-[11px] text-mute">{k}</dt><dd className={`num mt-0.5 truncate text-[13px] font-medium ${k === "Liq. price" ? "text-warn" : k === "TP" ? "text-bull" : k === "SL" ? "text-bear" : ""}`}>{v}</dd></div>
             ))}
           </dl>
           {edit === p.key && (

@@ -2,14 +2,12 @@ import { createContext, ReactNode, useContext, useEffect, useState } from "react
 
 /** Themes and layout preferences. Saved per device (browser storage); everything works without it. */
 export const THEMES = [
-  { id: "gold", name: "Gold (exchange)", swatch: ["#0b0e11", "#f0b90b", "#0ecb81"] },
-  { id: "midnight", name: "Midnight", swatch: ["#060a14", "#4da3ff", "#a855f7"] },
-  { id: "aurora", name: "Aurora", swatch: ["#0c0915", "#a78bfa", "#2dd4bf"] },
-  { id: "ocean", name: "Ocean", swatch: ["#04121a", "#22d3ee", "#3b82f6"] },
-  { id: "graphite", name: "Graphite", swatch: ["#111214", "#e5e7eb", "#9ca3af"] },
-  { id: "oled", name: "OLED black", swatch: ["#000000", "#f0b90b", "#1f2937"] },
-  { id: "light", name: "Light", swatch: ["#f5f6f8", "#c99400", "#ffffff"] },
-  { id: "system", name: "Auto (device)", swatch: ["#0b0e11", "#f5f6f8", "#f0b90b"] },
+  { id: "gold", name: "Gold", sub: "exchange classic", swatch: ["#0b0e11", "#f0b90b", "#0ecb81"] },
+  { id: "abyss", name: "Abyss", sub: "futuristic crypto", swatch: ["#04060f", "#22e4ff", "#8b5cf6"] },
+  { id: "nexora", name: "Nexora", sub: "pro dashboard", swatch: ["#0a0f1c", "#3b82f6", "#22d3ee"] },
+  { id: "trado", name: "Trado", sub: "minimal black & green", swatch: ["#000000", "#00e676", "#141414"] },
+  { id: "light", name: "Light", sub: "bright", swatch: ["#f5f6f8", "#c99400", "#ffffff"] },
+  { id: "system", name: "Auto", sub: "follows the device", swatch: ["#0b0e11", "#f5f6f8", "#f0b90b"] },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]["id"];
 
@@ -24,7 +22,11 @@ const DEFAULTS: Appearance = { theme: "gold", nav: "top", density: "comfortable"
 const KEY = "cia-appearance-v2";     // v2: the new Gold look becomes everyone's starting theme once
 
 function load(): Appearance {
-  try { return { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") }; } catch { return DEFAULTS; }
+  try {
+    const a = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
+    if (!THEMES.some((t) => t.id === a.theme)) a.theme = "gold";      // a retired theme falls back to Gold
+    return a;
+  } catch { return DEFAULTS; }
 }
 
 const darkQuery = () => (typeof window !== "undefined" && window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null);
