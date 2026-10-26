@@ -58,7 +58,7 @@ export default function Alerts() {
     const p = isTrade ? { side, market, min_confidence: minConf ? Number(minConf) / 100 : 0, confident_only: confidentOnly, grade: strongOnly ? "A" : "any" }
       : need ? { [need.key]: Number(param) } : {};
     run(() => post("/alerts", { type, symbol, timeframe: tf, cooldown_s: Math.max(1, Number(cooldown)) * 60, params: p }),
-      `Alert created for ${symbol} ${tf.toUpperCase()}. It fires when the condition next turns true (checked every engine run, about every 5–10 minutes).`);
+      `Alert created for ${symbol} ${tf.toUpperCase()}. It fires when the condition next turns true (checked every engine run, every 5 minutes).`);
   };
   const turnOn = () => run(async () => { const msg = await push.enable(); setPerm(push.permission()); setOk(msg); }, undefined);
 
@@ -110,7 +110,7 @@ export default function Alerts() {
         <button className="btn btn-primary mt-3 w-full sm:w-auto" onClick={create}>Create alert</button>
         {err && <div className="mt-3"><ErrorBox error={err} /></div>}
         {ok && <p className="mt-3 text-sm text-accent">{ok}</p>}
-        <Note>{isTrade ? "A trade-signal alert fires when the engine issues a valid BUY / SELL plan for the coin, and the message contains the entry zone, stop-loss, the three take-profit levels, risk/reward, confidence and — for futures — a suggested leverage with its liquidation price. “Confident calls only” keeps just the calls above the model's out-of-sample confident-call threshold. " : ""}An alert fires once when its condition turns from false to true, then stays quiet until the condition has reset and the cooldown has passed. Conditions are checked at every engine run (about every 5–10 minutes).</Note>
+        <Note>{isTrade ? "A trade-signal alert fires when the engine issues a valid BUY / SELL plan for the coin, and the message contains the entry zone, stop-loss, the three take-profit levels, risk/reward, confidence and — for futures — a suggested leverage with its liquidation price. “Confident calls only” keeps just the calls above the model's out-of-sample confident-call threshold. " : ""}An alert fires once when its condition turns from false to true, then stays quiet until the condition has reset and the cooldown has passed. Conditions are checked at every engine run (every 5 minutes).</Note>
       </Card>
 
       {data.error && <ErrorBox error={data.error} retry={data.reload} />}

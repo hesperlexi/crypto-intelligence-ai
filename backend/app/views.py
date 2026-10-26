@@ -253,8 +253,10 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
             "signals": sigs[:limit]},
             "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))),
             "bots": sorted(bots, key=lambda b: not b["scorecard"]),
-            "method": {"live": "Every trade signal the engine published, followed candle by candle: a third of the position "
-                               "exits at each take-profit, the rest at the stop or after 30 candles. Fees not included.",
+            "method": {"live": "Every trade signal the engine published, followed candle by candle: half the position exits "
+                               "at take-profit 1 (1:1), a quarter at take-profit 2 and a quarter at take-profit 3; after "
+                               "take-profit 1 the stop moves to break-even, after take-profit 2 to take-profit 1. The rest "
+                               "exits at the stop or after 30 candles. Fees not included.",
                        "tested": "Walk-forward test: the models are trained only on data before each test period and then "
                                  "scored on the following period, which they never saw. A simulation, not live results."}}
     out["achievements"] = achievements(rt, out, bot_report)
@@ -321,7 +323,7 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
             "best": trades[:5], "worst": trades[-1] if trades else None,
             "best_coin": max(by_coin.items(), key=lambda kv: kv[1])[0] if by_coin else None,
             "scorecard_bots": bots, "radar_best": radar_best,
-            "basis": "Signals that closed this week; each return assumes equal size, a third closed at each target, before fees."}
+            "basis": "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, before fees."}
 
 
 def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks: int = 12) -> dict[str, Any]:

@@ -26,7 +26,7 @@ export class ApiError extends Error {
 }
 
 type Sub = (cb: (v: any) => void, err: (e: Error) => void) => () => void;
-const NOT_READY = "The engine has not published this yet. It runs about every 5–10 minutes; the first run also trains the models.";
+const NOT_READY = "The engine has not published this yet. It runs every 5 minutes; the first run also trains the models.";
 
 const toSymbol = (s: string) => {
   const u = decodeURIComponent(s).toUpperCase().replace(/[-_]/g, "/");

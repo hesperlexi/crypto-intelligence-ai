@@ -68,8 +68,8 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           {tab === "live" && (
             <div className="overflow-x-auto">
               {!sigs.length ? <p className="p-4 text-sm text-mute">No trade signals yet. Each one appears here the moment it is published, and its result is filled in as the price moves.</p> : (
-                <table className="w-full min-w-[640px] text-sm">
-                  <thead><tr className="text-left text-[11px] uppercase tracking-wide text-mute"><th className="px-3 py-2">Signal</th><th>Grade</th><th>Entry</th><th>Stop</th><th>Target 1</th><th>Result</th><th className="pr-3 text-right">Return</th></tr></thead>
+                <table className="w-full text-sm sm:min-w-[640px]">
+                  <thead><tr className="text-left text-[11px] uppercase tracking-wide text-mute"><th className="px-3 py-2">Signal</th><th>Grade</th><th className="hidden sm:table-cell">Entry</th><th className="hidden sm:table-cell">Stop</th><th className="hidden sm:table-cell">Target 1</th><th>Result</th><th className="pr-3 text-right">Return</th></tr></thead>
                   <tbody className="divide-y divide-glass/[0.06]">
                     {sigs.map((x, i) => {
                       const [lab, cls] = STATUS[x.status] ?? [x.status, ""];
@@ -77,7 +77,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                         <tr key={i}>
                           <td className="px-3 py-2"><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={20} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span></div><div className="text-[11px] text-mute">{fmtTime(x.created_at)}</div></td>
                           <td>{x.grade ? <span className={`rounded px-1.5 text-[11px] font-bold ${x.grade === "A" ? "bg-accent/15 text-accent" : "bg-warn/15 text-warn"}`}>{x.grade}</span> : <span className="text-mute">—</span>}</td>
-                          <td className="num">{fmtPrice(x.entry)}</td><td className="num text-bear">{fmtPrice(x.stop)}</td><td className="num text-bull">{fmtPrice(x.tp1)}</td>
+                          <td className="num hidden sm:table-cell">{fmtPrice(x.entry)}</td><td className="num hidden text-bear sm:table-cell">{fmtPrice(x.stop)}</td><td className="num hidden text-bull sm:table-cell">{fmtPrice(x.tp1)}</td>
                           <td className={`text-xs font-semibold ${cls}`}>{lab}</td>
                           <td className={`num pr-3 text-right font-semibold ${tone(x.return_pct)}`}>{x.status === "OPEN" ? "…" : pct(x.return_pct, 2)}</td>
                         </tr>

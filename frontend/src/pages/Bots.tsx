@@ -24,7 +24,7 @@ export default function Bots() {
   const save = async (list: any[], done: string) => {
     try {
       await put("/bots", { bots: list });
-      setMsg(`${done} Changes take effect on the next engine cycle (within about 10 minutes).`);
+      setMsg(`${done} Changes take effect on the next engine cycle (within about 5 minutes).`);
       setEditing(null);
     } catch (e: any) {
       setMsg(e.message);
@@ -72,7 +72,7 @@ export default function Bots() {
           {admin && <p><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></p>}
           <p className="md:col-span-2"><span className="font-medium text-text">Futures bots</span> <span className="text-mute">trade the same calls as USDT perpetual futures with isolated margin: only the margin (position ÷ leverage) is set aside, futures fees (0.05%) apply, funding is paid or received every 8 hours, and a position is liquidated — losing its margin — if price reaches the liquidation price. With “safe leverage” on, a signal bot lowers its leverage so liquidation always sits well beyond the stop. Position size still comes from the stop, so leverage changes the margin used, not the risk per trade.</span></p>
         </div>
-        <Note>The engine runs about every 5–10 minutes. Entries fill at the price available when it runs, plus spread, slippage and fees. Stops and targets are checked against every 15-minute candle, and when one candle touches both, the stop counts first. Only trades taken after a bot started are counted.</Note>
+        <Note>The engine runs every 5 minutes. Entries fill at the price available when it runs, plus spread, slippage and fees. Stops and targets are checked against every 15-minute candle, and when one candle touches both, the stop counts first. Only trades taken after a bot started are counted.</Note>
       </Card>
       {msg && <p className="text-sm text-accent">{msg}</p>}
       {b.error && <ErrorBox error={b.error} retry={b.reload} />}

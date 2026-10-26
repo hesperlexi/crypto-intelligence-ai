@@ -54,7 +54,7 @@ export default function News() {
                 {evs.map((e) => {
                   const near = Math.abs(e.ts - now) <= 45 * 60_000;
                   return (
-                    <li key={e.id} className={`grid grid-cols-[52px_minmax(0,1fr)_auto] items-start gap-3 px-4 py-2.5 ${near ? "bg-bear/[0.06]" : ""}`}>
+                    <li key={e.id ?? `${e.ts}-${e.title}`} className={`grid grid-cols-[52px_minmax(0,1fr)_auto] items-start gap-3 px-4 py-2.5 ${near ? "bg-bear/[0.06]" : ""}`}>
                       <span className="num pt-0.5 text-sm">{hhmm(e.ts)}</span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
@@ -82,7 +82,7 @@ export default function News() {
             <details className="border-t border-glass/[0.06] px-4 py-2 text-sm">
               <summary className="cursor-pointer text-mute">Earlier this week ({past.length})</summary>
               <ul className="mt-2 space-y-1 text-xs text-mute">
-                {past.map((e) => <li key={e.id}><span className="num">{dayKey(e.ts)} {hhmm(e.ts)}</span> · {e.country} {e.title}{e.actual ? ` · actual ${e.actual}` : ""}</li>)}
+                {past.map((e) => <li key={e.id ?? `${e.ts}-${e.title}`}><span className="num">{dayKey(e.ts)} {hhmm(e.ts)}</span> · {e.country} {e.title}{e.actual ? ` · actual ${e.actual}` : ""}</li>)}
               </ul>
             </details>
           )}
@@ -91,10 +91,10 @@ export default function News() {
 
         <section className="panel self-start p-0">
           <div className="card-head border-b border-glass/[0.06] px-4 py-2.5"><h2 className="label">Crypto headlines</h2></div>
-          {!heads.length && <p className="px-4 py-6 text-sm text-mute">Headlines arrive with the next engine run (about every 5–10 minutes).</p>}
+          {!heads.length && <p className="px-4 py-6 text-sm text-mute">Headlines arrive with the next engine run (every 5 minutes).</p>}
           <ul className="divide-y divide-glass/[0.06]">
             {heads.slice(0, 25).map((h) => (
-              <li key={h.url}>
+              <li key={h.url ?? h.title}>
                 <a href={h.url} target="_blank" rel="noopener noreferrer" className="block px-4 py-2.5 hover:bg-glass/[0.04]">
                   <div className="text-sm font-medium leading-snug">{h.title}</div>
                   <div className="mt-0.5 text-[11px] text-mute">{h.source}{h.ts ? ` · ${ago(h.ts)}` : ""}</div>

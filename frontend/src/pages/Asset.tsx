@@ -239,7 +239,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
     setBusy(true);
     try {
       await post("/models/train", { symbol, timeframe: tf });
-      setMsg("Training queued. It runs in the next engine cycle (within about 10 minutes); this panel updates by itself.");
+      setMsg("Training queued. It runs in the next engine cycle (within about 5 minutes); this panel updates by itself.");
     } catch (e: any) {
       setMsg(e.message);
     } finally {

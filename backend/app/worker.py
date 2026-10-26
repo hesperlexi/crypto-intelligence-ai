@@ -1,4 +1,4 @@
-"""Batch engine for the Firebase deployment (runs on a schedule, e.g. GitHub Actions every 15 minutes).
+"""Batch engine for the Firebase deployment (always-on GitHub Actions job, one cycle every 5 minutes).
 
   python -m app.worker tick  [--budget 600] [--local DIR]     one engine cycle
   python -m app.worker train [--budget 2700] [--local DIR]    upgrade / refresh models (full model set)
@@ -491,6 +491,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         detail["news"] = step("news", lambda: sync_news(rt))
         detail["derivs"] = step("derivs", lambda: derivs.sync(rt.db, rt.symbols(), max_calls=40))
         detail["crowd"] = step("crowd", lambda: derivs.sync_crowd(rt.db, rt.symbols(), max_files=25))
+    if not rt.db.get_setting("tracking_be_v23", False):     # one-time: re-follow TP1/TP2 signals with break-even stops
+        detail["tracking_be_v23"] = tracking.reopen_for_break_even(rt.db)
+        rt.db.set_setting("tracking_be_v23", True)
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
                                   tracking.update_signal_outcomes(rt, table="shadow_signals")))
     missing = [(s, tf) for s in rt.symbols() for tf in MODEL_TIMEFRAMES

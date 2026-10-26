@@ -66,7 +66,7 @@ export default function Replay() {
           <button className="btn btn-primary" disabled={busy || !when} onClick={run}>{busy ? "Queued — waiting for the engine…" : "Replay"}</button>
         </div>
         {range.data && !range.data.available && <p className="mt-2 text-sm text-warn">{range.data.reason}</p>}
-        {range.data?.available && <Note>Replayable range: {fmtTime(range.data.earliest)} to {fmtTime(range.data.latest)}. Replays run on the engine (a model is trained from scratch on the truncated data), so the result arrives with its next cycle, usually within 10 minutes.</Note>}
+        {range.data?.available && <Note>Replayable range: {fmtTime(range.data.earliest)} to {fmtTime(range.data.latest)}. Replays run on the engine (a model is trained from scratch on the truncated data), so the result arrives with its next cycle, usually within 5 minutes.</Note>}
       </Card>
       {err && <ErrorBox error={err} />}
 

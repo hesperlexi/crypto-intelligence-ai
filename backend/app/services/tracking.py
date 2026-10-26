@@ -190,7 +190,8 @@ def log_shadow(db: Database, a: dict[str, Any], decision: str, setup: dict[str, 
 def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signals") -> int:
     """Follow OPEN signals through later candles. Stop is assumed first when stop and target share a bar.
     Return = three legs (50% / 25% / 25%), each exiting at its target if reached, otherwise at the stop or,
-    on expiry, at the last close."""
+    on expiry, at the last close. As members and the bots trade it: after TP1 the stop moves to break-even (entry),
+    after TP2 to TP1."""
     if table not in ("signals", "shadow_signals"):
         raise ValueError(table)
     db = rt.db
@@ -204,19 +205,21 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
         tps = [s["tp1"], s["tp2"], s["tp3"]]
         hit = [False, False, False]
         stop_hit, closed_ts = False, None
+        level = s["stop"]                    # moves to break-even after TP1 and to TP1 after TP2 (the bots' rules)
         for _, c in after.iterrows():
-            if (side > 0 and c["low"] <= s["stop"]) or (side < 0 and c["high"] >= s["stop"]):
+            if (side > 0 and c["low"] <= level) or (side < 0 and c["high"] >= level):
                 stop_hit, closed_ts = True, int(c["ts"])
                 break
             for i, tp in enumerate(tps):
                 if (side > 0 and c["high"] >= tp) or (side < 0 and c["low"] <= tp):
                     hit[i] = True
+            level = tps[0] if hit[1] else entry if hit[0] else s["stop"]
             if hit[2]:
                 closed_ts = int(c["ts"])
                 break
         expired = closed_ts is None and len(after) >= horizon_bars
         last_close = float(after["close"].iloc[-1])
-        fallback = s["stop"] if stop_hit else last_close
+        fallback = level if stop_hit else last_close
         ret = float(sum(w * side * ((tps[i] if hit[i] else fallback) / entry - 1) for i, w in enumerate((0.5, 0.25, 0.25)))) * 100      # 50% / 25% / 25% exits
         status = "STOPPED" if stop_hit and not hit[0] else "TP3" if hit[2] else \
             ("TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED") if (stop_hit or expired) else "OPEN"
@@ -251,3 +254,11 @@ def signal_summary(db: Database) -> dict[str, Any]:
             "avg_return_pct": float(rets.mean()) if len(rets) else None,
             "by_status": {s: sum(r["status"] == s for r in rows) for s in ("STOPPED", "TP1", "TP2", "TP3", "EXPIRED")},
             "generated_at": int(time.time() * 1000)}
+
+
+def reopen_for_break_even(db: Database, since: int = 0) -> int:
+    """v2.3 one-time correction: signals that reached TP1 but not TP3 were closed with the stop left at its original
+    level. They are re-followed under the published rule (break-even after TP1, TP1 after TP2) - wins and losses
+    alike; nothing is removed. Returns how many were re-opened."""
+    return db.execute("UPDATE signals SET status = 'OPEN', closed_at = NULL WHERE tp1_hit = 1 AND tp3_hit = 0 "
+                      "AND status IN ('TP1', 'TP2') AND created_at >= ?", (since,))

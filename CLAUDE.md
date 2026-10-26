@@ -46,7 +46,8 @@ pages/run, flag `deep2:*`). Gold = `PAXG/USDT` (added once, flag `gold_paxg_v21`
 **v2.2 engine upgrades.** Nightly training = `train.yml` 15 slices (`worker train-shard`, no engine lock) + `merge`
 (`worker train-merge`: `trainer.import_bundle`, `prune_files` >7 d inactive, funding + crowd sync, publish, backup).
 Bigger-trend check (`analysis.higher_trend_check`: against both next higher TFs → NO TRADE, against one → A→B).
-Safety switch `services/safety.py` (last 25 closed, ≥20, avg<0 & TP1<40% → pause; paused trades go to
+Live record (`tracking.update_signal_outcomes`) uses the bots' stops: break-even after TP1, TP1 after TP2 (one-time
+re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/safety.py` (last 25 closed, ≥20, avg<0 & TP1<40% → pause; paused trades go to
 `shadow_signals`; resume when ≥8 shadow closed, avg>0, TP1≥50%; listed on Health). AI targets `ml/target_model.py`
 (per-R reach classifiers, used only with Brier skill ≥1% on last 30%; lift × base rate in `setup.pick`). Crowd data
 `derivs.sync_crowd` (data.binance.vision daily metrics → `oi_1h`, `ls_top_1h`, `ls_acct_1h`, `taker_1h`; features
@@ -61,7 +62,7 @@ Safety switch `services/safety.py` (last 25 closed, ≥20, avg<0 & TP1<40% → p
    proves they help.
 
 ## Bots and auto-trade
-- `services/bots.py`: thirds at TP1/TP2/TP3, break-even after TP1, trail to TP1 after TP2, time exit,
+- `services/bots.py`: 50/25/25 at TP1/TP2/TP3 (`TP_SPLIT`), break-even after TP1, trail to TP1 after TP2, time exit,
   **reversal exit** (signal flips → close, profit taken / loss cut, then take the new side), no hedging, size
   0.5–1.5x by grade/filter (`size_multiplier`), max 3 same-direction trades. Scorecard bots
   `futures-signal-ab-1h/4h` mirror the Signals page. One-time migrations use settings flags (`fresh_start_v2`,

@@ -305,3 +305,30 @@ def test_bigger_trend_check_counts_the_next_two_higher_timeframes():
     assert higher_trend_check(m, "1h", -1)["against"] == 1            # 4h bear, 12h bull
     assert higher_trend_check(m, "1h", -1)["checked"] == ["4h", "12h"]
     assert higher_trend_check(m, "1d", 1) is None and higher_trend_check(m, "4h", 0) is None
+
+
+def test_signal_record_moves_stop_to_break_even_after_tp1_and_to_tp1_after_tp2():
+    import pandas as pd
+
+    class RT:
+        def __init__(self, bars):
+            self.db = Database("sqlite:///:memory:")
+            self.df = pd.DataFrame(bars, columns=["ts", "open", "high", "low", "close", "volume"])
+
+        def candles(self, symbol, tf):
+            return self.df
+
+    def run(bars):
+        rt = RT([[0, 100, 100, 100, 100, 1]] + bars)
+        rt.db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, "
+                      "stop, tp1, tp2, tp3, status) VALUES ('s', 1, 'BTC/USDT', '4h', 0, 'BUY', 'BUY', 100, 1, 100, 98, "
+                      "102, 103, 104, 'OPEN')")
+        tracking.update_signal_outcomes(rt)
+        return rt.db.one("SELECT status, return_pct FROM signals")
+
+    r = run([[1, 100, 102.5, 100.5, 102, 1], [2, 101, 101, 99.9, 100, 1]])      # TP1, then back to entry
+    assert r["status"] == "TP1" and abs(r["return_pct"] - 1.0) < 1e-9          # 50% at +2%, rest at break-even
+    r = run([[1, 100, 103.2, 100.5, 103, 1], [2, 103, 103, 101.5, 102, 1]])    # TP2, then back to TP1
+    assert r["status"] == "TP2" and abs(r["return_pct"] - (0.5 * 2 + 0.25 * 3 + 0.25 * 2)) < 1e-9
+    r = run([[1, 100, 101, 97.5, 98, 1]])                                       # straight to the stop: a full loss
+    assert r["status"] == "STOPPED" and abs(r["return_pct"] + 2.0) < 1e-9

@@ -58,7 +58,7 @@ export default function Backtest() {
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Backtesting</h1>
         <p className="text-sm text-mute">Signals are decided on a bar's close and executed at the next bar's open, with fees, spread and slippage. Net results only.</p>
-        <p className="text-xs text-mute">Backtests run on the engine: the result appears here after its next cycle (usually within 10 minutes). You can leave this page; finished runs are listed under Previous runs.</p>
+        <p className="text-xs text-mute">Backtests run on the engine: the result appears here after its next cycle (usually within 5 minutes). You can leave this page; finished runs are listed under Previous runs.</p>
       </div>
       <Card title="Inputs">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">

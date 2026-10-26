@@ -22,7 +22,7 @@ export default function Health() {
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <Card title="Prediction engine">
               <Stat label="Last cycle" value={d.engine?.last_tick_finished ? ago(d.engine.last_tick_finished) : "not run yet"}
-                sub={`runs every ${d.engine?.schedule_minutes ?? 15} min · ${d.engine?.ticks ?? 0} cycles so far`}
+                sub={`runs every ${d.engine?.schedule_minutes ?? 5} min · ${d.engine?.ticks ?? 0} cycles so far`}
                 className={d.engine?.last_tick_finished && Date.now() - d.engine.last_tick_finished > 45 * 60_000 ? "text-warn" : ""} />
               <div className="mt-3">
                 <Row k="Cycle duration" v={isNum(d.engine?.last_tick_seconds) ? `${d.engine.last_tick_seconds}s` : DASH} />
