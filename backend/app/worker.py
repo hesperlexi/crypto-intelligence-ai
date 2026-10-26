@@ -649,8 +649,7 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
     detail = {"shards": shards, "imported": imported, "skipped": skipped, "pruned_files": pruned,
               "failed": failed[:20], "derivs": derivs_note}
     _record(rt, "train", started, "ok", detail)
-    publish_models(rt, sink)
-    publish_status(rt, sink, engine_info(rt, {"last_train_seconds": round(time.time() - t0, 1)}))
+    publish_models(rt, sink)          # health/status stays with the 5-minute engine (it has the live price feed)
     sink.flush()
     return detail
 

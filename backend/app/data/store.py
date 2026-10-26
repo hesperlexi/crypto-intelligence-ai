@@ -74,7 +74,7 @@ class CandleStore:
         else:
             since = last  # re-fetch the last candle: it may have been forming when stored
         written = 0
-        if last is not None and have >= min(bars, 200) and have < 0.9 * bars:
+        if last is not None and have >= min(bars, 200) and have < bars - 2:     # anything missing: older history or holes
             written += await self._deepen(provider, symbol, timeframe, bars, step, now, page)
         # exchanges cap a page at very different sizes (100-1000), so paging continues until the present
         # is reached or no progress is made, not until a short page comes back
