@@ -1,0 +1,22 @@
+name: Live audit (manual)
+# Checks the live app data against the requirements (aggregates only, no personal data).
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet firebase-admin
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python scripts/audit_live.py > /tmp/audit.json && head -400 /tmp/audit.json
+      - run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/audit.json reports/audit.json && git add reports && git commit -qm "Live audit" && git push -q origin reports
