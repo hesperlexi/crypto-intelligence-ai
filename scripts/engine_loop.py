@@ -4,7 +4,8 @@ GitHub starts scheduled workflows late (often 40-60 minutes apart), so instead o
 keeps itself alive: engine.yml calls this script five times in a row (saving the state to the Actions cache after
 each call), which keeps one job running for ~5 h 50 min; the next scheduled run is already queued and takes over.
 
-Each tick runs in a fresh process (`python -m app.worker tick`), exactly like before. The loop stops early when:
+Each tick runs in a fresh process (`python -m app.worker tick`), exactly like before, after a fast-forward to the
+newest code on main (so engine fixes go live within 5 minutes; workflow changes still need the next run). The loop stops early when:
   * the nightly training merge has started (it waits for this job to save the state and end, then takes over;
     it restarts the engine when it is done);
   * the stop file exists (an earlier call in the same job decided to stop).
@@ -53,6 +54,24 @@ def merge_waiting() -> bool:
         return False
 
 
+def update_code() -> None:
+    """Fast-forward to the newest code on main, so a change goes live at the next tick instead of the next run."""
+    root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    try:
+        before = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+        subprocess.run(["git", "-C", root, "pull", "--ff-only", "-q", "origin", "main"], capture_output=True, timeout=60)
+        after = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
+        if before and after and before != after:
+            print(f"engine loop: code updated {before[:7]} -> {after[:7]}", flush=True)
+            changed = subprocess.run(["git", "-C", root, "diff", "--name-only", before, after],
+                                     capture_output=True, text=True).stdout
+            if "backend/requirements-worker.txt" in changed:
+                subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r",
+                                os.path.join(root, "backend", "requirements-worker.txt")], timeout=600)
+    except Exception as exc:                       # never let an update problem stop the engine
+        print(f"engine loop: code update skipped ({exc})", flush=True)
+
+
 def tick(budget: int) -> int:
     """Run one engine cycle; returns the number of view documents it wrote (0 if unknown)."""
     try:
@@ -89,6 +108,7 @@ def main() -> None:
             if stop:
                 open(stop, "w").write("merge")
             return
+        update_code()
         started = time.time()
         written += tick(a.budget)
         n += 1

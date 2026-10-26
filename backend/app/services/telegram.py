@@ -5,7 +5,9 @@ channel in Settings (stored in owner/telegram, readable by the owner only). On e
   * Wins of the day - once a day (16:00 UTC, 20:00 Dubai), the best winning signals of the last 24 h;
   * Weekly results - Mondays from 06:00 UTC, last week's totals and best trades with the app link;
   * Teaser signal - at most one a day: a grade-A call members received at least an hour earlier;
-  * Every win (v2.3) - each signal that closes in profit, as soon as the engine sees it (at most 5 per run).
+  * Best wins (v2.3) - each signal that closes after reaching target 2 or 3, as soon as the engine sees it.
+Approve first (default on): instead of posting, the engine puts each card in owner/telegram_drafts; the owner sees a
+preview in Settings and taps Post (job "telegram_post", sent on the next engine run) or Skip.
 Every post is an image card with the logo (services/cards.py) and the facts as its caption; if a card can't be
 drawn the caption is sent as text. Each post is sent once (markers in the engine's settings). Wins and losses
 alike come from the real record - the weekly card always shows the losses too.
@@ -29,8 +31,10 @@ WINS_HOUR_UTC = 16
 WEEKLY_HOUR_UTC = 6
 TEASER_DELAY_MS = 60 * 60_000
 MAX_WIN_POSTS = 5
+MAX_DRAFTS = 6                     # each card is ~70 KB; a Firestore document holds 1 MB
+DRAFTS = "owner/telegram_drafts"
 DEFAULTS = {"enabled": False, "channel": "@crypappai", "post_wins": True, "post_weekly": True, "post_teaser": True,
-            "post_each_win": True}
+            "post_each_win": True, "approve_first": True}
 
 
 def config(sink) -> dict[str, Any]:
@@ -71,6 +75,37 @@ def send_photo(cfg: dict[str, Any], png: bytes | None, caption: str, session: An
     if not body.get("ok"):
         raise RuntimeError(body.get("description") or "Telegram refused the picture")
     return body
+
+
+def add_draft(sink, kind: str, caption: str, png: bytes | None, now: int) -> str:
+    """Keep a card for the owner to approve (newest first, at most MAX_DRAFTS)."""
+    import base64
+    did = f"{kind}-{now}-{abs(hash(caption)) % 10_000:04d}"
+    item = {"id": did, "kind": kind, "caption": caption, "created_at": now,
+            "png": base64.b64encode(png).decode() if png else None}
+
+    def put(cur):
+        items = [x for x in ((cur or {}).get("items") or []) if x.get("id") != did]
+        return {"items": ([item] + items)[:MAX_DRAFTS], "updated_at": now}, did
+    return sink.transact(DRAFTS, put)
+
+
+def post_draft(sink, draft_id: str, session: Any = None) -> dict[str, Any]:
+    """Job from the website: send one approved card and take it off the list."""
+    import base64
+    cfg = config(sink)
+    if not cfg["token"] or not cfg["channel"]:
+        raise ValueError("add the bot token and the channel in Settings first")
+    items = (sink.get(DRAFTS) or {}).get("items") or []
+    item = next((x for x in items if x.get("id") == draft_id), None)
+    if not item:
+        return {"sent": False, "reason": "this card is no longer waiting (already posted or skipped)"}
+    send_photo(cfg, base64.b64decode(item["png"]) if item.get("png") else None, item["caption"], session)
+    sink.transact(DRAFTS, lambda cur: ({"items": [x for x in ((cur or {}).get("items") or []) if x.get("id") != draft_id],
+                                        "updated_at": now_ms()}, None))
+    prev = sink.get("owner/telegram_status") or {}
+    sink.set("owner/telegram_status", {**prev, "ok": True, "errors": [], "last_post_at": now_ms(), "last_sent": [item["kind"]]})
+    return {"sent": True, "kind": item["kind"]}
 
 
 def _card(name: str, *args) -> bytes | None:
@@ -175,9 +210,13 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         if not text:
             return
         try:
-            send_photo(cfg, _card(*card) if card else None, text, session)
+            png = _card(*card) if card else None
+            if cfg["approve_first"]:
+                add_draft(sink, kind, text, png, now)
+            else:
+                send_photo(cfg, png, text, session)
             db.set_setting(marker, value)
-            out["sent"].append(kind)
+            out["sent"].append(kind + (" (waiting for approval)" if cfg["approve_first"] else ""))
         except Exception as exc:
             errors.append(f"{kind}: {exc}"[:200])
 
@@ -206,7 +245,7 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         if last is None:                       # first run: start from now, don't flood the channel with old wins
             db.set_setting("tg_win_last", now)
         else:
-            rows = db.query("SELECT * FROM signals WHERE status IN ('TP1', 'TP2', 'TP3') AND return_pct > 0 "
+            rows = db.query("SELECT * FROM signals WHERE status IN ('TP2', 'TP3') AND return_pct > 0 "
                             "AND closed_at IS NOT NULL AND closed_at > ? AND created_at >= ? AND side != 0 "
                             "ORDER BY closed_at LIMIT ?", (int(last), record_since(rt), MAX_WIN_POSTS))
             for r in rows:
@@ -218,7 +257,7 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
     status = {"ok": not errors, "checked_at": now, "errors": errors, "last_sent": out["sent"] or None}
     try:
         prev = sink.get("owner/telegram_status") or {}
-        if out["sent"]:
+        if any("approval" not in k for k in out["sent"]):
             status["last_post_at"] = now
         else:
             status["last_post_at"] = prev.get("last_post_at")

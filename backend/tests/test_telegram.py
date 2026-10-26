@@ -37,7 +37,8 @@ def test_posts_wins_once_at_the_evening_slot(tmp_path):
     rt = Runtime(Database("sqlite:///:memory:"), None)
     sink, fake = LocalSink(tmp_path), Fake()
     assert T.run(rt, sink, WINS, None, ms(2026, 10, 27, 17), fake)["enabled"] is False      # not configured
-    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "mychannel", "post_teaser": False})
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "mychannel", "post_teaser": False,
+                                "approve_first": False})
     T.run(rt, sink, WINS, None, ms(2026, 10, 27, 15), fake)                                 # before 16:00 UTC
     assert fake.sent == []
     out = T.run(rt, sink, WINS, None, ms(2026, 10, 27, 17), fake)
@@ -49,7 +50,8 @@ def test_posts_wins_once_at_the_evening_slot(tmp_path):
 def test_weekly_on_monday_and_teaser_of_a_grade_a_signal(tmp_path):
     rt = Runtime(Database("sqlite:///:memory:"), None)
     sink, fake = LocalSink(tmp_path), Fake()
-    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_wins": False})
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_wins": False,
+                                "approve_first": False})
     now = ms(2026, 10, 26, 8)                                                                # a Monday
     rt.db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, stop, "
                   "tp1, tp2, tp3, status, payload) VALUES ('s', ?, 'SOL/USDT', '1h', 1, 'BUY', 'BUY', 180, 1, 180, 176, 184, 188, "
@@ -67,7 +69,7 @@ def test_every_win_is_posted_once_as_a_picture(tmp_path):
     rt = Runtime(Database("sqlite:///:memory:"), None)
     sink, fake = LocalSink(tmp_path), Fake()
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_wins": False,
-                                "post_weekly": False, "post_teaser": False})
+                                "post_weekly": False, "post_teaser": False, "approve_first": False})
     t0 = ms(2026, 10, 27, 9)
     T.run(rt, sink, None, None, t0, fake)                              # first run only sets the starting point
     assert fake.sent == []
@@ -78,7 +80,8 @@ def test_every_win_is_posted_once_as_a_picture(tmp_path):
                       "4000, 1, 4000, 3960, 4040, 4060, 4100, ?, ?, ?)", (f"s{i}", t0 - 3_600_000, i, status, closed, ret))
     add(1, "TP2", 1.6, t0 + 60_000)
     add(2, "STOPPED", -1.0, t0 + 120_000)                              # losses are not announced as wins
-    add(3, "TP1", 0.5, t0 - 60_000)                                    # closed before the start point
+    add(3, "TP2", 0.5, t0 - 60_000)                                    # closed before the start point
+    add(4, "TP1", 0.4, t0 + 90_000)                                    # target 1 only: not one of the best wins
     out = T.run(rt, sink, None, None, t0 + 300_000, fake)
     assert out["sent"] == ["win"] and fake.sent[0]["photo"] is True
     assert "GOLD LONG" in fake.sent[0]["text"] and "+1.6%" in fake.sent[0]["text"]
@@ -93,3 +96,16 @@ def test_cards_render():
                 cards.wins_card(WINS["wins"]), cards.teaser_card({"symbol": "ETH/USDT", "side": -1, "timeframe": "15m",
                                                                    "entry": 1, "stop": 2, "tp1": 0.9, "tp2": 0.8, "tp3": 0.7}, 61)):
         assert png[:8] == b"\x89PNG\r\n\x1a\n" and len(png) > 10_000
+
+
+def test_approve_first_keeps_the_card_until_the_owner_posts_it(tmp_path):
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    sink, fake = LocalSink(tmp_path), Fake()
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_teaser": False})   # approve_first by default
+    out = T.run(rt, sink, WINS, None, ms(2026, 10, 27, 17), fake)
+    assert fake.sent == [] and out["sent"] == ["wins (waiting for approval)"]
+    items = sink.get(T.DRAFTS)["items"]
+    assert len(items) == 1 and items[0]["png"] and "+4.9%" in items[0]["caption"]
+    res = T.post_draft(sink, items[0]["id"], fake)
+    assert res["sent"] and fake.sent[0]["photo"] and sink.get(T.DRAFTS)["items"] == []
+    assert T.post_draft(sink, items[0]["id"], fake)["sent"] is False                 # not twice

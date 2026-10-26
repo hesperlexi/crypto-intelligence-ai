@@ -280,6 +280,8 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
     kind, p = job.get("type"), job.get("params") or {}
     if kind == "test_telegram":
         return telegram.test_post(sink)
+    if kind == "telegram_post":
+        return telegram.post_draft(sink, str(p.get("id") or ""))
     if kind == "test_push":
         if sink is None:
             return {"ok": False, "reason": "no publisher"}
