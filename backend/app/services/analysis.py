@@ -54,6 +54,13 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
     except Exception as exc:  # model failure: surface it, never substitute a made-up forecast
         rt.record_error(f"forecast {symbol} {timeframe}", exc)
         return {"available": False, "status": "MODEL ERROR", "reason": f"{type(exc).__name__}: {exc}"[:200]}
+    try:
+        from ..ml import trade_filter
+        x_row = ds.X[bundle["feature_names"]].to_numpy(float)[-1]
+        fc["trade_filter"] = trade_filter.score(bundle.get("trade_filter"), x_row, fc["probabilities"])
+    except Exception as exc:
+        rt.record_error(f"trade filter {symbol} {timeframe}", exc)
+        fc["trade_filter"] = None
     edge = bundle["edge"]
     fc.update({
         "available": True, "status": "OK", "timeframe": timeframe,
@@ -260,6 +267,18 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 decision = "SELL"
             if grade:
                 direction = side
+    # trade filter: the model's own record of which setups reach their targets before the stop
+    tf_view = (fc or {}).get("trade_filter") if fc.get("available") else None
+    filter_score = None
+    if tf_view and decision in TRADE_DECISIONS:
+        tside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
+        filter_score = tf_view["p_long"] if tside > 0 else tf_view["p_short"]
+        if filter_score < tf_view["threshold"]:
+            decision, why = "NO TRADE", (f"the trade filter scores this setup {filter_score:.0%}, below the "
+                                         f"{tf_view['threshold']:.0%} bar at which past setups paid off")
+            grade = None
+            flags.append("FILTERED")
+
     # high-impact US data release (CPI, jobs report, Fed): pause fresh entries around it
     news_risk = None
     try:
@@ -293,6 +312,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             "range_compression": bool(last["range_compression"])},
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)),
         "grade": grade, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
+        "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"),
         "confidence": confidence, "confidence_detail": conf_detail,
         "forecast": fc, "mtf": matrix, "setup": setup, "risk": risk,
         "model_agreement": fc.get("model_agreement") if fc["available"] else None,

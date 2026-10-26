@@ -152,6 +152,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             </p>
           )}
           {v.tone !== "wait" && r.decision_basis && <p className="mt-1 text-xs text-mute">Why: {r.decision_basis}</p>}
+          {v.tone !== "wait" && isNum(r.filter_score) && <p className="mt-0.5 text-xs text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>}
           {market === "spot" && v.tone === "bear" && <p className="mt-1 text-sm text-mute">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>}
         </div>
 

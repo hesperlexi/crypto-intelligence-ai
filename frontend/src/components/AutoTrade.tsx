@@ -7,7 +7,7 @@ import { db } from "../lib/firebase";
 import { base, fmtPrice, fmtTime } from "../lib/format";
 import { myUid } from "../lib/session";
 
-const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 5, coins: "all", notify: true };
+const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 5, coins: "all", notify: true, scale: true, max_same_side: 3 };
 type S = typeof DEF;
 
 export default function AutoTrade() {
@@ -66,6 +66,9 @@ export default function AutoTrade() {
             <select className="input mt-1" value={s.coins} onChange={(e) => setS({ ...s, coins: e.target.value })}>
               <option value="all">All coins</option><option value="mine">Only my own coins</option>
             </select></label>
+          <label className="block"><span className="text-xs text-mute">Max trades in the same direction</span>
+            <input className="input mt-1" type="number" min={1} max={50} value={s.max_same_side} onChange={(e) => setS({ ...s, max_same_side: Math.max(1, Math.min(50, Number(e.target.value) || 1)) })} /></label>
+          <label className="flex items-center gap-2 self-end pb-2 text-sm" title="Grade A trades use 1.2x your margin, grade B 0.8x, up to 1.5x when the trade filter rates the setup highly"><input type="checkbox" checked={s.scale} onChange={(e) => setS({ ...s, scale: e.target.checked })} />Bigger size on stronger signals</label>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={s.notify} onChange={(e) => setS({ ...s, notify: e.target.checked })} />Notify me on each auto-trade</label>
           <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-[11px] text-mute">Inside the signal's entry zone the trade opens at market; otherwise a limit order waits at the ideal entry (cancelled after 6 candles if it never fills). Stop-loss and take-profit come from the signal. One entry per signal; a coin with an open trade is skipped.</p>

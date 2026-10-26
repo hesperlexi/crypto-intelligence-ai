@@ -85,6 +85,15 @@ DEFAULT_BOTS: list[dict[str, Any]] = [
      "timeframe": "1h", "symbols": "all", "starting_balance": 10_000.0, "position_pct": 5.0, "min_probability": 0.40,
      "allow_short": True, "reset_token": "1", "leverage": 3.0, **_FUT},
 ]
+def size_multiplier(grade: str | None, filter_score: float | None = None, filter_threshold: float | None = None) -> float:
+    """Bigger on stronger calls, smaller on weaker ones (0.5x - 1.5x of the normal risk): grade A 1.2x, grade B 0.8x,
+    plus up to +30 % when the trade filter scores the setup well above its bar."""
+    m = 1.2 if grade == "A" else 0.8 if grade == "B" else 1.0
+    if filter_score is not None and filter_threshold:
+        m *= float(np.clip(1 + (filter_score - filter_threshold) * 2, 1.0, 1.3))
+    return float(np.clip(m, 0.5, 1.5))
+
+
 # the bots that take exactly the calls members see on the Signals page (futures, grades A+B, every coin):
 # the app's own scorecard, shown first on the public track record
 SCORECARD_IDS = ("futures-signal-ab-1h", "futures-signal-ab-4h")
@@ -92,7 +101,7 @@ FIELDS = {"name": str, "enabled": bool, "mode": str, "timeframe": str, "symbols"
           "starting_balance": float, "risk_per_trade_pct": float, "max_position_pct": float,
           "max_open_positions": int, "allow_short": bool, "pending_bars": int, "max_hold_bars": int,
           "position_pct": float, "min_probability": float, "reset_token": str, "market": str, "leverage": float,
-          "safe_leverage": bool, "confident_only": bool, "grades": str}
+          "safe_leverage": bool, "confident_only": bool, "grades": str, "edge_sizing": bool, "max_same_side": int}
 
 
 def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
@@ -447,6 +456,7 @@ class BotEngine:
     def _enter_decision(self, cfg: dict[str, Any], state: dict[str, Any], syms: list[str], now: int) -> list[dict[str, Any]]:
         events = []
         busy = {p["symbol"] for p in state["positions"]} | {o["symbol"] for o in state["pending"]}
+        max_same = int(cfg.get("max_same_side") or 3)
         for s in syms:
             if s in busy or len(state["positions"]) + len(state["pending"]) >= cfg["max_open_positions"]:
                 continue
@@ -460,6 +470,10 @@ class BotEngine:
                 continue
             side = int(setup["side_int"])
             if side < 0 and not cfg.get("allow_short", True):
+                continue
+            # many coins signalling the same way at once is really one bet on the market: cap it
+            same = sum(1 for p in state["positions"] if p["side"] == side) + sum(1 for o in state["pending"] if o["side"] == side)
+            if same >= max_same:
                 continue
             px = self._price(s)
             if px is None:
@@ -485,7 +499,9 @@ class BotEngine:
                     lev = float(min(lev, F.safe_leverage(entry, stop, lev)))
             fee_rate = F.FUTURES_FEE_RATE if fut else self.fee
             # risk-based size (the stop decides the loss, not the leverage); the margin per position is capped
-            qty = eq * cfg["risk_per_trade_pct"] / 100 / risk_per_unit
+            mult = size_multiplier(a.get("grade"), a.get("filter_score"), a.get("filter_threshold")) if cfg.get("edge_sizing", True) else 1.0
+            info["size_mult"] = mult
+            qty = eq * cfg["risk_per_trade_pct"] * mult / 100 / risk_per_unit
             qty = min(qty, eq * cfg["max_position_pct"] / 100 * lev / entry,
                       state["cash"] * 0.995 / (entry * (1 / lev + fee_rate)))
             info["leverage"] = lev

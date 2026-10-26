@@ -23,10 +23,10 @@ def test_auto_paper_opens_once_respects_settings_and_balance(tmp_path):
     assert r["members"] == 1 and r["opened"] == 1 and r["orders"] == 1
     acc = sink.get("paper/m1_futures")
     pos = acc["positions"]["BTCUSDT"]
-    assert pos["auto"] and pos["margin"] == 250 and pos["leverage"] == 5 and pos["stop"] == 96 and pos["take"] == 108
+    assert pos["auto"] and pos["margin"] == 300 and pos["leverage"] == 5          # grade A: 1.2x the chosen $250 and pos["stop"] == 96 and pos["take"] == 108
     od = next(iter(acc["orders"].values()))
     assert od["symbol"] == "ETH/USDT" and od["price"] == 100.0 and od["side"] == -1      # outside the zone: limit at the ideal entry
-    assert abs(acc["wallet"] - (10_000 - 250 - pos["fees"] - od["reserve"])) < 1e-6
+    assert abs(acc["wallet"] - (10_000 - pos["margin"] - pos["fees"] - od["reserve"])) < 1e-6
     assert sink.get("paper/gone_futures") is None and sink.get("paper/off_futures") is None
     assert len([1 for _ in sink.list("paper_futures_trades")]) == 1
     # next run: the same signals are not entered again
@@ -69,3 +69,19 @@ def test_manual_positions_are_never_closed_by_a_reversal(tmp_path):
     flip = {**row(side=-1), "timeframe": "1h"}
     new, res = autopaper.place(acc, flip, autopaper.settings_of({}), 2)
     assert new is None and res["action"] == "skipped" and "reversed" not in res
+
+
+def test_same_direction_cap_and_strength_sizing(tmp_path):
+    from app.services.bots import size_multiplier
+
+    assert size_multiplier("A") == 1.2 and size_multiplier("B") == 0.8 and size_multiplier(None) == 1.0
+    assert size_multiplier("A", 0.70, 0.50) == 1.5 and size_multiplier("B", 0.40, 0.50) == 0.8      # capped, never below
+    acc = autopaper.new_account(1)
+    s = autopaper.settings_of({"max_same_side": 2, "margin": 100})
+    for sym in ("BTC/USDT", "ETH/USDT", "SOL/USDT"):
+        new, res = autopaper.place(acc, {**row(sym, grade="B"), "timeframe": "1h"}, s, 1)
+        acc = new or acc
+    assert len(acc["positions"]) == 2 and "same-direction" in res["reason"]
+    assert all(abs(p["margin"] - 80) < 1e-9 for p in acc["positions"].values())                   # grade B: 0.8x
+    new, res = autopaper.place(acc, {**row("XRP/USDT", side=-1), "timeframe": "1h"}, s, 1)
+    assert res["action"] == "opened"                                                               # the other side is fine

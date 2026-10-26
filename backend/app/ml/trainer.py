@@ -146,6 +146,19 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
             if sc:
                 best_by_regime[gname] = {"model": min(sc, key=sc.get), "n": int(gm.sum()), "brier": sc}
 
+    # ---- trade filter: learn which of the model's calls actually pay under the bots' rules ------------------
+    tfilter: dict[str, Any] = {"enabled": False, "reason": "not trained (fast model set)"}
+    if not fast:
+        try:
+            from . import trade_filter
+            o_rows = idx[oos]
+            ind = frame.ind
+            tfilter = trade_filter.train(X[oos], wf.P_ens[oos], o_rows, ind["high"].to_numpy(float), ind["low"].to_numpy(float),
+                                         ind["close"].to_numpy(float), ind["atr"].to_numpy(float), _cost())
+        except Exception as exc:          # the filter must never block a model release
+            log.warning("trade filter failed for %s %s: %s", symbol, timeframe, exc)
+            tfilter = {"enabled": False, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+
     created = now_ms()
     digest = hashlib.sha1(f"{symbol}{timeframe}{created}{sorted(stage['models'])}".encode()).hexdigest()[:8]
     version = f"{symbol.replace('/', '')}-{timeframe}-{time.strftime('%Y%m%d%H%M%S', time.gmtime(created / 1000))}-{digest}"
@@ -175,6 +188,7 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
         "sizes": {"train": train_len, "val": val_len, "test": f0.test[1] - f0.test[0], "gap": GAP},
         "n_samples": int(n), "n_oos": int(oos.sum()), "data_start": int(ts[0]), "data_end": int(ts[-1]),
         "failures": failures, "model_status": model_status(), "importance": None, "fast": bool(fast),
+        "trade_filter": tfilter,
     }
     if not fast:
         try:

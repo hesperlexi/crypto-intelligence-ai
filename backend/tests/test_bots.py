@@ -235,3 +235,19 @@ def test_signal_reversal_closes_the_trade_and_flips(monkeypatch, no_costs):
     assert t["exit_reason"] == "signal reversed (profit taken)" and t["pnl"] > 0
     (cfg, st), = eng.bots()
     assert len(st["positions"]) == 1 and st["positions"][0]["side"] == -1      # flipped short, never both at once
+
+
+def test_bots_cap_same_direction_trades(monkeypatch, no_costs):
+    rt = _rt(("BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT"))
+    for sym in ("BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT"):
+        rt.add_symbol(sym)
+    now = _now_aligned()
+    t0 = now - 40 * STEP
+    for sym in ("BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT"):
+        _put(rt, sym, t0, [100.0] * 4)
+    eng = B.BotEngine(rt)
+    eng.sync_configs([_cfg(max_same_side=2, max_position_pct=10.0)])
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy())
+    eng.run(t0 + 4 * STEP)
+    (cfg, st), = eng.bots()
+    assert len(st["positions"]) == 2 and all(p["side"] == 1 for p in st["positions"])

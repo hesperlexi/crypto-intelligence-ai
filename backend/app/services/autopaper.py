@@ -30,7 +30,7 @@ ADVERSE = (2 + 0.5) / 1e4
 MAX_LEV = 50
 TAKES = {"tp1": 0, "tp2": 1, "tp3": 2}
 DEFAULTS = {"enabled": False, "margin": 100.0, "leverage": "signal", "timeframes": ["1h", "4h"], "grades": "AB",
-            "take": "tp2", "max_open": 5, "coins": "all", "notify": True}
+            "take": "tp2", "max_open": 5, "coins": "all", "notify": True, "scale": True, "max_same_side": 3}
 
 
 def _rid(n: int = 10) -> str:
@@ -61,6 +61,8 @@ def settings_of(raw: dict[str, Any] | None) -> dict[str, Any]:
     s["grades"] = "A" if str(s["grades"]).upper() == "A" else "AB"
     s["take"] = s["take"] if s["take"] in TAKES else "tp2"
     s["max_open"] = int(max(1, min(50, int(s.get("max_open") or 5))))
+    s["max_same_side"] = int(max(1, min(50, int(s.get("max_same_side") or 3))))
+    s["scale"] = bool(s.get("scale", True))
     return s
 
 
@@ -109,6 +111,10 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
         res["reversed"] = reversed_
     if any(x.get("symbol") == sym for x in list(positions.values()) + list(orders.values())):
         return (acc if reversed_ else None), {**res, "action": "skipped", "reason": "a position or order on this coin is already open"}
+    same = sum(1 for x in list(positions.values()) + list(orders.values()) if int(x.get("side", 0)) == side)
+    if same >= s["max_same_side"]:
+        return (acc if reversed_ else None), {**res, "action": "skipped",
+                                               "reason": f"already {same} {'long' if side > 0 else 'short'} trades open (same-direction limit)"}
     if len(positions) + len(orders) >= s["max_open"]:
         return (acc if reversed_ else None), {**res, "action": "skipped", "reason": f"the limit of {s['max_open']} open trades is reached"}
     stop = float(p["stop"])
@@ -124,7 +130,9 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
     safe = F.safe_leverage(entry, stop, MAX_LEV, MMR, buffer=1.1)
     lev = int(p.get("suggested_leverage") or safe) if s["leverage"] == "signal" else int(s["leverage"])
     lev = max(1, min(lev, safe, MAX_LEV))           # never so high that liquidation comes before the stop
-    margin = float(s["margin"])
+    from .bots import size_multiplier
+    mult = size_multiplier(sig.get("grade"), sig.get("filter_score"), sig.get("filter_threshold")) if s["scale"] else 1.0
+    margin = round(float(s["margin"]) * mult, 2)
     if market:
         qty = margin * lev / entry
         fee = qty * entry * FEE
