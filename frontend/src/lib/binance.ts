@@ -43,6 +43,12 @@ export async function fklines(symbol: string, tf: string, limit = 500): Promise<
 }
 
 /** Last futures price for every listed perpetual, keyed by app symbol (empty when futures are unreachable). */
+/** 24h stats of one USDⓈ-M perpetual (used for gold, XAUT, which has no spot market on Binance). */
+export async function futuresTicker(symbol: string) {
+  const t = await get<any>(`/fapi/v1/ticker/24hr?symbol=${bsym(symbol)}`, [FUTURES]);
+  return toTicker(symbol, +t.lastPrice, NaN, NaN, +t.priceChangePercent, +t.quoteVolume, t.closeTime);
+}
+
 export async function futuresPrices(symbols: string[]): Promise<Record<string, number>> {
   if (!symbols.length) return {};
   try {
