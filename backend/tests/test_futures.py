@@ -16,6 +16,7 @@ def no_costs(monkeypatch):
     monkeypatch.setattr(settings, "slippage_bps", 0.0)
     monkeypatch.setattr(settings, "spread_bps", 0.0)
     monkeypatch.setattr(F, "FUTURES_FEE_RATE", 0.0)
+    monkeypatch.setattr(F, "DEFAULT_FUNDING_RATE", 0.0)     # no funding unless a test sets a rate (time-of-day safe)
 
 
 def _fcfg(**kw):

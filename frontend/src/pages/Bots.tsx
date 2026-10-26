@@ -6,7 +6,7 @@ import { DASH, fmtNum, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from
 import { useLive } from "../lib/live";
 import { useIsAdmin } from "../lib/session";
 
-const TFS = ["15m", "1h", "4h"];
+const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"];
 
 const SCORECARD = ["futures-signal-ab-1h", "futures-signal-ab-4h"];
 
@@ -68,7 +68,7 @@ export default function Bots() {
       </div>
       <Card title="How the bots work">
         <div className="grid gap-4 text-sm md:grid-cols-2">
-          <p><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. Targets sit at 0.5R, 0.75R and 1R (a 1:1 final target); a third closes at each, the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></p>
+          <p><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. Half the position closes at TP1 (1:1), a quarter at TP2 (up to 1:2) and a quarter at TP3 (up to 1:3); the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></p>
           {admin && <p><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></p>}
           <p className="md:col-span-2"><span className="font-medium text-text">Futures bots</span> <span className="text-mute">trade the same calls as USDT perpetual futures with isolated margin: only the margin (position ÷ leverage) is set aside, futures fees (0.05%) apply, funding is paid or received every 8 hours, and a position is liquidated — losing its margin — if price reaches the liquidation price. With “safe leverage” on, a signal bot lowers its leverage so liquidation always sits well beyond the stop. Position size still comes from the stop, so leverage changes the margin used, not the risk per trade.</span></p>
         </div>

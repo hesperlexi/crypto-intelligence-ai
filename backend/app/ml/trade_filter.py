@@ -2,7 +2,7 @@
 
 The direction models answer "is the next candle up or down?". A trade is decided over many candles: does the price
 reach the targets before the stop? For every out-of-sample bar where the ensemble leaned one way, the trade the app
-would take is replayed under the bots' own rules (stop ~1.5 ATR, targets at 0.5R / 0.75R / 1R - a 1:1 final target - a third at each,
+would take is replayed under the bots' own rules (stop ~1.5 ATR, targets at 1R / 1.75R / 2.5R closing 50% / 25% / 25%,
 break-even after target 1, trailing to target 1 after target 2, time exit after `HORIZON` bars, costs included) and
 labelled by its result in R. A gradient-boosting classifier learns which setups tend to pay.
 
@@ -21,7 +21,8 @@ import numpy as np
 log = logging.getLogger(__name__)
 HORIZON = 30
 STOP_ATR = 1.5
-R_MULTIPLES = (0.5, 0.75, 1.0)     # same as engine/setup.py (1:1 final target)
+R_MULTIPLES = (1.0, 1.75, 2.5)     # typical ladder of engine/setup.py (TP1 1:1, TP2 / TP3 chosen up to 1:2 / 1:3)
+TP_SPLIT = (0.5, 0.25, 0.25)
 MIN_MARGIN = 0.02
 KEEP_GRID = (0.3, 0.4, 0.5, 0.6, 0.7, 0.8)
 MIN_GAIN_R = 0.03
@@ -44,8 +45,9 @@ def trade_r(high: np.ndarray, low: np.ndarray, close: np.ndarray, atr: np.ndarra
             left = 0.0
             break
         while hit < 3 and ((h >= tps[hit]) if side > 0 else (lo <= tps[hit])):
-            r += (1 / 3) * side * (tps[hit] - entry) / dist
-            left -= 1 / 3
+            part = TP_SPLIT[hit] if hit < 2 else left
+            r += part * side * (tps[hit] - entry) / dist
+            left -= part
             hit += 1
             stop = entry if hit == 1 else tps[0] if hit == 2 else stop
         if left <= 1e-9:

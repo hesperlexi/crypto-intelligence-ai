@@ -10,7 +10,7 @@ import { useApi } from "../lib/api";
 import { base, DASH, fmtCompact, fmtPct, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
 import { useLive } from "../lib/live";
 
-const HORIZONS = ["15M", "1H", "4H"];
+const HORIZONS = ["15M", "1H", "4H", "12H", "24H", "3D"];
 
 function heatColor(pct: number | null | undefined): string {
   if (!isNum(pct)) return "rgba(111,126,145,0.12)";

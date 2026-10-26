@@ -1,7 +1,7 @@
 import { useApi } from "../lib/api";
 import { Tabs } from "./ui";
 
-export const MODEL_TFS = ["15m", "1h", "4h"] as const;
+export const MODEL_TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 export const ALL_TFS = ["1m", "5m", "15m", "30m", "1h", "4h", "12h", "1d", "3d", "1w"] as const;
 
 export function useMeta() {

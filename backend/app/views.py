@@ -17,7 +17,7 @@ from .ml.models import REGISTRY, model_status
 from .services import alerts, backtests, replay, tracking
 from .services.runtime import Runtime
 
-ASSET_TIMEFRAMES = ["15m", "1h", "4h", "1d"]
+ASSET_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"]
 
 
 def slug(symbol: str) -> str:
@@ -154,7 +154,7 @@ def settings_view(rt: Runtime) -> dict[str, Any]:
 
 
 # ---- futures -----------------------------------------------------------------------------------------------
-FUTURES_TIMEFRAMES = ("15m", "1h", "4h")
+FUTURES_TIMEFRAMES = ("15m", "1h", "4h", "12h", "1d", "3d")
 
 
 def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) -> dict[str, Any]:

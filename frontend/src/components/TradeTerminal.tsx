@@ -184,7 +184,7 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
   const use = () => {
     const q = new URLSearchParams(params);
     q.set("side", market === "spot" ? "LONG" : p.side); if (market === "futures") q.set("lev", String(p.suggested_leverage));
-    q.set("sl", String(p.stop)); q.set("tp", String((p.targets?.[2] ?? p.targets?.[1] ?? p.targets?.[0])?.price)); q.set("limit", String(p.entry));
+    q.set("sl", String(p.stop)); q.set("tp", String((p.targets?.[1] ?? p.targets?.[0])?.price)); q.set("limit", String(p.entry));
     setParams(q, { replace: true });
   };
   const cls = vd.tone === "bull" ? "border-bull/40 bg-bull/[0.07]" : vd.tone === "bear" ? "border-bear/40 bg-bear/[0.07]" : "border-glass/10 bg-glass/[0.03]";

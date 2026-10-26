@@ -109,7 +109,7 @@ def test_setup_is_refused_when_reward_does_not_justify_risk():
     last = fr.ind.iloc[-1]
     price, atr = float(last["close"]), float(last["atr"])
     wall = {"support": [], "resistance": [{"low": price + 0.2 * atr, "high": price + 0.4 * atr, "mid": price + 0.3 * atr}]}
-    s = build_setup(fr.ind, wall, 1, min_rr=1.0)
+    s = build_setup(fr.ind, wall, 1, min_rr=1.25)
     assert s["valid"] is False and ("Resistance" in s["reason"] or "expectancy" in s["reason"])
     assert build_setup(fr.ind, {"support": [], "resistance": []}, 1, min_rr=50)["valid"] is False
 
@@ -155,3 +155,13 @@ def test_weight_optimisation_reports_out_of_sample_accuracy():
     assert out["ok"] and out["test_rows"] > 500 and 0 <= out["test_accuracy"] <= 1
     assert abs(sum(out["weights"].values()) - 1) < 1e-9 and min(out["weights"].values()) >= 0
     assert optimise_weights(ind.iloc[:200], fwd.iloc[:200])["ok"] is False
+
+
+def test_targets_tp1_is_one_to_one_and_the_rest_stay_within_1_to_3():
+    fr = build_frame(synthetic_candles(1500, "4h", seed=3), "4h")
+    for side in (1, -1):
+        s = build_setup(fr.ind, {"support": [], "resistance": []}, side, min_rr=0)
+        rr = [t["rr"] for t in s["targets"]]
+        assert abs(rr[0] - 1.0) < 1e-6 and 1.25 - 1e-6 <= rr[1] <= 2.0 + 1e-6 and 2.0 - 1e-6 <= rr[2] <= 3.0 + 1e-6
+        assert rr[2] >= rr[1] + 0.25 - 1e-6 and s["tp_split"] == [0.5, 0.25, 0.25]
+        assert abs(s["risk_reward"] - (0.5 * rr[0] + 0.25 * rr[1] + 0.25 * rr[2])) < 1e-9

@@ -51,7 +51,7 @@ export default function AutoTrade() {
               {[1, 2, 3, 5, 10, 20].map((l) => <option key={l} value={l}>{l}x (capped so liquidation stays beyond the stop)</option>)}
             </select></label>
           <div><span className="text-xs text-mute">Timeframes</span>
-            <div className="mt-1 flex gap-1">{["15m", "1h", "4h"].map((tf) => <button key={tf} className={`btn flex-1 px-2 py-1.5 text-xs ${s.timeframes.includes(tf) ? "btn-on" : ""}`} aria-pressed={s.timeframes.includes(tf)} onClick={() => toggleTf(tf)}>{tf.toUpperCase()}</button>)}</div></div>
+            <div className="mt-1 flex gap-1">{["15m", "1h", "4h", "12h", "1d", "3d"].map((tf) => <button key={tf} className={`btn flex-1 px-2 py-1.5 text-xs ${s.timeframes.includes(tf) ? "btn-on" : ""}`} aria-pressed={s.timeframes.includes(tf)} onClick={() => toggleTf(tf)}>{tf.toUpperCase()}</button>)}</div></div>
           <label className="block"><span className="text-xs text-mute">Signals</span>
             <select className="input mt-1" value={s.grades} onChange={(e) => setS({ ...s, grades: e.target.value })}>
               <option value="AB">Grade A and B (more trades)</option><option value="A">Grade A only (strongest)</option>

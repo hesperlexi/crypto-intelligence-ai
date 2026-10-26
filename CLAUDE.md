@@ -34,10 +34,12 @@ Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real
   from Hyperliquid; live funding fallback OKX.
 
 ## How a signal is made (engine v2)
-**v2.1 (Oct 2026): quick trades.** `MODEL_TIMEFRAMES = 15m/1h/4h` (12h/1d/3d/1w dropped from signals; 1d stays as chart
-context), targets 0.5R/0.75R/1R (1:1 final, `engine/setup.py` + `ml/trade_filter.py` R_MULTIPLES), min R:R 1.0.
-15m history 30000 bars via `CandleStore._deepen` (older-history backfill, 120 pages/run). Gold = `PAXG/USDT`
-(added once, flag `gold_paxg_v21`), shown as GOLD; Pro chart `FOREXCOM:XAUUSD` (forex.com has no free API).
+**v2.2 (Oct 2026).** `MODEL_TIMEFRAMES = 15m/1h/4h/12h/1d/3d` (1w chart context only; `log_signal` skips non-model
+TFs). Targets (`engine/setup.py`): TP1 exactly 1R closes 50% (stop → break-even), TP2 ∈ [1.25R, 2R] and TP3 ∈ [2R, 3R]
+picked by max historical first-passage p·R, capped by S/R; 25% each (`TP_SPLIT`, used by bots, tracking, trade
+filter). `risk_reward` = blended exits, min 1.25. 15m history 30000 bars via `CandleStore._deepen` (fills holes, 120
+pages/run, flag `deep2:*`). Gold = `PAXG/USDT` (added once, flag `gold_paxg_v21`), shown as GOLD; Pro chart
+`FOREXCOM:XAUUSD` (forex.com has no free API).
 1. `services/analysis.py`: technical tilt + ensemble forecast (`ml/trainer.py`, walk-forward, calibrated).
 2. Directional confidence = hit rate of comparable out-of-sample calls (`ml/direction.py`); per-model margin policy.
 3. Grades: **A** tilt + AI agree above proven threshold; **B** AI-led where the model has an out-of-sample edge.

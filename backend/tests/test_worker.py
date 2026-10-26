@@ -28,7 +28,7 @@ def test_engine_cycle_publishes_views_runs_jobs_and_bots():
     sink = LocalSink(tempfile.mkdtemp(), db)
     d = worker.tick(rt, sink, budget_s=900, fetch_context=False)
     assert d["status"] == "ok", d["steps"]
-    assert len(d["bootstrap"]) >= 4                                    # missing models trained (fast set)
+    assert len(d["bootstrap"]) >= 8                                    # missing models trained (fast set)
     a = _view(sink, "analysis_BTCUSDT_4h")
     assert a["status"] == "OK" and a["forecast"]["available"] and "NaN" not in sink.get("views/analysis_BTCUSDT_4h")["json"]
     for name in ("futures_4h", "futures_1h", "meta", "health", "dashboard_4h", "models_BTCUSDT_4h", "perf_BTCUSDT_4h", "performance", "signals",

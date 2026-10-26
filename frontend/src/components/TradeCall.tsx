@@ -87,7 +87,9 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   // price ladder: every level sorted top to bottom, with the live price slotted in
   const levels: { k: string; price: number; cls: string; note?: string }[] = [];
   if (plan) {
-    for (const tg of [...(plan.targets ?? [])].reverse()) levels.push({ k: `Take-profit ${tg.name.replace("TP", "")}`, price: tg.price, cls: "text-bull", note: isNum(tg.probability) ? `${fmtProb(tg.probability)} reached before` : undefined });
+    const SPLIT = ["close 50%", "close 25%", "close 25%"];
+    for (const [i, tg] of [...(plan.targets ?? [])].entries()) levels.push({ k: `Take-profit ${tg.name.replace("TP", "")} · 1:${isNum(tg.rr) ? (Math.round(tg.rr * 100) / 100).toString() : "?"}`, price: tg.price, cls: "text-bull",
+      note: [SPLIT[i], isNum(tg.probability) ? `${fmtProb(tg.probability)} reached before the stop` : null].filter(Boolean).join(" · ") });
     levels.push({ k: "Entry (ideal)", price: plan.entry, cls: "text-accent", note: plan.entry_zone ? `zone ${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined });
     levels.push({ k: "Stop-loss", price: plan.stop, cls: "text-bear", note: isNum(plan.risk_pct) ? `risk ${fmtPctRaw(plan.risk_pct, 1, false)}` : undefined });
     if (market === "futures" && isNum(plan.liquidation_at_suggested)) levels.push({ k: `Liquidation at ${plan.suggested_leverage}x`, price: plan.liquidation_at_suggested, cls: "text-warn" });
@@ -98,7 +100,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   const paper = () => {
     const q = new URLSearchParams({ market, symbol: r.symbol, side: market === "spot" ? "LONG" : side,
       ...(market === "futures" && plan?.suggested_leverage ? { lev: String(plan.suggested_leverage) } : {}),
-      ...(plan?.stop ? { sl: String(plan.stop) } : {}), ...((plan?.targets?.[2] ?? plan?.targets?.[1])?.price ? { tp: String((plan.targets[2] ?? plan.targets[1]).price) } : {}) });
+      ...(plan?.stop ? { sl: String(plan.stop) } : {}), ...(plan?.targets?.[1]?.price ? { tp: String(plan.targets[1].price) } : {}) });
     nav(`/paper?${q}`);
   };
   const copy = async () => {
@@ -162,10 +164,10 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             <Box k={market === "futures" ? (side === "LONG" ? "Long entry" : "Short entry") : "Buy at"} v={fmtPrice(plan.entry)} cls="text-accent" sub={plan.entry_zone ? `${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined} />
             <Box k="Stop-loss" v={fmtPrice(plan.stop)} cls="text-bear" sub={pct(plan.stop, plan.entry) != null ? fmtPctRaw(pct(plan.stop, plan.entry)!, 1) : undefined} />
-            <Box k="Target (1:1)" v={fmtPrice(plan.targets?.[2]?.price ?? plan.targets?.[0]?.price)} cls="text-bull" sub={pct((plan.targets?.[2] ?? plan.targets?.[0])?.price, plan.entry) != null ? fmtPctRaw(pct((plan.targets[2] ?? plan.targets[0]).price, plan.entry)!, 1) : undefined} />
+            <Box k="TP1 · 1:1 · close 50%" v={fmtPrice(plan.targets?.[0]?.price)} cls="text-bull" sub={pct(plan.targets?.[0]?.price, plan.entry) != null ? fmtPctRaw(pct(plan.targets[0].price, plan.entry)!, 1) : undefined} />
             {market === "futures"
               ? <Box k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />
-              : <Box k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="at the final target" />}
+              : <Box k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="blended: 50% at TP1, 25% TP2, 25% TP3" />}
           </div>
         )}
 

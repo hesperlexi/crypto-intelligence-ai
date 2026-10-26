@@ -57,7 +57,7 @@ def settings_of(raw: dict[str, Any] | None) -> dict[str, Any]:
             s["leverage"] = int(max(1, min(MAX_LEV, float(s["leverage"]))))
         except (TypeError, ValueError):
             s["leverage"] = "signal"
-    s["timeframes"] = [t for t in (s["timeframes"] or []) if t in ("15m", "1h", "4h")] or ["1h", "4h"]
+    s["timeframes"] = [t for t in (s["timeframes"] or []) if t in ("15m", "1h", "4h", "12h", "1d", "3d")] or ["1h", "4h"]
     s["grades"] = "A" if str(s["grades"]).upper() == "A" else "AB"
     s["take"] = s["take"] if s["take"] in TAKES else "tp2"
     s["max_open"] = int(max(1, min(50, int(s.get("max_open") or 5))))

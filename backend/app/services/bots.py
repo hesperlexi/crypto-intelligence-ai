@@ -10,8 +10,8 @@ Two kinds of bot, both run by the engine on every cycle, on either market:
 
 
 * decision   - trades only the engine's final decisions (BUY / BUY ON PULLBACK / SELL) with the trade plan's
-               entry, stop and three targets, risk-based sizing, a third of the position closed at each
-               target, the stop moved to break-even after TP1 and trailed to TP1 after TP2. Measures what following the signals earns.
+               entry, stop and three targets, risk-based sizing, half the position closed at TP1 (1:1) and a
+               quarter at TP2 and TP3, the stop moved to break-even after TP1 and trailed to TP1 after TP2. Measures what following the signals earns.
 * prediction - trades every ensemble call (UP -> long, DOWN -> short) for exactly one bar of its timeframe,
                with no other filter. Measures the raw accuracy and payoff of the model's predictions.
 
@@ -33,6 +33,7 @@ from ..config import settings
 from ..data.base import tf_ms
 from ..db import Database, dumps, loads, new_id, now_ms
 from ..engine import futures as F
+from ..engine.setup import TP_SPLIT
 from . import analysis
 from .runtime import Runtime
 
@@ -130,7 +131,7 @@ def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
         out[k] = v
     if out["mode"] not in ("decision", "prediction"):
         out["mode"] = "decision"
-    if out["timeframe"] not in ("15m", "1h", "4h"):
+    if out["timeframe"] not in ("15m", "1h", "4h", "12h", "1d", "3d"):
         out["timeframe"] = "4h"
     out["starting_balance"] = max(100.0, out["starting_balance"])
     out["risk_per_trade_pct"] = float(np.clip(out.get("risk_per_trade_pct", 1.0), 0.05, 10))
@@ -397,13 +398,14 @@ class BotEngine:
                     if not ((hi >= tp) if side > 0 else (lo <= tp)):
                         break
                     px = max(op, tp) if side > 0 else min(op, tp)
-                    leg = pos["qty_open"] if pos["tp_hit"] == len(pos["targets"]) - 1 else pos["qty"] / len(pos["targets"])
+                    split = TP_SPLIT if len(pos["targets"]) == len(TP_SPLIT) else [1 / len(pos["targets"])] * len(pos["targets"])
+                    leg = pos["qty_open"] if pos["tp_hit"] == len(pos["targets"]) - 1 else pos["qty"] * split[pos["tp_hit"]]
                     self._reduce(state, pos, min(leg, pos["qty_open"]), px, True)
                     pos["tp_hit"] += 1
                     if pos["tp_hit"] == 1:
                         pos["stop"] = pos["entry"]            # protect the rest at break-even
                     elif pos["tp_hit"] == 2 and pos["targets"]:
-                        pos["stop"] = pos["targets"][0]       # trail: after TP2 the last third is locked in at TP1
+                        pos["stop"] = pos["targets"][0]       # trail: after TP2 the last quarter is locked in at TP1
                 if pos["qty_open"] <= pos["qty"] * 1e-9:
                     done = (f"TP{pos['tp_hit']}", ts + step)
                     break

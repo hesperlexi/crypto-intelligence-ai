@@ -25,7 +25,7 @@ def test_structured_output_has_every_field_of_the_final_signal_format():
               "forecast", "entry", "stop", "tp1", "tp2", "tp3", "risk_reward", "multi_timeframe_alignment",
               "model_agreement", "warnings", "decision"):
         assert k in out, k
-    assert set(out["forecast"]) == {"15M", "1H", "4H"}
+    assert set(out["forecast"]) == {"15M", "1H", "4H", "12H", "24H", "3D"}
     assert out["decision"] in ("BUY", "BUY ON PULLBACK", "HOLD", "SELL", "NO TRADE")
     assert abs(out["bullish"] + out["neutral"] + out["bearish"] - 1) < 1e-9
     json.loads(dumps(a))                                   # strict JSON: no NaN, no numpy types
@@ -37,10 +37,10 @@ def test_horizons_use_their_own_timeframe_model_and_never_extrapolate():
     rt, _ = shared_runtime()
     hz = {h["horizon"]: h for h in analysis.horizon_forecasts(rt, "BTC/USDT")}
     assert hz["4H"]["available"] and hz["4H"]["timeframe"] == "4h"
-    for label in ("15M", "1H"):                            # only the 4h model was trained in this fixture
+    for label in ("15M", "1H", "24H"):                            # only the 4h model was trained in this fixture
         assert not hz[label]["available"] and hz[label]["status"] == "MODEL NOT TRAINED"
         assert "expected_return" not in hz[label]
-    assert analysis.model_forecast(rt, "BTC/USDT", "1d")["status"] == "NOT MODELLED"     # daily: context only
+    assert analysis.model_forecast(rt, "BTC/USDT", "1w")["status"] == "NOT MODELLED"     # weekly: context only
 
 
 def test_no_data_and_no_model_protection():
@@ -273,7 +273,7 @@ def test_database_failure_shows_up_in_health():
     rt, _ = make_runtime()
     h = health.report(rt)
     assert h["database"]["ok"] and h["market_data"]["quality_pct"] == 100.0
-    assert h["status"] in ("DEGRADED", "LIVE") and len(h["series"]) == 8 and len(h["models"]) == 6
+    assert h["status"] in ("DEGRADED", "LIVE") and len(h["series"]) == 8 and len(h["models"]) == 12
     health.snapshot(rt)
     assert rt.db.one("SELECT COUNT(*) AS n FROM system_health")["n"] == 3
     rt.db._conn.close()

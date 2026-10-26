@@ -87,11 +87,11 @@ Tap any coin to open its page. The chart has two modes: **AI chart** (the app's 
 2. **Confidence / probability up.** The chance the models give that the price is higher at the end of the horizon. 50% is a coin flip. Around 55–60% is a real lean for crypto; anything that claims 80%+ should make you more careful, not less.
 3. **Confident calls.** Results → Accuracy shows the confidence level above which the model has historically been right more often (the *Confident calls* card). Above it is a confident call, worth acting on; below it, treat the call as a lean only.
 4. **Expected move / edge.** How big the move is expected to be. A 55% call with a tiny expected move is often not worth fees and slippage.
-5. **Trade setup: entry, stop loss, targets.** The stop comes from recent volatility (ATR) and support/resistance. Targets are quick: **TP1 at half the stop distance, TP2 at three quarters, TP3 at the full stop distance (1:1)**. A third is taken at each, and after TP1 the stop moves to break-even. Tap **Trade plan** above the chart to draw it. Always use the stop loss. "No valid setup" means a support/resistance level is in the way or the odds are poor.
-6. **Multi-timeframe card.** Shows each timeframe's view and an *alignment* score. The strongest setups are when timeframes agree. Signals are made on **15M, 1H and 4H** (quick trades); the daily and weekly views are shown as background trend only.
+5. **Trade setup: entry, stop loss, targets.** The stop comes from recent volatility (ATR) and support/resistance. **TP1 is always 1:1** (as far as the stop) and closes **half** the trade; after it the stop moves to break-even. **TP2 (up to 1:2) and TP3 (up to 1:3)** are chosen by the AI from how often price reached each level in similar conditions, and are pulled in when support/resistance is in the way; a quarter closes at each. Tap **Trade plan** above the chart to draw it. Always use the stop loss. "No valid setup" means a support/resistance level is in the way or the odds are poor.
+6. **Multi-timeframe card.** Shows each timeframe's view and an *alignment* score. The strongest setups are when timeframes agree. Signals are made on **15M, 1H and 4H** for quick trades and **12H, 1D and 3D** for swing trades; the weekly view is background trend only.
 7. **Model consensus and "Why this signal?".** Each model (gradient boosting, LSTM, GRU, Transformer) votes, and the explanation card lists the reasons. Agreement between very different models is a better sign than one model being very sure.
 
-> **Rule of thumb:** act only when the decision is a confident call, at least two timeframes agree, and you place the stop loss. Targets are 1:1: the full target is as far away as the stop.
+> **Rule of thumb:** act only when the decision is a confident call, at least two timeframes agree, and you place the stop loss. Take half off at TP1 (1:1), then let the rest run to TP2 / TP3 with the stop at break-even.
 
 ## 5. A daily routine that gets the most out of it
 
@@ -160,7 +160,7 @@ Open **Trade** (bottom bar on phones). It works like Binance or MEXC, with virtu
 - **Gold (XAUT):** on the **Futures** tab, the coin list also has **XAUT** (Tether Gold, tagged GOLD), so you can follow and demo-trade gold with a live chart and order book. Binance offers gold only as a futures contract, so it is not on the Spot tab, and the AI does not make signals for it.
 - **Gold signals (XAU/USD):** the Signals page includes **GOLD**. The AI trades it through PAXG (one token = one ounce of gold), which follows the XAU/USD price closely; the Pro chart shows forex.com's XAU/USD. If you trade gold on forex.com, use the same **% distances** from your entry that the signal shows for the stop and targets, because the two prices can differ slightly.
 - **AI call strip:** the app's current call for this coin. **Use this plan** fills in the side, leverage, a limit at the entry price, the stop-loss and the take-profit for you.
-- **Chart:** live candles (1m to 1D; signals are on 15M, 1H and 4H). Your entry, take-profit, stop-loss, liquidation price and open limit orders are drawn on it.
+- **Chart:** live candles (1m to 1D; signals are on 15M to 3D). Your entry, take-profit, stop-loss, liquidation price and open limit orders are drawn on it.
 - **Order book** (computer): live bids and asks.
 - **Order form:** **Limit** (buy or sell at your price; it fills when the market gets there) or **Market** (now). Set the size with the amount box or the **25 / 50 / 75 / 100%** buttons.
 
@@ -180,7 +180,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 **Results → Demo bots** runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
-- **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets (0.5R, 0.75R and 1R, a 1:1 final target), taking a third off at each. After take-profit 1 the stop moves to break-even, and after take-profit 2 it moves up to take-profit 1. The two **App scorecard** bots (futures, grades A+B, 1H and 4H) take exactly the calls members see on the Signals page, on every coin, so their result is the app's real performance; they are shown first on the Track record. The standard bots trade grade A calls only; the **A+B** bots also take grade B calls, so you can compare quality against quantity.
+- **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets: half closes at take-profit 1 (1:1), a quarter at take-profit 2 (up to 1:2) and a quarter at take-profit 3 (up to 1:3). After take-profit 1 the stop moves to break-even, and after take-profit 2 it moves up to take-profit 1. The two **App scorecard** bots (futures, grades A+B, 1H and 4H) take exactly the calls members see on the Signals page, on every coin, so their result is the app's real performance; they are shown first on the Track record. The standard bots trade grade A calls only; the **A+B** bots also take grade B calls, so you can compare quality against quantity.
 - **Prediction trackers** take every raw model call for one bar, showing how good the raw predictions are.
 - **Futures bots** trade the same calls as perpetual futures with leverage, liquidation and funding.
 

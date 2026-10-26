@@ -7,13 +7,13 @@ from app.ml import trade_filter as T
 def test_trade_r_follows_the_bot_rules():
     atr = np.full(40, 1.0)
     close = np.full(40, 100.0)
-    # long: stop 98.5 (1.5 ATR), targets 100.75 / 101.125 / 101.5 (0.5R / 0.75R / 1R)
+    # long: stop 98.5 (1.5 ATR), targets 101.5 / 102.625 / 103.75 (1R / 1.75R / 2.5R), closing 50% / 25% / 25%
     high = close.copy(); low = close.copy()
-    high[1], low[1] = 100.8, 99.9            # target 1
-    high[2], low[2] = 101.2, 100.9           # target 2 (stop now at entry, then trails to target 1)
-    high[3], low[3] = 101.0, 100.7           # back down: trailing stop at target 1 (100.75)
+    high[1], low[1] = 101.6, 99.9            # target 1: half off, stop to break-even
+    high[2], low[2] = 102.7, 101.6           # target 2: a quarter off, stop trails to target 1
+    high[3], low[3] = 102.0, 101.4           # back down: trailing stop at target 1 (101.5)
     r = T.trade_r(high, low, close, atr, 0, 1, 0.0)
-    assert abs(r - (0.5 + 0.75 + 0.5) / 3) < 1e-9
+    assert abs(r - (0.5 * 1.0 + 0.25 * 1.75 + 0.25 * 1.0)) < 1e-9
     high2, low2 = close.copy(), close.copy(); low2[1], high2[1] = 98.0, 103.0      # stop and target in one candle
     assert abs(T.trade_r(high2, low2, close, atr, 0, 1, 0.0) + 1.0) < 1e-9          # the stop counts first
     assert T.trade_r(high, low, close, atr, 20, 1, 0.0) is None                     # future unknown

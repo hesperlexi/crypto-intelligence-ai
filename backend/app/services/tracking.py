@@ -172,7 +172,7 @@ def log_signal(db: Database, a: dict[str, Any]) -> bool:
 
 def update_signal_outcomes(rt: Any, horizon_bars: int = 30) -> int:
     """Follow OPEN signals through later candles. Stop is assumed first when stop and target share a bar.
-    Return = average of three equal legs, each exiting at its target if reached, otherwise at the stop or,
+    Return = three legs (50% / 25% / 25%), each exiting at its target if reached, otherwise at the stop or,
     on expiry, at the last close."""
     db = rt.db
     changed = 0
@@ -198,7 +198,7 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30) -> int:
         expired = closed_ts is None and len(after) >= horizon_bars
         last_close = float(after["close"].iloc[-1])
         fallback = s["stop"] if stop_hit else last_close
-        ret = float(np.mean([side * ((tps[i] if hit[i] else fallback) / entry - 1) for i in range(3)])) * 100
+        ret = float(sum(w * side * ((tps[i] if hit[i] else fallback) / entry - 1) for i, w in enumerate((0.5, 0.25, 0.25)))) * 100      # 50% / 25% / 25% exits
         status = "STOPPED" if stop_hit and not hit[0] else "TP3" if hit[2] else \
             ("TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED") if (stop_hit or expired) else "OPEN"
         if closed_ts is None and expired:

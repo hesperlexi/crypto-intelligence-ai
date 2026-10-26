@@ -26,9 +26,9 @@ TF_SECONDS = {
 }
 # Forecast horizon -> the timeframe whose own model produces it (one bar ahead).
 # A 1h model is never extrapolated into a daily forecast.
-# v2.1: quick trades - signals and models on 15m, 1h and 4h only (daily / weekly stay as chart context)
-HORIZONS = {"15M": "15m", "1H": "1h", "4H": "4h"}
-MODEL_TIMEFRAMES = ["15m", "1h", "4h"]
+# v2.2: quick timeframes (15m, 1h, 4h) plus the swing timeframes (12h, 1d, 3d); the weekly is chart context only
+HORIZONS = {"15M": "15m", "1H": "1h", "4H": "4h", "12H": "12h", "24H": "1d", "3D": "3d"}
+MODEL_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "3d"]
 MTF_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "1w"]
 MTF_WEIGHTS = {"15m": 0.08, "1h": 0.14, "4h": 0.22, "12h": 0.16, "1d": 0.24, "1w": 0.16}
 
@@ -113,7 +113,7 @@ class Settings:
     min_dir_confidence_a: float = field(default_factory=lambda: _f("MIN_DIR_CONFIDENCE_A", 0.53))
     min_dir_confidence_b: float = field(default_factory=lambda: _f("MIN_DIR_CONFIDENCE_B", 0.505))
     min_agreement_b: float = field(default_factory=lambda: _f("MIN_AGREEMENT_B", 0.50))
-    min_risk_reward: float = field(default_factory=lambda: _f("MIN_RISK_REWARD", 1.0))
+    min_risk_reward: float = field(default_factory=lambda: _f("MIN_RISK_REWARD", 1.25))
 
     # costs (defaults for backtests / paper trading)
     fee_rate: float = field(default_factory=lambda: _f("FEE_RATE", 0.001))

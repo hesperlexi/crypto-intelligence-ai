@@ -86,7 +86,7 @@ def test_long_takes_partial_profits_and_exits_at_breakeven(monkeypatch, no_costs
     assert st["positions"] == []
     t = rt.db.one("SELECT * FROM bot_trades")
     assert t["exit_reason"] == "breakeven stop" and t["correct"] == 1
-    assert abs(t["pnl"] - 50 / 3 * 2) < 1e-6                       # one third banked +$2, the rest flat
+    assert abs(t["pnl"] - 50 * 0.5 * 2) < 1e-6                      # half banked at TP1 (+$2), the rest flat
     assert abs(st["cash"] - (10_000 + t["pnl"])) < 1e-6 and abs(st["equity"] - st["cash"]) < 1e-6
     assert abs(t["r_multiple"] - t["pnl"] / 100) < 1e-9
 
@@ -122,7 +122,7 @@ def test_short_and_one_entry_per_signal_bar(monkeypatch, no_costs):
     (cfg, st), = eng.bots()
     t = rt.db.one("SELECT * FROM bot_trades")
     assert t["side"] == -1 and t["exit_reason"] == "TP3"
-    assert abs(t["pnl"] - (50 / 3) * (2 + 4 + 6)) < 1e-6
+    assert abs(t["pnl"] - 50 * (0.5 * 2 + 0.25 * 4 + 0.25 * 6)) < 1e-6
     assert st["positions"] == [] and rt.db.one("SELECT COUNT(*) AS n FROM bot_trades")["n"] == 1
 
 

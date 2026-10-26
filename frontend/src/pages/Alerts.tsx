@@ -12,7 +12,7 @@ const NEEDS: Record<string, { key: string; label: string; placeholder: string }>
   PRICE_BELOW: { key: "level", label: "Price level", placeholder: "e.g. 60000" },
 };
 const LABEL: Record<string, string> = { TRADE_SETUP: "Trade signal — entry, stop-loss & take-profits" };
-const TRADE_TFS = ["15m", "1h", "4h"] as const;
+const TRADE_TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 
 function describe(a: any): string {
   const p = a.params ?? {};
