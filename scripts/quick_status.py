@@ -7,15 +7,15 @@ firebase_admin.initialize_app(credentials.Certificate(json.loads(os.environ["FIR
 fs = firestore.client()
 wl = [x.get("symbol") for x in (fs.document("config/watchlist").get().to_dict() or {}).get("symbols", [])]
 out = {"watchlist": wl, "views": {}}
-for tf in ("15m", "1h", "4h"):
+for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
     d = fs.document(f"views/futures_{tf}").get().to_dict()
     v = json.loads(d["json"]) if d and d.get("json") else {}
     rows = v.get("rows") or []
     out["views"][tf] = {
         "rows": len(rows), "updated": (d or {}).get("updated_at"),
         "tradable": [{"symbol": r.get("symbol"), "side": (r.get("plan") or {}).get("side"), "grade": r.get("grade"),
-                      "rr": (r.get("plan") or {}).get("risk_reward"),
-                      "targets_rr": [t.get("rr") for t in (r.get("plan") or {}).get("targets") or []]}
+                      "rr": round((r.get("plan") or {}).get("risk_reward") or 0, 2),
+                      "targets_rr": [round(t.get("rr") or 0, 2) for t in (r.get("plan") or {}).get("targets") or []]}
                      for r in rows if r.get("plan")][:8],
         "statuses": sorted({str(r.get("status")) for r in rows}),
         "gold": next(({k: r.get(k) for k in ("status", "reason", "decision", "grade")} for r in rows if str(r.get("symbol", "")).startswith("PAXG")), None),
