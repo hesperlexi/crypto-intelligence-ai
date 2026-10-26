@@ -186,3 +186,11 @@ for n, lim in (("news", 120), ("radar", 120), ("context", 120)):
         P(f"view {n} not updated for {a} min")
 
 print(json.dumps(out, indent=1, default=str))
+
+# 13. model coverage: which coin/timeframes have no model and why
+ms, _ = view("models_status")
+rows = (ms or {}).get("rows") or (ms or {}).get("models") or (ms if isinstance(ms, list) else [])
+skipped = [{k: r.get(k) for k in ("symbol", "timeframe", "state", "status", "detail", "reason", "error")}
+           for r in rows if isinstance(r, dict) and str(r.get("state") or r.get("status") or "").upper() not in ("DONE", "OK", "READY")]
+print(json.dumps({"models_status_keys": list((ms or {}).keys())[:10] if isinstance(ms, dict) else None,
+                  "not_trained": skipped[:80]}, indent=1, default=str))
