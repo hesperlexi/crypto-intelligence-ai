@@ -271,3 +271,35 @@ CREATE TABLE IF NOT EXISTS derivs (
   value DOUBLE PRECISION NOT NULL,
   PRIMARY KEY (symbol, kind, ts)
 );
+
+-- v2.2 safety switch: trades a paused coin/timeframe would have taken (tracked like signals, never shown as signals)
+CREATE TABLE IF NOT EXISTS shadow_signals (
+  id TEXT PRIMARY KEY,
+  created_at BIGINT NOT NULL,
+  symbol TEXT NOT NULL,
+  timeframe TEXT NOT NULL,
+  bar_ts BIGINT NOT NULL,
+  signal TEXT NOT NULL,
+  decision TEXT NOT NULL,
+  score DOUBLE PRECISION,
+  confidence DOUBLE PRECISION,
+  regime TEXT,
+  price DOUBLE PRECISION NOT NULL,
+  side INTEGER NOT NULL DEFAULT 0,
+  entry DOUBLE PRECISION,
+  stop DOUBLE PRECISION,
+  tp1 DOUBLE PRECISION,
+  tp2 DOUBLE PRECISION,
+  tp3 DOUBLE PRECISION,
+  rr DOUBLE PRECISION,
+  status TEXT NOT NULL DEFAULT 'OPEN',
+  tp1_hit INTEGER NOT NULL DEFAULT 0,
+  tp2_hit INTEGER NOT NULL DEFAULT 0,
+  tp3_hit INTEGER NOT NULL DEFAULT 0,
+  stop_hit INTEGER NOT NULL DEFAULT 0,
+  closed_at BIGINT,
+  return_pct DOUBLE PRECISION,
+  model_version_id TEXT,
+  payload TEXT,
+  UNIQUE (symbol, timeframe, bar_ts)
+);

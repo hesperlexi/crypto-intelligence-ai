@@ -205,3 +205,35 @@ def test_v2_fresh_start_resets_bots_once_and_starts_the_record(tmp_path):
     assert all(t.startswith("v2-") for t in tokens) and rt.db.get_setting("record_since", 0) > 0
     worker.sync_config(rt, sink)
     assert [b["reset_token"] for b in sink.get("config/bots")["bots"]] == tokens        # only once
+
+
+def test_parallel_training_slices_are_registered_by_the_merge(monkeypatch, tmp_path):
+    """A slice trains on its own copy of the state and exports the models; the merge registers them in the real
+    state (a newer model that is already active is never replaced)."""
+    import shutil
+
+    from app.ml import trainer
+    from app.services import training
+    from app.sinks import LocalSink
+    from tests.helpers import make_runtime
+
+    rt, _ = make_runtime(symbols=("BTC/USDT",), predictable=0.15)
+    monkeypatch.setattr(worker, "MODEL_TIMEFRAMES", ["4h"])
+    monkeypatch.setattr(training, "train_one", lambda rt_, s, tf, fast=False: _orig(rt_, s, tf, True))   # fast set in tests
+    monkeypatch.setattr(rt.store, "is_current", lambda *a, **k: True)                                      # test data ends earlier
+    out = tmp_path / "slice-0"
+    r = worker.train_shard(rt, 0, 1, 600, str(out))
+    assert r["exported"] == 1 and (out / "manifest.json").exists()
+    rec = json.loads((out / "manifest.json").read_text())["records"][0]
+    # the "real" state: a fresh database that has never seen this model
+    rt2, _ = make_runtime(symbols=("BTC/USDT",), predictable=0.15, model_dir=str(tmp_path / "models2"))
+    sink = LocalSink(str(tmp_path / "sink"), rt2.db)
+    d = worker.train_merge(rt2, sink, str(tmp_path))
+    assert d["imported"] == 1 and trainer.active_version("BTC/USDT", "4h", rt2.db)["id"] == rec["version"]
+    assert trainer.load_bundle("BTC/USDT", "4h", rt2.db)["version"] == rec["version"]
+    assert worker.train_merge(rt2, sink, str(tmp_path))["imported"] == 0          # importing twice changes nothing
+
+
+from app.services import training as _training  # noqa: E402
+
+_orig = _training.train_one

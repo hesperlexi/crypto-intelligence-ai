@@ -267,6 +267,16 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 decision = "SELL"
             if grade:
                 direction = side
+    # bigger-trend check (v2.2): a trade against BOTH of the next two higher timeframes' trends is refused; against
+    # one of them, a grade A call is lowered to B. Quick timeframes are where this matters most.
+    trend_check = higher_trend_check(matrix, timeframe, direction if decision in TRADE_DECISIONS else 0)
+    if decision in TRADE_DECISIONS and trend_check:
+        if trend_check["against"] >= 2:
+            decision, why, grade = "NO TRADE", f"the bigger trend points the other way ({trend_check['label']})", None
+            flags.append("AGAINST BIGGER TREND")
+        elif trend_check["against"] == 1 and grade == "A":
+            grade = "B"
+            basis = f"{basis}; one higher timeframe disagrees ({trend_check['label']})" if basis else trend_check["label"]
     # trade filter: the model's own record of which setups reach their targets before the stop
     tf_view = (fc or {}).get("trade_filter") if fc.get("available") else None
     filter_score = None
@@ -279,6 +289,20 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             grade = None
             flags.append("FILTERED")
 
+    # safety switch (v2.2): a coin/timeframe whose recent live signals lost pauses; its would-be trades are
+    # tracked as hidden practice trades until they recover
+    safety_state, shadow = None, None
+    if live and bundle is None and timeframe in MODEL_TIMEFRAMES:
+        try:
+            from . import safety
+            from ..views import record_since
+            safety_state = safety.check(rt.db, symbol, timeframe, record_since(rt))
+        except Exception:
+            safety_state = None
+        if safety_state and safety_state.get("paused") and decision in TRADE_DECISIONS and setup and setup.get("valid"):
+            shadow = (decision, setup)
+            decision, why, grade = "NO TRADE", safety_state["reason"], None
+            flags.append("PAUSED")
     # high-impact US data release (CPI, jobs report, Fed): pause fresh entries around it
     news_risk = None
     try:
@@ -310,7 +334,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             "atr": _n(last["atr"]), "atr_pct": _n(last["atr_pct"]), "bb_width": _n(last["bb_width"]),
             "bb_width_percentile": _n(last["bb_width_pct"]), "range_expansion": bool(last["range_expansion"]),
             "range_compression": bool(last["range_compression"])},
-        "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)),
+        "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
+        "safety": safety_state,
         "grade": grade, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
         "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"),
         "confidence": confidence, "confidence_detail": conf_detail,
@@ -333,8 +358,26 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         if fc["available"]:
             tracking.log_prediction(rt.db, symbol, timeframe, fc)
         tracking.log_signal(rt.db, out)
+        if shadow:
+            tracking.log_shadow(rt.db, out, shadow[0], shadow[1])
         rt.analysis_cache[key] = (time.time(), out)
     return out
+
+
+def higher_trend_check(matrix: dict[str, Any], timeframe: str, side: int) -> dict[str, Any] | None:
+    """How many of the next two higher timeframes trend against `side` (+1 long / -1 short)."""
+    if not side:
+        return None
+    from ..config import TF_SECONDS
+
+    rows = sorted((r for r in matrix.get("rows", []) if r.get("available") and r.get("direction") is not None
+                   and TF_SECONDS.get(r["timeframe"], 0) > TF_SECONDS.get(timeframe, 0)),
+                  key=lambda r: TF_SECONDS[r["timeframe"]])[:2]
+    if not rows:
+        return None
+    against = [r["timeframe"] for r in rows if r["direction"] == -side]
+    label = ", ".join(f"{r['timeframe'].upper()} {r['direction_label'].lower()}" for r in rows)
+    return {"checked": [r["timeframe"] for r in rows], "against": len(against), "label": label}
 
 
 def _n(v: Any) -> float | None:

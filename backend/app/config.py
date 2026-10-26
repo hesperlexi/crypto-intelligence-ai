@@ -29,8 +29,8 @@ TF_SECONDS = {
 # v2.2: quick timeframes (15m, 1h, 4h) plus the swing timeframes (12h, 1d, 3d); the weekly is chart context only
 HORIZONS = {"15M": "15m", "1H": "1h", "4H": "4h", "12H": "12h", "24H": "1d", "3D": "3d"}
 MODEL_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "3d"]
-MTF_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "1w"]
-MTF_WEIGHTS = {"15m": 0.08, "1h": 0.14, "4h": 0.22, "12h": 0.16, "1d": 0.24, "1w": 0.16}
+MTF_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"]
+MTF_WEIGHTS = {"15m": 0.08, "1h": 0.14, "4h": 0.22, "12h": 0.16, "1d": 0.24, "3d": 0.10, "1w": 0.16}
 
 # How many closed candles to keep per timeframe (history depth for training / charts).
 HISTORY_BARS = {

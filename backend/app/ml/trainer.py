@@ -331,20 +331,63 @@ def save_bundle(bundle: dict[str, Any], db: Database) -> str:
     Path(settings.model_dir).mkdir(parents=True, exist_ok=True)
     path = str(Path(settings.model_dir) / f"{bundle['version']}.joblib")
     joblib.dump(bundle, path, compress=3)
-    db.execute("UPDATE model_versions SET active = 0 WHERE symbol = ? AND timeframe = ?",
-               (bundle["symbol"], bundle["timeframe"]))
+    register(bundle_record(bundle), path, db)
+    _cache[f"{bundle['symbol']}|{bundle['timeframe']}"] = bundle
+    return path
+
+
+def bundle_record(bundle: dict[str, Any]) -> dict[str, Any]:
+    """Everything the database needs about a trained bundle (lets another machine register it without
+    unpickling the models)."""
+    metrics = [[model, k, float(v)] for model, mm in bundle["metrics"].items()
+               for k, v in mm.items() if isinstance(v, (int, float, np.floating, np.integer)) and not isinstance(v, bool)
+               and v is not None and np.isfinite(v)]
+    return {"version": bundle["version"], "symbol": bundle["symbol"], "timeframe": bundle["timeframe"],
+            "created_at": int(bundle["created_at"]), "data_start": bundle["data_start"], "data_end": bundle["data_end"],
+            "n_samples": int(bundle["n_samples"]), "n_oos": int(bundle["n_oos"]),
+            "edge_confirmed": int(bundle["edge"]["edge_confirmed"]), "summary": _summary(bundle), "metrics": metrics}
+
+
+def register(rec: dict[str, Any], path: str, db: Database) -> None:
+    db.execute("UPDATE model_versions SET active = 0 WHERE symbol = ? AND timeframe = ?", (rec["symbol"], rec["timeframe"]))
     db.execute(
         "INSERT INTO model_versions (id, symbol, timeframe, created_at, data_start, data_end, n_samples, n_oos, "
         "edge_confirmed, active, path, summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
-        (bundle["version"], bundle["symbol"], bundle["timeframe"], bundle["created_at"], bundle["data_start"],
-         bundle["data_end"], bundle["n_samples"], bundle["n_oos"], int(bundle["edge"]["edge_confirmed"]), path,
-         dumps(_summary(bundle))))
-    rows = [(bundle["version"], model, k, float(v)) for model, mm in bundle["metrics"].items()
-            for k, v in mm.items() if isinstance(v, (int, float, np.floating, np.integer)) and not isinstance(v, bool)
-            and v is not None and np.isfinite(v)]
-    db.executemany("INSERT INTO model_metrics (model_version_id, model, metric, value) VALUES (?, ?, ?, ?)", rows)
-    _cache[f"{bundle['symbol']}|{bundle['timeframe']}"] = bundle
-    return path
+        (rec["version"], rec["symbol"], rec["timeframe"], rec["created_at"], rec["data_start"], rec["data_end"],
+         rec["n_samples"], rec["n_oos"], rec["edge_confirmed"], path, dumps(rec["summary"])))
+    db.executemany("INSERT INTO model_metrics (model_version_id, model, metric, value) VALUES (?, ?, ?, ?)",
+                   [(rec["version"], m, k, v) for m, k, v in rec["metrics"]])
+
+
+def import_bundle(rec: dict[str, Any], file: str, db: Database) -> bool:
+    """Register a bundle trained on another machine. Skipped when a newer model is already active."""
+    import shutil
+
+    cur = active_version(rec["symbol"], rec["timeframe"], db)
+    if cur is not None and (cur["created_at"] >= rec["created_at"] or cur["id"] == rec["version"]):
+        return False
+    Path(settings.model_dir).mkdir(parents=True, exist_ok=True)
+    path = str(Path(settings.model_dir) / f"{rec['version']}.joblib")
+    shutil.copyfile(file, path)
+    register(rec, path, db)
+    _cache.pop(f"{rec['symbol']}|{rec['timeframe']}", None)
+    return True
+
+
+def prune_files(db: Database, keep_days: float = 7) -> int:
+    """Delete model files of versions that are no longer active and older than `keep_days` (the database rows
+    stay for the history pages). Keeps the engine state - and its backup - from growing without end."""
+    cutoff = int(time.time() * 1000 - keep_days * 86_400_000)
+    n = 0
+    for r in db.query("SELECT id, path FROM model_versions WHERE active = 0 AND created_at < ? AND path IS NOT NULL", (cutoff,)):
+        try:
+            p = Path(r["path"])
+            if p.exists():
+                p.unlink()
+                n += 1
+        except OSError:
+            pass
+    return n
 
 
 def active_version(symbol: str, timeframe: str, db: Database) -> dict[str, Any] | None:

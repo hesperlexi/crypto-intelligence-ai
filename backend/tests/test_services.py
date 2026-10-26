@@ -292,3 +292,16 @@ def test_external_context_can_be_disabled_without_inventing_values():
         assert ctx["enabled"] is False and "market" not in ctx and "sentiment" not in ctx
     finally:
         settings.enable_external_context = old
+
+
+def test_bigger_trend_check_counts_the_next_two_higher_timeframes():
+    from app.services.analysis import higher_trend_check
+
+    rows = [{"timeframe": tf, "available": True, "direction": d, "direction_label": {1: "BULL", -1: "BEAR", 0: "NEUTRAL"}[d]}
+            for tf, d in (("15m", 1), ("1h", -1), ("4h", -1), ("12h", 1), ("1d", 1))]
+    m = {"rows": rows}
+    assert higher_trend_check(m, "15m", 1)["against"] == 2            # 1h and 4h both bearish: a 15m long is refused
+    assert higher_trend_check(m, "15m", -1)["against"] == 0
+    assert higher_trend_check(m, "1h", -1)["against"] == 1            # 4h bear, 12h bull
+    assert higher_trend_check(m, "1h", -1)["checked"] == ["4h", "12h"]
+    assert higher_trend_check(m, "1d", 1) is None and higher_trend_check(m, "4h", 0) is None

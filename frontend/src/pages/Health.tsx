@@ -52,6 +52,19 @@ export default function Health() {
               <Row k="Deep models" v={d.config.deep_models ? "enabled" : "disabled"} />
             </Card>
           </div>
+          <Card title="Safety switch" right={<Badge tone={d.safety?.length ? "warn" : "bull"}>{d.safety?.length ? `${d.safety.length} paused` : "all active"}</Badge>}>
+            {d.safety?.length ? (
+              <ul className="space-y-1.5 text-sm">
+                {d.safety.map((x: any) => (
+                  <li key={x.symbol + x.timeframe} className="flex flex-wrap justify-between gap-2 rounded-lg bg-glass/[0.04] px-2.5 py-1.5">
+                    <span className="font-medium">{x.symbol} <span className="uppercase text-mute">{x.timeframe}</span></span>
+                    <span className="text-xs text-mute">paused {ago(x.paused_at)}{x.trigger ? ` · last ${x.trigger.n} signals avg ${Number(x.trigger.avg_return_pct).toFixed(2)}%, ${Math.round(x.trigger.tp1_rate * 100)}% hit TP1` : ""}</span>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-sm text-mute">No coin or timeframe is paused.</p>}
+            <Note>A coin/timeframe pauses when its last 25 live signals lost on average and fewer than 40% reached TP1. It resumes by itself once 8 hidden practice trades recover.</Note>
+          </Card>
           <Card title="Candle series">
             <div className="max-h-96 overflow-auto"><table className="grid-table">
               <thead><tr><th>Asset</th><th>TF</th><th>Status</th><th className="text-right">Candles</th><th className="text-right">Missing</th><th className="text-right">Duplicates</th><th className="text-right">Malformed</th><th className="text-right">Quality</th><th>Last candle closed</th></tr></thead>

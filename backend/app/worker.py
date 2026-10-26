@@ -397,6 +397,11 @@ def publish_models(rt: Runtime, sink: BaseSink) -> None:
 def publish_status(rt: Runtime, sink: BaseSink, engine: dict[str, Any]) -> None:
     h = health.report(rt)
     h["engine"] = engine
+    try:
+        from .services import safety
+        h["safety"] = safety.overview(rt.db)
+    except Exception:
+        h["safety"] = []
     sink.view("health", h, volatile=())
     sink.view("meta", views.meta(rt, engine), volatile=())
 
@@ -453,7 +458,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         step("context", lambda: asyncio.run(market.external_context(rt)))
         detail["news"] = step("news", lambda: sync_news(rt))
         detail["derivs"] = step("derivs", lambda: derivs.sync(rt.db, rt.symbols(), max_calls=40))
-    step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt)))
+    step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
+                                  tracking.update_signal_outcomes(rt, table="shadow_signals")))
     missing = [(s, tf) for s in rt.symbols() for tf in MODEL_TIMEFRAMES
                if trainer.active_version(s, tf, rt.db) is None and rt.store.is_current(rt.exchange, s, tf)]
     detail["bootstrap"] = step("bootstrap", lambda: train_until(rt, missing, True, t0 + budget_s * 0.5))
@@ -563,10 +569,98 @@ def train(rt: Runtime, sink: BaseSink, budget_s: float = 2700) -> dict[str, Any]
     return detail
 
 
+# ---- parallel nightly training (train.yml: 15 slices on separate machines, then one merge) -------------------
+
+TF_COST = {"15m": 6, "1h": 5, "4h": 3, "12h": 2, "1d": 2, "3d": 1}
+
+
+def shard_pairs(rt: Runtime, shard: int, of: int, max_age_h: float = 12) -> list[tuple[str, str]]:
+    """Every model that is missing, fast-only, missing a model family, or older than `max_age_h`, spread over
+    `of` slices so each gets a similar amount of work (heavy timeframes dealt out first)."""
+    pairs = []
+    for s in rt.symbols():
+        for tf in MODEL_TIMEFRAMES:
+            if not rt.store.is_current(rt.exchange, s, tf):
+                continue
+            v = trainer.active_version(s, tf, rt.db)
+            if v is None or (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > max_age_h * 3.6e6 \
+                    or _missing_models(v.get("summary") or {}):
+                pairs.append((s, tf))
+    pairs.sort(key=lambda p: (-TF_COST.get(p[1], 1), p[0]))
+    return [p for i, p in enumerate(pairs) if i % of == shard]
+
+
+def train_shard(rt: Runtime, shard: int, of: int, budget_s: float, out_dir: str) -> dict[str, Any]:
+    """Train one slice on a copy of the engine state and write the new models + their records to `out_dir`.
+    Nothing is published from here; the merge job registers the results in the real state."""
+    import shutil
+    from pathlib import Path
+
+    t0 = time.time()
+    pairs = shard_pairs(rt, shard, of)
+    done = train_until(rt, pairs, False, t0 + budget_s)
+    out = Path(out_dir)
+    out.mkdir(parents=True, exist_ok=True)
+    records = []
+    for d in done:
+        s, tf = d["pair"].rsplit(" ", 1)
+        st = rt.training.get(f"{s}|{tf}", {})
+        if st.get("state") != "done" or not st.get("version"):
+            continue
+        bundle = trainer.load_bundle(s, tf, rt.db)
+        if bundle is None or bundle["version"] != st["version"]:
+            continue
+        rec = trainer.bundle_record(bundle)
+        src = trainer.active_version(s, tf, rt.db)["path"]
+        shutil.copyfile(src, out / f"{rec['version']}.joblib")
+        records.append(rec)
+    (out / "manifest.json").write_text(dumps({"shard": shard, "of": of, "records": records, "trained": done,
+                                              "seconds": round(time.time() - t0, 1)}))
+    return {"shard": shard, "pairs": len(pairs), "trained": len(done), "exported": len(records),
+            "remaining": max(0, len(pairs) - len(done))}
+
+
+def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
+    """Register the models the slices trained (a newer model already active wins), tidy old model files,
+    refresh the futures history for the next night, and publish."""
+    from pathlib import Path
+
+    t0 = time.time()
+    started = now_ms()
+    imported, skipped, shards, failed = 0, 0, 0, []
+    for m in sorted(Path(in_dir).glob("**/manifest.json")):
+        shards += 1
+        data = loads(m.read_text(), {}) or {}
+        for rec in data.get("records", []):
+            f = m.parent / f"{rec['version']}.joblib"
+            if f.exists() and trainer.import_bundle(rec, str(f), rt.db):
+                imported += 1
+            else:
+                skipped += 1
+        failed += [t for t in data.get("trained", []) if t.get("state") == "failed"]
+    pruned = trainer.prune_files(rt.db)
+    try:
+        asyncio.run(market.sync_all(rt))
+        derivs_note = derivs.sync(rt.db, rt.symbols(), max_calls=600)
+    except Exception as exc:
+        derivs_note = f"failed: {exc}"
+    detail = {"shards": shards, "imported": imported, "skipped": skipped, "pruned_files": pruned,
+              "failed": failed[:20], "derivs": derivs_note}
+    _record(rt, "train", started, "ok", detail)
+    publish_models(rt, sink)
+    publish_status(rt, sink, engine_info(rt, {"last_train_seconds": round(time.time() - t0, 1)}))
+    sink.flush()
+    return detail
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(prog="python -m app.worker")
-    ap.add_argument("command", choices=["tick", "train"])
+    ap.add_argument("command", choices=["tick", "train", "train-shard", "train-merge"])
+    ap.add_argument("--shard", type=int, default=0)
+    ap.add_argument("--of", type=int, default=1)
+    ap.add_argument("--out", default="shard-out", help="train-shard: folder for the trained models")
+    ap.add_argument("--in", dest="inp", default="shards", help="train-merge: folder with the slices' output")
     ap.add_argument("--budget", type=float, default=None, help="seconds")
     ap.add_argument("--local", default=None, help="write to this folder instead of Firestore (dry run)")
     a = ap.parse_args()
@@ -576,6 +670,10 @@ def main() -> None:
     sink: BaseSink = LocalSink(a.local, db) if a.local else FirestoreSink(db, settings_project())
     if a.command == "tick":
         out = tick(rt, sink, a.budget or 600)
+    elif a.command == "train-shard":
+        out = train_shard(rt, a.shard, a.of, a.budget or 3000, a.out)
+    elif a.command == "train-merge":
+        out = train_merge(rt, sink, a.inp)
     else:
         out = train(rt, sink, a.budget or 2700)
     log.info("finished: %s", dumps({k: v for k, v in out.items() if k != "trained"})[:2000])

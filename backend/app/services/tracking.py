@@ -170,13 +170,32 @@ def log_signal(db: Database, a: dict[str, Any]) -> bool:
     return n > 0
 
 
-def update_signal_outcomes(rt: Any, horizon_bars: int = 30) -> int:
+def log_shadow(db: Database, a: dict[str, Any], decision: str, setup: dict[str, Any]) -> bool:
+    """A trade the safety switch held back: tracked to the end like a signal, so the switch knows when the
+    coin/timeframe has recovered. Never shown as a signal."""
+    tps = [t["price"] for t in setup.get("targets", [])] + [None, None, None]
+    fc = a.get("forecast") or {}
+    n = db.execute(
+        "INSERT INTO shadow_signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, score, confidence, "
+        "regime, price, side, entry, stop, tp1, tp2, tp3, rr, status, model_version_id, payload) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?) "
+        "ON CONFLICT (symbol, timeframe, bar_ts) DO NOTHING",
+        (new_id(), now_ms(), a["symbol"], a["timeframe"], a["bar_ts"], (a.get("signal") or {}).get("signal", ""), decision,
+         (a.get("signal") or {}).get("score"), a.get("confidence"), (a.get("regime") or {}).get("regime"), a["price"],
+         setup.get("side_int", 0), a["price"], setup.get("stop"), tps[0], tps[1], tps[2], setup.get("risk_reward"),
+         fc.get("model_version"), dumps({"shadow": True})))
+    return n > 0
+
+
+def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signals") -> int:
     """Follow OPEN signals through later candles. Stop is assumed first when stop and target share a bar.
     Return = three legs (50% / 25% / 25%), each exiting at its target if reached, otherwise at the stop or,
     on expiry, at the last close."""
+    if table not in ("signals", "shadow_signals"):
+        raise ValueError(table)
     db = rt.db
     changed = 0
-    for s in db.query("SELECT * FROM signals WHERE status = 'OPEN'"):
+    for s in db.query(f"SELECT * FROM {table} WHERE status = 'OPEN'"):
         df = rt.candles(s["symbol"], s["timeframe"])
         after = df[df["ts"] > s["bar_ts"]].iloc[:horizon_bars]
         if after.empty:
@@ -204,7 +223,7 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30) -> int:
         if closed_ts is None and expired:
             closed_ts = int(after["ts"].iloc[-1])
         n = db.execute(
-            "UPDATE signals SET tp1_hit = ?, tp2_hit = ?, tp3_hit = ?, stop_hit = ?, status = ?, closed_at = ?, "
+            f"UPDATE {table} SET tp1_hit = ?, tp2_hit = ?, tp3_hit = ?, stop_hit = ?, status = ?, closed_at = ?, "
             "return_pct = ? WHERE id = ? AND (status != ? OR tp1_hit != ? OR tp2_hit != ? OR return_pct IS NULL "
             "OR return_pct != ?)",
             (int(hit[0]), int(hit[1]), int(hit[2]), int(stop_hit), status, closed_ts if status != "OPEN" else None,
