@@ -47,8 +47,6 @@ export function AppearancePanel() {
 /** Header button that opens the appearance popover. */
 export default function AppearanceButton() {
   const [open, setOpen] = useState(false);
-  const { a: ap } = useAppearance();
-  const cur = THEMES.find((t) => t.id === ap.theme) ?? THEMES[0];
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -60,13 +58,15 @@ export default function AppearanceButton() {
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      {/* same shape and size as the header's status badge: the theme's three colours, then its name */}
+      {/* icon-only, same height and corners as the header's status badge */}
       <button onClick={() => setOpen((v) => !v)} aria-expanded={open} title="Theme and layout" aria-label="Theme and layout"
-        className={`inline-flex h-[22px] items-center gap-1.5 rounded border px-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors ${open ? "border-accent/60 bg-accent/10 text-accent" : "border-glass/15 bg-glass/[0.04] text-mute hover:border-accent/50 hover:text-text"}`}>
-        <span className="flex overflow-hidden rounded-[3px] ring-1 ring-glass/20" aria-hidden>
-          {cur.swatch.map((c, i) => <span key={i} className="h-3 w-[5px]" style={{ background: c }} />)}
-        </span>
-        <span className="hidden sm:inline">{cur.name}</span>
+        className={`inline-flex h-[22px] w-[26px] items-center justify-center rounded border transition-colors ${open ? "border-accent/60 bg-accent/10 text-accent" : "border-glass/15 bg-glass/[0.04] text-accent/90 hover:border-accent/50 hover:text-accent"}`}>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+          {/* half-moon disc (light / dark) with a small spark: "appearance" */}
+          <circle cx="11" cy="13" r="8" stroke="currentColor" strokeWidth="2" />
+          <path d="M11 5a8 8 0 0 1 0 16z" fill="currentColor" />
+          <path d="M19.5 2.5v3M18 4h3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+        </svg>
       </button>
       {open && (
         <div className="panel popover animate-in fixed inset-x-3 top-14 z-50 max-h-[75vh] overflow-y-auto p-4 sm:absolute sm:inset-x-auto sm:right-0 sm:top-10 sm:w-[26rem]">
