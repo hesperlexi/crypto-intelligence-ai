@@ -165,7 +165,7 @@ export default function Landing({ error }: { error: string | null }) {
           <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Start in three steps</h2>
           <ol className="mt-10 grid gap-4 md:grid-cols-3">
             {[["Sign in", "Use your Google account. No exchange keys, no forms."],
-              ["Choose a plan", "Pay in seconds with Binance Pay and upload the receipt. Access opens as soon as it is checked."],
+              ["Choose a plan", "Pay in seconds with Binance or MEXC and upload the receipt. Access opens as soon as it is checked."],
               ["Get signals", "Follow your coins, add your own, set alerts and practise with paper trading."]].map(([t, p], i) => (
               <li key={t} className="panel relative p-5">
                 <span className="font-display text-5xl font-extrabold text-accent/25">0{i + 1}</span>
@@ -198,7 +198,7 @@ export default function Landing({ error }: { error: string | null }) {
               );
             })}
           </div>
-          <p className="mt-4 text-center text-xs text-mute">Paid with Binance Pay (USDT). Renew any time; early renewals add on top of your remaining days.</p>
+          <p className="mt-4 text-center text-xs text-mute">Pay with Binance or MEXC (USDT). Renew any time; early renewals add on top of your remaining days.</p>
         </section>
 
         {/* questions */}

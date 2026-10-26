@@ -57,7 +57,7 @@ export default function Users() {
         </div>
       )}
       <div className="grid gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
-      <Note>Members pay with your Binance QR and upload a screenshot and/or the Binance order ID. Check the payment arrived in your Binance app (Pay → History) before approving. Approving adds the months after the current end date, so early renewals never lose days. When a membership ends, that person is locked out automatically until they renew; their paper accounts and alerts are kept. People approved before memberships existed have no end date until you give them a plan.</Note>
+      <Note>Members pay with your Binance QR or by MEXC transfer to your UID, then upload a screenshot and/or the order ID. Check the payment arrived (Binance → Pay → History, or MEXC → Wallets → History) before approving. Approving adds the months after the current end date, so early renewals never lose days. When a membership ends, that person is locked out automatically until they renew; their paper accounts and alerts are kept. People approved before memberships existed have no end date until you give them a plan.</Note>
       {zoom && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 p-4" onClick={() => setZoom(null)} role="dialog" aria-label="Payment proof">
           <img src={zoom} alt="Payment proof" className="max-h-full max-w-full rounded-xl" />
@@ -113,6 +113,7 @@ function UserCard({ u, st, cfg, act, onZoom }: { u: any; st?: any; cfg: Membersh
             {p.proof ? <button onClick={() => onZoom(p.proof)} className="shrink-0" title="Open full size"><img src={p.proof} alt="Payment screenshot" className="h-24 w-16 rounded-md object-cover ring-1 ring-glass/20" /></button>
               : <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded-md bg-glass/[0.04] text-center text-[10px] text-mute">no screenshot</div>}
             <dl className="grid min-w-0 flex-1 grid-cols-[auto_1fr] content-start gap-x-3 gap-y-1 text-xs">
+              <dt className="text-mute">Paid with</dt><dd className="text-right">{p.method === "mexc" ? "MEXC" : "Binance"}</dd>
               <dt className="text-mute">Order ID</dt><dd className="num truncate text-right">{p.txid || "—"}</dd>
               <dt className="text-mute">Sent</dt><dd className="text-right">{fmtTime(p.submitted_at)}</dd>
               {p.reason && <><dt className="text-mute">Reason</dt><dd className="truncate text-right">{p.reason}</dd></>}

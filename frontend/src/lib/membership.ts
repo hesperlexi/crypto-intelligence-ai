@@ -6,7 +6,7 @@ import { db } from "./firebase";
 import { getSession } from "./session";
 
 export interface Plan { months: number; price: number; label: string }
-export interface MembershipConfig { plans: Plan[]; currency: string; pay_note: string; qr_url: string; support_email: string }
+export interface MembershipConfig { plans: Plan[]; currency: string; pay_note: string; qr_url: string; mexc_uid: string; support_email: string }
 
 export const DEFAULT_CONFIG: MembershipConfig = {
   plans: [
@@ -18,6 +18,7 @@ export const DEFAULT_CONFIG: MembershipConfig = {
   currency: "USDT",
   pay_note: "Pay with the Binance app: scan the QR code, send the exact amount, then upload the payment screenshot here.",
   qr_url: "/pay/binance-qr.png",
+  mexc_uid: "00183657",
   support_email: "hesper.soloist@live.com",
 };
 
@@ -79,12 +80,14 @@ export async function compressImage(file: File): Promise<string> {
 }
 
 /** Member: send payment proof for a plan. Creates the access request if it does not exist yet. */
-export async function submitPayment(plan: Plan, txid: string, proof: string | null, currency: string) {
+export type PayMethod = "binance" | "mexc";
+
+export async function submitPayment(plan: Plan, txid: string, proof: string | null, currency: string, method: PayMethod = "binance") {
   const s = getSession();
   if (!s) throw new Error("not signed in");
   const t = txid.trim();
-  if (!proof && t.length < 6) throw new Error("Add the payment screenshot or the Binance order / transaction ID.");
-  const payment = { months: plan.months, amount: plan.price, currency, txid: t || null, proof: proof || null,
+  if (!proof && t.length < 6) throw new Error(`Add the payment screenshot or the ${method === "mexc" ? "MEXC" : "Binance"} order / transaction ID.`);
+  const payment = { method, months: plan.months, amount: plan.price, currency, txid: t || null, proof: proof || null,
     status: "submitted", submitted_at: Date.now() };
   const ref = doc(db, "users", s.uid);
   const cur = await getDoc(ref);

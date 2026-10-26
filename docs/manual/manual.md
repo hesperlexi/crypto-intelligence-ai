@@ -34,10 +34,12 @@ The longer the plan, the lower the monthly price.
 **How to pay (about 2 minutes):**
 
 1. Sign in. On the membership screen, tap the plan you want.
-2. Open the **Binance app → Pay → Scan** and scan the QR code shown in the app (tap it to open it full size). Send the **exact amount** in USDT.
-3. Take a screenshot of the Binance **payment successful** screen, showing the amount and the order ID.
-4. Back in the app, tap **Upload screenshot**, and paste the **Binance order ID** (Binance → Pay → History → the payment). Press **Send proof**.
-5. The screen shows *Payment proof sent · waiting for check*. The owner checks the payment in Binance and approves it, and the app opens by itself.
+2. Choose how to pay: **Binance** or **MEXC**.
+   - **Binance:** open the **Binance app → Pay → Scan** and scan the QR code shown in the app (tap it to open it full size). Send the **exact amount** in USDT.
+   - **MEXC:** open the **MEXC app → Wallets → Withdraw → USDT**, pick **Internal transfer (MEXC user)**, enter UID **00183657** (tap **Copy UID** in the app) and send the **exact amount**.
+3. Take a screenshot of the **payment / transfer successful** screen, showing the amount and the order ID.
+4. Back in the app, tap **Upload screenshot**, and paste the **order ID** (Binance → Pay → History, or MEXC → Wallets → History). Press **Send proof**.
+5. The screen shows *Payment proof sent · waiting for check*. The owner checks the payment and approves it, and the app opens by itself.
 
 If a proof is not accepted, you see the reason on the same screen and can send it again.
 
@@ -232,7 +234,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 | Problem | Fix |
 | --- | --- |
-| "Payment proof sent · waiting for check" | The owner checks Binance and approves; the app opens by itself. Make sure the amount and order ID are visible. Waiting long? Use **Contact support**. |
+| "Payment proof sent · waiting for check" | The owner checks the payment and approves; the app opens by itself. Make sure the amount and order ID are visible. Waiting long? Use **Contact support**. |
 | My proof was rejected | Read the reason on the membership screen, fix it (exact amount, right screenshot, order ID) and send again. |
 | The app says my membership has ended | Renew on the same screen; your data is kept. |
 | Header shows **RECONNECTING** instead of **LIVE** | It reconnects on its own within seconds. If it stays, check your internet, then reload. |

@@ -130,7 +130,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
           <p className="mx-auto mt-2 max-w-md text-sm text-mute">
             {expired
               ? <>Membership for <span className="text-text">{user.email}</span> ended on {fmtDate(rec?.expires_at)}. Renew below to continue: your paper accounts, alerts and settings are kept.</>
-              : <>Signed in as <span className="text-text">{user.email}</span>. Choose a plan, pay with Binance and send the proof. The app opens by itself as soon as the owner approves.</>}
+              : <>Signed in as <span className="text-text">{user.email}</span>. Choose a plan, pay with Binance or MEXC and send the proof. The app opens by itself as soon as the owner approves.</>}
           </p>
         </div>
         <div className="mt-6">{rec === undefined ? <p className="text-center text-sm text-mute">Loading…</p> : <PaymentPanel record={rec} />}</div>
