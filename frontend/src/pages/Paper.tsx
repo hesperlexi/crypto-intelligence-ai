@@ -21,7 +21,7 @@ export default function Paper() {
 
 function SpotPaper() {
   const symbols = useSymbols();
-  const { tickers } = useLive();
+  const { spotTickers: tickers } = useLive();   // spot practice: spot prices
   const st = useApi<any>("/paper", 15000);
   const [symbol, setSymbol] = useState("BTC/USDT");
   const [amount, setAmount] = useState("1000");
@@ -132,7 +132,7 @@ function SpotPaper() {
 }
 
 function SpotPositions({ d, onClose }: { d: any; onClose: (symbol: string, qty: number) => void }) {
-  const { tickers } = useLive();
+  const { spotTickers: tickers } = useLive();   // spot practice: spot prices
   const rows = (d?.positions ?? []).map((p: any) => {
     const mark = tickers[p.symbol]?.last ?? p.mark;
     const u = mark != null ? p.qty * (mark - p.avg_price) : null;

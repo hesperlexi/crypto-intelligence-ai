@@ -35,8 +35,14 @@ function useGoldListed(): boolean {
 }
 
 /** 24h stats: the live spot feed for the app's coins, Binance futures for gold (refreshed every 15 s). */
-function useTicker(symbol: string) {
-  const { tickers } = useLive();
+/** Spot screens use spot prices; futures screens the perpetual's own price. */
+function useMktTickers(market: Mkt) {
+  const { tickers, spotTickers } = useLive();
+  return market === "spot" ? spotTickers : tickers;
+}
+
+function useTicker(symbol: string, market: Mkt) {
+  const tickers = useMktTickers(market);
   const [t, setT] = useState<any>(null);
   const gold = isGold(symbol);
   useEffect(() => {
@@ -52,7 +58,7 @@ function useTicker(symbol: string) {
 
 function useLastPrice(symbol: string): number | null {
   const st = useContext(StreamCtx);
-  const { tickers } = useLive();
+  const tickers = useMktTickers(st?.source === "spot" ? "spot" : "futures");
   return st?.last ?? tickers[symbol]?.last ?? null;
 }
 
@@ -122,8 +128,8 @@ export default function TradeTerminal() {
 
 /* ---------------------------------------------------------------- pair bar */
 function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: string; symbols: string[]; market: Mkt; onSymbol: (s: string) => void; onMarket: (m: Mkt) => void }) {
-  const { tickers } = useLive();
-  const t = useTicker(symbol);
+  const tickers = useMktTickers(market);
+  const t = useTicker(symbol, market);
   const last = useLastPrice(symbol);
   const st = useContext(StreamCtx);
   const [open, setOpen] = useState(false);
@@ -247,7 +253,7 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
 /* ---------------------------------------------------------------- order book */
 function OrderBook({ symbol, market }: { symbol: string; market: Mkt }) {
   const ob = useDepth(symbol, market);
-  const { tickers } = useLive();
+  const tickers = useMktTickers(market);
   const last = useLastPrice(symbol);
   const asks: [number, number][] = (ob?.asks ?? []).slice(0, 9).reverse();
   const bids: [number, number][] = (ob?.bids ?? []).slice(0, 9);

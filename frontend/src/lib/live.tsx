@@ -1,6 +1,6 @@
 import { doc, onSnapshot } from "firebase/firestore";
-import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
-import { bsym, tickers as restTickers, toTicker } from "./binance";
+import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { bsym, futures24h, listedPairs, tickers as restTickers, toTicker } from "./binance";
 import { Race, raceSocket } from "./ws";
 import { db } from "./firebase";
 import { localNotify } from "./push";
@@ -18,7 +18,10 @@ export interface Ticker {
 }
 
 interface LiveState {
+  /** What members see everywhere: the perpetual-futures price (same as the Trade page and the signals), spot when a coin has no futures. */
   tickers: Record<string, Ticker>;
+  /** Spot prices only (spot practice trading). */
+  spotTickers: Record<string, Ticker>;
   connected: boolean;
   feed: any;
   alerts: { id: string; message: string; created_at: number }[];
@@ -27,13 +30,15 @@ interface LiveState {
   dismissAlert: (id: string) => void;
 }
 
-/** Latest prices for non-React code (paper trading, position sizing). */
+/** Latest SPOT prices for non-React code (spot paper trading, position sizing). */
 export const latestPrices: Record<string, number> = {};
 
-const Ctx = createContext<LiveState>({ tickers: {}, connected: false, feed: null, alerts: [], refreshAt: 0, symbols: [], dismissAlert: () => {} });
+const Ctx = createContext<LiveState>({ tickers: {}, spotTickers: {}, connected: false, feed: null, alerts: [], refreshAt: 0, symbols: [], dismissAlert: () => {} });
 // several endpoints: some networks block port 9443 or one of the hosts
 // the exchange's own stream first (the data-stream.binance.vision mirror can lag a few seconds)
 const WS_HOSTS = ["wss://stream.binance.com:9443", "wss://stream.binance.com:443", "wss://data-stream.binance.vision"];
+// Binance USDⓈ-M futures: trades on /market (the address the Trade page uses since the 2026-04-23 split)
+const FUT_WS = "wss://fstream.binance.com/market";
 
 /** Live tickers straight from Binance's public WebSocket, plus alert / refresh notices from Firestore. */
 export function LiveProvider({ children }: { children: ReactNode }) {
@@ -171,13 +176,95 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Futures layer: the signals, bots and the Trade page all use the perpetual's price, which differs slightly from
+  // spot, so every page shows that price too. Every trade (aggTrade) moves it; 24h change / volume come from the
+  // futures REST ticker every 20 s. Coins without a perpetual, or a network that blocks futures, keep spot.
+  const [fut, setFut] = useState<Record<string, Ticker>>({});
+  useEffect(() => {
+    const all0 = key ? key.split(",") : [];
+    if (!all0.length) return;
+    let closed = false, race: Race | null = null, timer = 0, attempt = 0, lastFrame = 0, syms: string[] = [];
+    const stats: Record<string, Ticker> = {}, opens: Record<string, number> = {}, pend: Record<string, Ticker> = {};
+    const put = (sym: string, px: number, ts: number) => {
+      const o = opens[sym];
+      const t: Ticker = { ...(stats[sym] ?? { symbol: sym }), symbol: sym, last: px, ts, ...(o ? { change_pct: (px / o - 1) * 100 } : {}) };
+      stats[sym] = t; pend[sym] = t;
+    };
+    const loadStats = async () => {
+      if (closed || document.hidden || !syms.length) return;
+      try {
+        const rows = await futures24h();
+        for (const s of syms) {
+          const r = rows[bsym(s)];
+          if (!r || !(r.last > 0)) continue;
+          opens[s] = r.open;
+          const prev = stats[s];
+          stats[s] = { ...(prev ?? { symbol: s }), symbol: s, quote_volume: r.qv };
+          put(s, prev?.ts && prev.ts > r.ts && prev.last ? prev.last : r.last, Math.max(prev?.ts ?? 0, r.ts));   // keep a newer trade
+        }
+      } catch { /* futures unreachable: spot stays */ }
+    };
+    const connect = () => {
+      window.clearTimeout(timer);
+      race?.close();
+      if (closed || !syms.length) return;
+      const bySym: Record<string, string> = Object.fromEntries(syms.map((s) => [bsym(s), s]));
+      const streams = syms.map((s) => `${bsym(s).toLowerCase()}@aggTrade`).join("/");
+      race = raceSocket([`${FUT_WS}/stream?streams=${streams}`], (m) => {
+        lastFrame = Date.now(); attempt = 0;
+        const d = m.data, sym = d && bySym[d.s];
+        if (sym && d.e === "aggTrade" && opens[sym]) put(sym, +d.p, d.T);   // only once its 24h stats are known
+      }, () => {
+        if (closed) return;
+        attempt++;
+        timer = window.setTimeout(connect, Math.min(15000, 1000 * 2 ** Math.min(attempt, 4)));
+      });
+    };
+    listedPairs().then(({ fut: listed }) => {
+      if (closed) return;
+      syms = all0.filter((s) => listed.has(bsym(s)));
+      if (!syms.length) return;
+      loadStats().then(connect);
+    }).catch(() => {});
+    const statsTimer = window.setInterval(loadStats, 20000);
+    const watchdog = window.setInterval(() => {
+      if (!document.hidden && syms.length && lastFrame && Date.now() - lastFrame > 20000) { attempt = 0; connect(); }
+    }, 5000);
+    const wake = () => { if (!document.hidden && syms.length && Date.now() - lastFrame > 5000) { attempt = 0; loadStats(); connect(); } };
+    document.addEventListener("visibilitychange", wake);
+    const flush = window.setInterval(() => {
+      const ks = Object.keys(pend);
+      if (!ks.length) return;
+      const batch: Record<string, Ticker> = {};
+      for (const k of ks) { batch[k] = pend[k]; delete pend[k]; }
+      setFut((f) => ({ ...f, ...batch }));
+    }, 125);
+    return () => {
+      closed = true;
+      window.clearTimeout(timer); window.clearInterval(statsTimer); window.clearInterval(watchdog); window.clearInterval(flush);
+      document.removeEventListener("visibilitychange", wake);
+      race?.close();
+    };
+  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // a futures price older than 30 s (stream and REST both stuck) gives way to the live spot price
+  const merged = useMemo(() => {
+    const out: Record<string, Ticker> = { ...tickers };
+    const now = Date.now();
+    for (const [k, f] of Object.entries(fut)) {
+      if (f.last == null || (f.ts && now - f.ts > 30_000 && tickers[k]?.last != null)) continue;
+      out[k] = { ...(tickers[k] ?? {}), ...f, bid: null, ask: null, spread_bps: null };
+    }
+    return out;
+  }, [tickers, fut]);
+
   const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 2s" : all.length ? "RECONNECTING" : "IDLE";
   const feed = {
     status, last_update_ms: lastMsg,
     transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 2 s (stream reconnecting)" : "reconnecting to Binance…",
   };
   const dismissAlert = (id: string) => setAlerts((a) => a.filter((x) => x.id !== id));
-  return <Ctx.Provider value={{ tickers, connected, feed, alerts, refreshAt, symbols: all, dismissAlert }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ tickers: merged, spotTickers: tickers, connected, feed, alerts, refreshAt, symbols: all, dismissAlert }}>{children}</Ctx.Provider>;
 }
 
 export const useLive = () => useContext(Ctx);

@@ -43,6 +43,12 @@ export async function fklines(symbol: string, tf: string, limit = 500): Promise<
 }
 
 /** Last futures price for every listed perpetual, keyed by app symbol (empty when futures are unreachable). */
+/** 24h stats of every USDⓈ-M perpetual, keyed by Binance symbol (e.g. "BTCUSDT"). */
+export async function futures24h(): Promise<Record<string, { last: number; open: number; change: number; qv: number; ts: number }>> {
+  const rows = await get<any[]>("/fapi/v1/ticker/24hr", [FUTURES]);
+  return Object.fromEntries(rows.map((r) => [r.symbol, { last: +r.lastPrice, open: +r.openPrice, change: +r.priceChangePercent, qv: +r.quoteVolume, ts: +r.closeTime }]));
+}
+
 /** 24h stats of one USDⓈ-M perpetual (used for gold, XAUT, which has no spot market on Binance). */
 export async function futuresTicker(symbol: string) {
   const t = await get<any>(`/fapi/v1/ticker/24hr?symbol=${bsym(symbol)}`, [FUTURES]);
