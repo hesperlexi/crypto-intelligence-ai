@@ -251,3 +251,19 @@ def test_bots_cap_same_direction_trades(monkeypatch, no_costs):
     eng.run(t0 + 4 * STEP)
     (cfg, st), = eng.bots()
     assert len(st["positions"]) == 2 and all(p["side"] == 1 for p in st["positions"])
+
+
+def test_bot_cleanup_removes_copies_fixes_timeframes_and_tightens_trackers():
+    from app import worker
+
+    base = {"enabled": True, "mode": "prediction", "timeframe": "4h", "symbols": "all", "position_pct": 10.0}
+    bots = [{"id": "prediction-a", "name": "P", **base}, {"id": "prediction-b", "name": "P copy", **base},
+            {"id": "signal-1h", "name": "S", "mode": "decision", "timeframe": "4h", "reset_token": "1"},
+            {"id": "futures-predict-1h", "name": "F", "mode": "prediction", "timeframe": "12h"}]
+    out, notes = worker.cleanup_bots(bots)
+    ids = [b["id"] for b in out]
+    assert ids == ["prediction-a", "signal-1h", "futures-predict-1h"] and notes["removed_duplicates"] == ["prediction-b"]
+    by = {b["id"]: b for b in out}
+    assert by["signal-1h"]["timeframe"] == "1h" and by["signal-1h"]["reset_token"] == "tf-1"
+    assert by["futures-predict-1h"]["timeframe"] == "1h" and by["futures-predict-1h"]["confident_only"] is True
+    assert by["prediction-a"]["confident_only"] is True

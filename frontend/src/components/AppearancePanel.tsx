@@ -60,16 +60,13 @@ export default function AppearanceButton() {
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      <button className={`btn h-8 gap-2 rounded-full py-0 pl-1 pr-2.5 text-xs font-medium ${open ? "btn-on" : ""}`} onClick={() => setOpen((v) => !v)}
-        aria-expanded={open} title="Theme and layout" aria-label="Theme and layout">
-        {/* the active theme's own colours, as a small orb */}
-        <span className="relative grid h-6 w-6 place-items-center rounded-full ring-1 ring-glass/20" aria-hidden
-          style={{ background: `conic-gradient(from 210deg, ${cur.swatch[1]}, ${cur.swatch[2]}, ${cur.swatch[1]})` }}>
-          <span className="h-3.5 w-3.5 rounded-full" style={{ background: cur.swatch[0], boxShadow: `0 0 8px ${cur.swatch[1]}` }} />
+      {/* same shape and size as the header's status badge: the theme's three colours, then its name */}
+      <button onClick={() => setOpen((v) => !v)} aria-expanded={open} title="Theme and layout" aria-label="Theme and layout"
+        className={`inline-flex h-[22px] items-center gap-1.5 rounded border px-1.5 text-[11px] font-semibold uppercase tracking-wide transition-colors ${open ? "border-accent/60 bg-accent/10 text-accent" : "border-glass/15 bg-glass/[0.04] text-mute hover:border-accent/50 hover:text-text"}`}>
+        <span className="flex overflow-hidden rounded-[3px] ring-1 ring-glass/20" aria-hidden>
+          {cur.swatch.map((c, i) => <span key={i} className="h-3 w-[5px]" style={{ background: c }} />)}
         </span>
         <span className="hidden sm:inline">{cur.name}</span>
-        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
-          className={`hidden text-mute transition-transform sm:block ${open ? "rotate-180" : ""}`} aria-hidden><path d="m6 9 6 6 6-6" /></svg>
       </button>
       {open && (
         <div className="panel popover animate-in fixed inset-x-3 top-14 z-50 max-h-[75vh] overflow-y-auto p-4 sm:absolute sm:inset-x-auto sm:right-0 sm:top-10 sm:w-[26rem]">

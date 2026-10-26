@@ -38,6 +38,7 @@ from . import analysis
 from .runtime import Runtime
 
 PATH_TF = "15m"
+MIN_NOTIONAL = 10.0          # USDT: smaller trades are skipped (a bot with no free cash must not open dust positions)
 CONF_BUCKETS = (0.0, 0.45, 0.5, 0.55, 0.6, 1.0001)
 MAX_EQUITY_POINTS = 3000
 
@@ -507,7 +508,7 @@ class BotEngine:
             qty = min(qty, eq * cfg["max_position_pct"] / 100 * lev / entry,
                       state["cash"] * 0.995 / (entry * (1 / lev + fee_rate)))
             info["leverage"] = lev
-            if qty <= 0:
+            if qty <= 0 or qty * entry < MIN_NOTIONAL:
                 continue
             state["last_entry_bar"][s] = a["bar_ts"]
             if a["decision"] == "BUY ON PULLBACK" and side * (px - entry) > 0:
@@ -581,6 +582,8 @@ class BotEngine:
             fee_rate = F.FUTURES_FEE_RATE if fut else self.fee
             margin = min(eq * cfg["position_pct"] / 100, state["cash"] * 0.995 / (1 + fee_rate * lev))
             qty = margin * lev / px
+            if qty * px < MIN_NOTIONAL:
+                continue
             info = {"predicted": fc["predicted"], "p_max": fc["p_max"], "p_up": fc["probabilities"]["up"],
                     "p_down": fc["probabilities"]["down"], "confidence": (fc.get("confidence") or {}).get("confidence"),
                     "model_version": fc["model_version"], "edge_confirmed": fc["edge_confirmed"],

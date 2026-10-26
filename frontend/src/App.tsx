@@ -242,6 +242,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/replay" element={<Replay />} />
             <Route path="/history" element={<Navigate to="/results?tab=log" replace />} />
             <Route path="/paper" element={<Paper />} />
+            <Route path="/trade" element={<Navigate to="/paper" replace />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/health" element={<Health />} />
             <Route path="/settings" element={<Settings />} />

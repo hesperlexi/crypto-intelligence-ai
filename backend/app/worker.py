@@ -35,7 +35,7 @@ from .sinks import BaseSink, FirestoreSink, LocalSink
 from . import views
 
 log = logging.getLogger("engine")
-SCHEDULE_MIN = 15
+SCHEDULE_MIN = 5
 HOURLY_TFS = {"12h", "1d", "3d", "1w"}
 
 
@@ -68,6 +68,31 @@ def norm_symbol(raw: str) -> str:
 
 
 # ---- configuration from the website --------------------------------------------------------------------
+
+def cleanup_bots(bots: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], dict[str, Any]]:
+    """v2.2 tidy-up of the demo bots: identical copies are removed, a bot whose id names another timeframe gets
+    that timeframe (and restarts), and prediction trackers only take the model's confident calls (fewer trades,
+    less fee drag)."""
+    import re
+
+    out, seen, removed, retimed, confident = [], {}, [], [], []
+    for b in bots:
+        b = dict(b)
+        m = re.search(r"-(15m|1h|4h|12h|1d|3d)(?:$|-)", str(b.get("id", "")))
+        if m and b.get("timeframe") != m.group(1):
+            b["timeframe"] = m.group(1)
+            b["reset_token"] = f"tf-{b.get('reset_token', '1')}"
+            retimed.append(b["id"])
+        if b.get("mode") == "prediction" and not b.get("confident_only"):
+            b["confident_only"] = True
+            confident.append(b["id"])
+        sig = dumps({k: v for k, v in sorted(b.items()) if k not in ("id", "name", "reset_token")})
+        if sig in seen:
+            removed.append(b["id"])
+            continue
+        seen[sig] = b["id"]
+        out.append(b)
+    return out, {"removed_duplicates": removed, "timeframe_fixed": retimed, "confident_only": confident}
 
 MAJOR_COINS = ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "SOL/USDT", "DOGE/USDT", "TRX/USDT", "ADA/USDT",
                "LINK/USDT", "AVAX/USDT", "SUI/USDT", "XLM/USDT", "GRAM/USDT", "HBAR/USDT", "BCH/USDT", "LTC/USDT",
@@ -232,6 +257,11 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             bots_cfg = bots_cfg + new
             sink.set("config/bots", {**doc, "bots": bots_cfg, "updated_at": now_ms(),
                                      "defaults_added": sorted(seen | {b["id"] for b in DEFAULT_BOTS})})
+    if not rt.db.get_setting("bots_cleanup_v22", False):
+        bots_cfg, cleaned = cleanup_bots(bots_cfg)
+        sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
+        rt.db.set_setting("bots_cleanup_v22", True)
+        notes["bots_cleanup"] = cleaned
     if not rt.db.get_setting("fresh_start_v2", False):
         # v2.0 fresh start: every bot restarts with its starting balance and the counted track record begins now.
         # Older signals stay in the database (Signal log); they are just not counted in the v2.0 record.
