@@ -71,6 +71,12 @@ service cloud.firestore {
     }
     // per-user small state (e.g. which alerts were read)
     match /user_state/{uid}  { allow read, write: if allowed() && (isAdmin() || me() == uid); }
+    // last activity, approximate country (from the time zone) and device type: written by the person, read by the owner
+    match /presence/{uid} {
+      allow read: if isAdmin();
+      allow write: if signedIn() && me() == uid
+        && request.resource.data.keys().hasOnly(['last_seen', 'at', 'country', 'tz', 'device']);
+    }
 
     match /alerts/{id} {
       allow read: if isAdmin() || (isMember() && resource.data.owner_uid == me());

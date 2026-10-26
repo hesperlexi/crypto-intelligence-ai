@@ -18,7 +18,7 @@ Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real
 - **Engine** `backend/app` Python, run by GitHub Actions; SQLite state in the Actions cache (`engine-state-*`),
   encrypted daily backup as release asset `engine-backup` (`scripts/engine_backup.sh`, auto-restore on cache miss).
 - Firestore rules: `firestore.rules.template` (deployed by `deploy.yml`). Public docs: `views/wins_today`,
-  `config/membership`. Owner-only: `owner/*`, `admin/*`.
+  `config/membership`. Owner-only: `owner/*`, `admin/*`. `presence/{uid}` (last_seen, country from time zone, device; written by the person every ≤4 min, read by admin on Users).
 
 ## Workflows (.github/workflows)
 - `engine.yml` every 5 min (`python -m app.worker tick --budget 300`) · `train.yml` daily 02:17 UTC (60 min, full

@@ -35,6 +35,7 @@ import { TickerTape } from "./components/Polish";
 import Landing from "./components/Landing";
 import TelegramLink from "./components/TelegramLink";
 import { fmtDate, useMyRecord } from "./lib/membership";
+import { startPresence } from "./lib/presence";
 
 const NAV = [
   ["/", "Home"],
@@ -95,6 +96,7 @@ export default function App() {
   const [role, setRole] = useState<Role>("loading");
   useEffect(() => onAuthStateChanged(auth, (u) => { setUser(u); setRole("loading"); }), []);
   useEffect(() => (user ? watchRole(user, setRole) : undefined), [user]);
+  useEffect(() => { if (user && role !== "loading") startPresence(); }, [user, role]);
   if (user === undefined || (user && role === "loading")) return <div className="py-20 text-center text-sm text-mute">Loading…</div>;
   if (!user) return <Landing error={null} />;
   const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role };

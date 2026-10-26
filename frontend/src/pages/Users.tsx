@@ -1,4 +1,5 @@
 import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { countryName, flagUrl, ONLINE_MS } from "../lib/presence";
 import { useEffect, useState } from "react";
 import { Badge, Card, Empty, ErrorBox, Note } from "../components/ui";
 import { db } from "../lib/firebase";
@@ -21,6 +22,10 @@ export default function Users() {
   useEffect(() => (admin ? onSnapshot(collection(db, "users"), (q) => setRows(q.docs.map((d) => ({ id: d.id, ...d.data() }))), (e) => setErr(e.message)) : undefined), [admin]);
   const [states, setStates] = useState<Record<string, any>>({});
   useEffect(() => (admin ? onSnapshot(collection(db, "user_state"), (q) => setStates(Object.fromEntries(q.docs.map((d) => [d.id, d.data()]))), () => {}) : undefined), [admin]);
+  const [seen, setSeen] = useState<Record<string, any>>({});
+  useEffect(() => (admin ? onSnapshot(collection(db, "presence"), (q) => setSeen(Object.fromEntries(q.docs.map((d) => [d.id, d.data()]))), () => {}) : undefined), [admin]);
+  const [, tick] = useState(0);
+  useEffect(() => { const id = window.setInterval(() => tick((n) => n + 1), 30_000); return () => window.clearInterval(id); }, []);
   if (!admin) return <Empty>Only the app owner can manage users.</Empty>;
 
   const all = rows ?? [];
@@ -30,7 +35,12 @@ export default function Users() {
   const match: Record<Filter, (u: any) => boolean> = {
     todo, members: (u) => role(u) === "member", ending, expired: (u) => role(u) === "expired", blocked: (u) => u.status === "blocked", all: () => true,
   };
-  const list = all.filter(match[filter]).sort((a, b) => Number(todo(b)) - Number(todo(a)) || (b.payment?.submitted_at ?? b.requested_at ?? 0) - (a.payment?.submitted_at ?? a.requested_at ?? 0));
+  const last = (u: any) => seen[u.id]?.last_seen ?? 0;
+  const list = all.filter(match[filter]).sort((a, b) => Number(todo(b)) - Number(todo(a)) || last(b) - last(a) || (b.payment?.submitted_at ?? b.requested_at ?? 0) - (a.payment?.submitted_at ?? a.requested_at ?? 0));
+  const now = Date.now();
+  const within = (ms: number) => all.filter((u) => now - last(u) < ms).length;
+  const byCountry = Object.entries(all.reduce((m: Record<string, number>, u) => { const c = seen[u.id]?.country; if (c) m[c] = (m[c] ?? 0) + 1; return m; }, {}))
+    .sort((a, b) => b[1] - a[1]);
   const count = (f: Filter) => all.filter(match[f]).length;
   const act = async (fn: () => Promise<any>, ok: string | ((res: any) => string)) => { try { const res = await fn(); setErr(null); setMsg(typeof ok === "function" ? ok(res) : ok); } catch (e: any) { setErr(e.message); setMsg(null); } };
   const income = all.flatMap((u) => u.history ?? []).reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0);
@@ -39,8 +49,25 @@ export default function Users() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h1 className="text-xl font-semibold tracking-tight">Users & memberships</h1>
-        <span className="num text-xs text-mute">{count("members")} active · ${income} received in total</span>
+        <span className="num text-xs text-mute">{count("members")} active · {income} USDT received in total</span>
       </div>
+      <Card title="Activity">
+        <div className="grid grid-cols-3 gap-3 text-center">
+          <div><div className="num flex items-center justify-center gap-1.5 text-2xl font-semibold"><span className="h-2.5 w-2.5 rounded-full bg-bull" aria-hidden="true" />{within(ONLINE_MS)}</div><div className="text-xs text-mute">online now</div></div>
+          <div><div className="num text-2xl font-semibold">{within(86_400_000)}</div><div className="text-xs text-mute">active today</div></div>
+          <div><div className="num text-2xl font-semibold">{within(7 * 86_400_000)}</div><div className="text-xs text-mute">active this week</div></div>
+        </div>
+        {byCountry.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2 border-t border-glass/[0.06] pt-3">
+            {byCountry.map(([c, n]) => (
+              <span key={c} className="inline-flex items-center gap-1.5 rounded-lg border border-glass/10 px-2 py-1 text-xs">
+                <Flag cc={c} />{countryName(c)}<span className="num text-mute">{n}</span>
+              </span>
+            ))}
+          </div>
+        )}
+        <p className="mt-3 text-[11px] text-mute">Country is estimated from each device's time zone. People appear after they open the app once with this version.</p>
+      </Card>
       <div className="flex flex-wrap gap-1" role="group" aria-label="Filter">
         {([["todo", `To check (${count("todo")})`], ["members", `Active (${count("members")})`], ["ending", `Ending ≤7 days (${count("ending")})`],
           ["expired", `Expired (${count("expired")})`], ["blocked", `Blocked (${count("blocked")})`], ["all", `All (${all.length})`]] as const).map(([k, l]) => (
@@ -53,7 +80,7 @@ export default function Users() {
         <Card><Empty>{filter === "todo" ? "Nothing to check. New payment proofs appear here, and you get a notification." : "No one here."}</Empty></Card>
       ) : (
         <div className="grid gap-3 lg:grid-cols-2">
-          {list.map((u) => <UserCard key={u.id} u={u} st={states[u.id]} cfg={cfg} act={act} onZoom={setZoom} />)}
+          {list.map((u) => <UserCard key={u.id} u={u} st={states[u.id]} pr={seen[u.id]} cfg={cfg} act={act} onZoom={setZoom} />)}
         </div>
       )}
       <div className="grid gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
@@ -67,7 +94,22 @@ export default function Users() {
   );
 }
 
-function UserCard({ u, st, cfg, act, onZoom }: { u: any; st?: any; cfg: MembershipConfig; act: (fn: () => Promise<any>, ok: string | ((res: any) => string)) => void; onZoom: (s: string) => void }) {
+function Flag({ cc }: { cc?: string | null }) {
+  const [bad, setBad] = useState(false);
+  const url = flagUrl(cc);
+  if (!url || bad) return <span className="inline-flex h-3.5 w-5 items-center justify-center rounded-sm bg-glass/10 text-[8px] text-mute" aria-hidden="true">{cc ?? "?"}</span>;
+  return <img src={url} alt="" width={20} height={14} className="h-3.5 w-5 rounded-sm object-cover ring-1 ring-glass/15" onError={() => setBad(true)} />;
+}
+
+function activeText(ts?: number): { text: string; on: boolean } {
+  if (!ts) return { text: "not seen yet", on: false };
+  const d = Date.now() - ts;
+  if (d < ONLINE_MS) return { text: "online now", on: true };
+  const m = Math.round(d / 60_000), h = Math.round(d / 3_600_000), days = Math.round(d / 86_400_000);
+  return { text: m < 60 ? `${m} min ago` : h < 24 ? `${h} h ago` : days < 30 ? `${days} d ago` : fmtDate(ts), on: false };
+}
+
+function UserCard({ u, st, pr, cfg, act, onZoom }: { u: any; st?: any; pr?: any; cfg: MembershipConfig; act: (fn: () => Promise<any>, ok: string | ((res: any) => string)) => void; onZoom: (s: string) => void }) {
   const p = u.payment;
   const r = roleOf(u);
   const [months, setMonths] = useState<number>(p?.months ?? 1);
@@ -85,6 +127,12 @@ function UserCard({ u, st, cfg, act, onZoom }: { u: any; st?: any; cfg: Membersh
           <div className="min-w-0">
             <div className="truncate font-medium">{u.name || u.email}</div>
             <div className="truncate text-xs text-mute">{u.email}</div>
+            {(() => { const a = activeText(pr?.last_seen); return (
+              <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px]">
+                <span className={`inline-flex items-center gap-1 ${a.on ? "text-bull" : "text-mute"}`}><span className={`h-1.5 w-1.5 rounded-full ${a.on ? "bg-bull" : "bg-glass/30"}`} aria-hidden="true" />{a.text}</span>
+                {pr?.country && <span className="inline-flex items-center gap-1 text-mute"><Flag cc={pr.country} />{countryName(pr.country)}</span>}
+                {pr?.device && <span className="text-mute">· {pr.device}</span>}
+              </div>); })()}
           </div>
         </div>
         {badge}
@@ -95,7 +143,7 @@ function UserCard({ u, st, cfg, act, onZoom }: { u: any; st?: any; cfg: Membersh
         {u.expires_at && <><dt className="text-mute">Active until</dt><dd className="text-right">{fmtDate(u.expires_at)}</dd></>}
         {u.plan_months && <><dt className="text-mute">Last plan</dt><dd className="text-right">{planLabel(u.plan_months)}</dd></>}
         <dt className="text-mute">Notifications</dt><dd className={`text-right ${st?.push_error ? "text-bear" : st?.push_ok_at ? "text-bull" : "text-mute"}`}>{st?.push_error ? `failed ${fmtTime(st.push_error.at)}` : st?.push_ok_at ? `on since ${fmtDate(st.push_ok_at)}` : "not turned on"}</dd>
-        {u.history?.length > 0 && <><dt className="text-mute">Payments</dt><dd className="num text-right">{u.history.length} · ${u.history.reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0)}</dd></>}
+        {u.history?.length > 0 && <><dt className="text-mute">Payments</dt><dd className="num text-right">{u.history.length} · {u.history.reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0)} USDT</dd></>}
       </dl>
 
       {st?.push_error && (
