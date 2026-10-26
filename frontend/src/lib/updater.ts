@@ -5,8 +5,7 @@ import { BUILD_ID } from "./version";
  * Auto-update: every deploy writes /version.json with a new build id. The app checks it every minute,
  * when it comes back to the foreground and when the network returns. When a newer build is live:
  *  - app in the background  -> reloads straight away (nothing to interrupt)
- *  - app on screen          -> short "Updating…" notice, then reloads
- *  - you are typing         -> waits and shows an "Update now" button instead, so nothing is lost
+ *  - app on screen          -> an "Update now" button; nothing reloads while you are looking at it
  */
 export type UpdateState = { phase: "idle" | "updating" | "ready"; build?: string };
 
@@ -46,12 +45,10 @@ export async function checkForUpdate(manual = false): Promise<boolean> {
         if (g?.b === v.build && Date.now() - g.t < 120_000) return true;
       } catch { /* ignore */ }
     }
+    // never reload under someone's eyes (it reset charts and zoom mid-trade): on screen it offers "Update now",
+    // and the update applies by itself the next time the app goes to the background
     if (manual || document.hidden) reloadNow(v.build);
-    else if (editing()) emit({ phase: "ready", build: v.build });
-    else {
-      emit({ phase: "updating", build: v.build });
-      setTimeout(() => (editing() ? emit({ phase: "ready", build: v.build }) : reloadNow(v.build)), 2500);
-    }
+    else emit({ phase: "ready", build: v.build });
     return true;
   } catch {
     return false;

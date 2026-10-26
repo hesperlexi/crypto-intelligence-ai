@@ -1,5 +1,5 @@
 import { ColorType, createChart, CrosshairMode, IChartApi, ISeriesApi, LineStyle } from "lightweight-charts";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { chartColors, useAppearance } from "../lib/appearance";
 import { isNum, pricePrecision } from "../lib/format";
 
@@ -41,22 +41,44 @@ interface Props {
   height?: number;
   /** extra candles drawn dimmed after `candles` (used by Replay to reveal the future) */
   future?: Candle[];
+  /** remembers the zoom / scroll under this key (e.g. symbol + timeframe), also across reloads in this tab */
+  viewKey?: string;
 }
 
 const t = (ms: number) => Math.floor(ms / 1000) as any;
 const NONE: Candle[] = [];
 const NO_KEYS: string[] = [];
 
-export default function CandleChart({ candles, overlays, show = NO_KEYS, lines = [], markers = [], livePrice, liveCandle = null, height = 460, future = NONE }: Props) {
+// Zoom is stored relative to the newest candle, so a remembered view keeps following new candles.
+type View = { from: number; to: number };
+const views = new Map<string, View>();
+function loadView(key?: string): View | null {
+  if (!key) return null;
+  if (views.has(key)) return views.get(key)!;
+  try { const v = JSON.parse(sessionStorage.getItem("cia-chart-view:" + key) ?? "null"); if (v && isNum(v.from) && isNum(v.to)) return v; } catch { /* ignore */ }
+  return null;
+}
+function saveView(key: string | undefined, v: View) {
+  if (!key) return;
+  views.set(key, v);
+  try { sessionStorage.setItem("cia-chart-view:" + key, JSON.stringify(v)); } catch { /* ignore */ }
+}
+
+export default function CandleChart({ candles, overlays, show = NO_KEYS, lines = [], markers = [], livePrice, liveCandle = null, height = 460, future = NONE, viewKey }: Props) {
   const el = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
   const lastRef = useRef<Candle | null>(null);
+  const countRef = useRef(0);                 // number of bars on the chart (to keep zoom relative to the newest)
+  const keyRef = useRef(viewKey);
+  keyRef.current = viewKey;
+  const priceLinesRef = useRef<any[]>([]);
   // candles that arrived live after `candles` was loaded; kept so a rebuild (new lines, theme) does not drop them
   const tailRef = useRef<Map<number, Candle>>(new Map());
   const histRef = useRef<Candle[] | null>(null);
   if (histRef.current !== candles) { histRef.current = candles; tailRef.current = new Map(); }
   const { resolved } = useAppearance();
+  const [ready, setReady] = useState(0);        // bumps after each (re)build so lines and markers are redrawn
 
   useEffect(() => {
     if (!el.current || !candles.length) return;
@@ -84,6 +106,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     series.setData(all.map((c) => ({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] })));
     seriesRef.current = series;
     lastRef.current = [...all[all.length - 1]] as Candle;
+    countRef.current = all.length;
 
     if (future.length) {
       const fs = chart.addCandlestickSeries({
@@ -114,27 +137,48 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
         line.setData(data);
       }
     }
-    for (const l of lines) {
-      if (!isNum(l.price)) continue;
-      series.createPriceLine({ price: l.price, color: l.color, lineWidth: 1, lineStyle: l.dashed ? LineStyle.Dashed : LineStyle.Solid, axisLabelVisible: true, title: l.title });
-    }
+    // restore the last zoom for this chart (or show everything the first time)
+    const v = loadView(keyRef.current);
+    if (v) chart.timeScale().setVisibleLogicalRange({ from: countRef.current - 1 + v.from, to: countRef.current - 1 + v.to } as any);
+    else chart.timeScale().fitContent();
+    const onRange = (r: any) => { if (r && countRef.current) saveView(keyRef.current, { from: r.from - (countRef.current - 1), to: r.to - (countRef.current - 1) }); };
+    chart.timeScale().subscribeVisibleLogicalRangeChange(onRange);
+    setReady((n) => n + 1);
+    return () => {
+      chart.timeScale().unsubscribeVisibleLogicalRangeChange(onRange);
+      seriesRef.current = null;
+      chartRef.current = null;
+      priceLinesRef.current = [];
+      chart.remove();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [candles, overlays, show.join(","), future, resolved]);
+
+  // entry / SL / TP / liquidation lines change without rebuilding the chart (so zoom and scroll stay put)
+  const linesKey = JSON.stringify(lines.filter((l) => isNum(l.price)).map((l) => [+l.price.toPrecision(8), l.title, l.color, !!l.dashed]));
+  useEffect(() => {
+    const series = seriesRef.current;
+    if (!series) return;
+    for (const pl of priceLinesRef.current) { try { series.removePriceLine(pl); } catch { /* ignore */ } }
+    priceLinesRef.current = lines.filter((l) => isNum(l.price)).map((l) =>
+      series.createPriceLine({ price: l.price, color: l.color, lineWidth: 1, lineStyle: l.dashed ? LineStyle.Dashed : LineStyle.Solid, axisLabelVisible: true, title: l.title }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [linesKey, ready]);
+
+  const markersKey = JSON.stringify(markers);
+  useEffect(() => {
+    const series = seriesRef.current;
+    if (!series || !candles.length) return;
     const first = candles[0][0];
-    const ms = markers
+    series.setMarkers(markers
       .filter((m) => m.ts >= first)
       .sort((a, b) => a.ts - b.ts)
       .map((m) => ({
         time: t(m.ts), position: (m.up ? "belowBar" : "aboveBar") as "belowBar" | "aboveBar", color: m.up ? "#0ecb81" : "#f6465d",
         shape: (m.up ? "arrowUp" : "arrowDown") as "arrowUp" | "arrowDown", text: m.text,
-      }));
-    if (ms.length) series.setMarkers(ms);
-    chart.timeScale().fitContent();
-    return () => {
-      seriesRef.current = null;
-      chartRef.current = null;
-      chart.remove();
-    };
+      })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candles, overlays, show.join(","), JSON.stringify(lines), JSON.stringify(markers), future, resolved]);
+  }, [markersKey, ready]);
 
   // live stream: update or append the forming candle without rebuilding the chart
   useEffect(() => {
@@ -142,8 +186,10 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     if (!s || !liveCandle || future.length) return;
     const c = liveCandle;
     if (lastRef.current && c[0] < lastRef.current[0]) return;
+    const fresh = !lastRef.current || c[0] > lastRef.current[0];
     tailRef.current.set(c[0], [...c] as Candle);
     lastRef.current = [...c] as Candle;
+    if (fresh) countRef.current += 1;
     s.update({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] });
   }, [liveCandle, future.length]);
 

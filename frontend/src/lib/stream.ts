@@ -33,6 +33,7 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
 
   useEffect(() => {
     let closed = false, race: Race | null = null, attempt = 0, retry = 0, poll = 0, lastFrame = 0, dirty = false;
+    let connected = false;                            // a stream host is delivering (quiet markets can go seconds without a trade)
     let offset = 0, delay: number | null = null;
     let src: Mkt = market;
     const step = TF_MS[tf] ?? 9e5;
@@ -66,6 +67,7 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
       const path = `/stream?streams=${s}@aggTrade/${s}@kline_${tf}`;
       race = raceSocket(hosts.map((h) => h + path), (m) => {
         lastFrame = Date.now(); attempt = 0;
+        if (!connected) { connected = true; dirty = true; }
         const d = m.data;
         if (d?.e === "aggTrade") {
           tick(+d.p, d.T);
@@ -74,21 +76,25 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
         } else if (d?.e === "kline") kline(d.k);
       }, () => {
         if (closed) return;
+        connected = false; dirty = true;
         attempt++;
         retry = window.setTimeout(connect, Math.min(8000, 500 * 2 ** Math.min(attempt, 4)));
       });
     };
 
-    // while the socket is silent (phone woke up, network switch) the forming candle is polled over REST
+    // Only while no stream host is delivering (phone woke up, network switch, blocked host) the forming candle is
+    // polled over REST. The kline stream sends at least every ~2 s even without trades, so 6 s of silence means
+    // the socket is really stuck; a quiet market alone never switches to polling or shows "reconnecting".
     const restPoll = async () => {
-      if (closed || document.hidden || Date.now() - lastFrame < 2500) return;
+      const silent = Date.now() - lastFrame;
+      if (closed || document.hidden || (connected && silent < 6000)) return;
+      if (connected) { connected = false; dirty = true; }
       try {
         const rows = src === "futures" ? await fklines(symbol, tf, 2) : await klines(symbol, tf, 2);
         const c = rows[rows.length - 1];
-        if (c) { kline({ t: c[0], o: c[1], h: c[2], l: c[3], c: c[4], v: c[5] }); if (liveRef.current) liveRef.current[4] = c[4]; dirty = true; }
-        setSt((x) => (x.status === "polling" ? x : { ...x, status: "polling" }));
+        if (c && !connected) { kline({ t: c[0], o: c[1], h: c[2], l: c[3], c: c[4], v: c[5] }); if (liveRef.current && liveRef.current[0] === c[0]) liveRef.current[4] = c[4]; dirty = true; }
       } catch { /* keep trying */ }
-      if (race && Date.now() - lastFrame > 15000) { attempt = 0; connect(); }      // silent socket: race again
+      if (race && silent > 12000) { attempt = 0; connect(); }      // stuck socket: race the hosts again
     };
 
     (async () => {
@@ -115,7 +121,7 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
       dirty = false;
       const c = [...liveRef.current] as Candle;
       // history keeps its identity (the chart is never rebuilt); the chart appends closed candles itself
-      setSt((x) => ({ ...x, live: c, last: c[4], delay, status: Date.now() - lastFrame < 2500 ? "live" : x.status }));
+      setSt((x) => ({ ...x, live: c, last: c[4], delay, status: connected ? "live" : "polling" }));
     }, 200);
     const wake = () => { if (!document.hidden && Date.now() - lastFrame > 3000) { attempt = 0; connect(); } };
     document.addEventListener("visibilitychange", wake);

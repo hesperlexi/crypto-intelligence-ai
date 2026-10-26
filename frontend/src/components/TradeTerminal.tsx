@@ -204,9 +204,9 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
           </span>
         </span>
       </div>
-      {pro ? <div className="p-1"><TVChart symbol={symbol} market={market} tf={tf} height={400} /></div>
+      {pro ? <div className="p-1"><TVChart symbol={symbol} market={market} tf={tf} height={380} /></div>
         : st?.error ? <p className="p-4 text-sm text-bear">Chart unavailable: {st.error}</p>
-        : candles.length ? <CandleChart candles={candles} lines={lines} liveCandle={st?.live ?? null} height={380} />
+        : candles.length ? <CandleChart candles={candles} lines={lines} liveCandle={st?.live ?? null} height={380} viewKey={`trade|${symbol}|${market}|${tf}`} />
         : <div className="skeleton m-3 h-[340px] rounded-lg" />}
     </section>
   );

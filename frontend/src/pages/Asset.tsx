@@ -115,7 +115,7 @@ export default function Asset() {
         </div>}>
         {pro ? <TVChart symbol={symbol} tf={tf} /> : oh.error ? <ErrorBox error={oh.error} retry={oh.reload} /> : !oh.data ? <Loading what="Loading candles" /> : (
           <>
-            <CandleChart candles={oh.data.candles} overlays={oh.data.overlays} show={show} lines={lines} markers={markers} liveCandle={live.live} livePrice={live.live ? null : tk?.last} />
+            <CandleChart candles={oh.data.candles} overlays={oh.data.overlays} show={show} lines={lines} markers={markers} liveCandle={live.live} livePrice={live.live ? null : tk?.last} viewKey={`asset|${symbol}|${tf}`} />
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-mute">
               {show.map((k) => <span key={k} className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-4" style={{ background: OVERLAY_COLORS[k] }} />{k.replace("_", " ").toUpperCase()}</span>)}
               <span>Times in UTC</span>
