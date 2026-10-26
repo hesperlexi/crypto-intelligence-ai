@@ -15,7 +15,7 @@ for d in fs.collection("user_state").stream():
     ua = (e or {}).get("ua") or ""
     android = re.search(r"Android [\d.]+", ua)
     browser = re.search(r"(SamsungBrowser|Chrome|Firefox|Edg|OPR)/[\d]+", ua)
-    rows.append({"step": (e or {}).get("step"), "code": (e or {}).get("code"), "message": str((e or {}).get("message"))[:200],
+    rows.append({"step": (e or {}).get("stage"), "code": (e or {}).get("code"), "message": str((e or {}).get("message"))[:200],
                  "app": (e or {}).get("app"), "android": android.group(0) if android else None,
                  "browser": browser.group(0) if browser else None, "at": (e or {}).get("at"), "ok_at": ok})
 tokens = [{"app": (t.to_dict() or {}).get("app"), "browser": (re.search(r"(SamsungBrowser|Chrome)/\d+", (t.to_dict() or {}).get("ua") or "") or [None])[0]}

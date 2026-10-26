@@ -5,6 +5,7 @@ import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom"
 import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
 import UpdateNotice from "./components/UpdateNotice";
+import NotifyPrompt from "./components/NotifyPrompt";
 import { Badge } from "./components/ui";
 import { useApi } from "./lib/api";
 import { useAppearance } from "./lib/appearance";
@@ -290,6 +291,7 @@ function Shell({ user }: { user: User }) {
       )}
       <Toasts />
       <UpdateNotice />
+      <NotifyPrompt />
     </div>
   );
 }

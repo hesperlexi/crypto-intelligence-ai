@@ -202,10 +202,10 @@ function NotificationsCard() {
         </div>
         {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
         {perm === "denied" && !msg && <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 p-2 text-sm text-warn">{push.blockedHelp()}</p>}
-        {push.inAndroidApp() && (
+        {oldApk() && (
           <div className="mt-3 rounded-lg border border-warn/40 bg-warn/10 p-3 text-sm">
-            <p className="text-warn">Notifications don't work in the APK. Install the app from Chrome instead.</p>
-            <a className="btn btn-primary mt-2" href={CHROME_INTENT}>Open in Chrome</a>
+            <p className="text-warn">Update the app to get notifications (Google Chrome must be installed).</p>
+            <a className="btn btn-primary mt-2" href={APK_URL}>Download the new app</a>
           </div>
         )}
         {!hasKey && admin && (
@@ -223,7 +223,8 @@ function NotificationsCard() {
   );
 }
 
-const CHROME_INTENT = "intent://crypapp-6a9b9.web.app/settings#Intent;scheme=https;package=com.android.chrome;end";
+// The APK runs inside the phone's browser; older builds could open in Samsung Internet etc., which cannot deliver notifications.
+const oldApk = () => push.inAndroidApp() && /SamsungBrowser|Firefox|EdgA|OPR|YaBrowser|UCBrowser|MiuiBrowser|HuaweiBrowser/i.test(navigator.userAgent);
 const APK_URL = "https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk";
 
 function AndroidCard() {
@@ -231,8 +232,10 @@ function AndroidCard() {
   useEffect(() => { fetch(`/download/android.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then(setInfo).catch(() => setInfo(null)); }, []);
   return (
     <Card title="Install the app">
-      <p className="text-sm"><b>Recommended:</b> open <span className="text-accent">crypapp-6a9b9.web.app</span> in Chrome (Android) or Safari (iPhone) → menu → <b>Install app</b> / <b>Add to Home Screen</b>. Notifications work.</p>
-      {info && <a className="mt-3 inline-block text-xs text-mute underline" href={info.url ?? APK_URL}>Android APK v{info.version} (no notifications)</a>}
+      <a className="btn btn-primary w-full justify-center py-3 text-base" href={info?.url ?? APK_URL}>⬇ Download the Android app (APK){info?.version ? ` v${info.version}` : ""}</a>
+      <p className="mt-1 text-xs text-mute">Asks for notification permission on first open. Needs Google Chrome on the phone.</p>
+      <p className="mt-3 text-sm"><b>Android (Chrome):</b> open <span className="text-accent">crypapp-6a9b9.web.app</span> → menu ⋮ → <b>Install app</b>.</p>
+      <p className="mt-1 text-sm"><b>iPhone (Safari):</b> Share → <b>Add to Home Screen</b>.</p>
     </Card>
   );
 }

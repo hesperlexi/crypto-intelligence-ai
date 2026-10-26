@@ -71,6 +71,7 @@ jobs:
           (cd ../frontend/public/icons && python3 -m http.server 8765 --bind 127.0.0.1 > /dev/null 2>&1 &)
           sleep 1
           bubblewrap update --skipVersionUpgrade
+          python3 ../scripts/android_force_chrome.py
           bubblewrap build --skipPwaValidation
           mkdir -p out/.well-known out/download
           cp app-release-signed.apk out/download/crypto-intelligence-ai.apk
