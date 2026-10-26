@@ -1,6 +1,7 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useContext, useEffect, useRef, useState } from "react";
 import { bsym, tickers as restTickers, toTicker } from "./binance";
+import { Race, raceSocket } from "./ws";
 import { db } from "./firebase";
 import { localNotify } from "./push";
 import { myUid } from "./session";
@@ -88,68 +89,58 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const syms = key ? key.split(",") : [];
     if (!syms.length) return;
-    let ws: WebSocket | null = null;
+    let race: Race | null = null;
     let closed = false, attempt = 0, timer = 0, lastFrame = 0, lastRest = 0, busy = false;
     let cur: "ws" | "rest" | "down" = "down";
     const setM = (m: typeof cur) => { if (m !== cur) { cur = m; setMode(m); setConnected(m === "ws"); } };
     const take = (t: Ticker) => { pending.current[t.symbol] = t; if (t.last != null) latestPrices[t.symbol] = t.last; };
 
+    // all hosts at once; the first to deliver wins (a slow or blocked host costs nothing)
     const connect = () => {
       window.clearTimeout(timer);
-      const old = ws;
-      const host = WS_HOSTS[attempt % WS_HOSTS.length];
+      race?.close();
       const streams = syms.map((s) => `${bsym(s).toLowerCase()}@ticker`).join("/");
-      const sock = new WebSocket(`${host}/stream?streams=${streams}`);
-      ws = sock;
-      try { old?.close(); } catch { /* ignore */ }
-      sock.onmessage = (ev) => {
-        if (ws !== sock) return;
+      race = raceSocket(WS_HOSTS.map((h) => `${h}/stream?streams=${streams}`), (m) => {
         lastFrame = Date.now(); attempt = 0; setM("ws");
-        try {
-          const d = JSON.parse(ev.data).data;
-          const sym = syms.find((s) => bsym(s) === d.s);
-          if (sym) take(toTicker(sym, +d.c, +d.b, +d.a, +d.P, +d.q, d.E));
-        } catch { /* ignore malformed frames */ }
-      };
-      sock.onclose = () => {
-        if (ws !== sock || closed) return;
+        const d = m.data;
+        const sym = d && syms.find((s) => bsym(s) === d.s);
+        if (sym) take(toTicker(sym, +d.c, +d.b, +d.a, +d.P, +d.q, d.E));
+      }, () => {
+        if (closed) return;
         if (cur === "ws") setM(Date.now() - lastRest < 15000 ? "rest" : "down");
         attempt++;
-        timer = window.setTimeout(connect, Math.min(15000, 1000 * 2 ** Math.min(attempt, 4)));
-      };
-      sock.onerror = () => { try { sock.close(); } catch { /* ignore */ } };
+        timer = window.setTimeout(connect, Math.min(8000, 500 * 2 ** Math.min(attempt, 4)));
+      });
     };
 
     const rest = async () => {
-      if (busy || document.hidden || Date.now() - lastFrame < 12000) return;   // socket is delivering: nothing to do
+      if (busy || document.hidden || Date.now() - lastFrame < 4000) return;   // socket is delivering: nothing to do
       busy = true;
       try {
         const t = await restTickers(syms);
         Object.values(t).forEach((x: any) => take(x));
         lastRest = Date.now();
-        if (Date.now() - lastFrame >= 12000) setM("rest");
+        if (Date.now() - lastFrame >= 4000) setM("rest");
       } catch {
-        if (Date.now() - lastFrame >= 12000) setM("down");
+        if (Date.now() - lastFrame >= 4000) setM("down");
       } finally { busy = false; }
     };
 
     const watchdog = window.setInterval(() => {
       if (document.hidden) return;
-      if (ws && ws.readyState === WebSocket.OPEN && lastFrame && Date.now() - lastFrame > 20000) {
-        try { ws.close(); } catch { /* onclose reconnects */ }
-      }
+      if (lastFrame && Date.now() - lastFrame > 15000) { attempt = 0; connect(); }   // silent socket: race again
       rest();
-    }, 5000);
+    }, 2000);
     const wake = () => {
       if (document.hidden) return;
-      if (!ws || ws.readyState > WebSocket.OPEN || Date.now() - lastFrame > 10000) { attempt = 0; connect(); }
+      if (Date.now() - lastFrame > 4000) { attempt = 0; connect(); }
       rest();
     };
     document.addEventListener("visibilitychange", wake);
     window.addEventListener("online", wake);
     window.addEventListener("focus", wake);
     connect();
-    window.setTimeout(rest, 4000);   // first prices over REST if the socket has not answered within 4 s
+    window.setTimeout(rest, 2500);   // first prices over REST if no stream has answered within 2.5 s
 
     const flush = window.setInterval(() => {   // up to ~6 renders per second
       const p = pending.current;
@@ -164,14 +155,14 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timer); window.clearInterval(flush); window.clearInterval(watchdog);
       document.removeEventListener("visibilitychange", wake);
       window.removeEventListener("online", wake); window.removeEventListener("focus", wake);
-      try { ws?.close(); } catch { /* ignore */ }
+      race?.close();
     };
   }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 5s" : all.length ? "RECONNECTING" : "IDLE";
+  const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 2s" : all.length ? "RECONNECTING" : "IDLE";
   const feed = {
     status, last_update_ms: lastMsg,
-    transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 5 s (stream reconnecting)" : "reconnecting to Binance…",
+    transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 2 s (stream reconnecting)" : "reconnecting to Binance…",
   };
   const dismissAlert = (id: string) => setAlerts((a) => a.filter((x) => x.id !== id));
   return <Ctx.Provider value={{ tickers, connected, feed, alerts, refreshAt, symbols: all, dismissAlert }}>{children}</Ctx.Provider>;

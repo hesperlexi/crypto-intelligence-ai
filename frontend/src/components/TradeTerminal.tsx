@@ -10,8 +10,7 @@ import { useSymbols } from "./Pickers";
 import { CoinAvatar } from "./Polish";
 import { verdictOf } from "./TradeCall";
 import { useApi } from "../lib/api";
-import { orderbook } from "../lib/binance";
-import { StreamState, useMarketStream } from "../lib/stream";
+import { StreamState, useDepth, useMarketStream } from "../lib/stream";
 import { base, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
 import * as SP from "../lib/paper";
@@ -125,7 +124,8 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
       <div><div className={`num text-xl font-semibold ${tone(t?.change_pct)}`}>{fmtPrice(last)}</div>
         <div className="flex items-center gap-1 text-[11px] text-mute">
           <span className={`h-1.5 w-1.5 rounded-full ${st?.status === "live" ? "bg-bull" : st?.status === "polling" ? "bg-warn" : "bg-glass/30"}`} aria-hidden="true" />
-          {st?.status === "live" ? "live" : st?.status === "polling" ? "reconnecting" : "last price"}{market === "futures" ? (st?.source === "spot" ? " · spot price (futures unreachable)" : " · futures price") : ""}
+          {st?.status === "live" ? "live" : st?.status === "polling" ? "reconnecting" : "last price"}{market === "futures" ? (st?.source === "spot" ? " · spot price (futures unreachable)" : " · futures price") : " · spot price"}
+          {st?.status === "live" && st.delay != null && <span className={st.delay < 1500 ? "text-bull" : st.delay < 4000 ? "text-warn" : "text-bear"} title="How old the latest price is when it reaches this device (on Binance's clock)"> · {(Math.max(0, st.delay) / 1000).toFixed(1)} s</span>}
         </div></div>
       <div><div className={`num text-sm ${tone(t?.change_pct)}`}>{fmtPctRaw(t?.change_pct)}</div><div className="text-[11px] text-mute">24h change</div></div>
       <div className="hidden sm:block"><div className="num text-sm">{t?.quote_volume != null ? `${fmtNum(t.quote_volume / 1e6, 1)}M` : "—"}</div><div className="text-[11px] text-mute">24h volume (USDT)</div></div>
@@ -214,16 +214,9 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
 
 /* ---------------------------------------------------------------- order book */
 function OrderBook({ symbol, market }: { symbol: string; market: Mkt }) {
-  const [ob, setOb] = useState<any>(null);
+  const ob = useDepth(symbol, market);
   const { tickers } = useLive();
   const last = useLastPrice(symbol);
-  useEffect(() => {
-    let alive = true;
-    const load = () => { if (!document.hidden) orderbook(symbol, market).then((x: any) => alive && setOb(x)).catch(() => {}); };
-    setOb(null); load();
-    const id = window.setInterval(load, 2000);
-    return () => { alive = false; window.clearInterval(id); };
-  }, [symbol, market]);
   const asks: [number, number][] = (ob?.asks ?? []).slice(0, 9).reverse();
   const bids: [number, number][] = (ob?.bids ?? []).slice(0, 9);
   const max = Math.max(1, ...[...asks, ...bids].map((x) => x[0] * x[1]));
