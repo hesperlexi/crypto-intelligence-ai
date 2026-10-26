@@ -1,0 +1,22 @@
+name: Notification errors (manual)
+# Sanitised notification failures (no names, emails or ids) to the reports branch, to fix device-specific problems.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet firebase-admin
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python scripts/push_errors.py > /tmp/push-errors.json && cat /tmp/push-errors.json | head -80
+      - run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/push-errors.json reports/push-errors.json && git add reports && git commit -qm "Notification errors" && git push -q origin reports
