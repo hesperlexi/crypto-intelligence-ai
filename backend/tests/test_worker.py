@@ -163,3 +163,23 @@ def test_achievements_unlock_only_from_real_results():
     assert a["best_trade"]["value"] == "+7.5%" and a["win_streak"]["value"] == "3 in a row" and a["all_targets"]["unlocked"]
     assert not a["win_rate_30d"]["unlocked"]                # 12 signals: fewer than the 20 required
     assert v["achievements"][0]["unlocked"] and not v["achievements"][-1]["unlocked"]
+
+
+def test_wins_today_lists_real_recent_wins_only():
+    from app import views
+    from app.db import Database
+    from app.services.runtime import Runtime
+
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    now = views.now_ms()
+    ins = ("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, stop, "
+           "tp1, tp2, tp3, status, return_pct, closed_at, payload) VALUES (?, 1, ?, '1h', ?, 'BUY', 'BUY', 100, 1, 100, 95, "
+           "105, 110, 115, ?, ?, ?, '{}')")
+    rt.db.execute(ins, ("a", "BTC/USDT", 1, "TP2", 4.0, now - 3_600_000))
+    rt.db.execute(ins, ("b", "ETH/USDT", 2, "STOPPED", -2.0, now - 3_600_000))
+    rt.db.execute(ins, ("c", "SOL/USDT", 3, "TP1", 1.0, now - 3 * 86_400_000))
+    v = views.wins_today(rt)
+    assert v["period"] == "today" and [w["symbol"] for w in v["wins"]] == ["BTC/USDT"] and v["wins"][0]["target"] == 110
+    rt.db.execute("DELETE FROM signals WHERE id = 'a'")
+    v = views.wins_today(rt)
+    assert v["period"] == "this week" and v["wins"][0]["symbol"] == "SOL/USDT"

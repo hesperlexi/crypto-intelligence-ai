@@ -187,11 +187,11 @@ The **Bots** page runs automatic demo traders with virtual money around the cloc
 
 ## 11. When to trust the models: the Accuracy page
 
-**Track record** (menu) lists every trade signal since launch with its real result (target hit, stopped or expired), the win rate and the running total, plus how each coin's AI scored on past data it never saw. Nothing is removed. The page is also public on the start page, so you can show it to friends before they join.
+**Track record** (menu) lists every trade signal since launch with its real result (target hit, stopped or expired), the win rate and the running total, plus how each coin's AI scored on past data it never saw. Nothing is removed. The start page shows visitors the **Wins of the day**: real winning signals from the last 24 hours.
 
-**Weekly report** (menu) turns each week into a ready-to-post image (square post or 9:16 story) with the week's best signals, the full totals (wins and losses) and a link to the track record, plus a caption to copy. A new report is ready every Monday.
+**Weekly report** (menu) turns each week into a ready-to-post image (square post or 9:16 story) with the week's best signals, the full totals (wins and losses) and the app link, plus a caption to copy. A new report is ready every Monday.
 
-**Achievements** (menu) shows the milestones the app has really reached (signals delivered, best signal, winning streaks, profitable weeks, the scorecard bot beating buy & hold, Radar star picks), worked out from the public record. Download any badge as an image, or all of them as one poster.
+**Achievements** (menu) shows the milestones the app has really reached (signals delivered, best signal, winning streaks, profitable weeks, the scorecard bot beating buy & hold, Radar star picks), worked out from the real track record. Download any badge as an image, or all of them as one poster.
 
 The **Accuracy** page is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
 

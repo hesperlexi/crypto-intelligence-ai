@@ -410,3 +410,17 @@ def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] 
             if days < goal:
                 break
     return sorted(out, key=lambda a: (not a["unlocked"], -(a["achieved_at"] or 0)))
+
+
+def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
+    """Public highlights for the sign-in page: winning signals closed in the last 24 h (else the last 7 days)."""
+    now = now_ms()
+    for hours, label in ((24, "today"), (24 * 7, "this week")):
+        rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct > 0 AND closed_at >= ? "
+                           "ORDER BY return_pct DESC LIMIT ?", (now - hours * 3_600_000, limit))
+        if rows:
+            break
+    wins = [{"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+             "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"], "closed_at": r["closed_at"],
+             "target": {"TP1": r["tp1"], "TP2": r["tp2"], "TP3": r["tp3"]}.get(r["status"])} for r in rows]
+    return {"generated_at": now, "period": label if wins else None, "wins": wins}

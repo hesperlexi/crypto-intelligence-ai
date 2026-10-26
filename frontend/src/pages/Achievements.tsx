@@ -61,7 +61,7 @@ async function header(g: CanvasRenderingContext2D, W: number, y: number) {
 }
 
 function footer(g: CanvasRenderingContext2D, W: number, H: number) {
-  g.textAlign = "center"; g.fillStyle = "#eaecef"; g.font = F(700, 28); g.fillText(`Every signal & result is public: ${SITE}`, W / 2, H - 92);
+  g.textAlign = "center"; g.fillStyle = "#eaecef"; g.font = F(700, 28); g.fillText(`AI crypto signals · join at ${SITE}`, W / 2, H - 92);
   g.fillStyle = "#848e9c"; g.font = F(500, 20); g.fillText("Achieved by the app's published signals. Not financial advice; past results don't guarantee future ones.", W / 2, H - 58);
   g.textAlign = "left";
 }
@@ -125,7 +125,7 @@ export default function Achievements() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-xl font-semibold tracking-tight">Achievements</h1>
-          <p className="text-sm text-mute">Milestones the app has really reached, worked out by the engine from the public track record. Download any of them as an image to share.</p>
+          <p className="text-sm text-mute">Milestones the app has really reached, worked out by the engine from the app's real track record. Download any of them as an image to share.</p>
         </div>
         <button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>
       </div>

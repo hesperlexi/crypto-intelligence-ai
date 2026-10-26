@@ -334,6 +334,7 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("bots", bot_report)
     sink.view("track_record", views.track_record(rt, bot_report))
     sink.view("weekly_report", views.weekly_reports(rt, bot_report))
+    sink.view("wins_today", views.wins_today(rt))
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))

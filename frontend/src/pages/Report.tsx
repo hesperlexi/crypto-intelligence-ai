@@ -71,7 +71,7 @@ async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
   }
   const fy = H - (story ? 175 : 128);
   g.fillStyle = "rgba(240,185,11,0.12)"; g.fillRect(48, fy - 10, W - 96, story ? 130 : 100);
-  g.fillStyle = text; g.font = font(700, 28); g.fillText(`Every signal & result, wins and losses: ${SITE}`, 70, fy + 32);
+  g.fillStyle = text; g.font = font(700, 28); g.fillText(`AI crypto signals · join at ${SITE}`, 70, fy + 32);
   g.fillStyle = mute; g.font = font(500, 20);
   const disc = "Results of the app's published signals, equal size, before fees. Not financial advice; past results don't guarantee future ones.";
   wrap(g, disc, W - 150).forEach((ln, k) => g.fillText(ln, 70, fy + (story ? 72 : 58) + k * 24));
@@ -82,7 +82,7 @@ async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
     g.strokeStyle = "rgba(240,185,11,0.5)"; g.lineWidth = 2; g.strokeRect(70, cy, W - 140, 380);
     g.fillStyle = gold; g.font = font(800, 44); g.fillText("Get the next signals", 110, cy + 80);
     g.fillStyle = text; g.font = font(500, 30);
-    ["AI long / short calls with entry, stop-loss & targets", "Alerts on your phone · demo trading · weekly reports", "Every result public, losses included"].forEach((t, k) => {
+    ["AI long / short calls with entry, stop-loss & targets", "Alerts on your phone · demo trading · weekly reports", "Full results, losses included, for members"].forEach((t, k) => {
       g.fillStyle = gold; g.fillText("✓", 110, cy + 150 + k * 56); g.fillStyle = text; g.fillText(t, 150, cy + 150 + k * 56);
     });
     g.fillStyle = gold; g.font = font(800, 34); g.fillText(`${SITE} · from $15/month`, 110, cy + 345);
@@ -109,7 +109,7 @@ function caption(r: any): string {
     `📈 Total result of all closed signals: ${sp(r.total_return_pct)}`,
     ...(best.length ? ["", "Top signals:", ...best.map((t: any) => `• ${base(t.symbol)} ${t.side} (${String(t.timeframe).toUpperCase()}): ${sp(t.return_pct)}`)] : []),
     "",
-    `Every signal and its result, losses included, is public: https://${SITE}`,
+    `Join and see every signal live: https://${SITE}`,
     "AI long/short signals with entry, stop-loss and targets · from $15/month.",
     "",
     "Not financial advice. Past results don't guarantee future results.",
@@ -145,7 +145,7 @@ export default function Report() {
     <div className="space-y-4">
       <div>
         <h1 className="text-xl font-semibold tracking-tight">Weekly report</h1>
-        <p className="text-sm text-mute">Ready to post: the week's best signals up front, with the full totals and a link to the public track record. Showing the losses next to the wins is what makes people trust the wins.</p>
+        <p className="text-sm text-mute">Ready to post: the week's best signals up front, with the full totals (wins and losses) and the app link. Showing the totals next to the best trades is what makes people trust the wins.</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <select className="input w-auto" value={idx} onChange={(e) => setI(Number(e.target.value))} aria-label="Week">
