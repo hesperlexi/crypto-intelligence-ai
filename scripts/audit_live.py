@@ -190,10 +190,10 @@ print(json.dumps(out, indent=1, default=str))
 # 13. model coverage: which coin/timeframes have no model and why (from the health view)
 hm = (h or {}).get("models") or []
 skipped = [{k: r.get(k) for k in ("symbol", "timeframe", "state", "message")} for r in hm
-           if str(r.get("state") or "").lower() != "done"]
+           if str(r.get("state") or "").lower() not in ("done", "active")]
 cnt = {}
 for r in hm:
     cnt.setdefault(r.get("timeframe"), [0, 0])[0 if str(r.get("state")).lower() == "done" else 1] += 1
-print(json.dumps({"models_done_vs_not_by_tf": cnt, "not_trained": skipped[:80]}, indent=1, default=str))
+print(json.dumps({"models_done_vs_not_by_tf": cnt, "not_trained": skipped[:200]}, indent=1, default=str))
 ser = [s for s in (h.get("series") or []) if s.get("timeframe") in ("3d", "1w")]
 print(json.dumps({"series_3d_1w": [{k: s.get(k) for k in ("symbol", "timeframe", "candles", "missing", "quality_pct", "first_ts")} for s in ser]}, default=str))
