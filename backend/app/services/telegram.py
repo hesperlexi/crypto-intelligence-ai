@@ -25,7 +25,7 @@ API = "https://api.telegram.org"
 WINS_HOUR_UTC = 16
 WEEKLY_HOUR_UTC = 6
 TEASER_DELAY_MS = 60 * 60_000
-DEFAULTS = {"enabled": False, "channel": "", "post_wins": True, "post_weekly": True, "post_teaser": True}
+DEFAULTS = {"enabled": False, "channel": "@crypappai", "post_wins": True, "post_weekly": True, "post_teaser": True}
 
 
 def config(sink) -> dict[str, Any]:

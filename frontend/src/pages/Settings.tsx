@@ -31,7 +31,6 @@ function MemberSettings() {
         <Card title="Appearance"><AppearancePanel /></Card>
         <div className="space-y-4"><MembershipCard /><ContactCard /><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
-      <Note>Coins, bots, the risk profile and the signal weights are managed by the app owner.</Note>
     </div>
   );
 }
@@ -93,7 +92,7 @@ function AdminSettings() {
             ))}
           </div>
           <button className="btn btn-primary mt-3" onClick={() => save({ risk_profile: risk }, "Risk profile saved")}>Save risk profile</button>
-          <Note>Position sizes are computed from these limits and the stop distance only. Risk management never looks at the forecast.</Note>
+
         </Card>
         <Card title="Forecast refresh">
           <div className="flex flex-wrap gap-2">
@@ -101,10 +100,10 @@ function AdminSettings() {
               <button key={s} className={`btn ${st.data.forecast_refresh_s === s ? "btn-on" : ""}`} aria-pressed={st.data.forecast_refresh_s === s} onClick={() => save({ forecast_refresh_s: s }, `Forecasts now refresh every ${REFRESH_LABEL[s]}`)}>{REFRESH_LABEL[s]}</button>
             ))}
           </div>
-          <Note>The engine re-scores every asset about every 5–10 minutes (its schedule is set in the GitHub workflow). Refreshing never retrains; models are retrained by a separate daily run. Saved settings are picked up by the next cycle.</Note>
+
           {policy && (
             <div className="mt-4">
-              <div className="label mb-1">Signal policy (set in the backend .env)</div>
+              <div className="label mb-1">Signal policy</div>
               <Row k="Minimum confidence to trade" v={fmtProb(policy.min_confidence)} />
               <Row k="Minimum model agreement" v={fmtProb(policy.min_model_agreement)} />
               <Row k="Minimum risk / reward" v={`1 : ${policy.min_risk_reward}`} />
@@ -136,7 +135,7 @@ function AdminSettings() {
               <p className="text-sm">Out-of-sample direction accuracy <span className="num">{fmtProb(opt.test_accuracy, 1)}</span> vs base rate <span className="num">{fmtProb(opt.test_base_rate, 1)}</span> on {opt.test_rows} later bars.</p>
               <div className="mt-2 grid gap-x-8 sm:grid-cols-2">{["trend", "momentum", "volume", "structure", "volatility"].map((k) => <Row key={k} k={k} v={`${Number(weights[k]).toFixed(2)} → ${opt.weights[k].toFixed(2)}`} />)}</div>
               <button className="btn mt-2" onClick={() => setWeights(Object.fromEntries(Object.entries(opt.weights).map(([k, v]) => [k, Number((v as number).toFixed(3))])))}>Load suggestion into the form</button>
-              <Note>{opt.note} If accuracy is not above the base rate, the suggestion has no demonstrated value: keep the defaults.</Note>
+              <Note>Only use it if accuracy beats the base rate.</Note>
             </div>
           ) : <p className="mt-3 text-sm text-warn">{opt.reason}</p>)}
         </div>
@@ -151,7 +150,7 @@ function ManualCard() {
     <Card title="User manual">
       <div className="flex items-center gap-3">
         <img src="/icons/icon-192.png" alt="" className="h-12 w-12 rounded-xl" />
-        <p className="text-sm text-mute">Step-by-step guide: reading signals, futures, alerts, paper trading, demo bots and how far to trust the models.</p>
+        <p className="text-sm text-mute">Signals, trading, alerts and bots, step by step.</p>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <a className="btn btn-primary" href={href} target="_blank" rel="noopener">Open manual</a>
@@ -167,9 +166,7 @@ function AboutCard() {
   return (
     <Card title="About">
       <Row k="App" v="Crypto Intelligence AI" />
-      <Row k="Version" v={`v${APP_VERSION} · build ${BUILD_ID}`} />
-      <Row k="Build" v={BUILD_ID} />
-      <Row k="Updates" v="automatic after every deploy" />
+      <Row k="Version" v={`v${APP_VERSION}`} />
       <div className="mt-3 flex items-center gap-3">
         <button className="btn" onClick={async () => { setMsg("Checking…"); setMsg((await checkForUpdate(true)) ? "Updating…" : "You have the latest version."); }}>Check for updates</button>
         {msg && <span className="text-sm text-mute">{msg}</span>}
@@ -197,7 +194,7 @@ function NotificationsCard() {
     <section id="notifications">
       <Card title="Notifications">
         <Row k="This device" v={perm === "granted" ? (token ? "on — also when the app is closed" : "on while the app is open") : perm === "denied" ? (push.inAndroidApp() ? "blocked in phone settings" : "blocked in browser settings") : perm === "unsupported" ? "not supported" : "off"} />
-        <Row k="Push key (Web Push certificate)" v={hasKey == null ? "…" : hasKey ? "added" : "not added yet"} />
+        {admin && <Row k="Push key" v={hasKey == null ? "…" : hasKey ? "added" : "not added yet"} />}
         <div className="mt-3 flex flex-wrap gap-2">
           {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy} onClick={() => act(push.enable)}>{perm === "denied" ? "Try again" : "Turn on notifications"}</button>
             : <button className="btn" disabled={busy} onClick={() => act(async () => { await push.disable(); return "Notifications turned off on this device."; })}>Turn off on this device</button>}
@@ -205,39 +202,37 @@ function NotificationsCard() {
         </div>
         {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
         {perm === "denied" && !msg && <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 p-2 text-sm text-warn">{push.blockedHelp()}</p>}
-        {!hasKey && !admin && <p className="mt-3 text-xs text-mute">Notifications while the app is closed need a one-time setup by the app owner.</p>}
+        {push.inAndroidApp() && (
+          <div className="mt-3 rounded-lg border border-warn/40 bg-warn/10 p-3 text-sm">
+            <p className="text-warn">Notifications don't work in the APK. Install the app from Chrome instead.</p>
+            <a className="btn btn-primary mt-2" href={CHROME_INTENT}>Open in Chrome</a>
+          </div>
+        )}
         {!hasKey && admin && (
           <div className="mt-4 border-t border-glass/[0.06] pt-3">
-            <p className="text-sm">One-time setup so alerts also arrive when the app is closed:</p>
-            <ol className="mt-1 list-decimal pl-5 text-xs leading-relaxed text-mute">
-              <li>Open the Firebase console → your project → ⚙ Project settings → <b>Cloud Messaging</b>.</li>
-              <li>Under <b>Web Push certificates</b>, click <b>Generate key pair</b>.</li>
-              <li>Copy the long key shown there and paste it here, then press Save and “Turn on notifications”.</li>
-            </ol>
+            <p className="text-xs text-mute">Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair, then paste it here.</p>
             <div className="mt-2 flex gap-2">
               <input className="input" placeholder="Paste the Web Push key (starts with B…)" value={key} onChange={(e) => setKey(e.target.value)} />
               <button className="btn" disabled={busy || !key.trim()} onClick={() => act(async () => { await push.saveVapidKey(key); setHasKey(true); return "Key saved. Now press “Turn on notifications” on each device."; })}>Save</button>
             </div>
           </div>
         )}
-        <Note>iPhone / iPad: notifications work only for the app added to the Home Screen (Safari → Share → Add to Home Screen), iOS 16.4 or newer. Turn them on separately on each device.</Note>
+        <Note>iPhone: add the app to the Home Screen first (Safari → Share), iOS 16.4+.</Note>
       </Card>
     </section>
   );
 }
 
+const CHROME_INTENT = "intent://crypapp-6a9b9.web.app/settings#Intent;scheme=https;package=com.android.chrome;end";
 const APK_URL = "https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk";
 
 function AndroidCard() {
   const [info, setInfo] = useState<any>(undefined);
   useEffect(() => { fetch(`/download/android.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then(setInfo).catch(() => setInfo(null)); }, []);
   return (
-    <Card title="Android app">
-      {info === undefined ? <p className="text-sm text-mute">Checking…</p> : info ? (<>
-        <a className="btn btn-primary w-full sm:w-auto" href={info.url ?? APK_URL}>Download the Android app (APK)</a>
-        <p className="mt-2 text-xs text-mute">Version {info.version} · {(info.bytes / 1e6).toFixed(1)} MB</p>
-      </>) : <p className="text-sm text-mute">The Android app is being built; it appears here after the next deploy.</p>}
-      <Note>On your phone: download, open the file, and allow “install unknown apps” for your browser when Android asks. The app opens this site in Chrome, so it always shows the newest version without reinstalling; you only reinstall to pick up a new app icon. Sign in once with Google inside the app.</Note>
+    <Card title="Install the app">
+      <p className="text-sm"><b>Recommended:</b> open <span className="text-accent">crypapp-6a9b9.web.app</span> in Chrome (Android) or Safari (iPhone) → menu → <b>Install app</b> / <b>Add to Home Screen</b>. Notifications work.</p>
+      {info && <a className="mt-3 inline-block text-xs text-mute underline" href={info.url ?? APK_URL}>Android APK v{info.version} (no notifications)</a>}
     </Card>
   );
 }

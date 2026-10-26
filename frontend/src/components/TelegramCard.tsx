@@ -6,7 +6,7 @@ import { db } from "../lib/firebase";
 import { ago } from "../lib/format";
 import { Card, Note } from "./ui";
 
-const DEF = { enabled: false, token: "", channel: "", post_wins: true, post_weekly: true, post_teaser: true };
+const DEF = { enabled: false, token: "", channel: "@crypappai", post_wins: true, post_weekly: true, post_teaser: true };
 
 export default function TelegramCard() {
   const [s, setS] = useState(DEF);
@@ -26,13 +26,8 @@ export default function TelegramCard() {
   return (
     <Card title="Telegram channel autopilot" right={<span className={`text-xs font-semibold ${s.enabled && ready ? "text-bull" : "text-mute"}`}>{s.enabled && ready ? "ON" : "OFF"}</span>}>
       <div className="space-y-3 text-sm">
-        <p className="text-mute">Posts to your public channel automatically: <b className="text-text">Wins of the day</b> (20:00 Dubai), <b className="text-text">weekly results</b> (Monday morning) and <b className="text-text">one free grade-A signal a day</b>, shared an hour after members got it.</p>
-        <ol className="list-decimal space-y-1 pl-5 text-xs text-mute">
-          <li>In Telegram, open <b className="text-text">@BotFather</b>, send <span className="num">/newbot</span>, pick a name; copy the token it gives you.</li>
-          <li>Open your channel → Administrators → Add admin → search your bot → allow <b className="text-text">Post messages</b>.</li>
-          <li>Paste the token and the channel name (e.g. <span className="num">@cryptointelligenceai</span>) below, save, press <b className="text-text">Send test post</b>.</li>
-        </ol>
-        <label className="block"><span className="text-xs text-mute">Bot token (private: only you can see it)</span>
+        <p className="text-xs text-mute">Daily wins, Monday results and one free signal a day. Setup: @BotFather → /newbot → copy token; add the bot as channel admin.</p>
+        <label className="block"><span className="text-xs text-mute">Bot token (private)</span>
           <div className="mt-1 flex gap-2"><input className="input flex-1" type={show ? "text" : "password"} autoComplete="off" value={s.token} onChange={(e) => setS({ ...s, token: e.target.value.trim() })} placeholder="123456789:AA…" />
             <button className="btn px-3 text-xs" onClick={() => setShow(!show)}>{show ? "Hide" : "Show"}</button></div></label>
         <label className="block"><span className="text-xs text-mute">Channel</span>

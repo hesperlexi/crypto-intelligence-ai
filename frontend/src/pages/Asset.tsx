@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useIsAdmin } from "../lib/session";
 import { Link, useParams } from "react-router-dom";
 import TVChart from "../components/TVChart";
+import { useMarketStream } from "../lib/stream";
 import CandleChart, { Marker, OVERLAY_COLORS, PriceLine } from "../components/CandleChart";
 import { MODEL_TFS, TfTabs } from "../components/Pickers";
 
@@ -30,7 +31,8 @@ export default function Asset() {
   useEffect(() => { try { localStorage.setItem("chart_pro", pro ? "1" : "0"); } catch { /* ignore */ } }, [pro]);
   const tk = useTicker(symbol);
   const an = useApi<any>(`/analysis/${s}?timeframe=${tf}`, 60000);
-  const oh = useApi<any>(`/market/${s}/ohlcv?timeframe=${tf}&limit=500`, 60000);
+  const oh = useApi<any>(`/market/${s}/ohlcv?timeframe=${tf}&limit=500`);
+  const live = useMarketStream(symbol, "spot", tf);          // every trade moves the forming candle, no polling delay
   const a = an.data;
   const ok = a?.status === "OK";
   const price = tk?.last ?? a?.price;
@@ -113,7 +115,7 @@ export default function Asset() {
         </div>}>
         {pro ? <TVChart symbol={symbol} tf={tf} /> : oh.error ? <ErrorBox error={oh.error} retry={oh.reload} /> : !oh.data ? <Loading what="Loading candles" /> : (
           <>
-            <CandleChart candles={oh.data.candles} overlays={oh.data.overlays} show={show} lines={lines} markers={markers} livePrice={tk?.last} />
+            <CandleChart candles={oh.data.candles} overlays={oh.data.overlays} show={show} lines={lines} markers={markers} liveCandle={live.live} livePrice={live.live ? null : tk?.last} />
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-mute">
               {show.map((k) => <span key={k} className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-4" style={{ background: OVERLAY_COLORS[k] }} />{k.replace("_", " ").toUpperCase()}</span>)}
               <span>Times in UTC</span>

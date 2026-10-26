@@ -9,9 +9,9 @@ import { bsym, fklines, klines } from "./binance";
 import { latestPrices } from "./live";
 
 export type Mkt = "spot" | "futures";
-const SPOT_WS = ["wss://data-stream.binance.vision", "wss://stream.binance.com:9443"];
+const SPOT_WS = ["wss://stream.binance.com:9443", "wss://stream.binance.com:443", "wss://data-stream.binance.vision"];
 const FUT_WS = ["wss://fstream.binance.com"];
-const TF_MS: Record<string, number> = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "1h": 36e5, "4h": 144e5, "1d": 864e5 };
+const TF_MS: Record<string, number> = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "30m": 18e5, "1h": 36e5, "4h": 144e5, "12h": 432e5, "1d": 864e5, "3d": 2592e5, "1w": 6048e5 };
 
 /** Last traded futures price per symbol (filled by the stream, read by paper futures for fills). */
 export const futuresLast: Record<string, { px: number; ts: number }> = {};

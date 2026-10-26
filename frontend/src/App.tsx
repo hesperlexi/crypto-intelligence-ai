@@ -32,6 +32,7 @@ import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
 import Landing from "./components/Landing";
+import TelegramLink from "./components/TelegramLink";
 import { fmtDate, useMyRecord } from "./lib/membership";
 
 const NAV = [
@@ -134,7 +135,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
         <div className="mt-6">{rec === undefined ? <p className="text-center text-sm text-mute">Loading…</p> : <PaymentPanel record={rec} />}</div>
         <div className="mt-6 flex flex-wrap items-center justify-between gap-2 border-t border-glass/[0.06] pt-4 text-xs text-mute">
           <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">What you get: read the user manual (PDF)</a>
-          <span className="flex items-center gap-4"><SupportLink className="text-accent hover:underline" label="Problem? Contact support" /><button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button></span>
+          <span className="flex items-center gap-4"><TelegramLink variant="link" /><SupportLink className="text-accent hover:underline" label="Problem? Contact support" /><button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button></span>
         </div>
         <p className="mt-3 text-center text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION} · Analysis and demo trading only, not financial advice.</p>
       </div>
@@ -145,7 +146,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
 function Footer({ className = "" }: { className?: string }) {
   return (
     <footer className={`border-t border-glass/[0.06] px-4 py-3 text-center text-xs text-mute ${className}`}>
-      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual (PDF)</a> · <SupportLink className="text-accent hover:underline" /></div>
+      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual (PDF)</a> · <SupportLink className="text-accent hover:underline" /> · <TelegramLink variant="link" /></div>
       <div className="mt-1 hidden md:block">
         Research tool, not financial advice. Forecasts are probabilities with uncertainty, never certainties. No real orders are placed. Demo bots and paper trading use virtual money.
       </div>

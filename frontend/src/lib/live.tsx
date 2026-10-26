@@ -31,7 +31,8 @@ export const latestPrices: Record<string, number> = {};
 
 const Ctx = createContext<LiveState>({ tickers: {}, connected: false, feed: null, alerts: [], refreshAt: 0, symbols: [], dismissAlert: () => {} });
 // several endpoints: some networks block port 9443 or one of the hosts
-const WS_HOSTS = ["wss://data-stream.binance.vision", "wss://stream.binance.com:443", "wss://stream.binance.com:9443"];
+// the exchange's own stream first (the data-stream.binance.vision mirror can lag a few seconds)
+const WS_HOSTS = ["wss://stream.binance.com:9443", "wss://stream.binance.com:443", "wss://data-stream.binance.vision"];
 
 /** Live tickers straight from Binance's public WebSocket, plus alert / refresh notices from Firestore. */
 export function LiveProvider({ children }: { children: ReactNode }) {
@@ -150,14 +151,14 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     connect();
     window.setTimeout(rest, 4000);   // first prices over REST if the socket has not answered within 4 s
 
-    const flush = window.setInterval(() => {   // at most 4 renders per second
+    const flush = window.setInterval(() => {   // up to ~6 renders per second
       const p = pending.current;
       if (Object.keys(p).length) {
         pending.current = {};
         setTickers((t) => ({ ...t, ...p }));
         setLastMsg(Date.now());
       }
-    }, 250);
+    }, 160);
     return () => {
       closed = true;
       window.clearTimeout(timer); window.clearInterval(flush); window.clearInterval(watchdog);

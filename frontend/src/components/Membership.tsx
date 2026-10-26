@@ -122,7 +122,7 @@ export function MembershipCard() {
       {r.payment?.status === "submitted" && <p className="mt-3 text-xs text-warn">Renewal proof sent on {fmtDate(r.payment.submitted_at)} · waiting for the owner.</p>}
       {r.expires_at && <button className="btn btn-primary mt-3 w-full" onClick={() => setOpen(!open)}>{open ? "Hide" : "Renew / extend"}</button>}
       {open && <div className="mt-4 border-t border-glass/[0.06] pt-4"><PaymentPanel record={r} compact /></div>}
-      <p className="mt-3 text-xs text-mute">Renewing early adds the new time after your current end date, so you never lose days.</p>
+
     </Card>
   );
 }
@@ -145,7 +145,7 @@ export function ContactCard() {
   const [copied, setCopied] = useState(false);
   return (
     <Card title="Help & support">
-      <p className="text-sm text-mute">A problem with your payment, your account or the app? Write to the app owner; your account email is added automatically.</p>
+      <p className="text-sm text-mute">Questions or problems? Email us.</p>
       <div className="mt-3 flex flex-wrap items-center gap-2">
         <a className="btn btn-primary" href={supportLink(support_email)}>Email support</a>
         <button className="btn" onClick={async () => { try { await navigator.clipboard.writeText(support_email); setCopied(true); window.setTimeout(() => setCopied(false), 1500); } catch { /* ignore */ } }}>{copied ? "Copied" : "Copy address"}</button>

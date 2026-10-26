@@ -6,6 +6,7 @@ import { auth, googleProvider } from "../lib/firebase";
 import { base, fmtPctRaw, fmtPrice } from "../lib/format";
 import { useMembershipConfig } from "../lib/membership";
 import WinsToday from "./WinsToday";
+import TelegramLink from "./TelegramLink";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
 import { CoinAvatar } from "./Polish";
 
@@ -61,6 +62,7 @@ export default function Landing({ error }: { error: string | null }) {
           </div>
           <div className="flex items-center gap-2">
             <a href="#wins" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Wins</a>
+            <span className="hidden px-2 text-sm sm:inline"><TelegramLink variant="link" /></span>
             <a href="#pricing" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Pricing</a>
             <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Manual</a>
             <button className="btn px-3 py-1.5 text-sm" onClick={signIn} disabled={busy}>Sign in</button>
@@ -84,6 +86,7 @@ export default function Landing({ error }: { error: string | null }) {
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
               <button className="btn px-5 py-3 text-base" onClick={() => setDemo(true)}>▶ Watch what's new in 2.0 (70 s)</button>
+              <TelegramLink label="Free signals on Telegram" />
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
             <p className="mt-5 text-xs text-mute">No exchange keys needed · the app never places real orders · from ${(plans[plans.length - 1].price / 12).toFixed(2)}/month</p>
@@ -230,7 +233,7 @@ export default function Landing({ error }: { error: string | null }) {
         </div>
       )}
       <footer className="border-t border-glass/[0.06] px-4 py-6 text-center text-xs text-mute">
-        {COPYRIGHT} · Crypto Intelligence AI · <span className="num">v{APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual</a> · <a href={`mailto:${cfg.support_email}`} className="text-accent hover:underline">{cfg.support_email}</a>
+        {COPYRIGHT} · Crypto Intelligence AI · <span className="num">v{APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual</a> · <a href={`mailto:${cfg.support_email}`} className="text-accent hover:underline">{cfg.support_email}</a> · <TelegramLink variant="link" />
         <div className="mt-1">Research tool, not financial advice. Forecasts are probabilities, never certainties. No real orders are placed.</div>
       </footer>
     </div>
