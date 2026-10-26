@@ -1,3 +1,4 @@
+import FearGreed from "../components/FearGreed";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
@@ -96,7 +97,7 @@ export default function Dashboard() {
         <Card title="Sentiment & context">
           {sentiment ? (
             <div className="space-y-2">
-              <Stat label="Fear & Greed" value={`${sentiment.value} · ${sentiment.label}`} sub={isNum(sentiment.change_7d) ? `${sentiment.change_7d > 0 ? "+" : ""}${sentiment.change_7d} over 7 days` : undefined} />
+              <FearGreed value={sentiment.value} label={sentiment.label} change7d={isNum(sentiment.change_7d) ? sentiment.change_7d : null} history={sentiment.history ?? []} />
               {sentiment.divergence && <Badge tone="warn">{sentiment.divergence}</Badge>}
             </div>
           ) : <Empty>{ctx.data?.reason ?? ctx.data?.sentiment_error ?? "Sentiment source unavailable"}</Empty>}
