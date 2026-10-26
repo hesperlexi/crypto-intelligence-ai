@@ -1,0 +1,22 @@
+name: Health report (manual)
+# Why the Health page shows its status: stale or gappy series, failed steps (no personal data).
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet firebase-admin
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python scripts/health_report.py > /tmp/health.json && head -120 /tmp/health.json
+      - run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/health.json reports/health.json && git add reports && git commit -qm "Health report" && git push -q origin reports
