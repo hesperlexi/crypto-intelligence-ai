@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
 import { useEffect, useState } from "react";
-import { NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
 import UpdateNotice from "./components/UpdateNotice";
@@ -12,20 +12,16 @@ import { Role, SessionCtx, setSession, useIsAdmin, watchRole } from "./lib/sessi
 import { auth, db, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
-import Bots from "./pages/Bots";
-import Accuracy from "./pages/Accuracy";
 import Alerts from "./pages/Alerts";
 import Asset from "./pages/Asset";
 import Backtest from "./pages/Backtest";
 import Dashboard from "./pages/Dashboard";
-import Futures from "./pages/Futures";
 import Health from "./pages/Health";
 import News from "./pages/News";
-import Track from "./pages/Track";
+import Results from "./pages/Results";
 import Radar from "./pages/Radar";
 import Report from "./pages/Report";
 import Achievements from "./pages/Achievements";
-import History from "./pages/History";
 import Paper from "./pages/Paper";
 import Replay from "./pages/Replay";
 import Scanner from "./pages/Scanner";
@@ -39,28 +35,20 @@ import Landing from "./components/Landing";
 import { fmtDate, useMyRecord } from "./lib/membership";
 
 const NAV = [
-  ["/", "Dashboard"],
+  ["/", "Home"],
   ["/signals", "Signals"],
-  ["/scanner", "Scanner"],
-  ["/radar", "Radar"],
-  ["/futures", "Futures"],
+  ["/paper", "Trade"],
   ["/news", "News"],
-  ["/track", "Track record"],
-  ["/report", "Weekly report"],
-  ["/achievements", "Achievements"],
-  ["/accuracy", "Accuracy"],
-  ["/bots", "Demo bots"],
-  ["/backtest", "Backtest"],
-  ["/replay", "Replay"],
-  ["/history", "Signal log"],
-  ["/paper", "Paper"],
+  ["/radar", "Radar"],
+  ["/results", "Results"],
   ["/alerts", "Alerts"],
-  ["/health", "Health"],
   ["/settings", "Settings"],
 ] as const;
+// owner-only tools: marketing material and system health
+const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"]] as const;
 
 // phone bottom bar: four main sections + "More" for the rest
-const PRIMARY: [string, string, string][] = [["/", "Home", "◧"], ["/signals", "Signals", "◆"], ["/futures", "Futures", "⇅"], ["/paper", "Trade", "◎"]];
+const PRIMARY: [string, string, string][] = [["/", "Home", "◧"], ["/signals", "Signals", "◆"], ["/paper", "Trade", "◎"], ["/results", "Results", "▤"]];
 
 function StatusPill({ user }: { user: User }) {
   const { connected, feed } = useLive();
@@ -177,7 +165,7 @@ function Shell({ user }: { user: User }) {
   const [more, setMore] = useState(false);
   const admin = useIsAdmin();
   const pending = usePendingCount(admin);
-  const nav: (readonly [string, string])[] = [...NAV, ...(admin ? [["/users", pending ? `Users (${pending})` : "Users"] as const] : [])];
+  const nav: (readonly [string, string])[] = [...NAV, ...(admin ? [...ADMIN_NAV, ["/users", pending ? `Users (${pending})` : "Users"] as const] : [])];
   const { a } = useAppearance();
   const side = a.nav === "side";
   const width = a.width === "wide" ? "max-w-none" : "max-w-[1600px]";
@@ -237,17 +225,18 @@ function Shell({ user }: { user: User }) {
             <Route path="/asset/:symbol" element={<Asset />} />
             <Route path="/signals" element={<Signals />} />
             <Route path="/scanner" element={<Scanner />} />
-            <Route path="/futures" element={<Futures />} />
+            <Route path="/futures" element={<Navigate to="/signals?market=futures" replace />} />
             <Route path="/news" element={<News />} />
-            <Route path="/track" element={<Track />} />
+            <Route path="/results" element={<Results />} />
+            <Route path="/track" element={<Navigate to="/results?tab=track" replace />} />
             <Route path="/radar" element={<Radar />} />
             <Route path="/report" element={<Report />} />
             <Route path="/achievements" element={<Achievements />} />
-            <Route path="/accuracy" element={<Accuracy />} />
-            <Route path="/bots" element={<Bots />} />
+            <Route path="/accuracy" element={<Navigate to="/results?tab=accuracy" replace />} />
+            <Route path="/bots" element={<Navigate to="/results?tab=bots" replace />} />
             <Route path="/backtest" element={<Backtest />} />
             <Route path="/replay" element={<Replay />} />
-            <Route path="/history" element={<History />} />
+            <Route path="/history" element={<Navigate to="/results?tab=log" replace />} />
             <Route path="/paper" element={<Paper />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/health" element={<Health />} />

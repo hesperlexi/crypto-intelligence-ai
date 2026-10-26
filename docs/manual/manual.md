@@ -2,6 +2,8 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 ## 1. Getting started
 
+**The menu:** Home · Signals · Trade · News · Radar · Results · Alerts · Settings. **Results** holds the track record, the demo bots, the accuracy report, the signal log and the tools (Backtest, Replay, Scanner). On phones the bottom bar has Home, Signals, Trade and Results; the rest is under **More**.
+
 **Open the app.** Go to **crypapp-6a9b9.web.app** and press **Sign in with Google**.
 
 **Install it** so it opens like a normal app and can send notifications:
@@ -69,7 +71,7 @@ Open **Signals** (bottom bar on phones). Pick **Futures** or **Spot** and a time
 - **Why:** one line saying what the call is based on.
 - **Hit rate (similar calls):** how often the AI was right in the past when it leaned the same way by a similar amount, measured on data it was not trained on. 50% is a coin flip; 53–60% is a real, useful edge in crypto. The **up / down** chances behind the call sit next to it.
 
-Buttons: **Practise this trade** opens it in the trading screen with stop and target filled in, the bell sets an alert, **Copy** copies the plan as text. The **All coins** list shows every coin's call with entry, stop and first target. The same card appears at the top of each coin's page and on the **Futures** page.
+Buttons: **Practise this trade** opens it in the trading screen with stop and target filled in, the bell sets an alert, **Copy** copies the plan as text. The **All coins** list shows every coin's call with entry, stop and first target. The same card appears at the top of each coin's page.
 
 **Radar: coins to watch.** Every hour the engine screens all liquid Binance coins that are not in the app yet and ranks them by how strongly they outperform the market (against BTC over 7 and 30 days, trend, volume surge, breakouts). Coins that already went parabolic are shown apart with "wait for a pullback". Press **+ Add** to follow a coin; its AI long/short calls start once its model is trained. The Radar keeps its own record: every pick is scored 7 days later against BTC.
 
@@ -79,7 +81,7 @@ Tap any coin to open its page. The chart has two modes: **AI chart** (the app's 
 
 1. **Decision: BUY, BUY ON PULLBACK, SELL or HOLD.** BUY ON PULLBACK means the direction is up but the price is stretched, so wait for the entry in the trade plan instead of chasing. HOLD means no edge worth trading. Most of the time HOLD is the right answer, and doing nothing is fine.
 2. **Confidence / probability up.** The chance the models give that the price is higher at the end of the horizon. 50% is a coin flip. Around 55–60% is a real lean for crypto; anything that claims 80%+ should make you more careful, not less.
-3. **Confident calls.** The Accuracy page shows the confidence level above which the model has historically been right more often (the *Confident calls* card). Above it is a confident call, worth acting on; below it, treat the call as a lean only.
+3. **Confident calls.** Results → Accuracy shows the confidence level above which the model has historically been right more often (the *Confident calls* card). Above it is a confident call, worth acting on; below it, treat the call as a lean only.
 4. **Expected move / edge.** How big the move is expected to be. A 55% call with a tiny expected move is often not worth fees and slippage.
 5. **Trade setup: entry, stop loss, targets.** Built from recent volatility (ATR) and support/resistance; tap **Trade plan** above the chart to draw it. Always use the stop loss. "No valid setup" means the reward is too small for the risk.
 6. **Multi-timeframe card.** Shows each timeframe's view and an *alignment* score. The strongest setups are when timeframes agree. The 1H and 4H models have the better track record; give the daily call less weight.
@@ -95,16 +97,16 @@ About 10 minutes a day is enough. Prices update every few seconds and prediction
 | --- | --- | --- |
 | Morning (5 min) | **Signals** | See which coins have a GO LONG, GO SHORT or BUY call. Ignore WAIT. |
 | Morning | **Coin page** | For each candidate, check timeframe agreement and the trade plan (section 4). |
-| Morning | **Futures** | Check funding before going against the crowd (section 6). |
+| Morning | **Signals → Futures** | Check funding before going against the crowd (section 6). |
 | When notified | **Alerts** | Open the alert, re-check the coin page, then practise the trade first. |
 | Evening (3 min) | **Trade** | Review open positions; move stops only in your favour. |
-| Weekly (10 min) | **Accuracy**, **Bots** | Compare models and bots over the last week and month. Keep what works. |
+| Weekly (10 min) | **Results** (Accuracy, Demo bots) | Compare models and bots over the last week and month. Keep what works. |
 
 > **Golden rule:** a new strategy runs on the practice account for at least 2–4 weeks and 30+ trades before you even think about real money.
 
 ## 6. Futures: long, short and leverage
 
-The **Futures** page shows every coin's futures call as a clear trade card: **GO LONG**, **GO SHORT** or **WAIT**, with the entry zone, stop-loss, take-profits, suggested leverage, liquidation price, confidence and funding. Use the filter buttons to show only trade calls, longs or shorts, and tap **Practise this trade** to open the setup in the trading screen.
+**Signals → Futures** shows every coin's futures call as a clear trade card: **GO LONG**, **GO SHORT** or **WAIT**, with the entry zone, stop-loss, take-profits, suggested leverage, liquidation price, confidence and funding. Use the filter buttons to show only trade calls, longs or shorts, and tap **Practise this trade** to open the setup in the trading screen.
 
 - **Suggested leverage and liquidation price:** the liquidation price must always be further away than your stop.
 - **Funding 8h:** positive funding means longs pay shorts every 8 hours. High positive funding plus a crowded long side often comes before a drop; the opposite before a squeeze up.
@@ -170,7 +172,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 ## 10. Demo bots: proof of whether the predictions work
 
-The **Bots** page runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
+**Results → Demo bots** runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
 - **Signal bots** trade only the final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets, taking a third off at each target. After take-profit 2 the stop moves up to take-profit 1 (a trailing stop), so the last third can run without giving back the gains. The two **App scorecard** bots (futures, grades A+B, 1H and 4H) take exactly the calls members see on the Signals page, on every coin, so their result is the app's real performance; they are shown first on the Track record. The standard bots trade grade A calls only; the **A+B** bots also take grade B calls, so you can compare quality against quantity.
 - **Prediction trackers** take every raw model call for one bar, showing how good the raw predictions are.
@@ -189,13 +191,13 @@ The **Bots** page runs automatic demo traders with virtual money around the cloc
 
 ## 11. When to trust the models: the Accuracy page
 
-**Track record** (menu) lists every trade signal since launch with its real result (target hit, stopped or expired), the win rate and the running total, plus how each coin's AI scored on past data it never saw. Nothing is removed. The start page shows visitors the **Wins of the day**: real winning signals from the last 24 hours.
+**Results → Track record** lists every trade signal since launch with its real result (target hit, stopped or expired), the win rate and the running total, plus how each coin's AI scored on past data it never saw. Nothing is removed. The start page shows visitors the **Wins of the day**: real winning signals from the last 24 hours.
 
-**Weekly report** (menu) turns each week into a ready-to-post image (square post or 9:16 story) with the week's best signals, the full totals (wins and losses) and the app link, plus a caption to copy. A new report is ready every Monday.
+**Weekly report** (owner menu) turns each week into a ready-to-post image (square post or 9:16 story) with the week's best signals, the full totals (wins and losses) and the app link, plus a caption to copy. A new report is ready every Monday.
 
-**Achievements** (menu) shows the milestones the app has really reached (signals delivered, best signal, winning streaks, profitable weeks, the scorecard bot beating buy & hold, Radar star picks), worked out from the real track record. Download any badge as an image, or all of them as one poster.
+**Achievements** (owner menu) shows the milestones the app has really reached (signals delivered, best signal, winning streaks, profitable weeks, the scorecard bot beating buy & hold, Radar star picks), worked out from the real track record. Download any badge as an image, or all of them as one poster.
 
-The **Accuracy** page is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
+**Results → Accuracy** is the app's honest report card. Every number on it is *out-of-sample*: measured on data the model had never seen, using walk-forward testing. Look at, in order:
 
 1. **The verdict** for the coin and timeframe: does the model beat a naive guess, and is the p-value below 0.05 (edge unlikely to be luck)?
 2. **Directional accuracy:** for crypto, **51–56% is realistic and useful**; nobody gets 70% consistently.
@@ -209,9 +211,9 @@ The **Accuracy** page is the app's honest report card. Every number on it is *ou
 
 ## 12. Backtest and Replay: test ideas on the past
 
-**Backtest** runs a strategy over past data with fees and slippage. Choose the coin, timeframe, period and strategy under **Inputs** and run it. Read the verdict (*Beats buy & hold* or not), net return, win rate, profit factor, Sharpe and max drawdown. A strategy that only wins before costs does not win.
+**Backtest** (Results → Tools) runs a strategy over past data with fees and slippage. Choose the coin, timeframe, period and strategy under **Inputs** and run it. Read the verdict (*Beats buy & hold* or not), net return, win rate, profit factor, Sharpe and max drawdown. A strategy that only wins before costs does not win.
 
-**Replay** is the best way to build trust. Under **Choose a moment**, pick a coin and a past date and time. The app shows exactly what it knew and forecast then, without future data (the **Look-ahead audit** proves it). Decide what you would have done, then press **Reveal what happened next**. Do 10–20 replays across calm, rising and falling markets.
+**Replay** (Results → Tools) is the best way to build trust. Under **Choose a moment**, pick a coin and a past date and time. The app shows exactly what it knew and forecast then, without future data (the **Look-ahead audit** proves it). Decide what you would have done, then press **Reveal what happened next**. Do 10–20 replays across calm, rising and falling markets.
 
 ## 13. Rules for getting the most out of it
 

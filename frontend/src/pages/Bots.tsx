@@ -8,6 +8,8 @@ import { useIsAdmin } from "../lib/session";
 
 const TFS = ["1h", "4h", "12h", "1d"];
 
+const SCORECARD = ["futures-signal-ab-1h", "futures-signal-ab-4h"];
+
 export default function Bots() {
   const admin = useIsAdmin();
   const b = useApi<any>("/bots");
@@ -15,7 +17,9 @@ export default function Bots() {
   const [msg, setMsg] = useState<string | null>(null);
   const [market, setMarket] = useState<"all" | "spot" | "futures">("all");
   const cfgList: any[] = b.data?.config ?? [];
-  const shown = (b.data?.bots ?? []).filter((x: any) => market === "all" || (x.config.market ?? "spot") === market);
+  // members see the bots that trade the signals; the raw prediction trackers are diagnostics for the owner
+  const shown = (b.data?.bots ?? []).filter((x: any) => (market === "all" || (x.config.market ?? "spot") === market) && (admin || x.config.mode !== "prediction"))
+    .sort((x: any, y: any) => Number(!SCORECARD.includes(x.config.id)) - Number(!SCORECARD.includes(y.config.id)));
 
   const save = async (list: any[], done: string) => {
     try {
@@ -65,7 +69,7 @@ export default function Bots() {
       <Card title="How the bots work">
         <div className="grid gap-4 text-sm md:grid-cols-2">
           <p><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. A third of the position closes at each target; the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></p>
-          <p><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay.</span></p>
+          {admin && <p><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></p>}
           <p className="md:col-span-2"><span className="font-medium text-text">Futures bots</span> <span className="text-mute">trade the same calls as USDT perpetual futures with isolated margin: only the margin (position ÷ leverage) is set aside, futures fees (0.05%) apply, funding is paid or received every 8 hours, and a position is liquidated — losing its margin — if price reaches the liquidation price. With “safe leverage” on, a signal bot lowers its leverage so liquidation always sits well beyond the stop. Position size still comes from the stop, so leverage changes the margin used, not the risk per trade.</span></p>
         </div>
         <Note>The engine runs about every 5–10 minutes. Entries fill at the price available when it runs, plus spread, slippage and fees. Stops and targets are checked against every 15-minute candle, and when one candle touches both, the stop counts first. Only trades taken after a bot started are counted.</Note>
