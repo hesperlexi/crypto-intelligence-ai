@@ -183,3 +183,25 @@ def test_wins_today_lists_real_recent_wins_only():
     rt.db.execute("DELETE FROM signals WHERE id = 'a'")
     v = views.wins_today(rt)
     assert v["period"] == "this week" and v["wins"][0]["symbol"] == "SOL/USDT"
+
+
+def test_v2_fresh_start_resets_bots_once_and_starts_the_record(tmp_path):
+    from app import worker
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return []
+
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    sink = LocalSink(tmp_path)
+    sink.set("config/bots", {"bots": [{**worker.DEFAULT_BOTS[0]}], "defaults_added": [b["id"] for b in worker.DEFAULT_BOTS]})
+    worker.sync_config(rt, sink)
+    tokens = [b["reset_token"] for b in sink.get("config/bots")["bots"]]
+    assert all(t.startswith("v2-") for t in tokens) and rt.db.get_setting("record_since", 0) > 0
+    worker.sync_config(rt, sink)
+    assert [b["reset_token"] for b in sink.get("config/bots")["bots"]] == tokens        # only once

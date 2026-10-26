@@ -200,6 +200,14 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             bots_cfg = bots_cfg + new
             sink.set("config/bots", {**doc, "bots": bots_cfg, "updated_at": now_ms(),
                                      "defaults_added": sorted(seen | {b["id"] for b in DEFAULT_BOTS})})
+    if not rt.db.get_setting("fresh_start_v2", False):
+        # v2.0 fresh start: every bot restarts with its starting balance and the counted track record begins now.
+        # Older signals stay in the database (Signal log); they are just not counted in the v2.0 record.
+        bots_cfg = [{**b, "reset_token": f"v2-{b.get('reset_token', '1')}"} for b in bots_cfg]
+        sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
+        rt.db.set_setting("record_since", now_ms())
+        rt.db.set_setting("fresh_start_v2", True)
+        notes["fresh_start_v2"] = True
     BotEngine(rt).sync_configs(bots_cfg)
     return notes
 

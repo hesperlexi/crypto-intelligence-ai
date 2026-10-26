@@ -176,6 +176,11 @@ def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) 
 
 # ---- public track record ---------------------------------------------------------------------------------------
 
+def record_since(rt: Runtime) -> int:
+    """Start of the counted record: the v2.0 launch (older signals stay in the database, labelled as the old engine)."""
+    return int(rt.db.get_setting("record_since", 0) or 0)
+
+
 def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: int = 150) -> dict[str, Any]:
     """Everything a visitor needs to judge the app honestly, readable without an account (views/track_record):
     every trade signal since launch with its real outcome, the models' results on past data they never trained on
@@ -184,7 +189,8 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
 
     from .ml import direction as dirview, trainer
 
-    rows = rt.db.query("SELECT * FROM signals WHERE status != 'INFO' ORDER BY created_at DESC")
+    since0 = record_since(rt)
+    rows = rt.db.query("SELECT * FROM signals WHERE status != 'INFO' AND created_at >= ? ORDER BY created_at DESC", (since0,))
     sigs = []
     for r in rows:
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
@@ -242,7 +248,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "benchmark_return_pct": st.get("benchmark_return_pct"), "win_rate": st.get("win_rate"),
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
-    out = {"generated_at": now_ms(), "since": first, "live": {"summary": summ(closed), "by_timeframe": by_tf,
+    out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None, "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "signals": sigs[:limit]},
             "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))),
@@ -274,9 +280,9 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
 
     end = start + WEEK
     rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL "
-                       "AND closed_at >= ? AND closed_at < ? ORDER BY return_pct DESC", (start, end))
+                       "AND closed_at >= ? AND closed_at < ? AND created_at >= ? ORDER BY return_pct DESC", (start, end, record_since(rt)))
     issued = rt.db.one("SELECT COUNT(*) AS n FROM signals WHERE status != 'INFO' AND created_at >= ? AND created_at < ?",
-                       (start, end))["n"]
+                       (max(start, record_since(rt)), end))["n"]
     trades = []
     for r in rows:
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
@@ -322,7 +328,7 @@ def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks:
     """This week so far, last week, and the archive (newest first)."""
     now = now_ms()
     cur = week_start(now)
-    first = rt.db.one("SELECT MIN(created_at) AS t FROM signals WHERE status != 'INFO'")
+    first = rt.db.one("SELECT MIN(created_at) AS t FROM signals WHERE status != 'INFO' AND created_at >= ?", (record_since(rt),))
     first_ts = int(first["t"]) if first and first["t"] else cur
     out = []
     for i in range(weeks):
@@ -340,7 +346,8 @@ def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] 
     import numpy as np
 
     rows = rt.db.query("SELECT symbol, side, status, return_pct, closed_at FROM signals "
-                       "WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL ORDER BY closed_at")
+                       "WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL AND created_at >= ? ORDER BY closed_at",
+                       (record_since(rt),))
     out: list[dict[str, Any]] = []
 
     def add(aid, title, unlocked, value, detail, at=None, progress=None):
@@ -417,7 +424,7 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
     now = now_ms()
     for hours, label in ((24, "today"), (24 * 7, "this week")):
         rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct > 0 AND closed_at >= ? "
-                           "ORDER BY return_pct DESC LIMIT ?", (now - hours * 3_600_000, limit))
+                           "AND created_at >= ? ORDER BY return_pct DESC LIMIT ?", (now - hours * 3_600_000, record_since(rt), limit))
         if rows:
             break
     wins = [{"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
