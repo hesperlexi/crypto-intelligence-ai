@@ -11,8 +11,11 @@ class Fake:
     def __init__(self):
         self.sent = []
 
-    def post(self, url, json=None, timeout=None):
-        self.sent.append(json)
+    def post(self, url, json=None, data=None, files=None, timeout=None):
+        m = dict(json or data or {})
+        m["text"] = m.get("text") or m.get("caption")
+        m["photo"] = bool(files)
+        self.sent.append(m)
 
         class R:
             status_code = 200
@@ -58,3 +61,35 @@ def test_weekly_on_monday_and_teaser_of_a_grade_a_signal(tmp_path):
     assert sorted(out["sent"]) == ["teaser", "weekly"]
     texts = " ".join(m["text"] for m in fake.sent)
     assert "3 wins / 1 losses" in texts and "SOL/USDT LONG" in texts and "grade A" in texts
+
+
+def test_every_win_is_posted_once_as_a_picture(tmp_path):
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    sink, fake = LocalSink(tmp_path), Fake()
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_wins": False,
+                                "post_weekly": False, "post_teaser": False})
+    t0 = ms(2026, 10, 27, 9)
+    T.run(rt, sink, None, None, t0, fake)                              # first run only sets the starting point
+    assert fake.sent == []
+
+    def add(i, status, ret, closed):
+        rt.db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, "
+                      "stop, tp1, tp2, tp3, status, closed_at, return_pct) VALUES (?, ?, 'PAXG/USDT', '1h', ?, 'BUY', 'BUY', "
+                      "4000, 1, 4000, 3960, 4040, 4060, 4100, ?, ?, ?)", (f"s{i}", t0 - 3_600_000, i, status, closed, ret))
+    add(1, "TP2", 1.6, t0 + 60_000)
+    add(2, "STOPPED", -1.0, t0 + 120_000)                              # losses are not announced as wins
+    add(3, "TP1", 0.5, t0 - 60_000)                                    # closed before the start point
+    out = T.run(rt, sink, None, None, t0 + 300_000, fake)
+    assert out["sent"] == ["win"] and fake.sent[0]["photo"] is True
+    assert "GOLD LONG" in fake.sent[0]["text"] and "+1.6%" in fake.sent[0]["text"]
+    T.run(rt, sink, None, None, t0 + 600_000, fake)                    # not posted twice
+    assert len(fake.sent) == 1
+
+
+def test_cards_render():
+    from app.services import cards
+    for png in (cards.win_card(T.win_item({"symbol": "BTC/USDT", "timeframe": "4h", "side": 1, "status": "TP3",
+                                           "return_pct": 3.3, "entry": 1, "tp3": 2, "created_at": 0, "closed_at": 7_200_000})),
+                cards.wins_card(WINS["wins"]), cards.teaser_card({"symbol": "ETH/USDT", "side": -1, "timeframe": "15m",
+                                                                   "entry": 1, "stop": 2, "tp1": 0.9, "tp2": 0.8, "tp3": 0.7}, 61)):
+        assert png[:8] == b"\x89PNG\r\n\x1a\n" and len(png) > 10_000

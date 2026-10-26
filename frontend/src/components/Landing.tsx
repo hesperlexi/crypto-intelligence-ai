@@ -2,6 +2,9 @@
 import { signInWithPopup } from "firebase/auth";
 import { useEffect, useState } from "react";
 import { tickers as restTickers } from "../lib/binance";
+import { raceSocket } from "../lib/ws";
+
+const WS_HOSTS = ["wss://stream.binance.com:9443", "wss://stream.binance.com:443", "wss://data-stream.binance.vision"];
 import { auth, googleProvider } from "../lib/firebase";
 import { base, fmtPctRaw, fmtPrice } from "../lib/format";
 import { useMembershipConfig } from "../lib/membership";
@@ -31,11 +34,36 @@ export default function Landing({ error }: { error: string | null }) {
   const [px, setPx] = useState<Record<string, any>>({});
   const [demo, setDemo] = useState(false);
   useEffect(() => {
-    let alive = true;
-    const load = () => restTickers(COINS).then((t) => alive && setPx(t)).catch(() => {});
+    // 24h stats over REST every 30 s, the price itself from every trade (Binance WebSocket), shown ~8x a second
+    let alive = true, pending: Record<string, number> = {};
+    const load = () => restTickers(COINS).then((t) => alive && setPx((cur) => {
+      const out: Record<string, any> = { ...t };
+      for (const k of Object.keys(out)) if (cur[k]?.last && Date.now() - (cur[k].ts ?? 0) < 5000) out[k] = { ...out[k], last: cur[k].last, ts: cur[k].ts };
+      return out;
+    })).catch(() => {});
     load();
-    const id = window.setInterval(load, 10000);
-    return () => { alive = false; window.clearInterval(id); };
+    const id = window.setInterval(load, 30000);
+    const by: Record<string, string> = Object.fromEntries(COINS.map((c) => [c.replace("/", ""), c]));
+    const streams = COINS.map((c) => `${c.replace("/", "").toLowerCase()}@aggTrade`).join("/");
+    const race = raceSocket(WS_HOSTS.map((h) => `${h}/stream?streams=${streams}`), (m) => {
+      const d = m.data; const sym = d && by[d.s];
+      if (sym) pending[sym] = +d.p;
+    }, () => {});
+    const flush = window.setInterval(() => {
+      if (!Object.keys(pending).length) return;
+      const p = pending; pending = {};
+      setPx((cur) => {
+        const out = { ...cur };
+        for (const [k, v] of Object.entries(p)) {
+          const t = cur[k];
+          if (!t) continue;
+          const open = t.last && t.change_pct != null ? t.last / (1 + t.change_pct / 100) : null;
+          out[k] = { ...t, last: v, ts: Date.now(), change_pct: open ? (v / open - 1) * 100 : t.change_pct };
+        }
+        return out;
+      });
+    }, 125);
+    return () => { alive = false; window.clearInterval(id); window.clearInterval(flush); race.close(); };
   }, []);
   const signIn = async () => {
     setBusy(true);

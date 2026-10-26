@@ -12,3 +12,4 @@ lightgbm>=4.3
 statsmodels>=0.14
 firebase-admin>=6.5
 pytest>=8.0
+pillow>=10

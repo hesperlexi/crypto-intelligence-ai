@@ -6,7 +6,7 @@ import { db } from "../lib/firebase";
 import { ago } from "../lib/format";
 import { Card, Note } from "./ui";
 
-const DEF = { enabled: false, token: "", channel: "@crypappai", post_wins: true, post_weekly: true, post_teaser: true };
+const DEF = { enabled: false, token: "", channel: "@crypappai", post_wins: true, post_weekly: true, post_teaser: true, post_each_win: true };
 
 export default function TelegramCard() {
   const [s, setS] = useState(DEF);
@@ -33,7 +33,7 @@ export default function TelegramCard() {
         <label className="block"><span className="text-xs text-mute">Channel</span>
           <input className="input mt-1" value={s.channel} onChange={(e) => setS({ ...s, channel: e.target.value.trim() })} placeholder="@yourchannel" /></label>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([["post_wins", "Wins of the day"], ["post_weekly", "Weekly results"], ["post_teaser", "Daily free signal"]] as const).map(([k, l]) => (
+          {([["post_each_win", "Every win (picture card)"], ["post_wins", "Wins of the day"], ["post_weekly", "Weekly results"], ["post_teaser", "Daily free signal"]] as const).map(([k, l]) => (
             <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={(s as any)[k]} onChange={(e) => setS({ ...s, [k]: e.target.checked })} />{l}</label>
           ))}
         </div>

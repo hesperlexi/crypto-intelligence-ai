@@ -21,8 +21,11 @@ Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real
   `config/membership`. Owner-only: `owner/*`, `admin/*`. `presence/{uid}` (last_seen, country from time zone, device; written by the person every ≤4 min, read by admin on Users).
 
 ## Workflows (.github/workflows)
-- `engine.yml` every 5 min (`python -m app.worker tick --budget 300`) · `train.yml` daily 02:17 UTC (60 min, full
-  models + deriv gate + trade filter, then backup) · `watchdog.yml` every 30 min (push to owner if engine is stale
+- `engine.yml` **always on** (v2.3): one run lives ~5 h 50 min, `scripts/engine_loop.py` runs
+  `python -m app.worker tick` every 5 min (10 min after 3000 view writes in a run), cache save after each ~64-min
+  segment, keeps the newest 4 state caches; cron */30 only keeps one run queued behind it. `train.yml` daily 02:17 UTC
+  (15 slices, then `merge` in group `train-merge`: it waits until no engine run is in progress — the engine loop sees
+  the running merge job and stops — merges, backs up and re-dispatches engine.yml) · `watchdog.yml` every 30 min (push to owner if engine is stale
   >75 min; weekly re-enable of schedules) · `deploy.yml` on push (pytest, build, Firebase deploy, Android APK) ·
   `diagnose.yml` (manual, gate replay + policy study → `reports` branch) · `evaluate.yml`, `probe.yml` (manual).
 - From this sandbox: `gh workflow run` is blocked (GraphQL) → dispatch with
@@ -69,8 +72,8 @@ Safety switch `services/safety.py` (last 25 closed, ≥20, avg<0 & TP1<40% → p
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
-`Achievements.tsx`, `components/WinsToday.tsx` · Telegram autopilot `services/telegram.py` +
-`components/TelegramCard.tsx` · Live trading stream `frontend/src/lib/stream.ts` · Memberships
+`Achievements.tsx`, `components/WinsToday.tsx` · Telegram autopilot `services/telegram.py` (every win + daily/weekly/teaser as image cards from
+`services/cards.py`, Pillow, Inter fonts + logo in `app/assets`) + `components/TelegramCard.tsx` · Live trading stream `frontend/src/lib/stream.ts` · Memberships
 `services/membership.py`, `components/Membership.tsx` (prices 15/40/70/130 USDT, USDT only; Binance QR or MEXC UID 00183657; support email in
 `config/membership`) · Manual `docs/manual/manual.md` → `python scripts/build_manual.py` (members only, no admin
 instructions) · Promo video `frontend/public/demo.mp4` (70 s, original soundtrack).
@@ -84,5 +87,4 @@ directly. Frontend type-check: `npx tsc --noEmit` (CI) — the sandbox has no no
 
 ## Ideas not done yet
 Arabic (RTL) · referral programme · smarter exits per coin · parallel training matrix · Binance daily metrics
-(OI, long/short, taker) as features · iPhone App Store ($99/yr, owner decision) · always-on server (~$5–10/mo,
-owner decision) · real-money auto-trading (only after a proven record and a VARA check).
+(OI, long/short, taker) as features · iPhone App Store ($99/yr, owner decision) · real-money auto-trading (only after a proven record and a VARA check).

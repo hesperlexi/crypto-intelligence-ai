@@ -4,8 +4,11 @@ The owner creates a bot with @BotFather, adds it as an admin of the public chann
 channel in Settings (stored in owner/telegram, readable by the owner only). On engine runs it then posts:
   * Wins of the day - once a day (16:00 UTC, 20:00 Dubai), the best winning signals of the last 24 h;
   * Weekly results - Mondays from 06:00 UTC, last week's totals and best trades with the app link;
-  * Teaser signal - at most one a day: a grade-A call members received at least an hour earlier.
-Every post is sent once (markers in the engine's settings). Messages are plain facts from the real record.
+  * Teaser signal - at most one a day: a grade-A call members received at least an hour earlier;
+  * Every win (v2.3) - each signal that closes in profit, as soon as the engine sees it (at most 5 per run).
+Every post is an image card with the logo (services/cards.py) and the facts as its caption; if a card can't be
+drawn the caption is sent as text. Each post is sent once (markers in the engine's settings). Wins and losses
+alike come from the real record - the weekly card always shows the losses too.
 """
 from __future__ import annotations
 
@@ -25,7 +28,9 @@ API = "https://api.telegram.org"
 WINS_HOUR_UTC = 16
 WEEKLY_HOUR_UTC = 6
 TEASER_DELAY_MS = 60 * 60_000
-DEFAULTS = {"enabled": False, "channel": "@crypappai", "post_wins": True, "post_weekly": True, "post_teaser": True}
+MAX_WIN_POSTS = 5
+DEFAULTS = {"enabled": False, "channel": "@crypappai", "post_wins": True, "post_weekly": True, "post_teaser": True,
+            "post_each_win": True}
 
 
 def config(sink) -> dict[str, Any]:
@@ -50,6 +55,57 @@ def send(cfg: dict[str, Any], text: str, session: Any = None) -> dict[str, Any]:
     if not body.get("ok"):
         raise RuntimeError(body.get("description") or "Telegram refused the message")
     return body
+
+
+def send_photo(cfg: dict[str, Any], png: bytes | None, caption: str, session: Any = None) -> dict[str, Any]:
+    """Image card with an HTML caption; falls back to a text message when there is no picture."""
+    if not png:
+        return send(cfg, caption, session)
+    r = (session or requests).post(f"{API}/bot{cfg['token']}/sendPhoto", timeout=30,
+                                   data={"chat_id": cfg["channel"], "caption": caption[:1024], "parse_mode": "HTML"},
+                                   files={"photo": ("card.png", png, "image/png")})
+    try:
+        body = r.json()
+    except Exception:
+        body = {"ok": False, "description": f"HTTP {getattr(r, 'status_code', '?')}"}
+    if not body.get("ok"):
+        raise RuntimeError(body.get("description") or "Telegram refused the picture")
+    return body
+
+
+def _card(name: str, *args) -> bytes | None:
+    try:
+        from . import cards
+        return getattr(cards, name)(*args)
+    except Exception as exc:          # Pillow missing or a drawing error: the caption still goes out as text
+        log.warning("telegram card %s failed: %s", name, exc)
+        return None
+
+
+def _held(ms: int | None) -> str:
+    if not ms or ms <= 0:
+        return "—"
+    m = round(ms / 60_000)
+    if m < 60:
+        return f"{m} min"
+    if m < 48 * 60:
+        return f"{m // 60} h {m % 60:02d} min"
+    return f"{m // 1440} d {(m % 1440) // 60} h"
+
+
+def win_item(r: dict[str, Any]) -> dict[str, Any]:
+    target = {"TP1": r.get("tp1"), "TP2": r.get("tp2"), "TP3": r.get("tp3")}.get(r["status"])
+    return {"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+            "status": r["status"], "return_pct": float(r["return_pct"]), "entry": r.get("entry"),
+            "exit_price": target, "held": _held((r.get("closed_at") or 0) - (r.get("created_at") or 0))}
+
+
+def win_text(w: dict[str, Any]) -> str:
+    target = {"TP1": "Target 1 hit", "TP2": "Target 2 hit", "TP3": "All targets hit"}.get(w["status"], "Closed in profit")
+    return "\n".join([
+        f"✅ <b>{_coin(w['symbol'])} {w['side']}</b> ({w['timeframe'].upper()}) · {target} · <b>+{w['return_pct']:.1f}%</b>",
+        f"Entry {_px(w['entry'])} → {_px(w['exit_price'])} · held {w['held']}",
+        "", f"Get every signal live 👉 {SITE}", "<i>Not financial advice.</i>"])
 
 
 def _coin(sym: str) -> str:
@@ -115,11 +171,11 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
     day = dt.strftime("%Y-%m-%d")
     errors = []
 
-    def post(kind: str, text: str | None, marker: str, value: Any):
+    def post(kind: str, text: str | None, marker: str, value: Any, card: tuple | None = None):
         if not text:
             return
         try:
-            send(cfg, text, session)
+            send_photo(cfg, _card(*card) if card else None, text, session)
             db.set_setting(marker, value)
             out["sent"].append(kind)
         except Exception as exc:
@@ -127,12 +183,13 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
 
     if cfg["post_wins"] and dt.hour >= WINS_HOUR_UTC and db.get_setting("tg_wins_day", "") != day:
         if (wins_view or {}).get("period") == "today":
-            post("wins", wins_text(wins_view), "tg_wins_day", day)
+            post("wins", wins_text(wins_view), "tg_wins_day", day,
+                 ("wins_card", wins_view["wins"], wins_view["period"]))
     if cfg["post_weekly"] and dt.weekday() == 0 and dt.hour >= WEEKLY_HOUR_UTC and db.get_setting("tg_weekly_day", "") != day:
         reports = (weekly_view or {}).get("reports") or []
         last = reports[1] if len(reports) > 1 else None
         if last and last.get("complete"):
-            post("weekly", weekly_text(last), "tg_weekly_day", day)
+            post("weekly", weekly_text(last), "tg_weekly_day", day, ("weekly_card", last))
     if cfg["post_teaser"] and db.get_setting("tg_teaser_day", "") != day:
         from ..views import record_since
         rows = db.query("SELECT * FROM signals WHERE status = 'OPEN' AND side != 0 AND created_at <= ? AND created_at >= ? "
@@ -141,7 +198,23 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         from ..db import loads
         pick = next((r for r in rows if (loads(r.get("payload"), {}) or {}).get("grade") == "A"), None)
         if pick:
-            post("teaser", teaser_text(pick), "tg_teaser_day", day)
+            mins = max(60, round((now - pick["created_at"]) / 60_000))
+            post("teaser", teaser_text(pick), "tg_teaser_day", day, ("teaser_card", pick, mins))
+    if cfg["post_each_win"]:
+        from ..views import record_since
+        last = db.get_setting("tg_win_last", None)
+        if last is None:                       # first run: start from now, don't flood the channel with old wins
+            db.set_setting("tg_win_last", now)
+        else:
+            rows = db.query("SELECT * FROM signals WHERE status IN ('TP1', 'TP2', 'TP3') AND return_pct > 0 "
+                            "AND closed_at IS NOT NULL AND closed_at > ? AND created_at >= ? AND side != 0 "
+                            "ORDER BY closed_at LIMIT ?", (int(last), record_since(rt), MAX_WIN_POSTS))
+            for r in rows:
+                w = win_item(r)
+                n = len(out["sent"])
+                post("win", win_text(w), "tg_win_last", int(r["closed_at"]), ("win_card", w))
+                if len(out["sent"]) == n:      # failed: keep the marker, try again next run
+                    break
     status = {"ok": not errors, "checked_at": now, "errors": errors, "last_sent": out["sent"] or None}
     try:
         prev = sink.get("owner/telegram_status") or {}
@@ -160,8 +233,8 @@ def test_post(sink) -> dict[str, Any]:
     cfg = config(sink)
     if not cfg["token"] or not cfg["channel"]:
         raise ValueError("add the bot token and the channel in Settings first")
-    send(cfg, "✅ <b>Crypto Intelligence AI</b> is connected to this channel. Wins of the day, weekly results and a "
-              f"daily free signal will appear here automatically.\n\n👉 {SITE}")
+    send(cfg, "✅ <b>Crypto Intelligence AI</b> is connected to this channel. Every win, wins of the day, weekly "
+              f"results and a daily free signal will appear here automatically.\n\n👉 {SITE}")
     sink.set("owner/telegram_status", {"ok": True, "checked_at": now_ms(), "errors": [], "last_post_at": now_ms(),
                                        "last_sent": ["test"]})
     return {"sent": True}

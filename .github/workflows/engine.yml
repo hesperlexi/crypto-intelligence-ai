@@ -1,12 +1,16 @@
-name: Engine (every 5 minutes)
+name: Engine (always on, every 5 minutes)
 
+# v2.3: GitHub starts scheduled runs late (40-60 minutes apart), so one run now stays alive for ~5 h 50 min and
+# ticks every 5 minutes (scripts/engine_loop.py), saving the state to the cache about every hour. The schedule
+# below only keeps one run queued behind it, so the next run takes over the moment this one ends. The nightly
+# training merge (train.yml) makes the running engine save and stop, merges, then restarts the engine.
 on:
   schedule:
-    - cron: "*/5 * * * *"     # a run starts as soon as the previous one ends (about every 5-8 minutes)
+    - cron: "*/30 * * * *"
   workflow_dispatch:
 
 concurrency:
-  group: engine            # one engine run at a time; they share the cached state
+  group: engine            # one engine run at a time (plus one queued); they share the cached state
   cancel-in-progress: false
 
 jobs:
@@ -14,7 +18,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write          # encrypted backup as a release asset (only when the daily one is missing)
-    timeout-minutes: 25
+      actions: write           # see whether the training merge is running; tidy old state caches
+    timeout-minutes: 358
     defaults:
       run:
         working-directory: backend
@@ -56,17 +61,101 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed; starting fresh"
-      - name: Run one engine cycle
-        run: python -m app.worker tick --budget 300
-      - name: Save engine state
-        if: always()
+      - name: Engine loop, hour 1
+        id: loop1
+        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="$RUNNER_TEMP/engine-stop.ticks"; before=$(cat "$T" 2>/dev/null | wc -l)
+          python ../scripts/engine_loop.py --minutes 64 --stop-file "$RUNNER_TEMP/engine-stop"
+          after=$(cat "$T" 2>/dev/null | wc -l)
+          echo "ticked=$([ "$after" -gt "$before" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Save engine state (hour 1)
+        if: always() && steps.loop1.outputs.ticked == 'true'
         uses: actions/cache/save@v4
         with:
           path: backend/data
-          key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}
+          key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-1
+      - name: Engine loop, hour 2
+        id: loop2
+        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="$RUNNER_TEMP/engine-stop.ticks"; before=$(cat "$T" 2>/dev/null | wc -l)
+          python ../scripts/engine_loop.py --minutes 64 --stop-file "$RUNNER_TEMP/engine-stop"
+          after=$(cat "$T" 2>/dev/null | wc -l)
+          echo "ticked=$([ "$after" -gt "$before" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Save engine state (hour 2)
+        if: always() && steps.loop2.outputs.ticked == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: backend/data
+          key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-2
+      - name: Engine loop, hour 3
+        id: loop3
+        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="$RUNNER_TEMP/engine-stop.ticks"; before=$(cat "$T" 2>/dev/null | wc -l)
+          python ../scripts/engine_loop.py --minutes 64 --stop-file "$RUNNER_TEMP/engine-stop"
+          after=$(cat "$T" 2>/dev/null | wc -l)
+          echo "ticked=$([ "$after" -gt "$before" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Save engine state (hour 3)
+        if: always() && steps.loop3.outputs.ticked == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: backend/data
+          key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-3
+      - name: Engine loop, hour 4
+        id: loop4
+        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="$RUNNER_TEMP/engine-stop.ticks"; before=$(cat "$T" 2>/dev/null | wc -l)
+          python ../scripts/engine_loop.py --minutes 64 --stop-file "$RUNNER_TEMP/engine-stop"
+          after=$(cat "$T" 2>/dev/null | wc -l)
+          echo "ticked=$([ "$after" -gt "$before" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Save engine state (hour 4)
+        if: always() && steps.loop4.outputs.ticked == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: backend/data
+          key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-4
+      - name: Engine loop, hour 5
+        id: loop5
+        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          T="$RUNNER_TEMP/engine-stop.ticks"; before=$(cat "$T" 2>/dev/null | wc -l)
+          python ../scripts/engine_loop.py --minutes 64 --stop-file "$RUNNER_TEMP/engine-stop"
+          after=$(cat "$T" 2>/dev/null | wc -l)
+          echo "ticked=$([ "$after" -gt "$before" ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Save engine state (hour 5)
+        if: always() && steps.loop5.outputs.ticked == 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: backend/data
+          key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-5
       - name: Make sure an encrypted backup from the last day exists
-        if: success()
+        if: always() && hashFiles('backend/data/**') != ''
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/engine_backup.sh ensure || echo "::warning::backup failed; will retry next run"
+        run: |
+          [ -s "$RUNNER_TEMP/engine-stop.ticks" ] || { echo "no tick in this run: nothing new to back up"; exit 0; }
+          bash scripts/engine_backup.sh ensure || echo "::warning::backup failed; will retry next run"
+      - name: Tidy old state caches (keep the newest 4)
+        if: always()
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh api "repos/${{ github.repository }}/actions/caches?key=engine-state-&sort=created_at&direction=desc&per_page=100" \
+            -q '.actions_caches[4:][] | .id' | while read -r id; do
+              gh api -X DELETE "repos/${{ github.repository }}/actions/caches/$id" >/dev/null || true
+            done

@@ -77,10 +77,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 40
     concurrency:
-      group: engine            # shares the cached state with the 5-minute engine: one at a time
+      group: train-merge       # not "engine": a queued engine run would cancel a merge waiting in that group
       cancel-in-progress: false
     permissions:
       contents: write          # the daily encrypted backup is stored as a release asset
+      actions: write           # look at the engine runs and restart the engine afterwards
     defaults:
       run:
         working-directory: backend
@@ -94,6 +95,19 @@ jobs:
           cache: pip
           cache-dependency-path: backend/requirements-worker.txt
       - run: pip install -r requirements-worker.txt
+      - name: Wait until the always-on engine has handed over its state
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # the engine sees this job running, finishes its current tick, saves the state and stops
+          for i in $(seq 1 120); do
+            n=$(gh api "repos/${{ github.repository }}/actions/workflows/engine.yml/runs?status=in_progress" -q '.total_count' || echo 0)
+            [ "$n" = "0" ] && { sleep 20; n=$(gh api "repos/${{ github.repository }}/actions/workflows/engine.yml/runs?status=in_progress" -q '.total_count' || echo 0); }
+            [ "$n" = "0" ] && { echo "engine is idle"; exit 0; }
+            echo "engine still running ($n); waiting"; sleep 30
+          done
+          echo "::warning::engine did not stop within 60 minutes; merging anyway"
       - id: state
         uses: actions/cache/restore@v4
         with:
@@ -123,3 +137,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: bash scripts/engine_backup.sh save
+      - name: Restart the always-on engine
+        if: always()
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api -X POST "repos/${{ github.repository }}/actions/workflows/engine.yml/dispatches" -f ref=main || true

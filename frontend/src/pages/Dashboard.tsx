@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
 import { DashboardHero } from "../components/Polish";
-import NewsBanner from "../components/NewsBanner";
+import NewsBanner, { countdown } from "../components/NewsBanner";
 import { TfTabs } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge, Stat } from "../components/ui";
 import { useApi } from "../lib/api";
@@ -69,8 +69,8 @@ export default function Dashboard() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card title="Market regime">
-          <div className="space-y-2.5">
+        <Card title="Market regime" right={<span className="text-[11px] text-mute">{(d?.regimes ?? []).length} coins</span>}>
+          <div className="-mr-2 max-h-[34rem] space-y-2.5 overflow-y-auto pr-2">
             {(d?.regimes ?? []).map((r: any) => (
               <div key={r.symbol} className="grid grid-cols-[4rem_1fr_3rem] items-center gap-3 text-sm">
                 <Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{base(r.symbol)}</Link>
@@ -93,6 +93,7 @@ export default function Dashboard() {
             ))}
             {!d?.top_signals?.length && <Empty>No signals yet</Empty>}
           </div>
+          <WinsMini />
         </Card>
         <Card title="Sentiment & context" right={<span className="text-[11px] text-mute">Fear &amp; Greed index</span>}>
           {sentiment ? (
@@ -108,6 +109,8 @@ export default function Dashboard() {
               ))}
             </ul>
           )}
+          <ComingUp />
+          <RadarMini />
           <Note>Context only. Sentiment is never allowed to override price data.</Note>
         </Card>
       </div>
@@ -169,5 +172,87 @@ export default function Dashboard() {
         </Card>
       </div>
     </div>
+  );
+}
+
+
+/* ---- extra dashboard sections (they keep the three cards in this row the same height) ---------------------- */
+function MiniHead({ title, to }: { title: string; to: string }) {
+  return (
+    <div className="mb-2 mt-4 flex items-center justify-between border-t border-glass/[0.06] pt-3">
+      <span className="text-[11px] font-semibold uppercase tracking-wide text-mute">{title}</span>
+      <Link to={to} className="text-[11px] text-accent hover:underline">See all →</Link>
+    </div>
+  );
+}
+
+/** Signals that hit their targets in the last 24 hours (else this week). */
+function WinsMini() {
+  const v = useApi<any>("/wins-today", 60_000);
+  const wins: any[] = (v.data?.wins ?? []).slice(0, 5);
+  const label: Record<string, string> = { TP1: "TP1", TP2: "TP2", TP3: "TP3" };
+  return (
+    <>
+      <MiniHead title={v.data?.period === "today" ? "Wins today" : "Wins this week"} to="/results" />
+      {wins.length ? (
+        <ul className="space-y-1.5">
+          {wins.map((w, i) => (
+            <li key={i} className="flex items-center justify-between gap-2 rounded-md bg-bull/[0.06] px-2 py-1.5 text-sm">
+              <span className="flex min-w-0 items-center gap-2">
+                <span className="font-medium">{base(w.symbol)}</span>
+                <span className={`text-[11px] font-bold ${w.side === "LONG" ? "text-bull" : "text-bear"}`}>{w.side}</span>
+                <span className="text-[11px] uppercase text-mute">{w.timeframe}</span>
+              </span>
+              <span className="flex items-center gap-2">
+                <span className="rounded bg-bull/15 px-1.5 text-[10px] font-bold text-bull">{label[w.status] ?? "WIN"}</span>
+                <span className="num font-semibold text-bull">+{Number(w.return_pct).toFixed(1)}%</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="text-xs text-mute">No closed wins yet in this period. They appear here as soon as a signal reaches its target.</p>}
+    </>
+  );
+}
+
+/** The next high-impact US releases (signals pause around them). */
+function ComingUp() {
+  const v = useApi<any>("/news", 300_000);
+  const now = Date.now();
+  const evs: any[] = (v.data?.calendar ?? []).filter((e: any) => e.impact === "High" && e.ts > now - 30 * 60_000).slice(0, 3);
+  return (
+    <>
+      <MiniHead title="Coming up · US data" to="/news" />
+      {evs.length ? (
+        <ul className="space-y-1.5">
+          {evs.map((e, i) => (
+            <li key={i} className="flex items-center justify-between gap-2 text-sm">
+              <span className="min-w-0 truncate">{e.title}</span>
+              <span className="num shrink-0 text-xs text-warn">{countdown(e.ts, now)}</span>
+            </li>
+          ))}
+        </ul>
+      ) : <p className="text-xs text-mute">No high-impact release in the coming days.</p>}
+    </>
+  );
+}
+
+/** Radar: the strongest coins outside the app, against BTC. */
+function RadarMini() {
+  const v = useApi<any>("/radar", 600_000);
+  const picks: any[] = (v.data?.picks ?? []).slice(0, 3);
+  if (!picks.length) return null;
+  return (
+    <>
+      <MiniHead title="Radar · beating the market" to="/radar" />
+      <ul className="space-y-1.5">
+        {picks.map((p) => (
+          <li key={p.symbol} className="flex items-center justify-between gap-2 text-sm">
+            <span className="flex items-center gap-2"><span className="w-4 text-center text-[11px] text-accent/80">{p.rank}</span><span className="font-medium">{base(p.symbol)}</span></span>
+            <span className="num text-xs"><span className="text-mute">vs BTC 7d </span><span className={tone(p.rs_7d)}>{isNum(p.rs_7d) ? `${p.rs_7d > 0 ? "+" : ""}${(p.rs_7d * 100).toFixed(1)}%` : "—"}</span></span>
+          </li>
+        ))}
+      </ul>
+    </>
   );
 }

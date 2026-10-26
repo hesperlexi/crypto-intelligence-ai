@@ -28,48 +28,54 @@ async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
   g.strokeStyle = "rgba(240,185,11,0.35)"; g.lineWidth = 4; g.strokeRect(24, 24, W - 48, H - 48);
   const font = (w: number, px: number, mono = false) => `${w} ${px}px ${mono ? "ui-monospace, Menlo, monospace" : "Inter, system-ui, sans-serif"}`;
   const logo = await loadImg("/icons/icon-192.png");
-  let y = story ? 150 : 80;
+  let y = story ? 150 : 72;
   if (logo) g.drawImage(logo, 70, y - 10, 86, 86);
   g.fillStyle = text; g.font = font(800, 40); g.fillText("Crypto Intelligence", 176, y + 30);
   g.fillStyle = gold; g.fillText(" AI", 176 + g.measureText("Crypto Intelligence").width, y + 30);
   g.fillStyle = mute; g.font = font(500, 26); g.fillText(`WEEKLY RESULTS · ${range(r)}`.toUpperCase(), 176, y + 70);
-  y += story ? 230 : 170;
+  y += story ? 230 : 150;
 
   g.fillStyle = mute; g.font = font(600, 28); g.fillText("Total result of all closed signals", 70, y);
-  g.fillStyle = (r.total_return_pct ?? 0) >= 0 ? bull : bear; g.font = font(800, story ? 150 : 128, true);
-  g.fillText(sp(r.total_return_pct), 64, y + (story ? 150 : 125));
-  y += story ? 220 : 185;
+  g.fillStyle = (r.total_return_pct ?? 0) >= 0 ? bull : bear; g.font = font(800, story ? 150 : 112, true);
+  g.fillText(sp(r.total_return_pct), 64, y + (story ? 150 : 108));
+  y += story ? 220 : 160;
   const kp = [["Win rate", isNum(r.win_rate) ? `${Math.round(r.win_rate * 100)}%` : "—"], ["Wins / losses", `${r.wins} / ${r.losses}`], ["Signals", String(r.issued ?? r.closed)]];
+  const kh = story ? 120 : 106;
   kp.forEach(([k, v], i) => {
     const x = 70 + i * 320;
-    g.fillStyle = "rgba(255,255,255,0.05)"; g.fillRect(x, y, 290, 120);
-    g.fillStyle = mute; g.font = font(600, 24); g.fillText(k, x + 22, y + 40);
-    g.fillStyle = text; g.font = font(800, 46, true); g.fillText(v, x + 22, y + 98);
+    g.fillStyle = "rgba(255,255,255,0.05)"; g.fillRect(x, y, 290, kh);
+    g.fillStyle = mute; g.font = font(600, 24); g.fillText(k, x + 22, y + 38);
+    g.fillStyle = text; g.font = font(800, story ? 46 : 42, true); g.fillText(v, x + 22, y + kh - 22);
   });
-  y += story ? 200 : 175;
+  y += story ? 200 : 150;
 
   g.fillStyle = gold; g.font = font(700, 30); g.fillText("TOP SIGNALS THIS WEEK", 70, y);
-  y += 24;
-  const best = (r.best ?? []).filter((t: any) => t.return_pct > 0).slice(0, story ? 5 : 3);
+  y += story ? 24 : 20;
+  const bot = (r.scorecard_bots ?? []).find((b: any) => isNum(b.week_return_pct));
+  const fy = H - (story ? 175 : 128);                   // the footer band starts here
+  const rowH = story ? 100 : 84;
+  // square post: only as many rows as fit above the scorecard line and the footer (nothing may overlap)
+  const room = Math.floor((fy - 16 - (bot ? 46 : 0) - y) / rowH);
+  const best = (r.best ?? []).filter((t: any) => t.return_pct > 0).slice(0, story ? 5 : Math.max(1, Math.min(3, room)));
   if (!best.length) { g.fillStyle = mute; g.font = font(500, 28); g.fillText("No winning signals closed this week.", 70, y + 50); y += 80; }
   for (const t of best) {
-    g.fillStyle = "rgba(255,255,255,0.04)"; g.fillRect(70, y, W - 140, 86);
-    g.fillStyle = text; g.font = font(800, 36); g.fillText(base(t.symbol), 96, y + 56);
+    const bh = rowH - 14, mid = y + bh / 2 + 12;
+    g.fillStyle = "rgba(255,255,255,0.04)"; g.fillRect(70, y, W - 140, bh);
+    g.fillStyle = text; g.font = font(800, 34); g.fillText(base(t.symbol), 96, mid);
     const w0 = g.measureText(base(t.symbol)).width;
-    g.fillStyle = t.side === "LONG" ? bull : bear; g.font = font(800, 26); g.fillText(t.side, 116 + w0, y + 54);
-    g.fillStyle = mute; g.font = font(500, 24, true);
-    g.fillText(`${String(t.timeframe).toUpperCase()} · entry ${fmtPrice(t.entry)} · ${t.status === "TP3" ? "all targets" : t.status === "TP2" ? "target 2" : "target 1"}`, 300 + w0 * 0.2, y + 54);
-    g.fillStyle = bull; g.font = font(800, 40, true); g.textAlign = "right"; g.fillText(sp(t.return_pct), W - 96, y + 58); g.textAlign = "left";
-    y += 100;
+    g.fillStyle = t.side === "LONG" ? bull : bear; g.font = font(800, 24); g.fillText(t.side, 112 + w0, mid - 2);
+    const w1 = g.measureText(t.side).width;
+    g.fillStyle = mute; g.font = font(500, 22, true);
+    g.fillText(`${String(t.timeframe).toUpperCase()} · entry ${fmtPrice(t.entry)} · ${t.status === "TP3" ? "all targets" : t.status === "TP2" ? "target 2" : "target 1"}`, 136 + w0 + w1, mid - 2);
+    g.fillStyle = bull; g.font = font(800, 38, true); g.textAlign = "right"; g.fillText(sp(t.return_pct), W - 96, mid + 2); g.textAlign = "left";
+    y += rowH;
   }
-  const bot = (r.scorecard_bots ?? []).find((b: any) => isNum(b.week_return_pct));
   if (bot || r.radar_best) {
     y += 10;
     g.fillStyle = mute; g.font = font(500, 26);
     if (bot) { g.fillText(`Scorecard bot (all app signals, virtual money): `, 70, y + 30); g.fillStyle = bot.week_return_pct >= 0 ? bull : bear; g.font = font(800, 28, true); g.fillText(sp(bot.week_return_pct), 650, y + 30); y += 46; }
     if (r.radar_best && story) { g.fillStyle = mute; g.font = font(500, 26); g.fillText(`Radar pick ${base(r.radar_best.symbol)}: ${sp(r.radar_best.ret_7d_pct)} in 7 days`, 70, y + 30); y += 46; }
   }
-  const fy = H - (story ? 175 : 128);
   g.fillStyle = "rgba(240,185,11,0.12)"; g.fillRect(48, fy - 10, W - 96, story ? 130 : 100);
   g.fillStyle = text; g.font = font(700, 28); g.fillText(`AI crypto signals · join at ${SITE}`, 70, fy + 32);
   g.fillStyle = mute; g.font = font(500, 20);

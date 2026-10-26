@@ -93,18 +93,30 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     let closed = false, attempt = 0, timer = 0, lastFrame = 0, lastRest = 0, busy = false;
     let cur: "ws" | "rest" | "down" = "down";
     const setM = (m: typeof cur) => { if (m !== cur) { cur = m; setMode(m); setConnected(m === "ws"); } };
-    const take = (t: Ticker) => { pending.current[t.symbol] = t; if (t.last != null) latestPrices[t.symbol] = t.last; };
+    const stats: Record<string, Ticker> = {};      // latest 24h stats per coin; trades move the last price in between
+    const take = (t: Ticker) => { stats[t.symbol] = t; pending.current[t.symbol] = t; if (t.last != null) latestPrices[t.symbol] = t.last; };
+    const trade = (sym: string, px: number, ts: number) => {
+      const base = pending.current[sym] ?? stats[sym];
+      if (!base || !(px > 0)) return;
+      const open = base.last != null && base.change_pct != null ? base.last / (1 + base.change_pct / 100) : null;   // 24h open
+      const t = { ...base, last: px, ts, change_pct: open ? (px / open - 1) * 100 : base.change_pct };
+      stats[sym] = t; pending.current[sym] = t; latestPrices[sym] = px;
+    };
 
     // all hosts at once; the first to deliver wins (a slow or blocked host costs nothing)
     const connect = () => {
       window.clearTimeout(timer);
       race?.close();
-      const streams = syms.map((s) => `${bsym(s).toLowerCase()}@ticker`).join("/");
+      // @ticker: 24h change / volume / bid-ask (once a second); @aggTrade: every trade, so prices move in real time
+      const streams = syms.flatMap((s) => [`${bsym(s).toLowerCase()}@ticker`, `${bsym(s).toLowerCase()}@aggTrade`]).join("/");
+      const bySym: Record<string, string> = Object.fromEntries(syms.map((s) => [bsym(s), s]));
       race = raceSocket(WS_HOSTS.map((h) => `${h}/stream?streams=${streams}`), (m) => {
         lastFrame = Date.now(); attempt = 0; setM("ws");
         const d = m.data;
-        const sym = d && syms.find((s) => bsym(s) === d.s);
-        if (sym) take(toTicker(sym, +d.c, +d.b, +d.a, +d.P, +d.q, d.E));
+        const sym = d && bySym[d.s];
+        if (!sym) return;
+        if (d.e === "aggTrade") trade(sym, +d.p, d.T);
+        else take(toTicker(sym, +d.c, +d.b, +d.a, +d.P, +d.q, d.E));
       }, () => {
         if (closed) return;
         if (cur === "ws") setM(Date.now() - lastRest < 15000 ? "rest" : "down");
@@ -142,14 +154,14 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     connect();
     window.setTimeout(rest, 2500);   // first prices over REST if no stream has answered within 2.5 s
 
-    const flush = window.setInterval(() => {   // up to ~6 renders per second
+    const flush = window.setInterval(() => {   // up to ~8 renders per second, however many trades arrive
       const p = pending.current;
       if (Object.keys(p).length) {
         pending.current = {};
         setTickers((t) => ({ ...t, ...p }));
         setLastMsg(Date.now());
       }
-    }, 160);
+    }, 125);
     return () => {
       closed = true;
       window.clearTimeout(timer); window.clearInterval(flush); window.clearInterval(watchdog);
