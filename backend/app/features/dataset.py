@@ -205,11 +205,16 @@ def make_features(frame: Frame, btc: Frame | None = None, htf: Frame | None = No
     if btc is not None:  # cross-asset context: the same closed bar of BTC is known at the same time
         b = btc.ind
         blr = np.log(b["close"])
-        X["btc_ret_1"] = (blr - blr.shift(1)).reindex(X.index)
-        X["btc_ret_5"] = (blr - blr.shift(5)).reindex(X.index)
-        X["btc_tech"] = b["tech_score"].reindex(X.index)
+        # the latest BTC bar that had opened by this bar's open (so it closed by this bar's close: no look-ahead).
+        # Usually the very same bar; on 3d Binance starts each coin's candles from its listing date, so a coin's
+        # 3d bars can sit 1-2 days off BTC's and an exact-time match would leave every row empty.
+        tol = pd.Timedelta(seconds=TF_SECONDS[frame.timeframe] - 1)
+        al = lambda s: s.reindex(X.index, method="ffill", tolerance=tol)  # noqa: E731
+        X["btc_ret_1"] = al(blr - blr.shift(1))
+        X["btc_ret_5"] = al(blr - blr.shift(5))
+        X["btc_tech"] = al(b["tech_score"])
         X["corr_btc_30"] = X["ret_1"].rolling(30).corr(X["btc_ret_1"])
-        X["rel_strength_20"] = X["ret_20"] - (blr - blr.shift(20)).reindex(X.index)
+        X["rel_strength_20"] = X["ret_20"] - al(blr - blr.shift(20))
     if htf is not None:
         X = pd.concat([X, htf_features(frame, htf)], axis=1)
     if deriv is not None:
