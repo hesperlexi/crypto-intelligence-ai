@@ -25,4 +25,12 @@ hj = json.loads(h["json"]) if h else {}
 out["health"] = {"status": hj.get("status"), "engine": {k: (hj.get("engine") or {}).get(k) for k in ("failed_steps", "last_tick_seconds")},
                  "models_15m": [{"symbol": m["symbol"], "state": m["state"], "message": (m.get("message") or "")[:120]} for m in hj.get("models", []) if m["timeframe"] == "15m"][:30],
                  "series_15m": [{"symbol": s["symbol"], "candles": s["candles"], "status": s["status"]} for s in hj.get("series", []) if s["timeframe"] == "15m"]}
+ages = {}
+for m in hj.get("models", []):
+    ages.setdefault(m["timeframe"], []).append(m.get("age_h"))
+out["model_age_h"] = {tf: {"n": len(v), "fresh_12h": sum(1 for a in v if a is not None and a <= 12),
+                           "max": max((a for a in v if a is not None), default=None), "missing": sum(1 for a in v if a is None)}
+                      for tf, v in ages.items()}
+out["last_train"] = (hj.get("engine") or {}).get("last_train")
+out["safety"] = hj.get("safety")
 print(json.dumps(out, indent=1, default=str))
