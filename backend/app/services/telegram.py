@@ -85,7 +85,7 @@ def weekly_text(r: dict[str, Any]) -> str | None:
              f"📈 Total of all closed signals: <b>{r['total_return_pct']:+.1f}%</b>"]
     if best:
         lines += ["", "Top signals:"] + [f"• {_coin(t['symbol'])} {t['side']} ({t['timeframe'].upper()}): +{t['return_pct']:.1f}%" for t in best]
-    lines += ["", f"AI crypto signals from $15/month 👉 {SITE}", "<i>Not financial advice. Past results don't guarantee future results.</i>"]
+    lines += ["", f"AI crypto signals from 15 USDT/month 👉 {SITE}", "<i>Not financial advice. Past results don't guarantee future results.</i>"]
     return "\n".join(lines)
 
 

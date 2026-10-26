@@ -71,8 +71,8 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
             <button key={p.months} type="button" onClick={() => setMonths(p.months)} aria-pressed={on}
               className={`relative rounded-xl border p-3 text-left transition ${on ? "border-accent bg-accent/[0.12] shadow-[0_0_0_1px_rgb(var(--accent)/0.6),0_8px_24px_rgb(var(--accent)/0.15)]" : "border-glass/10 bg-glass/[0.03] hover:border-accent/40"}`}>
               <div className="text-xs text-mute">{p.label}</div>
-              <div className="num mt-0.5 text-xl font-semibold">${p.price}</div>
-              <div className="num text-[11px] text-mute">${(p.price / p.months).toFixed(2)} / month</div>
+              <div className="num mt-0.5 text-xl font-semibold">{p.price} <span className="text-sm font-medium text-mute">USDT</span></div>
+              <div className="num text-[11px] text-mute">{(p.price / p.months).toFixed(2)} USDT / month</div>
               {save > 0 && <span className="absolute right-2 top-2 rounded-full bg-bull/15 px-1.5 py-0.5 text-[10px] font-semibold text-bull">−{save}%</span>}
             </button>
           );
@@ -80,6 +80,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
       </div>
 
       <div className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-mute">2 · Choose how to pay</div>
+      <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">Pay in <b>USDT only</b>. Both accounts accept USDT; other coins (USDC, BTC…) cannot be credited.</p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {([["binance", "Binance", BinanceLogo, "Binance Pay · QR"], ["mexc", "MEXC", MexcLogo, "Transfer to UID"]] as const).map(([id, name, Logo, sub]) => {
           const on = method === id;
@@ -135,7 +136,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
         </label>
       </div>
       <button className="btn btn-primary mt-4 w-full py-2.5" disabled={busy} onClick={send}>
-        {busy ? "Sending…" : `Send proof · ${plan.label} · $${plan.price}`}
+        {busy ? "Sending…" : `Send proof · ${plan.label} · ${plan.price} USDT`}
       </button>
       {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-bull" : "text-bear"}`}>{msg.text}</p>}
     </div>

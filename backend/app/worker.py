@@ -70,8 +70,11 @@ def norm_symbol(raw: str) -> str:
 # ---- configuration from the website --------------------------------------------------------------------
 
 MAJOR_COINS = ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "SOL/USDT", "DOGE/USDT", "TRX/USDT", "ADA/USDT",
-               "LINK/USDT", "AVAX/USDT", "SUI/USDT", "XLM/USDT", "TON/USDT", "HBAR/USDT", "BCH/USDT", "LTC/USDT",
+               "LINK/USDT", "AVAX/USDT", "SUI/USDT", "XLM/USDT", "GRAM/USDT", "HBAR/USDT", "BCH/USDT", "LTC/USDT",
                "DOT/USDT", "UNI/USDT", "NEAR/USDT", "APT/USDT", "AAVE/USDT"]
+# coins the exchange renamed: the old pair stops trading, the new one continues the same asset
+# (Binance: Toncoin TON -> Gram GRAM, trading as GRAM/USDT from 2026-07-02)
+RENAMED = {"TON/USDT": "GRAM/USDT"}
 MEMBER_COIN_LIMIT = 5        # default: coins one member can add for themselves (admin can change: config/limits)
 MEMBER_COINS_MAX = 25        # default: all members together, on top of the admin's list (keeps the engine within its time)
 
@@ -105,6 +108,7 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         if uid in users and uid not in inactive:
             for x in (d.get("symbols") or [])[:per_member]:
                 sym = norm_symbol(x)
+                sym = RENAMED.get(sym, sym)
                 if sym not in member_coins:
                     member_coins.append(sym)
     # watchlist
@@ -132,6 +136,19 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/watchlist", doc)
                 notes["majors_added"] = add
             rt.db.set_setting("watchlist_majors_v2", True)
+        # renamed coins: rewrite the watchlist once so the website shows the new name too
+        names = [norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]]
+        if any(n in RENAMED for n in names):
+            items, seen_syms = [], set()
+            for i, n in zip(doc["symbols"], names):
+                new = RENAMED.get(n, n)
+                if new in seen_syms:
+                    continue
+                seen_syms.add(new)
+                items.append({"symbol": new, "pinned": bool(i.get("pinned")) if isinstance(i, dict) else False})
+            doc = {**doc, "symbols": items, "updated_at": now_ms()}
+            sink.set("config/watchlist", doc)
+            notes["renamed"] = {o: n for o, n in RENAMED.items() if o in names}
         wanted = {}
         for item in doc["symbols"]:
             sym = norm_symbol(item["symbol"] if isinstance(item, dict) else item)

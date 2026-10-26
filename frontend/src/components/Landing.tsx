@@ -89,7 +89,7 @@ export default function Landing({ error }: { error: string | null }) {
               <TelegramLink label="Free signals on Telegram" />
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
-            <p className="mt-5 text-xs text-mute">No exchange keys needed · the app never places real orders · from ${(plans[plans.length - 1].price / 12).toFixed(2)}/month</p>
+            <p className="mt-5 text-xs text-mute">No exchange keys needed · the app never places real orders · from {(plans[plans.length - 1].price / 12).toFixed(2)} USDT/month</p>
           </div>
 
           {/* product preview */}
@@ -188,8 +188,8 @@ export default function Landing({ error }: { error: string | null }) {
                 <div key={p.months} className={`panel relative flex flex-col p-5 ${best ? "glow-ring" : ""}`}>
                   {best && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-xs font-bold text-ink">BEST VALUE</span>}
                   <div className="text-sm text-mute">{p.label}</div>
-                  <div className="font-display mt-1 text-4xl font-extrabold">${p.price}</div>
-                  <div className="num mt-1 text-sm text-mute">${(p.price / p.months).toFixed(2)} / month{save ? <span className="ml-2 text-bull">save {save}%</span> : null}</div>
+                  <div className="font-display mt-1 text-4xl font-extrabold">{p.price} <span className="text-lg font-semibold text-mute">USDT</span></div>
+                  <div className="num mt-1 text-sm text-mute">{(p.price / p.months).toFixed(2)} USDT / month{save ? <span className="ml-2 text-bull">save {save}%</span> : null}</div>
                   <ul className="mt-4 flex-1 space-y-1.5 text-sm text-mute">
                     <li>✓ All signals & AI forecasts</li><li>✓ Futures & phone alerts</li><li>✓ Paper trading & demo bots</li>
                   </ul>
@@ -198,7 +198,7 @@ export default function Landing({ error }: { error: string | null }) {
               );
             })}
           </div>
-          <p className="mt-4 text-center text-xs text-mute">Pay with Binance or MEXC (USDT). Renew any time; early renewals add on top of your remaining days.</p>
+          <p className="mt-4 text-center text-xs text-mute">Prices in USDT. Pay in USDT only, with Binance or MEXC. Renew any time; early renewals add on top of your remaining days.</p>
         </section>
 
         {/* questions */}

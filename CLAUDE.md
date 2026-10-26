@@ -48,7 +48,7 @@ Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real
   **reversal exit** (signal flips → close, profit taken / loss cut, then take the new side), no hedging, size
   0.5–1.5x by grade/filter (`size_multiplier`), max 3 same-direction trades. Scorecard bots
   `futures-signal-ab-1h/4h` mirror the Signals page. One-time migrations use settings flags (`fresh_start_v2`,
-  `watchlist_majors_v2`, `defaults_added`).
+  `watchlist_majors_v2`, `defaults_added`). Exchange renames: `RENAMED` in `worker.py` (TON→GRAM, 2026-07-02) rewrites the watchlist once.
 - `services/autopaper.py`: members' auto-trade into `paper/{uid}_futures` (settings `auto_paper/{uid}`, log
   `auto_paper_state/{uid}`); same reversal/size/cap rules; manual trades never touched.
 
@@ -57,7 +57,7 @@ News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.p
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
 `Achievements.tsx`, `components/WinsToday.tsx` · Telegram autopilot `services/telegram.py` +
 `components/TelegramCard.tsx` · Live trading stream `frontend/src/lib/stream.ts` · Memberships
-`services/membership.py`, `components/Membership.tsx` (prices $15/$40/$70/$130, Binance QR, support email in
+`services/membership.py`, `components/Membership.tsx` (prices 15/40/70/130 USDT, USDT only; Binance QR or MEXC UID 00183657; support email in
 `config/membership`) · Manual `docs/manual/manual.md` → `python scripts/build_manual.py` (members only, no admin
 instructions) · Promo video `frontend/public/demo.mp4` (70 s, original soundtrack).
 

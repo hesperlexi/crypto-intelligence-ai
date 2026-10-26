@@ -24,14 +24,16 @@ Access to the app is by membership. Choose the plan that suits you:
 
 | Plan | Price | Per month | You save |
 | --- | --- | --- | --- |
-| 1 month | **$15** | $15.00 | — |
-| 3 months | **$40** | $13.33 | 11% |
-| 6 months | **$70** | $11.67 | 22% |
-| 1 year | **$130** | $10.83 | 28% |
+| 1 month | **15 USDT** | 15.00 USDT | — |
+| 3 months | **40 USDT** | 13.33 USDT | 11% |
+| 6 months | **70 USDT** | 11.67 USDT | 22% |
+| 1 year | **130 USDT** | 10.83 USDT | 28% |
 
 The longer the plan, the lower the monthly price.
 
 **How to pay (about 2 minutes):**
+
+Pay in **USDT only**: both payment accounts (Binance and MEXC) accept USDT, so other coins such as USDC or BTC cannot be credited.
 
 1. Sign in. On the membership screen, tap the plan you want.
 2. Choose how to pay: **Binance** or **MEXC**.

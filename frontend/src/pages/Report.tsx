@@ -85,7 +85,7 @@ async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
     ["AI long / short calls with entry, stop-loss & targets", "Alerts on your phone · demo trading · weekly reports", "Full results, losses included, for members"].forEach((t, k) => {
       g.fillStyle = gold; g.fillText("✓", 110, cy + 150 + k * 56); g.fillStyle = text; g.fillText(t, 150, cy + 150 + k * 56);
     });
-    g.fillStyle = gold; g.font = font(800, 34); g.fillText(`${SITE} · from $15/month`, 110, cy + 345);
+    g.fillStyle = gold; g.font = font(800, 34); g.fillText(`${SITE} · from 15 USDT/month`, 110, cy + 345);
   }
 }
 
@@ -110,7 +110,7 @@ function caption(r: any): string {
     ...(best.length ? ["", "Top signals:", ...best.map((t: any) => `• ${base(t.symbol)} ${t.side} (${String(t.timeframe).toUpperCase()}): ${sp(t.return_pct)}`)] : []),
     "",
     `Join and see every signal live: https://${SITE}`,
-    "AI long/short signals with entry, stop-loss and targets · from $15/month.",
+    "AI long/short signals with entry, stop-loss and targets · from 15 USDT/month.",
     "",
     "Not financial advice. Past results don't guarantee future results.",
     "#crypto #bitcoin #tradingsignals #cryptotrading #AItrading",
