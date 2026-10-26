@@ -95,36 +95,54 @@ class CandleStore:
     async def _deepen(self, provider: MarketDataProvider, symbol: str, timeframe: str, bars: int, step: int,
                       now: int, page: int) -> int:
         """Fetch history older than what is stored when HISTORY_BARS was raised (e.g. 15m for the quick-trade
-        models). Spread over several runs; marked done once the exchange has nothing older."""
-        key = f"deep:{provider.name}:{symbol}:{timeframe}:{bars}"
+        models), and fill any hole a run left behind. Spread over several runs (a page budget per run);
+        marked done when the window is complete or the exchange has nothing more to give."""
+        key = f"deep2:{provider.name}:{symbol}:{timeframe}:{bars}"      # deep2: re-check holes left by the first version
         if self.db.get_setting(key, False):
             return 0
-        row = self.db.one("SELECT MIN(ts) AS ts FROM market_data WHERE exchange = ? AND symbol = ? AND timeframe = ?",
-                          (provider.name, symbol, timeframe))
-        oldest = int(row["ts"]) if row and row["ts"] is not None else now
-        since = now - bars * step
-        if oldest <= since + 10 * step:
-            self.db.set_setting(key, True)
-            return 0
-        written, first = 0, True
-        while since < oldest and CandleStore._pages_used < self.BACKFILL_PAGES_PER_RUN:
-            rows = await provider.fetch_ohlcv(symbol, timeframe, since=since, limit=page)
-            CandleStore._pages_used += 1
-            if not rows:
+        start = max(now - bars * step, int(self.db.get_setting(key + ":floor", 0) or 0))
+        known = set(self.db.get_setting(key + ":holes", []) or [])     # holes the exchange cannot fill (outages)
+        written = 0
+        while CandleStore._pages_used < self.BACKFILL_PAGES_PER_RUN:
+            ts = [int(r["ts"]) for r in self.db.query(
+                "SELECT ts FROM market_data WHERE exchange = ? AND symbol = ? AND timeframe = ? AND ts >= ? ORDER BY ts",
+                (provider.name, symbol, timeframe, start - step))]
+            if not ts:
+                break
+            # the first hole: before the oldest candle, or between two stored candles
+            hole = None
+            if ts[0] > start + 10 * step:
+                hole = (start, ts[0])
+            else:
+                for x, y in zip(ts, ts[1:]):
+                    if y - x > step and (x + step) not in known:
+                        hole = (x + step, y)
+                        break
+            if hole is None:
                 self.db.set_setting(key, True)
                 break
-            if first and int(rows[0][0]) > since + 50 * step and int(rows[0][0]) >= oldest - step:
-                self.db.set_setting(key, True)        # nothing older on the exchange (coin listed later)
-                break
-            first = False
-            written += self.upsert(provider.name, symbol, timeframe, [r for r in rows if int(r[0]) < oldest])
-            newest = int(rows[-1][0])
-            if newest <= since:
-                break
-            since = newest + step
-        else:
-            if since >= oldest:
-                self.db.set_setting(key, True)
+            since, until = hole
+            got_any = False
+            while since < until and CandleStore._pages_used < self.BACKFILL_PAGES_PER_RUN:
+                rows = await provider.fetch_ohlcv(symbol, timeframe, since=since, limit=page)
+                CandleStore._pages_used += 1
+                inside = [r for r in (rows or []) if since <= int(r[0]) < until]
+                if not inside:
+                    break
+                got_any = True
+                written += self.upsert(provider.name, symbol, timeframe, inside)
+                since = int(inside[-1][0]) + step
+            if not got_any:
+                if hole[0] == start and hole[1] == ts[0]:
+                    # nothing older than the oldest candle (coin listed later): history starts there; keep
+                    # checking for holes after it
+                    start = ts[0]
+                    self.db.set_setting(key + ":floor", start)
+                    continue
+                # the exchange has nothing for this hole between candles (a real outage): remember it, go on
+                known.add(hole[0])
+                self.db.set_setting(key + ":holes", sorted(known)[-200:])
+                continue
         if written:
             log.info("deepened %s %s by %d candles", symbol, timeframe, written)
         return written
