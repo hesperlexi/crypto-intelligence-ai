@@ -7,6 +7,7 @@ import * as push from "../lib/push";
 import { myUid, useIsAdmin } from "../lib/session";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
 import { ContactCard, MembershipCard } from "../components/Membership";
+import TelegramCard from "../components/TelegramCard";
 import { post, put, queueJob, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
 
@@ -82,7 +83,7 @@ function AdminSettings() {
       {err && <ErrorBox error={err} />}
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
-        <div className="space-y-4"><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
+        <div className="space-y-4"><TelegramCard /><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Risk profile">

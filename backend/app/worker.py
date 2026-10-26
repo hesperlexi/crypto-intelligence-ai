@@ -28,7 +28,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import alerts, analysis, autopaper, backtests, health, market, membership, news, radar, replay, scanner, tracking, training
+from .services import alerts, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -216,6 +216,8 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
 
 def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | None = None) -> dict[str, Any]:
     kind, p = job.get("type"), job.get("params") or {}
+    if kind == "test_telegram":
+        return telegram.test_post(sink)
     if kind == "test_push":
         if sink is None:
             return {"ok": False, "reason": "no publisher"}
@@ -475,6 +477,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                     "Open Report to download the post image.") if r["closed"] else "No signals closed last week. The report is ready to view."
             return sink.send_push([{"title": "Your weekly report is ready", "body": body, "url": "/report", "tag": "weekly-report"}])
         detail["weekly_push"] = step("weekly_push", weekly_push)
+    if fetch_context:
+        detail["telegram"] = step("telegram", lambda: telegram.run(rt, sink, views.wins_today(rt), views.weekly_reports(rt, None, weeks=2)))
     if fired_events:
         owners = {r["id"]: r["user_id"] for r in rt.db.query("SELECT id, user_id FROM alerts")}
         detail["push"] = step("push", lambda: sink.send_push(

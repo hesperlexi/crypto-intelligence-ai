@@ -30,6 +30,8 @@ service cloud.firestore {
 
     // admin probe: the website reads this to know whether the signed-in account is an admin
     match /admin/{id}        { allow read: if isAdmin(); allow write: if false; }
+    // owner-only settings (e.g. the Telegram bot token): members can neither read nor write them
+    match /owner/{id}        { allow read: if isAdmin(); allow write: if isAdmin() && id != 'telegram_status'; }
 
     // access requests, membership and payment proofs
     match /users/{uid} {
