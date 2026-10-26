@@ -44,3 +44,28 @@ def test_leverage_is_capped_so_liquidation_never_comes_before_the_stop(tmp_path)
     poor = autopaper.new_account(1, balance=10)
     _, res = autopaper.place(poor, {**row(), "timeframe": "1h"}, autopaper.settings_of({"margin": 100}), 1)
     assert res["action"] == "skipped" and "balance" in res["reason"]
+
+
+def test_reversal_closes_the_auto_trade_and_opens_the_other_way(tmp_path):
+    sink = LocalSink(tmp_path)
+    now = 1_793_000_000_000
+    sink.set("users/m1", {"status": "approved", "expires_at": now + 86_400_000})
+    sink.set("auto_paper/m1", {"enabled": True, "margin": 100, "timeframes": ["1h"]})
+    autopaper.run(sink, {"1h": [row()]}, now)
+    flip = row(side=-1, price=101.0, zone=(100.5, 101.5))
+    flip["plan"].update({"entry": 101.0, "stop": 104.0, "targets": [{"price": 98.0}, {"price": 95.0}, {"price": 92.0}]})
+    r = autopaper.run(sink, {"1h": [flip]}, now + 3_600_000)
+    acc = sink.get("paper/m1_futures")
+    assert r["reversed"] == 1 and r["opened"] == 1
+    assert list(acc["positions"].values())[0]["side"] == -1 and acc["totals"]["count"] == 1 and acc["totals"]["wins"] == 1
+    closes = [d for _, d in sink.list("paper_futures_trades") if d.get("type") == "CLOSE"]
+    assert len(closes) == 1 and closes[0]["reason"] == "signal reversed" and closes[0]["realized_pnl"] > 0
+
+
+def test_manual_positions_are_never_closed_by_a_reversal(tmp_path):
+    acc = autopaper.new_account(1)
+    acc["positions"] = {"BTCUSDT": {"key": "BTCUSDT", "symbol": "BTC/USDT", "side": 1, "qty": 1, "entry": 100, "margin": 20,
+                                    "leverage": 5, "fees": 0}}
+    flip = {**row(side=-1), "timeframe": "1h"}
+    new, res = autopaper.place(acc, flip, autopaper.settings_of({}), 2)
+    assert new is None and res["action"] == "skipped" and "reversed" not in res

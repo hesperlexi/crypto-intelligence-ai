@@ -405,6 +405,43 @@ class BotEngine:
             if done:
                 t = self._close_trade(cfg["id"], state, pos, done[1], done[0])
                 events.append({"bot": cfg["id"], "type": "close", "symbol": pos["symbol"], "reason": done[0], "pnl": t["pnl"]})
+        events += self._reversals(cfg, state, now)
+        return events
+
+    def _signal_side(self, cfg: dict[str, Any], symbol: str) -> int:
+        """+1 / -1 when the bot's timeframe currently has a tradable call it would take, else 0."""
+        a = analysis.analyze(self.rt, symbol, cfg["timeframe"], detail=False)
+        if a.get("status") != "OK" or a.get("decision") not in analysis.TRADE_DECISIONS:
+            return 0
+        if a.get("grade") and a["grade"] not in str(cfg.get("grades") or "A"):
+            return 0
+        if not (a.get("setup") or {}).get("valid"):
+            return 0
+        return 1 if a["decision"] in ("BUY", "BUY ON PULLBACK") else -1
+
+    def _reversals(self, cfg: dict[str, Any], state: dict[str, Any], now: int) -> list[dict[str, Any]]:
+        """The call flipped (long -> short or back): close the open trade at market, profit or loss, and drop any
+        pending entry the other way. The new direction is then entered like any fresh signal (no hedging: one
+        position per coin)."""
+        events = []
+        for pos in list(state["positions"]):
+            side = self._signal_side(cfg, pos["symbol"])
+            if side == 0 or side == pos["side"]:
+                continue
+            px = self._price(pos["symbol"])
+            if not px:
+                continue
+            in_profit = pos["side"] * (px - pos["entry"]) > 0
+            self._reduce(state, pos, pos["qty_open"], px, False)
+            reason = "signal reversed (profit taken)" if in_profit else "signal reversed (loss cut)"
+            t = self._close_trade(cfg["id"], state, pos, now, reason)
+            events.append({"bot": cfg["id"], "type": "close", "symbol": pos["symbol"], "reason": reason, "pnl": t["pnl"]})
+        for o in list(state["pending"]):
+            side = self._signal_side(cfg, o["symbol"])
+            if side and side != o["side"]:
+                state["cash"] += o["reserved"]
+                state["pending"].remove(o)
+                events.append({"bot": cfg["id"], "type": "expired", "symbol": o["symbol"], "reason": "signal reversed"})
         return events
 
     def _enter_decision(self, cfg: dict[str, Any], state: dict[str, Any], syms: list[str], now: int) -> list[dict[str, Any]]:

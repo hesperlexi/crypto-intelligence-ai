@@ -81,10 +81,36 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
     sym, side, p = sig["symbol"], int(sig["side"]), sig["plan"]
     res = {"ts": now, "symbol": sym, "timeframe": sig["timeframe"], "side": "LONG" if side > 0 else "SHORT", "grade": sig.get("grade")}
     positions, orders = dict(acc.get("positions") or {}), dict(acc.get("orders") or {})
+    reversed_ = None
+    # the call flipped on a coin the auto-trader holds: close that auto trade at market (profit or loss), drop an
+    # auto order the other way, then take the new direction. Manual trades are never touched; no hedging.
+    for key, pos in list(positions.items()):
+        if pos.get("symbol") == sym and pos.get("auto") and int(pos["side"]) != side:
+            price_now = float(sig["price"])
+            fill = price_now * (1 - pos["side"] * ADVERSE)
+            fee = pos["qty"] * fill * FEE
+            gross = pos["side"] * pos["qty"] * (fill - pos["entry"])
+            back = max(0.0, pos["margin"] + gross) - fee
+            pnl = back - pos["margin"] - (pos.get("fees") or 0)
+            del positions[key]
+            t = acc.get("totals") or {}
+            acc = {**acc, "wallet": acc["wallet"] + back, "positions": positions,
+                   "totals": {**t, "realized": (t.get("realized") or 0) + pnl, "fees": (t.get("fees") or 0) + fee,
+                              "count": (t.get("count") or 0) + 1, "wins": (t.get("wins") or 0) + (1 if pnl > 0 else 0)}}
+            reversed_ = {"type": "CLOSE", "reason": "signal reversed", "symbol": sym, "side": pos["side"], "qty": pos["qty"],
+                         "price": fill, "entry": pos["entry"], "leverage": pos["leverage"], "margin": pos["margin"], "fee": fee,
+                         "realized_pnl": pnl, "roe_pct": pnl / pos["margin"] * 100 if pos["margin"] else None,
+                         "funding": pos.get("funding") or 0, "opened_at": pos.get("opened_at"), "auto": True}
+    for oid, od in list(orders.items()):
+        if od.get("symbol") == sym and od.get("auto") and int(od["side"]) != side:
+            del orders[oid]
+            acc = {**acc, "wallet": acc["wallet"] + od.get("reserve", 0), "orders": orders}
+    if reversed_:
+        res["reversed"] = reversed_
     if any(x.get("symbol") == sym for x in list(positions.values()) + list(orders.values())):
-        return None, {**res, "action": "skipped", "reason": "a position or order on this coin is already open"}
+        return (acc if reversed_ else None), {**res, "action": "skipped", "reason": "a position or order on this coin is already open"}
     if len(positions) + len(orders) >= s["max_open"]:
-        return None, {**res, "action": "skipped", "reason": f"the limit of {s['max_open']} open trades is reached"}
+        return (acc if reversed_ else None), {**res, "action": "skipped", "reason": f"the limit of {s['max_open']} open trades is reached"}
     stop = float(p["stop"])
     targets = p["targets"]
     take = float(targets[min(TAKES[s["take"]], len(targets) - 1)]["price"])
@@ -94,7 +120,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
     market = lo <= price <= hi
     entry = price * (1 + side * ADVERSE) if market else ideal
     if side * (entry - stop) <= 0 or side * (take - entry) <= 0:
-        return None, {**res, "action": "skipped", "reason": "price already moved past the stop or target"}
+        return (acc if reversed_ else None), {**res, "action": "skipped", "reason": "price already moved past the stop or target"}
     safe = F.safe_leverage(entry, stop, MAX_LEV, MMR, buffer=1.1)
     lev = int(p.get("suggested_leverage") or safe) if s["leverage"] == "signal" else int(s["leverage"])
     lev = max(1, min(lev, safe, MAX_LEV))           # never so high that liquidation comes before the stop
@@ -103,7 +129,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
         qty = margin * lev / entry
         fee = qty * entry * FEE
         if margin + fee > acc["wallet"] + 1e-9:
-            return None, {**res, "action": "skipped", "reason": f"not enough virtual balance (${acc['wallet']:.2f})"}
+            return (acc if reversed_ else None), {**res, "action": "skipped", "reason": f"not enough virtual balance (${acc['wallet']:.2f})"}
         key = sym.replace("/", "")
         positions[key] = {"key": key, "symbol": sym, "side": side, "qty": qty, "entry": entry, "margin": margin, "leverage": lev,
                           "liq": liq_price(entry, side, lev), "stop": stop, "take": take, "opened_at": now, "checked_at": now,
@@ -114,7 +140,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
                      "stop": stop, "take": take, "liq": positions[key]["liq"], "account_id": acc["id"]}
     reserve = margin * (1 + lev * MAKER)
     if reserve > acc["wallet"] + 1e-9:
-        return None, {**res, "action": "skipped", "reason": f"not enough virtual balance (${acc['wallet']:.2f})"}
+        return (acc if reversed_ else None), {**res, "action": "skipped", "reason": f"not enough virtual balance (${acc['wallet']:.2f})"}
     oid = _rid(8)
     orders[oid] = {"id": oid, "symbol": sym, "side": side, "price": entry, "margin": margin, "leverage": lev, "stop": stop,
                    "take": take, "reserve": reserve, "created_at": now, "checked_at": now, "auto": True,
@@ -148,6 +174,11 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
                 continue
             result = sink.transact(f"paper/{uid}_futures", lambda acc, sig=sig: place(acc, sig, s, now))
             done[key] = now
+            if result.get("reversed"):
+                acc_id = (sink.get(f"paper/{uid}_futures") or {}).get("id")
+                sink.add("paper_futures_trades", {**result["reversed"], "account_id": acc_id, "uid": uid, "created_at": now,
+                                                  "mode": "PAPER FUTURES"})
+                out["reversed"] = out.get("reversed", 0) + 1
             entries.append(result)
             if result["action"] == "opened":
                 out["opened"] += 1

@@ -216,3 +216,22 @@ def test_config_validation():
                         "max_open_positions": "x"})
     assert c["mode"] == "decision" and c["timeframe"] == "4h" and c["starting_balance"] == 100.0
     assert c["risk_per_trade_pct"] == 10 and c["max_open_positions"] == 5
+
+
+def test_signal_reversal_closes_the_trade_and_flips(monkeypatch, no_costs):
+    rt = _rt()
+    now = _now_aligned()
+    t0 = now - 40 * STEP
+    _put(rt, "BTC/USDT", t0, [100.0] * 4)
+    eng = B.BotEngine(rt)
+    eng.sync_configs([_cfg()])
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy())
+    eng.run(t0 + 4 * STEP)
+    _put(rt, "BTC/USDT", t0 + 4 * STEP, [(100, 101.5, 99.8, 101.0)])      # in profit, no target yet
+    sell = _buy("SELL", -1, 101.0, 103.0, (99.0, 97.0, 95.0), bar_ts=9)
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: sell)
+    eng.run(t0 + 6 * STEP)
+    t = rt.db.one("SELECT * FROM bot_trades")
+    assert t["exit_reason"] == "signal reversed (profit taken)" and t["pnl"] > 0
+    (cfg, st), = eng.bots()
+    assert len(st["positions"]) == 1 and st["positions"][0]["side"] == -1      # flipped short, never both at once
