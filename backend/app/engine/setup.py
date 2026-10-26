@@ -24,7 +24,8 @@ R_MULTIPLES = (1.0, 1.75, 2.5)        # typical levels, used where a fixed ladde
 
 
 def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_rr: float = 1.25,
-                horizon: int = 30, live_price: float | None = None) -> dict[str, Any]:
+                horizon: int = 30, live_price: float | None = None,
+                lift: dict[float, float] | None = None) -> dict[str, Any]:
     """side = +1 (long) or -1 (short). Returns {'valid': False, 'reason': ...} when reward does not justify risk."""
     last = ind.iloc[-1]
     price = float(live_price if live_price else last["close"])
@@ -86,11 +87,17 @@ def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_
             cands = capped or cands[:1]
         best = None
         for m in cands:
-            br = base_rate(m)
+            br = dict(base_rate(m))
+            k = (lift or {}).get(float(m))
+            if k is not None and br.get("probability") is not None:      # the AI's view of THIS setup
+                br["probability"] = float(min(0.99, br["probability"] * k))
+                br["ai_lift"] = round(k, 3)
+                br["basis"] = f"{br.get('basis')}, adjusted by the AI for this setup (x{k:.2f})"
             score = (br["probability"] or 0.0) * m          # expected R of this leg (it runs at break-even)
             if best is None or score > best[0] + 1e-9:
                 best = (score, m, br)
-        basis = "data-chosen" + (", capped by " + ("resistance" if side > 0 else "support") if wall is not None and best[1] <= wall else "")
+        ai = best[2].get("ai_lift") is not None
+        basis = ("AI-chosen" if ai else "data-chosen") + (", capped by " + ("resistance" if side > 0 else "support") if wall is not None and best[1] <= wall else "")
         return best[1], basis, best[2]
 
     br1 = base_rate(TP1_R)

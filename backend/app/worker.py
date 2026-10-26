@@ -458,6 +458,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         step("context", lambda: asyncio.run(market.external_context(rt)))
         detail["news"] = step("news", lambda: sync_news(rt))
         detail["derivs"] = step("derivs", lambda: derivs.sync(rt.db, rt.symbols(), max_calls=40))
+        detail["crowd"] = step("crowd", lambda: derivs.sync_crowd(rt.db, rt.symbols(), max_files=25))
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
                                   tracking.update_signal_outcomes(rt, table="shadow_signals")))
     missing = [(s, tf) for s in rt.symbols() for tf in MODEL_TIMEFRAMES
@@ -641,7 +642,8 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
     pruned = trainer.prune_files(rt.db)
     try:
         asyncio.run(market.sync_all(rt))
-        derivs_note = derivs.sync(rt.db, rt.symbols(), max_calls=600)
+        derivs_note = {"funding": derivs.sync(rt.db, rt.symbols(), max_calls=600),
+                       "crowd": derivs.sync_crowd(rt.db, rt.symbols(), max_files=2500)}
     except Exception as exc:
         derivs_note = f"failed: {exc}"
     detail = {"shards": shards, "imported": imported, "skipped": skipped, "pruned_files": pruned,

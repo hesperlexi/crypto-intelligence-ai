@@ -27,7 +27,7 @@ TTL_MS = 30 * 86_400_000
 
 
 def _key(symbol: str, tf: str) -> str:
-    return f"deriv_gate|{symbol}|{tf}"
+    return f"deriv_gate2|{symbol}|{tf}"          # v2.2: re-tested with the crowd-positioning features
 
 
 def cached(db: Database, symbol: str, tf: str) -> dict[str, Any] | None:
@@ -39,12 +39,12 @@ def decide(db: Database, symbol: str, tf: str, frame: Frame, btc: Frame | None, 
            force: bool = False) -> dict[str, Any]:
     if not force and (hit := cached(db, symbol, tf)):
         return hit
-    days = derivs.coverage_days(db, symbol)
+    days = max(derivs.coverage_days(db, symbol), derivs.crowd_days(db, symbol))
     if days < MIN_DAYS:
         return {"on": False, "reason": f"collecting futures data ({days:.0f} of {MIN_DAYS} days)", "at": None}
     from .trainer import GAP
 
-    d = derivs.load(db, symbol)
+    d = derivs.load_all(db, symbol)
     base, enh = make_dataset(frame, btc, htf=htf), make_dataset(frame, btc, htf=htf, deriv=d)
     idx = np.where(base.trainable & enh.trainable)[0]
     m = base.meta.iloc[idx]
@@ -57,6 +57,8 @@ def decide(db: Database, symbol: str, tf: str, frame: Frame, btc: Frame | None, 
         runs[label] = run_walk_forward(X, y, sigma, fwd, groups, ds.feature_names, names, WALK_FORWARD[tf], GAP,
                                        settings.min_train_samples).P_ens
     avail = enh.X["deriv_avail"].to_numpy(float)[idx] > 0
+    if "crowd_avail" in enh.X:
+        avail |= enh.X["crowd_avail"].to_numpy(float)[idx] > 0
     ok = np.isfinite(runs["base"]).all(axis=1) & np.isfinite(runs["deriv"]).all(axis=1) & avail
     n = int(ok.sum())
     if n < 200:

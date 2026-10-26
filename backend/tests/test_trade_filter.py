@@ -48,3 +48,31 @@ def test_filter_switches_on_only_when_it_helps():
     assert s["p_long"] > s["threshold"] > s_bad["p_long"]
     off = T.train(*_market(1600, 2, False), cost_rate=0.0)
     assert not off["enabled"] and T.score(off, np.zeros(5), {"down": 0.3, "neutral": 0.3, "up": 0.4}) is None
+
+
+def test_target_model_lifts_only_where_it_beats_the_average():
+    """Setups whose x0 > 0 run much further: the model learns it (on unseen calls) and lifts their far targets;
+    on pure noise it stays off."""
+    from app.ml import target_model as TM
+
+    def market(n, seed, informative):
+        rng = np.random.default_rng(seed)
+        L = n * 40
+        close = np.full(L, 100.0); high = close.copy(); low = close.copy(); atr = np.full(L, 1.0)
+        rows = np.arange(n) * 40
+        X = rng.normal(size=(n, 5))
+        P = np.tile([0.25, 0.25, 0.5], (n, 1))
+        for k, r in enumerate(rows):
+            far = (X[k, 0] > 0) if informative else rng.random() < 0.5
+            run = rng.uniform(3.2, 4.8) if far else rng.uniform(0.3, 2.2)     # in ATRs; the stop is 1.5 ATR
+            high[r + 1:r + 6] = 100 + run
+            low[r + 1:r + 6] = 99.9
+        return X, P, rows, high, low, close, atr
+
+    tm = TM.train(*market(1600, 1, True))
+    assert tm["enabled"] and 2.5 in tm["models"]
+    x_far, x_near = np.array([2.0, 0, 0, 0, 0]), np.array([-2.0, 0, 0, 0, 0])
+    probs = {"down": 0.25, "neutral": 0.25, "up": 0.5}
+    assert TM.lifts(tm, x_far, probs)["long"][2.5] > 1.3 > TM.lifts(tm, x_near, probs)["long"].get(2.5, 1.0)
+    noise = TM.train(*market(1600, 2, False))
+    assert not noise["enabled"] or len(noise["models"]) <= 2

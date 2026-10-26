@@ -138,7 +138,7 @@ class Runtime:
         if hit and time.time() - hit[0] < 600:
             return hit[1]
         try:
-            df = derivs.load(self.db, symbol)
+            df = derivs.load_all(self.db, symbol)
         except Exception:                      # older database without the table
             import pandas as pd
             df = pd.DataFrame(columns=["ts", "funding", "premium"])

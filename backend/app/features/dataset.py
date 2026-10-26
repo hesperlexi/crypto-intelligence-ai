@@ -78,6 +78,10 @@ def htf_features(frame: Frame, htf: Frame) -> pd.DataFrame:
 
 
 DERIV_COLS = ["fund_1h", "fund_8h", "fund_z", "prem", "prem_24h", "prem_chg_8h", "deriv_avail"]
+# crowd positioning (Binance archive): open interest, long/short ratios, taker flow. A day's values are used from
+# the start of the day after next (the archive publishes after the day ends), in training and live alike.
+CROWD_COLS = ["oi_chg_1d", "oi_chg_7d", "ls_top", "ls_top_chg_3d", "ls_acct", "taker_24h", "crowd_avail"]
+CROWD_LAG_DAYS = 2
 
 
 def deriv_features(frame: Frame, d: pd.DataFrame | None) -> pd.DataFrame:
@@ -89,7 +93,9 @@ def deriv_features(frame: Frame, d: pd.DataFrame | None) -> pd.DataFrame:
     out = pd.DataFrame(0.0, index=frame.ind.index, columns=DERIV_COLS)
     if d is None or d.empty:
         return out
-    h = d.sort_values("ts").copy()
+    h = d.dropna(subset=["funding"]).sort_values("ts").copy() if "funding" in d else d.iloc[0:0]
+    if h.empty:
+        return out
     f = h["funding"].astype(float) * 1e4                 # basis points per hour
     p = h["premium"].astype(float) * 1e4
     mean7, std7 = f.rolling(168, min_periods=48).mean(), f.rolling(168, min_periods=48).std()
@@ -107,6 +113,39 @@ def deriv_features(frame: Frame, d: pd.DataFrame | None) -> pd.DataFrame:
     vals[~fresh.to_numpy()] = np.nan
     out[cols] = np.nan_to_num(vals, nan=0.0)
     out["deriv_avail"] = (fresh & m["fund_1h"].notna()).astype(float).to_numpy()
+    return out
+
+
+def crowd_features(frame: Frame, d: pd.DataFrame | None) -> pd.DataFrame:
+    """Crowd positioning without look-ahead: each bar sees the latest day that was published at least
+    CROWD_LAG_DAYS ago (nothing older than CROWD_LAG_DAYS + 2 days, else 'unavailable')."""
+    from ..data.base import tf_ms
+
+    out = pd.DataFrame(0.0, index=frame.ind.index, columns=CROWD_COLS)
+    if d is None or d.empty or "oi" not in d or d["oi"].notna().sum() < 48:
+        return out
+    h = d[["ts", "oi", "ls_top", "ls_acct", "taker"]].dropna(subset=["oi"]).sort_values("ts").copy()
+    day = 86_400_000
+    oi = h["oi"].astype(float)
+    lt = np.log(h["ls_top"].astype(float).clip(lower=1e-6))
+    la = np.log(h["ls_acct"].astype(float).clip(lower=1e-6))
+    tk = np.log(h["taker"].astype(float).clip(lower=1e-6))
+    H = pd.DataFrame({
+        "known_ts": ((h["ts"].astype("int64") // day + CROWD_LAG_DAYS) * day).astype("int64"),
+        "oi_chg_1d": ((oi / oi.shift(24) - 1) * 100).clip(-60, 60),
+        "oi_chg_7d": ((oi / oi.shift(168) - 1) * 100).clip(-90, 90),
+        "ls_top": lt.clip(-3, 3), "ls_top_chg_3d": (lt - lt.shift(72)).clip(-3, 3),
+        "ls_acct": la.clip(-3, 3), "taker_24h": tk.rolling(24, min_periods=12).mean().clip(-3, 3),
+    })
+    base = pd.DataFrame({"known_ts": (frame.ind["ts"] + tf_ms(frame.timeframe)).astype("int64"), "_i": np.arange(len(frame.ind))})
+    m = pd.merge_asof(base.sort_values("known_ts"), H.rename(columns={"known_ts": "_k"}).assign(known_ts=lambda x: x["_k"]),
+                      on="known_ts", direction="backward").sort_values("_i")
+    fresh = (m["known_ts"] - m["_k"]) <= 2 * day
+    cols = CROWD_COLS[:-1]
+    vals = m[cols].to_numpy(float).copy()
+    vals[~fresh.to_numpy()] = np.nan
+    out[cols] = np.nan_to_num(vals, nan=0.0)
+    out["crowd_avail"] = (fresh & m["oi_chg_1d"].notna()).astype(float).to_numpy()
     return out
 
 
@@ -175,6 +214,8 @@ def make_features(frame: Frame, btc: Frame | None = None, htf: Frame | None = No
         X = pd.concat([X, htf_features(frame, htf)], axis=1)
     if deriv is not None:
         X = pd.concat([X, deriv_features(frame, deriv)], axis=1)
+        if "oi" in deriv:
+            X = pd.concat([X, crowd_features(frame, deriv)], axis=1)
     return X.replace([np.inf, -np.inf], np.nan)
 
 

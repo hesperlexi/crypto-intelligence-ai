@@ -158,6 +158,17 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
         except Exception as exc:          # the filter must never block a model release
             log.warning("trade filter failed for %s %s: %s", symbol, timeframe, exc)
             tfilter = {"enabled": False, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+    # ---- target model: how far this kind of setup tends to run (picks TP2 / TP3 within their ranges) --------
+    tmodel: dict[str, Any] = {"enabled": False, "reason": "not trained (fast model set)"}
+    if not fast:
+        try:
+            from . import target_model
+            ind = frame.ind
+            tmodel = target_model.train(X[oos], wf.P_ens[oos], idx[oos], ind["high"].to_numpy(float), ind["low"].to_numpy(float),
+                                        ind["close"].to_numpy(float), ind["atr"].to_numpy(float))
+        except Exception as exc:
+            log.warning("target model failed for %s %s: %s", symbol, timeframe, exc)
+            tmodel = {"enabled": False, "reason": f"{type(exc).__name__}: {exc}"[:160]}
 
     created = now_ms()
     digest = hashlib.sha1(f"{symbol}{timeframe}{created}{sorted(stage['models'])}".encode()).hexdigest()[:8]
@@ -188,7 +199,7 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
         "sizes": {"train": train_len, "val": val_len, "test": f0.test[1] - f0.test[0], "gap": GAP},
         "n_samples": int(n), "n_oos": int(oos.sum()), "data_start": int(ts[0]), "data_end": int(ts[-1]),
         "failures": failures, "model_status": model_status(), "importance": None, "fast": bool(fast),
-        "trade_filter": tfilter,
+        "trade_filter": tfilter, "target_model": tmodel,
     }
     if not fast:
         try:

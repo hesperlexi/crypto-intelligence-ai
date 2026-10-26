@@ -61,6 +61,11 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
     except Exception as exc:
         rt.record_error(f"trade filter {symbol} {timeframe}", exc)
         fc["trade_filter"] = None
+    try:
+        from ..ml import target_model
+        fc["target_lift"] = target_model.lifts(bundle.get("target_model"), x_row, fc["probabilities"])
+    except Exception:
+        fc["target_lift"] = None
     edge = bundle["edge"]
     fc.update({
         "available": True, "status": "OK", "timeframe": timeframe,
@@ -188,7 +193,9 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                        mtf_engine.alignment_with(matrix, lean), matrix["conflict"])
     direction = sig.get("direction") or 0
     levels = _levels(fr, price)
-    setup = build_setup(ind, levels["zones"], direction, settings.min_risk_reward, live_price=price) if direction else None
+    lift_of = lambda side: ((fc.get("target_lift") or {}).get("long" if side > 0 else "short") if fc.get("available") else None)  # noqa: E731
+    setup = build_setup(ind, levels["zones"], direction, settings.min_risk_reward, live_price=price,
+                        lift=lift_of(direction)) if direction else None
     if vol_state == "EXTREME":
         flags.append("UNSTABLE MARKET — REDUCED CONFIDENCE")
 
@@ -239,7 +246,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 why = f"the AI leans {'up' if mside > 0 else 'down'}, against the {'bullish' if direction > 0 else 'bearish'} technical tilt"
         else:
             if side != direction:          # model-led call: build the plan on the model's side
-                setup = build_setup(ind, levels["zones"], side, settings.min_risk_reward, live_price=price)
+                setup = build_setup(ind, levels["zones"], side, settings.min_risk_reward, live_price=price, lift=lift_of(side))
             firm = bool(direction) and not weak
             conf_ok_a = confidence is not None and confidence >= settings.min_dir_confidence_a
             conf_ok_b = confidence is not None and confidence >= settings.min_dir_confidence_b

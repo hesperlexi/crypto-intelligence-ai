@@ -139,3 +139,69 @@ def test_gate_turns_features_on_only_when_they_help():
     assert on["on"] and on["hit_deriv"] > on["hit_base"], on
     assert not off["on"], off
     assert deriv_gate.cached(good, "BTC/USDT", "1h")["on"]
+
+
+def test_crowd_features_use_only_days_published_two_days_earlier():
+    import numpy as np
+    import pandas as pd
+
+    from app.features.dataset import CROWD_COLS, build_frame, crowd_features
+    from tests.helpers import synthetic_candles
+
+    fr = build_frame(synthetic_candles(400, "1h", seed=4), "1h")
+    ts = fr.ind["ts"].to_numpy()
+    day = 86_400_000
+    # open interest that jumps by 50 % on one day: the jump may only appear in features two days later
+    hours = np.arange(ts[0] - 10 * day, ts[-1] + 3_600_000, 3_600_000)
+    jump_day = (ts[200] // day) * day
+    oi = np.where(hours >= jump_day, 150.0, 100.0)
+    d = pd.DataFrame({"ts": hours, "oi": oi, "ls_top": 1.2, "ls_acct": 1.1, "taker": 1.0})
+    X = crowd_features(fr, d)
+    assert list(X.columns) == CROWD_COLS and X["crowd_avail"].iloc[-1] == 1.0
+    close = ts + 3_600_000
+    before = close < jump_day + 2 * day
+    assert (X["oi_chg_1d"][before] == 0).all()                 # the jump is invisible before it was published
+    assert X["oi_chg_1d"][~before].max() > 40
+
+
+def test_crowd_sync_reads_archive_days_and_marks_missing_coins():
+    import io
+    import time
+    import zipfile
+
+    from app.data import derivs
+    from app.db import Database
+
+    now = int(time.time() * 1000)
+
+    class Resp:
+        def __init__(self, code, content=b""):
+            self.status_code, self.content = code, content
+
+        def raise_for_status(self):
+            if self.status_code >= 400:
+                raise RuntimeError(self.status_code)
+
+    def day_zip(url):
+        d = url.rsplit("-metrics-", 1)[1][:10]
+        rows = ["create_time,symbol,sum_open_interest,sum_open_interest_value,count_toptrader_long_short_ratio,"
+                "sum_toptrader_long_short_ratio,count_long_short_ratio,sum_taker_long_short_vol_ratio"]
+        rows += [f"{d} {h:02d}:{m:02d}:00,BTCUSDT,1,{1000 + h},1,1.5,1.2,0.9" for h in range(24) for m in (0, 55)]
+        b = io.BytesIO()
+        with zipfile.ZipFile(b, "w") as z:
+            z.writestr("x.csv", "\n".join(rows))
+        return b.getvalue()
+
+    class Session:
+        def get(self, url, timeout=20):
+            return Resp(404) if "NOPEUSDT" in url else Resp(200, day_zip(url))
+
+    db = Database("sqlite:///:memory:")
+    r = derivs.sync_crowd(db, ["BTC/USDT", "NOPE/USDT"], history_days=5, max_files=20, session=Session(), now=now)
+    assert r["missing"] == ["NOPE/USDT"] and db.get_setting("crowd_none_NOPE/USDT") is True
+    df = derivs.load_crowd(db, "BTC/USDT")
+    assert len(df) == 24 * 5 and set(df.columns) == {"ts", "oi", "ls_top", "ls_acct", "taker"}
+    assert df["oi"].iloc[0] == 1000 and abs(df["ls_top"].iloc[0] - 1.5) < 1e-9
+    assert derivs.crowd_days(db, "BTC/USDT") == 5
+    all_ = derivs.load_all(db, "BTC/USDT")
+    assert "funding" in all_ and all_["oi"].notna().sum() == 120
