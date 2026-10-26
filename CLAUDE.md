@@ -29,6 +29,7 @@ Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real
   `gh api -X POST repos/hesperlexi/crypto-intelligence-ai/actions/workflows/<file>/dispatches -f ref=main`.
   Log downloads are blocked; failed step names: `gh api repos/.../actions/runs/<id>/jobs`. Reports:
   `git fetch origin reports:refs/remotes/origin/reports; git show origin/reports:reports/diagnose-latest.json`.
+- Browser futures streams: `wss://fstream.binance.com/market/stream` (aggTrade, kline) and `/public/stream` (depth); the legacy `/stream` path stopped pushing on 2026-04-23.
 - Binance futures (fapi) is geo-blocked on the US runners; spot data via data-api.binance.vision; futures history
   from Hyperliquid; live funding fallback OKX.
 
