@@ -23,7 +23,7 @@ export function AppearancePanel() {
     <div className="space-y-4">
       <div>
         <div className="label mb-1.5">Theme</div>
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
           {THEMES.map((t) => (
             <button key={t.id} onClick={() => set({ theme: t.id })} aria-pressed={a.theme === t.id}
               className={`tile flex items-center gap-2 p-2 text-left text-xs transition-colors ${a.theme === t.id ? "!border-accent/70 text-accent" : "hover:border-accent/40"}`}>
@@ -47,6 +47,8 @@ export function AppearancePanel() {
 /** Header button that opens the appearance popover. */
 export default function AppearanceButton() {
   const [open, setOpen] = useState(false);
+  const { a: ap } = useAppearance();
+  const cur = THEMES.find((t) => t.id === ap.theme) ?? THEMES[0];
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     if (!open) return;
@@ -58,11 +60,16 @@ export default function AppearanceButton() {
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      <button className={`btn px-2 py-1.5 text-sm ${open ? "btn-on" : ""}`} onClick={() => setOpen((v) => !v)} aria-expanded={open} title="Theme and layout" aria-label="Theme and layout">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
-          <path d="M12 22a10 10 0 1 1 10-10c0 2.2-1.8 3-3.5 3H16a2 2 0 0 0-1.5 3.3A2 2 0 0 1 12 22z" />
-          <circle cx="7.5" cy="10.5" r="1.2" fill="currentColor" /><circle cx="12" cy="7" r="1.2" fill="currentColor" /><circle cx="16.5" cy="10.5" r="1.2" fill="currentColor" />
-        </svg>
+      <button className={`btn h-8 gap-2 rounded-full py-0 pl-1 pr-2.5 text-xs font-medium ${open ? "btn-on" : ""}`} onClick={() => setOpen((v) => !v)}
+        aria-expanded={open} title="Theme and layout" aria-label="Theme and layout">
+        {/* the active theme's own colours, as a small orb */}
+        <span className="relative grid h-6 w-6 place-items-center rounded-full ring-1 ring-glass/20" aria-hidden
+          style={{ background: `conic-gradient(from 210deg, ${cur.swatch[1]}, ${cur.swatch[2]}, ${cur.swatch[1]})` }}>
+          <span className="h-3.5 w-3.5 rounded-full" style={{ background: cur.swatch[0], boxShadow: `0 0 8px ${cur.swatch[1]}` }} />
+        </span>
+        <span className="hidden sm:inline">{cur.name}</span>
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          className={`hidden text-mute transition-transform sm:block ${open ? "rotate-180" : ""}`} aria-hidden><path d="m6 9 6 6 6-6" /></svg>
       </button>
       {open && (
         <div className="panel popover animate-in fixed inset-x-3 top-14 z-50 max-h-[75vh] overflow-y-auto p-4 sm:absolute sm:inset-x-auto sm:right-0 sm:top-10 sm:w-[26rem]">
