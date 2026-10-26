@@ -54,6 +54,23 @@ export async function futuresPrices(symbols: string[]): Promise<Record<string, n
   } catch { return {}; }
 }
 
+/** Which pairs Binance lists for spot and for USDⓈ-M futures (cached 10 min), e.g. "BTCUSDC". */
+let listedCache: { spot: Set<string>; fut: Set<string>; at: number } | null = null;
+let listedReq: Promise<{ spot: Set<string>; fut: Set<string> }> | null = null;
+export function listedPairs(): Promise<{ spot: Set<string>; fut: Set<string> }> {
+  if (listedCache && Date.now() - listedCache.at < 600_000) return Promise.resolve(listedCache);
+  listedReq ??= (async () => {
+    const [sp, fu] = await Promise.all([
+      get<any[]>("/api/v3/ticker/price").catch(() => [] as any[]),
+      get<any[]>("/fapi/v1/ticker/price", [FUTURES]).catch(() => [] as any[]),
+    ]);
+    listedCache = { spot: new Set(sp.map((r) => r.symbol)), fut: new Set(fu.map((r) => r.symbol)), at: Date.now() };
+    listedReq = null;
+    return listedCache;
+  })();
+  return listedReq;
+}
+
 export async function ohlcv(symbol: string, tf: string, limit = 500) {
   const candles = await klines(symbol, tf, limit);
   const step = TF_MS[tf];

@@ -155,6 +155,7 @@ Open **Trade** (bottom bar on phones). It works like Binance or MEXC, with virtu
 **The screen:**
 
 - **Pair bar:** tap the coin to switch pairs; it shows the last price, 24h change and volume. Switch between **Futures** and **Spot** on the right. Prices and the chart update live on every trade; on the Futures tab they come from Binance Futures (the perpetual's own price, which differs slightly from spot), marked **live · futures price** under the price.
+- **USDT / USDC / FDUSD:** next to Futures/Spot, choose what you trade the coin against. USDC works on spot and futures, FDUSD (a USD stablecoin) on spot. A greyed-out button means Binance does not list that pair for the coin. Your demo balance is the same for all three (1 USDT = 1 USDC = 1 FDUSD), and the AI call shown is the coin's USDT signal (prices differ by a fraction of a percent).
 - **AI call strip:** the app's current call for this coin. **Use this plan** fills in the side, leverage, a limit at the entry price, the stop-loss and the take-profit for you.
 - **Chart:** live candles (1m to 1D). Your entry, take-profit, stop-loss, liquidation price and open limit orders are drawn on it.
 - **Order book** (computer): live bids and asks.

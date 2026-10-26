@@ -10,6 +10,7 @@ import { useSymbols } from "./Pickers";
 import { CoinAvatar } from "./Polish";
 import { verdictOf } from "./TradeCall";
 import { useApi } from "../lib/api";
+import { listedPairs, tickers as fetchTickers } from "../lib/binance";
 import { StreamState, useDepth, useMarketStream } from "../lib/stream";
 import { base, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
@@ -22,6 +23,44 @@ const LEVS = [1, 2, 3, 5, 10, 20, 50];
 
 /** The live stream of the coin on screen (futures price on the Futures tab), shared by every panel. */
 const StreamCtx = createContext<StreamState | null>(null);
+// Quote currencies: USDT (default), USDC, and FDUSD (Binance's USD stablecoin, spot only). Signals come from the
+// coin's USDT pair; the price of the same coin in USDC / FDUSD differs by a fraction of a percent.
+export const QUOTES: Record<Mkt, string[]> = { spot: ["USDT", "USDC", "FDUSD"], futures: ["USDT", "USDC"] };
+export const quoteOf = (s: string) => s.split("/")[1] ?? "USDT";
+const withQuote = (s: string, q: string) => `${base(s)}/${q}`;
+const usdtOf = (s: string) => withQuote(s, "USDT");
+
+/** Which quotes Binance lists for this coin on this market (USDT is always offered). */
+function useQuotes(symbol: string, market: Mkt): Set<string> {
+  const [ok, setOk] = useState<Set<string>>(new Set(["USDT"]));
+  useEffect(() => {
+    let live = true;
+    listedPairs().then((l) => {
+      if (!live) return;
+      const set = market === "futures" ? l.fut : l.spot;
+      setOk(new Set(QUOTES[market].filter((q) => q === "USDT" || set.has(base(symbol).toUpperCase() + q))));
+    }).catch(() => {});
+    return () => { live = false; };
+  }, [symbol, market]);
+  return ok;
+}
+
+/** 24h stats for pairs outside the live USDT feed (refreshed every 15 s). */
+function useTicker(symbol: string) {
+  const { tickers } = useLive();
+  const [t, setT] = useState<any>(null);
+  const own = quoteOf(symbol) !== "USDT";
+  useEffect(() => {
+    if (!own) return;
+    let live = true;
+    const load = () => fetchTickers([symbol]).then((x) => { if (live) setT(x[symbol] ?? null); }).catch(() => {});
+    setT(null); load();
+    const id = window.setInterval(load, 15000);
+    return () => { live = false; window.clearInterval(id); };
+  }, [symbol, own]);
+  return own ? t : tickers[symbol];
+}
+
 function useLastPrice(symbol: string): number | null {
   const st = useContext(StreamCtx);
   const { tickers } = useLive();
@@ -58,7 +97,8 @@ export default function TradeTerminal() {
   return (
     <StreamCtx.Provider value={stream}>
     <div className="space-y-3">
-      <PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })} onMarket={(m) => setQ({ market: m, symbol })} />
+      <PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })}
+        onMarket={(m) => setQ({ market: m, symbol: QUOTES[m].includes(quoteOf(symbol)) ? symbol : usdtOf(symbol) })} />
       <SignalStrip symbol={symbol} market={market} />
       {market === "futures" && <AutoTrade />}
       {msg && <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-bull/40 bg-bull/10 text-bull" : "border-bear/40 bg-bear/10 text-bear"}`}>{msg.text}</div>}
@@ -85,7 +125,7 @@ export default function TradeTerminal() {
             <Assets d={d} market={market} act={act} />}
         </div>
       </section>
-      <p className="text-xs text-mute">Practice account with virtual USDT. Market orders fill at the live price plus a small spread and slippage; limit orders fill when the price reaches them (checked on every 15-minute candle, also while the app is closed). Fees: spot 0.1%, futures 0.05% market / 0.02% limit.</p>
+      <p className="text-xs text-mute">Practice account with virtual USDT (USDC and FDUSD pairs use the same balance, 1 : 1). Market orders fill at the live price plus a small spread and slippage; limit orders fill when the price reaches them (checked on every 15-minute candle, also while the app is closed). Fees: spot 0.1%, futures 0.05% market / 0.02% limit.</p>
     </div>
     </StreamCtx.Provider>
   );
@@ -94,17 +134,25 @@ export default function TradeTerminal() {
 /* ---------------------------------------------------------------- pair bar */
 function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: string; symbols: string[]; market: Mkt; onSymbol: (s: string) => void; onMarket: (m: Mkt) => void }) {
   const { tickers } = useLive();
-  const t = tickers[symbol];
+  const t = useTicker(symbol);
   const last = useLastPrice(symbol);
   const st = useContext(StreamCtx);
   const [open, setOpen] = useState(false);
+  const quote = quoteOf(symbol);
+  const avail = useQuotes(symbol, market);
+  // a coin picked from the list keeps the chosen quote when Binance lists it, else USDT
+  const pick = async (s: string) => {
+    let next = usdtOf(s);
+    if (quote !== "USDT") { try { const l = await listedPairs(); if ((market === "futures" ? l.fut : l.spot).has(base(s).toUpperCase() + quote)) next = withQuote(s, quote); } catch { /* USDT */ } }
+    onSymbol(next);
+  };
   return (
     <div className="panel flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-2.5 sm:px-4">
       <div className="relative">
         <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-glass/[0.05]">
           <CoinAvatar symbol={symbol} size={30} />
-          <span className="text-left"><span className="font-display block text-lg font-bold leading-none">{base(symbol)}<span className="text-mute">/USDT</span></span>
-            <span className="text-[11px] text-mute">{market === "futures" ? "Perpetual · USDT-M" : "Spot"}</span></span>
+          <span className="text-left"><span className="font-display block text-lg font-bold leading-none">{base(symbol)}<span className="text-mute">/{quote}</span></span>
+            <span className="text-[11px] text-mute">{market === "futures" ? `Perpetual · ${quote}-margined` : "Spot"}</span></span>
           <span className="text-mute" aria-hidden="true">▾</span>
         </button>
         {open && (
@@ -112,8 +160,8 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
             {symbols.map((s) => {
               const x = tickers[s];
               return (
-                <button key={s} onClick={() => { onSymbol(s); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-glass/[0.06] ${s === symbol ? "bg-accent/10" : ""}`}>
-                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span></span>
+                <button key={s} onClick={() => { pick(s); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-glass/[0.06] ${base(s) === base(symbol) ? "bg-accent/10" : ""}`}>
+                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/{quote}</span></span>
                   <span className="num text-right text-xs"><span className="block">{fmtPrice(x?.last)}</span><span className={tone(x?.change_pct)}>{fmtPctRaw(x?.change_pct)}</span></span>
                 </button>
               );
@@ -128,9 +176,16 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
           {st?.status === "live" && st.delay != null && <span className={st.delay < 1500 ? "text-bull" : st.delay < 4000 ? "text-warn" : "text-bear"} title="How old the latest price is when it reaches this device (on Binance's clock)"> · {(Math.max(0, st.delay) / 1000).toFixed(1)} s</span>}
         </div></div>
       <div><div className={`num text-sm ${tone(t?.change_pct)}`}>{fmtPctRaw(t?.change_pct)}</div><div className="text-[11px] text-mute">24h change</div></div>
-      <div className="hidden sm:block"><div className="num text-sm">{t?.quote_volume != null ? `${fmtNum(t.quote_volume / 1e6, 1)}M` : "—"}</div><div className="text-[11px] text-mute">24h volume (USDT)</div></div>
+      <div className="hidden sm:block"><div className="num text-sm">{t?.quote_volume != null ? `${fmtNum(t.quote_volume / 1e6, 1)}M` : "—"}</div><div className="text-[11px] text-mute">24h volume ({quote})</div></div>
       {market === "spot" && <div className="hidden md:block"><div className="num text-sm">{fmtPrice(t?.bid)} / {fmtPrice(t?.ask)}</div><div className="text-[11px] text-mute">bid / ask</div></div>}
-      <div className="ml-auto inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Market">
+      <div className="ml-auto inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Quote currency">
+        {QUOTES[market].map((q) => (
+          <button key={q} aria-pressed={quote === q} disabled={!avail.has(q)} onClick={() => onSymbol(withQuote(symbol, q))}
+            title={avail.has(q) ? `Trade ${base(symbol)} against ${q}` : `${base(symbol)}/${q} is not listed on Binance ${market}`}
+            className={`rounded-lg px-2.5 py-1.5 text-xs font-semibold disabled:cursor-not-allowed disabled:opacity-35 ${quote === q ? "bg-glass/[0.12] text-text" : "text-mute hover:text-text"}`}>{q}</button>
+        ))}
+      </div>
+      <div className="inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Market">
         {(["futures", "spot"] as const).map((k) => (
           <button key={k} aria-pressed={market === k} onClick={() => onMarket(k)}
             className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${market === k ? "bg-accent text-ink" : "text-mute hover:text-text"}`}>{k === "futures" ? "Futures" : "Spot"}</button>
@@ -144,8 +199,9 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
 function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
   const v = useApi<any>("/futures?timeframe=4h");
   const [params, setParams] = useSearchParams();
-  const r = (v.data?.rows ?? []).find((x: any) => x.symbol === symbol);
+  const r = (v.data?.rows ?? []).find((x: any) => x.symbol === usdtOf(symbol));
   if (!r) return null;
+  const via = quoteOf(symbol) !== "USDT";
   const vd = verdictOf(r, market);
   const p = r.plan;
   const usable = vd.tone !== "wait" && p && (market === "futures" || p.side === "LONG");
@@ -158,7 +214,7 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
   const cls = vd.tone === "bull" ? "border-bull/40 bg-bull/[0.07]" : vd.tone === "bear" ? "border-bear/40 bg-bear/[0.07]" : "border-glass/10 bg-glass/[0.03]";
   return (
     <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border px-3 py-2 text-sm ${cls}`}>
-      <span className="text-xs uppercase tracking-wide text-mute">AI call · 4H</span>
+      <span className="text-xs uppercase tracking-wide text-mute">AI call · 4H{via ? ` · from ${usdtOf(symbol)}` : ""}</span>
       <span className={`font-bold ${vd.tone === "bull" ? "text-bull" : vd.tone === "bear" ? "text-bear" : "text-mute"}`}>{vd.label}</span>
       {usable ? (
         <span className="num text-xs text-mute">entry <span className="text-accent">{fmtPrice(p.entry)}</span> · stop <span className="text-bear">{fmtPrice(p.stop)}</span> · TP1 <span className="text-bull">{fmtPrice(p.targets?.[0]?.price)}</span>{market === "futures" ? ` · ${p.suggested_leverage}x` : ""}</span>
@@ -312,7 +368,7 @@ function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d:
         {type === "limit" ? (
           <label className="flex items-center rounded-lg border border-glass/10 bg-ink/40 px-3"><span className="w-16 text-xs text-mute">Price</span>
             <input className="num min-w-0 flex-1 bg-transparent py-2 text-right outline-none" inputMode="decimal" value={limit} onChange={(e) => setLimit(e.target.value)} aria-label="Limit price" />
-            <button className="ml-2 text-xs text-accent" onClick={() => px && setLimit(String(px))}>Last</button><span className="ml-2 text-xs text-mute">USDT</span></label>
+            <button className="ml-2 text-xs text-accent" onClick={() => px && setLimit(String(px))}>Last</button><span className="ml-2 text-xs text-mute">{quoteOf(symbol)}</span></label>
         ) : <div className="flex items-center rounded-lg border border-glass/10 bg-ink/20 px-3 py-2 text-sm text-mute"><span className="w-16 text-xs">Price</span><span className="flex-1 text-right">Market price</span></div>}
         <label className="flex items-center rounded-lg border border-glass/10 bg-ink/40 px-3"><span className="w-16 text-xs text-mute">{market === "futures" ? "Margin" : spotSide === "BUY" ? "Total" : "Amount"}</span>
           <input className="num min-w-0 flex-1 bg-transparent py-2 text-right outline-none" inputMode="decimal" placeholder="0" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Order size" />
@@ -407,7 +463,7 @@ function SpotHoldings({ rows, act }: { rows: any[]; act: (fn: () => Promise<any>
         const pct = p.mark && p.avg_price ? (p.mark / p.avg_price - 1) * 100 : null;
         return (
           <div key={p.symbol} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-glass/[0.08] p-3">
-            <div className="flex items-center gap-2.5"><CoinAvatar symbol={p.symbol} size={28} /><div><div className="font-semibold">{base(p.symbol)}</div><div className="num text-xs text-mute">{fmtNum(p.qty, 6)} · avg {fmtPrice(p.avg_price)}</div></div></div>
+            <div className="flex items-center gap-2.5"><CoinAvatar symbol={p.symbol} size={28} /><div><div className="font-semibold">{base(p.symbol)}{quoteOf(p.symbol) !== "USDT" && <span className="text-mute">/{quoteOf(p.symbol)}</span>}</div><div className="num text-xs text-mute">{fmtNum(p.qty, 6)} · avg {fmtPrice(p.avg_price)}</div></div></div>
             <div className="text-right"><div className="num">{fmtNum(p.market_value)} USDT</div><div className={`num text-xs ${tone(p.unrealized_pnl)}`}>{p.unrealized_pnl != null ? `${p.unrealized_pnl >= 0 ? "+" : ""}${fmtNum(p.unrealized_pnl)} (${fmtPctRaw(pct, 1)})` : "—"}</div></div>
             <button className="btn px-3 py-1 text-xs" onClick={() => act(() => SP.order(p.symbol, "SELL", p.qty, null), `Sold all ${base(p.symbol)}.`)}>Sell all</button>
           </div>
