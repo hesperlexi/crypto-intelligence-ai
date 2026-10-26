@@ -11,7 +11,10 @@ import { clockOffset, Race, raceSocket } from "./ws";
 
 export type Mkt = "spot" | "futures";
 const SPOT_WS = ["wss://stream.binance.com:9443", "wss://stream.binance.com:443", "wss://data-stream.binance.vision"];
+// Binance futures split its streams on 2026-04-23: trades and candles under /market, order book under /public
+// (the old /stream address no longer pushes trades or candles).
 const FUT_WS = ["wss://fstream.binance.com"];
+const FUT_MARKET = "/market", FUT_PUBLIC = "/public";
 const TF_MS: Record<string, number> = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "30m": 18e5, "1h": 36e5, "4h": 144e5, "12h": 432e5, "1d": 864e5, "3d": 2592e5, "1w": 6048e5 };
 
 /** Last traded futures price per symbol (filled by the stream, read by paper futures for fills). */
@@ -65,7 +68,7 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
       race?.close();
       const hosts = src === "futures" ? FUT_WS : SPOT_WS;
       const path = `/stream?streams=${s}@aggTrade/${s}@kline_${tf}`;
-      race = raceSocket(hosts.map((h) => h + path), (m) => {
+      race = raceSocket(hosts.map((h) => h + (src === "futures" ? FUT_MARKET : "") + path), (m) => {
         lastFrame = Date.now(); attempt = 0;
         if (!connected) { connected = true; dirty = true; }
         const d = m.data;
@@ -150,7 +153,7 @@ export function useDepth(symbol: string, market: Mkt): { bids: [number, number][
     const connect = () => {
       if (closed) return;
       const hosts = fut ? FUT_WS : SPOT_WS;
-      race = raceSocket(hosts.map((h) => `${h}/stream?streams=${s}@depth20@100ms`), (m) => {
+      race = raceSocket(hosts.map((h) => `${h}${fut ? FUT_PUBLIC : ""}/stream?streams=${s}@depth20@100ms`), (m) => {
         const d = m.data || {};
         pending = { bids: conv(d.bids ?? d.b), asks: conv(d.asks ?? d.a) };
         last = Date.now();
