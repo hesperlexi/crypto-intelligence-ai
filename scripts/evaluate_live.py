@@ -12,8 +12,16 @@ tr = view("track_record"); bots = view("bots"); h = view("health"); perf = view(
 out = {"track_record_keys": sorted(tr.keys())[:40]}
 for k in ("summary", "totals", "by_timeframe", "by_grade", "since", "record_since"):
     if k in tr: out[k] = tr[k]
-out["bots"] = [{k: b.get(k) for k in ("id", "name", "timeframe", "market", "return_pct", "trades", "win_rate", "max_drawdown_pct", "equity", "open")}
-               for b in (bots.get("bots") or [])][:30]
+out["bots_raw_keys"] = sorted(bots.keys())[:20]
+bl = bots.get("bots") or []
+out["bots"] = []
+for b in bl[:40]:
+    cfg = b.get("config") or {}
+    st = b.get("stats") or b.get("summary") or {}
+    out["bots"].append({"id": cfg.get("id") or b.get("id"), "tf": cfg.get("timeframe"), "mode": cfg.get("mode"), "market": cfg.get("market"),
+                        "keys": sorted(b.keys())[:20], "stats": {k: st.get(k) for k in list(st)[:14]} if isinstance(st, dict) else None,
+                        "equity": b.get("equity") or (b.get("state") or {}).get("equity"), "cash": (b.get("state") or {}).get("cash"),
+                        "n_trades": len(b.get("trades") or [])})
 out["engine"] = {k: (h.get("engine") or {}).get(k) for k in ("last_tick_seconds", "failed_steps", "ticks", "schedule_minutes")}
 out["models"] = {"edge": sum(1 for m in h.get("models", []) if m.get("edge_confirmed")), "total": len(h.get("models", []))}
 out["perf_keys"] = sorted(perf.keys())[:30]
