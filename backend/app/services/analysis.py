@@ -344,8 +344,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     if live and bundle is None and timeframe in MODEL_TIMEFRAMES:
         try:
             from . import safety
-            from ..views import record_since
-            safety_state = safety.check(rt.db, symbol, timeframe, record_since(rt))
+            from ..views import record_for
+            safety_state = safety.check(rt.db, symbol, timeframe, record_for(rt, timeframe))
         except Exception:
             safety_state = None
         if safety_state and safety_state.get("paused") and decision in TRADE_DECISIONS and setup and setup.get("valid"):

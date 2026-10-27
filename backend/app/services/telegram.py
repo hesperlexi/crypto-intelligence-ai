@@ -230,24 +230,26 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         if last and last.get("complete"):
             post("weekly", weekly_text(last), "tg_weekly_day", day, ("weekly_card", last))
     if cfg["post_teaser"] and db.get_setting("tg_teaser_day", "") != day:
-        from ..views import record_since
+        from ..views import record_clause
+        rc, rp = record_clause(rt)
         rows = db.query("SELECT * FROM signals WHERE status = 'OPEN' AND side != 0 AND created_at <= ? AND created_at >= ? "
-                        "AND created_at >= ? ORDER BY created_at DESC LIMIT 20",
-                        (now - TEASER_DELAY_MS, now - 6 * 3_600_000, record_since(rt)))
+                        f"AND {rc} ORDER BY created_at DESC LIMIT 20",
+                        (now - TEASER_DELAY_MS, now - 6 * 3_600_000, *rp))
         from ..db import loads
         pick = next((r for r in rows if (loads(r.get("payload"), {}) or {}).get("grade") == "A"), None)
         if pick:
             mins = max(60, round((now - pick["created_at"]) / 60_000))
             post("teaser", teaser_text(pick), "tg_teaser_day", day, ("teaser_card", pick, mins))
     if cfg["post_each_win"]:
-        from ..views import record_since
+        from ..views import record_clause
         last = db.get_setting("tg_win_last", None)
         if last is None:                       # first run: start from now, don't flood the channel with old wins
             db.set_setting("tg_win_last", now)
         else:
+            rc, rp = record_clause(rt)
             rows = db.query("SELECT * FROM signals WHERE status IN ('TP2', 'TP3') AND return_pct > 0 "
-                            "AND closed_at IS NOT NULL AND closed_at > ? AND created_at >= ? AND side != 0 "
-                            "ORDER BY closed_at LIMIT ?", (int(last), record_since(rt), MAX_WIN_POSTS))
+                            f"AND closed_at IS NOT NULL AND closed_at > ? AND {rc} AND side != 0 "
+                            "ORDER BY closed_at LIMIT ?", (int(last), *rp, MAX_WIN_POSTS))
             for r in rows:
                 w = win_item(r)
                 n = len(out["sent"])

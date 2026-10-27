@@ -46,7 +46,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <Kpi k="Closed signals" v={String(s.closed ?? 0)} sub={d.record_since ? `since v2.0 · ${fmtDate(d.record_since)} · ${d.live?.open ?? 0} open` : d.since ? `since ${fmtDate(d.since)} · ${d.live?.open ?? 0} open` : undefined} />
+        <Kpi k="Closed signals" v={String(s.closed ?? 0)} sub={d.record_since ? `since ${fmtDate(d.record_since)}${d.record_since_tf?.["15m"] ? ` (15M since ${fmtDate(d.record_since_tf["15m"])}, new cost rule)` : ""} · ${d.live?.open ?? 0} open` : d.since ? `since ${fmtDate(d.since)} · ${d.live?.open ?? 0} open` : undefined} />
         <Kpi k="Win rate (live)" v={rate(s.win_rate)} sub={s.closed ? `${s.closed} closed signals` : "first results soon"} />
         <Kpi k="Avg result per signal" v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub="before fees" />
         <Kpi k="Tested hit rate" v={rate(avgTested)} sub={`${edge.length} coin/timeframes with a proven edge`} />

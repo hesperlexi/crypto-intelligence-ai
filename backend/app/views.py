@@ -182,6 +182,24 @@ def record_since(rt: Runtime) -> int:
     return int(rt.db.get_setting("record_since", 0) or 0)
 
 
+def record_since_tf(rt: Runtime) -> dict[str, int]:
+    """Later starts for single timeframes whose rules changed (v2.3: 15m restarted with the trading-costs rule)."""
+    return {k: int(v) for k, v in (rt.db.get_setting("record_since_tf", {}) or {}).items()}
+
+
+def record_for(rt: Runtime, timeframe: str) -> int:
+    return max(record_since(rt), record_since_tf(rt).get(timeframe, 0))
+
+
+def record_clause(rt: Runtime) -> tuple[str, tuple]:
+    """SQL condition (and its values) for signals that count in the record: wins and losses alike."""
+    sql, params = "created_at >= ?", [record_since(rt)]
+    for tf, t in sorted(record_since_tf(rt).items()):
+        sql += " AND (timeframe != ? OR created_at >= ?)"
+        params += [tf, t]
+    return sql, tuple(params)
+
+
 def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: int = 150) -> dict[str, Any]:
     """Everything a visitor needs to judge the app honestly, readable without an account (views/track_record):
     every trade signal since launch with its real outcome, the models' results on past data they never trained on
@@ -191,7 +209,8 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
     from .ml import direction as dirview, trainer
 
     since0 = record_since(rt)
-    rows = rt.db.query("SELECT * FROM signals WHERE status != 'INFO' AND created_at >= ? ORDER BY created_at DESC", (since0,))
+    rc, rp = record_clause(rt)
+    rows = rt.db.query(f"SELECT * FROM signals WHERE status != 'INFO' AND {rc} ORDER BY created_at DESC", rp)
     sigs = []
     for r in rows:
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
@@ -249,7 +268,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "benchmark_return_pct": st.get("benchmark_return_pct"), "win_rate": st.get("win_rate"),
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
-    out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None, "live": {"summary": summ(closed), "by_timeframe": by_tf,
+    out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None, "record_since_tf": record_since_tf(rt) or None, "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "signals": sigs[:limit]},
             "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))),
@@ -282,10 +301,11 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
     from .services.bots import SCORECARD_IDS
 
     end = start + WEEK
+    rc, rp = record_clause(rt)
     rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL "
-                       "AND closed_at >= ? AND closed_at < ? AND created_at >= ? ORDER BY return_pct DESC", (start, end, record_since(rt)))
-    issued = rt.db.one("SELECT COUNT(*) AS n FROM signals WHERE status != 'INFO' AND created_at >= ? AND created_at < ?",
-                       (max(start, record_since(rt)), end))["n"]
+                       f"AND closed_at >= ? AND closed_at < ? AND {rc} ORDER BY return_pct DESC", (start, end, *rp))
+    issued = rt.db.one(f"SELECT COUNT(*) AS n FROM signals WHERE status != 'INFO' AND {rc} AND created_at >= ? AND created_at < ?",
+                       (*rp, start, end))["n"]
     trades = []
     for r in rows:
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
@@ -331,7 +351,8 @@ def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks:
     """This week so far, last week, and the archive (newest first)."""
     now = now_ms()
     cur = week_start(now)
-    first = rt.db.one("SELECT MIN(created_at) AS t FROM signals WHERE status != 'INFO' AND created_at >= ?", (record_since(rt),))
+    rc, rp = record_clause(rt)
+    first = rt.db.one(f"SELECT MIN(created_at) AS t FROM signals WHERE status != 'INFO' AND {rc}", rp)
     first_ts = int(first["t"]) if first and first["t"] else cur
     out = []
     for i in range(weeks):
@@ -348,9 +369,9 @@ def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] 
     """Milestones the app has really reached. Locked ones show progress; nothing is unlocked by hand."""
     import numpy as np
 
+    rc, rp = record_clause(rt)
     rows = rt.db.query("SELECT symbol, side, status, return_pct, closed_at FROM signals "
-                       "WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL AND created_at >= ? ORDER BY closed_at",
-                       (record_since(rt),))
+                       f"WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL AND {rc} ORDER BY closed_at", rp)
     out: list[dict[str, Any]] = []
 
     def add(aid, title, unlocked, value, detail, at=None, progress=None):
@@ -426,8 +447,9 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
     """Public highlights for the sign-in page: winning signals closed in the last 24 h (else the last 7 days)."""
     now = now_ms()
     for hours, label in ((24, "today"), (24 * 7, "this week")):
+        rc, rp = record_clause(rt)
         rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct > 0 AND closed_at >= ? "
-                           "AND created_at >= ? ORDER BY return_pct DESC LIMIT ?", (now - hours * 3_600_000, record_since(rt), limit))
+                           f"AND {rc} ORDER BY return_pct DESC LIMIT ?", (now - hours * 3_600_000, *rp, limit))
         if rows:
             break
     wins = [{"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",

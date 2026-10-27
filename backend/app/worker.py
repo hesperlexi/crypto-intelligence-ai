@@ -311,6 +311,17 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
         rt.db.set_setting("bots_lev20_v23", True)
         notes["bots_leverage"] = 20
+    if not rt.db.get_setting("reset_15m_v23", False):
+        # v2.3 (owner request): the 15m timeframe restarts under the trading-costs rule - its counted signal record
+        # (results, achievements, weekly report, Telegram) starts now, wins and losses alike, and the two 15m bots
+        # restart from their starting balance. Older 15m signals stay in the Signal log.
+        rt.db.set_setting("record_since_tf", {**(rt.db.get_setting("record_since_tf", {}) or {}), "15m": now_ms()})
+        rt.db.execute("DELETE FROM app_settings WHERE key LIKE 'safety:%:15m'")
+        bots_cfg = [{**b, "reset_token": f"{b.get('reset_token', '1')}-15m"} if b.get("timeframe") == "15m" else b
+                    for b in bots_cfg]
+        sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
+        rt.db.set_setting("reset_15m_v23", True)
+        notes["reset_15m"] = [b["id"] for b in bots_cfg if b.get("timeframe") == "15m"]
     if not rt.db.get_setting("bots_spotcap_v23", False):
         # v2.3: spot bots may use up to the whole balance per position (each trade still risks 1 % at its stop and
         # cannot spend more cash than it has); the old 25 % cap shrank tight-stop winners but not wide-stop losers

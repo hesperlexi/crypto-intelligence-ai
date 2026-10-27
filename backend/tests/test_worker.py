@@ -308,3 +308,22 @@ def test_fresh_start_v23_runs_once(tmp_path):
     first = rt.db.get_setting("record_since", 0)
     worker.sync_config(rt, sink)
     assert rt.db.get_setting("record_since", 0) == first                     # only once
+
+
+def test_15m_record_restart_counts_wins_and_losses_alike_from_the_restart():
+    from app import views
+    from app.db import Database
+    from app.services.runtime import Runtime
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    rt.db.set_setting("record_since", 1000)
+    ins = ("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, stop, "
+           "tp1, tp2, tp3, status, return_pct, closed_at) VALUES (?, ?, 'BTC/USDT', ?, ?, 'BUY', 'BUY', 100, 1, 100, 98, "
+           "102, 104, 106, ?, ?, ?)")
+    rt.db.execute(ins, ("a", 2000, "15m", 1, "TP2", 1.5, 2500))     # old 15m win
+    rt.db.execute(ins, ("b", 2100, "15m", 2, "STOPPED", -1.0, 2600))  # old 15m loss
+    rt.db.execute(ins, ("c", 2200, "1h", 3, "STOPPED", -1.0, 2700))   # 1h loss stays
+    rt.db.execute(ins, ("d", 6000, "15m", 4, "TP1", 0.5, 6500))       # new 15m
+    rt.db.set_setting("record_since_tf", {"15m": 5000})
+    rc, rp = views.record_clause(rt)
+    ids = [r["id"] for r in rt.db.query(f"SELECT id FROM signals WHERE {rc} ORDER BY id", rp)]
+    assert ids == ["c", "d"] and views.record_for(rt, "15m") == 5000 and views.record_for(rt, "1h") == 1000
