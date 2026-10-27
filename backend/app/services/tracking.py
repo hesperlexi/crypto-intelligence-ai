@@ -275,8 +275,8 @@ def signal_summary(db: Database) -> dict[str, Any]:
 
 
 def reopen_for_break_even(db: Database, since: int = 0) -> int:
-    """v2.3 one-time correction: signals that reached TP1 but not TP3 were closed with the stop left at its original
-    level. They are re-followed under the published rule (break-even after TP1, TP1 after TP2) - wins and losses
+    """v2.3 one-time correction: signals that reached TP1 were closed with the stop left at its original level
+    (including ones that dipped back to entry after TP1 and went on to TP3). They are re-followed under the published rule (break-even after TP1, TP1 after TP2) - wins and losses
     alike; nothing is removed. Returns how many were re-opened."""
-    return db.execute("UPDATE signals SET status = 'OPEN', closed_at = NULL WHERE tp1_hit = 1 AND tp3_hit = 0 "
-                      "AND status IN ('TP1', 'TP2') AND created_at >= ?", (since,))
+    return db.execute("UPDATE signals SET status = 'OPEN', closed_at = NULL WHERE tp1_hit = 1 "
+                      "AND status IN ('TP1', 'TP2', 'TP3') AND created_at >= ?", (since,))

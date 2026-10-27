@@ -281,8 +281,17 @@ def predict(bundle: dict[str, Any], ds: Dataset, pos: int = -1, multipliers: dic
             "oos_accuracy": bundle["metrics"].get(name, {}).get("accuracy"),
             "oos_brier": bundle["metrics"].get(name, {}).get("brier"),
         })
+    # the validated ensemble must still be mostly present: if members carrying most of its weight could not predict
+    # (e.g. deep models switched off), there is no honest forecast - never a re-weighted guess or a 0/0/0 one
+    w_row = weights["by_regime"].get(int(group[0]), weights["global"])
+    total_w = sum(float(v) for k, v in w_row.items() if not REGISTRY.get(k, {}).get("baseline"))
+    have_w = sum(float(w_row.get(k, 0.0)) for k in cal if not REGISTRY.get(k, {}).get("baseline"))
+    if total_w > 0 and have_w / total_w < 0.5:
+        missing_m = sorted(k for k in w_row if k not in cal and float(w_row.get(k, 0)) > 0)
+        raise InsufficientData(f"most of this model's weight is on members that cannot run now ({', '.join(missing_m)}); "
+                               "it is retrained without them at the next nightly training")
     P = ensemble_proba(cal, weights, group)[0]
-    if not np.isfinite(P).all():
+    if not np.isfinite(P).all() or P.sum() <= 0:
         raise InsufficientData("no ensemble member produced a prediction")
     cls = int(P.argmax())
     members = [p for p in per_model if "calibrated" in p and not p["baseline"] and p["weight"] > 0]

@@ -541,9 +541,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         detail["news"] = step("news", lambda: sync_news(rt))
         detail["derivs"] = step("derivs", lambda: derivs.sync(rt.db, rt.symbols(), max_calls=40))
         detail["crowd"] = step("crowd", lambda: derivs.sync_crowd(rt.db, rt.symbols(), max_files=25))
-    if not rt.db.get_setting("tracking_be_v23", False):     # one-time: re-follow TP1/TP2 signals with break-even stops
-        detail["tracking_be_v23"] = tracking.reopen_for_break_even(rt.db)
-        rt.db.set_setting("tracking_be_v23", True)
+    if not rt.db.get_setting("tracking_be_v23b", False):    # one-time: re-follow every signal that reached TP1
+        detail["tracking_be_v23b"] = tracking.reopen_for_break_even(rt.db)  # (wins and losses alike) under the BE rule
+        rt.db.set_setting("tracking_be_v23b", True)
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
                                   tracking.update_signal_outcomes(rt, table="shadow_signals")))
     missing = [(s, tf) for s in rt.symbols() for tf in MODEL_TIMEFRAMES

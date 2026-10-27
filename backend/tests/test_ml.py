@@ -178,3 +178,33 @@ def test_unavailable_libraries_are_reported_not_replaced():
         m = status[name]
         assert m["available"] or m["reason"]             # either usable or an explicit reason
     assert set(default_models()) == {k for k, v in status.items() if v["available"]}
+
+
+def test_forecast_unavailable_when_the_weighted_members_cannot_run():
+    import numpy as np
+    import pytest
+    from app.ml import trainer
+    from app.features.dataset import InsufficientData
+
+    class Broken:
+        def predict_proba(self, X):
+            raise RuntimeError("switched off")
+
+    class Cal:
+        method = "none"
+
+        def transform(self, p):
+            return p
+
+    class Ok:
+        def predict_proba(self, X):
+            return np.tile([0.2, 0.3, 0.5], (len(X), 1))
+    import pandas as pd
+    X = pd.DataFrame({"f": np.ones(5)})
+    meta = pd.DataFrame({"regime_group": np.ones(5), "sigma": np.full(5, 0.01), "close": np.full(5, 100.0)})
+    ds = type("DS", (), {"X": X, "meta": meta})()
+    bundle = {"feature_names": ["f"], "models": {"gru": Broken(), "logistic": Ok()},
+              "calibrators": {"gru": Cal(), "logistic": Cal()}, "metrics": {},
+              "weights": {"global": {"gru": 1.0, "logistic": 0.0}, "by_regime": {}}}
+    with pytest.raises(InsufficientData):
+        trainer.predict(bundle, ds)
