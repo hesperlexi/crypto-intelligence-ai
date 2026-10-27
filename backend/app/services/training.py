@@ -28,9 +28,20 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
     try:
         frame = rt.frame(symbol, timeframe)
         btc = None if symbol.startswith("BTC/") else _try_frame(rt, "BTC/USDT", timeframe)
-        htf = None
-        if settings.use_htf_features and timeframe in HTF_OF:
-            htf = _try_frame(rt, symbol, HTF_OF[timeframe])
+        htf, htf_gate_res = None, None
+        if timeframe in HTF_OF:
+            hf = _try_frame(rt, symbol, HTF_OF[timeframe])
+            if hf is not None and settings.use_htf_features:          # forced on for every series (old switch)
+                htf = hf
+            elif hf is not None and not fast:                          # v2.3: on only where it proves it helps
+                status.update(message="testing higher-timeframe context")
+                try:
+                    from ..ml import htf_gate
+                    htf_gate_res = htf_gate.decide(rt.db, symbol, timeframe, frame, btc, hf)
+                    if htf_gate_res.get("on"):
+                        htf = hf
+                except Exception as exc:               # the gate must never stop training
+                    log.warning("htf gate failed for %s %s: %s", symbol, timeframe, exc)
         deriv, gate = None, None
         if settings.use_deriv_features and not fast:
             status.update(message="testing futures features")
@@ -43,6 +54,7 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
                 log.warning("deriv gate failed for %s %s: %s", symbol, timeframe, exc)
         bundle = trainer.train_bundle(symbol, timeframe, frame, btc, fast=fast, progress=progress, htf=htf, deriv=deriv)
         bundle.setdefault("extras", {})["deriv_gate"] = gate
+        bundle["extras"]["htf_gate"] = htf_gate_res
         status.update(progress=0.95, message="saving")
         trainer.save_bundle(bundle, rt.db)
         rt.analysis_cache.clear()

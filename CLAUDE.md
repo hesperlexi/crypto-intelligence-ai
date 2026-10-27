@@ -60,6 +60,9 @@ re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/s
 5. **News guard** (`services/news.py`): no new entries 45 min before → 30 min after high-impact US releases.
 6. Futures features (funding/premium, `data/derivs.py`, `features/dataset.py`) used only where `ml/deriv_gate.py`
    proves they help.
+7. Higher-timeframe context (v2.3) used only where `ml/htf_gate.py` proves it helps (per series, paired Brier test,
+   30-day cache `htf_gate1|`; slices pass decisions to the merge via `bundle_record.gates`). `USE_HTF_FEATURES=1` forces it on.
+   BTC context aligns to the latest BTC bar opened by the coin bar's open (3d candles start on listing dates).
 
 ## Bots and auto-trade
 - `services/bots.py`: 50/25/25 at TP1/TP2/TP3 (`TP_SPLIT`), break-even after TP1, trail to TP1 after TP2, time exit,

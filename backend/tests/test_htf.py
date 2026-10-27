@@ -42,3 +42,25 @@ def test_selective_threshold_prefers_reliable_calls():
     sel = selective_threshold(P, y)
     assert sel["threshold"] is not None and sel["hit_rate"] > sel["base"]["hit_rate"]
     assert sel["n"] >= 30 and 0 < sel["coverage"] <= 1
+
+
+def test_htf_gate_decides_per_series_and_remembers():
+    import numpy as np
+    from app.data.base import to_frame
+    from app.db import Database
+    from app.features.dataset import build_frame
+    from app.ml import htf_gate
+
+    rng = np.random.default_rng(3)
+    h = 3_600_000
+    n = 2400
+    c = 100 * np.exp(np.cumsum(rng.normal(0, 0.01, n)))
+    rows = [[i * h, x, x * 1.005, x * 0.995, x, 1000 + i] for i, x in enumerate(c)]
+    f1 = build_frame(to_frame(rows), "1h")
+    four = [[rows[i][0], rows[i][1], max(r[2] for r in rows[i:i + 4]), min(r[3] for r in rows[i:i + 4]), rows[i + 3][4],
+             sum(r[5] for r in rows[i:i + 4])] for i in range(0, n - 3, 4)]
+    f4 = build_frame(to_frame(four), "4h")
+    db = Database("sqlite:///:memory:")
+    out = htf_gate.decide(db, "X/USDT", "1h", f1, None, f4)
+    assert isinstance(out["on"], bool) and out["htf"] == "4h" and out["at"]
+    assert htf_gate.cached(db, "X/USDT", "1h") == out             # kept for 30 days

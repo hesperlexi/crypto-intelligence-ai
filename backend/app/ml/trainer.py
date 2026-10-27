@@ -356,7 +356,8 @@ def bundle_record(bundle: dict[str, Any]) -> dict[str, Any]:
     return {"version": bundle["version"], "symbol": bundle["symbol"], "timeframe": bundle["timeframe"],
             "created_at": int(bundle["created_at"]), "data_start": bundle["data_start"], "data_end": bundle["data_end"],
             "n_samples": int(bundle["n_samples"]), "n_oos": int(bundle["n_oos"]),
-            "edge_confirmed": int(bundle["edge"]["edge_confirmed"]), "summary": _summary(bundle), "metrics": metrics}
+            "edge_confirmed": int(bundle["edge"]["edge_confirmed"]), "summary": _summary(bundle), "metrics": metrics,
+            "gates": {k: v for k, v in (bundle.get("extras") or {}).items() if k in ("htf_gate", "deriv_gate") and v}}
 
 
 def register(rec: dict[str, Any], path: str, db: Database) -> None:
@@ -382,6 +383,11 @@ def import_bundle(rec: dict[str, Any], file: str, db: Database) -> bool:
     shutil.copyfile(file, path)
     register(rec, path, db)
     _cache.pop(f"{rec['symbol']}|{rec['timeframe']}", None)
+    # keep the slices' feature-test decisions, so each is re-run monthly instead of every night
+    keys = {"htf_gate": "htf_gate1", "deriv_gate": "deriv_gate2"}
+    for k, g in (rec.get("gates") or {}).items():
+        if k in keys and isinstance(g, dict) and g.get("at"):
+            db.set_setting(f"{keys[k]}|{rec['symbol']}|{rec['timeframe']}", g)
     return True
 
 

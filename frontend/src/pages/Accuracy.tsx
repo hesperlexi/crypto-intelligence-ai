@@ -134,7 +134,8 @@ export default function Accuracy() {
                   <Stat label={`Calls ≥ ${fmtProb(m.selective.threshold)}`} value={fmtProb(m.selective.hit_rate, 1)} className={m.selective.hit_rate > (m.selective.base?.hit_rate ?? 1) ? "text-bull" : ""}
                     sub={`95% CI ${fmtProb(m.selective.ci95?.[0])}–${fmtProb(m.selective.ci95?.[1])}`} />
                   <Stat label="How often it is that sure" value={fmtProb(m.selective.coverage, 0)} sub={`${m.selective.n} of the test bars`} />
-                  <Stat label="Higher-timeframe context" value={m.uses_htf ? `on (${m.uses_htf})` : "off"} />
+                  <Stat label="Higher-timeframe context" value={m.uses_htf ? `on (${String(m.uses_htf).toUpperCase()})` : m.htf_gate ? "tested · off" : "off"}
+                    sub={m.uses_htf ? "it improved accuracy on unseen data" : m.htf_gate ? "it did not improve accuracy on unseen data; re-tested monthly" : "tested at the next nightly training"} />
                 </div>
                 <Note>Measured on walk-forward out-of-sample bars only: a call is right when the next bar moves in the called direction. The threshold is the one with the best lower 95% bound, so it is not picked for a lucky handful of calls. The Confident-call tracker bot and “confident calls only” alerts use it.</Note>
               </>) : <Empty>{m.selective.reason ?? "Not enough out-of-sample calls to set a confident-call threshold."}</Empty>}
