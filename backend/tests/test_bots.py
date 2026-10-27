@@ -291,3 +291,48 @@ def test_a_trade_the_cap_would_shrink_below_half_its_risk_is_skipped(monkeypatch
     eng.run(t0 + 4 * STEP)
     (cfg, st), = eng.bots()
     assert st["positions"] == []
+
+
+def _runner_buy():
+    a = _buy()
+    a["setup"]["runner"] = {"on": True, "target": 108.0, "rr": 4.0}
+    return a
+
+
+def test_runner_keeps_the_whole_position_and_closes_at_the_runner_target(monkeypatch, no_costs):
+    rt = _rt()
+    now = _now_aligned()
+    t0 = now - 40 * STEP
+    _put(rt, "BTC/USDT", t0, [100.0] * 4)
+    eng = B.BotEngine(rt)
+    eng.sync_configs([_cfg()])
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _runner_buy())
+    entry_time = t0 + 4 * STEP
+    eng.run(entry_time)
+    (cfg, st), = eng.bots()
+    assert st["positions"][0]["info"]["run_target"] == 108.0
+    # TP1 then TP2: nothing is closed, the stop climbs to break-even and then to TP1; then the 1:4 target
+    _put(rt, "BTC/USDT", t0 + 4 * STEP, [(100, 102.5, 100.1, 102), (102, 104.5, 102.1, 104), (104, 108.5, 103.9, 108)])
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: {"status": "OK", "decision": "HOLD"})
+    eng.run(entry_time + 4 * STEP)
+    (cfg, st), = eng.bots()
+    t = rt.db.one("SELECT * FROM bot_trades")
+    assert st["positions"] == [] and t["exit_reason"] == "runner target"
+    assert abs(t["pnl"] - 50 * 8) < 1e-6 and abs(t["r_multiple"] - 4.0) < 1e-9     # the whole position at +4R
+
+
+def test_runner_stops_at_break_even_after_tp1(monkeypatch, no_costs):
+    rt = _rt()
+    now = _now_aligned()
+    t0 = now - 40 * STEP
+    _put(rt, "BTC/USDT", t0, [100.0] * 4)
+    eng = B.BotEngine(rt)
+    eng.sync_configs([_cfg()])
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _runner_buy())
+    entry_time = t0 + 4 * STEP
+    eng.run(entry_time)
+    _put(rt, "BTC/USDT", t0 + 4 * STEP, [(100, 102.5, 100.1, 102), (102, 102.2, 99.5, 99.8)])
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: {"status": "OK", "decision": "HOLD"})
+    eng.run(entry_time + 3 * STEP)
+    t = rt.db.one("SELECT * FROM bot_trades")
+    assert t["exit_reason"] == "breakeven stop" and abs(t["pnl"]) < 1e-6           # nothing banked, out at entry
