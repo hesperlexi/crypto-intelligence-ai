@@ -101,6 +101,21 @@ class BaseSink:
         return {"sent": 0, "devices": 0, "reason": "not supported by this sink"}
 
 
+def chunks(docs: dict[str, dict[str, Any]], max_docs: int = 400, max_bytes: int = 7_000_000):
+    """Split documents into commit-sized groups by count and by (approximate) size."""
+    cur: list[tuple[str, dict[str, Any]]] = []
+    size = 0
+    for path, data in docs.items():
+        n = len(path) + sum(len(str(k)) + len(v) if isinstance(v, str) else len(str(k)) + 16 for k, v in data.items())
+        if cur and (len(cur) >= max_docs or size + n > max_bytes):
+            yield cur
+            cur, size = [], 0
+        cur.append((path, data))
+        size += n
+    if cur:
+        yield cur
+
+
 class LocalSink(BaseSink):
     def __init__(self, root: str | Path, db: Database | None = None):
         super().__init__(db)
@@ -165,10 +180,12 @@ class FirestoreSink(BaseSink):
         self.fs = firestore.client()
 
     def _write_many(self, docs: dict[str, dict[str, Any]]) -> None:
-        items = list(docs.items())
-        for i in range(0, len(items), 400):          # Firestore batches hold at most 500 writes
+        # A Firestore commit holds at most 500 writes AND at most 10 MiB; analysis documents can be several hundred
+        # KB each, so batches are cut by size as well (v2.3: after a nightly training every analysis changes at once
+        # and one 400-document batch went over 10 MiB, so nothing at all was published).
+        for chunk in chunks(docs, max_docs=400, max_bytes=7_000_000):
             batch = self.fs.batch()
-            for path, data in items[i:i + 400]:
+            for path, data in chunk:
                 batch.set(self.fs.document(path), data)
             batch.commit()
 

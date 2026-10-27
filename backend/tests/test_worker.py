@@ -237,3 +237,12 @@ def test_parallel_training_slices_are_registered_by_the_merge(monkeypatch, tmp_p
 from app.services import training as _training  # noqa: E402
 
 _orig = _training.train_one
+
+
+def test_firestore_batches_are_cut_by_size_and_count():
+    from app.sinks import chunks
+    docs = {f"views/a{i}": {"json": "x" * 300_000, "updated_at": 1} for i in range(60)}       # 18 MB in total
+    groups = list(chunks(docs, max_docs=400, max_bytes=7_000_000))
+    assert sum(len(g) for g in groups) == 60 and all(sum(len(d["json"]) for _, d in g) <= 7_000_000 for g in groups)
+    small = {f"views/b{i}": {"json": "y", "updated_at": 1} for i in range(900)}
+    assert [len(g) for g in chunks(small)] == [400, 400, 100]

@@ -712,6 +712,8 @@ def main() -> None:
         out = train_merge(rt, sink, a.inp)
     else:
         out = train(rt, sink, a.budget or 2700)
+    if a.command == "tick":                       # read by scripts/engine_loop.py (the summary below is cut at 2000 chars)
+        print(f'tick written: {{"written": {int(out.get("written") or 0)}}}', flush=True)
     log.info("finished: %s", dumps({k: v for k, v in out.items() if k != "trained"})[:2000])
     asyncio.run(rt.provider.close())
 
