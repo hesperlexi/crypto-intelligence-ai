@@ -1,0 +1,25 @@
+name: Custom domain (manual)
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: "domain, e.g. cryptointelai.com"
+        required: true
+permissions:
+  contents: write
+jobs:
+  domain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet google-auth requests
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python scripts/custom_domain.py "${{ inputs.domain }}" > /tmp/domain.json; cat /tmp/domain.json
+      - run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/domain.json reports/custom-domain.json && git add reports && git commit -qm "Custom domain" && (for i in 1 2 3 4 5; do git pull -q --rebase origin reports && git push -q origin reports && break; sleep $((i*4)); done)
