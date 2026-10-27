@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Badge, Card, Empty, ErrorBox, Note } from "../components/ui";
 import { db } from "../lib/firebase";
 import { fmtTime } from "../lib/format";
-import { daysLeft, fmtDate, grantMembership, MembershipConfig, planLabel, rejectPayment, saveMembershipConfig, useMembershipConfig } from "../lib/membership";
+import { daysLeft, fmtDate, grantMembership, markFree, MembershipConfig, planLabel, rejectPayment, saveMembershipConfig, useMembershipConfig } from "../lib/membership";
 import { roleOf, useIsAdmin } from "../lib/session";
 import { Limits, saveLimits, useLimits } from "../lib/limits";
 
@@ -49,7 +49,7 @@ export default function Users() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h1 className="text-xl font-semibold tracking-tight">Users & memberships</h1>
-        <span className="num text-xs text-mute">{count("members")} active · {income} USDT received in total</span>
+        <span className="num text-xs text-mute">{count("members")} active{all.filter((u) => u.free && match.members(u)).length ? ` (${all.filter((u) => u.free && match.members(u)).length} free)` : ""} · {income} USDT received in total</span>
       </div>
       <Card title="Activity">
         <div className="grid grid-cols-3 gap-3 text-center">
@@ -115,7 +115,7 @@ function UserCard({ u, st, pr, cfg, act, onZoom }: { u: any; st?: any; pr?: any;
   const [months, setMonths] = useState<number>(p?.months ?? 1);
   const price = cfg.plans.find((x) => x.months === months)?.price ?? null;
   const left = daysLeft(u.expires_at);
-  const badge = r === "member" ? <Badge tone={left != null && left <= 7 ? "warn" : "bull"}>{left == null ? "member · no end date" : `member · ${left}d left`}</Badge>
+  const badge = r === "member" ? <Badge tone={left != null && left <= 7 ? "warn" : "bull"}>{u.free ? "free · " : ""}{left == null ? "member · no end date" : `member · ${left}d left`}</Badge>
     : r === "expired" ? <Badge tone="bear">expired</Badge> : r === "blocked" ? <Badge tone="bear">blocked</Badge> : <Badge tone="warn">waiting</Badge>;
   const paid = p?.status === "submitted" && p.amount != null && price != null && Number(p.amount) !== price && p.months === months;
 
@@ -143,7 +143,7 @@ function UserCard({ u, st, pr, cfg, act, onZoom }: { u: any; st?: any; pr?: any;
         {u.expires_at && <><dt className="text-mute">Active until</dt><dd className="text-right">{fmtDate(u.expires_at)}</dd></>}
         {u.plan_months && <><dt className="text-mute">Last plan</dt><dd className="text-right">{planLabel(u.plan_months)}</dd></>}
         <dt className="text-mute">Notifications</dt><dd className={`text-right ${st?.push_error ? "text-bear" : st?.push_ok_at ? "text-bull" : "text-mute"}`}>{st?.push_error ? `failed ${fmtTime(st.push_error.at)}` : st?.push_ok_at ? `on since ${fmtDate(st.push_ok_at)}` : "not turned on"}</dd>
-        {u.history?.length > 0 && <><dt className="text-mute">Payments</dt><dd className="num text-right">{u.history.length} · {u.history.reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0)} USDT</dd></>}
+        {u.history?.length > 0 && <><dt className="text-mute">Payments</dt><dd className="num text-right">{u.free && !u.history.some((h: any) => Number(h.amount) > 0) ? "free (nothing paid)" : `${u.history.length} · ${u.history.reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0)} USDT`}</dd></>}
       </dl>
 
       {st?.push_error && (
@@ -177,8 +177,16 @@ function UserCard({ u, st, pr, cfg, act, onZoom }: { u: any; st?: any; pr?: any;
         <button className="btn btn-primary px-3 py-1 text-xs" onClick={() => act(
           () => grantMembership(u.id, u, months, p?.status === "submitted" ? Number(p.amount) : price),
           (to: number) => `${u.email}: member until ${fmtDate(to)}.`)}>
-          {r === "member" ? `Extend +${planLabel(months)}` : p?.status === "submitted" ? `Accept · ${planLabel(months)}` : `Approve · ${planLabel(months)}`}
+          {r === "member" ? `Extend +${planLabel(months)} (paid)` : p?.status === "submitted" ? `Accept · ${planLabel(months)}` : `Approve · paid · ${planLabel(months)}`}
         </button>
+        <button className="btn px-3 py-1 text-xs" title="Complimentary access (testers): recorded as 0 USDT, not counted as income" onClick={() => act(
+          () => grantMembership(u.id, u, months, 0, true),
+          (to: number) => `${u.email}: free member until ${fmtDate(to)}.`)}>
+          Free · {planLabel(months)}
+        </button>
+        {!u.free && (u.history ?? []).some((h: any) => Number(h.amount) > 0) && <button className="btn px-3 py-1 text-xs" title="Nothing was actually paid: set their recorded payments to 0 USDT (dates stay the same)" onClick={() => {
+          if (window.confirm(`Mark ${u.email} as a free member? Their recorded payments become 0 USDT; their end date stays the same.`)) act(() => markFree(u.id, u), `${u.email} marked as free.`);
+        }}>Mark as free (nothing paid)</button>}
         {p?.status === "submitted" && <button className="btn px-3 py-1 text-xs hover:text-bear" onClick={() => {
           const why = window.prompt("Why is the proof not accepted? (shown to the person)", "Payment not found in my Binance history");
           if (why !== null) act(() => rejectPayment(u.id, u, why), `Proof from ${u.email} rejected.`);

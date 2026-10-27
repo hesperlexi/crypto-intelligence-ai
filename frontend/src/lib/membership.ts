@@ -99,19 +99,28 @@ export async function submitPayment(plan: Plan, txid: string, proof: string | nu
 }
 
 /** Admin: accept a payment (or grant time without one). Extends from the current end date if still active. */
-export async function grantMembership(uid: string, u: any, months: number, price: number | null) {
+/** free = complimentary (testers, friends): recorded as 0 USDT and marked free, so it never counts as income. */
+export async function grantMembership(uid: string, u: any, months: number, price: number | null, free = false) {
   const now = Date.now();
   const base = u?.status === "approved" && u?.expires_at && u.expires_at > now ? u.expires_at : now;
   const expires_at = addMonths(base, months);
   const p = u?.payment;
-  const entry = { months, amount: price, txid: p?.txid ?? null, paid_submitted_at: p?.submitted_at ?? null, granted_at: now,
+  const entry = { months, amount: free ? 0 : price, free, txid: free ? null : p?.txid ?? null, paid_submitted_at: p?.submitted_at ?? null, granted_at: now,
     granted_by: getSession()?.email ?? null, from: base, to: expires_at };
   await updateDoc(doc(db, "users", uid), {
     status: "approved", expires_at, plan_months: months, approved_at: u?.approved_at ?? now, approved_by: getSession()?.email ?? null,
-    ...(p && p.status === "submitted" ? { payment: { ...p, status: "accepted", decided_at: now } } : {}),
+    free,
+    ...(p && p.status === "submitted" && !free ? { payment: { ...p, status: "accepted", decided_at: now } } : {}),
     history: arrayUnion(entry),
   });
   return expires_at;
+}
+
+/** Mark someone as a free (test) member: their recorded payments become 0 USDT, the original amount is kept as
+ *  was_amount for reference, and their membership dates do not change. */
+export async function markFree(uid: string, u: any) {
+  const history = (u?.history ?? []).map((h: any) => (h.free ? h : { ...h, was_amount: h.amount ?? null, amount: 0, free: true }));
+  await updateDoc(doc(db, "users", uid), { free: true, history, changed_at: Date.now() });
 }
 
 export async function rejectPayment(uid: string, u: any, reason: string) {
