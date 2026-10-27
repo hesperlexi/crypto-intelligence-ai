@@ -9,7 +9,7 @@ Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real
 - Every result shown to members or the public comes from the real record. Never delete, hide or edit losing trades
   to improve figures (requested once; declined). The v2.0 "fresh start" counts the record from the launch date
   (`record_since` setting); older signals stay in the Signal log. Per-timeframe restarts after a rule change
-  (`record_since_tf`, e.g. 15m on 27 Oct 2026 with the costs rule) go through `views.record_clause` — wins and losses alike, shown on Results.
+  (`record_since_tf`, e.g. 15m on 27 Oct 2026 with the costs rule, again 19:10 Dubai after the no-flip fix, flag `reset_15m_v23b`) go through `views.record_clause` — wins and losses alike, shown on Results.
 - The Firebase service-account key lives only in the GitHub secret `FIREBASE_SERVICE_ACCOUNT`. The Telegram bot token
   lives in Firestore `owner/telegram` (owner-only rule). Never print or commit secrets.
 - The user is non-technical: answer in plain words, short. Commits end with the attribution lines given by the
