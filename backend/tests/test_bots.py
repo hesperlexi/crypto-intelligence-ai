@@ -336,3 +336,21 @@ def test_runner_stops_at_break_even_after_tp1(monkeypatch, no_costs):
     eng.run(entry_time + 3 * STEP)
     t = rt.db.one("SELECT * FROM bot_trades")
     assert t["exit_reason"] == "breakeven stop" and abs(t["pnl"]) < 1e-6           # nothing banked, out at entry
+
+
+def test_15m_bots_hold_their_trade_when_the_signal_flips(monkeypatch, no_costs):
+    rt = _rt()
+    now = _now_aligned()
+    t0 = now - 40 * STEP
+    _put(rt, "BTC/USDT", t0, [100.0] * 4)
+    eng = B.BotEngine(rt)
+    eng.sync_configs([_cfg(timeframe="15m")])
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy())
+    eng.run(t0 + 4 * STEP)
+    _put(rt, "BTC/USDT", t0 + 4 * STEP, [(100, 100.6, 99.9, 100.5)])
+    sell = _buy(decision="SELL", side=-1, entry=100.5, stop=102.5, tps=(98.5, 97.0, 95.0), bar_ts=2)
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: sell)
+    eng.run(t0 + 6 * STEP)
+    (cfg, st), = eng.bots()
+    assert len(st["positions"]) == 1 and st["positions"][0]["side"] == 1          # still long, no flip
+    assert rt.db.one("SELECT COUNT(*) AS n FROM bot_trades")["n"] == 0

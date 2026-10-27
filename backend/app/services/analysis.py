@@ -29,6 +29,7 @@ TRADE_DECISIONS = ("BUY", "BUY ON PULLBACK", "SELL")
 # v2.3: a trade is only worth taking when target 1 (= 1R) clearly beats the cost of getting in and out. Futures:
 # 0.05 % taker fee + slippage/spread per side; target 1 must be at least COST_MULT x the round trip.
 COST_MULT = 3.0
+ONE_CALL_TFS = ("15m",)      # no opposite call while a call on the same coin/timeframe is still open
 
 
 def round_trip_cost(futures: bool = True) -> float:
@@ -322,6 +323,18 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         why = (f"target 1 is only {rp:.2f}% away: too small to beat trading costs "
                f"(about {round_trip_cost() * 100:.2f}% to get in and out; it needs at least {COST_MULT:g}x that)")
         flags.append("TARGET TOO SMALL FOR COSTS")
+
+    # one call at a time on quick timeframes (v2.3): while a 15m call on this coin is still running, an opposite 15m
+    # call is not issued (the 15m view can swing within the hour; flip-flopping cut winners and entered losers)
+    if decision in TRADE_DECISIONS and timeframe in ONE_CALL_TFS and live and bundle is None and as_of is None:
+        nside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
+        running = rt.db.one("SELECT side, created_at FROM signals WHERE symbol = ? AND timeframe = ? AND status = 'OPEN' "
+                            "AND side != 0 ORDER BY created_at DESC LIMIT 1", (symbol, timeframe))
+        if running and int(running["side"]) == -nside:
+            decision, grade = "NO TRADE", None
+            why = (f"the previous {timeframe.upper()} {'long' if nside < 0 else 'short'} call on this coin is still "
+                   "running; no opposite call until it closes")
+            flags.append("CALL STILL RUNNING")
 
     # let winners run (v2.3): where the runner model proved itself on unseen trades and scores this setup above its
     # threshold, the whole position stays open at TP1 and the stop follows the price up to the 1:4 runner target

@@ -38,6 +38,7 @@ from . import analysis
 from .runtime import Runtime
 
 PATH_TF = "15m"
+NO_FLIP_TFS = ("15m",)       # timeframes whose bots never reverse on an opposite signal (held to stop / targets)
 MIN_NOTIONAL = 10.0          # USDT: smaller trades are skipped (a bot with no free cash must not open dust positions)
 CONF_BUCKETS = (0.0, 0.45, 0.5, 0.55, 0.6, 1.0001)
 MAX_EQUITY_POINTS = 3000
@@ -424,6 +425,10 @@ class BotEngine:
         pending entry the other way. The new direction is then entered like any fresh signal (no hedging: one
         position per coin)."""
         events = []
+        if cfg.get("timeframe") in NO_FLIP_TFS:
+            # v2.3: on 15m the call can swing within the hour; flipping cut winners early and entered losers, so a
+            # 15m trade is held to its own stop, targets or time limit
+            return events
         for pos in list(state["positions"]):
             side = self._signal_side(cfg, pos["symbol"])
             if side == 0 or side == pos["side"]:
