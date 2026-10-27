@@ -139,6 +139,23 @@ def clear_admin_practice(sink: BaseSink) -> dict[str, Any]:
     return out
 
 
+def clear_all_practice(sink: BaseSink) -> dict[str, Any]:
+    """Delete every person's practice accounts (spot + futures), practice trades and auto-trade logs, so all members
+    restart from the starting balance. Auto-trade settings, memberships, watchlists and alerts stay."""
+    out: dict[str, Any] = {"accounts": 0, "trades": 0, "auto_logs": 0}
+    for did, _ in sink.list("paper"):
+        sink.delete(f"paper/{did}")
+        out["accounts"] += 1
+    for did, _ in sink.list("auto_paper_state"):
+        sink.delete(f"auto_paper_state/{did}")
+        out["auto_logs"] += 1
+    for col in ("paper_trades", "paper_futures_trades"):
+        for did, _ in sink.list(col):
+            sink.delete(f"{col}/{did}")
+            out["trades"] += 1
+    return out
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
@@ -322,6 +339,11 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
         rt.db.set_setting("reset_15m_v23", True)
         notes["reset_15m"] = [b["id"] for b in bots_cfg if b.get("timeframe") == "15m"]
+    if not rt.db.get_setting("members_practice_v23", False):
+        # v2.3 (owner request, 27 Oct 20:39 Dubai): testing restarts for everyone - all members' practice accounts,
+        # practice trades and auto-trade logs are cleared (demo money only; settings and memberships kept)
+        notes["members_practice_v23"] = clear_all_practice(sink)
+        rt.db.set_setting("members_practice_v23", True)
     if not rt.db.get_setting("reset_15m_v23b", False):
         # v2.3 (owner request, 27 Oct 19:10 Dubai): second 15m restart after the no-flip / one-call-per-coin fix - the
         # counted 15m record and the two 15m bots start again now, wins and losses alike (same as reset_15m_v23).

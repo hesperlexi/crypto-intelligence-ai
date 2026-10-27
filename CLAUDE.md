@@ -75,7 +75,7 @@ re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/s
 - `services/bots.py`: 50/25/25 at TP1/TP2/TP3 (`TP_SPLIT`), break-even after TP1, trail to TP1 after TP2, time exit,
   **reversal exit** (signal flips → close, profit taken / loss cut, then take the new side), no hedging, size
   0.5–1.5x by grade/filter (`size_multiplier`), max 3 same-direction trades. **v2.3 line-up** (flag `fresh_start_v23`,
-  27 Oct 2026: all bot books + admin practice trades cleared, `record_since` restarted): 5 spot `signal-ab-{15m,1h,4h,12h,1d}`
+  27 Oct 2026: all bot books + admin practice trades cleared, `record_since` restarted; 20:39 Dubai all members' practice accounts, trades and auto-trade logs cleared too, flag `members_practice_v23`): 5 spot `signal-ab-{15m,1h,4h,12h,1d}`
   + 5 futures `futures-signal-ab-*` (20x, safe-leverage per trade), all grades A+B. Costs rule (v2.3): a signal needs
   1R ≥ 3x the futures round-trip cost (`analysis.beats_costs`, ~0.45%), spot bots 3x the spot cost; bots skip a trade the
   position cap would shrink below half its planned risk; spot bots' cap 100% of balance (`bots_spotcap_v23`). 15m (v2.3): no opposite 15m call while a 15m call on the
