@@ -19,7 +19,7 @@ export const DEFAULT_CONFIG: MembershipConfig = {
   pay_note: "Pay with the Binance app: scan the QR code, send the exact amount, then upload the payment screenshot here.",
   qr_url: "/pay/binance-qr.png",
   mexc_uid: "00183657",
-  support_email: "hesper.soloist@live.com",
+  support_email: "support@cryptointelai.com",
 };
 
 export const DAY = 86_400_000;
