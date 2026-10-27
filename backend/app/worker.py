@@ -115,6 +115,30 @@ def member_limits(sink: BaseSink) -> tuple[int, int]:
     return per, total
 
 
+def clear_admin_practice(sink: BaseSink) -> dict[str, Any]:
+    """Delete the admins' practice accounts (spot + futures), their practice trades and their auto-trade log.
+    Auto-trade settings stay. Trades without an owner come from the old single shared (admin) account."""
+    import os
+    out: dict[str, Any] = {"accounts": 0, "trades": 0, "admins": 0}
+    uids = [u for u in (sink.uid_for_email(e.strip()) for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()) if u]
+    out["admins"] = len(uids)
+    for uid in uids:
+        for path in (f"paper/{uid}_spot", f"paper/{uid}_futures", f"auto_paper_state/{uid}"):
+            if sink.get(path) is not None:
+                sink.delete(path)
+                out["accounts"] += 1
+    for path in ("paper/current", "paper/futures"):          # legacy shared accounts from before memberships
+        if sink.get(path) is not None:
+            sink.delete(path)
+            out["accounts"] += 1
+    for col in ("paper_trades", "paper_futures_trades"):
+        for did, d in sink.list(col):
+            if not d.get("uid") or d.get("uid") in uids:
+                sink.delete(f"{col}/{did}")
+                out["trades"] += 1
+    return out
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
@@ -247,6 +271,18 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             rt.db.execute("INSERT INTO alerts (id, user_id, type, symbol, timeframe, params, cooldown_s, enabled, created_at) "
                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                           (aid, a.get("owner_uid") or USER, *row, int(a.get("created_at") or now_ms())))
+    # v2.3 fresh start (owner request, 27 Oct 2026): every bot book and the admin's practice trades are cleared -
+    # wins and losses alike - the bot line-up becomes 5 spot + 5 futures signal bots, and the counted performance
+    # record restarts now. Older signals stay in the Signal log; members' own practice accounts are not touched.
+    if not rt.db.get_setting("fresh_start_v23", False):
+        sink.set("config/bots", {"bots": [dict(b) for b in DEFAULT_BOTS], "updated_at": now_ms(),
+                                 "defaults_added": [b["id"] for b in DEFAULT_BOTS]})
+        for t in ("bot_trades", "bot_equity", "bots"):
+            rt.db.execute(f"DELETE FROM {t}")
+        rt.db.execute("DELETE FROM app_settings WHERE key LIKE 'safety:%'")     # safety switch history restarts too
+        rt.db.set_setting("record_since", now_ms())
+        notes["fresh_start_v23"] = {"bots": len(DEFAULT_BOTS), "admin_practice": clear_admin_practice(sink)}
+        rt.db.set_setting("fresh_start_v23", True)
     # demo bots
     _b("config: bots")
     doc = sink.get("config/bots")

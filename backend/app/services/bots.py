@@ -46,50 +46,22 @@ MAX_EQUITY_POINTS = 3000
 # 1.5x the stop distance beyond the entry (tight stops -> up to 20x, wide stops -> less). Size still comes from the
 # risk per trade, so leverage frees margin and lifts the cap on position size rather than the risk taken.
 _FUT = {"market": "futures", "safe_leverage": True}
-DEFAULT_BOTS: list[dict[str, Any]] = [
-    {"id": "signal-4h", "name": "Signal bot 4H", "enabled": True, "mode": "decision", "timeframe": "4h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 25.0,
-     "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1", "market": "spot", "leverage": 1.0},
-    {"id": "signal-1h", "name": "Signal bot 1H", "enabled": True, "mode": "decision", "timeframe": "1h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 25.0,
-     "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1", "market": "spot", "leverage": 1.0},
-    {"id": "predict-4h", "name": "Prediction tracker 4H", "enabled": True, "mode": "prediction", "timeframe": "4h",
-     "symbols": "all", "starting_balance": 10_000.0, "position_pct": 10.0, "min_probability": 0.40,
-     "allow_short": True, "reset_token": "1", "market": "spot", "leverage": 1.0},
-    {"id": "predict-1h", "name": "Prediction tracker 1H", "enabled": True, "mode": "prediction", "timeframe": "1h",
-     "symbols": "all", "starting_balance": 10_000.0, "position_pct": 10.0, "min_probability": 0.40,
-     "allow_short": True, "reset_token": "1", "market": "spot", "leverage": 1.0},
-    {"id": "predict-confident-4h", "name": "Confident-call tracker 4H", "enabled": True, "mode": "prediction",
-     "timeframe": "4h", "symbols": "all", "starting_balance": 10_000.0, "position_pct": 10.0, "min_probability": 0.40,
-     "allow_short": True, "reset_token": "1", "market": "spot", "leverage": 1.0, "confident_only": True},
-    {"id": "futures-signal-4h", "name": "Futures signal bot 4H", "enabled": True, "mode": "decision", "timeframe": "4h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
-     "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1",
-     "leverage": 20.0, **_FUT},
-    {"id": "futures-signal-1h", "name": "Futures signal bot 1H", "enabled": True, "mode": "decision", "timeframe": "1h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
-     "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1",
-     "leverage": 20.0, **_FUT},
-    {"id": "signal-ab-4h", "name": "Signal bot 4H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "4h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 25.0,
-     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1", "market": "spot",
-     "leverage": 1.0, "grades": "AB"},
-    {"id": "signal-ab-1h", "name": "Signal bot 1H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "1h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 25.0,
-     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1", "market": "spot",
-     "leverage": 1.0, "grades": "AB"},
-    {"id": "futures-signal-ab-4h", "name": "Futures signal bot 4H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "4h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
-     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1",
-     "leverage": 20.0, "grades": "AB", **_FUT},
-    {"id": "futures-signal-ab-1h", "name": "Futures signal bot 1H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "1h",
-     "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
-     "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1",
-     "leverage": 20.0, "grades": "AB", **_FUT},
-    {"id": "futures-predict-1h", "name": "Futures prediction tracker 1H", "enabled": True, "mode": "prediction",
-     "timeframe": "1h", "symbols": "all", "starting_balance": 10_000.0, "position_pct": 5.0, "min_probability": 0.40,
-     "allow_short": True, "reset_token": "1", "leverage": 20.0, **_FUT},
-]
+# v2.3 fresh start: 5 spot + 5 futures bots, each trading exactly what the Signals page shows (grades A and B) on one
+# timeframe. The futures 1H / 4H bots keep the scorecard ids. reset_token "v23" restarts every bot with a clean book.
+_HOLD = {"15m": 48, "1h": 48, "4h": 42, "12h": 30, "1d": 30}
+
+
+def _sig_bot(tf: str, futures: bool) -> dict[str, Any]:
+    base = {"id": f"{'futures-' if futures else ''}signal-ab-{tf}",
+            "name": f"{'Futures' if futures else 'Spot'} signal bot {tf.upper()} · grades A+B", "enabled": True,
+            "mode": "decision", "timeframe": tf, "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0,
+            "max_position_pct": 20.0 if futures else 25.0, "max_open_positions": 6, "allow_short": True, "pending_bars": 6,
+            "max_hold_bars": _HOLD[tf], "reset_token": "v23", "grades": "AB"}
+    return {**base, "leverage": 20.0, **_FUT} if futures else {**base, "market": "spot", "leverage": 1.0}
+
+
+BOT_TFS = ("15m", "1h", "4h", "12h", "1d")
+DEFAULT_BOTS: list[dict[str, Any]] = [_sig_bot(tf, False) for tf in BOT_TFS] + [_sig_bot(tf, True) for tf in BOT_TFS]
 def size_multiplier(grade: str | None, filter_score: float | None = None, filter_threshold: float | None = None) -> float:
     """Bigger on stronger calls, smaller on weaker ones (0.5x - 1.5x of the normal risk): grade A 1.2x, grade B 0.8x,
     plus up to +30 % when the trade filter scores the setup well above its bar."""

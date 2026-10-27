@@ -54,7 +54,7 @@ def test_engine_cycle_publishes_views_runs_jobs_and_bots():
     assert "NOPE/USDT" not in rt.symbols() and d2["config"]["rejected_symbols"] == ["NOPE/USDT"]
     assert rt.risk_profile().portfolio == 50_000 and rt.signal_weights()["trend"] == 0.5
     assert "a1" in _view(sink, "alerts")["state"]
-    assert {b["id"] for b in sink.get("config/bots")["bots"]} >= {"futures-signal-4h", "futures-predict-1h"}
+    assert {b["id"] for b in sink.get("config/bots")["bots"]} >= {"futures-signal-ab-4h", "signal-ab-15m"}
     # the website replaces the list (keeping the other fields, as the site does): deleted defaults stay deleted
     sink.set("config/bots", {**sink.get("config/bots"),
                              "bots": [{"id": "only", "mode": "prediction", "timeframe": "4h", "reset_token": "1"}]})
@@ -198,6 +198,7 @@ def test_v2_fresh_start_resets_bots_once_and_starts_the_record(tmp_path):
             return []
 
     rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.db.set_setting("fresh_start_v23", True)          # this test covers the v2.0 reset only
     sink = LocalSink(tmp_path)
     sink.set("config/bots", {"bots": [{**worker.DEFAULT_BOTS[0]}], "defaults_added": [b["id"] for b in worker.DEFAULT_BOTS]})
     worker.sync_config(rt, sink)
@@ -261,3 +262,49 @@ def test_push_sending_has_a_hard_time_limit(monkeypatch):
     t = time.time()
     out = sink.send_push([{"title": "x", "body": "y"}])
     assert time.time() - t < 5 and "did not answer" in out["error"]
+
+
+def test_fresh_start_v23_clears_bots_admin_practice_and_restarts_the_record(tmp_path, monkeypatch):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+    db = Database("sqlite:///:memory:")
+    rt = Runtime(db, None)
+    sink = LocalSink(tmp_path, db)
+    import os
+    os.environ["ADMIN_EMAILS"] = "owner@x.com"
+    monkeypatch.setattr(LocalSink, "uid_for_email", lambda self, e: "ADMIN" if e == "owner@x.com" else None)
+    sink.set("paper/ADMIN_futures", {"balance": 1}); sink.set("paper/MEMBER_futures", {"balance": 2})
+    sink.set("paper_futures_trades/t1", {"uid": "ADMIN"}); sink.set("paper_futures_trades/t2", {"uid": "MEMBER"})
+    sink.set("auto_paper/ADMIN", {"enabled": True})
+    out = worker.clear_admin_practice(sink)
+    assert out["accounts"] == 1 and out["trades"] == 1
+    assert sink.get("paper/MEMBER_futures") and sink.get("paper_futures_trades/t2") and sink.get("auto_paper/ADMIN")
+    assert sink.get("paper/ADMIN_futures") is None and sink.get("paper_futures_trades/t1") is None
+
+
+
+def test_fresh_start_v23_runs_once(tmp_path):
+    from app import worker
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return []
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    for f in ("fresh_start_v2", "bots_cleanup_v22", "bots_lev20_v23"):
+        rt.db.set_setting(f, True)
+    sink = LocalSink(tmp_path, rt.db)
+    sink.set("config/bots", {"bots": [{"id": "old-bot", "mode": "decision", "timeframe": "4h"}]})
+    notes = worker.sync_config(rt, sink)
+    ids = [b["id"] for b in sink.get("config/bots")["bots"]]
+    assert "old-bot" not in ids and len(ids) == 10 and sum(i.startswith("futures-") for i in ids) == 5
+    assert notes["fresh_start_v23"]["bots"] == 10 and rt.db.get_setting("record_since", 0) > 0
+    first = rt.db.get_setting("record_since", 0)
+    worker.sync_config(rt, sink)
+    assert rt.db.get_setting("record_since", 0) == first                     # only once

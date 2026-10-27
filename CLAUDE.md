@@ -71,7 +71,9 @@ re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/s
 ## Bots and auto-trade
 - `services/bots.py`: 50/25/25 at TP1/TP2/TP3 (`TP_SPLIT`), break-even after TP1, trail to TP1 after TP2, time exit,
   **reversal exit** (signal flips → close, profit taken / loss cut, then take the new side), no hedging, size
-  0.5–1.5x by grade/filter (`size_multiplier`), max 3 same-direction trades. Scorecard bots
+  0.5–1.5x by grade/filter (`size_multiplier`), max 3 same-direction trades. **v2.3 line-up** (flag `fresh_start_v23`,
+  27 Oct 2026: all bot books + admin practice trades cleared, `record_since` restarted): 5 spot `signal-ab-{15m,1h,4h,12h,1d}`
+  + 5 futures `futures-signal-ab-*` (20x, safe-leverage per trade), all grades A+B. Scorecard bots
   `futures-signal-ab-1h/4h` mirror the Signals page. One-time migrations use settings flags (`fresh_start_v2`,
   `watchlist_majors_v2`, `defaults_added`). Exchange renames: `RENAMED` in `worker.py` (TON→GRAM, 2026-07-02) rewrites the watchlist once.
 - `services/autopaper.py`: members' auto-trade into `paper/{uid}_futures` (settings `auto_paper/{uid}`, log

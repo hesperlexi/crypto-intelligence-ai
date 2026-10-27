@@ -215,7 +215,7 @@ def test_config_validation():
     c = B.clean_config({"mode": "evil", "timeframe": "1m", "starting_balance": "-5", "risk_per_trade_pct": 99,
                         "max_open_positions": "x"})
     assert c["mode"] == "decision" and c["timeframe"] == "4h" and c["starting_balance"] == 100.0
-    assert c["risk_per_trade_pct"] == 10 and c["max_open_positions"] == 5
+    assert c["risk_per_trade_pct"] == 10 and c["max_open_positions"] == B.DEFAULT_BOTS[0]["max_open_positions"]
 
 
 def test_signal_reversal_closes_the_trade_and_flips(monkeypatch, no_costs):

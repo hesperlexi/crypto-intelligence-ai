@@ -92,6 +92,9 @@ class BaseSink:
     def set_quick(self, path: str, data: dict[str, Any]) -> None:
         self.set(path, data)
 
+    def uid_for_email(self, email: str) -> str | None:
+        return None
+
     def add(self, collection: str, data: dict[str, Any]) -> str:
         from .db import new_id
         doc_id = new_id()
@@ -198,6 +201,13 @@ class FirestoreSink(BaseSink):
 
     def set(self, path: str, data: dict[str, Any], merge: bool = False) -> None:
         self.fs.document(path).set(json.loads(dumps(data)), merge=merge)
+
+    def uid_for_email(self, email: str) -> str | None:
+        try:
+            from firebase_admin import auth
+            return auth.get_user_by_email(email).uid
+        except Exception:
+            return None
 
     def set_quick(self, path: str, data: dict[str, Any]) -> None:
         """Best-effort small write: no retries, 5 s limit (progress notes must never slow the cycle)."""
