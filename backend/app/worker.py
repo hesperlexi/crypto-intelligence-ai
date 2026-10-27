@@ -263,6 +263,12 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             bots_cfg = bots_cfg + new
             sink.set("config/bots", {**doc, "bots": bots_cfg, "updated_at": now_ms(),
                                      "defaults_added": sorted(seen | {b["id"] for b in DEFAULT_BOTS})})
+    if not rt.db.get_setting("bots_lev20_v23", False):
+        # v2.3 (owner request): futures demo bots up to 20x, lowered per trade by the safe-leverage rule
+        bots_cfg = [{**b, "leverage": 20.0, "safe_leverage": True} if b.get("market") == "futures" else b for b in bots_cfg]
+        sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
+        rt.db.set_setting("bots_lev20_v23", True)
+        notes["bots_leverage"] = 20
     if not rt.db.get_setting("bots_cleanup_v22", False):
         bots_cfg, cleaned = cleanup_bots(bots_cfg)
         sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})

@@ -42,6 +42,9 @@ MIN_NOTIONAL = 10.0          # USDT: smaller trades are skipped (a bot with no f
 CONF_BUCKETS = (0.0, 0.45, 0.5, 0.55, 0.6, 1.0001)
 MAX_EQUITY_POINTS = 3000
 
+# v2.3: futures bots use up to 20x per trade; `safe_leverage` lowers it trade by trade so the liquidation price stays
+# 1.5x the stop distance beyond the entry (tight stops -> up to 20x, wide stops -> less). Size still comes from the
+# risk per trade, so leverage frees margin and lifts the cap on position size rather than the risk taken.
 _FUT = {"market": "futures", "safe_leverage": True}
 DEFAULT_BOTS: list[dict[str, Any]] = [
     {"id": "signal-4h", "name": "Signal bot 4H", "enabled": True, "mode": "decision", "timeframe": "4h",
@@ -62,11 +65,11 @@ DEFAULT_BOTS: list[dict[str, Any]] = [
     {"id": "futures-signal-4h", "name": "Futures signal bot 4H", "enabled": True, "mode": "decision", "timeframe": "4h",
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
      "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1",
-     "leverage": 5.0, **_FUT},
+     "leverage": 20.0, **_FUT},
     {"id": "futures-signal-1h", "name": "Futures signal bot 1H", "enabled": True, "mode": "decision", "timeframe": "1h",
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
      "max_open_positions": 5, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1",
-     "leverage": 5.0, **_FUT},
+     "leverage": 20.0, **_FUT},
     {"id": "signal-ab-4h", "name": "Signal bot 4H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "4h",
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 25.0,
      "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1", "market": "spot",
@@ -78,14 +81,14 @@ DEFAULT_BOTS: list[dict[str, Any]] = [
     {"id": "futures-signal-ab-4h", "name": "Futures signal bot 4H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "4h",
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
      "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 42, "reset_token": "1",
-     "leverage": 5.0, "grades": "AB", **_FUT},
+     "leverage": 20.0, "grades": "AB", **_FUT},
     {"id": "futures-signal-ab-1h", "name": "Futures signal bot 1H · grades A+B", "enabled": True, "mode": "decision", "timeframe": "1h",
      "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0, "max_position_pct": 20.0,
      "max_open_positions": 6, "allow_short": True, "pending_bars": 6, "max_hold_bars": 48, "reset_token": "1",
-     "leverage": 5.0, "grades": "AB", **_FUT},
+     "leverage": 20.0, "grades": "AB", **_FUT},
     {"id": "futures-predict-1h", "name": "Futures prediction tracker 1H", "enabled": True, "mode": "prediction",
      "timeframe": "1h", "symbols": "all", "starting_balance": 10_000.0, "position_pct": 5.0, "min_probability": 0.40,
-     "allow_short": True, "reset_token": "1", "leverage": 3.0, **_FUT},
+     "allow_short": True, "reset_token": "1", "leverage": 20.0, **_FUT},
 ]
 def size_multiplier(grade: str | None, filter_score: float | None = None, filter_threshold: float | None = None) -> float:
     """Bigger on stronger calls, smaller on weaker ones (0.5x - 1.5x of the normal risk): grade A 1.2x, grade B 0.8x,
