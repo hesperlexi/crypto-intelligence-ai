@@ -55,7 +55,7 @@ def _sig_bot(tf: str, futures: bool) -> dict[str, Any]:
     base = {"id": f"{'futures-' if futures else ''}signal-ab-{tf}",
             "name": f"{'Futures' if futures else 'Spot'} signal bot {tf.upper()} · grades A+B", "enabled": True,
             "mode": "decision", "timeframe": tf, "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0,
-            "max_position_pct": 20.0 if futures else 25.0, "max_open_positions": 6, "allow_short": True, "pending_bars": 6,
+            "max_position_pct": 20.0 if futures else 100.0, "max_open_positions": 6, "allow_short": True, "pending_bars": 6,
             "max_hold_bars": _HOLD[tf], "reset_token": "v23", "grades": "AB"}
     return {**base, "leverage": 20.0, **_FUT} if futures else {**base, "market": "spot", "leverage": 1.0}
 
@@ -473,6 +473,9 @@ class BotEngine:
             # the plan must still make sense at the price the bot can actually get
             if side * (px - stop) <= 0 or side * (targets[0] - px) <= 0:
                 continue
+            # v2.3: spot pays twice the futures fee - skip a trade whose target 1 would mostly go to costs
+            if cfg.get("market") != "futures" and not analysis.beats_costs(px, stop, futures=False):
+                continue
             fc = a.get("forecast") or {}
             info = {"signal": a["signal"]["signal"], "decision": a["decision"], "confidence": a.get("confidence"),
                     "p_up": (fc.get("probabilities") or {}).get("up"), "p_down": (fc.get("probabilities") or {}).get("down"),
@@ -500,6 +503,11 @@ class BotEngine:
                       state["cash"] * 0.995 / (entry * (1 / lev + fee_rate)))
             info["leverage"] = lev
             if qty <= 0 or qty * entry < MIN_NOTIONAL:
+                continue
+            # v2.3: when the position cap shrinks a trade below half its planned risk, the win is tiny while fees stay:
+            # skip it (otherwise tight-stop winners are capped but wide-stop losers are not)
+            planned = eq * cfg["risk_per_trade_pct"] * mult / 100 / risk_per_unit
+            if qty < 0.5 * planned:
                 continue
             state["last_entry_bar"][s] = a["bar_ts"]
             if a["decision"] == "BUY ON PULLBACK" and side * (px - entry) > 0:

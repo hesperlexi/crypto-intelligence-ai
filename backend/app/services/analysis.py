@@ -26,6 +26,20 @@ from . import tracking
 from .runtime import Runtime, ttl_get
 
 TRADE_DECISIONS = ("BUY", "BUY ON PULLBACK", "SELL")
+# v2.3: a trade is only worth taking when target 1 (= 1R) clearly beats the cost of getting in and out. Futures:
+# 0.05 % taker fee + slippage/spread per side; target 1 must be at least COST_MULT x the round trip.
+COST_MULT = 3.0
+
+
+def round_trip_cost(futures: bool = True) -> float:
+    """Fraction of price paid to enter and exit once (fees + slippage + half spread, both sides)."""
+    from ..engine.futures import FUTURES_FEE_RATE
+    side = (FUTURES_FEE_RATE if futures else settings.fee_rate) + (settings.slippage_bps + settings.spread_bps / 2) / 1e4
+    return 2 * side
+
+
+def beats_costs(entry: float, stop: float, futures: bool = True, mult: float = COST_MULT) -> bool:
+    return bool(entry and stop) and abs(entry - stop) / entry >= mult * round_trip_cost(futures)
 
 
 def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None = None,
@@ -300,6 +314,14 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                                          f"{tf_view['threshold']:.0%} bar at which past setups paid off")
             grade = None
             flags.append("FILTERED")
+
+    # costs (v2.3): a target 1 that barely covers fees and slippage is no trade (mostly tight 15m setups)
+    if decision in TRADE_DECISIONS and setup and setup.get("valid") and not beats_costs(setup["ideal_entry"], setup["stop"]):
+        rp = abs(setup["ideal_entry"] - setup["stop"]) / setup["ideal_entry"] * 100
+        decision, grade = "NO TRADE", None
+        why = (f"target 1 is only {rp:.2f}% away: too small to beat trading costs "
+               f"(about {round_trip_cost() * 100:.2f}% to get in and out; it needs at least {COST_MULT:g}x that)")
+        flags.append("TARGET TOO SMALL FOR COSTS")
 
     # let winners run (v2.3): where the runner model proved itself on unseen trades and scores this setup above its
     # threshold, the whole position stays open at TP1 and the stop follows the price up to the 1:4 runner target

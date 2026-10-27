@@ -246,7 +246,7 @@ def test_bots_cap_same_direction_trades(monkeypatch, no_costs):
     for sym in ("BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT"):
         _put(rt, sym, t0, [100.0] * 4)
     eng = B.BotEngine(rt)
-    eng.sync_configs([_cfg(max_same_side=2, max_position_pct=10.0)])
+    eng.sync_configs([_cfg(max_same_side=2, max_position_pct=30.0)])
     monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy())
     eng.run(t0 + 4 * STEP)
     (cfg, st), = eng.bots()
@@ -267,3 +267,27 @@ def test_bot_cleanup_removes_copies_fixes_timeframes_and_tightens_trackers():
     assert by["signal-1h"]["timeframe"] == "1h" and by["signal-1h"]["reset_token"] == "tf-1"
     assert by["futures-predict-1h"]["timeframe"] == "1h" and by["futures-predict-1h"]["confident_only"] is True
     assert by["prediction-a"]["confident_only"] is True
+
+
+def test_trades_must_beat_trading_costs():
+    from app.services import analysis
+    rt = analysis.round_trip_cost(True)
+    assert 0.001 < rt < 0.003                                       # futures: about 0.15 % in and out
+    assert analysis.round_trip_cost(False) > rt                     # spot fees are higher
+    assert not analysis.beats_costs(100.0, 99.76)                   # a 0.24 % stop: target 1 barely covers costs
+    assert analysis.beats_costs(100.0, 99.0)                        # a 1 % stop is fine
+    assert not analysis.beats_costs(100.0, 99.5, futures=False)     # 0.5 % is too tight for spot fees
+
+
+def test_a_trade_the_cap_would_shrink_below_half_its_risk_is_skipped(monkeypatch, no_costs):
+    rt = _rt(("BTC/USDT",))
+    rt.add_symbol("BTC/USDT")
+    now = _now_aligned()
+    t0 = now - 40 * STEP
+    _put(rt, "BTC/USDT", t0, [100.0] * 4)
+    eng = B.BotEngine(rt)
+    eng.sync_configs([_cfg(max_position_pct=10.0)])           # 2 % stop, 1 % risk -> 50 % planned; cap 10 % = a fifth
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy())
+    eng.run(t0 + 4 * STEP)
+    (cfg, st), = eng.bots()
+    assert st["positions"] == []

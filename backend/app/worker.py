@@ -311,6 +311,13 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
         rt.db.set_setting("bots_lev20_v23", True)
         notes["bots_leverage"] = 20
+    if not rt.db.get_setting("bots_spotcap_v23", False):
+        # v2.3: spot bots may use up to the whole balance per position (each trade still risks 1 % at its stop and
+        # cannot spend more cash than it has); the old 25 % cap shrank tight-stop winners but not wide-stop losers
+        bots_cfg = [{**b, "max_position_pct": 100.0} if b.get("market", "spot") != "futures" and b.get("mode", "decision") == "decision"
+                    else b for b in bots_cfg]
+        sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
+        rt.db.set_setting("bots_spotcap_v23", True)
     if not rt.db.get_setting("bots_cleanup_v22", False):
         bots_cfg, cleaned = cleanup_bots(bots_cfg)
         sink.set("config/bots", {**(sink.get("config/bots") or {}), "bots": bots_cfg, "updated_at": now_ms()})
