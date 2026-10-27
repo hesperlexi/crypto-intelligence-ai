@@ -264,6 +264,8 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
                 Q(f"{sym} {tf}: liquidation price does not match {lev}x")
             if side * (p["liquidation_at_suggested"] - s) >= 0:
                 Q(f"{sym} {tf}: liquidation before the stop at {lev}x")
+        if dec in ("BUY", "BUY ON PULLBACK", "SELL") and R / e < 3 * 0.0015 - 1e-9:
+            Q(f"{sym} {tf}: tradable signal with target 1 only {R / e * 100:.2f}% away (below the cost rule)")
         run = p.get("runner") or {}
         if run.get("on") and abs(side * (run["target"] - e) / R - run.get("rr", 4)) > 0.02:
             Q(f"{sym} {tf}: runner target is not 1:{run.get('rr')}")
