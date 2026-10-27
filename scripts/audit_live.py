@@ -346,3 +346,10 @@ for bt in (b or {}).get("bots") or []:
         "sizes_notional": sorted(round((t.get("qty") or 0) * (t.get("entry") or 0)) for t in tr)[-5:],
     }
 print(json.dumps({"bot_breakdown": bd}, default=str))
+
+# 19. record by timeframe (since each timeframe's start) and the 15m signals in detail
+tr, _ = view("track_record")
+lv = (tr or {}).get("live") or {}
+print(json.dumps({"tf_record": lv.get("by_timeframe"), "by_grade": lv.get("by_grade"),
+                  "sig15": [{k: x.get(k) for k in ("symbol", "side", "grade", "status", "return_pct", "created_at", "closed_at")}
+                            for x in (lv.get("signals") or []) if x.get("timeframe") == "15m"][:40]}, default=str))
