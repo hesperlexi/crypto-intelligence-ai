@@ -4,7 +4,7 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 **The menu:** Home · Signals · Trade · News · Radar · Results · Alerts · Settings. **Results** holds the track record, the demo bots, the accuracy report, the signal log and the tools (Backtest, Replay, Scanner). On phones the bottom bar has Home, Signals, Trade and Results; the rest is under **More**.
 
-**Open the app.** Go to **crypapp-6a9b9.web.app** and press **Sign in with Google**.
+**Open the app.** Go to **cryptointelai.com** (or **crypapp-6a9b9.web.app**: both open the same app) and press **Sign in with Google**.
 
 **Install it** so it opens like a normal app and can send notifications:
 
@@ -16,7 +16,7 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 **What you get.** Every prediction and trade signal (spot and futures), Accuracy and the demo bots, backtests and replays, your own practice accounts, alerts and phone notifications, and up to 5 coins of your own.
 
-**Need help?** Use **Contact support** (in **Settings → Help & support**, the **More** menu or the page footer) to email the app owner. Your account email is added for you.
+**Need help?** Email **support@cryptointelai.com**, or use **Contact support** (in **Settings → Help & support**, the **More** menu or the page footer), which opens that email with your account details added for you.
 
 ## 2. Membership plans and payment
 
