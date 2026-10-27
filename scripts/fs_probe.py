@@ -36,4 +36,14 @@ for d in fs.collection("jobs").order_by("created_at", direction=firestore.Query.
     rj.append({"type": j.get("type"), "status": j.get("status"), "created_at": j.get("created_at"),
                "started_at": j.get("started_at"), "finished_at": j.get("finished_at") or j.get("done_at")})
 out["recent_jobs"] = rj
+import statistics
+rb = {}
+for tf in ("15m", "1h", "4h", "12h", "1d"):
+    d = fs.document(f"views/futures_{tf}").get().to_dict() or {}
+    rows = (json.loads(d.get("json") or "{}") or {}).get("rows") or []
+    rk = sorted(r["plan"]["risk_pct"] for r in rows if (r.get("plan") or {}).get("risk_pct"))
+    tr = sorted(r["plan"]["risk_pct"] for r in rows if (r.get("plan") or {}).get("valid") and r.get("decision") in ("BUY", "SELL", "BUY ON PULLBACK"))
+    rb[tf] = {"plans": len(rk), "risk_pct_min": rk[0] if rk else None, "median": statistics.median(rk) if rk else None,
+              "max": rk[-1] if rk else None, "tradable_risk_pcts": [round(x, 2) for x in tr]}
+out["risk_by_tf"] = rb
 print(json.dumps(out, indent=1, default=str))
