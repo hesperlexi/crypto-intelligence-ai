@@ -1,0 +1,45 @@
+name: Verify engine (manual)
+# Self-check on a copy of the engine state: re-follows closed signals, runs every model, checks every plan.
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    defaults:
+      run:
+        working-directory: backend
+    env:
+      EXCHANGE: binance_public
+      ENABLE_DEEP_MODELS: "false"
+      DATABASE_URL: sqlite:////tmp/verify/crypto_ai.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements-worker.txt
+            backend/requirements-torch.txt
+      - run: pip install -r requirements-worker.txt && pip install -r requirements-torch.txt
+      - uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-verify-${{ github.run_id }}
+          restore-keys: engine-state-
+      - name: Copy the state and verify
+        run: |
+          mkdir -p /tmp/verify && cp data/crypto_ai.db /tmp/verify/
+          timeout 1800 python ../scripts/verify_engine.py > /tmp/verify.json 2> /tmp/verify.err || { echo "exit $?"; tail -40 /tmp/verify.err; }
+          cat /tmp/verify.json
+      - if: always()
+        working-directory: .
+        run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/verify.json reports/verify-engine.json 2>/dev/null || echo '{}' > reports/verify-engine.json
+          tail -c 20000 /tmp/verify.err > reports/verify-engine.err 2>/dev/null || true
+          git add reports && git commit -qm "Verify engine" && (for i in 1 2 3 4 5; do git pull -q --rebase origin reports && git push -q origin reports && break; sleep $((i*4)); done)

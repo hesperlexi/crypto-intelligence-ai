@@ -201,3 +201,111 @@ hb = fs.document("admin/engine_heartbeat").get().to_dict() or {}
 if hb.get("stack"):
     print("STACK:\n" + hb["stack"])
 print(json.dumps({"heartbeat": {**{k: v for k, v in hb.items() if k != "stack"}, "at_min_ago": age_min(hb.get("at")), "tick_started_min_ago": age_min(hb.get("tick_started"))}}, default=str))
+
+# 14. consistency of every published trade plan with its own inputs (the numbers members act on)
+import math
+MMR = 0.005
+
+
+def liq(entry, side, lev):
+    lev = max(1.0, float(lev))
+    return max(0.0, entry * (1 - 1 / lev + MMR)) if side > 0 else entry * (1 + 1 / lev - MMR)
+
+
+def safe_lev(entry, stop, mx=20, buffer=1.5):
+    d = abs(entry - stop) / entry
+    return int(max(1, min(mx, math.floor(1 / (buffer * d + MMR))))) if d > 0 else 1
+
+
+checks = {"plans": 0, "problems": []}
+Q = checks["problems"].append
+for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
+    v, _ = view(f"futures_{tf}")
+    for r in (v or {}).get("rows") or []:
+        sym = r.get("symbol")
+        pr = [r.get("p_up"), r.get("p_down"), r.get("p_neutral")]
+        if all(x is not None for x in pr) and abs(sum(pr) - 1) > 0.02:
+            Q(f"{sym} {tf}: probabilities add to {sum(pr):.3f}")
+        if r.get("confidence") is not None and not 0 <= r["confidence"] <= 1:
+            Q(f"{sym} {tf}: confidence {r['confidence']} outside 0-1")
+        dec, grade = r.get("decision"), r.get("grade")
+        if grade and dec not in ("BUY", "BUY ON PULLBACK", "SELL"):
+            Q(f"{sym} {tf}: grade {grade} on a {dec} decision")
+        p = r.get("plan") or {}
+        if not p.get("valid"):
+            continue
+        checks["plans"] += 1
+        side = 1 if p.get("side") == "LONG" else -1
+        e, s, tg = p.get("entry"), p.get("stop"), p.get("targets") or []
+        if dec in ("BUY", "BUY ON PULLBACK") and side < 0 or dec == "SELL" and side > 0:
+            Q(f"{sym} {tf}: decision {dec} but plan side {p.get('side')}")
+        if not (e and s) or side * (e - s) <= 0:
+            Q(f"{sym} {tf}: stop on the wrong side of entry"); continue
+        R = abs(e - s)
+        prices = [t["price"] for t in tg]
+        if len(prices) != 3 or any(side * (prices[i] - (prices[i - 1] if i else e)) <= 0 for i in range(3)):
+            Q(f"{sym} {tf}: targets not in order beyond entry")
+        for t in tg:
+            if abs(side * (t["price"] - e) / R - t["rr"]) > 0.02:
+                Q(f"{sym} {tf}: {t['name']} price is {side * (t['price'] - e) / R:.2f}R but labelled 1:{t['rr']}")
+        zone = p.get("entry_zone") or []
+        if zone and not (min(zone) - 1e-9 <= e <= max(zone) + 1e-9):
+            Q(f"{sym} {tf}: entry outside its entry zone")
+        if p.get("risk_pct") is not None and abs(p["risk_pct"] - R / e * 100) > 0.01:
+            Q(f"{sym} {tf}: risk % {p['risk_pct']:.3f} vs {R / e * 100:.3f} from entry/stop")
+        bl = 0.5 * 1 + 0.25 * tg[1]["rr"] + 0.25 * tg[2]["rr"] if len(tg) == 3 else None
+        if bl is not None and p.get("risk_reward") is not None and abs(p["risk_reward"] - bl) > 0.02:
+            Q(f"{sym} {tf}: blended R:R {p['risk_reward']:.2f} vs {bl:.2f}")
+        lev = p.get("suggested_leverage")
+        if lev:
+            if lev > min(10, safe_lev(e, s)):
+                Q(f"{sym} {tf}: suggested {lev}x above the safe {min(10, safe_lev(e, s))}x")
+            if abs((p.get("liquidation_at_suggested") or 0) - liq(e, side, lev)) > e * 1e-6:
+                Q(f"{sym} {tf}: liquidation price does not match {lev}x")
+            if side * (p["liquidation_at_suggested"] - s) >= 0:
+                Q(f"{sym} {tf}: liquidation before the stop at {lev}x")
+        run = p.get("runner") or {}
+        if run.get("on") and abs(side * (run["target"] - e) / R - run.get("rr", 4)) > 0.02:
+            Q(f"{sym} {tf}: runner target is not 1:{run.get('rr')}")
+checks["problems"] = checks["problems"][:40]
+print(json.dumps({"plan_checks": checks}))
+
+# 15. record arithmetic
+tr, _ = view("track_record")
+lv = (tr or {}).get("live") or {}
+sm = lv.get("summary") or {}
+sig = lv.get("signals") or []
+closed = [x for x in sig if x.get("status") not in ("OPEN", "INFO") and x.get("return_pct") is not None]
+rec = {"summary": sm, "listed_signals": len(sig), "listed_closed": len(closed),
+       "statuses": {s: sum(1 for x in sig if x.get("status") == s) for s in {x.get("status") for x in sig}}}
+bad = [x for x in closed if (x["status"] == "STOPPED" and x["return_pct"] > 0.001)
+       or (x["status"] in ("TP2", "TP3") and x["return_pct"] < -0.001)]
+rec["status_return_mismatch"] = len(bad)
+if sm.get("closed") and len(closed) == sm["closed"]:
+    import statistics
+    rec["win_rate_check"] = abs(sum(1 for x in closed if x["return_pct"] > 0) / len(closed) - sm["win_rate"]) < 1e-9
+    rec["total_check"] = abs(sum(x["return_pct"] for x in closed) - sm["total_return_pct"]) < 1e-6
+print(json.dumps({"record_checks": rec}, default=str))
+
+# 16. bots: sane numbers
+b, _ = view("bots")
+bc = []
+for bt in (b or {}).get("bots") or []:
+    st = bt.get("stats") or {}
+    eq, cash = st.get("equity"), (bt.get("state") or {}).get("cash")
+    pos = bt.get("positions") or (bt.get("state") or {}).get("positions") or []
+    wrong = 0
+    for q in pos:
+        if q.get("stop") and q.get("entry") and q.get("tp_hit", 0) == 0 and q["side"] * (q["entry"] - q["stop"]) <= 0:
+            wrong += 1
+    bc.append({"id": (bt.get("config") or {}).get("id") or bt.get("id"), "equity": round(eq, 2) if isinstance(eq, (int, float)) else eq,
+               "trades": st.get("trades"), "open": len(pos), "lev": (bt.get("config") or {}).get("leverage"),
+               "stop_wrong_side": wrong, "cash_negative": isinstance(cash, (int, float)) and cash < -1e-6})
+print(json.dumps({"bot_checks": bc}, default=str))
+
+# 17. failed website jobs (types only)
+fj = []
+for d in fs.collection("jobs").where("status", "==", "failed").limit(20).stream():
+    j = d.to_dict() or {}
+    fj.append({"type": j.get("type"), "age_h": round((age_min(j.get("created_at")) or 0) / 60, 1), "error": str(j.get("error") or j.get("result"))[:120]})
+print(json.dumps({"failed_jobs": sorted(fj, key=lambda x: x["age_h"])[:10]}, default=str))
