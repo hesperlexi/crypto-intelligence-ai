@@ -30,4 +30,10 @@ try:
     fs.document("admin/probe").set({"at": int(time.time() * 1000)}, timeout=60); out["write_test"] = {"ok": True, "seconds": round(time.time() - t, 1)}
 except Exception as e:
     out["write_test"] = {"error": f"{type(e).__name__}: {e}"[:300]}
-print(json.dumps(out, indent=1))
+rj = []
+for d in fs.collection("jobs").order_by("created_at", direction=firestore.Query.DESCENDING).limit(8).stream():
+    j = d.to_dict() or {}
+    rj.append({"type": j.get("type"), "status": j.get("status"), "created_at": j.get("created_at"),
+               "started_at": j.get("started_at"), "finished_at": j.get("finished_at") or j.get("done_at")})
+out["recent_jobs"] = rj
+print(json.dumps(out, indent=1, default=str))
