@@ -233,9 +233,30 @@ class FirestoreSink(BaseSink):
         self.writes += 1
         return ref.id
 
+    PUSH_TIMEOUT_S = 45
+
     def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
+        """Runs the sending in a background thread with a hard time limit: a hung notification service must never
+        stop the engine cycle (27 Oct: a renewal reminder that never returned froze every cycle for hours)."""
         if not messages:
             return {"sent": 0, "devices": 0}
+        import threading
+
+        box: dict[str, Any] = {}
+
+        def run():
+            try:
+                box["out"] = self._send_push(messages)
+            except Exception as exc:
+                box["out"] = {"sent": 0, "devices": 0, "error": f"{type(exc).__name__}: {exc}"[:200]}
+        t = threading.Thread(target=run, daemon=True, name="push")
+        t.start()
+        t.join(self.PUSH_TIMEOUT_S)
+        if t.is_alive():
+            return {"sent": 0, "devices": 0, "error": f"notification service did not answer within {self.PUSH_TIMEOUT_S} s"}
+        return box.get("out") or {"sent": 0, "devices": 0}
+
+    def _send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
         try:
             from firebase_admin import messaging
 

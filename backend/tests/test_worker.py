@@ -246,3 +246,14 @@ def test_firestore_batches_are_cut_by_size_and_count():
     assert sum(len(g) for g in groups) == 60 and all(sum(len(d["json"]) for _, d in g) <= 7_000_000 for g in groups)
     small = {f"views/b{i}": {"json": "y", "updated_at": 1} for i in range(900)}
     assert [len(g) for g in chunks(small)] == [400, 400, 100]
+
+
+def test_push_sending_has_a_hard_time_limit():
+    import time
+    from app.sinks import FirestoreSink
+    sink = FirestoreSink.__new__(FirestoreSink)
+    sink.PUSH_TIMEOUT_S = 1
+    sink._send_push = lambda msgs: time.sleep(30)            # a service that never answers
+    t = time.time()
+    out = sink.send_push([{"title": "x", "body": "y"}])
+    assert time.time() - t < 5 and "did not answer" in out["error"]

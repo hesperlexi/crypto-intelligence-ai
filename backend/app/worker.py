@@ -118,11 +118,14 @@ def member_limits(sink: BaseSink) -> tuple[int, int]:
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
+    _b = getattr(rt, "beat", None) or (lambda *_: None)
+    _b("config: members")
     users = dict(sink.list("users"))
     now = now_ms()
     inactive = membership.inactive_uids(users, now)
     msgs, seen = membership.notifications(users, rt.db.get_setting("membership_notified", {}), now)
     if msgs:
+        _b("config: membership notifications")
         notes["membership_push"] = sink.send_push(msgs)
     rt.db.set_setting("membership_notified", seen)
     if inactive:
@@ -138,6 +141,7 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 if sym not in member_coins:
                     member_coins.append(sym)
     # watchlist
+    _b("config: watchlist")
     doc = sink.get("config/watchlist")
     if doc is None or not isinstance(doc.get("symbols"), list):
         sink.set("config/watchlist", {"symbols": [{"symbol": w["symbol"], "pinned": bool(w["pinned"])}
@@ -226,6 +230,7 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         if sum(w.values()) > 0:
             rt.db.set_setting("signal_weights", w)
     # alert rules (website) -> local table, keeping the debounce state
+    _b("config: alerts")
     remote = dict(sink.list("alerts"))
     local = {a["id"]: a for a in rt.db.query("SELECT * FROM alerts")}
     for aid in set(local) - set(remote):
@@ -243,6 +248,7 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                           "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
                           (aid, a.get("owner_uid") or USER, *row, int(a.get("created_at") or now_ms())))
     # demo bots
+    _b("config: bots")
     doc = sink.get("config/bots")
     if doc is None or not isinstance(doc.get("bots"), list):
         sink.set("config/bots", {"bots": DEFAULT_BOTS, "updated_at": now_ms(),
@@ -469,6 +475,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                                                 **(extra or {})})
         except Exception:
             pass
+
+    rt.beat = beat                                      # lets long steps report sub-steps
 
     def step(name: str, fn):
         s0 = time.time()
