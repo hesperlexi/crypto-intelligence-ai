@@ -394,7 +394,20 @@ class BotEngine:
                     self._reduce(state, pos, pos["qty_open"], px, True)
                     done = ("trailing stop" if pos["tp_hit"] >= 2 else "breakeven stop" if pos["tp_hit"] else "stop", ts + step)
                     break
-                while pos["tp_hit"] < len(pos["targets"]):
+                run_t = (pos.get("info") or {}).get("run_target")
+                if run_t:
+                    # runner: nothing closes at TP1-3; each target moves the stop up one step, the whole position
+                    # closes at the runner target
+                    while pos["tp_hit"] < len(pos["targets"]) and (
+                            (hi >= pos["targets"][pos["tp_hit"]]) if side > 0 else (lo <= pos["targets"][pos["tp_hit"]])):
+                        pos["tp_hit"] += 1
+                        pos["stop"] = pos["entry"] if pos["tp_hit"] == 1 else pos["targets"][pos["tp_hit"] - 2]
+                    if (hi >= run_t) if side > 0 else (lo <= run_t):
+                        px = max(op, run_t) if side > 0 else min(op, run_t)
+                        self._reduce(state, pos, pos["qty_open"], px, True)
+                        done = ("runner target", ts + step)
+                        break
+                while not run_t and pos["tp_hit"] < len(pos["targets"]):
                     tp = pos["targets"][pos["tp_hit"]]
                     if not ((hi >= tp) if side > 0 else (lo <= tp)):
                         break
@@ -491,6 +504,9 @@ class BotEngine:
                     "predicted": fc.get("predicted"), "model_version": fc.get("model_version"),
                     "edge_confirmed": fc.get("edge_confirmed"), "rr": setup.get("risk_reward"),
                     "bar_ts": a["bar_ts"], "timeframe": cfg["timeframe"]}
+            run = setup.get("runner") or {}
+            if run.get("on") and run.get("target"):
+                info["run_target"] = float(run["target"])         # v2.3: AI let-it-run exit for this trade
             eq = self.equity(state)
             entry = float(setup["ideal_entry"]) if a["decision"] == "BUY ON PULLBACK" else px
             risk_per_unit = abs(entry - stop)

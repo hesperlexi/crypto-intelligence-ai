@@ -66,6 +66,11 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
         fc["target_lift"] = target_model.lifts(bundle.get("target_model"), x_row, fc["probabilities"])
     except Exception:
         fc["target_lift"] = None
+    try:
+        from ..ml import runner_model
+        fc["runner"] = runner_model.score(bundle.get("runner_model"), x_row, fc["probabilities"])
+    except Exception:
+        fc["runner"] = None
     edge = bundle["edge"]
     fc.update({
         "available": True, "status": "OK", "timeframe": timeframe,
@@ -295,6 +300,21 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                                          f"{tf_view['threshold']:.0%} bar at which past setups paid off")
             grade = None
             flags.append("FILTERED")
+
+    # let winners run (v2.3): where the runner model proved itself on unseen trades and scores this setup above its
+    # threshold, the whole position stays open at TP1 and the stop follows the price up to the 1:4 runner target
+    run_view = (fc or {}).get("runner") if fc.get("available") else None
+    if run_view and decision in TRADE_DECISIONS and setup and setup.get("valid"):
+        rside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
+        rp = run_view["p_long"] if rside > 0 else run_view["p_short"]
+        if rp >= run_view["threshold"]:
+            dist = abs(setup["ideal_entry"] - setup["stop"])
+            rr = float(run_view.get("run_r") or 4.0)
+            tgt = float(setup["ideal_entry"] + rside * rr * dist)
+            setup["runner"] = {"on": True, "target": tgt, "rr": rr, "score": rp, "threshold": run_view["threshold"],
+                               "move_pct": float(rside * (tgt / setup["ideal_entry"] - 1) * 100),
+                               "basis": "AI: let it run - nothing closes at TP1; the stop moves to break-even at TP1, "
+                                        f"to TP1 at TP2, to TP2 at TP3; the whole position closes at 1:{rr:g}"}
 
     # safety switch (v2.2): a coin/timeframe whose recent live signals lost pauses; its would-be trades are
     # tracked as hidden practice trades until they recover

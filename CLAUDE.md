@@ -60,7 +60,11 @@ re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/s
 5. **News guard** (`services/news.py`): no new entries 45 min before → 30 min after high-impact US releases.
 6. Futures features (funding/premium, `data/derivs.py`, `features/dataset.py`) used only where `ml/deriv_gate.py`
    proves they help.
-7. Higher-timeframe context (v2.3) used only where `ml/htf_gate.py` proves it helps (per series, paired Brier test,
+7. **Let winners run** (v2.3, `ml/runner_model.py`): per coin/timeframe, trained nightly on out-of-sample calls; on only if
+   'runner when scored, standard otherwise' beat 'always standard' by ≥0.04R on the last quarter. Runner = nothing closes
+   at TP1, stop → BE at TP1, → TP1 at TP2, → TP2 at TP3, whole position at 1:4 (`setup.runner`, signal payload `runner`,
+   bots `info.run_target`, tracking single exit). Signal card shows move % and ROI at the suggested leverage.
+8. Higher-timeframe context (v2.3) used only where `ml/htf_gate.py` proves it helps (per series, paired Brier test,
    30-day cache `htf_gate1|`; slices pass decisions to the merge via `bundle_record.gates`). `USE_HTF_FEATURES=1` forces it on.
    BTC context aligns to the latest BTC bar opened by the coin bar's open (3d candles start on listing dates).
 

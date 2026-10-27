@@ -91,6 +91,7 @@ def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage
             "targets": [{"name": t["name"], "price": t["price"], "rr": t["rr"], "probability": t.get("probability")}
                         for t in setup.get("targets") or []],
             "risk_reward": setup.get("risk_reward"), "risk_pct": risk_pct,
+            "runner": setup.get("runner"),
             "suggested_leverage": lev,
             "liquidation_at_suggested": liquidation_price(entry, plan_side, lev) if lev else None,
             "margin_loss_at_stop_pct": risk_pct * lev if lev else None,

@@ -166,7 +166,8 @@ def log_signal(db: Database, a: dict[str, Any]) -> bool:
          setup.get("risk_reward") if tradable else None, "OPEN" if tradable else "INFO",
          fc.get("model_version"), dumps({"reasons": sig.get("reasons"), "warnings": sig.get("warnings"),
                                          "flags": a.get("flags"), "decision_reason": a.get("decision_reason"),
-                                         "grade": a.get("grade")})))
+                                         "grade": a.get("grade"),
+                                         "runner": setup.get("runner") if tradable else None})))
     return n > 0
 
 
@@ -205,6 +206,9 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
         tps = [s["tp1"], s["tp2"], s["tp3"]]
         hit = [False, False, False]
         stop_hit, closed_ts = False, None
+        run = (loads(s.get("payload"), {}) or {}).get("runner") or {}
+        final = run.get("target") if run.get("on") else None      # v2.3 runner: whole position to the 1:4 target
+        final_hit = False
         level = s["stop"]                    # moves to break-even after TP1 and to TP1 after TP2 (the bots' rules)
         for _, c in after.iterrows():
             if (side > 0 and c["low"] <= level) or (side < 0 and c["high"] >= level):
@@ -213,16 +217,30 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
             for i, tp in enumerate(tps):
                 if (side > 0 and c["high"] >= tp) or (side < 0 and c["low"] <= tp):
                     hit[i] = True
-            level = tps[0] if hit[1] else entry if hit[0] else s["stop"]
-            if hit[2]:
-                closed_ts = int(c["ts"])
-                break
+            if final is None:
+                level = tps[0] if hit[1] else entry if hit[0] else s["stop"]
+                if hit[2]:
+                    closed_ts = int(c["ts"])
+                    break
+            else:
+                level = tps[1] if hit[2] else tps[0] if hit[1] else entry if hit[0] else s["stop"]
+                if (side > 0 and c["high"] >= final) or (side < 0 and c["low"] <= final):
+                    final_hit, closed_ts = True, int(c["ts"])
+                    hit = [True, True, True]
+                    break
         expired = closed_ts is None and len(after) >= horizon_bars
         last_close = float(after["close"].iloc[-1])
         fallback = level if stop_hit else last_close
-        ret = float(sum(w * side * ((tps[i] if hit[i] else fallback) / entry - 1) for i, w in enumerate((0.5, 0.25, 0.25)))) * 100      # 50% / 25% / 25% exits
-        status = "STOPPED" if stop_hit and not hit[0] else "TP3" if hit[2] else \
-            ("TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED") if (stop_hit or expired) else "OPEN"
+        if final is None:
+            ret = float(sum(w * side * ((tps[i] if hit[i] else fallback) / entry - 1) for i, w in enumerate((0.5, 0.25, 0.25)))) * 100      # 50% / 25% / 25% exits
+        else:                                # runner: the whole position exits once - at the target, the trailing stop or expiry
+            ret = float(side * ((final if final_hit else fallback) / entry - 1)) * 100
+        if final is None:
+            status = "STOPPED" if stop_hit and not hit[0] else "TP3" if hit[2] else \
+                ("TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED") if (stop_hit or expired) else "OPEN"
+        else:
+            status = "TP3" if final_hit else "STOPPED" if stop_hit and not hit[0] else \
+                ("TP3" if hit[2] else "TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED") if (stop_hit or expired) else "OPEN"
         if closed_ts is None and expired:
             closed_ts = int(after["ts"].iloc[-1])
         n = db.execute(
