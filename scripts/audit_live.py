@@ -309,3 +309,38 @@ for d in fs.collection("jobs").where("status", "==", "failed").limit(20).stream(
     j = d.to_dict() or {}
     fj.append({"type": j.get("type"), "age_h": round((age_min(j.get("created_at")) or 0) / 60, 1), "error": str(j.get("error") or j.get("result"))[:120]})
 print(json.dumps({"failed_jobs": sorted(fj, key=lambda x: x["age_h"])[:10]}, default=str))
+
+# 18. bot trade breakdown (why a bot wins or loses)
+b, _ = view("bots")
+bd = {}
+for bt in (b or {}).get("bots") or []:
+    cfg = bt.get("config") or {}
+    tr = bt.get("trades") or []
+    if not tr:
+        bd[cfg.get("id")] = {"trades": 0, "open": len(bt.get("positions") or [])}
+        continue
+    rs = {}
+    for t in tr:
+        r = t.get("exit_reason"); rs.setdefault(r, [0, 0.0, 0.0])
+        rs[r][0] += 1; rs[r][1] += t.get("pnl") or 0; rs[r][2] += t.get("fees") or 0
+    info = []
+    for t in tr:
+        try:
+            info.append(json.loads(t.get("info") or "{}") if isinstance(t.get("info"), str) else (t.get("info") or {}))
+        except Exception:
+            info.append({})
+    holds = [((t.get("closed_at") or 0) - (t.get("opened_at") or 0)) / 60000 for t in tr]
+    rm = [t.get("r_multiple") for t in tr if t.get("r_multiple") is not None]
+    bd[cfg.get("id")] = {
+        "trades": len(tr), "wins": sum(1 for t in tr if (t.get("pnl") or 0) > 0),
+        "pnl": round(sum(t.get("pnl") or 0 for t in tr), 2), "fees": round(sum(t.get("fees") or 0 for t in tr), 2),
+        "avg_r": round(sum(rm) / len(rm), 3) if rm else None, "median_hold_min": sorted(holds)[len(holds) // 2],
+        "by_exit": {k: {"n": v[0], "pnl": round(v[1], 2), "fees": round(v[2], 2)} for k, v in rs.items()},
+        "leverage": sorted({round(i.get("leverage") or 1, 1) for i in info})[:8],
+        "decisions": {d: sum(1 for i in info if i.get("decision") == d) for d in {i.get("decision") for i in info}},
+        "tp_hit": {h: sum(1 for i in info if i.get("tp_hit") == h) for h in {i.get("tp_hit") for i in info}},
+        "symbols_top": sorted(((s, sum(1 for t in tr if t["symbol"] == s)) for s in {t["symbol"] for t in tr}), key=lambda x: -x[1])[:6],
+        "equity": round((bt.get("stats") or {}).get("equity") or 0, 2), "open": len(bt.get("positions") or []),
+        "sizes_notional": sorted(round((t.get("qty") or 0) * (t.get("entry") or 0)) for t in tr)[-5:],
+    }
+print(json.dumps({"bot_breakdown": bd}, default=str))
