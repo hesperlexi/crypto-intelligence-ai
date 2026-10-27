@@ -198,4 +198,6 @@ print(json.dumps({"models_done_vs_not_by_tf": cnt, "not_trained": skipped[:200]}
 ser = [s for s in (h.get("series") or []) if s.get("timeframe") in ("3d", "1w")]
 print(json.dumps({"series_3d_1w": [{k: s.get(k) for k in ("symbol", "timeframe", "candles", "missing", "quality_pct", "first_ts")} for s in ser]}, default=str))
 hb = fs.document("admin/engine_heartbeat").get().to_dict() or {}
-print(json.dumps({"heartbeat": {**hb, "at_min_ago": age_min(hb.get("at")), "tick_started_min_ago": age_min(hb.get("tick_started"))}}, default=str))
+if hb.get("stack"):
+    print("STACK:\n" + hb["stack"])
+print(json.dumps({"heartbeat": {**{k: v for k, v in hb.items() if k != "stack"}, "at_min_ago": age_min(hb.get("at")), "tick_started_min_ago": age_min(hb.get("tick_started"))}}, default=str))

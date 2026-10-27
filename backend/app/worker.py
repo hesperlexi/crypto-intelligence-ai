@@ -483,9 +483,28 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
             pass
 
     rt.beat = beat                                      # lets long steps report sub-steps
+    cur = {"name": None, "since": time.time()}
+
+    def watch():
+        # if one step runs longer than 2 minutes, record where the main thread is (stack) in the heartbeat
+        import sys
+        import threading
+        import traceback
+        main_id = threading.main_thread().ident
+        last = None
+        while not cur.get("stop"):
+            time.sleep(20)
+            if cur["name"] and time.time() - cur["since"] > 120 and cur["name"] != last:
+                fr = sys._current_frames().get(main_id)
+                stack = "".join(traceback.format_stack(fr)[-14:]) if fr else ""
+                beat(cur["name"], {"slow_for_s": int(time.time() - cur["since"]), "stack": stack[-3500:]})
+                last = cur["name"]
+    import threading as _th
+    _th.Thread(target=watch, daemon=True, name="step-watch").start()
 
     def step(name: str, fn):
         s0 = time.time()
+        cur.update(name=name, since=s0)
         beat(name)
         try:
             out = fn()
