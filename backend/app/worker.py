@@ -605,6 +605,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         return fired
     detail["alerts_fired"] = step("analyses", analyse)
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
+    # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
+    # not wait for it
+    detail["written_early"] = step("publish_early", sink.flush) or 0
     detail["jobs"] = step("jobs", lambda: process_jobs(rt, sink, deadline))
     engine = engine_info(rt, {"last_tick_started": started, "last_tick_finished": now_ms(),
                               "last_tick_seconds": round(time.time() - t0, 1),
@@ -802,7 +805,7 @@ def main() -> None:
     else:
         out = train(rt, sink, a.budget or 2700)
     if a.command == "tick":                       # read by scripts/engine_loop.py (the summary below is cut at 2000 chars)
-        print(f'tick written: {{"written": {int(out.get("written") or 0)}}}', flush=True)
+        print(f'tick written: {{"written": {int(out.get("written") or 0) + int(out.get("written_early") or 0)}}}', flush=True)
     log.info("finished: %s", dumps({k: v for k, v in out.items() if k != "trained"})[:2000])
     asyncio.run(rt.provider.close())
 
