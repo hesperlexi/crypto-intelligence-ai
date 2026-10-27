@@ -59,7 +59,10 @@ def update_code() -> None:
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     try:
         before = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
-        subprocess.run(["git", "-C", root, "pull", "--ff-only", "-q", "origin", "main"], capture_output=True, timeout=60)
+        # the Actions checkout is a detached commit, so `git pull` does nothing: fetch main and move to it
+        f = subprocess.run(["git", "-C", root, "fetch", "-q", "--depth=1", "origin", "main"], capture_output=True, timeout=60)
+        if f.returncode == 0:
+            subprocess.run(["git", "-C", root, "reset", "-q", "--hard", "FETCH_HEAD"], capture_output=True, timeout=60)
         after = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
         if before and after and before != after:
             print(f"engine loop: code updated {before[:7]} -> {after[:7]}", flush=True)
