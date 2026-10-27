@@ -99,7 +99,18 @@ class SequenceClassifier:
         return self
 
     def predict_proba(self, X: np.ndarray) -> np.ndarray:
+        from ..config import settings
+        if not settings.enable_deep_models:
+            # v2.3: building these networks inside the engine cycle crashed the process (27 Oct); while deep models
+            # are switched off the ensemble simply leaves them out and re-weights the other members
+            raise RuntimeError("deep models are switched off (ENABLE_DEEP_MODELS)")
         import torch
+
+        if getattr(self, "net_", None) is None and getattr(self, "_pending_weights", None) is not None:
+            self.net_ = self._net(self.n_features_)
+            self.net_.load_state_dict({k: torch.from_numpy(v.copy()) for k, v in self._pending_weights.items()})
+            self.net_.eval()
+            self._pending_weights = None
 
         W = self._windows(np.clip((X - self.mu_) / self.sd_, -8, 8)).astype(np.float32)
         self.net_.eval()
@@ -113,17 +124,16 @@ class SequenceClassifier:
     # weight arrays and the network is rebuilt when a saved model bundle is loaded.
     def __getstate__(self):
         d = self.__dict__.copy()
+        pending = d.pop("_pending_weights", None)
         net = d.pop("net_", None)
+        if net is None and pending is not None:
+            d["_weights"] = pending
         if net is not None:
             d["_weights"] = {k: v.detach().cpu().numpy() for k, v in net.state_dict().items()}
         return d
 
     def __setstate__(self, d):
-        weights = d.pop("_weights", None)
+        # the network is rebuilt only when it is first used (loading a bundle no longer builds torch networks)
+        self._pending_weights = d.pop("_weights", None)
         self.__dict__.update(d)
-        if weights is not None:
-            import torch
-
-            self.net_ = self._net(self.n_features_)
-            self.net_.load_state_dict({k: torch.from_numpy(v.copy()) for k, v in weights.items()})
-            self.net_.eval()
+        self.net_ = None

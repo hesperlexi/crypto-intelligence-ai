@@ -76,19 +76,37 @@ def update_code() -> None:
 
 
 def tick(budget: int) -> int:
-    """Run one engine cycle; returns the number of view documents it wrote (0 if unknown)."""
-    try:
-        p = subprocess.run([sys.executable, "-m", "app.worker", "tick", "--budget", str(budget)],
-                           capture_output=True, text=True, timeout=budget + 600)
-    except subprocess.TimeoutExpired:
-        print("::warning::engine tick hung and was stopped", flush=True)
-        return 0
-    sys.stdout.write(p.stdout[-4000:])
-    sys.stderr.write(p.stderr[-6000:])
-    m = re.search(r'"written": ?(\d+)', p.stdout + p.stderr)
-    if p.returncode:
-        print(f"::warning::engine tick exited with {p.returncode}", flush=True)
-    return int(m.group(1)) if m else 0
+    """Run one engine cycle; returns the number of view documents it wrote (0 if unknown).
+    The cycle runs in its own process group with its output in a temp file, so a hung or crashed cycle - including
+    any worker processes it started - is stopped completely at the time limit (27 Oct: pipes held open by worker
+    processes kept the loop waiting for hours)."""
+    import signal
+    import tempfile
+
+    with tempfile.TemporaryFile(mode="w+") as log:
+        p = subprocess.Popen([sys.executable, "-m", "app.worker", "tick", "--budget", str(budget)],
+                             stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
+        try:
+            code = p.wait(timeout=budget + 600)
+        except subprocess.TimeoutExpired:
+            print("::warning::engine tick hung and was stopped", flush=True)
+            code = None
+        try:
+            os.killpg(p.pid, signal.SIGKILL)             # the cycle and any worker processes it left behind
+        except ProcessLookupError:
+            pass
+        if code is None:
+            try:
+                p.wait(timeout=30)
+            except subprocess.TimeoutExpired:
+                pass
+        log.seek(0)
+        text = log.read()
+    sys.stdout.write(text[-6000:])
+    if code:
+        print(f"::warning::engine tick exited with {code}", flush=True)
+    m = re.findall(r'"written": ?(\d+)', text)
+    return int(m[-1]) if m else 0
 
 
 def main() -> None:
