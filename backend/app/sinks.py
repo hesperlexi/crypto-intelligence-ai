@@ -89,6 +89,9 @@ class BaseSink:
             self.set(path, new)
         return result
 
+    def set_quick(self, path: str, data: dict[str, Any]) -> None:
+        self.set(path, data)
+
     def add(self, collection: str, data: dict[str, Any]) -> str:
         from .db import new_id
         doc_id = new_id()
@@ -195,6 +198,10 @@ class FirestoreSink(BaseSink):
 
     def set(self, path: str, data: dict[str, Any], merge: bool = False) -> None:
         self.fs.document(path).set(json.loads(dumps(data)), merge=merge)
+
+    def set_quick(self, path: str, data: dict[str, Any]) -> None:
+        """Best-effort small write: no retries, 5 s limit (progress notes must never slow the cycle)."""
+        self.fs.document(path).set(json.loads(dumps(data)), retry=None, timeout=5)
         self.writes += 1
 
     def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:

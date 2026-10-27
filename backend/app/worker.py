@@ -473,10 +473,17 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     deadline = t0 + budget_s
     detail: dict[str, Any] = {"steps": {}}
 
+    last_beat = [0.0]
+
     def beat(name: str, extra: dict | None = None) -> None:
-        # tiny progress note (admin/engine_heartbeat) so a stuck or failing cycle can be seen from outside
+        # tiny progress note (admin/engine_heartbeat) so a stuck or failing cycle can be seen from outside. Firestore
+        # allows about one write per second to one document, so notes are spaced >= 10 s apart (except ones with
+        # extra detail) and sent without retries (27 Oct: rapid notes were throttled and stalled the cycle)
+        if not extra and time.time() - last_beat[0] < 10:
+            return
+        last_beat[0] = time.time()
         try:
-            sink.set("admin/engine_heartbeat", {"step": name, "at": now_ms(), "tick_started": started,
+            sink.set_quick("admin/engine_heartbeat", {"step": name, "at": now_ms(), "tick_started": started,
                                                 "steps": {k: v.get("seconds", v.get("error")) for k, v in detail["steps"].items()},
                                                 **(extra or {})})
         except Exception:
