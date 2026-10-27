@@ -461,8 +461,18 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     deadline = t0 + budget_s
     detail: dict[str, Any] = {"steps": {}}
 
+    def beat(name: str, extra: dict | None = None) -> None:
+        # tiny progress note (admin/engine_heartbeat) so a stuck or failing cycle can be seen from outside
+        try:
+            sink.set("admin/engine_heartbeat", {"step": name, "at": now_ms(), "tick_started": started,
+                                                "steps": {k: v.get("seconds", v.get("error")) for k, v in detail["steps"].items()},
+                                                **(extra or {})})
+        except Exception:
+            pass
+
     def step(name: str, fn):
         s0 = time.time()
+        beat(name)
         try:
             out = fn()
             detail["steps"][name] = {"ok": True, "seconds": round(time.time() - s0, 1)}
@@ -557,7 +567,10 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         owners = {r["id"]: r["user_id"] for r in rt.db.query("SELECT id, user_id FROM alerts")}
         detail["push"] = step("push", lambda: sink.send_push(
             [push_message(e, owners.get(e.get("alert_id"))) for e in fired_events]))
-    detail["written"] = sink.flush()
+    beat("publish", {"pending_docs": len(sink.pending),
+                     "pending_mb": round(sum(len(v.get("json") or "") for v in sink.pending.values()) / 1e6, 2)})
+    detail["written"] = step("publish", sink.flush) or 0
+    beat("done", {"written": detail["written"]})
     detail["skipped_unchanged"] = sink.skipped
     status = "ok" if all(v["ok"] for v in detail["steps"].values()) else "partial"
     _record(rt, "tick", started, status, detail)
