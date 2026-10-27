@@ -1,6 +1,6 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
@@ -13,22 +13,7 @@ import { Role, SessionCtx, setSession, useIsAdmin, watchRole } from "./lib/sessi
 import { auth, db, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
-import Alerts from "./pages/Alerts";
-import Asset from "./pages/Asset";
-import Backtest from "./pages/Backtest";
 import Dashboard from "./pages/Dashboard";
-import Health from "./pages/Health";
-import News from "./pages/News";
-import Results from "./pages/Results";
-import Radar from "./pages/Radar";
-import Report from "./pages/Report";
-import Achievements from "./pages/Achievements";
-import Paper from "./pages/Paper";
-import Replay from "./pages/Replay";
-import Scanner from "./pages/Scanner";
-import Settings from "./pages/Settings";
-import Signals from "./pages/Signals";
-import Users from "./pages/Users";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
@@ -36,6 +21,33 @@ import Landing from "./components/Landing";
 import TelegramLink from "./components/TelegramLink";
 import { fmtDate, useMyRecord } from "./lib/membership";
 import { startPresence } from "./lib/presence";
+
+// pages load on first visit (smaller first download); the busiest ones are fetched in the background after start.
+// After an update an old page may ask for a file that no longer exists: reload once to get the new version.
+const page = <T,>(load: () => Promise<T>) => lazy(() => load().catch((e) => {
+  try {
+    if (!sessionStorage.getItem("chunk-reload")) { sessionStorage.setItem("chunk-reload", "1"); location.reload(); }
+  } catch { /* storage blocked: just report */ }
+  throw e;
+}) as Promise<any>);
+const Alerts = page(() => import("./pages/Alerts"));
+const Asset = page(() => import("./pages/Asset"));
+const Backtest = page(() => import("./pages/Backtest"));
+const Health = page(() => import("./pages/Health"));
+const News = page(() => import("./pages/News"));
+const Results = page(() => import("./pages/Results"));
+const Radar = page(() => import("./pages/Radar"));
+const Report = page(() => import("./pages/Report"));
+const Achievements = page(() => import("./pages/Achievements"));
+const Paper = page(() => import("./pages/Paper"));
+const Replay = page(() => import("./pages/Replay"));
+const Scanner = page(() => import("./pages/Scanner"));
+const Settings = page(() => import("./pages/Settings"));
+const Signals = page(() => import("./pages/Signals"));
+const Users = page(() => import("./pages/Users"));
+try { window.setTimeout(() => sessionStorage.removeItem("chunk-reload"), 15000); } catch { /* ignore */ }
+const prefetch = () => { void import("./pages/Signals"); void import("./pages/Paper"); void import("./pages/Results"); void import("./pages/Asset"); };
+if (typeof window !== "undefined") window.setTimeout(() => ((window as any).requestIdleCallback ?? ((f: () => void) => f()))(prefetch), 2500);
 
 const NAV = [
   ["/", "Home"],
@@ -224,6 +236,7 @@ function Shell({ user }: { user: User }) {
         {!admin && <RenewBanner />}
         <main className={`mx-auto w-full ${width} flex-1 px-3 py-4 sm:px-4`}>
           <div key={loc.pathname} className="page-enter">
+          <Suspense fallback={<div className="space-y-3 py-2" aria-busy="true"><div className="skeleton h-24 rounded-xl" /><div className="skeleton h-64 rounded-xl" /></div>}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/asset/:symbol" element={<Asset />} />
@@ -249,6 +262,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/users" element={<Users />} />
             <Route path="*" element={<div className="py-10 text-center text-mute">Page not found</div>} />
           </Routes>
+          </Suspense>
           </div>
         </main>
         <Footer className="pb-24 md:pb-3" />

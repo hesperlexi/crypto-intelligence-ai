@@ -233,28 +233,25 @@ class FirestoreSink(BaseSink):
         self.writes += 1
         return ref.id
 
-    PUSH_TIMEOUT_S = 45
+    PUSH_TIMEOUT_S = 60
 
     def send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
-        """Runs the sending in a background thread with a hard time limit: a hung notification service must never
-        stop the engine cycle (27 Oct: a renewal reminder that never returned froze every cycle for hours)."""
+        """Sends from a separate process with a hard time limit: a hung notification service must never stop or slow
+        the engine cycle (27 Oct: a renewal reminder that never returned froze every cycle for hours)."""
         if not messages:
             return {"sent": 0, "devices": 0}
-        import threading
+        import subprocess
+        import sys
 
-        box: dict[str, Any] = {}
-
-        def run():
-            try:
-                box["out"] = self._send_push(messages)
-            except Exception as exc:
-                box["out"] = {"sent": 0, "devices": 0, "error": f"{type(exc).__name__}: {exc}"[:200]}
-        t = threading.Thread(target=run, daemon=True, name="push")
-        t.start()
-        t.join(self.PUSH_TIMEOUT_S)
-        if t.is_alive():
+        try:
+            p = subprocess.run([sys.executable, "-m", "app.push_send"], input=json.dumps(messages, default=str),
+                               capture_output=True, text=True, timeout=self.PUSH_TIMEOUT_S)
+        except subprocess.TimeoutExpired:
             return {"sent": 0, "devices": 0, "error": f"notification service did not answer within {self.PUSH_TIMEOUT_S} s"}
-        return box.get("out") or {"sent": 0, "devices": 0}
+        try:
+            return json.loads(p.stdout.strip().splitlines()[-1])
+        except Exception:
+            return {"sent": 0, "devices": 0, "error": (p.stderr or "no result")[-200:]}
 
     def _send_push(self, messages: list[dict[str, str]]) -> dict[str, Any]:
         try:

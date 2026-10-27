@@ -21,8 +21,7 @@ self.addEventListener("fetch", (e) => {
   if (req.mode === "navigate" && !/\.[a-z0-9]+$/i.test(url.pathname)) {   // files such as /manual.pdf are left to the browser
     // pages: network first (always the newest deploy), cached shell when offline
     e.respondWith(fetch(req, { cache: "no-store" }).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put("/index.html", copy));
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put("/index.html", copy)); }
       return res;
     }).catch(() => caches.match("/index.html")));
     return;
@@ -30,8 +29,7 @@ self.addEventListener("fetch", (e) => {
   if (url.pathname.startsWith("/assets/")) {
     // build assets have content hashes in their names: cache first is safe
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req).then((res) => {
-      const copy = res.clone();
-      caches.open(CACHE).then((c) => c.put(req, copy));
+      if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)); }   // never keep an error page
       return res;
     })));
   }
