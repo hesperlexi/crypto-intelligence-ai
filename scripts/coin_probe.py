@@ -16,18 +16,26 @@ def view(name):
 out = {"coin": coin}
 sig, _ = view("signals")
 rows = sig.get("signals") if isinstance(sig, dict) else sig
-out["signals"] = [r for r in (rows or []) if isinstance(r, dict) and r.get("symbol") == coin][:12]
+if coin == "ALL":                                   # every trade signal (not info rows), newest first
+    out["signals"] = [{k: r.get(k) for k in ("symbol", "timeframe", "decision", "side", "entry", "stop", "tp1", "tp2", "tp3",
+                       "status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "return_pct", "created_at", "closed_at")}
+                      for r in (rows or []) if isinstance(r, dict) and r.get("status") != "INFO"][:40]
+    for b in (bots or {}).get("bots", []) if False else []:
+        pass
+else:
+    out["signals"] = [r for r in (rows or []) if isinstance(r, dict) and r.get("symbol") == coin][:12]
 bots, _ = view("bots")
 ob = []
 for b in (bots or {}).get("bots", []):
     st = b.get("state") or {}
     ob.append({"bot": (b.get("config") or {}).get("id"),
-               "positions": [p for p in (b.get("positions") or st.get("positions") or []) if p.get("symbol") == coin],
+               "positions": [p for p in (b.get("positions") or st.get("positions") or []) if coin == "ALL" or p.get("symbol") == coin],
                "pending": [p for p in (b.get("pending") or st.get("pending") or []) if p.get("symbol") == coin],
-               "trades": [t for t in (b.get("trades") or b.get("recent_trades") or []) if t.get("symbol") == coin][:5]})
+               "trades": [{k: t.get(k) for k in ("symbol", "side", "entry", "exit", "pnl", "reason", "opened_at", "closed_at")}
+                          for t in (b.get("trades") or []) if coin == "ALL" or t.get("symbol") == coin][:10]})
 out["bots"] = ob
 an = {}
-for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
+for tf in (() if coin == "ALL" else ("15m", "1h", "4h", "12h", "1d", "3d")):
     a, ts = view(f"analysis_{slug}_{tf}")
     if not a:
         continue
