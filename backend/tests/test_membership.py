@@ -175,3 +175,31 @@ def test_gold_is_added_once_and_can_be_removed(tmp_path):
     sink.set("config/watchlist", {**doc, "symbols": [x for x in doc["symbols"] if x["symbol"] != "PAXG/USDT"]})
     worker.sync_config(rt, sink)
     assert "PAXG/USDT" not in rt.symbols()                    # removed by the admin: stays removed
+
+
+def test_testing_mode_v24_keeps_ten_coins_futures_bots_and_restarts_practice(tmp_path):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return [f"{q}/USDT"]
+
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    for f in ("watchlist_majors_v2", "gold_paxg_v21", "fresh_start_v23"):
+        rt.db.set_setting(f, True)
+    sink = LocalSink(tmp_path)
+    sink.set("config/watchlist", {"symbols": [{"symbol": s, "pinned": False} for s in ("BTC/USDT", "PEPE/USDT", "ENA/USDT")]})
+    sink.set("paper/u1_futures", {"wallet": 5})
+    sink.set("paper_futures_trades/t1", {"uid": "u1"})
+    notes = worker.sync_config(rt, sink)
+    assert sorted(rt.symbols()) == sorted(worker.TEST_COINS)
+    assert all(b["market"] == "futures" for b in sink.get("config/bots")["bots"]) and len(sink.get("config/bots")["bots"]) == 5
+    assert sink.get("paper/u1_futures") is None and sink.get("paper_futures_trades/t1") is None
+    assert notes["testing_v24"]["coins"] == worker.TEST_COINS
+    assert "testing_v24" not in worker.sync_config(rt, sink)       # done once
+    assert len(sink.get("config/bots")["bots"]) == 5                # spot bots are not added back

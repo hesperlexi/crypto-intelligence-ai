@@ -29,8 +29,11 @@ MMR = 0.005
 ADVERSE = (2 + 0.5) / 1e4
 MAX_LEV = 50
 TAKES = {"tp1": 0, "tp2": 1, "tp3": 2}
+# v2.4 testing mode: each member's auto-trade holds at most 3 trades at a time and opens at most 6 new ones a day
+MAX_OPEN_CAP = 3
+MAX_NEW_PER_DAY = 6
 DEFAULTS = {"enabled": False, "margin": 100.0, "leverage": "signal", "timeframes": ["1h", "4h"], "grades": "AB",
-            "take": "tp2", "max_open": 5, "coins": "all", "notify": True, "scale": True, "max_same_side": 3}
+            "take": "tp2", "max_open": 3, "coins": "all", "notify": True, "scale": True, "max_same_side": 3}
 
 
 def _rid(n: int = 10) -> str:
@@ -60,7 +63,7 @@ def settings_of(raw: dict[str, Any] | None) -> dict[str, Any]:
     s["timeframes"] = [t for t in (s["timeframes"] or []) if t in ("15m", "1h", "4h", "12h", "1d", "3d")] or ["1h", "4h"]
     s["grades"] = "A" if str(s["grades"]).upper() == "A" else "AB"
     s["take"] = s["take"] if s["take"] in TAKES else "tp2"
-    s["max_open"] = int(max(1, min(50, int(s.get("max_open") or 5))))
+    s["max_open"] = int(max(1, min(MAX_OPEN_CAP, int(s.get("max_open") or MAX_OPEN_CAP))))
     s["max_same_side"] = int(max(1, min(50, int(s.get("max_same_side") or 3))))
     s["scale"] = bool(s.get("scale", True))
     return s
@@ -177,6 +180,8 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
             if mine is not None and sig["symbol"] not in mine:
                 continue
             key = f"{sig['symbol']}|{sig['timeframe']}|{sig['side']}"
+            if sum(1 for v in done.values() if now - int(v) < 86_400_000) >= MAX_NEW_PER_DAY:
+                break                                   # daily limit of new auto-trades reached
             # one entry per signal: the same call is not re-entered on later candles for 6 bars
             if now - int(done.get(key, 0)) < 6 * tf_ms(sig["timeframe"]):
                 continue

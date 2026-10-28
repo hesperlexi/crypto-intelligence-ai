@@ -268,7 +268,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "benchmark_return_pct": st.get("benchmark_return_pct"), "win_rate": st.get("win_rate"),
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
-    out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None, "record_since_tf": record_since_tf(rt) or None, "live": {"summary": summ(closed), "by_timeframe": by_tf,
+    out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None, "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "signals": sigs[:limit]},
             "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))),

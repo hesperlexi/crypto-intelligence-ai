@@ -105,6 +105,11 @@ MEMBER_COIN_LIMIT = 5        # default: coins one member can add for themselves 
 MEMBER_COINS_MAX = 25        # default: all members together, on top of the admin's list (keeps the engine within its time)
 
 
+# v2.4 testing mode: the 10 coins (ranked by proven out-of-sample edges on the bot timeframes, 28 Oct 2026) + gold
+TEST_COINS = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "XRP/USDT", "SOL/USDT", "DOGE/USDT", "LTC/USDT", "AAVE/USDT",
+              "AVAX/USDT", "XAUT/USDT"]
+
+
 def member_limits(sink: BaseSink) -> tuple[int, int]:
     d = sink.get("config/limits") or {}
     try:
@@ -181,6 +186,27 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sym = RENAMED.get(sym, sym)
                 if sym not in member_coins:
                     member_coins.append(sym)
+    # v2.4 testing mode (owner request, 28 Oct 2026 09:25 Dubai): two weeks of focused testing on 10 coins chosen by
+    # proven out-of-sample edges (most timeframes with an edge, then hit rate, liquid coins only) + gold; only the 5
+    # futures bots run; every bot book, every practice account and the counted record restart now (wins and losses
+    # alike; older signals stay in the Signal log). Members cannot add extra coins during the test.
+    if not rt.db.get_setting("testing_v24", False) and not rt.db.get_setting("fresh_start_v23", False):
+        rt.db.set_setting("testing_v24", True)         # a brand-new install starts clean anyway (and keeps its own coins)
+    if not rt.db.get_setting("testing_v24", False):
+        _b("config: testing mode v2.4")
+        sink.set("config/watchlist", {"symbols": [{"symbol": c, "pinned": c in ("BTC/USDT", "XAUT/USDT")} for c in TEST_COINS],
+                                      "updated_at": now_ms(), "testing_mode": True})
+        sink.set("config/limits", {**(sink.get("config/limits") or {}), "member_coins_max": 0, "updated_at": now_ms()})
+        fut = [{**b, "reset_token": "v24"} for b in DEFAULT_BOTS if b.get("market") == "futures"]
+        sink.set("config/bots", {"bots": fut, "updated_at": now_ms(), "defaults_added": [b["id"] for b in DEFAULT_BOTS]})
+        for t in ("bot_trades", "bot_equity", "bots"):
+            rt.db.execute(f"DELETE FROM {t}")
+        rt.db.execute("DELETE FROM app_settings WHERE key LIKE 'safety:%'")
+        rt.db.set_setting("record_since", now_ms())
+        rt.db.set_setting("record_since_tf", {})
+        rt.db.set_setting("testing_since", now_ms())
+        notes["testing_v24"] = {"coins": TEST_COINS, "bots": [b["id"] for b in fut], "practice": clear_all_practice(sink)}
+        rt.db.set_setting("testing_v24", True)
     # watchlist
     _b("config: watchlist")
     doc = sink.get("config/watchlist")

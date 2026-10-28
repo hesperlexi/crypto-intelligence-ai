@@ -55,6 +55,9 @@ export async function order(symbol: string, side: string, qty: number | null | u
     let q = qty ?? (notional != null ? notional / fill : NaN);
     if (!(q > 0)) throw new Error("give a positive quantity or amount");
     if (side === "SELL" && q > held * (1 + 1e-9)) throw new Error(`cannot sell ${q.toPrecision(6)}; position is ${held.toPrecision(6)}`);
+    // testing period (v2.4): at most 5 coins held at a time in the spot practice account
+    if (side === "BUY" && !held && Object.values<any>(acc.positions ?? {}).filter((p) => (p?.qty ?? 0) > 0).length >= 5)
+      throw new Error("during the testing period you can hold up to 5 coins at a time; sell one first");
     if (side === "SELL") q = Math.min(q, held);
     const fee = q * fill * costs.fee_rate;
     const slip = q * Math.abs(fill - mark);

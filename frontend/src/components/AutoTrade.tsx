@@ -7,7 +7,7 @@ import { db } from "../lib/firebase";
 import { base, fmtPrice, fmtTime } from "../lib/format";
 import { myUid } from "../lib/session";
 
-const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 5, coins: "all", notify: true, scale: true, max_same_side: 3 };
+const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 3, coins: "all", notify: true, scale: true, max_same_side: 3 };
 type S = typeof DEF;
 
 export default function AutoTrade() {
@@ -60,8 +60,8 @@ export default function AutoTrade() {
             <select className="input mt-1" value={s.take} onChange={(e) => setS({ ...s, take: e.target.value })}>
               <option value="tp1">Target 1 (quick, more wins)</option><option value="tp2">Target 2 (balanced)</option><option value="tp3">Target 3 (let it run)</option>
             </select></label>
-          <label className="block"><span className="text-xs text-mute">Max open trades</span>
-            <input className="input mt-1" type="number" min={1} max={50} value={s.max_open} onChange={(e) => setS({ ...s, max_open: Math.max(1, Math.min(50, Number(e.target.value) || 1)) })} /></label>
+          <label className="block"><span className="text-xs text-mute">Max open trades (testing period: up to 3, max 6 new a day)</span>
+            <input className="input mt-1" type="number" min={1} max={3} value={s.max_open} onChange={(e) => setS({ ...s, max_open: Math.max(1, Math.min(3, Number(e.target.value) || 1)) })} /></label>
           <label className="block"><span className="text-xs text-mute">Coins</span>
             <select className="input mt-1" value={s.coins} onChange={(e) => setS({ ...s, coins: e.target.value })}>
               <option value="all">All coins</option><option value="mine">Only my own coins</option>

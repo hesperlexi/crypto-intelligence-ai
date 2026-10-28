@@ -77,6 +77,14 @@ re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/s
    30-day cache `htf_gate1|`; slices pass decisions to the merge via `bundle_record.gates`). `USE_HTF_FEATURES=1` forces it on.
    BTC context aligns to the latest BTC bar opened by the coin bar's open (3d candles start on listing dates).
 
+## Testing mode v2.4 (from 28 Oct 2026, two weeks)
+Flag `testing_v24` (`worker.sync_config`): watchlist = `worker.TEST_COINS` (10: BTC ETH BNB XRP SOL DOGE LTC AAVE AVAX + XAUT
+gold, ranked by proven out-of-sample edges), `config/limits.member_coins_max = 0`, only the 5 futures bots (spot bots
+removed, reset_token v24), all bot books + all practice accounts cleared, `record_since` restarted, `record_since_tf`
+cleared, `testing_since` shown on Results. Trade limits: auto-trade ≤3 open, ≤6 new/day (`autopaper.MAX_OPEN_CAP`,
+`MAX_NEW_PER_DAY`); manual practice futures ≤5 open trades+orders (`paperFutures.MAX_OPEN_TRADES`), spot ≤5 coins.
+To end testing: restore the watchlist/limits and re-add spot bots (no automatic undo).
+
 ## Bots and auto-trade
 - `services/bots.py`: 50/25/25 at TP1/TP2/TP3 (`TP_SPLIT`), break-even after TP1, trail to TP1 after TP2, time exit,
   **reversal exit** (signal flips → close, profit taken / loss cut, then take the new side), no hedging, size

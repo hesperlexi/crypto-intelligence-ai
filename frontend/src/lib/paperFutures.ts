@@ -79,6 +79,15 @@ async function log(trade: any) {
   await addDoc(collection(db, TRADES), { ...trade, uid: myUid(), created_at: trade.created_at ?? Date.now(), mode: "PAPER FUTURES" });
 }
 
+/** Testing period (v2.4): at most this many open practice trades (positions + waiting limit orders) at a time. */
+export const MAX_OPEN_TRADES = 5;
+function checkTradeLimit(acc: any, symbol: string, side: number) {
+  const pos = Object.values<any>(acc.positions ?? {});
+  if (pos.some((p) => p.symbol === symbol && p.side === side)) return;          // adding to a trade you already hold
+  const n = pos.length + Object.keys(acc.orders ?? {}).length;
+  if (n >= MAX_OPEN_TRADES) throw new Error(`during the testing period you can hold up to ${MAX_OPEN_TRADES} open trades and orders; close one first`);
+}
+
 export interface OpenOrder { symbol: string; side: 1 | -1; margin: number; leverage: number; stop?: number | null; take?: number | null }
 
 /** One-way: a coin holds either a long or a short. Hedge: a long and a short can be open on the same coin at once. */
@@ -113,6 +122,7 @@ export async function open(o: OpenOrder) {
   const res = await runTransaction(db, async (tx) => {
     const acc: any = (await tx.get(ACC_REF())).data();
     if (o.margin + fee > acc.wallet + 1e-9) throw new Error(`not enough virtual balance: need $${(o.margin + fee).toFixed(2)}, have $${acc.wallet.toFixed(2)}`);
+    checkTradeLimit(acc, o.symbol, o.side);
     const positions = { ...(acc.positions ?? {}) };
     const hedge = acc.position_mode === "hedge";
     const now = Date.now();
@@ -173,6 +183,7 @@ export async function placeLimit(o: LimitOrder) {
   await runTransaction(db, async (tx) => {
     const acc: any = (await tx.get(ACC_REF())).data();
     if (reserve > acc.wallet + 1e-9) throw new Error(`not enough virtual balance: need $${reserve.toFixed(2)}, have $${acc.wallet.toFixed(2)}`);
+    checkTradeLimit(acc, o.symbol, o.side);
     if (acc.position_mode !== "hedge") {
       const opposite = Object.values<any>(acc.positions ?? {}).find((p) => p.symbol === o.symbol && p.side !== o.side);
       if (opposite) throw new Error(`you have a ${opposite.side > 0 ? "LONG" : "SHORT"} ${o.symbol} position. Close it first, or switch to Hedge mode.`);
