@@ -200,7 +200,8 @@ CREATE TABLE IF NOT EXISTS app_settings (
 CREATE TABLE IF NOT EXISTS published (
   doc_id TEXT PRIMARY KEY,
   hash TEXT NOT NULL,
-  ts BIGINT NOT NULL
+  ts BIGINT NOT NULL,
+  core TEXT
 );
 
 CREATE TABLE IF NOT EXISTS engine_runs (

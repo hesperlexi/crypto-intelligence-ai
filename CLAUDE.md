@@ -20,6 +20,12 @@ Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real
   `android`). Data comes from Firestore `views/*` (JSON written by the engine), live prices from Binance WebSockets.
 - **Engine** `backend/app` Python, run by GitHub Actions; SQLite state in the Actions cache (`engine-state-*`),
   encrypted daily backup as release asset `engine-backup` (`scripts/engine_backup.sh`, auto-restore on cache miss).
+- **Firestore quota (Spark/free plan: 20,000 writes/day, day = midnight US Pacific).** 27-28 Oct 2026 the always-on
+  engine used it up by ~23:00 Dubai and nothing published for ~12 h. `sinks.BaseSink` now counts writes per quota day
+  (`fs_writes`), paces coin analyses (`worker.ANALYSIS_EVERY_S`, immediately when `analysis_core` - the call - changes),
+  goes lean (essentials only, every 30 min) above `FIRESTORE_DAILY_BUDGET` (15000), and on a 429 stops writing until the
+  quota day ends (`fs_blocked_until`; unpublished views go out after the reset). Heartbeat ≤ 1/min. Health shows
+  `firestore_writes_today`. Upgrading Firebase to Blaze removes the hard stop (owner decision).
 - Firestore rules: `firestore.rules.template` (deployed by `deploy.yml`). Public docs: `views/wins_today`,
   `config/membership`. Owner-only: `owner/*`, `admin/*`. `presence/{uid}` (last_seen, country from time zone, device; written by the person every ≤4 min, read by admin on Users).
 

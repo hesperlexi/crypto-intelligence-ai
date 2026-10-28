@@ -327,3 +327,23 @@ def test_15m_record_restart_counts_wins_and_losses_alike_from_the_restart():
     rc, rp = views.record_clause(rt)
     ids = [r["id"] for r in rt.db.query(f"SELECT id FROM signals WHERE {rc} ORDER BY id", rp)]
     assert ids == ["c", "d"] and views.record_for(rt, "15m") == 5000 and views.record_for(rt, "1h") == 1000
+
+
+def test_sink_paces_views_counts_writes_and_backs_off_on_quota(tmp_path):
+    from app.db import Database
+    from app.sinks import LocalSink
+    s = LocalSink(tmp_path / "out", Database(str(tmp_path / "x.db")))
+    s.view("a", {"x": 1}, min_interval_s=900, core=["BUY"])
+    assert s.flush() == 1
+    s.view("a", {"x": 2}, min_interval_s=900, core=["BUY"])     # changed numbers, same call: held back
+    assert s.flush() == 0
+    s.view("a", {"x": 3}, min_interval_s=900, core=["SELL"])    # the call changed: goes out at once
+    assert s.flush() == 1 and s.writes_today() == 2
+
+    def quota(docs):
+        raise RuntimeError("429 Quota exceeded.")
+    s._write_many = quota
+    s.view("b", {"y": 1})
+    assert s.flush() == 0 and s.blocked()                       # no exception, no retries
+    s.view("c", {"y": 1})
+    assert s.flush() == 0 and s.held == 2

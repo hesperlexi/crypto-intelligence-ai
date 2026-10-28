@@ -494,11 +494,35 @@ def push_message(ev: dict[str, Any], owner: str | None = None) -> dict[str, str]
     return msg
 
 
+# Coin analysis pages carry live numbers, so they change every cycle; they are re-published at most this often
+# (seconds) unless the trade call itself changes - then at once (Firebase free plan: 20,000 writes a day).
+ANALYSIS_EVERY_S = {"15m": 900, "1h": 1800, "4h": 3600, "12h": 7200, "1d": 7200, "3d": 7200, "1w": 14400}
+
+
+def analysis_core(a: dict[str, Any]) -> Any:
+    """The part of an analysis that must reach members at once when it changes: the call itself (new trade signals
+    also go out at once on the Signals page)."""
+    st = a.get("setup") if isinstance(a.get("setup"), dict) else {}
+    return [a.get("decision"), a.get("grade"), a.get("status"), st.get("side"), st.get("valid")]   # not the live levels
+
+
 def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analyses: dict[tuple[str, str], dict]) -> None:
+    if sink.lean:
+        # near the day's write limit: only what members act on (signals, results, bots, futures boards, status)
+        bot_report = BotEngine(rt).report()
+        sink.view("signals", views.signals(rt))
+        sink.view("bots", bot_report)
+        sink.view("track_record", views.track_record(rt, bot_report))
+        sink.view("wins_today", views.wins_today(rt))
+        for tf in views.FUTURES_TIMEFRAMES:
+            if all((s, tf) in analyses for s in rt.symbols()):
+                sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))
+        publish_status(rt, sink, engine)
+        return
     for (s, tf), a in analyses.items():
-        sink.view(f"analysis_{views.slug(s)}_{tf}", a)
+        sink.view(f"analysis_{views.slug(s)}_{tf}", a, min_interval_s=ANALYSIS_EVERY_S.get(tf, 900), core=analysis_core(a))
     for tf in MODEL_TIMEFRAMES:
-        sink.view(f"dashboard_{tf}", scanner.dashboard(rt, tf))
+        sink.view(f"dashboard_{tf}", scanner.dashboard(rt, tf), min_interval_s=600)
     publish_models(rt, sink)
     sink.view("performance", views.performance_all(rt))
     sink.view("signals", views.signals(rt))
@@ -569,9 +593,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
 
     def beat(name: str, extra: dict | None = None) -> None:
         # tiny progress note (admin/engine_heartbeat) so a stuck or failing cycle can be seen from outside. Firestore
-        # allows about one write per second to one document, so notes are spaced >= 10 s apart (except ones with
+        # allows about one write per second to one document, so notes are spaced >= 60 s apart (they count against the daily write quota too) (except ones with
         # extra detail) and sent without retries (27 Oct: rapid notes were throttled and stalled the cycle)
-        if not extra and time.time() - last_beat[0] < 10:
+        if not extra and time.time() - last_beat[0] < 60:
             return
         last_beat[0] = time.time()
         try:
@@ -670,6 +694,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "data_host": getattr(rt.provider, "host_used", None),
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
+    engine["firestore_writes_today"] = sink.writes_today()     # Firebase free plan: 20,000 a day
+    engine["firestore_write_budget"] = sink.DAILY_BUDGET
+    engine["firestore_lean"] = sink.lean
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
     if analyses:
         res = step("auto_paper", lambda: _auto_paper(rt, sink, analyses))
@@ -707,6 +734,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["written"] = step("publish", sink.flush) or 0
     beat("done", {"written": detail["written"]})
     detail["skipped_unchanged"] = sink.skipped
+    detail["deferred"] = getattr(sink, "deferred", 0)
+    detail["held_for_quota"] = getattr(sink, "held", 0)
     status = "ok" if all(v["ok"] for v in detail["steps"].values()) else "partial"
     _record(rt, "tick", started, status, detail)
     detail["status"], detail["seconds"] = status, round(time.time() - t0, 1)

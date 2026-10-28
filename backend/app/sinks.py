@@ -22,6 +22,10 @@ from .db import Database, dumps
 MAX_DOC_BYTES = 1_000_000
 
 
+class QuotaBlocked(RuntimeError):
+    pass
+
+
 def _now() -> int:
     return int(time.time() * 1000)
 
@@ -33,8 +37,82 @@ class BaseSink:
         self.writes = 0
         self.skipped = 0
 
+    # -- daily write budget -------------------------------------------------------------------------------
+    # The Firebase free plan allows 20,000 document writes a day (the day restarts at midnight US Pacific time).
+    # 27-28 Oct 2026: the always-on engine used it all by ~23:00 Dubai and nothing was published for ~12 hours.
+    # The engine now keeps its own count, slows the heavy documents down, goes "lean" (essentials only, every
+    # 30 min) near the limit, and stops trying (no hanging retries) once Firestore answers "quota exceeded".
+    DAILY_BUDGET = int(os.environ.get("FIRESTORE_DAILY_BUDGET", "15000"))
+    LEAN_EVERY_S = 1800
+
+    @staticmethod
+    def quota_day(now_s: float | None = None) -> tuple[str, int]:
+        """(current quota day as YYYY-MM-DD, ms when it ends) - the quota day runs midnight to midnight US Pacific."""
+        from datetime import datetime, timedelta
+        from zoneinfo import ZoneInfo
+        tz = ZoneInfo("America/Los_Angeles")
+        t = datetime.fromtimestamp(now_s if now_s is not None else time.time(), tz)
+        end = (t + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0)
+        return t.strftime("%Y-%m-%d"), int(end.timestamp() * 1000)
+
+    def _budget(self) -> dict[str, Any]:
+        day, _ = self.quota_day()
+        b = (self.db.get_setting("fs_writes", None) if self.db is not None else None) or {}
+        return b if b.get("day") == day else {"day": day, "n": 0}
+
+    def writes_today(self) -> int:
+        return int(self._budget().get("n", 0))
+
+    def _count(self, n: int) -> None:
+        if self.db is None or n <= 0:
+            return
+        try:                                           # (may be called from the heartbeat's watch thread)
+            b = self._budget()
+            b["n"] = int(b.get("n", 0)) + n
+            self.db.set_setting("fs_writes", b)
+        except Exception:
+            pass
+
+    def blocked(self) -> bool:
+        """True while Firestore has refused writes for quota today (until the quota day ends)."""
+        if self.db is None:
+            return False
+        try:
+            return int(self.db.get_setting("fs_blocked_until", 0) or 0) > _now()
+        except Exception:
+            return False
+
+    def _mark_blocked(self) -> None:
+        if self.db is not None:
+            try:
+                self.db.set_setting("fs_blocked_until", self.quota_day()[1] + 120_000)
+            except Exception:
+                pass
+
+    @property
+    def lean(self) -> bool:
+        """Near the daily limit: publish only the essentials, at most every 30 minutes."""
+        return self.db is not None and self.writes_today() >= self.DAILY_BUDGET
+
+    @staticmethod
+    def is_quota_error(exc: BaseException) -> bool:
+        t = f"{type(exc).__name__} {exc}"
+        return "429" in t or "Quota exceeded" in t or "ResourceExhausted" in t or "RESOURCE_EXHAUSTED" in t
+
     # -- views (hash-deduplicated so unchanged documents cost no Firestore writes) ----------------------
-    def view(self, name: str, payload: Any, volatile: tuple[str, ...] = ("generated_at",)) -> None:
+    def _core_column(self) -> None:
+        if getattr(self, "_core_ok", False) or self.db is None:
+            return
+        try:
+            self.db.execute("ALTER TABLE published ADD COLUMN core TEXT")
+        except Exception:
+            pass                                       # already there
+        self._core_ok = True
+
+    def view(self, name: str, payload: Any, volatile: tuple[str, ...] = ("generated_at",),
+             min_interval_s: float = 0, core: Any = None) -> None:
+        """Queue a view. Unchanged documents are skipped. With min_interval_s, a changed document is still held back
+        until that long after its last publish - unless its `core` (e.g. the trade decision) changed."""
         text = dumps(payload)
         if len(text.encode()) > MAX_DOC_BYTES:
             text = dumps({"error": "payload too large for one document", "bytes": len(text)})
@@ -42,23 +120,44 @@ class BaseSink:
         if isinstance(payload, dict) and volatile:
             stable = {k: v for k, v in payload.items() if k not in volatile}
         digest = hashlib.sha1(dumps(stable).encode()).hexdigest()
+        core_digest = hashlib.sha1(dumps(core).encode()).hexdigest() if core is not None else None
         if self.db is not None:
-            row = self.db.one("SELECT hash FROM published WHERE doc_id = ?", (name,))
+            self._core_column()
+            row = self.db.one("SELECT hash, ts, core FROM published WHERE doc_id = ?", (name,))
             if row and row["hash"] == digest:
                 self.skipped += 1
                 return
-        self.pending[f"views/{name}"] = {"json": text, "updated_at": _now(), "_hash": digest}
+            wait = max(min_interval_s, self.LEAN_EVERY_S if self.lean else 0)
+            if row and wait and _now() - int(row["ts"]) < wait * 1000 and (core_digest is None or row["core"] == core_digest):
+                self.deferred = getattr(self, "deferred", 0) + 1
+                return
+        self.pending[f"views/{name}"] = {"json": text, "updated_at": _now(), "_hash": digest, "_core": core_digest}
 
     def flush(self) -> int:
-        docs = {k: {kk: vv for kk, vv in v.items() if kk != "_hash"} for k, v in self.pending.items()}
-        if docs:
+        if not self.pending:
+            return 0
+        if self.blocked():                             # quota used up today: keep everything for after the reset
+            self.held = getattr(self, "held", 0) + len(self.pending)
+            self.pending.clear()
+            return 0
+        docs = {k: {kk: vv for kk, vv in v.items() if not kk.startswith("_")} for k, v in self.pending.items()}
+        try:
             self._write_many(docs)
+        except Exception as exc:
+            if not self.is_quota_error(exc):
+                raise
+            self._mark_blocked()                       # nothing is marked published, so it all goes out after the reset
+            self.held = getattr(self, "held", 0) + len(self.pending)
+            self.pending.clear()
+            return 0
         if self.db is not None:
-            rows = [(k.split("/", 1)[1], v["_hash"], _now()) for k, v in self.pending.items() if "_hash" in v]
-            self.db.executemany("INSERT INTO published (doc_id, hash, ts) VALUES (?, ?, ?) "
-                                "ON CONFLICT (doc_id) DO UPDATE SET hash = excluded.hash, ts = excluded.ts", rows)
+            self._core_column()
+            rows = [(k.split("/", 1)[1], v["_hash"], _now(), v.get("_core")) for k, v in self.pending.items() if "_hash" in v]
+            self.db.executemany("INSERT INTO published (doc_id, hash, ts, core) VALUES (?, ?, ?, ?) "
+                                "ON CONFLICT (doc_id) DO UPDATE SET hash = excluded.hash, ts = excluded.ts, core = excluded.core", rows)
         n = len(docs)
         self.writes += n
+        self._count(n)
         self.pending.clear()
         return n
 
@@ -199,8 +298,21 @@ class FirestoreSink(BaseSink):
         snap = self.fs.document(path).get()
         return snap.to_dict() if snap.exists else None
 
+    def _guard(self, fn):
+        """Other writes: fail fast while the day's quota is used up (instead of minutes of retries per write)."""
+        if self.blocked():
+            raise QuotaBlocked("Firestore daily write quota used up; writes resume after midnight US Pacific")
+        try:
+            out = fn()
+        except Exception as exc:
+            if self.is_quota_error(exc):
+                self._mark_blocked()
+            raise
+        self._count(1)
+        return out
+
     def set(self, path: str, data: dict[str, Any], merge: bool = False) -> None:
-        self.fs.document(path).set(json.loads(dumps(data)), merge=merge)
+        self._guard(lambda: self.fs.document(path).set(json.loads(dumps(data)), merge=merge))
 
     def uid_for_email(self, email: str) -> str | None:
         try:
@@ -211,8 +323,16 @@ class FirestoreSink(BaseSink):
 
     def set_quick(self, path: str, data: dict[str, Any]) -> None:
         """Best-effort small write: no retries, 5 s limit (progress notes must never slow the cycle)."""
-        self.fs.document(path).set(json.loads(dumps(data)), retry=None, timeout=5)
+        if self.blocked():
+            return
+        try:
+            self.fs.document(path).set(json.loads(dumps(data)), retry=None, timeout=5)
+        except Exception as exc:
+            if self.is_quota_error(exc):
+                self._mark_blocked()
+            raise
         self.writes += 1
+        self._count(1)
 
     def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
         return [(s.id, s.to_dict() or {}) for s in self.fs.collection(collection).stream()]
@@ -228,7 +348,7 @@ class FirestoreSink(BaseSink):
         return sorted(jobs, key=lambda j: j[1].get("created_at") or 0)
 
     def delete(self, path: str) -> None:
-        self.fs.document(path).delete()
+        self._guard(lambda: self.fs.document(path).delete())
 
     def transact(self, path: str, fn) -> Any:
         from google.cloud import firestore as gfs
@@ -246,7 +366,7 @@ class FirestoreSink(BaseSink):
         return run(self.fs.transaction())
 
     def add(self, collection: str, data: dict[str, Any]) -> str:
-        _, ref = self.fs.collection(collection).add(json.loads(dumps(data)))
+        _, ref = self._guard(lambda: self.fs.collection(collection).add(json.loads(dumps(data))))
         self.writes += 1
         return ref.id
 
