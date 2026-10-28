@@ -27,13 +27,22 @@ if [ "$MODE" = save ]; then
   tar -czf - -C backend data | openssl enc -aes-256-cbc -pbkdf2 -iter 200000 -salt -pass "pass:$KEY" -out "$TMP/$name"
   gh release view "$TAG" >/dev/null 2>&1 || gh release create "$TAG" --title "Engine backup (encrypted)" \
       --notes "Encrypted engine state, restored automatically when the Actions cache is gone. Not a download." --prerelease
-  gh release upload "$TAG" "$TMP/$name" --clobber
-  echo "backed up $(du -h "$TMP/$name" | cut -f1) to release $TAG as $name"
+  # a release file may be at most 2 GiB and the state is ~1.8 GB, so it is stored in 1.5 GB parts
+  (cd "$TMP" && split -b 1500m -d -a 2 "$name" "${name}.part")
+  rm -f "$TMP/$name"
+  # remove this slot's older copy (whole file or parts) before uploading the new parts
+  for old in $(gh release view "$TAG" --json assets -q '.assets[].name' 2>/dev/null | grep "^engine-state-${slot}\." || true); do
+    gh release delete-asset "$TAG" "$old" -y || true
+  done
+  gh release upload "$TAG" "$TMP"/"${name}".part* --clobber
+  echo "backed up $(du -ch "$TMP"/"${name}".part* | tail -1 | cut -f1) to release $TAG as ${name}.part*"
 elif [ "$MODE" = restore ]; then
-  newest=$(gh release view "$TAG" --json assets -q '.assets | sort_by(.updatedAt) | reverse | .[].name' 2>/dev/null | grep '^engine-state-' | head -1 || true)
+  assets=$(gh release view "$TAG" --json assets -q '.assets | sort_by(.updatedAt) | reverse | .[].name' 2>/dev/null | grep '^engine-state-' || true)
+  newest=$(printf '%s\n' "$assets" | head -1 | sed -E 's/\.part[0-9]+$//')
   [ -n "$newest" ] || { echo "::warning::no engine backup found: starting fresh"; exit 0; }
-  gh release download "$TAG" -p "$newest" -D "$TMP"
+  gh release download "$TAG" -p "${newest}*" -D "$TMP"
   mkdir -p backend
+  if ls "$TMP/${newest}".part* >/dev/null 2>&1; then cat "$TMP/${newest}".part* > "$TMP/$newest"; rm -f "$TMP/${newest}".part*; fi
   openssl enc -d -aes-256-cbc -pbkdf2 -iter 200000 -pass "pass:$KEY" -in "$TMP/$newest" | tar -xzf - -C backend
   echo "::notice::engine state restored from backup $newest"
 fi
