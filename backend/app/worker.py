@@ -106,8 +106,9 @@ MEMBER_COINS_MAX = 25        # default: all members together, on top of the admi
 
 
 # v2.4 testing mode: the 10 coins (ranked by proven out-of-sample edges on the bot timeframes, 28 Oct 2026) + gold
+# Gold is PAXG (the app's gold: shown as GOLD, forex.com chart, gold notes on signals; longer tested history than XAUT)
 TEST_COINS = ["BTC/USDT", "ETH/USDT", "BNB/USDT", "XRP/USDT", "SOL/USDT", "DOGE/USDT", "LTC/USDT", "AAVE/USDT",
-              "AVAX/USDT", "XAUT/USDT"]
+              "AVAX/USDT", GOLD]
 
 
 def member_limits(sink: BaseSink) -> tuple[int, int]:
@@ -192,9 +193,10 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     # alike; older signals stay in the Signal log). Members cannot add extra coins during the test.
     if not rt.db.get_setting("testing_v24", False) and not rt.db.get_setting("fresh_start_v23", False):
         rt.db.set_setting("testing_v24", True)         # a brand-new install starts clean anyway (and keeps its own coins)
+        rt.db.set_setting("testing_v24b", True)
     if not rt.db.get_setting("testing_v24", False):
         _b("config: testing mode v2.4")
-        sink.set("config/watchlist", {"symbols": [{"symbol": c, "pinned": c in ("BTC/USDT", "XAUT/USDT")} for c in TEST_COINS],
+        sink.set("config/watchlist", {"symbols": [{"symbol": c, "pinned": c in ("BTC/USDT", GOLD)} for c in TEST_COINS],
                                       "updated_at": now_ms(), "testing_mode": True})
         sink.set("config/limits", {**(sink.get("config/limits") or {}), "member_coins_max": 0, "updated_at": now_ms()})
         fut = [{**b, "reset_token": "v24"} for b in DEFAULT_BOTS if b.get("market") == "futures"]
@@ -207,6 +209,15 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         rt.db.set_setting("testing_since", now_ms())
         notes["testing_v24"] = {"coins": TEST_COINS, "bots": [b["id"] for b in fut], "practice": clear_all_practice(sink)}
         rt.db.set_setting("testing_v24", True)
+        rt.db.set_setting("testing_v24b", True)
+    if rt.db.get_setting("testing_v24", False) and not rt.db.get_setting("testing_v24b", False):
+        # 28 Oct: the first testing list had XAUT as gold; the app's gold is PAXG (labels, chart, notes) - swap once
+        doc = sink.get("config/watchlist") or {}
+        items = [i for i in (doc.get("symbols") or []) if (i.get("symbol") if isinstance(i, dict) else i) != "XAUT/USDT"]
+        if not any((i.get("symbol") if isinstance(i, dict) else i) == GOLD for i in items):
+            items.append({"symbol": GOLD, "pinned": True})
+        sink.set("config/watchlist", {**doc, "symbols": items, "updated_at": now_ms()})
+        rt.db.set_setting("testing_v24b", True)
     # watchlist
     _b("config: watchlist")
     doc = sink.get("config/watchlist")

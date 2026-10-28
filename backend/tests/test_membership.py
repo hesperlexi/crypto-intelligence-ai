@@ -203,3 +203,27 @@ def test_testing_mode_v24_keeps_ten_coins_futures_bots_and_restarts_practice(tmp
     assert notes["testing_v24"]["coins"] == worker.TEST_COINS
     assert "testing_v24" not in worker.sync_config(rt, sink)       # done once
     assert len(sink.get("config/bots")["bots"]) == 5                # spot bots are not added back
+
+
+def test_testing_gold_swaps_xaut_for_paxg_once(tmp_path):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+
+    class _P:
+        name = "test"
+
+        async def search_markets(self, q, limit=50):
+            return [f"{q}/USDT"]
+
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    for f in ("watchlist_majors_v2", "gold_paxg_v21", "fresh_start_v23", "testing_v24"):
+        rt.db.set_setting(f, True)
+    sink = LocalSink(tmp_path)
+    sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}, {"symbol": "XAUT/USDT", "pinned": True}]})
+    worker.sync_config(rt, sink)
+    assert set(rt.symbols()) == {"BTC/USDT", "PAXG/USDT"}
+    sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})   # a later removal sticks
+    worker.sync_config(rt, sink)
+    assert set(rt.symbols()) == {"BTC/USDT"}

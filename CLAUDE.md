@@ -78,8 +78,8 @@ re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/s
    BTC context aligns to the latest BTC bar opened by the coin bar's open (3d candles start on listing dates).
 
 ## Testing mode v2.4 (from 28 Oct 2026, two weeks)
-Flag `testing_v24` (`worker.sync_config`): watchlist = `worker.TEST_COINS` (10: BTC ETH BNB XRP SOL DOGE LTC AAVE AVAX + XAUT
-gold, ranked by proven out-of-sample edges), `config/limits.member_coins_max = 0`, only the 5 futures bots (spot bots
+Flag `testing_v24` (`worker.sync_config`): watchlist = `worker.TEST_COINS` (10: BTC ETH BNB XRP SOL DOGE LTC AAVE AVAX + PAXG
+gold (XAUT swapped for PAXG same day, flag `testing_v24b`), ranked by proven out-of-sample edges), `config/limits.member_coins_max = 0`, only the 5 futures bots (spot bots
 removed, reset_token v24), all bot books + all practice accounts cleared, `record_since` restarted, `record_since_tf`
 cleared, `testing_since` shown on Results. Trade limits: auto-trade ≤3 open, ≤6 new/day (`autopaper.MAX_OPEN_CAP`,
 `MAX_NEW_PER_DAY`); manual practice futures ≤5 open trades+orders (`paperFutures.MAX_OPEN_TRADES`), spot ≤5 coins.
