@@ -49,8 +49,25 @@ async def sync_symbol(rt: Runtime, symbol: str, timeframes: list[str] | None = N
 
 
 async def sync_all(rt: Runtime, timeframes: list[str] | None = None) -> None:
-    for symbol in rt.symbols():
+    watched = rt.symbols()
+    for symbol in watched:
         await sync_symbol(rt, symbol, timeframes)
+    # a coin taken off the watchlist can still have OPEN signals: keep its candles coming on those timeframes only, so
+    # the signals are followed to their real end (28 Oct 2026: LINK / SUI calls stayed "open" after testing mode)
+    try:
+        rows = rt.db.query("SELECT DISTINCT symbol, timeframe FROM signals WHERE status = 'OPEN' "
+                           "UNION SELECT DISTINCT symbol, timeframe FROM shadow_signals WHERE status = 'OPEN'")
+    except Exception:
+        rows = []
+    orphans: dict[str, list[str]] = {}
+    for r in rows:
+        if r["symbol"] not in watched:
+            orphans.setdefault(r["symbol"], []).append(r["timeframe"])
+    for symbol, tfs in orphans.items():
+        try:
+            await sync_symbol(rt, symbol, sorted(set(tfs)))
+        except Exception as exc:
+            rt.record_error(f"candles {symbol} (open signals)", exc)
 
 
 async def refresh_order_book(rt: Runtime, symbol: str) -> dict[str, Any] | None:

@@ -11,6 +11,8 @@ from typing import Any
 import numpy as np
 
 from ..data.base import tf_ms
+
+PATH_TF = "15m"           # live record follows every signal on 15-minute candles (same as the bots)
 from ..db import Database, dumps, loads, new_id, now_ms
 from ..ml.metrics import brier, calibration_label, ece, reliability_table, wilson
 
@@ -197,9 +199,24 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
         raise ValueError(table)
     db = rt.db
     changed = 0
+    paths: dict[str, Any] = {}
     for s in db.query(f"SELECT * FROM {table} WHERE status = 'OPEN'"):
-        df = rt.candles(s["symbol"], s["timeframe"])
-        after = df[df["ts"] > s["bar_ts"]].iloc[:horizon_bars]
+        # v2.4: followed on 15-minute candles like the bots (refreshed every cycle), not on the signal's own candles -
+        # a 4h / 12h / 1d candle is only fetched once it closes, so a target or stop hit inside it showed hours late
+        step = tf_ms(s["timeframe"])
+        start, end = int(s["bar_ts"]) + step, int(s["bar_ts"]) + step * (horizon_bars + 1)
+        if s["symbol"] not in paths:
+            try:
+                paths[s["symbol"]] = rt.candles(s["symbol"], PATH_TF)
+            except Exception:
+                paths[s["symbol"]] = None
+        p15 = paths[s["symbol"]]
+        after = p15[(p15["ts"] >= start) & (p15["ts"] < end)] if p15 is not None and len(p15) else None
+        covered = after is not None and not after.empty and int(after["ts"].iloc[-1]) + tf_ms(PATH_TF) >= end
+        if after is None or after.empty:                # no 15m data: the signal's own candles, as before
+            df = rt.candles(s["symbol"], s["timeframe"])
+            after = df[df["ts"] > s["bar_ts"]].iloc[:horizon_bars]
+            covered = len(after) >= horizon_bars
         if after.empty:
             continue
         side, entry = s["side"], s["entry"]
@@ -228,7 +245,7 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
                     final_hit, closed_ts = True, int(c["ts"])
                     hit = [True, True, True]
                     break
-        expired = closed_ts is None and len(after) >= horizon_bars
+        expired = closed_ts is None and covered
         last_close = float(after["close"].iloc[-1])
         fallback = level if stop_hit else last_close
         if final is None:

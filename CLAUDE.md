@@ -55,7 +55,8 @@ pages/run, flag `deep2:*`). Gold = `PAXG/USDT` (added once, flag `gold_paxg_v21`
 **v2.2 engine upgrades.** Nightly training = `train.yml` 15 slices (`worker train-shard`, no engine lock) + `merge`
 (`worker train-merge`: `trainer.import_bundle`, `prune_files` >7 d inactive, funding + crowd sync, publish, backup).
 Bigger-trend check (`analysis.higher_trend_check`: against both next higher TFs → NO TRADE, against one → A→B).
-Live record (`tracking.update_signal_outcomes`) uses the bots' stops: break-even after TP1, TP1 after TP2 (one-time
+Live record (`tracking.update_signal_outcomes`, v2.4: followed on 15m candles `tracking.PATH_TF` like the bots, so a hit inside a
+4h/12h/1d candle shows within minutes; removed coins with OPEN signals keep syncing in `market.sync_all`) uses the bots' stops: break-even after TP1, TP1 after TP2 (one-time
 re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/safety.py` (last 25 closed, ≥20, avg<0 & TP1<40% → pause; paused trades go to
 `shadow_signals`; resume when ≥8 shadow closed, avg>0, TP1≥50%; listed on Health). AI targets `ml/target_model.py`
 (per-R reach classifiers, used only with Brier skill ≥1% on last 30%; lift × base rate in `setup.pick`). Crowd data

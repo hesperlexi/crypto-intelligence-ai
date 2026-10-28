@@ -332,3 +332,28 @@ def test_signal_record_moves_stop_to_break_even_after_tp1_and_to_tp1_after_tp2()
     assert r["status"] == "TP2" and abs(r["return_pct"] - (0.5 * 2 + 0.25 * 3 + 0.25 * 2)) < 1e-9
     r = run([[1, 100, 101, 97.5, 98, 1]])                                       # straight to the stop: a full loss
     assert r["status"] == "STOPPED" and abs(r["return_pct"] + 2.0) < 1e-9
+
+
+def test_signals_are_followed_on_15m_candles_before_their_own_candle_closes():
+    import pandas as pd
+    from app.services import tracking as T
+    db = Database("sqlite:///:memory:")
+    bar = 1_700_000_000_000 - (1_700_000_000_000 % tf_ms("12h"))
+    a = {"symbol": "BTC/USDT", "timeframe": "12h", "bar_ts": bar, "price": 100.0, "decision": "BUY",
+         "confidence": 0.6, "regime": {"regime": "BULL"}, "signal": {"signal": "BUY", "score": 70, "reasons": [], "warnings": []},
+         "setup": {"valid": True, "side_int": 1, "stop": 95.0, "risk_reward": 2.0,
+                   "targets": [{"price": 105.0}, {"price": 107.0}, {"price": 110.0}]}, "flags": []}
+    assert T.log_signal(db, a)
+    start = bar + tf_ms("12h")
+    m15 = pd.DataFrame({"ts": [start + i * tf_ms("15m") for i in range(3)], "open": [100, 101, 104],
+                        "high": [101, 105.5, 104.5], "low": [99.5, 100.5, 103], "close": [101, 104, 104]})
+    h12 = pd.DataFrame({"ts": [bar], "open": [99], "high": [100], "low": [98], "close": [100]})   # next 12h candle not in yet
+
+    class _RT:
+        pass
+    rt = _RT()
+    rt.db = db
+    rt.candles = lambda s, tf: m15 if tf == "15m" else h12
+    T.update_signal_outcomes(rt)
+    s = T.signal_history(db, "BTC/USDT")[0]
+    assert s["tp1_hit"] == 1 and s["status"] == "OPEN"          # TP1 seen within the hour, trade still running at break-even
