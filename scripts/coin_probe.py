@@ -22,8 +22,8 @@ ob = []
 for b in (bots or {}).get("bots", []):
     st = b.get("state") or {}
     ob.append({"bot": (b.get("config") or {}).get("id"),
-               "positions": [p for p in st.get("positions", []) if p.get("symbol") == coin],
-               "pending": [p for p in st.get("pending", []) if p.get("symbol") == coin],
+               "positions": [p for p in (b.get("positions") or st.get("positions") or []) if p.get("symbol") == coin],
+               "pending": [p for p in (b.get("pending") or st.get("pending") or []) if p.get("symbol") == coin],
                "trades": [t for t in (b.get("trades") or b.get("recent_trades") or []) if t.get("symbol") == coin][:5]})
 out["bots"] = ob
 an = {}
