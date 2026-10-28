@@ -46,4 +46,10 @@ for tf in ("15m", "1h", "4h", "12h", "1d"):
     rb[tf] = {"plans": len(rk), "risk_pct_min": rk[0] if rk else None, "median": statistics.median(rk) if rk else None,
               "max": rk[-1] if rk else None, "tradable_risk_pcts": [round(x, 2) for x in tr]}
 out["risk_by_tf"] = rb
+out["watchlist"] = (fs.document("config/watchlist").get().to_dict() or {})
+d = fs.document("views/track_record").get().to_dict() or {}
+tr = json.loads(d.get("json") or "{}") or {}
+out["tested"] = [{k: t.get(k) for k in ("symbol", "timeframe", "edge", "all_calls_hit_rate", "selective_hit_rate", "selective_calls", "coverage", "calls_per_day")}
+                 for t in tr.get("tested") or []]
+out["live_signals"] = [{k: x.get(k) for k in ("symbol", "timeframe", "status", "return_pct")} for x in (tr.get("live") or {}).get("signals") or []]
 print(json.dumps(out, indent=1, default=str))
