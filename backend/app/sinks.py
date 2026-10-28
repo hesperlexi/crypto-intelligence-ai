@@ -82,10 +82,22 @@ class BaseSink:
         except Exception:
             return False
 
+    BLOCK_S = 1200
+
     def _mark_blocked(self) -> None:
+        """Pause writes for 20 minutes (not until the quota day ends: 28 Oct a 429 right after the reset would
+        otherwise have stopped publishing for a whole day). The heartbeat keeps trying and lifts the pause."""
         if self.db is not None:
             try:
-                self.db.set_setting("fs_blocked_until", self.quota_day()[1] + 120_000)
+                self.db.set_setting("fs_blocked_until", min(self.quota_day()[1] + 120_000, _now() + self.BLOCK_S * 1000))
+            except Exception:
+                pass
+
+    def _unblock(self) -> None:
+        if self.db is not None:
+            try:
+                if int(self.db.get_setting("fs_blocked_until", 0) or 0):
+                    self.db.set_setting("fs_blocked_until", 0)
             except Exception:
                 pass
 
@@ -323,14 +335,14 @@ class FirestoreSink(BaseSink):
 
     def set_quick(self, path: str, data: dict[str, Any]) -> None:
         """Best-effort small write: no retries, 5 s limit (progress notes must never slow the cycle)."""
-        if self.blocked():
-            return
+        # always tried (one small write, no retries): it doubles as the check that writing works again
         try:
             self.fs.document(path).set(json.loads(dumps(data)), retry=None, timeout=5)
         except Exception as exc:
             if self.is_quota_error(exc):
                 self._mark_blocked()
             raise
+        self._unblock()
         self.writes += 1
         self._count(1)
 
