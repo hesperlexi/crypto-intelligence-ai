@@ -62,7 +62,7 @@ async def sync_all(rt: Runtime, timeframes: list[str] | None = None) -> None:
     orphans: dict[str, list[str]] = {}
     for r in rows:
         if r["symbol"] not in watched:
-            orphans.setdefault(r["symbol"], []).append(r["timeframe"])
+            orphans.setdefault(r["symbol"], ["15m"]).append(r["timeframe"])   # 15m: the record follows signals on it
     for symbol, tfs in orphans.items():
         try:
             await sync_symbol(rt, symbol, sorted(set(tfs)))
