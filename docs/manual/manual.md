@@ -4,7 +4,7 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 **The menu:** Home · Signals · Trade · News · Radar · Results · Alerts · Settings. **Results** holds the track record, the demo bots, the accuracy report, the signal log and the tools (Backtest, Replay, Scanner). On phones the bottom bar has Home, Signals, Trade and Results; the rest is under **More**.
 
-**Open the app.** Go to **cryptointelai.com** (or **crypapp-6a9b9.web.app**: both open the same app) and press **Sign in with Google**.
+**Open the app.** Go to **www.cryptointelai.com** and press **Sign in with Google**.
 
 **Install it** so it opens like a normal app and can send notifications:
 

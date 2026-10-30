@@ -8,6 +8,8 @@ transparent buy / sell / hold signals with risk-defined trade plans, and **refus
 insufficient**. It never places real orders: the bots and the paper account use virtual money. Every number on
 screen comes from live market data, a model evaluation or a recorded outcome. Nothing is hardcoded.
 
+**Live app: https://www.cryptointelai.com**
+
 > Research tool, not financial advice.
 
 ---
@@ -62,7 +64,7 @@ You need a Google account (the one that owns the Firebase project) and a free Gi
 8. Actions tab → enable workflows if asked → run **Test and deploy website** (or push any change), then run
    **Engine (every 5 minutes)** once by hand with *Run workflow*.
 
-Open **https://crypapp-6a9b9.web.app** and sign in with Google.
+Open **https://www.cryptointelai.com** and sign in with Google.
 
 **What to expect:** the first engine run downloads history and trains a fast first model set (about 10-15
 minutes). Until it finishes, pages say the engine has not published yet. From then on everything refreshes

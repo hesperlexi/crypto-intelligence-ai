@@ -56,7 +56,7 @@ export default function Backtest() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Backtesting</h1>
+        <h1 className="page-title">Backtesting</h1>
         <p className="text-sm text-mute">Signals are decided on a bar's close and executed at the next bar's open, with fees, spread and slippage. Net results only.</p>
         <p className="text-xs text-mute">Backtests run on the engine: the result appears here after its next cycle (usually within 5 minutes). You can leave this page; finished runs are listed under Previous runs.</p>
       </div>
@@ -142,7 +142,7 @@ export default function Backtest() {
       )}
       <Card title="Previous runs">
         {hist.data?.length ? (
-          <div className="overflow-x-auto"><table className="grid-table"><thead><tr><th>When</th><th>Asset</th><th>TF</th><th>Strategy</th><th className="text-right">Net return</th><th>Status</th></tr></thead>
+          <div className="table-wrap"><table className="grid-table"><thead><tr><th>When</th><th>Asset</th><th>TF</th><th>Strategy</th><th className="text-right">Net return</th><th>Status</th></tr></thead>
             <tbody>{hist.data.map((h: any) => <tr key={h.id}><td className="text-mute">{fmtTime(h.created_at)}</td><td>{h.symbol}</td><td className="uppercase text-mute">{h.timeframe}</td><td>{strategies[h.strategy]?.label ?? h.strategy}</td><td className={`num text-right ${tone(h.net_return)}`}>{fmtPct(h.net_return, 1)}</td><td className="text-mute">{h.error ?? h.status}</td></tr>)}</tbody></table></div>
         ) : <Empty>No backtests run yet</Empty>}
       </Card>

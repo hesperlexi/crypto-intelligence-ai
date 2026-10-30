@@ -125,7 +125,7 @@ export default function Achievements() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Achievements</h1>
+          <h1 className="page-title">Achievements</h1>
           <p className="text-sm text-mute">Milestones the app has really reached, worked out by the engine from the app's real track record. Download any of them as an image to share.</p>
         </div>
         <button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>

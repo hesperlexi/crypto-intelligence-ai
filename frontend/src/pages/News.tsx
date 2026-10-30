@@ -35,7 +35,7 @@ export default function News() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">News & economic calendar</h1>
+        <h1 className="page-title">News & economic calendar</h1>
         <p className="text-sm text-mute">US data releases move crypto within minutes. High-impact releases pause new signals from 45 minutes before to 30 minutes after, and members with notifications on get a heads-up 30 minutes before.</p>
       </div>
       <NewsBanner hours={24} />

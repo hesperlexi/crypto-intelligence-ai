@@ -104,9 +104,9 @@ export function DashboardHero({ rows, status, tf }: { rows?: any[]; status?: any
             {r.length ? <><span className="text-bull">{buys} buy</span> · <span className="text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
           </p>
           <div className="mt-4 grid grid-cols-3 gap-2 sm:flex sm:flex-wrap">
-            <Link to="/futures" className="btn btn-primary justify-center px-2 py-2 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm"><span className="sm:hidden">Futures</span><span className="hidden sm:inline">Futures signals</span></Link>
-            <Link to="/alerts" className="btn justify-center px-2 py-2 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm">Set an alert</Link>
-            <Link to="/paper" className="btn justify-center px-2 py-2 text-xs sm:px-3.5 sm:py-1.5 sm:text-sm">Paper trade</Link>
+            <Link to="/futures" className="btn btn-primary px-2 text-xs sm:px-4 sm:text-sm"><span className="sm:hidden">Signals</span><span className="hidden sm:inline">Futures signals</span></Link>
+            <Link to="/alerts" className="btn px-2 text-xs sm:px-4 sm:text-sm">Set an alert</Link>
+            <Link to="/paper" className="btn px-2 text-xs sm:px-4 sm:text-sm">Paper trade</Link>
           </div>
         </div>
         <div className="grid grid-cols-2 gap-2.5">
@@ -126,7 +126,7 @@ export function DashboardHero({ rows, status, tf }: { rows?: any[]; status?: any
               <div className="label">Market mood</div>
               <div className="mt-1 flex items-center gap-2 text-sm"><span className={`h-2 w-2 rounded-full ${mood === "BULL" ? "bg-bull" : mood === "BEAR" ? "bg-bear" : "bg-warn"} shadow-[0_0_10px_currentColor]`} />{status ? `${status.bull} bull · ${status.neutral} neutral · ${status.bear} bear` : "—"}</div>
             </div>
-            <div className="flex h-2 w-32 overflow-hidden rounded-full bg-glass/[0.06]" aria-hidden="true">
+            <div className="flex h-2 w-24 shrink-0 overflow-hidden rounded-full bg-glass/[0.06] sm:w-32" aria-hidden="true">
               {status && <><div className="bg-bull" style={{ flex: status.bull || 0 }} /><div className="bg-warn/70" style={{ flex: status.neutral || 0 }} /><div className="bg-bear" style={{ flex: status.bear || 0 }} /></>}
             </div>
           </div>

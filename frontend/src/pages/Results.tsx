@@ -21,13 +21,13 @@ export default function Results() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Results</h1>
-        <p className="text-sm text-mute">Does it work? Every signal's outcome, the demo bots that trade them, and how accurate the AI is on data it never saw.</p>
+        <h1 className="page-title">Results</h1>
+        <p className="page-sub">Does it work? Every signal's outcome, the demo bots that trade them, and how accurate the AI is on data it never saw.</p>
       </div>
       <div className="-mx-3 flex gap-1 overflow-x-auto border-b border-glass/[0.08] px-3 sm:mx-0 sm:px-0" role="tablist">
         {TABS.map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => go(k)}
-            className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
+            className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm transition-colors ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
         ))}
       </div>
       {tab === "track" && <TrackRecord />}

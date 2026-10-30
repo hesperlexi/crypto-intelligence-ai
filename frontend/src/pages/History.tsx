@@ -10,7 +10,7 @@ export default function History() {
   const sum = h.data?.summary;
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold tracking-tight">Signal history</h1>
+      <h1 className="page-title">Signal history</h1>
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
       {sum && (
         <Card title="Tracked trade signals">
@@ -26,7 +26,7 @@ export default function History() {
       )}
       <Card title="All logged signals">
         {!h.data && h.loading && <Loading />}
-        <div className="overflow-x-auto">
+        <div className="table-wrap">
           <table className="grid-table">
             <thead><tr><th>When</th><th>Asset</th><th>TF</th><th>Signal</th><th>Decision</th><th className="text-right">Price</th><th className="text-right">Conf.</th><th className="text-right">Stop</th><th>TP1</th><th>TP2</th><th>TP3</th><th>Stop hit</th><th>Status</th><th className="text-right">Return</th></tr></thead>
             <tbody>

@@ -2,12 +2,9 @@ import { createContext, ReactNode, useContext, useEffect, useState } from "react
 
 /** Themes and layout preferences. Saved per device (browser storage); everything works without it. */
 export const THEMES = [
-  { id: "gold", name: "Gold", sub: "exchange classic", swatch: ["#0b0e11", "#f0b90b", "#0ecb81"] },
-  { id: "abyss", name: "Abyss", sub: "futuristic crypto", swatch: ["#04060f", "#22e4ff", "#8b5cf6"] },
-  { id: "nexora", name: "Nexora", sub: "pro dashboard", swatch: ["#0a0f1c", "#3b82f6", "#22d3ee"] },
-  { id: "trado", name: "Trado", sub: "minimal black & green", swatch: ["#000000", "#00e676", "#141414"] },
-  { id: "light", name: "Light", sub: "bright", swatch: ["#f5f6f8", "#8a6200", "#ffffff"] },
-  { id: "system", name: "Auto", sub: "follows the device", swatch: ["#0b0e11", "#f5f6f8", "#f0b90b"] },
+  { id: "gold", name: "Gold Dark", sub: "black and gold (default)", swatch: ["#0b0e11", "#f0b90b", "#1e2329"] },
+  { id: "light", name: "Light", sub: "clean and bright", swatch: ["#f5f6f8", "#ffffff", "#8a6200"] },
+  { id: "system", name: "System", sub: "follows the device", swatch: ["#0b0e11", "#f5f6f8", "#f0b90b"] },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]["id"];
 
@@ -24,14 +21,14 @@ const KEY = "cia-appearance-v2";     // v2: the new Gold look becomes everyone's
 function load(): Appearance {
   try {
     const a = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
-    if (!THEMES.some((t) => t.id === a.theme)) a.theme = "gold";      // a retired theme falls back to Gold
+    if (!THEMES.some((t) => t.id === a.theme)) a.theme = "gold";      // retired themes (abyss, nexora, trado) fall back to Gold Dark
     return a;
   } catch { return DEFAULTS; }
 }
 
 const darkQuery = () => (typeof window !== "undefined" && window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null);
 
-/** The concrete theme in use ("system" resolves to Midnight or Light). */
+/** The concrete theme in use ("system" resolves to Gold Dark or Light). */
 export function resolveTheme(t: ThemeId): Exclude<ThemeId, "system"> {
   if (t !== "system") return t;
   return darkQuery()?.matches === false ? "light" : "gold";

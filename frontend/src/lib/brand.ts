@@ -14,9 +14,6 @@ export const BRAND = {
 /** The site address without the scheme, for printed text (images, captions, footers). */
 export const SITE_HOST = BRAND.url.replace(/^https?:\/\//, "");
 
-/** The old Firebase address: still live for the Android app and existing links (never retire it). */
-export const LEGACY_HOST = "crypapp-6a9b9.web.app";
-
 /** Footer line, exactly as in the contract. */
 export const footerText = (version: string = BRAND.version) =>
   `${BRAND.name} v${version} · ${SITE_HOST} · ${BRAND.supportEmail} · Analysis only, not financial advice.`;

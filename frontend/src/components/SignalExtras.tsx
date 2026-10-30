@@ -16,7 +16,7 @@ const PILL: Record<Tone, string> = {
 };
 
 export function Pill({ tone = "mute", children, title }: { tone?: Tone; children: React.ReactNode; title?: string }) {
-  return <span title={title} className={`inline-flex items-center whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[11px] font-semibold ${PILL[tone]}`}>{children}</span>;
+  return <span title={title} className={`inline-flex items-center whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-none ${PILL[tone]}`}>{children}</span>;
 }
 
 /** Call status as shown on cards (same words as the track record). */

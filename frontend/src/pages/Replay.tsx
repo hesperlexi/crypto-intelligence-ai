@@ -52,7 +52,7 @@ export default function Replay() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Replay market</h1>
+        <h1 className="page-title">Replay market</h1>
         <p className="text-sm text-mute">Pick a past moment. The system rebuilds its view using only candles that had closed by then, trains a model on that truncated history, forecasts — and only then shows what happened.</p>
       </div>
       <Card title="Choose a moment">

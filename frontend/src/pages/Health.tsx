@@ -12,7 +12,7 @@ export default function Health() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold tracking-tight">System health</h1>
+        <h1 className="page-title">System health</h1>
         {d && <Badge tone={toneOf(d.status)}>● {d.status}</Badge>}
       </div>
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}

@@ -18,7 +18,7 @@ export function GradeBadge({ grade, small = false }: { grade?: string | null; sm
   const a = grade === "A";
   return (
     <span title={a ? "Strong signal: trend, AI models and their track record all agree" : "Moderate signal: AI-led call where the model's out-of-sample record shows an edge"}
-      className={`inline-flex items-center rounded-md border font-bold ${small ? "px-1.5 py-0 text-[11px]" : "px-2 py-0.5 text-xs"} ${a ? "border-accent/60 bg-accent/15 text-accent" : "border-warn/50 bg-warn/10 text-warn"}`}>
+      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md border font-bold leading-none ${small ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-1 text-xs"} ${a ? "border-accent/60 bg-accent/15 text-accent" : "border-warn/50 bg-warn/10 text-warn"}`}>
       {a ? "A · strong" : "B · moderate"}
     </span>
   );
@@ -108,7 +108,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
     if (m == null) return undefined;
     const lev = market === "futures" && isNum(plan?.suggested_leverage) && plan.suggested_leverage > 1 ? plan.suggested_leverage : null;
     const gain = side === "SHORT" ? -m : m;              // profit on the trade (a short gains when price falls)
-    return lev ? `${fmtPctRaw(m, 1)} move · ${fmtPctRaw(gain * lev, 1)} ROI at ${lev}x` : fmtPctRaw(m, 1);
+    return lev ? `${fmtPctRaw(m, 1)} move · ${fmtPctRaw(gain * lev, 1)} ROI` : fmtPctRaw(m, 1);
   };
 
   const paper = () => {
@@ -141,16 +141,19 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             <div className="num text-sm text-mute">{fmtPrice(px)} · {String(r.timeframe ?? "").toUpperCase()} {market}</div>
           </div>
         </Link>
-        <span className="flex shrink-0 flex-col items-end gap-1">
-          <span className={`rounded-lg px-3 py-1.5 text-sm font-extrabold tracking-wide ${t.pill}`}>
-            {v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}
-          </span>
-          {v.tone !== "wait" && <GradeBadge grade={r.grade} small />}
-          {active && plan && <RiskBadge entry={plan.entry} stop={plan.stop} leverage={market === "futures" ? plan.suggested_leverage : 1} />}
+        <span className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-extrabold tracking-wide ${t.pill}`}>
+          {v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}
         </span>
       </div>
 
       <div className="space-y-3 p-4">
+        {v.tone !== "wait" && (r.grade || (active && plan)) && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <GradeBadge grade={r.grade} small />
+            {active && plan && <RiskBadge entry={plan.entry} stop={plan.stop} leverage={market === "futures" ? plan.suggested_leverage : 1} />}
+            {active && plan && market === "futures" && isNum(plan.suggested_leverage) && <span className="num text-[11px] text-mute">· {plan.suggested_leverage}x suggested</span>}
+          </div>
+        )}
         {r.stale === true && (
           <div className="rounded-lg border border-warn/40 bg-warn/[0.08] px-2.5 py-1.5 text-sm font-semibold text-warn" role="status">Data delayed — no trade</div>
         )}
@@ -238,11 +241,11 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
         {!pro && v.tone !== "wait" && r.grade && <Explain>{PLAIN.grade}</Explain>}
 
         <div className="grid grid-cols-[1fr_auto_auto] gap-2">
-          <button className={`btn py-2 text-sm ${active ? "btn-primary" : ""}`} onClick={paper}>{active ? "Practise this trade" : "Paper trade"}</button>
-          <Link className="btn px-3 py-2 text-sm" to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=${market}`} aria-label="Set an alert" title="Alert me when a setup appears">
+          <button className={`btn ${active ? "btn-primary" : ""}`} onClick={paper}>{active ? "Practise this trade" : "Paper trade"}</button>
+          <Link className="btn px-3" to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=${market}`} aria-label="Set an alert" title="Alert me when a setup appears">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg>
           </Link>
-          <button className="btn px-3 py-2 text-sm" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
+          <button className="btn px-3" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
         </div>
         {!compact && <p className="text-[11px] text-mute">Plan for the next {String(r.timeframe ?? "").toUpperCase()} candles, refreshed every few minutes. A probability, not a promise: always use the stop-loss.</p>}
       </div>
@@ -252,10 +255,10 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
 
 function Box({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
   return (
-    <div className="rounded-xl border border-glass/[0.08] bg-ink/40 px-3 py-2">
-      <div className="text-[11px] uppercase tracking-wide text-mute">{k}</div>
-      <div className={`num mt-0.5 truncate text-base font-semibold ${cls}`}>{v}</div>
-      {sub && <div className="num truncate text-[11px] text-mute">{sub}</div>}
+    <div className="min-w-0 rounded-xl border border-glass/[0.08] bg-ink/40 px-3 py-2.5">
+      <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-mute">{k}</div>
+      <div className={`num mt-1 truncate text-lg font-semibold leading-tight ${cls}`}>{v}</div>
+      {sub && <div className="num mt-0.5 text-[11px] leading-snug text-mute">{sub}</div>}
     </div>
   );
 }
