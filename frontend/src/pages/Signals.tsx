@@ -9,6 +9,7 @@ import { useApi } from "../lib/api";
 import { base, fmtPctRaw, fmtPrice, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
 import { CALL_STATUS, fillLabel, livePnl, managedLabel, Pill, RiskBadge, RoiFigure } from "../components/SignalExtras";
+import { AdjustHistory, adjustedPlan, UpdatedBadge } from "../components/SignalAdjust";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;
@@ -141,7 +142,7 @@ export default function Signals() {
               <ul className="divide-y divide-glass/[0.06]">
                 {rows.map((r) => {
                   const vv = verdictOf(r, market);
-                  const p = r.plan;
+                  const p = adjustedPlan(r.plan, r.call);
                   const show = vv.tone !== "wait" && p && (market === "futures" || p.side === "LONG");
                   return (
                     <li key={r.symbol}>
@@ -175,9 +176,11 @@ function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Mar
   const managed = c?.managed === 1 ? managedLabel(c.exit_reason) : null;
   const pnl = c?.status === "OPEN" && c.fill_status !== "PENDING" && c.fill_status !== "NOT_FILLED" ? livePnl(c.side, c.entry, px) : null;
   const p = r.plan;
-  if (!st && !fill && !managed && pnl == null && !(show && p)) return null;
+  if (!st && !fill && !managed && pnl == null && !(show && p) && !c?.adjustments?.length) return null;
   return (
+    <>
     <div className="mt-1 flex flex-wrap items-center gap-1">
+      <UpdatedBadge adj={c?.adjustments} />
       {st && <Pill tone={st[1]}>{st[0]}</Pill>}
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
@@ -187,5 +190,7 @@ function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Mar
       {c && c.status !== "OPEN" && isNum(c.return_pct) && <span className="inline-flex items-center gap-1"><RoiFigure x={c} size="sm" label={false} align="left" /></span>}
       {show && p && <RiskBadge entry={p.entry} stop={p.stop} leverage={market === "futures" ? p.suggested_leverage : 1} />}
     </div>
+    {c?.adjustments?.length > 0 && <AdjustHistory adj={c.adjustments.slice(-1)} compact />}
+    </>
   );
 }

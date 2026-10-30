@@ -102,6 +102,7 @@ export function CallStatusRow({ call, px }: { call?: any; px?: number }) {
       {st && !done && <Pill tone={st[1]}>{st[0]}</Pill>}
       {fill && <Pill tone={fill[1]} title={call.fill_status === "PENDING" ? "Pullback entry: the call counts once price trades through the entry" : "Price never reached the entry; not counted in the win rate"}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent" title="Closed by a managed exit rule">{managed}</Pill>}
+      {call.exit_reason === "admin_stop" && call.status !== "OPEN" && <Pill tone="warn" title="Closed at the stop-loss the admin moved (public change)">Admin stop</Pill>}
       {pnl != null && (liveLev
         ? <span className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live, from the current price vs the entry, on margin at the suggested leverage (before fees)">Live {fmtPctRaw(pnl * liveLev, 2)} ROI <span className="font-normal text-mute">· {liveLev}x · price {fmtPctRaw(pnl, 2)}</span></span>
         : <span className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live, from the current price vs the entry (price move, before fees)">Live {fmtPctRaw(pnl, 2)} price</span>)}

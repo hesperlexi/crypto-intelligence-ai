@@ -348,6 +348,8 @@ class BotEngine:
                                      fill_raw=True, lev=o.get("lev", 1.0), cfg=cfg)
                     if pos:
                         pos["last_check"] = ts - step         # re-check this same candle for the stop
+                        if o.get("adj"):
+                            pos["adj"] = list(o["adj"])
                         events.append({"bot": cfg["id"], "type": "fill", "symbol": o["symbol"], "price": px})
                     filled = True
                     break
@@ -362,6 +364,7 @@ class BotEngine:
             done = None
             for ts, op, hi, lo, cl in self._path(pos["symbol"], pos["last_check"]):
                 pos["last_check"] = ts
+                self._admin_levels(pos, ts)
                 if self._liq_hit(pos, op, hi, lo):
                     self._liquidate(state, pos)
                     done = ("liquidated", ts + step)
@@ -370,7 +373,8 @@ class BotEngine:
                 if stop_hit:
                     px = min(op, pos["stop"]) if side > 0 else max(op, pos["stop"])
                     self._reduce(state, pos, pos["qty_open"], px, True)
-                    done = ("atr trail" if pos.get("mg_trailed") else "trailing stop" if pos["tp_hit"] >= 2
+                    done = ("admin stop" if pos.get("admin_stop") is not None and abs(pos["stop"] - pos["admin_stop"]) < 1e-12
+                            else "atr trail" if pos.get("mg_trailed") else "trailing stop" if pos["tp_hit"] >= 2
                             else "breakeven stop" if pos["tp_hit"] else "stop", ts + step)
                     break
                 # v2.5 managed exits (MANAGED_EXITS, shared rules in engine/manage.py): give-back before TP1
@@ -390,6 +394,7 @@ class BotEngine:
                             (hi >= pos["targets"][pos["tp_hit"]]) if side > 0 else (lo <= pos["targets"][pos["tp_hit"]])):
                         pos["tp_hit"] += 1
                         pos["stop"] = pos["entry"] if pos["tp_hit"] == 1 else pos["targets"][pos["tp_hit"] - 2]
+                        self._protect(pos)
                     if (hi >= run_t) if side > 0 else (lo <= run_t):
                         px = max(op, run_t) if side > 0 else min(op, run_t)
                         self._reduce(state, pos, pos["qty_open"], px, True)
@@ -408,6 +413,7 @@ class BotEngine:
                         pos["stop"] = pos["entry"]            # protect the rest at break-even
                     elif pos["tp_hit"] == 2 and pos["targets"]:
                         pos["stop"] = pos["targets"][0]       # trail: after TP2 the last quarter is locked in at TP1
+                    self._protect(pos)
                 if pos["qty_open"] <= pos["qty"] * 1e-9:
                     done = (f"TP{pos['tp_hit']}", ts + step)
                     break
@@ -429,6 +435,48 @@ class BotEngine:
                 events.append({"bot": cfg["id"], "type": "close", "symbol": pos["symbol"], "reason": done[0], "pnl": t["pnl"]})
         events += self._reversals(cfg, state, now)
         return events
+
+    # ---- admin adjustments (v2.7, services/adjust.py) ---------------------------------------------------------
+    @staticmethod
+    def _protect(pos: dict[str, Any]) -> None:
+        """After TP1 the stop is the more protective of the rule stop and the admin stop (engine/manage.py)."""
+        a = pos.get("admin_stop")
+        if a is not None and pos.get("tp_hit"):
+            pos["stop"] = MG.protective(pos["side"], pos["stop"], a)
+
+    @staticmethod
+    def _admin_levels(pos: dict[str, Any], ts: int) -> None:
+        """Apply queued admin changes from the first candle opening at/after their time (forward-only)."""
+        q = pos.get("adj") or []
+        while q and int(q[0]["at"]) <= ts:
+            a = q.pop(0)
+            if a["field"] == "stop":
+                pos["admin_stop"] = float(a["new"])
+                pos["stop"] = MG.effective_stop(pos["side"], pos["stop"], pos["admin_stop"], bool(pos["tp_hit"]))
+            elif a["field"] == "tp1" and not pos["tp_hit"] and pos.get("targets"):
+                pos["targets"][0] = float(a["new"])
+        pos["adj"] = q
+
+    def apply_adjustment(self, sig: dict[str, Any], changes: list[tuple[str, float]], at: int) -> int:
+        """Queue the admin's change on every bot position / pending entry taken from this call (same coin, timeframe,
+        side and signal candle). Applied forward-only in `_manage_decision`. Returns how many were updated."""
+        n = 0
+        # a bot may have entered on a later candle of the same open call (the record keeps one call per coin/timeframe)
+        side, tf, bar = int(sig["side"]), sig["timeframe"], int(sig["bar_ts"])
+        for row in self.db.query("SELECT id, config, state FROM bots"):
+            cfg, state = loads(row["config"], {}), loads(row["state"], {})
+            if cfg.get("mode") != "decision" or cfg.get("timeframe") != tf:
+                continue
+            hit = 0
+            for x in list(state.get("positions") or []) + list(state.get("pending") or []):
+                info = x.get("info") or {}
+                if x.get("symbol") == sig["symbol"] and int(x.get("side") or 0) == side and int(info.get("bar_ts") or 0) >= bar:
+                    x["adj"] = list(x.get("adj") or []) + [{"at": int(at), "field": f, "new": float(v)} for f, v in changes]
+                    hit += 1
+            if hit:
+                self.db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))
+                n += hit
+        return n
 
     @staticmethod
     def _mg(pos: dict[str, Any], mp: dict[str, Any]) -> dict[str, Any] | None:

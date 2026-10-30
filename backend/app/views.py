@@ -239,6 +239,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
     since0 = record_since(rt)
     rc, rp = record_clause(rt)
     rows = rt.db.query(f"SELECT * FROM signals WHERE status != 'INFO' AND {rc} ORDER BY created_at DESC", rp)
+    adj = tracking.adjustments_for(rt.db, [r["id"] for r in rows[:limit]])
     sigs = []
     for r in rows:
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
@@ -246,7 +247,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
                      "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
                      "closed_at": r["closed_at"], "return_pct": r["return_pct"], **tracking.margin_fields(r, p),
-                     **contract_fields(r, p)})
+                     **contract_fields(r, p), **({"adjustments": adj[r["id"]]} if r["id"] in adj else {})})
     # never-filled pullback entries and void calls (no market data) have no result: listed, never counted
     closed = [x for x in sigs if x["status"] in tracking.CLOSED_STATUSES and x["return_pct"] is not None]
 
