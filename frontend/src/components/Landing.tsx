@@ -35,7 +35,7 @@ export default function Landing({ error }: { error: string | null }) {
   const [err, setErr] = useState<string | null>(error);
   const [busy, setBusy] = useState(false);
   const [px, setPx] = useState<Record<string, any>>({});
-  const [demo, setDemo] = useState(false);
+  const [demo, setDemo] = useState<null | "demo" | "story">(null);
   useEffect(() => {
     // 24h stats over REST every 30 s, the price itself from every trade (Binance WebSocket), shown ~8x a second
     let alive = true, pending: Record<string, number> = {};
@@ -117,7 +117,8 @@ export default function Landing({ error }: { error: string | null }) {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
-              <button className="btn px-5 py-3 text-base" onClick={() => setDemo(true)}>▶ Watch what's new in 2.0 (70 s)</button>
+              <button className="btn px-5 py-3 text-base" onClick={() => setDemo("demo")}>▶ App demo (70 s)</button>
+              <button className="btn px-5 py-3 text-base" onClick={() => setDemo("story")}>▶ Why traders use it (45 s)</button>
               <TelegramLink label="Free signals on Telegram" />
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
@@ -260,10 +261,12 @@ export default function Landing({ error }: { error: string | null }) {
       </main>
 
       {demo && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setDemo(false)} role="dialog" aria-label="Demo video">
-          <div className="relative h-full max-h-[90vh] w-auto" onClick={(e) => e.stopPropagation()}>
-            <video src={`/demo.mp4?v=${BUILD_ID}`} className="h-full max-h-[90vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />
-            <button className="absolute -right-2 -top-2 h-9 w-9 rounded-full bg-panel text-lg" aria-label="Close video" onClick={() => setDemo(false)}>✕</button>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setDemo(null)} role="dialog" aria-label={demo === "demo" ? "App demo video" : "Why traders use it video"}>
+          <div className="relative flex h-full max-h-[90vh] w-auto flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
+            {demo === "demo"
+              ? <video src={`/demo.mp4?v=${BUILD_ID}`} className="h-full max-h-[86vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />
+              : <video src={`/ads/friends-ad.mp4?v=${BUILD_ID}`} poster="/ads/friends-ad.jpg" className="h-full max-h-[86vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />}
+            <button className="absolute -right-2 -top-2 h-9 w-9 rounded-full bg-panel text-lg" aria-label="Close video" onClick={() => setDemo(null)}>✕</button>
           </div>
         </div>
       )}
