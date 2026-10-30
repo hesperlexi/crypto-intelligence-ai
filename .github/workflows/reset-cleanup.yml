@@ -1,0 +1,50 @@
+name: v1.0.0 reset cleanup (old backups, caches, report branches)
+
+# After the engine has run the v1.0.0 fresh start (settings flag reset_v1_done), old copies of the engine state still
+# hold the removed trades: encrypted backups (release engine-backup), older Actions caches, and the reports /
+# research-results branches. This removes them. Manual only; asks for the owner's approval phrase.
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type: APPROVE RESET v1.0.0'
+        required: true
+      reset_at:
+        description: "Reset time in ms (from Health / config/release); everything older is removed"
+        required: true
+
+jobs:
+  cleanup:
+    if: ${{ github.event.inputs.confirm == 'APPROVE RESET v1.0.0' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      R: ${{ github.repository }}
+      T: ${{ github.event.inputs.reset_at }}
+    steps:
+      - name: Old encrypted backups
+        run: |
+          cut=$(date -u -d @$((T/1000)) +%Y-%m-%dT%H:%M:%SZ)
+          gh release view engine-backup -R "$R" --json assets -q ".assets[] | select(.updatedAt < \"$cut\") | .name" \
+            | while read -r a; do gh release delete-asset engine-backup "$a" -R "$R" -y; echo "deleted backup $a"; done
+      - name: Older engine caches
+        run: |
+          gh api "repos/$R/actions/caches?key=engine-state-&per_page=100" -q '.actions_caches[] | "\(.id) \(.created_at)"' \
+            | while read -r id at; do
+                if [ "$(date -u -d "$at" +%s)" -lt $((T/1000)) ]; then gh api -X DELETE "repos/$R/actions/caches/$id"; echo "deleted cache $id ($at)"; fi
+              done
+      - uses: actions/checkout@v4
+      - name: Report branches with old results (emptied, kept so the other workflows can still write to them)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for b in reports research-results; do
+            git checkout -q --orphan "fresh-$b"
+            git rm -rfq . >/dev/null 2>&1 || true
+            printf 'Emptied for the v1.0.0 fresh start; new results appear here as the workflows run.\n' > README.md
+            git add README.md && git commit -qm "v1.0.0 fresh start: old results removed"
+            git push -f origin "HEAD:refs/heads/$b" && echo "emptied branch $b"
+          done
