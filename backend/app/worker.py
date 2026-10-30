@@ -345,6 +345,17 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         rt.db.set_setting("record_since", now_ms())
         notes["fresh_start_v23"] = {"bots": len(DEFAULT_BOTS), "admin_practice": clear_admin_practice(sink)}
         rt.db.set_setting("fresh_start_v23", True)
+    # v2.6 (owner decision, 30 Oct 2026): 15m trade calls are paused (analysis.PAUSED_TFS), so the 15m demo bots are
+    # removed once; their ids stay in defaults_added, so they are not added back automatically
+    if not rt.db.get_setting("pause_15m_v26", False):
+        from .services.analysis import PAUSED_TFS
+        doc = sink.get("config/bots") or {}
+        if isinstance(doc.get("bots"), list):
+            keep = [b for b in doc["bots"] if b.get("timeframe") not in PAUSED_TFS]
+            if len(keep) != len(doc["bots"]):
+                sink.set("config/bots", {**doc, "bots": keep, "updated_at": now_ms()})
+                notes["pause_15m_bots_removed"] = len(doc["bots"]) - len(keep)
+        rt.db.set_setting("pause_15m_v26", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())
@@ -361,7 +372,9 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         bots_cfg = doc["bots"]
         # one-time additions: default bots introduced in a later version are added once (deleting them later sticks)
         seen = set(doc.get("defaults_added") or [b.get("id") for b in bots_cfg])
-        new = [b for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}]
+        from .services.analysis import PAUSED_TFS
+        new = [b for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}
+               and b.get("timeframe") not in PAUSED_TFS]
         if new or not doc.get("defaults_added"):
             bots_cfg = bots_cfg + new
             sink.set("config/bots", {**doc, "bots": bots_cfg, "updated_at": now_ms(),

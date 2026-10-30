@@ -132,6 +132,9 @@ To end testing: restore the watchlist/limits and re-add spot bots (no automatic 
   15m (−0.17R) and 1h (−0.10R); 4h (+0.06R) and 12h are the only positive timeframes.
 - Market inputs (item 6): deriv/htf gates are tested per series; ~4 series use futures data, ~8 use higher-timeframe
   context. 3d had no htf map → now tested against 1w. BTC regime/tech in the trade's direction are filter2 features.
+- **15m trade calls paused** (owner decision 30 Oct 2026; `analysis.PAUSED_TFS`, env `PAUSED_TFS`, default "15m"): live
+  15m decisions → NO TRADE ("TIMEFRAME PAUSED"), chart/forecast unchanged, research replays unaffected; 15m bots removed
+  once (flag `pause_15m_v26`) and never re-added. 1h kept by owner choice although −0.10R on the test.
 - News sentiment: `services/sentiment.py` hourly Gemini score of the RSS headlines (calendar only if none) →
   table `news_sentiment` (known_at, no look-ahead); `ml/sentiment_gate.py` stub, off until ≥60 days. `NEWS_SENTIMENT`.
 

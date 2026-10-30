@@ -2,6 +2,8 @@
 into the structured output the API returns. Every number originates in an engine, a model or the database."""
 from __future__ import annotations
 
+import os
+
 import time
 from typing import Any
 
@@ -29,7 +31,10 @@ TRADE_DECISIONS = ("BUY", "BUY ON PULLBACK", "SELL")
 # v2.3: a trade is only worth taking when target 1 (= 1R) clearly beats the cost of getting in and out. Futures:
 # 0.05 % taker fee + slippage/spread per side; target 1 must be at least COST_MULT x the round trip.
 COST_MULT = 3.0
-ONE_CALL_TFS = ("15m",)      # no opposite call while a call on the same coin/timeframe is still open
+ONE_CALL_TFS = ("15m",)
+# timeframes whose trade calls are paused (owner decision 30 Oct 2026: 15m lost money on unseen data, -0.17R per trade);
+# the analysis, chart and forecast still run, only no trade call is issued. Env PAUSED_TFS, comma separated ("" = none).
+PAUSED_TFS = tuple(t.strip() for t in os.environ.get("PAUSED_TFS", "15m").split(",") if t.strip())      # no opposite call while a call on the same coin/timeframe is still open
 
 
 def round_trip_cost(futures: bool = True) -> float:
@@ -353,6 +358,13 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         why = (f"target 1 is only {rp:.2f}% away: too small to beat trading costs "
                f"(about {round_trip_cost() * 100:.2f}% to get in and out; it needs at least {COST_MULT:g}x that)")
         flags.append("TARGET TOO SMALL FOR COSTS")
+
+    # paused timeframes (v2.6): live calls only, so research replays still measure every timeframe
+    if decision in TRADE_DECISIONS and timeframe in PAUSED_TFS and live and bundle is None and as_of is None:
+        decision, grade = "NO TRADE", None
+        why = (f"{timeframe.upper()} trade calls are paused: on past calls they lost money after costs. "
+               "The chart and forecast stay available")
+        flags.append("TIMEFRAME PAUSED")
 
     # one call at a time on quick timeframes (v2.3): while a 15m call on this coin is still running, an opposite 15m
     # call is not issued (the 15m view can swing within the hour; flip-flopping cut winners and entered losers)
