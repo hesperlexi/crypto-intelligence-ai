@@ -8,7 +8,7 @@ function Choice<K extends keyof Appearance>({ label, k, options }: { label: stri
       <div className="label mb-1.5">{label}</div>
       <div className="flex flex-wrap gap-1" role="group" aria-label={label}>
         {options.map(([v, text]) => (
-          <button key={String(v)} className={`btn px-2.5 py-1 text-xs ${a[k] === v ? "btn-on" : ""}`} aria-pressed={a[k] === v}
+          <button key={String(v)} className={`btn btn-sm ${a[k] === v ? "btn-on" : ""}`} aria-pressed={a[k] === v}
             onClick={() => set({ [k]: v } as Partial<Appearance>)}>{text}</button>
         ))}
       </div>
@@ -23,14 +23,14 @@ export function AppearancePanel() {
     <div className="space-y-4">
       <div>
         <div className="label mb-1.5">Theme</div>
-        <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+        <div className="grid grid-cols-3 gap-2">
           {THEMES.map((t) => (
             <button key={t.id} onClick={() => set({ theme: t.id })} aria-pressed={a.theme === t.id}
-              className={`tile flex items-center gap-2 p-2 text-left text-xs transition-colors ${a.theme === t.id ? "!border-accent/70 text-accent" : "hover:border-accent/40"}`}>
-              <span className="flex shrink-0 overflow-hidden rounded-md border border-glass/20" aria-hidden>
-                {t.swatch.map((c) => <span key={c} className="h-6 w-2.5" style={{ background: c }} />)}
+              className={`tile flex flex-col items-stretch gap-2 p-2 text-left text-xs transition-colors ${a.theme === t.id ? "!border-accent/70 ring-1 ring-accent/40" : "hover:border-accent/40"}`}>
+              <span className="flex h-9 overflow-hidden rounded-md border border-glass/20" aria-hidden>
+                {t.swatch.map((c) => <span key={c} className="flex-1" style={{ background: c }} />)}
               </span>
-              <span className="min-w-0"><span className="block truncate font-semibold">{t.name}</span><span className="block truncate text-[11px] text-mute">{t.sub}</span></span>
+              <span className="min-w-0 px-0.5"><span className={`block truncate text-sm font-semibold ${a.theme === t.id ? "text-accent" : ""}`}>{t.name}</span><span className="block truncate text-[11px] text-mute">{t.sub}</span></span>
             </button>
           ))}
         </div>

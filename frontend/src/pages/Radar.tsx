@@ -63,7 +63,7 @@ export default function Radar() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Radar · coins to watch</h1>
+        <h1 className="page-title">Radar · coins to watch</h1>
         <p className="text-sm text-mute">Every hour the engine screens all liquid Binance coins that are not in the app yet and ranks them by how strongly they are outperforming the market. A screen for ideas, not a trade signal: add a coin to get the AI's long/short calls on it.</p>
       </div>
       {msg && <div role="status" className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">{msg}</div>}

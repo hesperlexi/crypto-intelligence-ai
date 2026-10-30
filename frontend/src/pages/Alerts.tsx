@@ -64,7 +64,7 @@ export default function Alerts() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold tracking-tight">Alerts</h1>
+      <h1 className="page-title">Alerts</h1>
 
       <div className={`panel flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm ${perm === "granted" ? "" : "border-warn/40"}`}>
         <span>

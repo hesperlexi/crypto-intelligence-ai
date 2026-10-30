@@ -151,7 +151,7 @@ export default function Report() {
   return (
     <div className="space-y-4">
       <div>
-        <h1 className="text-xl font-semibold tracking-tight">Weekly report</h1>
+        <h1 className="page-title">Weekly report</h1>
         <p className="text-sm text-mute">Ready to post: the week's best signals up front, with the full totals (wins and losses) and the app link. Showing the totals next to the best trades is what makes people trust the wins.</p>
       </div>
       <div className="flex flex-wrap items-center gap-2">

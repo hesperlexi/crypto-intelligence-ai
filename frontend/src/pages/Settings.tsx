@@ -3,6 +3,7 @@ import { SITE_HOST } from "../lib/brand";
 import { useEffect, useState } from "react";
 import { SymbolSelect, TfTabs, useMeta, useSymbols } from "../components/Pickers";
 import { AppearancePanel } from "../components/AppearancePanel";
+import { Logo } from "../components/Logo";
 import { Card, ErrorBox, Loading, Note, Row } from "../components/ui";
 import { checkForUpdate } from "../lib/updater";
 import * as push from "../lib/push";
@@ -28,11 +29,10 @@ export default function Settings() {
 function MemberSettings() {
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card title="Appearance"><AppearancePanel /></Card>
-        <ViewModeCard />
-        <div className="space-y-4"><MembershipCard /><ContactCard /><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
+      <PageHead />
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <div className="space-y-4"><MembershipCard /><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /><AboutCard /></div>
+        <div className="space-y-4"><NotificationsCard /><AndroidCard /><ManualCard /><ContactCard /></div>
       </div>
     </div>
   );
@@ -80,15 +80,14 @@ function AdminSettings() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
+      <PageHead />
       {msg && <p className="text-sm text-accent">{msg}</p>}
       {err && <ErrorBox error={err} />}
-      <div className="grid gap-4 xl:grid-cols-2">
-        <Card title="Appearance"><AppearancePanel /></Card>
-        <ViewModeCard />
-        <div className="space-y-4"><TelegramCard /><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
+      <div className="grid items-start gap-4 lg:grid-cols-2">
+        <div className="space-y-4"><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /><AboutCard /></div>
+        <div className="space-y-4"><TelegramCard /><NotificationsCard /><AndroidCard /><ManualCard /></div>
       </div>
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid items-start gap-4 lg:grid-cols-2">
         <Card title="Risk profile">
           <div className="grid gap-3 sm:grid-cols-2">
             {RISK_FIELDS.map(([k, label]) => (
@@ -148,12 +147,21 @@ function AdminSettings() {
   );
 }
 
+function PageHead() {
+  return (
+    <div>
+      <h1 className="page-title">Settings</h1>
+      <p className="page-sub">Appearance, notifications, the app and your membership. Saved on this device unless noted.</p>
+    </div>
+  );
+}
+
 function ManualCard() {
   const href = `/manual.pdf?v=${BUILD_ID}`;
   return (
     <Card title="User manual">
       <div className="flex items-center gap-3">
-        <img src="/icons/icon-192.png" alt="" className="h-12 w-12 rounded-xl" />
+        <Logo size={48} />
         <p className="text-sm text-mute">Signals, trading, alerts and bots, step by step.</p>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
@@ -171,7 +179,7 @@ function AboutCard() {
     <Card title="About">
       <Row k="App" v="Crypto Intelligence AI" />
       <Row k="Version" v={`v${APP_VERSION}`} />
-      <div className="mt-3 flex items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         <button className="btn" onClick={async () => { setMsg("Checking…"); setMsg((await checkForUpdate(true)) ? "Updating…" : "You have the latest version."); }}>Check for updates</button>
         {msg && <span className="text-sm text-mute">{msg}</span>}
       </div>

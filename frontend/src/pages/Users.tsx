@@ -48,7 +48,7 @@ export default function Users() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <h1 className="text-xl font-semibold tracking-tight">Users & memberships</h1>
+        <h1 className="page-title">Users & memberships</h1>
         <span className="num text-xs text-mute">{count("members")} active{all.filter((u) => u.free && match.members(u)).length ? ` (${all.filter((u) => u.free && match.members(u)).length} free)` : ""} · {income} USDT received in total</span>
       </div>
       <Card title="Activity">

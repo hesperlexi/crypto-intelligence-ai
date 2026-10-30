@@ -61,7 +61,7 @@ export default function Scanner() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-xl font-semibold tracking-tight">Scanner</h1>
+        <h1 className="page-title">Scanner</h1>
         <TfTabs value={tf} onChange={setTf} />
       </div>
       {admin && <Card title="Watchlist">
@@ -85,7 +85,7 @@ export default function Scanner() {
         </div>}>
         {scan.error && <ErrorBox error={scan.error} retry={scan.reload} />}
         {!scan.data && scan.loading && <Loading what="Scanning" />}
-        <div className="overflow-x-auto">
+        <div className="table-wrap">
           <table className="grid-table">
             <thead><tr><th></th><th>Coin</th><th className="text-right">Price</th><th className="text-right">24h</th><th className="text-right">Volume</th><th>Trend</th><th className="text-right">RSI</th><th className="text-right">ADX</th><th className="text-right">ML P(up)</th><th>Regime</th><th>Signal</th><th>Decision</th><th className="text-right">Conf.</th><th className="text-right">R:R</th><th className="text-right">Breakout</th><th></th></tr></thead>
             <tbody>

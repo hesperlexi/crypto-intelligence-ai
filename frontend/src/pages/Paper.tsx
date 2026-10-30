@@ -11,7 +11,7 @@ export default function Paper() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-3">
-        <h1 className="text-xl font-semibold tracking-tight">Trade</h1>
+        <h1 className="page-title">Trade</h1>
         <Badge tone="warn">Practice account · virtual USDT</Badge>
       </div>
       <TradeTerminal />

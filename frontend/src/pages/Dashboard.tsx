@@ -37,8 +37,8 @@ export default function Dashboard() {
       <DashboardHero rows={d?.rows} status={ms} tf={tf} />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg font-semibold">Market overview</h2>
-          <p className="text-sm text-mute">Signals and regimes on the {tf.toUpperCase()} timeframe{refreshAt ? " · forecasts refreshed just now" : ""}</p>
+          <h2 className="font-display text-lg font-semibold tracking-tight">Market overview</h2>
+          <p className="page-sub">Signals and regimes on the {tf.toUpperCase()} timeframe{refreshAt ? " · forecasts refreshed just now" : ""}</p>
         </div>
         <TfTabs value={tf} onChange={setTf} />
       </div>
@@ -72,9 +72,9 @@ export default function Dashboard() {
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Card title="Market regime" right={<span className="text-[11px] text-mute">{(d?.regimes ?? []).length} coins</span>}>
-          <div className="-mr-2 max-h-[34rem] space-y-2.5 overflow-y-auto pr-2">
+          <div className="-mr-2 max-h-[34rem] space-y-3 overflow-y-auto pr-2">
             {(d?.regimes ?? []).map((r: any) => (
-              <div key={r.symbol} className="grid grid-cols-[4rem_1fr_3rem] items-center gap-3 text-sm">
+              <div key={r.symbol} className="grid grid-cols-[3.5rem_minmax(0,1fr)_3rem] items-center gap-3 text-sm">
                 <Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{base(r.symbol)}</Link>
                 <div><RegimeBadge regime={r.regime} /><div className="mt-1"><Meter value={r.confidence} tone={regimeTone(r.regime)} /></div></div>
                 <span className="num text-right text-mute" title="Share of regime inputs that agree">{fmtProb(r.confidence)}</span>
@@ -86,11 +86,11 @@ export default function Dashboard() {
         <Card title="Top signals">
           <div className="space-y-2">
             {(d?.top_signals ?? []).map((s: any) => (
-              <Link key={s.symbol} to={`/asset/${slug(s.symbol)}`} className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-raised">
-                <span className="w-14 font-medium">{base(s.symbol)}</span>
-                <SignalBadge signal={s.signal} />
-                {pro && <span className="num text-mute" title="Signal score">{isNum(s.score) ? `${s.score.toFixed(0)}/100` : DASH}</span>}
-                <span className="text-xs text-mute">→ {s.decision}</span>
+              <Link key={s.symbol} to={`/asset/${slug(s.symbol)}`} className={`grid items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] ${pro ? "grid-cols-[3.5rem_minmax(0,1fr)_3.5rem_minmax(0,1fr)]" : "grid-cols-[3.5rem_minmax(0,1fr)_minmax(0,1fr)]"}`}>
+                <span className="font-medium">{base(s.symbol)}</span>
+                <span><SignalBadge signal={s.signal} /></span>
+                {pro && <span className="num text-right text-mute" title="Signal score">{isNum(s.score) ? `${s.score.toFixed(0)}/100` : DASH}</span>}
+                <span className="truncate text-right text-xs text-mute">→ {s.decision}</span>
               </Link>
             ))}
             {!d?.top_signals?.length && <Empty>No signals yet</Empty>}
@@ -118,13 +118,13 @@ export default function Dashboard() {
       </div>
 
       <Card title="Forecast table — expected return per horizon" right={<span className="text-xs text-mute">each horizon uses its own timeframe model</span>}>
-        <div className="overflow-x-auto">
+        <div className="table-wrap">
           <table className="grid-table">
             <thead><tr><th>Asset</th><th className="text-right">Current</th>{HORIZONS.map((h) => <th key={h} className="text-right">{h}</th>)}</tr></thead>
             <tbody>
               {(d?.forecast_table ?? []).map((r: any) => (
                 <tr key={r.symbol}>
-                  <td><Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{r.symbol}</Link></td>
+                  <td><Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{base(r.symbol)}</Link></td>
                   <td className="num text-right">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</td>
                   {HORIZONS.map((h) => {
                     const c = r.horizons[h];
@@ -147,9 +147,9 @@ export default function Dashboard() {
           {(d?.heatmap ?? []).map((h: any) => {
             const ch = tickers[h.symbol]?.change_pct ?? h.change_24h_pct;
             return (
-              <Link key={h.symbol} to={`/asset/${slug(h.symbol)}`} className="rounded-md border border-line p-3 transition-colors hover:border-accent/50" style={{ background: heatColor(ch) }}>
-                <div className="flex items-center justify-between"><span className="font-semibold">{base(h.symbol)}</span><span className="num text-sm">{fmtPctRaw(ch)}</span></div>
-                <div className="mt-1 text-xs text-text/80">{h.signal} · {h.regime}</div>
+              <Link key={h.symbol} to={`/asset/${slug(h.symbol)}`} className="rounded-xl border border-glass/10 p-3 transition-colors hover:border-accent/50" style={{ background: heatColor(ch) }}>
+                <div className="flex items-center justify-between"><span className="font-semibold">{base(h.symbol)}</span><span className="num text-sm font-semibold">{fmtPctRaw(ch)}</span></div>
+                <div className="mt-1 truncate text-[11px] uppercase tracking-wide text-text/75">{h.signal} · {h.regime}</div>
               </Link>
             );
           })}
@@ -159,16 +159,16 @@ export default function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Top opportunities">
           {d?.opportunities?.length ? d.opportunities.map((o: any) => (
-            <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-raised">
-              <span className="font-medium">{o.symbol}</span><SignalBadge signal={o.decision} />
-              <span className="num text-mute">conf. {fmtProb(o.confidence)}</span><span className="num text-mute">R:R 1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}</span>
+            <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="grid grid-cols-[minmax(0,1fr)_auto_4.5rem_4.5rem] items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05]">
+              <span className="truncate font-medium">{base(o.symbol)}</span><SignalBadge signal={o.decision} />
+              <span className="num text-right text-mute">{fmtProb(o.confidence)}<span className="text-[11px]"> conf.</span></span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-[11px]"> R:R</span></span>
             </Link>
           )) : <Empty>No setup currently passes every check (confidence, model agreement, risk/reward). That is a valid outcome.</Empty>}
         </Card>
         <Card title="Top risks">
           {d?.risks?.length ? d.risks.map((r: any, i: number) => (
-            <div key={i} className="flex items-center justify-between gap-3 border-b border-line/50 py-1.5 text-sm last:border-0">
-              <span className="font-medium">{r.symbol}</span><span className="text-warn">{r.risk}</span>
+            <div key={i} className="flex items-center justify-between gap-3 border-b border-line/50 px-2 py-2 text-sm last:border-0">
+              <span className="font-medium">{base(r.symbol)}</span><span className="text-right text-warn">{r.risk}</span>
             </div>
           )) : <Empty>No elevated risks flagged</Empty>}
         </Card>

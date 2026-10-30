@@ -139,7 +139,7 @@ export default function Asset() {
 
           <div className="grid gap-4 xl:grid-cols-2">
             <Card title="Forecast by horizon">
-              <div className="overflow-x-auto">
+              <div className="table-wrap">
                 <table className="grid-table">
                   <thead><tr><th>Horizon</th><th className="text-right">Expected</th><th className="text-right">P(up)</th><th className="text-right">80% range</th><th>Status</th></tr></thead>
                   <tbody>
@@ -262,7 +262,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
             <Stat label="Model agreement" value={fmtProb(fc.model_agreement)} sub={`${fc.models_agreeing} of ${fc.models_total} models`} className={fc.model_agreement < 0.6 ? "text-warn" : ""} />
             <div className="flex-1"><Meter value={fc.model_agreement} tone={fc.model_agreement < 0.6 ? "warn" : "accent"} /></div>
           </div>
-          <div className="overflow-x-auto">
+          <div className="table-wrap">
             <table className="grid-table">
               <thead><tr><th>Model</th><th>Call</th><th className="text-right">P(up)</th><th className="text-right">P(down)</th><th className="text-right">Weight</th><th className="text-right">OOS acc.</th></tr></thead>
               <tbody>

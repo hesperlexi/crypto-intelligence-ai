@@ -49,7 +49,7 @@ export default function Bots() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-xl font-semibold tracking-tight">Demo trading bots</h1>
+          <h1 className="page-title">Demo trading bots</h1>
           <Badge tone="warn">Demo only — virtual money</Badge>
         </div>
         {admin && <div className="flex flex-wrap gap-2">
@@ -142,7 +142,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
         <div>
           <div className="label mb-1">Open positions{bot.pending.length ? ` · ${bot.pending.length} pending limit order(s)` : ""}</div>
           {live.length || bot.pending.length ? (
-            <div className="overflow-x-auto"><table className="grid-table">
+            <div className="table-wrap"><table className="grid-table">
               <thead><tr><th>Coin</th><th>Side</th><th className="text-right">Entry</th><th className="text-right">Now</th><th className="text-right">P&L{fut ? " (on margin)" : ""}</th>{fut && <th className="text-right">Liquidation</th>}<th className="text-right">{isPred ? "Closes" : "Stop / TP hit"}</th></tr></thead>
               <tbody>
                 {live.map((p: any) => (
@@ -163,7 +163,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
         <div>
           <div className="label mb-1">Accuracy by {s.confidence_key === "p_max" ? "model probability" : "signal confidence"}</div>
           {s.by_confidence?.length ? (
-            <div className="overflow-x-auto"><table className="grid-table">
+            <div className="table-wrap"><table className="grid-table">
               <thead><tr><th>Bucket</th><th className="text-right">Trades</th><th className="text-right">Predicted</th><th className="text-right">Direction right</th><th className="text-right">Avg return</th></tr></thead>
               <tbody>{s.by_confidence.map((r: any) => (
                 <tr key={r.lo}><td className="num">{fmtProb(r.lo)}–{fmtProb(r.hi)}</td><td className="num text-right">{r.n}</td><td className="num text-right">{fmtProb(r.mean, 1)}</td>

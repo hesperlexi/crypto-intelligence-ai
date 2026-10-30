@@ -5,12 +5,12 @@ export function Card({ title, right, children, className = "" }: { title?: React
   return (
     <section className={`panel ${className}`}>
       {(title || right) && (
-        <header className="card-head flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-3 py-2.5 sm:px-4">
+        <header className="card-head flex min-h-[48px] flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
           <h2 className="label">{title}</h2>
           {right}
         </header>
       )}
-      <div className="card-body p-3 sm:p-4">{children}</div>
+      <div className="card-body p-4">{children}</div>
     </section>
   );
 }
@@ -39,7 +39,7 @@ export function ErrorBox({ error, retry }: { error: string; retry?: () => void }
     <div role="alert" className="flex items-center justify-between gap-3 rounded-md border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">
       <span>{error}</span>
       {retry && (
-        <button className="btn" onClick={retry}>
+        <button className="btn btn-sm" onClick={retry}>
           Retry
         </button>
       )}
@@ -62,7 +62,7 @@ const TONES: Record<Tone, string> = {
 
 export function Badge({ tone = "mute", children, title }: { tone?: Tone; children: ReactNode; title?: string }) {
   return (
-    <span title={title} className={`inline-flex items-center whitespace-nowrap rounded border px-1.5 py-0.5 text-[11px] font-semibold uppercase tracking-wide ${TONES[tone]}`}>
+    <span title={title} className={`inline-flex items-center whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[11px] font-semibold uppercase leading-none tracking-wide ${TONES[tone]}`}>
       {children}
     </span>
   );
@@ -158,9 +158,9 @@ export function Row({ k, v, className = "" }: { k: ReactNode; v: ReactNode; clas
 
 export function Tabs<T extends string>({ value, options, onChange, label }: { value: T; options: readonly T[]; onChange: (v: T) => void; label?: string }) {
   return (
-    <div className="flex flex-wrap gap-1" role="group" aria-label={label}>
+    <div className="seg max-w-full flex-wrap" role="group" aria-label={label}>
       {options.map((o) => (
-        <button key={o} className={`btn px-2.5 py-1 text-xs uppercase ${o === value ? "btn-on" : ""}`} aria-pressed={o === value} onClick={() => onChange(o)}>
+        <button key={o} type="button" className="num uppercase" aria-pressed={o === value} onClick={() => onChange(o)}>
           {o}
         </button>
       ))}

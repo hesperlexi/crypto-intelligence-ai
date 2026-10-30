@@ -57,7 +57,7 @@ export default function Accuracy() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Forecast accuracy</h1>
+          <h1 className="page-title">Forecast accuracy</h1>
           <p className="text-sm text-mute">Is the AI actually working? Every figure here comes from walk-forward out-of-sample tests or from live predictions scored after the fact.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -143,7 +143,7 @@ export default function Accuracy() {
           )}
 
           <Card title="Model comparison (out-of-sample)" right={m.best_model?.name ? <span className="text-xs text-mute">best single model: <span className="text-text">{m.best_model.label}</span> {m.best_model.supported ? "(statistically supported)" : "(not significantly better than the prior)"}</span> : undefined}>
-            <div className="overflow-x-auto">
+            <div className="table-wrap">
               <table className="grid-table">
                 <thead><tr><th>Model</th><th className="text-right">Weight</th><th className="text-right">Dir. acc.</th><th className="text-right">Prec.</th><th className="text-right">Recall</th><th className="text-right">F1</th><th className="text-right">AUC</th><th className="text-right">Brier</th><th className="text-right">Calib. err.</th><th>Calibration</th><th className="text-right">Net return</th><th className="text-right">Sharpe</th><th className="text-right">Max DD</th><th className="text-right">Win</th><th className="text-right">PF</th></tr></thead>
                 <tbody>
@@ -168,7 +168,7 @@ export default function Accuracy() {
           <div className="grid gap-4 xl:grid-cols-2">
             <Card title="Walk-forward timeline"><Timeline folds={m.folds} live={m.live_fit} sizes={m.sizes} /></Card>
             <Card title="Calibration · predicted confidence vs realised accuracy">
-              <div className="overflow-x-auto"><table className="grid-table">
+              <div className="table-wrap"><table className="grid-table">
                 <thead><tr><th>Confidence bin</th><th className="text-right">Predictions</th><th className="text-right">Mean predicted</th><th className="text-right">Actually correct</th><th className="text-right">Gap</th></tr></thead>
                 <tbody>{(m.reliability ?? []).map((b: any) => (
                   <tr key={b.lo}><td className="num">{fmtProb(b.lo)}–{fmtProb(b.hi)}</td><td className="num text-right">{b.n}</td><td className="num text-right">{fmtProb(b.mean_confidence, 1)}</td><td className="num text-right">{fmtProb(b.accuracy, 1)}</td>
@@ -192,7 +192,7 @@ export default function Accuracy() {
 
       <Card title="All trained models">
         {all.error && <ErrorBox error={all.error} />}
-        <div className="overflow-x-auto">
+        <div className="table-wrap">
           <table className="grid-table">
             <thead><tr><th>Asset</th><th>TF</th><th>Edge</th><th className="text-right">OOS n</th><th className="text-right">OOS dir. acc.</th><th className="text-right">OOS Brier</th><th className="text-right">OOS Sharpe</th><th className="text-right">OOS max DD</th><th className="text-right">Live n</th><th className="text-right">Live acc.</th><th className="text-right">Live 30d</th><th>Trained</th></tr></thead>
             <tbody>{(all.data?.rows ?? []).map((r: any) => (

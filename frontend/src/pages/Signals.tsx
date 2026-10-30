@@ -31,10 +31,9 @@ function callState(r: any): "open" | "closed" | null {
 
 function Seg<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: readonly (readonly [T, string])[]; onChange: (v: T) => void }) {
   return (
-    <div className="inline-flex rounded-lg border border-glass/10 bg-ink/40 p-0.5" role="group" aria-label={label}>
+    <div className="seg" role="group" aria-label={label}>
       {options.map(([k, l]) => (
-        <button key={k} type="button" aria-pressed={value === k} onClick={() => onChange(k)}
-          className={`rounded-md px-2.5 py-1 text-xs font-semibold transition ${value === k ? "bg-accent/15 text-accent" : "text-mute hover:text-text"}`}>{l}</button>
+        <button key={k} type="button" aria-pressed={value === k} onClick={() => onChange(k)}>{l}</button>
       ))}
     </div>
   );
@@ -80,14 +79,14 @@ export default function Signals() {
       <NewsBanner />
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-xl font-semibold tracking-tight">Trade signals</h1>
-          <p className="text-sm text-mute">{rows.length ? `${active} of ${rows.length} coins have a ${market === "futures" ? "long or short" : "buy or sell"} call on the ${tf.toUpperCase()} chart.` : "One clear call per coin: direction, entry, stop-loss and targets."}</p>
+          <h1 className="page-title">Trade signals</h1>
+          <p className="page-sub">{rows.length ? `${active} of ${rows.length} coins have a ${market === "futures" ? "long or short" : "buy or sell"} call on the ${tf.toUpperCase()} chart.` : "One clear call per coin: direction, entry, stop-loss and targets."}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Market">
+          <div className="seg" role="group" aria-label="Market">
             {(["futures", "spot"] as const).map((k) => (
-              <button key={k} aria-pressed={market === k} onClick={() => setMarket(k)}
-                className={`rounded-lg px-4 py-1.5 text-sm font-semibold transition ${market === k ? "bg-accent text-ink shadow" : "text-mute hover:text-text"}`}>
+              <button key={k} type="button" aria-pressed={market === k} onClick={() => setMarket(k)}
+                className={`!px-4 !text-sm ${market === k ? "!bg-accent !text-ink" : ""}`}>
                 {k === "futures" ? "Futures" : "Spot"}
               </button>
             ))}
@@ -98,14 +97,14 @@ export default function Signals() {
 
       {allRows.length > 0 && (
         <div className="flex flex-wrap items-center gap-2" aria-label="Filters">
-          <label>
+          <label className="w-full sm:w-auto">
             <span className="sr-only">Search coin</span>
-            <input className="input w-36 py-1 text-xs" type="search" placeholder="Search coin" value={q} onChange={(e) => setQ(e.target.value)} />
+            <input className="input input-sm w-full sm:w-44" type="search" placeholder="Search coin" value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
           <Seg label="Direction" value={dir} onChange={setDir} options={[["all", "All"], ["long", market === "futures" ? "Long" : "Buy"], ["short", market === "futures" ? "Short" : "Sell"]] as const} />
           <Seg label="Grade" value={grade} onChange={setGrade} options={[["all", "Any grade"], ["A", "A"], ["B", "B"]] as const} />
           {hasCalls && <Seg label="Status" value={st} onChange={setSt} options={[["all", "Any status"], ["open", "Open"], ["closed", "Closed"]] as const} />}
-          {filtered && <button type="button" className="text-xs text-accent hover:underline" onClick={() => { setDir("all"); setGrade("all"); setSt("all"); setQ(""); }}>Clear filters</button>}
+          {filtered && <button type="button" className="btn btn-ghost btn-sm text-accent" onClick={() => { setDir("all"); setGrade("all"); setSt("all"); setQ(""); }}>Clear filters</button>}
         </div>
       )}
       {allRows.length > 0 && rows.length === 0 && <Empty>No coin matches these filters.</Empty>}
@@ -149,11 +148,11 @@ export default function Signals() {
                       <button onClick={() => pick(r.symbol)} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left hover:bg-glass/[0.04] ${r.symbol === row?.symbol ? "bg-accent/[0.06]" : ""}`}>
                         <CoinAvatar symbol={r.symbol} size={28} />
                         <div className="min-w-0">
-                          <div className="flex items-center gap-2"><span className="font-semibold">{base(r.symbol)}</span>{vv.tone !== "wait" && <GradeBadge grade={r.grade} small />}<span className="num truncate text-xs text-mute">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</span></div>
+                          <div className="flex min-w-0 items-center gap-2"><span className="font-semibold">{base(r.symbol)}</span>{vv.tone !== "wait" && <GradeBadge grade={r.grade} small />}<span className="num ml-auto truncate text-xs text-mute sm:ml-0">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</span></div>
                           <div className="num truncate text-xs text-mute">{r.stale === true ? "Data delayed — no trade" : show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
                           <RowExtras r={r} show={!!show} market={market} px={tickers[r.symbol]?.last ?? r.price} />
                         </div>
-                        <span className={`rounded-md px-2 py-1 text-[11px] font-bold ${vv.tone === "bull" ? "bg-bull/15 text-bull" : vv.tone === "bear" ? "bg-bear/15 text-bear" : "bg-glass/10 text-mute"}`}>{vv.label}</span>
+                        <span className={`max-w-[6.5rem] whitespace-normal rounded-md px-2 py-1 text-center text-[11px] font-bold leading-tight ${vv.tone === "bull" ? "bg-bull/15 text-bull" : vv.tone === "bear" ? "bg-bear/15 text-bear" : "bg-glass/10 text-mute"}`}>{vv.label}</span>
                       </button>
                     </li>
                   );

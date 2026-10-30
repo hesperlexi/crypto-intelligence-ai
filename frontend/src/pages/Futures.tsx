@@ -30,7 +30,7 @@ export default function Futures() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="flex flex-wrap items-center gap-2">
-            <h1 className="text-xl font-semibold tracking-tight">Futures</h1>
+            <h1 className="page-title">Futures</h1>
             <Badge tone="warn">Predictions + demo only</Badge>
           </div>
           <p className="text-sm text-mute">Long / short calls for USDT perpetuals on the {tf.toUpperCase()} timeframe, with leverage, liquidation and funding.</p>
