@@ -429,8 +429,16 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
             return {"ok": False, "reason": "no publisher"}
         m = {"title": "Test notification", "body": "Notifications from Crypto Intelligence AI work on this device.",
              "url": "/settings", "tag": "test"}
-        if p.get("uid"):
-            m["uid"] = str(p["uid"])
+        # only to the person who queued the test: for members the job owner's uid (from the job's `by` email), never
+        # a uid taken from the job's params (the rules also require params.uid == the creator)
+        if job.get("_admin"):
+            if p.get("uid"):
+                m["uid"] = str(p["uid"])
+        else:
+            owner = job.get("_owner_uid")
+            if not owner:
+                return {"ok": False, "reason": "the owner of this job could not be identified"}
+            m["uid"] = owner
         res = sink.send_push([m])
         return {"ok": res.get("sent", 0) > 0, **res}
     if kind == "backtest":
@@ -461,11 +469,48 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
     raise ValueError(f"unknown job type {kind!r}")
 
 
+def _admin_emails() -> set[str]:
+    import os
+    return {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").replace(";", ",").split(",") if e.strip()}
+
+
 def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
+    """Run queued website jobs. Limits (admins exempt): JOBS_PER_USER_PER_DAY per person (UTC day) and JOBS_PER_TICK
+    per cycle; jobs over a limit fail with a clear message."""
     n = 0
+    admins = _admin_emails()
+    day = time.strftime("%Y-%m-%d", time.gmtime())
+    counts = rt.db.get_setting("job_counts", {}) or {}
+    if counts.get("day") != day:
+        counts = {"day": day, "by": {}}
+    this_tick = 0
+    uid_cache: dict[str, str | None] = {}
     for jid, job in sink.queued_jobs():
         if time.time() > deadline:
             break
+        who = str(job.get("by") or "").strip().lower()
+        admin = bool(who) and who in admins
+        job = {**job, "_admin": admin}
+        if who and not admin:
+            if who not in uid_cache:
+                uid_cache[who] = sink.uid_for_email(who)
+            job["_owner_uid"] = uid_cache[who]
+        if not admin:
+            used = int(counts["by"].get(who or "?", 0))
+            limit_msg = None
+            if used >= settings.jobs_per_user_per_day:
+                limit_msg = (f"daily limit reached: at most {settings.jobs_per_user_per_day} requests per person per day; "
+                             "please try again tomorrow")
+            elif this_tick >= settings.jobs_per_tick:
+                limit_msg = (f"the engine takes at most {settings.jobs_per_tick} requests per run; please try again in a "
+                             "few minutes")
+            if limit_msg:
+                sink.set(f"jobs/{jid}", {"status": "failed", "error": limit_msg, "finished_at": now_ms()}, merge=True)
+                n += 1
+                continue
+            counts["by"][who or "?"] = used + 1
+            this_tick += 1
+            rt.db.set_setting("job_counts", counts)
         sink.set(f"jobs/{jid}", {"status": "running", "started_at": now_ms()}, merge=True)
         try:
             result = run_job(rt, job, deadline, sink)
