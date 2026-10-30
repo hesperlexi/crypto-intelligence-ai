@@ -22,7 +22,7 @@ def _version() -> str:
             return v
     except Exception:
         pass
-    return "2.0.0"
+    return "2.1.0"
 
 
 VERSION = APP_VERSION = _version()

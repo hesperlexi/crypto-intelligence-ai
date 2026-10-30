@@ -1,4 +1,4 @@
-"""One-time v1.0.0 fresh start: every trade and performance record is removed (wins and losses alike) and the record
+"""One-time v2.1.0 fresh start (planned as v1.0.0): every trade and performance record is removed (wins and losses alike) and the record
 starts again from the launch moment. Owner decision, 30 Oct 2026: no backup.
 
 Runs inside the engine (worker.sync_config) only when APPROVED is True and the settings flag `reset_v1_done` is
@@ -14,10 +14,10 @@ from __future__ import annotations
 import sys
 from typing import Any
 
-# Set to True only after the owner types "APPROVE RESET v1.0.0".
-APPROVED = False
-APPROVAL_PHRASE = "APPROVE RESET v1.0.0"
-VERSION = "1.0.0"
+# Set to True only after the owner typed the approval phrase.
+APPROVED = True             # owner typed "APPROVE RESET v2.1.0" on 30 Oct 2026, 22:46 Dubai
+APPROVAL_PHRASE = "APPROVE RESET v2.1.0"
+VERSION = "2.1.0"
 
 SQL_TABLES = ("signals", "shadow_signals", "trades", "bots", "bot_trades", "bot_equity", "paper_accounts",
               "paper_positions", "backtests", "alert_events", "decisions", "published")

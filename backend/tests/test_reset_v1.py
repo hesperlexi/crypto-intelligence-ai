@@ -27,6 +27,7 @@ def _setup(tmp_path, rt):
 def test_reset_is_gated_and_runs_once(tmp_path, monkeypatch):
     rt = Runtime(Database("sqlite:///:memory:"), _P())
     sink = _setup(tmp_path, rt)
+    monkeypatch.setattr(reset_v1, "APPROVED", False)
     assert reset_v1.maybe_run(rt, sink, now_ms()) is None           # not approved: nothing happens
     assert sink.get("paper/u1_futures") is not None
     monkeypatch.setattr(reset_v1, "APPROVED", True)
@@ -37,7 +38,7 @@ def test_reset_is_gated_and_runs_once(tmp_path, monkeypatch):
     assert sink.get("views/bot_b1") is None
     assert sink.get("users/u1") and sink.get("alerts/a1")              # people and alert rules kept
     assert sink.get("config/bots")["bots"][0]["reset_token"] == "v1"
-    assert sink.get("config/release")["version"] == "1.0.0"
+    assert sink.get("config/release")["version"] == "2.1.0"
     assert rt.db.get_setting("record_since") == t
     assert rt.db.get_setting("safety:BTC/USDT:1h") is None
     assert rt.db.get_setting("risk_profile") == {"keep": True}

@@ -5,8 +5,8 @@ from app.pricefmt import fmt_price
 
 def test_brand_values_match_the_contract():
     assert brand.URL == "https://www.cryptointelai.com" and brand.SUPPORT_EMAIL == "support@cryptointelai.com"
-    assert brand.VERSION == "2.0.0"
-    assert brand.FOOTER == ("Crypto Intelligence AI v2.0.0 · www.cryptointelai.com · support@cryptointelai.com · "
+    assert brand.VERSION == "2.1.0"
+    assert brand.FOOTER == ("Crypto Intelligence AI v2.1.0 · www.cryptointelai.com · support@cryptointelai.com · "
                             "Analysis only, not financial advice.")
     assert brand.TELEGRAM_CHANNEL == "@crypappai"
 

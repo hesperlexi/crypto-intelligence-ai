@@ -43,7 +43,7 @@ def test_a2_entry_is_the_plan_entry_and_market_calls_are_filled():
     assert T.log_signal(db, _a(entry=100.0, live=101.3), now=BAR + H1 + 1000)
     s = db.one("SELECT * FROM signals")
     assert s["entry"] == 100.0 and s["price"] == 101.3 and s["fill_status"] == "FILLED"
-    assert s["engine_version"] == "2.6.0" and s["app_version"] == "2.0.0"
+    assert s["engine_version"] == "2.6.0" and s["app_version"] == "2.1.0"
     assert loads(s["payload"])["live_price"] == 101.3
 
 

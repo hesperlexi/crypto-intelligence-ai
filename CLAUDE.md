@@ -3,7 +3,7 @@
 Owner: Hesper (admin). Live site: https://crypapp-6a9b9.web.app (must ALWAYS stay active: Android app + existing links;
 never redirect or retire it) and the custom domain https://cryptointelai.com (Tasjeel DNS, connected 27 Oct 2026 via
 `custom-domain.yml`; www redirects to apex). Support email support@cryptointelai.com. Repo: hesperlexi/crypto-intelligence-ai (public).
-Version **2.0.0** (web + Android TWA). Analysis and demo trading only: **no real orders, ever**.
+Version **2.1.0** (fresh start 30 Oct 2026: `reset_v1.py`, record counted from the reset) (web + Android TWA). Analysis and demo trading only: **no real orders, ever**.
 
 ## Ground rules
 - Every result shown to members or the public comes from the real record. Never delete, hide or edit losing trades

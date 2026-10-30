@@ -1,13 +1,13 @@
-name: v1.0.0 reset cleanup (old backups, caches, report branches)
+name: v2.1.0 reset cleanup (old backups, caches, report branches)
 
-# After the engine has run the v1.0.0 fresh start (settings flag reset_v1_done), old copies of the engine state still
+# After the engine has run the v2.1.0 fresh start (settings flag reset_v1_done), old copies of the engine state still
 # hold the removed trades: encrypted backups (release engine-backup), older Actions caches, and the reports /
 # research-results branches. This removes them. Manual only; asks for the owner's approval phrase.
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type: APPROVE RESET v1.0.0'
+        description: 'Type: APPROVE RESET v2.1.0'
         required: true
       reset_at:
         description: "Reset time in ms (from Health / config/release); everything older is removed"
@@ -15,7 +15,7 @@ on:
 
 jobs:
   cleanup:
-    if: ${{ github.event.inputs.confirm == 'APPROVE RESET v1.0.0' }}
+    if: ${{ github.event.inputs.confirm == 'APPROVE RESET v2.1.0' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -44,7 +44,7 @@ jobs:
           for b in reports research-results; do
             git checkout -q --orphan "fresh-$b"
             git rm -rfq . >/dev/null 2>&1 || true
-            printf 'Emptied for the v1.0.0 fresh start; new results appear here as the workflows run.\n' > README.md
-            git add README.md && git commit -qm "v1.0.0 fresh start: old results removed"
+            printf 'Emptied for the v2.1.0 fresh start; new results appear here as the workflows run.\n' > README.md
+            git add README.md && git commit -qm "v2.1.0 fresh start: old results removed"
             git push -f origin "HEAD:refs/heads/$b" && echo "emptied branch $b"
           done
