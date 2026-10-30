@@ -1,0 +1,79 @@
+name: Research (read-only replays of the recorded calls)
+
+# Audit v1 proof: replays every recorded call on the stored candles with the current rules (give-back baseline) and
+# compares them with the managed exits on a tuning / untouched test split. Read-only on production state:
+#   * restores the engine state cache only (never saves it), no Firebase key or any other secret, never runs the engine;
+#   * results are committed to the `research-results` branch under results/.
+on:
+  push:
+    branches: [audit-v1-upgrade]
+    paths:
+      - "backend/**"
+      - ".github/workflows/research.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: research
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write          # commit the JSON results to the research-results branch
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-worker.txt
+      - run: pip install -r requirements-worker.txt
+      - name: Restore the engine state (read-only copy; never saved back)
+        id: state
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-none
+          restore-keys: engine-state-
+      - name: Run the research
+        env:
+          DATABASE_URL: sqlite:///./data/crypto_ai.db
+        run: |
+          mkdir -p ../out
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
+            for c in giveback compare; do
+              printf '{"ok": false, "command": "%s", "reason": "engine state cache not restored (no engine-state-* cache available)", "commit": "%s"}\n' "$c" "${GITHUB_SHA}" > ../out/$c-latest.json
+            done
+          else
+            python -m app.research giveback --out ../out/giveback-latest.json > /dev/null
+            python -m app.research compare --out ../out/compare-latest.json > /dev/null
+          fi
+          for c in giveback compare; do cp ../out/$c-latest.json ../out/$c-$stamp.json; done
+          echo "cache key: ${{ steps.state.outputs.cache-matched-key }}" > ../out/source.txt
+          echo "commit: ${GITHUB_SHA}" >> ../out/source.txt
+      - name: Commit the results to the research-results branch
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin research-results >/dev/null 2>&1; then
+            git fetch --depth 1 origin research-results
+            git worktree add ../rr FETCH_HEAD
+            git -C ../rr checkout -B research-results
+          else
+            git worktree add --detach ../rr
+            git -C ../rr checkout --orphan research-results
+            git -C ../rr rm -rf --quiet . || true
+          fi
+          mkdir -p ../rr/results
+          cp out/* ../rr/results/
+          cd ../rr
+          git add results
+          git commit -m "Research results for ${GITHUB_SHA::7}" || { echo "nothing new"; exit 0; }
+          git push origin HEAD:research-results
