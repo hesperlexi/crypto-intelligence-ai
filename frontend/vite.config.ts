@@ -25,7 +25,7 @@ function versionFiles(): Plugin {
     // icons, favicon and manifest get ?v=<build> so phones and browsers fetch the new files after every deploy
     // (this is also what makes an installed Android app pick up a changed icon)
     transformIndexHtml(html) {
-      return html.replace(/(href="\/(?:manifest\.webmanifest|favicon\.png|icons\/[^"?]+))"/g, `$1?v=${V}"`);
+      return html.replace(/(href="\/(?:manifest\.webmanifest|favicon\.(?:png|svg)|icons\/[^"?]+))"/g, `$1?v=${V}"`);
     },
     writeBundle(opts) {
       const dir = opts.dir || "dist";
