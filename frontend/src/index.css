@@ -333,3 +333,19 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px
 .route-fade { animation: route-fade .22s ease-out both; }
 @keyframes route-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .route-fade { animation: none !important; } }
+
+/* ---- site footer: centred rows, even gaps; "·" separators drawn by CSS only where the row fits on one line ---- */
+.foot { border-color: rgb(var(--glass) / 0.09); background: linear-gradient(180deg, rgb(var(--glass) / 0.015), transparent); }
+.foot-row { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; column-gap: 1.1rem; row-gap: 0.35rem; line-height: 1.5; }
+.foot-row > li { white-space: nowrap; }
+.foot-dots-sm > li + li::before, .foot-dots-lg > li + li::before { content: none; }
+/* a pair that always stays together on one line (with its own separator) */
+.foot-grp > * + *::before { content: "·"; display: inline-block; width: 1.4rem; text-align: center; color: rgb(var(--mute) / 0.5); }
+@media (min-width: 640px) {
+  .foot-dots-sm { column-gap: 0; }
+  .foot-dots-sm > li + li::before { content: "·"; display: inline-block; width: 1.5rem; text-align: center; color: rgb(var(--mute) / 0.55); }
+}
+@media (min-width: 1024px) {
+  .foot-dots-lg { column-gap: 0; }
+  .foot-dots-lg > li + li::before { content: "·"; display: inline-block; width: 1.4rem; text-align: center; color: rgb(var(--mute) / 0.5); }
+}

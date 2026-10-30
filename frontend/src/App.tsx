@@ -276,7 +276,7 @@ function Shell({ user }: { user: User }) {
           </Suspense>
           </div>
         </main>
-        <SiteFooter className="pb-24 md:pb-4" />
+        <SiteFooter className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-6" width={width} />
       </div>
 
       {/* phone navigation */}

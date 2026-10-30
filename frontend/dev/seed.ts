@@ -177,6 +177,34 @@ function proofImage(): string {
   } catch { return ""; }
 }
 
+// shaped like backend/app/services/market_insights.view (sample values for the preview)
+function marketContext() {
+  const t0 = Math.floor(NOW / H) * H;
+  const series: [number, number, number][] = [];
+  for (let i = 9 * 6; i >= 0; i--) {            // 9 days at 4-hour steps
+    const t = t0 - i * 4 * H;
+    const k = 54 - i;
+    series.push([t, +(57.1 + 0.012 * k + 0.18 * Math.sin(k / 5)).toFixed(3), +(11.9 - 0.004 * k + 0.08 * Math.cos(k / 6)).toFixed(3)]);
+  }
+  const last = series[series.length - 1];
+  const day = series[series.length - 7], week = series[series.length - 43];
+  const c24 = +(last[1] - day[1]).toFixed(3), c7 = +(last[1] - week[1]).toFixed(3);
+  return {
+    generated_at: NOW - 12 * 60_000,
+    dominance: { as_of: t0 + 4 * 60_000, btc: last[1], eth: last[2], btc_change_24h: c24, btc_change_7d: c7,
+      eth_change_24h: +(last[2] - day[2]).toFixed(3), eth_change_7d: +(last[2] - week[2]).toFixed(3), series, series_step_h: 4, points: 9 * 24,
+      reading: `Bitcoin's share is steady at ${last[1].toFixed(1)}% (${c7 >= 0 ? "+" : "−"}${Math.abs(c7).toFixed(1)} over 7 days): no clear rotation between Bitcoin and the rest.`,
+      source: "CoinGecko /global, stored hourly by the engine", tv_symbol: "CRYPTOCAP:BTC.D" },
+    altseason: { value: 32, label: "Neither season", n_beat: 16, n_total: 50, window_days: 90, as_of: Math.floor(NOW / D) * D, computed_at: NOW - 3 * H,
+      btc_return: 0.084, best: [{ coin: "HYPE", vs_btc: 0.61 }, { coin: "SUI", vs_btc: 0.38 }, { coin: "AAVE", vs_btc: 0.22 }],
+      universe: "CoinGecko market-cap ranking (coins listed on Binance spot)", history: [[NOW - 3 * H, 32]], source: "Binance spot daily closes" },
+    pulse: { as_of: NOW - 12 * 60_000, total_market_cap_usd: 3.62e12, market_cap_change_24h_pct: -0.84, stablecoin_share: 7.62, source: "CoinGecko" },
+    funding: { avg_rate_8h: 0.0000842, read: "neutral", n: 10, as_of: NOW - 12 * 60_000, source: "OKX perpetual", high: "SOL", low: "DOGE" },
+    headline: { title: "Fed holds rates steady; Powell says further cuts depend on incoming inflation data", url: "https://example.com/preview-headline", source: "CoinDesk", ts: NOW - 95 * 60_000 },
+    errors: [], rules: {},
+  };
+}
+
 export function seed(): Record<string, any> {
   const tfs = ["15m", "1h", "4h", "12h", "1d", "3d"];
   const out: Record<string, any> = {
@@ -192,6 +220,7 @@ export function seed(): Record<string, any> {
     "views/news": v({ calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: [], sources: [], next_high: { title: "CPI m/m", ts: NOW + 26 * H } }),
     "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {} }),
     "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
+    "views/market_context": v(marketContext()),
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
     "views/health": v({ status: "OK", engine: { last_tick_finished: NOW - 3 * 60_000, schedule_minutes: 5, ticks: 412 }, market_data: {}, exchange: {}, database: {}, config: {} }),
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
