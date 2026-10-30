@@ -4,8 +4,9 @@ import { useState } from "react";
 import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
 import { fmtDate } from "../lib/format";
+import { SITE_HOST } from "../lib/brand";
 
-const SITE = "crypapp-6a9b9.web.app";
+const SITE = SITE_HOST;
 const ICON: Record<string, string> = { signals: "◆", best_trade: "▲", win_streak: "⚡", all_targets: "◎", best_week: "★", green_weeks: "▣",
   win_rate_30d: "%", bot: "⚙", radar_star: "✦", proven_edges: "✓", live: "◷" };
 const iconOf = (id: string) => ICON[Object.keys(ICON).find((k) => id.startsWith(k)) ?? ""] ?? "★";

@@ -4,8 +4,9 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
 import { base, fmtPrice, isNum } from "../lib/format";
+import { SITE_HOST } from "../lib/brand";
 
-const SITE = "crypapp-6a9b9.web.app";
+const SITE = SITE_HOST;
 const dfmt = (ms: number) => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 const range = (r: any) => `${dfmt(r.week_start)} – ${dfmt(r.week_end - 1)}`;
 const sp = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
