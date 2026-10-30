@@ -6,10 +6,10 @@ import { useAppearance } from "../lib/appearance";
 
 const INTERVAL: Record<string, string> = { "1m": "1", "5m": "5", "15m": "15", "30m": "30", "1h": "60", "4h": "240", "12h": "720", "1d": "D", "3d": "3D", "1w": "W" };
 
-export default function TVChart({ symbol, market = "spot", tf = "1h", height = 520 }: { symbol: string; market?: "spot" | "futures"; tf?: string; height?: number }) {
+export default function TVChart({ symbol, market = "spot", tf = "1h", height = 520, tvSymbolOverride }: { symbol: string; market?: "spot" | "futures"; tf?: string; height?: number; tvSymbolOverride?: string }) {
   const { resolved } = useAppearance();
-  // gold (PAXG in the app) shows forex.com's spot gold price, XAU/USD
-  const tvSymbol = symbol.startsWith("PAXG/") ? "FOREXCOM:XAUUSD" : `BINANCE:${symbol.replace("/", "").toUpperCase()}${market === "futures" ? ".P" : ""}`;
+  // gold (PAXG in the app) shows forex.com's spot gold price, XAU/USD; an index (e.g. CRYPTOCAP:BTC.D) is passed as is
+  const tvSymbol = tvSymbolOverride ? tvSymbolOverride : symbol.startsWith("PAXG/") ? "FOREXCOM:XAUUSD" : `BINANCE:${symbol.replace("/", "").toUpperCase()}${market === "futures" ? ".P" : ""}`;
   const src = useMemo(() => {
     const dark = resolved !== "light";
     const q = new URLSearchParams({

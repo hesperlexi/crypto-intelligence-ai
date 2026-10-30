@@ -1,4 +1,5 @@
 import FearGreed from "../components/FearGreed";
+import MarketInsights from "../components/MarketInsights";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
@@ -117,6 +118,9 @@ export default function Dashboard() {
           <Note>Context only. Sentiment is never allowed to override price data.</Note>
         </Card>
       </div>
+
+      {/* directly below the Fear & Greed row: dominance, altcoin season, market pulse, top headline */}
+      <MarketInsights />
 
       <Card title="Forecast table — expected return per horizon" right={<span className="text-xs text-mute">each horizon uses its own timeframe model</span>}>
         <div className="table-wrap">
