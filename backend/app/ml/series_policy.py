@@ -289,9 +289,9 @@ def decide(ctx: Context, ref: np.ndarray, conf_b: float | np.ndarray | None = No
     cb = settings.min_dir_confidence_b if conf_b is None else conf_b
     cb = np.broadcast_to(np.asarray(cb, float), (n,))
     firm = (direction != 0) & ~weak
-    ok_a = np.nan_to_num(conf, nan=-1) >= settings.min_dir_confidence_a
+    ok_a = np.nan_to_num(conf, nan=-1) >= np.maximum(settings.min_dir_confidence_a, cb)
     ok_b = np.nan_to_num(conf, nan=-1) >= cb
-    gA = (side != 0) & firm & clears & ok_a & (cb <= settings.min_dir_confidence_a)
+    gA = (side != 0) & firm & clears & ok_a
     gB = (side != 0) & ~gA & ok_b & (clears | firm)
     grade = np.where(gA, "A", np.where(gB, "B", ""))
     reason = np.where(core, "", "insufficient")

@@ -16,6 +16,7 @@ between runs; Firestore holds only what the website shows.
 from __future__ import annotations
 
 import argparse
+import os
 import asyncio
 import logging
 import time
@@ -28,7 +29,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import ai_advisor, alerts, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
+from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -778,6 +779,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["alerts_fired"] = step("analyses", analyse)
     # Gemini advisor (advisory notes only; off without GEMINI_API_KEY): new calls and closed calls, bounded per cycle
     detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
+    detail["sentiment"] = step("news_sentiment", lambda: sentiment.collect(rt.db, getattr(rt, "headlines", None)))
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
@@ -952,8 +954,13 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
                        "crowd": derivs.sync_crowd(rt.db, rt.symbols(), max_files=2500)}
     except Exception as exc:
         derivs_note = f"failed: {exc}"
+    try:                              # v2.6: per-series evidence for the gates (cached; used only where enabled)
+        from .services import series_nightly
+        series_note = series_nightly.run(rt, budget_s=float(os.environ.get("SERIES_POLICY_BUDGET_S", 900)))
+    except Exception as exc:
+        series_note = f"failed: {type(exc).__name__}: {exc}"[:300]
     detail = {"shards": shards, "imported": imported, "skipped": skipped, "pruned_files": pruned,
-              "failed": failed[:20], "derivs": derivs_note}
+              "failed": failed[:20], "derivs": derivs_note, "series_policy": series_note}
     _record(rt, "train", started, "ok", detail)
     publish_models(rt, sink)          # health/status stays with the 5-minute engine (it has the live price feed)
     sink.flush()

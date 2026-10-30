@@ -152,11 +152,13 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
         struct = SP.decide(ctx, ref, stop_mode="struct")
         entry_tune = {}
         cands_by_entry = {}
+        t_early = int(ctx.ts[0]) + int((cut - int(ctx.ts[0])) * 0.7)
         for mode, k in ENTRY_OPTIONS:
             cands = SP.candidates(ctx, paths, tune | test, base, entry_mode=mode, k=k, news=news)
             cands_by_entry[(mode, k)] = cands
             tr = SP.taken(ctx, [c for c in cands if tune[c["j"]]])
-            entry_tune[f"{mode}:{k}"] = [t["r"] for t in tr]
+            entry_tune[f"{mode}:{k}"] = {"early": [t["r"] for t in tr if t["ts"] < t_early],
+                                         "late": [t["r"] for t in tr if t["ts"] >= t_early]}
         # filter rows (tuning trades of the OLD pipeline, plus every candidate call - the filter learns all calls)
         cands_old = cands_by_entry[("old", 0.0)]
         P = pool.setdefault(tf, {"F": [], "R": [], "ts": [], "test": []})
@@ -169,20 +171,26 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
                                "gate": gate, "conf": conf, "dec_conf": dec_conf, "struct": struct, "entry_tune": entry_tune,
                                "cands": cands_by_entry, "secs": round(time.time() - t0, 1)}
         log.info("%s %s: %d oos bars, %d tuning trades, %.1fs", s, tf, ctx.n, len(old_tune), time.time() - t0)
-    # ---- entry rule per timeframe, chosen on tuning trades pooled over coins ---------------------------------------
+    # ---- entry rule per timeframe, chosen like the nightly job: best lower bound on the EARLY 70 % of the tuning
+    # trades (pooled over coins), kept only if it also beats the v2.5 rule on the LATE 30 % of the tuning trades -------
     entry_choice = {}
     for tf in tfs:
         rows = [v for k, v in series.items() if k.endswith(f" {tf}")]
-        best, table = None, {}
+        table = {}
         for mode, k in ENTRY_OPTIONS:
-            r = sum((v["entry_tune"][f"{mode}:{k}"] for v in rows), [])
-            table[f"{mode}:{k}"] = {"n": len(r), "mean_r": float(np.mean(r)) if r else None,
-                                    "lb80": S.bootstrap_lb(r, 0.8) if len(r) >= 30 else None}
-        old = table.get("old:0.0", {})
-        cand = [(k, v) for k, v in table.items() if v["lb80"] is not None and v["n"] >= 0.3 * max(old.get("n") or 0, 1)]
-        if cand:
-            best = max(cand, key=lambda kv: kv[1]["lb80"])[0]
-        entry_choice[tf] = {"chosen": best or "old:0.0", "table": table}
+            e = sum((v["entry_tune"][f"{mode}:{k}"]["early"] for v in rows), [])
+            l_ = sum((v["entry_tune"][f"{mode}:{k}"]["late"] for v in rows), [])
+            table[f"{mode}:{k}"] = {"n_early": len(e), "mean_early": float(np.mean(e)) if e else None,
+                                    "lb80_early": S.bootstrap_lb(e, 0.8) if len(e) >= 30 else None,
+                                    "n_late": len(l_), "mean_late": float(np.mean(l_)) if l_ else None}
+        old = table["old:0.0"]
+        cand = [(k, v) for k, v in table.items() if v["lb80_early"] is not None and v["n_early"] >= 0.3 * max(old["n_early"], 1)]
+        best = max(cand, key=lambda kv: kv[1]["lb80_early"])[0] if cand else "old:0.0"
+        b = table[best]
+        confirmed = bool(best != "old:0.0" and b["mean_late"] is not None and old["mean_late"] is not None
+                         and b["mean_late"] > old["mean_late"])
+        entry_choice[tf] = {"chosen": best if confirmed else "old:0.0", "best_early": best, "confirmed_late": confirmed,
+                            "table": table}
     # ---- pooled trade filter per timeframe (trained on tuning trades only) ------------------------------------------
     filters = {}
     for tf, P in pool.items():
@@ -209,7 +217,9 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
             results["filter"][key_] = SP.taken(ctx, [c for c in v["cands"][("old", 0.0)] if test[c["j"]]], keep)
         else:
             results["filter"][key_] = old
-    out_tables = {name: _table(results[name], weeks) for name in variants}
+    results["diag_proven_series_only"] = {k: (results["old"][k] if series[k]["gate"]["verdict"] == "proven" else [])
+                                          for k in series}
+    out_tables = {name: _table(results[name], weeks) for name in variants + ["diag_proven_series_only"]}
     base_all = out_tables["old"]["overall"]
     proven = {}
     for name in variants[1:]:
@@ -217,6 +227,20 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
         ok = bool(o["n"] and base_all["n"] and o["expectancy_r"] is not None and base_all["expectancy_r"] is not None
                   and o["expectancy_r"] > base_all["expectancy_r"] and o["max_drawdown_r"] <= base_all["max_drawdown_r"] + 1e-9)
         proven[name] = ok
+    # how sure: bootstrap of the test-set expectancy gain (per-series blocks resampled), reported next to the verdict
+    rng = np.random.default_rng(0)
+    keys = list(series)
+    confidence = {}
+    for name in variants[1:]:
+        gains = []
+        for _ in range(500):
+            ks = [keys[i] for i in rng.integers(0, len(keys), len(keys))]
+            a = [t["r"] for k in ks for t in results["old"][k]]
+            b = [t["r"] for k in ks for t in results[name][k]]
+            if a and b:
+                gains.append(np.mean(b) - np.mean(a))
+        confidence[name] = {"mean_gain_r": float(np.mean(gains)) if gains else None,
+                            "share_of_resamples_better": float(np.mean(np.array(gains) > 0)) if gains else None}
     # ---- all proven changes together ----------------------------------------------------------------------------------
     combined: dict[str, list] = {}
     for key_, v in series.items():
@@ -239,10 +263,11 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
     return {
         "series": {k: {"oos_bars": int(v["ctx"].n), "tune_bars": int(v["tune"].sum()), "test_bars": int(v["test"].sum()),
                        "cut": v["cut"], "gate": v["gate"], "conf_b": v["conf"]["conf_b"], "conf_table": v["conf"]["table"],
+                       "test_old": S.stats([t["r"] for t in results["old"][k]]),
                        "seconds": v["secs"]} for k, v in series.items()},
         "skipped": skipped, "entry_choice": entry_choice,
         "filters": {tf: {k: x for k, x in f.items() if k != "model"} for tf, f in filters.items()},
-        "test": out_tables, "proven_on_test": proven,
+        "test": out_tables, "proven_on_test": proven, "test_gain_bootstrap_by_series": confidence,
     }
 
 
@@ -255,6 +280,33 @@ def _table(res: dict[str, list], weeks: dict[str, float]) -> dict[str, Any]:
     keys = list(weeks)
     tfs = sorted({k.split(" ")[1] for k in keys}, key=lambda t: MODEL_TIMEFRAMES.index(t) if t in MODEL_TIMEFRAMES else 99)
     return {"overall": block(keys), "by_timeframe": {tf: block([k for k in keys if k.endswith(f" {tf}")]) for tf in tfs}}
+
+
+def market_inputs(db, symbols: list[str]) -> dict[str, Any]:
+    """Item 6: for every series, whether the futures / crowd (deriv_gate2) and higher-timeframe (htf_gate1) inputs are on,
+    with the reason, how much futures / crowd history exists, and which timeframes the htf gate cannot test at all."""
+    from .data import derivs
+    from .features.dataset import HTF_OF
+    out: dict[str, Any] = {}
+    for s in symbols:
+        try:
+            fdays, cdays = derivs.coverage_days(db, s), derivs.crowd_days(db, s)
+        except Exception:
+            fdays, cdays = None, None
+        for tf in MODEL_TIMEFRAMES:
+            d = db.get_setting(f"deriv_gate2|{s}|{tf}", None) or {}
+            h = db.get_setting(f"htf_gate1|{s}|{tf}", None) or {}
+            v = db.one("SELECT summary FROM model_versions WHERE symbol = ? AND timeframe = ? AND active = 1", (s, tf))
+            from .db import loads
+            summ = loads(v["summary"], {}) if v else {}
+            out[f"{s} {tf}"] = {
+                "funding_days": fdays, "crowd_days": cdays,
+                "deriv_gate": {"on": d.get("on"), "n": d.get("n"), "p": d.get("p_value"), "reason": d.get("reason") or
+                               ("never tested (needs 90 days of futures history)" if not d else None)},
+                "htf_gate": {"on": h.get("on"), "htf": h.get("htf") or HTF_OF.get(tf), "n": h.get("n"), "p": h.get("p_value"),
+                             "reason": h.get("reason") or ("no higher timeframe defined" if tf not in HTF_OF else "never tested")},
+                "active_model_uses_htf": summ.get("uses_htf"), "active_model_uses_btc": summ.get("uses_btc")}
+    return out
 
 
 def run(db_url: str, budget_s: float, cost: float, symbols: list[str] | None = None, tfs: list[str] | None = None) -> dict[str, Any]:
@@ -272,6 +324,10 @@ def run(db_url: str, budget_s: float, cost: float, symbols: list[str] | None = N
     syms = symbols or [r["symbol"] for r in db.query("SELECT DISTINCT symbol FROM model_versions WHERE active = 1 ORDER BY symbol")]
     t0 = time.time()
     body = evaluate(rt, syms, tfs or list(MODEL_TIMEFRAMES), t0 + budget_s, cost)
+    try:
+        body["market_inputs"] = market_inputs(db, syms)
+    except Exception as exc:
+        body["market_inputs"] = {"error": f"{type(exc).__name__}: {exc}"[:200]}
     body.update({"engine_version": ENGINE_VERSION, "cost_pct_round_trip": cost, "tune_share": TUNE_SHARE,
                  "symbols": syms, "seconds": round(time.time() - t0, 1),
                  "method": __doc__.strip().split("\n\n", 1)[1] if __doc__ else None,

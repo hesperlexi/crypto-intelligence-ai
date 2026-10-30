@@ -214,8 +214,9 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     direction = sig.get("direction") or 0
     levels = _levels(fr, price)
     lift_of = lambda side: ((fc.get("target_lift") or {}).get("long" if side > 0 else "short") if fc.get("available") else None)  # noqa: E731
+    stop_kw = {"stop_mode": "struct", "struct_buffer_atr": settings.struct_stop_buffer_atr} if settings.struct_stops else {}
     setup = build_setup(ind, levels["zones"], direction, settings.min_risk_reward, live_price=price,
-                        lift=lift_of(direction)) if direction else None
+                        lift=lift_of(direction), **stop_kw) if direction else None
     if vol_state == "EXTREME":
         flags.append("UNSTABLE MARKET — REDUCED CONFIDENCE")
 
@@ -243,6 +244,9 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     #   grade A: firm technical tilt + model lean above its threshold + good model agreement + confidence >= A level
     #   grade B: everything else that passes (weak tilt confirmed by the model, or a model-led call)
     decision, why, grade, basis = "HOLD", None, None, None
+    # v2.6: per coin/timeframe policy computed nightly from out-of-sample history (series gate, grade-B threshold)
+    spol = series_policy_view(rt, symbol, timeframe) if bundle is None else {"blocked": False, "reason": None, "conf_b": None}
+    conf_b_min = spol["conf_b"] if spol["conf_b"] is not None else settings.min_dir_confidence_b
     idx = sig.get("label_index")
     weak = idx in (2, 4)
     if sig["signal"] == "INSUFFICIENT DATA":
@@ -266,10 +270,11 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 why = f"the AI leans {'up' if mside > 0 else 'down'}, against the {'bullish' if direction > 0 else 'bearish'} technical tilt"
         else:
             if side != direction:          # model-led call: build the plan on the model's side
-                setup = build_setup(ind, levels["zones"], side, settings.min_risk_reward, live_price=price, lift=lift_of(side))
+                setup = build_setup(ind, levels["zones"], side, settings.min_risk_reward, live_price=price, lift=lift_of(side),
+                                    **stop_kw)
             firm = bool(direction) and not weak
-            conf_ok_a = confidence is not None and confidence >= settings.min_dir_confidence_a
-            conf_ok_b = confidence is not None and confidence >= settings.min_dir_confidence_b
+            conf_ok_a = confidence is not None and confidence >= max(settings.min_dir_confidence_a, conf_b_min)
+            conf_ok_b = confidence is not None and confidence >= conf_b_min
             if firm and clears and agree >= settings.min_model_agreement and conf_ok_a:
                 grade, basis = "A", "technical tilt and AI agree, AI lean above its proven threshold"
             elif conf_ok_b and agree >= settings.min_agreement_b and (clears or firm):
@@ -315,6 +320,31 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                                          f"{tf_view['threshold']:.0%} bar at which past setups paid off")
             grade = None
             flags.append("FILTERED")
+
+    # v2.6 proven-only series gate: a coin/timeframe whose out-of-sample + live expectancy is not credibly positive
+    if decision in TRADE_DECISIONS and spol["blocked"]:
+        decision, why, grade = "NO TRADE", spol["reason"], None
+        flags.append("NO PROVEN EDGE")
+    # v2.6 pooled trade filter (one per timeframe, trained on the calls the pipeline itself made)
+    filter2 = None
+    if decision in TRADE_DECISIONS and settings.trade_filter2 and setup and setup.get("valid") and bundle is None:
+        try:
+            from ..ml import trade_filter2 as TF2
+            f2 = TF2.load(rt.db, timeframe)
+            if f2 is not None:
+                fside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
+                row = TF2.live_features(fc, confidence, grade, fside, last, matrix, _btc_last(rt, symbol, timeframe, as_of, last),
+                                        setup, int(last["ts"]) + tf_ms(timeframe))
+                sc = TF2.score(f2, row)
+                if sc is not None:
+                    filter2 = {"score": sc, "threshold": f2["threshold"]}
+                    if sc < f2["threshold"]:
+                        decision, grade = "NO TRADE", None
+                        why = (f"the {timeframe.upper()} trade filter scores this call {sc:.0%}, below the {f2['threshold']:.0%} "
+                               "bar at which comparable past calls paid off")
+                        flags.append("FILTERED")
+        except Exception as exc:
+            rt.record_error(f"trade filter2 {symbol} {timeframe}", exc)
 
     # costs (v2.3): a target 1 that barely covers fees and slippage is no trade (mostly tight 15m setups)
     if decision in TRADE_DECISIONS and setup and setup.get("valid") and not beats_costs(setup["ideal_entry"], setup["stop"]):
@@ -409,7 +439,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
         "safety": safety_state,
         "grade": grade, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
-        "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"),
+        "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"), "filter2": filter2,
+        "series_policy": spol if (spol.get("blocked") or spol.get("conf_b") is not None) else None,
         "confidence": confidence, "confidence_detail": conf_detail,
         "forecast": fc, "mtf": matrix, "setup": setup, "risk": risk,
         "model_agreement": fc.get("model_agreement") if fc["available"] else None,
@@ -440,6 +471,26 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             out["ai"] = ai
         rt.analysis_cache[key] = (time.time(), out)
     return out
+
+
+def series_policy_view(rt: Runtime, symbol: str, timeframe: str) -> dict[str, Any]:
+    """The cached nightly policy of this coin/timeframe as the live decision uses it (all off unless enabled)."""
+    if not (settings.series_gate or settings.series_conf):
+        return {"blocked": False, "reason": None, "conf_b": None}
+    try:
+        from ..ml import series_policy
+        return series_policy.apply(series_policy.cached(rt.db, symbol, timeframe))
+    except Exception:
+        return {"blocked": False, "reason": None, "conf_b": None}
+
+
+def _btc_last(rt: Runtime, symbol: str, timeframe: str, as_of: int | None, own_last: Any) -> Any:
+    if symbol.startswith("BTC/"):
+        return own_last
+    try:
+        return rt.frame("BTC/USDT", timeframe, as_of).ind.iloc[-1]
+    except Exception:
+        return None
 
 
 def is_stale(quality: dict[str, Any], last_ts: int, timeframe: str, now: int | None = None) -> bool:

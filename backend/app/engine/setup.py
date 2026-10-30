@@ -20,13 +20,17 @@ TP1_R = 1.0
 TP2_RANGE = (1.25, 1.5, 1.75, 2.0)
 TP3_RANGE = (2.0, 2.25, 2.5, 2.75, 3.0)
 TP_SPLIT = (0.5, 0.25, 0.25)
+STRUCT_BOUNDS = (0.8, 3.5)           # v2.6 structure stop, in ATR from the entry
 R_MULTIPLES = (1.0, 1.75, 2.5)        # typical levels, used where a fixed ladder is needed (trade-filter labels)
 
 
 def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_rr: float = 1.25,
                 horizon: int = 30, live_price: float | None = None,
-                lift: dict[float, float] | None = None) -> dict[str, Any]:
-    """side = +1 (long) or -1 (short). Returns {'valid': False, 'reason': ...} when reward does not justify risk."""
+                lift: dict[float, float] | None = None, stop_mode: str = "current",
+                struct_buffer_atr: float = 0.25) -> dict[str, Any]:
+    """side = +1 (long) or -1 (short). Returns {'valid': False, 'reason': ...} when reward does not justify risk.
+    stop_mode "struct" (v2.6, setting STRUCT_STOPS): the stop sits beyond the NEAREST confirmed swing / S-R level behind
+    the entry plus `struct_buffer_atr` ATR, bounded to [0.8, 3.5] ATR (default: beyond the farthest, [1, 3] ATR)."""
     last = ind.iloc[-1]
     price = float(live_price if live_price else last["close"])
     atr = float(last["atr"])
@@ -57,10 +61,17 @@ def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_
     swing = last["last_sl"] if side > 0 else last["last_sh"]
     if np.isfinite(swing) and side * (ideal - swing) > 0:
         struct.append(float(swing))
-    raw_stop = (min(struct) if side > 0 else max(struct)) - side * 0.25 * atr if struct else ideal - side * 1.5 * atr
-    dist = float(np.clip(side * (ideal - raw_stop), 1.0 * atr, 3.0 * atr))
+    if stop_mode == "struct":
+        beyond = [x for x in struct if side * (ideal - x) > 0]
+        lo_b, hi_b = STRUCT_BOUNDS
+        raw_stop = ((max(beyond) if side > 0 else min(beyond)) - side * struct_buffer_atr * atr) if beyond else ideal - side * 1.5 * atr
+    else:
+        lo_b, hi_b = 1.0, 3.0
+        raw_stop = (min(struct) if side > 0 else max(struct)) - side * 0.25 * atr if struct else ideal - side * 1.5 * atr
+    dist = float(np.clip(side * (ideal - raw_stop), lo_b * atr, hi_b * atr))
     stop = ideal - side * dist
-    stop_basis = "structure" if struct and 1.0 * atr <= side * (ideal - raw_stop) <= 3.0 * atr else "ATR bound"
+    stop_basis = ("structure" if struct and lo_b * atr <= side * (ideal - raw_stop) <= hi_b * atr else "ATR bound") + \
+        (" (nearest level)" if stop_mode == "struct" else "")
 
     # --- targets: TP1 at 1:1 (50%), TP2 / TP3 chosen from the data up to 1:2 / 1:3 -------------------------
     high, low, close, a = (ind[c].to_numpy(float) for c in ("high", "low", "close", "atr"))
