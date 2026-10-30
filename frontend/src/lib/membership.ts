@@ -1,3 +1,4 @@
+import { BRAND } from "./brand";
 // Paid memberships: a member pays with Binance Pay, uploads the proof, and the owner approves it for a number
 // of months. Prices live in config/membership (editable on the Users page); these are the defaults.
 import { arrayUnion, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
@@ -19,7 +20,7 @@ export const DEFAULT_CONFIG: MembershipConfig = {
   pay_note: "Pay with the Binance app: scan the QR code, send the exact amount, then upload the payment screenshot here.",
   qr_url: "/pay/binance-qr.png",
   mexc_uid: "00183657",
-  support_email: "support@cryptointelai.com",
+  support_email: BRAND.supportEmail,
 };
 
 export const DAY = 86_400_000;

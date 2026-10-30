@@ -73,7 +73,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
               <div className="text-xs text-mute">{p.label}</div>
               <div className="num mt-0.5 text-xl font-semibold">{p.price} <span className="text-sm font-medium text-mute">USDT</span></div>
               <div className="num text-[11px] text-mute">{(p.price / p.months).toFixed(2)} USDT / month</div>
-              {save > 0 && <span className="absolute right-2 top-2 rounded-full bg-bull/15 px-1.5 py-0.5 text-[10px] font-semibold text-bull">−{save}%</span>}
+              {save > 0 && <span className="absolute right-2 top-2 rounded-full bg-bull/15 px-1.5 py-0.5 text-[11px] font-semibold text-bull">−{save}%</span>}
             </button>
           );
         })}

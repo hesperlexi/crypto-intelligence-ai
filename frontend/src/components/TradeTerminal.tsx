@@ -12,6 +12,7 @@ import { verdictOf } from "./TradeCall";
 import { useApi } from "../lib/api";
 import { futuresTicker, listedPairs } from "../lib/binance";
 import { StreamState, useDepth, useMarketStream } from "../lib/stream";
+import { ProOnly, useIsPro } from "../lib/mode";
 import { base, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
 import * as SP from "../lib/paper";
@@ -87,6 +88,7 @@ export default function TradeTerminal() {
   const positions: any[] = d?.positions ?? [];
   const orders: any[] = d?.orders ?? [];
   const [tf, setTf] = useState<string>("15m");
+  const pro = useIsPro();
   const stream = useMarketStream(symbol, market, tf);
 
   return (
@@ -99,9 +101,9 @@ export default function TradeTerminal() {
       {msg && <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-bull/40 bg-bull/10 text-bull" : "border-bear/40 bg-bear/10 text-bear"}`}>{msg.text}</div>}
       {err && <div className="rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">{err}</div>}
 
-      <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_220px_320px]">
+      <div className={`grid gap-3 ${pro ? "lg:grid-cols-[minmax(0,1fr)_220px_320px]" : "lg:grid-cols-[minmax(0,1fr)_320px]"}`}>
         <ChartPanel symbol={symbol} market={market} positions={positions} orders={orders} tf={tf} setTf={setTf} />
-        <OrderBook symbol={symbol} market={market} />
+        <ProOnly><OrderBook symbol={symbol} market={market} /></ProOnly>
         <OrderForm symbol={symbol} market={market} d={d} act={act} />
       </div>
 
@@ -150,7 +152,7 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
               const x = tickers[s];
               return (
                 <button key={s} onClick={() => { onSymbol(s); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-glass/[0.06] ${s === symbol ? "bg-accent/10" : ""}`}>
-                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-[10px] font-bold text-accent">GOLD</span>}</span>
+                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-[11px] font-bold text-accent">GOLD</span>}</span>
                   <span className="num text-right text-xs"><span className="block">{fmtPrice(x?.last)}</span><span className={tone(x?.change_pct)}>{fmtPctRaw(x?.change_pct)}</span></span>
                 </button>
               );
@@ -267,7 +269,7 @@ function OrderBook({ symbol, market }: { symbol: string; market: Mkt }) {
   );
   return (
     <section className="panel hidden p-0 lg:block">
-      <div className="grid grid-cols-2 border-b border-glass/[0.06] px-2 py-2 text-[10px] uppercase tracking-wide text-mute"><span>Price</span><span className="text-right">Amount</span></div>
+      <div className="grid grid-cols-2 border-b border-glass/[0.06] px-2 py-2 text-[11px] uppercase tracking-wide text-mute"><span>Price</span><span className="text-right">Amount</span></div>
       {!ob ? <div className="skeleton m-2 h-80 rounded" /> : (
         <>
           {asks.map((x) => row(x, "a"))}
@@ -409,7 +411,7 @@ function FutPositions({ rows, act, hedges }: { rows: any[]; act: (fn: () => Prom
               <span className={`h-8 w-1 rounded-full ${p.side > 0 ? "bg-bull" : "bg-bear"}`} />
               <span className="font-semibold">{p.symbol}</span>
               <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${p.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{p.side > 0 ? "Long" : "Short"} {fmtNum(p.leverage, 1)}x</span>
-              {p.auto && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[10px] font-bold text-accent" title="Opened automatically from an app signal">AUTO</span>}
+              {p.auto && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[11px] font-bold text-accent" title="Opened automatically from an app signal">AUTO</span>}
             </div>
             <div className="text-right"><div className={`num font-semibold ${tone(p.upnl)}`}>{p.upnl != null ? `${p.upnl >= 0 ? "+" : ""}${fmtNum(p.upnl)} USDT` : "—"}</div><div className={`num text-xs ${tone(p.upnl)}`}>{fmtPctRaw(p.roe_pct, 1)} ROE</div></div>
           </div>
@@ -463,7 +465,7 @@ function Orders({ rows, market, act }: { rows: any[]; market: Mkt; act: (fn: () 
       <tbody>{rows.map((o) => {
         const buy = o.side === "BUY" || o.side > 0;
         return (
-          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium">{o.symbol}{o.auto && <span className="ml-1 rounded bg-accent/15 px-1 text-[10px] font-bold text-accent">AUTO</span>}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
+          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium">{o.symbol}{o.auto && <span className="ml-1 rounded bg-accent/15 px-1 text-[11px] font-bold text-accent">AUTO</span>}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
             <td className={buy ? "text-bull" : "text-bear"}>{market === "futures" ? (buy ? "Long" : "Short") : buy ? "Buy" : "Sell"}</td>
             <td className="num text-right">{fmtPrice(o.price)}</td><td className="num text-right">{market === "futures" ? `${fmtNum(o.margin)} USDT` : fmtNum(o.qty, 6)}</td>
             <td className="text-right"><button className="btn px-2 py-0.5 text-xs" onClick={() => act(() => (market === "futures" ? PF.cancelOrder(o.id) : SP.cancelOrder(o.id)), "Order cancelled; the funds are back.")}>Cancel</button></td></tr>

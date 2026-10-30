@@ -115,7 +115,7 @@ export default function FearGreed({ value, label, change7d, history = [] }: { va
       <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-xs">
         {([["Now", value], ["Yesterday", yday], ["Last week", week], ["30d range", lo != null && hi != null ? `${lo}–${hi}` : null]] as const).map(([k, x]) => (
           <div key={k} className="rounded-lg bg-glass/[0.04] px-1 py-1.5">
-            <div className="text-[10px] text-mute">{k}</div>
+            <div className="text-[11px] text-mute">{k}</div>
             <div className="num font-semibold" style={typeof x === "number" ? { color: zoneOf(x).color } : undefined}>{x ?? "—"}</div>
           </div>
         ))}
@@ -123,7 +123,7 @@ export default function FearGreed({ value, label, change7d, history = [] }: { va
 
       {hist.length > 2 && (
         <div className="mt-3">
-          <div className="mb-1 flex justify-between text-[10px] text-mute"><span>30 days ago</span><span>today</span></div>
+          <div className="mb-1 flex justify-between text-[11px] text-mute"><span>30 days ago</span><span>today</span></div>
           <svg viewBox={`0 0 ${W} ${H}`} className="h-16 w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id={`fg-area-${id}`} x1="0" y1="0" x2="0" y2="1">

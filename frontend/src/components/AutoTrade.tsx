@@ -28,7 +28,7 @@ export default function AutoTrade() {
     <section className={`panel border p-0 ${saved.enabled ? "border-accent/50" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div>
-          <div className="flex items-center gap-2 font-semibold">Auto-trade signals {saved.enabled && <span className="rounded bg-bull/15 px-1.5 py-0.5 text-[10px] font-bold text-bull">ON</span>}</div>
+          <div className="flex items-center gap-2 font-semibold">Auto-trade signals {saved.enabled && <span className="rounded bg-bull/15 px-1.5 py-0.5 text-[11px] font-bold text-bull">ON</span>}</div>
           <p className="text-xs text-mute">{saved.enabled
             ? `Every new futures signal (${saved.timeframes.map((t) => t.toUpperCase()).join(" + ")}, grade ${saved.grades === "A" ? "A" : "A+B"}) opens with $${saved.margin} margin at ${saved.leverage === "signal" ? "the suggested" : `${saved.leverage}x`} leverage, also while the app is closed.`
             : "Let the app place its futures signals in this practice account automatically, with the margin you choose."}</p>

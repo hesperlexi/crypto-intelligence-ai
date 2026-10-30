@@ -115,7 +115,7 @@ function CoinTile({ w, row, edit, admin, onPin, onRemove }: { w: any; row?: any;
         <div className={`num mt-2.5 truncate text-lg font-semibold transition-colors duration-500 ${flash === "up" ? "text-bull" : flash === "down" ? "text-bear" : ""}`}>{fmtPrice(price)}</div>
         <div className="mt-1 flex items-center justify-between gap-1">
           <span className={`num rounded-md px-1.5 py-0.5 text-[11px] ${ch == null ? "text-mute" : ch >= 0 ? "bg-bull/10 text-bull" : "bg-bear/10 text-bear"}`}>{fmtPctRaw(ch)}</span>
-          {row?.signal ? <span className="origin-right scale-90"><SignalBadge signal={row.signal} /></span> : <span className="text-[10px] text-mute">{w.mine ? "forecast soon" : ""}</span>}
+          {row?.signal ? <span className="origin-right scale-90"><SignalBadge signal={row.signal} /></span> : <span className="text-[11px] text-mute">{w.mine ? "forecast soon" : ""}</span>}
         </div>
       </Link>
       {edit && (canRemove || admin) && (

@@ -159,7 +159,7 @@ function UserCard({ u, st, pr, cfg, act, onZoom }: { u: any; st?: any; pr?: any;
           </div>
           <div className="mt-2 flex gap-3">
             {p.proof ? <button onClick={() => onZoom(p.proof)} className="shrink-0" title="Open full size"><img src={p.proof} alt="Payment screenshot" className="h-24 w-16 rounded-md object-cover ring-1 ring-glass/20" /></button>
-              : <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded-md bg-glass/[0.04] text-center text-[10px] text-mute">no screenshot</div>}
+              : <div className="flex h-24 w-16 shrink-0 items-center justify-center rounded-md bg-glass/[0.04] text-center text-[11px] text-mute">no screenshot</div>}
             <dl className="grid min-w-0 flex-1 grid-cols-[auto_1fr] content-start gap-x-3 gap-y-1 text-xs">
               <dt className="text-mute">Paid with</dt><dd className="text-right">{p.method === "mexc" ? "MEXC" : "Binance"}</dd>
               <dt className="text-mute">Order ID</dt><dd className="num truncate text-right">{p.txid || "—"}</dd>

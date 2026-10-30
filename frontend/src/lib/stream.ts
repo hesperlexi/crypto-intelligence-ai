@@ -5,9 +5,10 @@
 // endpoints cannot be reached, it falls back to spot and says so.
 import { useEffect, useRef, useState } from "react";
 import { Candle } from "./ta";
-import { bsym, fklines, klines } from "./binance";
+import { bsym, fklines, klines, orderbook } from "./binance";
 import { latestPrices } from "./live";
 import { clockOffset, Race, raceSocket } from "./ws";
+import { visibleInterval } from "./visibleInterval";
 
 export type Mkt = "spot" | "futures";
 const SPOT_WS = ["wss://stream.binance.com:9443", "wss://stream.binance.com:443", "wss://data-stream.binance.vision"];
@@ -35,7 +36,8 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
   const liveRef = useRef<Candle | null>(null);
 
   useEffect(() => {
-    let closed = false, race: Race | null = null, attempt = 0, retry = 0, poll = 0, lastFrame = 0, dirty = false;
+    let closed = false, race: Race | null = null, attempt = 0, retry = 0, lastFrame = 0, dirty = false;
+    let stopPoll = () => {};
     let connected = false;                            // a stream host is delivering (quiet markets can go seconds without a trade)
     let offset = 0, delay: number | null = null;
     let src: Mkt = market;
@@ -115,7 +117,7 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
       setSt({ candles: rows.slice(0, -1), live: liveRef.current, last: liveRef.current[4], source: src, status: "live", error: null, delay: null });
       clockOffset(src === "futures").then((o) => { offset = o; });
       connect();
-      poll = window.setInterval(restPoll, 1000);          // only used while no stream data is arriving
+      if (!closed) stopPoll = visibleInterval(restPoll, 1000);   // only used while no stream data is arriving; paused in a hidden tab
     })();
 
     // at most 5 renders a second, however fast trades arrive
@@ -131,7 +133,7 @@ export function useMarketStream(symbol: string, market: Mkt, tf: string): Stream
 
     return () => {
       closed = true;
-      window.clearTimeout(retry); window.clearInterval(poll); window.clearInterval(flush);
+      window.clearTimeout(retry); stopPoll(); window.clearInterval(flush);
       document.removeEventListener("visibilitychange", wake);
       race?.close();
     };
@@ -164,7 +166,6 @@ export function useDepth(symbol: string, market: Mkt): { bids: [number, number][
     const poll = window.setInterval(async () => {
       if (closed || document.hidden || Date.now() - last < 3000) return;
       try {
-        const { orderbook } = await import("./binance");
         const ob: any = await orderbook(symbol, market);
         if (ob?.bids && !closed) setBook({ bids: ob.bids, asks: ob.asks });
       } catch { /* keep trying */ }

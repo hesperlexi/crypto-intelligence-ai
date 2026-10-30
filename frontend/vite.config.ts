@@ -25,7 +25,7 @@ function versionFiles(): Plugin {
     // icons, favicon and manifest get ?v=<build> so phones and browsers fetch the new files after every deploy
     // (this is also what makes an installed Android app pick up a changed icon)
     transformIndexHtml(html) {
-      return html.replace(/(href="\/(?:manifest\.webmanifest|favicon\.png|icons\/[^"?]+))"/g, `$1?v=${V}"`);
+      return html.replace(/(href="\/(?:manifest\.webmanifest|favicon\.(?:png|svg)|icons\/[^"?]+))"/g, `$1?v=${V}"`);
     },
     writeBundle(opts) {
       const dir = opts.dir || "dist";
@@ -45,6 +45,20 @@ function versionFiles(): Plugin {
 
 export default defineConfig({
   plugins: [react(), versionFiles()],
+  build: {
+    rollupOptions: {
+      output: {
+        // stable vendor chunks: they change only when a library is upgraded, so browsers keep them cached across deploys
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          // core Firebase needed at start (auth + database); messaging/analytics stay in their own lazily loaded chunks
+          if (/[\\/]node_modules[\\/](@firebase[\\/](app|auth|firestore|util|component|logger|webchannel-wrapper)|firebase[\\/](app|auth|firestore))[\\/]/.test(id)) return "firebase";
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom|scheduler|@remix-run)[\\/]/.test(id)) return "react";
+          if (/[\\/]node_modules[\\/](lightweight-charts|fancy-canvas)[\\/]/.test(id)) return "charts";
+        },
+      },
+    },
+  },
   define: { __APP_VERSION__: JSON.stringify(APP_VERSION), __BUILD_ID__: JSON.stringify(BUILD_ID) },
   server: {
     port: 5173,

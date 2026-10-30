@@ -9,6 +9,7 @@ import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regime
 import { useApi } from "../lib/api";
 import { base, DASH, fmtCompact, fmtPct, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
 import { useLive } from "../lib/live";
+import { useIsPro } from "../lib/mode";
 
 const HORIZONS = ["15M", "1H", "4H", "12H", "24H", "3D"];
 
@@ -20,6 +21,7 @@ function heatColor(pct: number | null | undefined): string {
 
 export default function Dashboard() {
   const [tf, setTf] = useState("4h");
+  const pro = useIsPro();
   const { tickers, refreshAt } = useLive();
   const dash = useApi<any>(`/dashboard?timeframe=${tf}`, 60000);
   const ctx = useApi<any>("/context", 600000);
@@ -87,7 +89,7 @@ export default function Dashboard() {
               <Link key={s.symbol} to={`/asset/${slug(s.symbol)}`} className="flex items-center justify-between gap-3 rounded-md px-2 py-1.5 text-sm hover:bg-raised">
                 <span className="w-14 font-medium">{base(s.symbol)}</span>
                 <SignalBadge signal={s.signal} />
-                <span className="num text-mute" title="Signal score">{isNum(s.score) ? `${s.score.toFixed(0)}/100` : DASH}</span>
+                {pro && <span className="num text-mute" title="Signal score">{isNum(s.score) ? `${s.score.toFixed(0)}/100` : DASH}</span>}
                 <span className="text-xs text-mute">→ {s.decision}</span>
               </Link>
             ))}
@@ -204,7 +206,7 @@ function WinsMini() {
                 <span className="text-[11px] uppercase text-mute">{w.timeframe}</span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="rounded bg-bull/15 px-1.5 text-[10px] font-bold text-bull">{label[w.status] ?? "WIN"}</span>
+                <span className="rounded bg-bull/15 px-1.5 text-[11px] font-bold text-bull">{label[w.status] ?? "WIN"}</span>
                 <span className="num font-semibold text-bull">+{Number(w.return_pct).toFixed(1)}%</span>
               </span>
             </li>

@@ -12,6 +12,7 @@ import TradeCall, { Market } from "../components/TradeCall";
 import { post, useApi } from "../lib/api";
 import { DASH, fmtCompact, fmtNum, fmtPct, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, slug, tone } from "../lib/format";
 import { useTicker } from "../lib/live";
+import { ProOnly } from "../lib/mode";
 
 const OVERLAY_GROUPS: Record<string, string[]> = {
   EMA: ["ema_9", "ema_21", "ema_50", "ema_200"],
@@ -86,8 +87,10 @@ export default function Asset() {
             {ok && (
               <div className="grid grid-cols-3 gap-3 rounded-xl border border-glass/[0.08] bg-glass/[0.03] p-3 sm:flex sm:items-start sm:gap-5 sm:border-0 sm:bg-transparent sm:p-0 sm:text-right">
                 <Stat label="Decision" value={<Badge tone={signalTone(a.decision)}>{a.decision}</Badge>} />
-                <Stat label="Signal score" value={isNum(a.signal.score) ? `${a.signal.score.toFixed(0)}/100` : DASH} />
-                <Stat label="Confidence" value={isNum(a.confidence) ? `${(a.confidence * 100).toFixed(0)}/100` : DASH} />
+                <ProOnly>
+                  <Stat label="Signal score" value={isNum(a.signal.score) ? `${a.signal.score.toFixed(0)}/100` : DASH} />
+                  <Stat label="Confidence" value={isNum(a.confidence) ? `${(a.confidence * 100).toFixed(0)}/100` : DASH} />
+                </ProOnly>
               </div>
             )}
           </div>
@@ -131,7 +134,7 @@ export default function Asset() {
 
           <div className="grid gap-4 xl:grid-cols-2">
             <ForecastCard fc={fc} tf={tf} price={a.last_close} />
-            <ConsensusCard fc={fc} symbol={symbol} tf={tf} />
+            <ProOnly><ConsensusCard fc={fc} symbol={symbol} tf={tf} /></ProOnly>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
@@ -182,6 +185,7 @@ export default function Asset() {
             <LiquidityCard symbol={symbol} a={a} />
           </div>
 
+          <ProOnly>
           <Card title="Model performance" right={<Link to={`/accuracy?symbol=${s}&tf=${tf}`} className="text-xs text-accent hover:underline">Full accuracy panel</Link>}>
             {fc?.available ? (
               <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
@@ -192,6 +196,7 @@ export default function Asset() {
               </div>
             ) : <Empty>{fc?.reason ?? "No model for this timeframe."}</Empty>}
           </Card>
+          </ProOnly>
         </>
       )}
     </div>
@@ -263,7 +268,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
               <tbody>
                 {fc.per_model.map((m: any) => (
                   <tr key={m.name} className={m.baseline ? "text-mute" : ""}>
-                    <td>{m.label}{m.baseline && <span className="ml-1 text-[10px] uppercase">benchmark</span>}</td>
+                    <td>{m.label}{m.baseline && <span className="ml-1 text-[11px] uppercase">benchmark</span>}</td>
                     {m.error ? <td colSpan={5} className="text-bear">{m.error}</td> : (
                       <>
                         <td><Badge tone={m.predicted === "UP" ? "bull" : m.predicted === "DOWN" ? "bear" : "mute"}>{m.predicted}</Badge></td>

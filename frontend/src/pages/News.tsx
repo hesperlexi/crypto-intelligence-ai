@@ -58,9 +58,9 @@ export default function News() {
                       <span className="num pt-0.5 text-sm">{hhmm(e.ts)}</span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded border border-glass/15 px-1.5 text-[10px] font-bold text-mute">{e.country}</span>
+                          <span className="rounded border border-glass/15 px-1.5 text-[11px] font-bold text-mute">{e.country}</span>
                           <span className="font-medium">{e.title}</span>
-                          <span className={`rounded border px-1.5 text-[10px] font-bold ${IMPACT[e.impact] ?? ""}`}>{e.impact}</span>
+                          <span className={`rounded border px-1.5 text-[11px] font-bold ${IMPACT[e.impact] ?? ""}`}>{e.impact}</span>
                         </div>
                         {e.explain && <p className="mt-0.5 text-xs text-mute">{e.explain}</p>}
                         {(e.forecast || e.previous || e.actual) && (
