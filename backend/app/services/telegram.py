@@ -247,7 +247,7 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
     if cfg["post_wins"] and dt.hour >= WINS_HOUR_UTC and db.get_setting("tg_wins_day", "") != day:
         if (wins_view or {}).get("period") == "today":
             post("wins", wins_text(wins_view), "tg_wins_day", day,
-                 ("wins_card", wins_view["wins"], wins_view["period"]))
+                 ("wins_card", wins_view["wins"], wins_view["period"], wins_view.get("closed"), wins_view.get("losses")))
     if cfg["post_weekly"] and dt.weekday() == 0 and dt.hour >= WEEKLY_HOUR_UTC and db.get_setting("tg_weekly_day", "") != day:
         reports = (weekly_view or {}).get("reports") or []
         last = reports[1] if len(reports) > 1 else None
