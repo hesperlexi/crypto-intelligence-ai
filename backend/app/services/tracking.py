@@ -297,15 +297,39 @@ def entry_gate(db: Database, a: dict[str, Any], table: str = "signals", now: int
     return ("ok", None, {})
 
 
-def _plan(a: dict[str, Any]) -> dict[str, Any]:
-    """Entry, stop, targets and fill state of a tradable decision. Entry = the plan's ideal entry (what the card shows)."""
+def _plan(a: dict[str, Any], db: Database | None = None) -> dict[str, Any]:
+    """Entry, stop, targets and fill state of a tradable decision. Entry = the plan's ideal entry (what the card shows).
+    v2.6 (ENTRY_RULES, per timeframe where proven): 'confirm' waits for a candle closing beyond price + k ATR in the trade
+    direction, 'pullback' places a limit at price - k ATR; both are PENDING until filled within the fill window, and the
+    recorded entry / targets are set at the fill (targets in R from the actual entry)."""
     setup = a.get("setup") or {}
     tps = [t["price"] for t in setup.get("targets", [])] + [None, None, None]
     entry = setup.get("ideal_entry") or a.get("price")
     pending = a["decision"] == "BUY ON PULLBACK"
+    rule = None
+    if db is not None and a.get("timeframe"):
+        from .series_nightly import entry_rule
+        mode, k = entry_rule(db, a["timeframe"])
+        rr = [float(t.get("rr") or m) for t, m in zip(setup.get("targets", []), (1.0, 1.75, 2.5))] or [1.0, 1.75, 2.5]
+        if mode == "market":                      # proven for this timeframe: enter at the decision price, no limit
+            side = int(setup.get("side_int") or _side_of(a["decision"]))
+            px = float(a.get("price") or entry)
+            if setup.get("stop") is not None and side * (px - float(setup["stop"])) > 0:
+                d = abs(px - float(setup["stop"]))
+                entry, pending = px, False
+                tps = [px + side * m * d for m in rr] + [None, None, None]
+                rule = {"mode": "market", "k": 0.0, "rr": rr}
+        elif mode in ("confirm", "pullback") and setup.get("atr"):
+            side = int(setup.get("side_int") or _side_of(a["decision"]))
+            price = float(a.get("last_close") or a.get("price"))
+            rule = {"mode": mode, "k": k, "price": price, "atr": float(setup["atr"]), "rr": rr,
+                    "level": price + side * k * float(setup["atr"]) * (1 if mode == "confirm" else -1)}
+            pending = True
+            if mode == "pullback":
+                entry = rule["level"]
     return {"side": int(setup.get("side_int") or _side_of(a["decision"])), "entry": entry, "stop": setup.get("stop"),
             "tps": tps[:3], "rr": setup.get("risk_reward"), "atr": setup.get("atr"),
-            "fill_status": "PENDING" if pending else "FILLED"}
+            "fill_status": "PENDING" if pending else "FILLED", "entry_rule": rule}
 
 
 def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict[str, Any]:
@@ -335,11 +359,12 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
         if prev and prev["signal"] == sig["signal"] and prev["decision"] == a["decision"]:
             return res
     fc = a.get("forecast") or {}
-    pl = _plan(a) if tradable else None
+    pl = _plan(a, db) if tradable else None
     app_v, eng_v = versions()
     payload = {"reasons": sig.get("reasons"), "warnings": sig.get("warnings"), "flags": a.get("flags"),
                "decision_reason": a.get("decision_reason"), "grade": a.get("grade"),
-               "runner": setup.get("runner") if tradable else None}
+               "runner": setup.get("runner") if tradable else None,
+               "entry_rule": pl.get("entry_rule") if pl else None}
     if tradable:
         from ..engine.futures import signal_leverage
         payload.update({"manage": manage_params(db), "live_price": a.get("price"),
@@ -466,7 +491,38 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
         return out
     path = after
     first_is_fill = False
-    if fill_status == "PENDING":
+    rule = pay.get("entry_rule") or None
+    if fill_status == "PENDING" and rule and rule.get("mode") == "confirm":
+        # v2.6 confirmation entry: the first candle in the window closing beyond the level (cancelled if the stop
+        # trades first); the call is entered at that close and followed from the next candle
+        win_end = created + settings.fill_window_bars * step
+        w = after[after["ts"] < win_end]
+        cl, hi_, lo_ = w["close"].to_numpy(float), w["high"].to_numpy(float), w["low"].to_numpy(float)
+        lvl, stp = float(rule["level"]), float(s["stop"])
+        conf = (cl > lvl) if side > 0 else (cl < lvl)
+        bad = (lo_ <= stp) if side > 0 else (hi_ >= stp)
+        ci = int(conf.argmax()) if conf.any() else None
+        bi = int(bad.argmax()) if bad.any() else None
+        if ci is None or (bi is not None and bi <= ci):
+            win_covered = len(after) and int(after["ts"].iloc[-1]) + pms >= win_end
+            if bi is not None or win_covered or (wall_over and len(after)):
+                out.update(status="NOT_FILLED", fill_status="NOT_FILLED", closed_at=win_end, return_pct=None,
+                           exit_reason=None, managed=0, peak_r=None, peak_pct=None)
+                out["events"].append({"rule": "not_confirmed", "inputs": {"level": lvl, "window_bars": settings.fill_window_bars}})
+            return out
+        new_entry = float(cl[ci])
+        d = new_entry - stp
+        tps_new = [new_entry + m * d for m in (rule.get("rr") or (1.0, 1.75, 2.5))]
+        out.update(fill_status="FILLED", filled_at=int(w["ts"].iloc[ci]) + pms, entry=new_entry,
+                   tp1=tps_new[0], tp2=tps_new[1], tp3=tps_new[2])
+        out["events"].append({"rule": "confirmed", "inputs": {"level": lvl, "entry": new_entry, "candle_ts": int(w["ts"].iloc[ci])}})
+        s = {**s, "entry": new_entry, "tp1": tps_new[0], "tp2": tps_new[1], "tp3": tps_new[2],
+             "fill_status": "FILLED", "filled_at": out["filled_at"], "decision": "CONFIRMED"}
+        entry = new_entry
+        path = after[after["ts"] >= out["filled_at"]]
+        if path.empty:
+            return out
+    elif fill_status == "PENDING":
         win_end = created + settings.fill_window_bars * step
         idx = M.find_fill(side, entry, after, until_ts=win_end)
         if idx is None:
@@ -482,7 +538,9 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
         out["events"].append({"rule": "fill", "inputs": {"entry": entry, "candle_ts": out["filled_at"]}})
     elif s.get("fill_status") is None:                  # rows from before v2.5: market entries
         out["fill_status"] = "FILLED"
-    if s.get("fill_status") == "FILLED" and s.get("filled_at") and s.get("decision") == "BUY ON PULLBACK":
+    if rule and rule.get("mode") == "confirm" and s.get("fill_status") == "FILLED" and s.get("filled_at"):
+        path = after[after["ts"] >= int(s["filled_at"])]   # entered at a close: followed from the next candle
+    elif s.get("fill_status") == "FILLED" and s.get("filled_at") and (s.get("decision") == "BUY ON PULLBACK" or rule):
         fts = int(s["filled_at"])                       # a pullback filled earlier: follow from its fill candle
         path = after[after["ts"] >= fts]
         first_is_fill = not path.empty and int(path["ts"].iloc[0]) == fts
@@ -504,7 +562,8 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
 
 
 TRACKED = ("status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "closed_at", "return_pct", "fill_status", "filled_at",
-           "peak_r", "peak_pct", "exit_reason", "managed")
+           "peak_r", "peak_pct", "exit_reason", "managed",
+           "entry", "tp1", "tp2", "tp3")       # v2.6: set once, at a confirmation fill (the actual entry)
 
 
 def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signals", now: int | None = None) -> int:

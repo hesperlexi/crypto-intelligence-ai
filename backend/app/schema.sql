@@ -321,3 +321,17 @@ CREATE TABLE IF NOT EXISTS decisions (
 );
 CREATE INDEX IF NOT EXISTS ix_decisions_ts ON decisions (ts);
 CREATE INDEX IF NOT EXISTS ix_decisions_pair ON decisions (symbol, timeframe, ts);
+
+-- v2.6: hourly Gemini market-sentiment scores of the recent crypto headlines (collection only; not used by any decision
+-- until ml/sentiment_gate.py has >= 60 days of history to test it). ts = hour bucket; known_at = when it was scored.
+CREATE TABLE IF NOT EXISTS news_sentiment (
+  ts BIGINT NOT NULL,
+  grp TEXT NOT NULL,                -- 'market', 'BTC', 'ETH', 'alts'
+  score DOUBLE PRECISION NOT NULL,  -- [-1, 1]
+  n_headlines INTEGER NOT NULL,
+  newest_headline_ts BIGINT,
+  known_at BIGINT NOT NULL,
+  source TEXT,                      -- 'headlines' or 'calendar' (no headlines reachable: calendar context only)
+  model TEXT,
+  PRIMARY KEY (ts, grp)
+);

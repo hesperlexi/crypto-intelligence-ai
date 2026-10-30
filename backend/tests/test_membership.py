@@ -198,11 +198,11 @@ def test_testing_mode_v24_keeps_ten_coins_futures_bots_and_restarts_practice(tmp
     sink.set("paper_futures_trades/t1", {"uid": "u1"})
     notes = worker.sync_config(rt, sink)
     assert sorted(rt.symbols()) == sorted(worker.TEST_COINS)
-    assert all(b["market"] == "futures" for b in sink.get("config/bots")["bots"]) and len(sink.get("config/bots")["bots"]) == 5
+    assert all(b["market"] == "futures" for b in sink.get("config/bots")["bots"]) and len(sink.get("config/bots")["bots"]) == 4      # v2.6: the 15m bot is removed (15m paused)
     assert sink.get("paper/u1_futures") is None and sink.get("paper_futures_trades/t1") is None
     assert notes["testing_v24"]["coins"] == worker.TEST_COINS
     assert "testing_v24" not in worker.sync_config(rt, sink)       # done once
-    assert len(sink.get("config/bots")["bots"]) == 5                # spot bots are not added back
+    assert len(sink.get("config/bots")["bots"]) == 4                # spot bots (and the paused 15m bot) are not added back
 
 
 def test_testing_gold_swaps_xaut_for_paxg_once(tmp_path):
@@ -227,3 +227,23 @@ def test_testing_gold_swaps_xaut_for_paxg_once(tmp_path):
     sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})   # a later removal sticks
     worker.sync_config(rt, sink)
     assert set(rt.symbols()) == {"BTC/USDT"}
+
+
+def test_paused_15m_removes_its_bots_once(tmp_path):
+    from app.db import Database
+    from app.services.runtime import Runtime
+    from app.sinks import LocalSink
+    from app import worker
+
+    class _P:
+        name = "test"
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    for f in ("watchlist_majors_v2", "gold_paxg_v21", "fresh_start_v23", "testing_v24", "testing_v24b"):
+        rt.db.set_setting(f, True)
+    sink = LocalSink(tmp_path)
+    sink.set("config/bots", {"bots": [{"id": "a", "timeframe": "15m", "market": "futures"},
+                                      {"id": "b", "timeframe": "1h", "market": "futures"}],
+                             "defaults_added": ["a", "b"] + [d["id"] for d in worker.DEFAULT_BOTS]})
+    notes = worker.sync_config(rt, sink)
+    assert notes.get("pause_15m_bots_removed") == 1
+    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["b"]

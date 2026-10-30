@@ -16,6 +16,7 @@ between runs; Firestore holds only what the website shows.
 from __future__ import annotations
 
 import argparse
+import os
 import asyncio
 import logging
 import time
@@ -28,7 +29,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import ai_advisor, alerts, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
+from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -344,6 +345,17 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         rt.db.set_setting("record_since", now_ms())
         notes["fresh_start_v23"] = {"bots": len(DEFAULT_BOTS), "admin_practice": clear_admin_practice(sink)}
         rt.db.set_setting("fresh_start_v23", True)
+    # v2.6 (owner decision, 30 Oct 2026): 15m trade calls are paused (analysis.PAUSED_TFS), so the 15m demo bots are
+    # removed once; their ids stay in defaults_added, so they are not added back automatically
+    if not rt.db.get_setting("pause_15m_v26", False):
+        from .services.analysis import PAUSED_TFS
+        doc = sink.get("config/bots") or {}
+        if isinstance(doc.get("bots"), list):
+            keep = [b for b in doc["bots"] if b.get("timeframe") not in PAUSED_TFS]
+            if len(keep) != len(doc["bots"]):
+                sink.set("config/bots", {**doc, "bots": keep, "updated_at": now_ms()})
+                notes["pause_15m_bots_removed"] = len(doc["bots"]) - len(keep)
+        rt.db.set_setting("pause_15m_v26", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())
@@ -360,7 +372,9 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         bots_cfg = doc["bots"]
         # one-time additions: default bots introduced in a later version are added once (deleting them later sticks)
         seen = set(doc.get("defaults_added") or [b.get("id") for b in bots_cfg])
-        new = [b for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}]
+        from .services.analysis import PAUSED_TFS
+        new = [b for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}
+               and b.get("timeframe") not in PAUSED_TFS]
         if new or not doc.get("defaults_added"):
             bots_cfg = bots_cfg + new
             sink.set("config/bots", {**doc, "bots": bots_cfg, "updated_at": now_ms(),
@@ -778,6 +792,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["alerts_fired"] = step("analyses", analyse)
     # Gemini advisor (advisory notes only; off without GEMINI_API_KEY): new calls and closed calls, bounded per cycle
     detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
+    detail["sentiment"] = step("news_sentiment", lambda: sentiment.collect(rt.db, getattr(rt, "headlines", None)))
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
@@ -952,8 +967,13 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
                        "crowd": derivs.sync_crowd(rt.db, rt.symbols(), max_files=2500)}
     except Exception as exc:
         derivs_note = f"failed: {exc}"
+    try:                              # v2.6: per-series evidence for the gates (cached; used only where enabled)
+        from .services import series_nightly
+        series_note = series_nightly.run(rt, budget_s=float(os.environ.get("SERIES_POLICY_BUDGET_S", 900)))
+    except Exception as exc:
+        series_note = f"failed: {type(exc).__name__}: {exc}"[:300]
     detail = {"shards": shards, "imported": imported, "skipped": skipped, "pruned_files": pruned,
-              "failed": failed[:20], "derivs": derivs_note}
+              "failed": failed[:20], "derivs": derivs_note, "series_policy": series_note}
     _record(rt, "train", started, "ok", detail)
     publish_models(rt, sink)          # health/status stays with the 5-minute engine (it has the live price feed)
     sink.flush()

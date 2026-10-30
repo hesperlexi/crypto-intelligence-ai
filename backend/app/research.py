@@ -2,6 +2,7 @@
 
   python -m app.research giveback [--db sqlite:///./data/crypto_ai.db] [--out results/giveback.json]
   python -m app.research compare  [--db ...] [--out results/compare.json]
+  python -m app.research engine   [--db ...] [--out results/engine.json] [--budget 14400]  (v2.6, see research_engine.py)
 
 giveback  every closed call ever recorded (and separately those since record_since), replayed from publication on the
           stored 15m candles with the CURRENT rules: how many reached +0.5R / +0.8R / TP1 (1R) and still ended stopped
@@ -217,10 +218,13 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
+    ap.add_argument("--budget", type=float, default=14400, help="engine: seconds before remaining series are skipped")
+    ap.add_argument("--symbols", default=None, help="engine: comma-separated symbols (default: all with an active model)")
+    ap.add_argument("--timeframes", default=None, help="engine: comma-separated timeframes")
     a = ap.parse_args(argv)
     path = a.db.replace("sqlite:///", "")
     if a.db.startswith("sqlite:///") and not Path(path).exists():
@@ -239,12 +243,19 @@ def main(argv: list[str] | None = None) -> int:
             src.close()
             dst.close()
             a.db = f"sqlite:///{tmp}"
-        db = Database(a.db)
-        sigs = load_signals(db)
-        candles = candle_loader(db)
-        since = int(db.get_setting("record_since", 0) or 0)
-        body = giveback_report(sigs, candles, since) if a.command == "giveback" else compare_report(sigs, candles, a.cost_pct)
-        out = {"ok": True, "command": a.command, "engine_version": ENGINE_VERSION, "signals_in_db": len(sigs), **body}
+        if a.command == "engine":
+            from . import research_engine
+            body = research_engine.run(a.db, a.budget, a.cost_pct,
+                                       [x for x in (a.symbols or "").split(",") if x] or None,
+                                       [x for x in (a.timeframes or "").split(",") if x] or None)
+            out = {"ok": True, "command": a.command, **body}
+        else:
+            db = Database(a.db)
+            sigs = load_signals(db)
+            candles = candle_loader(db)
+            since = int(db.get_setting("record_since", 0) or 0)
+            body = giveback_report(sigs, candles, since) if a.command == "giveback" else compare_report(sigs, candles, a.cost_pct)
+            out = {"ok": True, "command": a.command, "engine_version": ENGINE_VERSION, "signals_in_db": len(sigs), **body}
     text = json.dumps(json.loads(dumps(out)), indent=1)
     print(text)
     if a.out:

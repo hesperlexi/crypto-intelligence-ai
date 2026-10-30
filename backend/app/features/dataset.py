@@ -23,7 +23,7 @@ from .volatility import volatility_frame
 
 MIN_BARS = 60
 # the higher timeframe whose context is added to each model's features
-HTF_OF = {"15m": "1h", "1h": "4h", "4h": "1d", "12h": "1d", "1d": "3d"}
+HTF_OF = {"15m": "1h", "1h": "4h", "4h": "1d", "12h": "1d", "1d": "3d", "3d": "1w"}   # v2.6: 3d tested against 1w too
 
 
 class InsufficientData(Exception):

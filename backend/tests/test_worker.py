@@ -54,7 +54,7 @@ def test_engine_cycle_publishes_views_runs_jobs_and_bots():
     assert "NOPE/USDT" not in rt.symbols() and d2["config"]["rejected_symbols"] == ["NOPE/USDT"]
     assert rt.risk_profile().portfolio == 50_000 and rt.signal_weights()["trend"] == 0.5
     assert "a1" in _view(sink, "alerts")["state"]
-    assert {b["id"] for b in sink.get("config/bots")["bots"]} >= {"futures-signal-ab-4h", "signal-ab-15m"}
+    assert {b["id"] for b in sink.get("config/bots")["bots"]} >= {"futures-signal-ab-4h", "signal-ab-1h"}
     # the website replaces the list (keeping the other fields, as the site does): deleted defaults stay deleted
     sink.set("config/bots", {**sink.get("config/bots"),
                              "bots": [{"id": "only", "mode": "prediction", "timeframe": "4h", "reset_token": "1"}]})
@@ -303,7 +303,7 @@ def test_fresh_start_v23_runs_once(tmp_path):
     sink.set("config/bots", {"bots": [{"id": "old-bot", "mode": "decision", "timeframe": "4h"}]})
     notes = worker.sync_config(rt, sink)
     ids = [b["id"] for b in sink.get("config/bots")["bots"]]
-    assert "old-bot" not in ids and len(ids) == 10 and sum(i.startswith("futures-") for i in ids) == 5
+    assert "old-bot" not in ids and len(ids) == 8 and sum(i.startswith("futures-") for i in ids) == 4      # v2.6: 15m bots removed
     assert notes["fresh_start_v23"]["bots"] == 10 and rt.db.get_setting("record_since", 0) > 0
     first = rt.db.get_setting("record_since", 0)
     worker.sync_config(rt, sink)

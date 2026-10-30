@@ -117,6 +117,27 @@ To end testing: restore the watchlist/limits and re-add spot bots (no automatic 
 - Website: split bundle, SVG logo (`components/Logo.tsx`), glass surfaces, Beginner/Pro mode (`lib/mode.tsx`),
   trust pages (`pages/Trust.tsx`), 404/error pages, security headers in `firebase.json`.
 
+## v2.6 accuracy upgrades (30 Oct 2026, branch `engine-v26`; `ENGINE_VERSION` 2.6.0)
+- Proof: `python -m app.research engine` (`research_engine.py`, run by `research.yml` → `research-results/results/engine-*.json`).
+  The models' walk-forward out-of-sample calls of every series are replayed through the live decision rules
+  (`ml/series_policy.decide`), simulated with the record's exits + 0.15% costs (`ml/series_sim.follow`, proven equal
+  to `manage.follow`), one call at a time; first 70% of each series chooses, last 30% is the untouched test.
+- Nightly in `train-merge` (`services/series_nightly.py`): `series_policy1|SYM|TF`, `entry_policy1|TF`, `trade_filter2|TF`.
+- Settings (default from the 30 Oct test, file `results/engine-20261030T180454Z.json`, 1516 test trades):
+  `SERIES_GATE` off (−0.062R vs −0.043R; series edges barely persist, corr 0.17), `SERIES_CONF` off (−0.073R),
+  `STRUCT_STOPS` off (−0.087R, drawdown 246R vs 134R), `ENTRY_RULES` **on** (per timeframe, nested choice: market
+  entry 15m/12h, confirm 0.1 ATR 1d; −0.040R), `TRADE_FILTER2` **on** (pooled per timeframe, on only where its own
+  exam passes: 1d; −0.042R, DD 128R). All proven together: −0.038R, DD 128R vs OLD −0.043R, DD 134R. Gains are small
+  and not significant (series bootstrap: better in ~66% of resamples). The pipeline is still negative after costs on
+  15m (−0.17R) and 1h (−0.10R); 4h (+0.06R) and 12h are the only positive timeframes.
+- Market inputs (item 6): deriv/htf gates are tested per series; ~4 series use futures data, ~8 use higher-timeframe
+  context. 3d had no htf map → now tested against 1w. BTC regime/tech in the trade's direction are filter2 features.
+- **15m trade calls paused** (owner decision 30 Oct 2026; `analysis.PAUSED_TFS`, env `PAUSED_TFS`, default "15m"): live
+  15m decisions → NO TRADE ("TIMEFRAME PAUSED"), chart/forecast unchanged, research replays unaffected; 15m bots removed
+  once (flag `pause_15m_v26`) and never re-added. 1h kept by owner choice although −0.10R on the test.
+- News sentiment: `services/sentiment.py` hourly Gemini score of the RSS headlines (calendar only if none) →
+  table `news_sentiment` (known_at, no look-ahead); `ml/sentiment_gate.py` stub, off until ≥60 days. `NEWS_SENTIMENT`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
