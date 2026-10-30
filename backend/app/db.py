@@ -17,6 +17,13 @@ from typing import Any, Iterable, Sequence
 from .config import settings
 
 SCHEMA_PATH = Path(__file__).with_name("schema.sql")
+# v2.5 columns added to existing tables (safe on both engines: added only when missing)
+MIGRATIONS: dict[str, list[tuple[str, str]]] = {
+    table: [("fill_status", "TEXT"), ("filled_at", "BIGINT"), ("peak_r", "DOUBLE PRECISION"),
+            ("peak_pct", "DOUBLE PRECISION"), ("exit_reason", "TEXT"), ("managed", "INTEGER"), ("atr", "DOUBLE PRECISION"),
+            ("app_version", "TEXT"), ("engine_version", "TEXT")]
+    for table in ("signals", "shadow_signals")
+}
 
 
 def now_ms() -> int:
@@ -97,6 +104,27 @@ class Database:
                 cur.close()
             else:
                 self._conn.executescript(script)
+        self.migrate()
+
+    def columns(self, table: str) -> set[str]:
+        if self.is_postgres:
+            rows = self.query("SELECT column_name AS name FROM information_schema.columns WHERE table_name = ?", (table,))
+        else:
+            rows = self.query(f"PRAGMA table_info({table})")
+        return {r["name"] for r in rows}
+
+    def migrate(self) -> None:
+        """ALTER TABLE ... ADD COLUMN for columns newer than the stored database (idempotent, SQLite and PostgreSQL)."""
+        for table, cols in MIGRATIONS.items():
+            have = self.columns(table)
+            for name, typ in cols:
+                if name in have:
+                    continue
+                try:
+                    self.execute(f"ALTER TABLE {table} ADD COLUMN {name} {typ}")
+                except Exception:          # added concurrently by another process: fine
+                    if name not in self.columns(table):
+                        raise
 
     def execute(self, sql: str, params: Sequence[Any] = ()) -> int:
         with self._lock:

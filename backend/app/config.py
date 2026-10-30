@@ -69,6 +69,19 @@ def _f(name: str, default: float) -> float:
         return default
 
 
+def _clamp(v: float, lo: float, hi: float) -> float:
+    return float(min(hi, max(lo, v)))
+
+
+ENGINE_VERSION = "2.5.0"
+# hard limits for the trade-management parameters (env values and AI suggestions are clamped into these)
+LIMITS = {
+    "giveback_arm_r": (0.3, 1.0), "giveback_frac": (0.3, 0.7), "trail_atr_k": (1.0, 4.0),
+    "time_stop_bars": (4, 48), "time_stop_min_r": (0.0, 0.5), "fill_window_bars": (1, 12),
+    "reentry_cooldown_bars": (0, 24), "reentry_max": (0, 10), "reentry_window_bars": (1, 200),
+}
+
+
 def _b(name: str, default: bool) -> bool:
     return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
 
@@ -119,6 +132,29 @@ class Settings:
     fee_rate: float = field(default_factory=lambda: _f("FEE_RATE", 0.001))
     slippage_bps: float = field(default_factory=lambda: _f("SLIPPAGE_BPS", 2.0))
     spread_bps: float = field(default_factory=lambda: _f("SPREAD_BPS", 1.0))
+
+    # ---- v2.5 trade management (audit v1). Hard limits below; every value is env-overridable and clamped. ----
+    managed_exits: bool = field(default_factory=lambda: _b("MANAGED_EXITS", False))
+    giveback_arm_r: float = field(default_factory=lambda: _clamp(_f("GIVEBACK_ARM_R", 0.6), *LIMITS["giveback_arm_r"]))
+    giveback_frac: float = field(default_factory=lambda: _clamp(_f("GIVEBACK_FRAC", 0.5), *LIMITS["giveback_frac"]))
+    trail_atr_k: float = field(default_factory=lambda: _clamp(_f("TRAIL_ATR_K", 2.0), *LIMITS["trail_atr_k"]))
+    time_stop_bars: int = field(default_factory=lambda: int(_clamp(_f("TIME_STOP_BARS", 12), *LIMITS["time_stop_bars"])))
+    time_stop_min_r: float = field(default_factory=lambda: _clamp(_f("TIME_STOP_MIN_R", 0.25), *LIMITS["time_stop_min_r"]))
+    fill_window_bars: int = field(default_factory=lambda: int(_clamp(_f("FILL_WINDOW_BARS", 3), *LIMITS["fill_window_bars"])))
+    reentry_cooldown_bars: int = field(default_factory=lambda: int(_clamp(_f("REENTRY_COOLDOWN_BARS", 2), *LIMITS["reentry_cooldown_bars"])))
+    reentry_max: int = field(default_factory=lambda: int(_clamp(_f("REENTRY_MAX", 2), *LIMITS["reentry_max"])))
+    reentry_window_bars: int = field(default_factory=lambda: int(_clamp(_f("REENTRY_WINDOW_BARS", 24), *LIMITS["reentry_window_bars"])))
+    ai_params: bool = field(default_factory=lambda: _b("AI_PARAMS", False))
+    # website job limits (admins exempt)
+    jobs_per_user_per_day: int = field(default_factory=lambda: int(_f("JOBS_PER_USER_PER_DAY", 20)))
+    jobs_per_tick: int = field(default_factory=lambda: int(_f("JOBS_PER_TICK", 10)))
+    # research: futures round trip incl. fees + slippage, % of price
+    research_cost_pct: float = field(default_factory=lambda: _f("RESEARCH_COST_PCT", 0.15))
+
+    def manage_params(self) -> dict:
+        return {"managed": bool(self.managed_exits), "giveback_arm_r": self.giveback_arm_r,
+                "giveback_frac": self.giveback_frac, "trail_atr_k": self.trail_atr_k,
+                "time_stop_bars": self.time_stop_bars, "time_stop_min_r": self.time_stop_min_r}
 
     def ensure_dirs(self) -> None:
         Path(self.model_dir).mkdir(parents=True, exist_ok=True)

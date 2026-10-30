@@ -28,7 +28,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import alerts, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
+from .services import ai_advisor, alerts, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -328,9 +328,10 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     # support email moved to the app's own domain (owner request, 27 Oct 2026); runs once
     if not rt.db.get_setting("support_email_v23", False):
         m = sink.get("config/membership") or {}
-        sink.set("config/membership", {**m, "support_email": "support@cryptointelai.com", "updated_at": now_ms()})
+        from . import brand
+        sink.set("config/membership", {**m, "support_email": brand.SUPPORT_EMAIL, "updated_at": now_ms()})
         rt.db.set_setting("support_email_v23", True)
-        notes["support_email"] = "support@cryptointelai.com"
+        notes["support_email"] = brand.SUPPORT_EMAIL
     # v2.3 fresh start (owner request, 27 Oct 2026): every bot book and the admin's practice trades are cleared -
     # wins and losses alike - the bot line-up becomes 5 spot + 5 futures signal bots, and the counted performance
     # record restarts now. Older signals stay in the Signal log; members' own practice accounts are not touched.
@@ -428,8 +429,16 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
             return {"ok": False, "reason": "no publisher"}
         m = {"title": "Test notification", "body": "Notifications from Crypto Intelligence AI work on this device.",
              "url": "/settings", "tag": "test"}
-        if p.get("uid"):
-            m["uid"] = str(p["uid"])
+        # only to the person who queued the test: for members the job owner's uid (from the job's `by` email), never
+        # a uid taken from the job's params (the rules also require params.uid == the creator)
+        if job.get("_admin"):
+            if p.get("uid"):
+                m["uid"] = str(p["uid"])
+        else:
+            owner = job.get("_owner_uid")
+            if not owner:
+                return {"ok": False, "reason": "the owner of this job could not be identified"}
+            m["uid"] = owner
         res = sink.send_push([m])
         return {"ok": res.get("sent", 0) > 0, **res}
     if kind == "backtest":
@@ -460,11 +469,48 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
     raise ValueError(f"unknown job type {kind!r}")
 
 
+def _admin_emails() -> set[str]:
+    import os
+    return {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").replace(";", ",").split(",") if e.strip()}
+
+
 def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
+    """Run queued website jobs. Limits (admins exempt): JOBS_PER_USER_PER_DAY per person (UTC day) and JOBS_PER_TICK
+    per cycle; jobs over a limit fail with a clear message."""
     n = 0
+    admins = _admin_emails()
+    day = time.strftime("%Y-%m-%d", time.gmtime())
+    counts = rt.db.get_setting("job_counts", {}) or {}
+    if counts.get("day") != day:
+        counts = {"day": day, "by": {}}
+    this_tick = 0
+    uid_cache: dict[str, str | None] = {}
     for jid, job in sink.queued_jobs():
         if time.time() > deadline:
             break
+        who = str(job.get("by") or "").strip().lower()
+        admin = bool(who) and who in admins
+        job = {**job, "_admin": admin}
+        if who and not admin:
+            if who not in uid_cache:
+                uid_cache[who] = sink.uid_for_email(who)
+            job["_owner_uid"] = uid_cache[who]
+        if not admin:
+            used = int(counts["by"].get(who or "?", 0))
+            limit_msg = None
+            if used >= settings.jobs_per_user_per_day:
+                limit_msg = (f"daily limit reached: at most {settings.jobs_per_user_per_day} requests per person per day; "
+                             "please try again tomorrow")
+            elif this_tick >= settings.jobs_per_tick:
+                limit_msg = (f"the engine takes at most {settings.jobs_per_tick} requests per run; please try again in a "
+                             "few minutes")
+            if limit_msg:
+                sink.set(f"jobs/{jid}", {"status": "failed", "error": limit_msg, "finished_at": now_ms()}, merge=True)
+                n += 1
+                continue
+            counts["by"][who or "?"] = used + 1
+            this_tick += 1
+            rt.db.set_setting("job_counts", counts)
         sink.set(f"jobs/{jid}", {"status": "running", "started_at": now_ms()}, merge=True)
         try:
             result = run_job(rt, job, deadline, sink)
@@ -540,7 +586,9 @@ def analysis_core(a: dict[str, Any]) -> Any:
     """The part of an analysis that must reach members at once when it changes: the call itself (new trade signals
     also go out at once on the Signals page)."""
     st = a.get("setup") if isinstance(a.get("setup"), dict) else {}
-    return [a.get("decision"), a.get("grade"), a.get("status"), st.get("side"), st.get("valid")]   # not the live levels
+    call = a.get("call") or {}
+    return [a.get("decision"), a.get("grade"), a.get("status"), st.get("side"), st.get("valid"),   # not the live levels
+            a.get("record_status"), a.get("stale"), call.get("id"), call.get("status"), call.get("fill_status")]
 
 
 def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analyses: dict[tuple[str, str], dict]) -> None:
@@ -574,6 +622,8 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("track_record", views.track_record(rt, bot_report))
     sink.view("weekly_report", views.weekly_reports(rt, bot_report))
     sink.view("wins_today", views.wins_today(rt))
+    # one document with the last 100 trade-management decisions; written only when it changed (hash-deduplicated)
+    sink.view("decisions_recent", views.decisions_recent(rt), min_interval_s=300)
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))
@@ -721,6 +771,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                 fired_events.extend(evs)
         return fired
     detail["alerts_fired"] = step("analyses", analyse)
+    # Gemini advisor (advisory notes only; off without GEMINI_API_KEY): new calls and closed calls, bounded per cycle
+    detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it

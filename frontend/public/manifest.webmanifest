@@ -1,7 +1,7 @@
 {
   "name": "Crypto Intelligence AI",
   "short_name": "Crypto AI",
-  "description": "Crypto forecasting, market regimes, signals and demo trading bots. Analysis only.",
+  "description": "AI market analysis for crypto traders. Signals, track record, alerts and practice trading with virtual money. Analysis only, not financial advice.",
   "id": "/",
   "start_url": "/",
   "scope": "/",

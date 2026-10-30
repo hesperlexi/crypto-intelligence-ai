@@ -139,135 +139,400 @@ def performance_windows(db: Database, bundle: dict[str, Any], recent_days: int =
 
 
 # ---- signal history ---------------------------------------------------------------------------------------
+#
+# v2.5 (audit v1):
+#   * entry = the plan's ideal entry (the price the signal card shows, the one stop and targets are built from);
+#     BUY / SELL are market entries (fill_status FILLED at creation), BUY ON PULLBACK waits for the price to trade
+#     through the entry (PENDING -> FILLED, or NOT_FILLED after FILL_WINDOW_BARS bars: never entered, no return,
+#     not counted in any statistic - but listed);
+#   * a call is followed only on candles that OPEN after it was published (no look-ahead into the forming candle);
+#   * at most one OPEN / PENDING call per coin and timeframe; re-entry cooldown and cap after a close;
+#   * calls whose candles never arrive expire on the wall clock (EXPIRED at the last known close, or VOID - no
+#     market data at all after publication - with no return, not counted, shown as a 'void' number);
+#   * every trade-management step is written to the `decisions` table.
 
-def log_signal(db: Database, a: dict[str, Any]) -> bool:
-    """Store a signal when it differs from the last one logged for this symbol/timeframe."""
+TRADE_DECISIONS = ("BUY", "BUY ON PULLBACK", "SELL")
+CLOSED_STATUSES = ("STOPPED", "TP1", "TP2", "TP3", "EXPIRED")     # count in statistics (with a return)
+NO_RESULT_STATUSES = ("NOT_FILLED", "VOID")                       # listed, never counted
+UNSTABLE_REGIMES = ("HIGH-VOLATILITY / UNSTABLE",)
+DECISIONS_KEEP_DAYS = 120
+
+
+def versions() -> tuple[str, str]:
+    from ..brand import APP_VERSION
+    from ..config import ENGINE_VERSION
+    return APP_VERSION, ENGINE_VERSION
+
+
+def log_decision(db: Database, rule: str, symbol: str | None, timeframe: str | None, signal_id: str | None = None,
+                 inputs: dict[str, Any] | None = None, ai_rationale: str | None = None, ts: int | None = None,
+                 dedupe: bool = False) -> bool:
+    """One row in `decisions`. With dedupe, a rule repeated with the same inputs for the same pair is not stored again."""
+    app_v, eng_v = versions()
+    text = dumps(inputs or {})
+    if dedupe:
+        recent = db.query("SELECT rule, inputs FROM decisions WHERE symbol = ? AND timeframe = ? ORDER BY ts DESC LIMIT 6",
+                          (symbol, timeframe))
+        if any(r["rule"] == rule and r["inputs"] == text for r in recent):
+            return False
+    db.execute("INSERT INTO decisions (id, ts, symbol, timeframe, signal_id, rule, inputs, ai_rationale, engine_version, "
+               "app_version) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+               (new_id(), ts or now_ms(), symbol, timeframe, signal_id, rule, text, ai_rationale, eng_v, app_v))
+    return True
+
+
+def recent_decisions(db: Database, limit: int = 100) -> dict[str, Any]:
+    newest = db.one("SELECT MAX(ts) AS t FROM decisions")
+    if newest and newest["t"]:
+        db.execute("DELETE FROM decisions WHERE ts < ?", (int(newest["t"]) - DECISIONS_KEEP_DAYS * DAY,))
+    rows = db.query("SELECT * FROM decisions ORDER BY ts DESC, id DESC LIMIT ?", (limit,))
+    return {"decisions": [{"ts": r["ts"], "symbol": r["symbol"], "timeframe": r["timeframe"], "signal_id": r["signal_id"],
+                           "rule": r["rule"], "inputs": loads(r["inputs"], {}), "ai_rationale": r["ai_rationale"],
+                           "engine_version": r["engine_version"], "app_version": r["app_version"]} for r in rows]}
+
+
+def manage_params(db: Database | None = None) -> dict[str, Any]:
+    """Current trade-management parameters (settings; AI-suggested give-back / trail values only with AI_PARAMS=1)."""
+    from ..config import LIMITS, settings
+    p = settings.manage_params()
+    if settings.ai_params and db is not None:
+        ai = db.get_setting("ai_manage_params", {}) or {}
+        for k in ("giveback_arm_r", "giveback_frac", "trail_atr_k"):
+            if isinstance(ai.get(k), (int, float)):
+                lo, hi = LIMITS[k]
+                p[k] = float(min(hi, max(lo, ai[k])))
+    return p
+
+
+def _side_of(decision: str) -> int:
+    return 1 if decision in ("BUY", "BUY ON PULLBACK") else -1 if decision == "SELL" else 0
+
+
+def open_call(db: Database, symbol: str, timeframe: str, table: str = "signals") -> dict[str, Any] | None:
+    return db.one(f"SELECT * FROM {table} WHERE symbol = ? AND timeframe = ? AND status = 'OPEN' AND side != 0 "
+                  "ORDER BY created_at DESC LIMIT 1", (symbol, timeframe))
+
+
+def call_view(r: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The contract's `call` object for analysis / futures rows."""
+    if not r:
+        return None
+    return {"id": r["id"], "status": r["status"], "fill_status": r.get("fill_status") or ("FILLED" if r["side"] else None),
+            "side": "LONG" if r["side"] > 0 else "SHORT", "entry": r["entry"], "stop": r["stop"], "tp1": r["tp1"],
+            "tp2": r["tp2"], "tp3": r["tp3"], "peak_r": r.get("peak_r"), "peak_pct": r.get("peak_pct"),
+            "exit_reason": r.get("exit_reason"), "managed": r.get("managed") or 0, "created_at": r["created_at"],
+            "return_pct": r.get("return_pct"), "closed_at": r.get("closed_at")}
+
+
+def current_call(db: Database, symbol: str, timeframe: str) -> dict[str, Any] | None:
+    """The call being tracked for this coin/timeframe: the open one, else the latest closed one from the last day."""
+    r = open_call(db, symbol, timeframe)
+    if r is None:
+        r = db.one("SELECT * FROM signals WHERE symbol = ? AND timeframe = ? AND side != 0 AND status != 'OPEN' "
+                   "AND closed_at >= ? ORDER BY created_at DESC LIMIT 1", (symbol, timeframe, now_ms() - DAY))
+    return call_view(r)
+
+
+def latest_ai(db: Database, symbol: str, timeframe: str) -> dict[str, Any] | None:
+    """The advisor note of the latest call on this coin/timeframe (contract: analysis row `ai`), if any."""
+    r = db.one("SELECT payload FROM signals WHERE symbol = ? AND timeframe = ? AND side != 0 ORDER BY created_at DESC LIMIT 1",
+               (symbol, timeframe))
+    ai = (loads(r["payload"], {}) or {}).get("ai") if r else None
+    if not ai:
+        return None
+    return {k: ai.get(k) for k in ("rationale", "regime", "model", "at") if k in ai}
+
+
+def entry_gate(db: Database, a: dict[str, Any], table: str = "signals", now: int | None = None) -> tuple[str, str | None, dict]:
+    """('ok' | 'already_open' | 'cooldown' | 'reentry_cap' | 'reentry_regime', reason, inputs) for a tradable decision."""
+    from ..config import settings
+    now = now or now_ms()
+    sym, tf = a["symbol"], a["timeframe"]
+    side = _side_of(a["decision"])
+    step = tf_ms(tf)
+    cur = open_call(db, sym, tf, table)
+    if cur:
+        return ("already_open", f"a {tf} {'long' if cur['side'] > 0 else 'short'} call on this coin is still "
+                f"{'waiting for its entry' if cur.get('fill_status') == 'PENDING' else 'running'}; no new call until it closes",
+                {"open_id": cur["id"], "decision": a["decision"]})
+    last = db.one(f"SELECT * FROM {table} WHERE symbol = ? AND timeframe = ? AND side != 0 AND status != 'OPEN' "
+                  "AND status != 'VOID' AND closed_at IS NOT NULL ORDER BY closed_at DESC LIMIT 1", (sym, tf))
+    if last:
+        ends = int(last["closed_at"]) + tf_ms(PATH_TF)
+        cool = settings.reentry_cooldown_bars * step
+        if now < ends + cool:
+            return ("cooldown", f"the last {tf} call on this coin closed {max(0, (now - ends) // 60_000)} min ago; "
+                    f"waiting {settings.reentry_cooldown_bars} bars before a new call",
+                    {"last_id": last["id"], "closed_at": last["closed_at"], "cooldown_bars": settings.reentry_cooldown_bars})
+    # re-entries in the same direction after a give-back / stop exit within the window
+    window = settings.reentry_window_bars * step
+    exits = db.query(f"SELECT * FROM {table} WHERE symbol = ? AND timeframe = ? AND side = ? AND closed_at >= ? "
+                     "AND exit_reason IN ('giveback', 'stop') ORDER BY closed_at", (sym, tf, side, now - window))
+    if exits:
+        first = exits[0]
+        regime = (a.get("regime") or {}).get("regime")
+        vol = (a.get("volatility") or {}).get("state")
+        if regime in UNSTABLE_REGIMES or vol == "EXTREME":
+            return ("reentry_regime", "no re-entry while volatility is extreme",
+                    {"after_id": first["id"], "regime": regime, "volatility": vol})
+        n = db.one(f"SELECT COUNT(*) AS n FROM {table} WHERE symbol = ? AND timeframe = ? AND side = ? AND created_at > ?",
+                   (sym, tf, side, int(first["closed_at"])))["n"]
+        if n >= settings.reentry_max:
+            return ("reentry_cap", f"already {n} re-entries in this direction since a {first['exit_reason']} exit "
+                    f"(limit {settings.reentry_max} within {settings.reentry_window_bars} bars)",
+                    {"after_id": first["id"], "reentries": n, "max": settings.reentry_max})
+    return ("ok", None, {})
+
+
+def _plan(a: dict[str, Any]) -> dict[str, Any]:
+    """Entry, stop, targets and fill state of a tradable decision. Entry = the plan's ideal entry (what the card shows)."""
+    setup = a.get("setup") or {}
+    tps = [t["price"] for t in setup.get("targets", [])] + [None, None, None]
+    entry = setup.get("ideal_entry") or a.get("price")
+    pending = a["decision"] == "BUY ON PULLBACK"
+    return {"side": int(setup.get("side_int") or _side_of(a["decision"])), "entry": entry, "stop": setup.get("stop"),
+            "tps": tps[:3], "rr": setup.get("risk_reward"), "atr": setup.get("atr"),
+            "fill_status": "PENDING" if pending else "FILLED"}
+
+
+def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict[str, Any]:
+    """Store the analysis in the signal history. Returns {'status': 'logged' | 'already_open' | 'not_logged' | None,
+    'reason', 'id'} (None: not a tradable decision; an INFO row may still be written)."""
     sig = a.get("signal") or {}
+    res: dict[str, Any] = {"status": None, "reason": None, "id": None, "written": False}
     if not sig.get("signal") or a.get("bar_ts") is None:
-        return False
+        return res
     from ..config import MODEL_TIMEFRAMES
     if a.get("timeframe") not in MODEL_TIMEFRAMES:      # daily charts are context only, never a signal
-        return False
-    prev = db.one("SELECT signal, decision FROM signals WHERE symbol = ? AND timeframe = ? ORDER BY bar_ts DESC LIMIT 1",
-                  (a["symbol"], a["timeframe"]))
-    if prev and prev["signal"] == sig["signal"] and prev["decision"] == a["decision"]:
-        return False
+        return res
+    now = now or now_ms()
+    sym, tf = a["symbol"], a["timeframe"]
     setup = a.get("setup") or {}
-    tradable = a["decision"] in ("BUY", "BUY ON PULLBACK", "SELL") and setup.get("valid")
-    tps = [t["price"] for t in setup.get("targets", [])] if tradable else [None, None, None]
+    tradable = a["decision"] in TRADE_DECISIONS and bool(setup.get("valid"))
+    if tradable:
+        gate, why, inputs = entry_gate(db, a, now=now)
+        if gate != "ok":
+            st = "already_open" if gate == "already_open" else "not_logged"
+            log_decision(db, f"skip_{gate}", sym, tf, inputs.get("open_id") or inputs.get("last_id") or inputs.get("after_id"),
+                         {**inputs, "decision": a["decision"], "reason": why}, ts=now, dedupe=True)
+            return {"status": st, "reason": why, "id": inputs.get("open_id"), "written": False}
+    else:
+        prev = db.one("SELECT signal, decision FROM signals WHERE symbol = ? AND timeframe = ? ORDER BY bar_ts DESC LIMIT 1",
+                      (sym, tf))
+        if prev and prev["signal"] == sig["signal"] and prev["decision"] == a["decision"]:
+            return res
     fc = a.get("forecast") or {}
-    n = db.execute(
-        "INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, score, confidence, regime, "
-        "price, side, entry, stop, tp1, tp2, tp3, rr, status, model_version_id, payload) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
-        "ON CONFLICT (symbol, timeframe, bar_ts) DO NOTHING",
-        (new_id(), now_ms(), a["symbol"], a["timeframe"], a["bar_ts"], sig["signal"], a["decision"], sig.get("score"),
-         a.get("confidence"), (a.get("regime") or {}).get("regime"), a["price"],
-         setup.get("side_int", 0) if tradable else 0, a["price"] if tradable else None,
-         setup.get("stop") if tradable else None, tps[0], tps[1], tps[2],
-         setup.get("risk_reward") if tradable else None, "OPEN" if tradable else "INFO",
-         fc.get("model_version"), dumps({"reasons": sig.get("reasons"), "warnings": sig.get("warnings"),
-                                         "flags": a.get("flags"), "decision_reason": a.get("decision_reason"),
-                                         "grade": a.get("grade"),
-                                         "runner": setup.get("runner") if tradable else None})))
-    return n > 0
+    pl = _plan(a) if tradable else None
+    app_v, eng_v = versions()
+    payload = {"reasons": sig.get("reasons"), "warnings": sig.get("warnings"), "flags": a.get("flags"),
+               "decision_reason": a.get("decision_reason"), "grade": a.get("grade"),
+               "runner": setup.get("runner") if tradable else None}
+    if tradable:
+        payload.update({"manage": manage_params(db), "live_price": a.get("price"),
+                        "decision_basis": a.get("decision_basis"),
+                        "ai_inputs": {"confidence": a.get("confidence"), "regime": (a.get("regime") or {}).get("regime"),
+                                      "trend": _comp(sig, "trend"), "momentum": _comp(sig, "momentum"),
+                                      "risk_reward": setup.get("risk_reward"), "risk_pct": setup.get("risk_pct"),
+                                      "targets_r": [t.get("rr") for t in setup.get("targets", [])],
+                                      "volatility": (a.get("volatility") or {}).get("state"),
+                                      "warnings": (sig.get("warnings") or [])[:4]}})
+    sid = new_id()
+    vals = (sid, now, sym, tf, a["bar_ts"], sig["signal"], a["decision"], sig.get("score"), a.get("confidence"),
+            (a.get("regime") or {}).get("regime"), a["price"], pl["side"] if pl else 0, pl["entry"] if pl else None,
+            pl["stop"] if pl else None, *(pl["tps"] if pl else [None, None, None]), pl["rr"] if pl else None,
+            "OPEN" if tradable else "INFO", fc.get("model_version"), dumps(payload),
+            pl["fill_status"] if pl else None, now if pl and pl["fill_status"] == "FILLED" else None,
+            0.0 if pl else None, 0.0 if pl else None, 0 if pl else None, pl["atr"] if pl else None, app_v, eng_v)
+    cols = ("id, created_at, symbol, timeframe, bar_ts, signal, decision, score, confidence, regime, price, side, entry, "
+            "stop, tp1, tp2, tp3, rr, status, model_version_id, payload, fill_status, filled_at, peak_r, peak_pct, managed, "
+            "atr, app_version, engine_version")
+    n = db.execute(f"INSERT INTO signals ({cols}) VALUES ({', '.join('?' * len(vals))}) "
+                   "ON CONFLICT (symbol, timeframe, bar_ts) DO NOTHING", vals)
+    if n == 0 and tradable:
+        # one row per candle: an INFO row on this candle becomes the call (a mid-candle decision change is not lost);
+        # a call already recorded on this candle is reported, not silently dropped
+        row = db.one("SELECT id, status FROM signals WHERE symbol = ? AND timeframe = ? AND bar_ts = ?", (sym, tf, a["bar_ts"]))
+        if row and row["status"] == "INFO":
+            sets = ", ".join(f"{c.strip()} = ?" for c in cols.split(",")[1:])
+            n = db.execute(f"UPDATE signals SET {sets} WHERE id = ? AND status = 'INFO'", (*vals[1:], row["id"]))
+            sid = row["id"]
+        else:
+            why = "a call was already recorded on this candle"
+            log_decision(db, "skip_same_candle", sym, tf, row["id"] if row else None,
+                         {"decision": a["decision"], "reason": why}, ts=now, dedupe=True)
+            return {"status": "not_logged", "reason": why, "id": row["id"] if row else None, "written": False}
+    if n > 0 and tradable:
+        log_decision(db, "logged", sym, tf, sid, {"decision": a["decision"], "grade": a.get("grade"), "entry": pl["entry"],
+                                                  "stop": pl["stop"], "tps": pl["tps"], "fill_status": pl["fill_status"],
+                                                  "live_price": a.get("price"), "manage": payload.get("manage")}, ts=now)
+        return {"status": "logged", "reason": None, "id": sid, "written": True}
+    if not tradable:
+        return {**res, "written": n > 0, "id": sid if n > 0 else None}
+    return {"status": "not_logged", "reason": "not stored", "id": None, "written": False}
+
+
+def _comp(sig: dict[str, Any], key: str) -> float | None:
+    for c in sig.get("components") or []:
+        if c.get("key") == key:
+            return c.get("score")
+    return None
+
+
+def log_signal(db: Database, a: dict[str, Any], now: int | None = None) -> bool:
+    """Store a signal; True when a row was written (see record_call for the reason when not)."""
+    res = record_call(db, a, now)
+    a["record_status"] = res["status"]
+    if res["reason"]:
+        a["record_reason"] = res["reason"]
+    return bool(res.get("written"))
 
 
 def log_shadow(db: Database, a: dict[str, Any], decision: str, setup: dict[str, Any]) -> bool:
     """A trade the safety switch held back: tracked to the end like a signal, so the switch knows when the
-    coin/timeframe has recovered. Never shown as a signal."""
-    tps = [t["price"] for t in setup.get("targets", [])] + [None, None, None]
+    coin/timeframe has recovered. Never shown as a signal. Same entry / fill / one-open rules as the record."""
+    if open_call(db, a["symbol"], a["timeframe"], "shadow_signals"):
+        return False
+    pl = _plan({**a, "decision": decision, "setup": setup})
     fc = a.get("forecast") or {}
+    app_v, eng_v = versions()
+    now = now_ms()
     n = db.execute(
         "INSERT INTO shadow_signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, score, confidence, "
-        "regime, price, side, entry, stop, tp1, tp2, tp3, rr, status, model_version_id, payload) "
-        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?) "
+        "regime, price, side, entry, stop, tp1, tp2, tp3, rr, status, model_version_id, payload, fill_status, filled_at, "
+        "peak_r, peak_pct, managed, atr, app_version, engine_version) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, 0, 0, 0, ?, ?, ?) "
         "ON CONFLICT (symbol, timeframe, bar_ts) DO NOTHING",
-        (new_id(), now_ms(), a["symbol"], a["timeframe"], a["bar_ts"], (a.get("signal") or {}).get("signal", ""), decision,
+        (new_id(), now, a["symbol"], a["timeframe"], a["bar_ts"], (a.get("signal") or {}).get("signal", ""), decision,
          (a.get("signal") or {}).get("score"), a.get("confidence"), (a.get("regime") or {}).get("regime"), a["price"],
-         setup.get("side_int", 0), a["price"], setup.get("stop"), tps[0], tps[1], tps[2], setup.get("risk_reward"),
-         fc.get("model_version"), dumps({"shadow": True})))
+         pl["side"], pl["entry"], pl["stop"], *pl["tps"], pl["rr"], fc.get("model_version"),
+         dumps({"shadow": True, "runner": setup.get("runner"), "manage": manage_params(db)}),
+         pl["fill_status"], now if pl["fill_status"] == "FILLED" else None, pl["atr"], app_v, eng_v))
     return n > 0
 
 
-def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signals") -> int:
-    """Follow OPEN signals through later candles. Stop is assumed first when stop and target share a bar.
-    Return = three legs (50% / 25% / 25%), each exiting at its target if reached, otherwise at the stop or,
-    on expiry, at the last close. As members and the bots trade it: after TP1 the stop moves to break-even (entry),
-    after TP2 to TP1."""
+def _bar_ms(tf: str) -> int:
+    try:
+        return tf_ms(tf)
+    except Exception:
+        return tf_ms(PATH_TF)
+
+
+def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bars: int = 30,
+                    params: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Pure: the tracked state of one OPEN signal row given its 15m path (`p15`) and own-timeframe candles (`own`).
+    Returns the columns to store plus 'events' (decisions to log)."""
+    from ..config import settings
+    from ..engine import manage as M
+
+    step = _bar_ms(s["timeframe"])
+    created = int(s["created_at"])
+    end = created + step * horizon_bars
+    path_ms = tf_ms(PATH_TF)
+    pay = loads(s.get("payload"), {}) or {}
+    # each call keeps the management rules it was published with (rows from before v2.5: standard rules)
+    p = pay.get("manage") or {"managed": False}
+    # A1: only candles that open at/after publication (the forming candle at publication is never used)
+    after = p15[(p15["ts"] >= created) & (p15["ts"] < end)] if p15 is not None and len(p15) else None
+    pms = path_ms
+    covered = after is not None and not after.empty and int(after["ts"].iloc[-1]) + path_ms >= end
+    if after is None or after.empty:                    # no 15m data: the signal's own candles (also after publication)
+        after = own[own["ts"] >= created].iloc[:horizon_bars] if own is not None and len(own) else None
+        pms = step
+        covered = after is not None and len(after) >= horizon_bars
+    wall_over = now >= end + 2 * path_ms                # A7: the horizon is over on the wall clock (+30 min for late data)
+    out: dict[str, Any] = {"events": []}
+    fill_status = s.get("fill_status") or "FILLED"
+    side, entry = int(s["side"]), float(s["entry"])
+    if after is None or after.empty:
+        if wall_over:
+            out.update(status="VOID", closed_at=end, return_pct=None, exit_reason=None, managed=0,
+                       fill_status=fill_status if fill_status == "FILLED" else "NOT_FILLED")
+            out["events"].append({"rule": "void", "inputs": {"reason": "no market data after publication"}})
+        return out
+    path = after
+    first_is_fill = False
+    if fill_status == "PENDING":
+        win_end = created + settings.fill_window_bars * step
+        idx = M.find_fill(side, entry, after, until_ts=win_end)
+        if idx is None:
+            win_covered = int(after["ts"].iloc[-1]) + pms >= win_end
+            if win_covered or (wall_over and len(after)):
+                out.update(status="NOT_FILLED", fill_status="NOT_FILLED", closed_at=win_end, return_pct=None,
+                           exit_reason=None, managed=0, peak_r=None, peak_pct=None)
+                out["events"].append({"rule": "not_filled", "inputs": {"entry": entry, "window_bars": settings.fill_window_bars}})
+            return out
+        path = after.iloc[idx:]
+        first_is_fill = True
+        out["fill_status"], out["filled_at"] = "FILLED", int(path["ts"].iloc[0])
+        out["events"].append({"rule": "fill", "inputs": {"entry": entry, "candle_ts": out["filled_at"]}})
+    elif s.get("fill_status") is None:                  # rows from before v2.5: market entries
+        out["fill_status"] = "FILLED"
+    if s.get("fill_status") == "FILLED" and s.get("filled_at") and s.get("decision") == "BUY ON PULLBACK":
+        fts = int(s["filled_at"])                       # a pullback filled earlier: follow from its fill candle
+        path = after[after["ts"] >= fts]
+        first_is_fill = not path.empty and int(path["ts"].iloc[0]) == fts
+    run = pay.get("runner") or {}
+    res = M.follow(side, entry, float(s["stop"]), [s["tp1"], s["tp2"], s["tp3"]], path,
+                   runner_target=run.get("target") if run.get("on") else None, atr=s.get("atr"), params=p,
+                   complete=covered or wall_over, first_is_fill=first_is_fill,
+                   start_ts=int(path["ts"].iloc[0]) if len(path) else None, bar_ms=step, path_ms=pms)
+    out.update(status=res["status"], tp1_hit=int(res["hits"][0]), tp2_hit=int(res["hits"][1]), tp3_hit=int(res["hits"][2]),
+               stop_hit=int(res["stop_hit"]), closed_at=res["closed_ts"], return_pct=res["return_pct"],
+               peak_r=res["peak_r"], peak_pct=res["peak_pct"], exit_reason=res["exit_reason"], managed=res["managed"])
+    if res["status"] != "OPEN":
+        out["events"].append({"rule": f"exit_{res['exit_reason'] or res['status'].lower()}",
+                              "inputs": {"status": res["status"], "exit_price": res["exit_price"],
+                                         "return_pct": res["return_pct"], "return_r": res["return_r"],
+                                         "peak_r": res["peak_r"], "managed": res["managed"],
+                                         "wall_clock_expiry": bool(wall_over and not covered)}})
+    return out
+
+
+TRACKED = ("status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "closed_at", "return_pct", "fill_status", "filled_at",
+           "peak_r", "peak_pct", "exit_reason", "managed")
+
+
+def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signals", now: int | None = None) -> int:
+    """Follow OPEN signals (v2.5: engine/manage.py) on 15-minute candles that opened after publication. Standard
+    rules: 50% / 25% / 25% at the targets, stop first within a candle, break-even after TP1, TP1 after TP2, expiry at
+    the last close; managed exits only when MANAGED_EXITS is on. Pullback entries wait for their fill."""
     if table not in ("signals", "shadow_signals"):
         raise ValueError(table)
     db = rt.db
+    now = now or now_ms()
+    params = manage_params(db)
     changed = 0
     paths: dict[str, Any] = {}
-    for s in db.query(f"SELECT * FROM {table} WHERE status = 'OPEN'"):
-        # v2.4: followed on 15-minute candles like the bots (refreshed every cycle), not on the signal's own candles -
-        # a 4h / 12h / 1d candle is only fetched once it closes, so a target or stop hit inside it showed hours late
-        step = tf_ms(s["timeframe"])
-        start, end = int(s["bar_ts"]) + step, int(s["bar_ts"]) + step * (horizon_bars + 1)
+    for s in db.query(f"SELECT * FROM {table} WHERE status = 'OPEN' AND side != 0"):
         if s["symbol"] not in paths:
             try:
                 paths[s["symbol"]] = rt.candles(s["symbol"], PATH_TF)
             except Exception:
                 paths[s["symbol"]] = None
-        p15 = paths[s["symbol"]]
-        after = p15[(p15["ts"] >= start) & (p15["ts"] < end)] if p15 is not None and len(p15) else None
-        covered = after is not None and not after.empty and int(after["ts"].iloc[-1]) + tf_ms(PATH_TF) >= end
-        if after is None or after.empty:                # no 15m data: the signal's own candles, as before
-            df = rt.candles(s["symbol"], s["timeframe"])
-            after = df[df["ts"] > s["bar_ts"]].iloc[:horizon_bars]
-            covered = len(after) >= horizon_bars
-        if after.empty:
+        try:
+            own = rt.candles(s["symbol"], s["timeframe"])
+        except Exception:
+            own = None
+        res = evaluate_signal(s, paths[s["symbol"]], own, now, horizon_bars, params)
+        events = res.pop("events")
+        upd = {k: v for k, v in res.items() if k in TRACKED}
+        if upd.get("status") == "OPEN":
+            upd["closed_at"] = None
+        diff = {k: v for k, v in upd.items() if not _same(s.get(k), v)}
+        if not diff:
             continue
-        side, entry = s["side"], s["entry"]
-        tps = [s["tp1"], s["tp2"], s["tp3"]]
-        hit = [False, False, False]
-        stop_hit, closed_ts = False, None
-        run = (loads(s.get("payload"), {}) or {}).get("runner") or {}
-        final = run.get("target") if run.get("on") else None      # v2.3 runner: whole position to the 1:4 target
-        final_hit = False
-        level = s["stop"]                    # moves to break-even after TP1 and to TP1 after TP2 (the bots' rules)
-        for _, c in after.iterrows():
-            if (side > 0 and c["low"] <= level) or (side < 0 and c["high"] >= level):
-                stop_hit, closed_ts = True, int(c["ts"])
-                break
-            for i, tp in enumerate(tps):
-                if (side > 0 and c["high"] >= tp) or (side < 0 and c["low"] <= tp):
-                    hit[i] = True
-            if final is None:
-                level = tps[0] if hit[1] else entry if hit[0] else s["stop"]
-                if hit[2]:
-                    closed_ts = int(c["ts"])
-                    break
-            else:
-                level = tps[1] if hit[2] else tps[0] if hit[1] else entry if hit[0] else s["stop"]
-                if (side > 0 and c["high"] >= final) or (side < 0 and c["low"] <= final):
-                    final_hit, closed_ts = True, int(c["ts"])
-                    hit = [True, True, True]
-                    break
-        expired = closed_ts is None and covered
-        last_close = float(after["close"].iloc[-1])
-        fallback = level if stop_hit else last_close
-        if final is None:
-            ret = float(sum(w * side * ((tps[i] if hit[i] else fallback) / entry - 1) for i, w in enumerate((0.5, 0.25, 0.25)))) * 100      # 50% / 25% / 25% exits
-        else:                                # runner: the whole position exits once - at the target, the trailing stop or expiry
-            ret = float(side * ((final if final_hit else fallback) / entry - 1)) * 100
-        if final is None:
-            status = "STOPPED" if stop_hit and not hit[0] else "TP3" if hit[2] else \
-                ("TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED") if (stop_hit or expired) else "OPEN"
-        else:
-            status = "TP3" if final_hit else "STOPPED" if stop_hit and not hit[0] else \
-                ("TP3" if hit[2] else "TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED") if (stop_hit or expired) else "OPEN"
-        if closed_ts is None and expired:
-            closed_ts = int(after["ts"].iloc[-1])
-        n = db.execute(
-            f"UPDATE {table} SET tp1_hit = ?, tp2_hit = ?, tp3_hit = ?, stop_hit = ?, status = ?, closed_at = ?, "
-            "return_pct = ? WHERE id = ? AND (status != ? OR tp1_hit != ? OR tp2_hit != ? OR return_pct IS NULL "
-            "OR return_pct != ?)",
-            (int(hit[0]), int(hit[1]), int(hit[2]), int(stop_hit), status, closed_ts if status != "OPEN" else None,
-             ret, s["id"], status, int(hit[0]), int(hit[1]), ret))
-        changed += n
+        sets = ", ".join(f"{k} = ?" for k in diff)
+        changed += db.execute(f"UPDATE {table} SET {sets} WHERE id = ?", (*diff.values(), s["id"]))
+        if table == "signals":
+            for ev in events:
+                log_decision(db, ev["rule"], s["symbol"], s["timeframe"], s["id"], ev["inputs"], ts=now)
     return changed
+
+
+def _same(a: Any, b: Any) -> bool:
+    if isinstance(a, (int, float)) and isinstance(b, (int, float)) and a is not None and b is not None:
+        return abs(float(a) - float(b)) < 1e-12
+    return a == b
 
 
 def signal_history(db: Database, symbol: str | None = None, limit: int = 200) -> list[dict[str, Any]]:
@@ -281,13 +546,19 @@ def signal_history(db: Database, symbol: str | None = None, limit: int = 200) ->
 
 
 def signal_summary(db: Database) -> dict[str, Any]:
-    rows = db.query("SELECT status, return_pct FROM signals WHERE status NOT IN ('OPEN', 'INFO')")
+    """Closed calls with a result; never-filled and void calls are counted separately (visible, not in the rates)."""
+    marks = ",".join("?" * len(CLOSED_STATUSES))
+    rows = db.query(f"SELECT status, return_pct FROM signals WHERE status IN ({marks}) AND return_pct IS NOT NULL",
+                    CLOSED_STATUSES)
+    other = {r["status"]: int(r["n"]) for r in db.query(
+        "SELECT status, COUNT(*) AS n FROM signals WHERE status IN ('NOT_FILLED', 'VOID') GROUP BY status")}
+    extra = {"not_filled": other.get("NOT_FILLED", 0), "void": other.get("VOID", 0)}
     if not rows:
-        return {"closed": 0, "note": "No tracked trade signals have closed yet."}
-    rets = np.array([r["return_pct"] for r in rows if r["return_pct"] is not None], float)
-    return {"closed": len(rows), "win_rate": float((rets > 0).mean()) if len(rets) else None,
+        return {"closed": 0, **extra, "note": "No tracked trade signals have closed yet."}
+    rets = np.array([r["return_pct"] for r in rows], float)
+    return {"closed": len(rows), **extra, "win_rate": float((rets > 0).mean()) if len(rets) else None,
             "avg_return_pct": float(rets.mean()) if len(rets) else None,
-            "by_status": {s: sum(r["status"] == s for r in rows) for s in ("STOPPED", "TP1", "TP2", "TP3", "EXPIRED")},
+            "by_status": {s: sum(r["status"] == s for r in rows) for s in CLOSED_STATUSES},
             "generated_at": int(time.time() * 1000)}
 
 

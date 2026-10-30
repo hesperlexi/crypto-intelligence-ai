@@ -1,6 +1,7 @@
 // PAPER TRADING (manual virtual orders) stored in Firestore. Virtual money only; no order ever reaches an exchange.
 import { addDoc, collection, doc, getDoc, getDocs, onSnapshot, query, runTransaction, setDoc, where } from "firebase/firestore";
 import { klines, tickers } from "./binance";
+import { visibleInterval } from "./visibleInterval";
 import { db } from "./firebase";
 import { latestPrices } from "./live";
 import { isAdmin, myUid } from "./session";
@@ -239,8 +240,17 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
   });
   settle().catch(() => {});
   const timer = window.setInterval(() => { if (!document.hidden) settle().catch(() => {}); }, 15_000);
-  const pnl = window.setInterval(() => { if (!document.hidden && lastAcc) build(lastAcc).catch(() => {}); }, 1000);
-  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); window.clearInterval(pnl); };
+  // P&L follows the live price every second while the tab is visible; nothing is re-sent when no price moved
+  let lastKey = "";
+  const priceKey = (acc: any) => [...Object.values<any>(acc.positions ?? {}).map((p) => latestPrices[p.symbol]), latestPrices[acc.benchmark_symbol]].join("|");
+  const stopPnl = visibleInterval(() => {
+    if (!lastAcc) return;
+    const k = priceKey(lastAcc);
+    if (k === lastKey) return;
+    lastKey = k;
+    build(lastAcc).catch(() => {});
+  }, 1000);
+  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); stopPnl(); };
 }
 
 export async function openExposure(): Promise<{ exposure: number; today: number }> {

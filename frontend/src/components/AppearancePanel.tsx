@@ -30,7 +30,7 @@ export function AppearancePanel() {
               <span className="flex shrink-0 overflow-hidden rounded-md border border-glass/20" aria-hidden>
                 {t.swatch.map((c) => <span key={c} className="h-6 w-2.5" style={{ background: c }} />)}
               </span>
-              <span className="min-w-0"><span className="block truncate font-semibold">{t.name}</span><span className="block truncate text-[10px] text-mute">{t.sub}</span></span>
+              <span className="min-w-0"><span className="block truncate font-semibold">{t.name}</span><span className="block truncate text-[11px] text-mute">{t.sub}</span></span>
             </button>
           ))}
         </div>

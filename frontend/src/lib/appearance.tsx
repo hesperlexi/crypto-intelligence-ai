@@ -6,7 +6,7 @@ export const THEMES = [
   { id: "abyss", name: "Abyss", sub: "futuristic crypto", swatch: ["#04060f", "#22e4ff", "#8b5cf6"] },
   { id: "nexora", name: "Nexora", sub: "pro dashboard", swatch: ["#0a0f1c", "#3b82f6", "#22d3ee"] },
   { id: "trado", name: "Trado", sub: "minimal black & green", swatch: ["#000000", "#00e676", "#141414"] },
-  { id: "light", name: "Light", sub: "bright", swatch: ["#f5f6f8", "#c99400", "#ffffff"] },
+  { id: "light", name: "Light", sub: "bright", swatch: ["#f5f6f8", "#8a6200", "#ffffff"] },
   { id: "system", name: "Auto", sub: "follows the device", swatch: ["#0b0e11", "#f5f6f8", "#f0b90b"] },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]["id"];

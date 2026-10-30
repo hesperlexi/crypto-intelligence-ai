@@ -7,6 +7,7 @@
 import { deleteDoc, doc, getDoc, setDoc } from "firebase/firestore";
 import { app, db } from "./firebase";
 import { getSession, myUid } from "./session";
+import { SITE_HOST } from "./brand";
 
 const LS_TOKEN = "cia-push-token";
 
@@ -20,7 +21,7 @@ export function inAndroidApp(): boolean {
 export function blockedHelp(): string {
   const ua = navigator.userAgent;
   if (inAndroidApp()) return "Notifications are switched off for the Crypto AI app. Open your phone's Settings → Apps → Crypto AI → Notifications and turn them on (or long-press the app icon → App info → Notifications), then come back and tap Turn on again.";
-  if (/android/i.test(ua)) return "Notifications are blocked for this site in Chrome. Tap the lock icon next to the address (or Chrome menu → Settings → Site settings → Notifications), allow crypapp-6a9b9.web.app, then tap Turn on again. Also check phone Settings → Apps → Chrome → Notifications.";
+  if (/android/i.test(ua)) return `Notifications are blocked for this site in Chrome. Tap the lock icon next to the address (or Chrome menu → Settings → Site settings → Notifications), allow ${location.hostname || SITE_HOST}, then tap Turn on again. Also check phone Settings → Apps → Chrome → Notifications.`;
   if (/iphone|ipad|ipod/i.test(ua)) return "On iPhone: open the app from the Home Screen icon (not Safari), then Settings → Notifications → Crypto Intelligence AI → Allow Notifications.";
   return "Notifications are blocked for this site. Click the lock icon in the address bar → Site settings → Notifications → Allow, then reload and try again.";
 }

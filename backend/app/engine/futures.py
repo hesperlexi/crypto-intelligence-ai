@@ -82,7 +82,11 @@ def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage
         "atr_pct": (a.get("volatility") or {}).get("atr_pct"), "signal": (a.get("signal") or {}).get("signal"),
         "funding_rate": rate, "funding_source": (funding or {}).get("source"),
         "funding_rate_used": rate_used,
+        # v1 contract: the tracked call, whether this call is in the record, stale data, the advisor note
+        "call": a.get("call"), "record_status": a.get("record_status"), "stale": bool(a.get("stale")),
     }
+    if a.get("ai"):
+        out["ai"] = a["ai"]
     if setup.get("stop") and entry:
         risk_pct = abs(entry - stop) / entry * 100
         out["plan"] = {

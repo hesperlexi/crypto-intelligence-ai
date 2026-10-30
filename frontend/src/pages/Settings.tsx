@@ -1,3 +1,5 @@
+import { ModeSwitch, useMode } from "../lib/mode";
+import { SITE_HOST } from "../lib/brand";
 import { useEffect, useState } from "react";
 import { SymbolSelect, TfTabs, useMeta, useSymbols } from "../components/Pickers";
 import { AppearancePanel } from "../components/AppearancePanel";
@@ -29,6 +31,7 @@ function MemberSettings() {
       <h1 className="text-xl font-semibold tracking-tight">Settings</h1>
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
+        <ViewModeCard />
         <div className="space-y-4"><MembershipCard /><ContactCard /><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
     </div>
@@ -82,6 +85,7 @@ function AdminSettings() {
       {err && <ErrorBox error={err} />}
       <div className="grid gap-4 xl:grid-cols-2">
         <Card title="Appearance"><AppearancePanel /></Card>
+        <ViewModeCard />
         <div className="space-y-4"><TelegramCard /><ManualCard /><NotificationsCard /><AndroidCard /><AboutCard /></div>
       </div>
       <div className="grid gap-4 xl:grid-cols-2">
@@ -234,8 +238,22 @@ function AndroidCard() {
     <Card title="Install the app">
       <a className="btn btn-primary w-full justify-center py-3 text-base" href={info?.url ?? APK_URL}>⬇ Download the Android app (APK){info?.version ? ` v${info.version}` : ""}</a>
       <p className="mt-1 text-xs text-mute">Asks for notification permission on first open. Needs Google Chrome on the phone.</p>
-      <p className="mt-3 text-sm"><b>Android (Chrome):</b> open <span className="text-accent">crypapp-6a9b9.web.app</span> → menu ⋮ → <b>Install app</b>.</p>
+      <p className="mt-3 text-sm"><b>Android (Chrome):</b> open <span className="text-accent">{SITE_HOST}</span> → menu ⋮ → <b>Install app</b>.</p>
       <p className="mt-1 text-sm"><b>iPhone (Safari):</b> Share → <b>Add to Home Screen</b>.</p>
+    </Card>
+  );
+}
+
+function ViewModeCard() {
+  const { mode } = useMode();
+  return (
+    <Card title="View mode" right={<ModeSwitch />}>
+      <p className="text-sm text-mute">
+        {mode === "beginner"
+          ? "Beginner: a simpler view. Advanced numbers (scores, model statistics, confidence intervals, order book) are hidden and short explanations are shown next to the trade plan."
+          : "Pro: every number and statistic, as before. Switch to Beginner for a simpler view with short explanations."}
+      </p>
+      <p className="mt-1 text-xs text-mute">Saved on this device. Also in the header.</p>
     </Card>
   );
 }

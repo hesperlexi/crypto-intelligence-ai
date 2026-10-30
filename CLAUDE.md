@@ -100,6 +100,23 @@ To end testing: restore the watchlist/limits and re-add spot bots (no automatic 
 - `services/autopaper.py`: members' auto-trade into `paper/{uid}_futures` (settings `auto_paper/{uid}`, log
   `auto_paper_state/{uid}`); same reversal/size/cap rules; manual trades never touched.
 
+## v2.5 engine / audit upgrade (30 Oct 2026, PR #1)
+- Record integrity: calls followed only from the first 15m candle opened after `created_at`; recorded entry = card entry
+  (ideal entry), pullbacks `fill_status` PENDING → FILLED / NOT_FILLED (`FILL_WINDOW_BARS`, excluded from stats);
+  stale candles → NO TRADE (`stale`); one OPEN/PENDING call per coin/timeframe (`record_status`, `call` on analysis rows);
+  wall-clock expiry, VOID when no data; `wins_today` also has `closed`/`losses`. Contract: `docs/v1-contract.md`.
+- `engine/manage.py`: one implementation of the exit rules (record + bots). Managed exits (give-back, ATR trail,
+  time stop) behind `MANAGED_EXITS` = **off**: `research.yml` (read-only replay → branch `research-results`) showed them
+  worse on unseen calls (−0.04R vs +0.02R, 30 Oct). Re-entry cooldown/cap. `decisions` table → `views/decisions_recent`.
+- Gemini advisor `services/ai_advisor.py` (secret `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_DAILY_LIMIT` 150): rationale,
+  regime label, post-trade review; advisory only, never changes a decision; `AI_PARAMS` off.
+- Security: rules validate presence/users/jobs/push_tokens; jobs limited per user/day; test pushes only to the owner.
+  App Check (reCAPTCHA v3) site key in `frontend/.env.production`; enforcement is a console switch (not on).
+- Brand: `backend/app/brand.py` + `frontend/src/lib/brand.ts` (www.cryptointelai.com, support email, footer).
+  web.app host, Firebase authDomain and the Android host stay unchanged. `ENGINE_VERSION` 2.5.0 in config.
+- Website: split bundle, SVG logo (`components/Logo.tsx`), glass surfaces, Beginner/Pro mode (`lib/mode.tsx`),
+  trust pages (`pages/Trust.tsx`), 404/error pages, security headers in `firebase.json`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

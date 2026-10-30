@@ -28,6 +28,8 @@ jobs:
       ENABLE_DEEP_MODELS: "false"
       FIREBASE_PROJECT_ID: crypapp-6a9b9
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-lite-latest' }}
       ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
       SYMBOLS: ${{ vars.SYMBOLS || 'BTC/USDT,ETH/USDT,BNB/USDT,SOL/USDT,XRP/USDT,ADA/USDT,DOGE/USDT,AVAX/USDT,LINK/USDT,SUI/USDT' }}
     steps:

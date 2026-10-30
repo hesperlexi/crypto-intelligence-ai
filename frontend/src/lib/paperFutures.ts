@@ -10,6 +10,7 @@ import { derivatives, fklines as klines, futuresPrices, tickers } from "./binanc
 import { futuresLast } from "./stream";
 import { db } from "./firebase";
 import { latestPrices } from "./live";
+import { visibleInterval } from "./visibleInterval";
 import { isAdmin, myUid } from "./session";
 
 const ACC_REF = () => doc(db, "paper", `${myUid()}_futures`);   // one account per user
@@ -446,6 +447,15 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
   settle().catch(() => {});
   const timer = window.setInterval(() => { if (!document.hidden) settle().catch(() => {}); }, 15_000);
   // P&L follows the live price every second (no network: it reads the prices already streaming in)
-  const pnl = window.setInterval(() => { if (!document.hidden && lastAcc) build(lastAcc); }, 1000);
-  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); window.clearInterval(pnl); };
+  // paused while the tab is hidden; skipped when no mark price changed since the last tick (no re-render)
+  let lastKey = "";
+  const priceKey = (acc: any) => Object.values<any>(acc.positions ?? {}).map((p) => fpx(p.symbol)).join("|");
+  const stopPnl = visibleInterval(() => {
+    if (!lastAcc) return;
+    const k = priceKey(lastAcc);
+    if (k === lastKey) return;
+    lastKey = k;
+    build(lastAcc);
+  }, 1000);
+  return () => { cancelled = true; unsubAcc(); unsubTrades(); window.clearInterval(timer); stopPnl(); };
 }
