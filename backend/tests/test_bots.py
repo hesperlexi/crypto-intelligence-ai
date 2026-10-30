@@ -354,3 +354,28 @@ def test_15m_bots_hold_their_trade_when_the_signal_flips(monkeypatch, no_costs):
     (cfg, st), = eng.bots()
     assert len(st["positions"]) == 1 and st["positions"][0]["side"] == 1          # still long, no flip
     assert rt.db.one("SELECT COUNT(*) AS n FROM bot_trades")["n"] == 0
+
+
+def test_managed_exits_in_bots_follow_the_shared_rules(monkeypatch, no_costs):
+    """MANAGED_EXITS on: a bot gives back half of a +0.8R peak -> closes at +0.4R (engine/manage.py rule); off: holds."""
+    from app.config import settings
+
+    def run(managed):
+        monkeypatch.setattr(settings, "managed_exits", managed)
+        rt = _rt()
+        now = _now_aligned()
+        t0 = now - 40 * STEP
+        _put(rt, "BTC/USDT", t0, [100.0] * 4)
+        eng = B.BotEngine(rt)
+        eng.sync_configs([_cfg()])
+        monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy())
+        eng.run(t0 + 4 * STEP)
+        _put(rt, "BTC/USDT", t0 + 4 * STEP, [(100, 101.6, 99.9, 101.4), (101.4, 101.5, 100.6, 100.7)])
+        monkeypatch.setattr(analysis, "analyze", lambda *a, **k: {"status": "OK", "decision": "HOLD"})
+        eng.run(t0 + 7 * STEP)
+        return rt.db.one("SELECT * FROM bot_trades"), eng.bots()[0][1]
+
+    t, _ = run(True)
+    assert t["exit_reason"] == "giveback" and abs(t["exit"] - 100.8) < 1e-9 and abs(t["pnl"] - 50 * 0.8) < 1e-6
+    t, st = run(False)
+    assert t is None and len(st["positions"]) == 1

@@ -33,6 +33,7 @@ from ..config import settings
 from ..data.base import tf_ms
 from ..db import Database, dumps, loads, new_id, now_ms
 from ..engine import futures as F
+from ..engine import manage as MG
 from ..engine.setup import TP_SPLIT
 from . import analysis
 from .runtime import Runtime
@@ -355,6 +356,7 @@ class BotEngine:
                 state["pending"].remove(o)
                 events.append({"bot": cfg["id"], "type": "expired", "symbol": o["symbol"]})
         # open positions: walk every closed 15m candle since the last check
+        mp = settings.manage_params()
         for pos in list(state["positions"]):
             side = pos["side"]
             done = None
@@ -368,8 +370,18 @@ class BotEngine:
                 if stop_hit:
                     px = min(op, pos["stop"]) if side > 0 else max(op, pos["stop"])
                     self._reduce(state, pos, pos["qty_open"], px, True)
-                    done = ("trailing stop" if pos["tp_hit"] >= 2 else "breakeven stop" if pos["tp_hit"] else "stop", ts + step)
+                    done = ("atr trail" if pos.get("mg_trailed") else "trailing stop" if pos["tp_hit"] >= 2
+                            else "breakeven stop" if pos["tp_hit"] else "stop", ts + step)
                     break
+                # v2.5 managed exits (MANAGED_EXITS, shared rules in engine/manage.py): give-back before TP1
+                mg = self._mg(pos, mp)
+                if mg is not None:
+                    gb = MG.giveback_exit(mg, op, hi, lo, mp, pos["tp_hit"] >= 1)
+                    if gb is not None:
+                        self._reduce(state, pos, pos["qty_open"], gb, True)
+                        done = ("giveback", ts + step)
+                        break
+                    MG.observe(mg, hi, lo, cl)
                 run_t = (pos.get("info") or {}).get("run_target")
                 if run_t:
                     # runner: nothing closes at TP1-3; each target moves the stop up one step, the whole position
@@ -399,6 +411,15 @@ class BotEngine:
                 if pos["qty_open"] <= pos["qty"] * 1e-9:
                     done = (f"TP{pos['tp_hit']}", ts + step)
                     break
+                if mg is not None:
+                    lvl = MG.trail_level(mg, pos["stop"], mp, pos["tp_hit"] >= 1)
+                    if lvl != pos["stop"]:
+                        pos["stop"], pos["mg_trailed"] = lvl, True
+                    if MG.time_exit_due(mg, ts + step, pos["opened_at"], tf, cl, mp, pos["tp_hit"] >= 1):
+                        self._reduce(state, pos, pos["qty_open"], cl, False)
+                        done = ("time stop", ts + step)
+                        break
+                    pos["mg"] = mg
                 if ts + step >= pos["opened_at"] + cfg.get("max_hold_bars", 42) * tf:
                     self._reduce(state, pos, pos["qty_open"], cl, False)
                     done = ("time exit", ts + step)
@@ -408,6 +429,16 @@ class BotEngine:
                 events.append({"bot": cfg["id"], "type": "close", "symbol": pos["symbol"], "reason": done[0], "pnl": t["pnl"]})
         events += self._reversals(cfg, state, now)
         return events
+
+    @staticmethod
+    def _mg(pos: dict[str, Any], mp: dict[str, Any]) -> dict[str, Any] | None:
+        """Managed-exit state of a position (None when MANAGED_EXITS is off or the trade is a runner)."""
+        if not mp.get("managed") or (pos.get("info") or {}).get("run_target") or not pos.get("stop0"):
+            return None
+        mg = pos.get("mg")
+        if mg is None:
+            mg = MG.new_state(pos["side"], pos["entry"], pos["stop0"], (pos.get("info") or {}).get("atr"))
+        return mg
 
     def _signal_side(self, cfg: dict[str, Any], symbol: str) -> int:
         """+1 / -1 when the bot's timeframe currently has a tradable call it would take, else 0."""
@@ -486,7 +517,7 @@ class BotEngine:
                     "p_up": (fc.get("probabilities") or {}).get("up"), "p_down": (fc.get("probabilities") or {}).get("down"),
                     "predicted": fc.get("predicted"), "model_version": fc.get("model_version"),
                     "edge_confirmed": fc.get("edge_confirmed"), "rr": setup.get("risk_reward"),
-                    "bar_ts": a["bar_ts"], "timeframe": cfg["timeframe"]}
+                    "bar_ts": a["bar_ts"], "timeframe": cfg["timeframe"], "atr": setup.get("atr")}
             run = setup.get("runner") or {}
             if run.get("on") and run.get("target"):
                 info["run_target"] = float(run["target"])         # v2.3: AI let-it-run exit for this trade
