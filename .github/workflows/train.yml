@@ -87,6 +87,8 @@ jobs:
         working-directory: backend
     env:
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-lite-latest' }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5

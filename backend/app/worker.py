@@ -28,7 +28,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import alerts, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
+from .services import ai_advisor, alerts, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -726,6 +726,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                 fired_events.extend(evs)
         return fired
     detail["alerts_fired"] = step("analyses", analyse)
+    # Gemini advisor (advisory notes only; off without GEMINI_API_KEY): new calls and closed calls, bounded per cycle
+    detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
