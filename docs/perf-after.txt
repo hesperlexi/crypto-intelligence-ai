@@ -3,6 +3,10 @@ Changes: Landing and Dashboard lazy-loaded (the one the sign-in state needs is f
 vendor chunks firebase (app/auth/firestore only) / react / charts, analytics loaded via dynamic import,
 binance.ts only statically imported (warning gone), 1 s loops paused in hidden tabs and skipped when prices are unchanged.
 
+Final build after Phases 5-6 (logo, trust pages, signal extras, view mode): index 142.93 / 48.44 kB,
+react 165.19 / 53.75, firebase 450.26 / 105.91, CSS 54.75 / 11.24, Trust page chunk 11.33 / 4.07 (lazy).
+The table below is the Phase 4 measurement.
+
 First load (entry + modulepreloads), raw / gzip:
   before: index 822.86 / 222.96 kB (single chunk)
   after:  index 131.5 / 44.8 + react 165.2 / 53.8 + firebase 450.3 / 105.9 = 747.0 / 204.5 kB,
