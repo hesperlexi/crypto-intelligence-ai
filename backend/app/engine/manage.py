@@ -17,6 +17,12 @@ Managed exits (params["managed"], setting MANAGED_EXITS, default off):
   * time stop: after `time_stop_bars` signal-timeframe bars, if TP1 was not reached and open profit < min_r, close at
     the close.
 peak_r / peak_pct (best open profit since the fill, in R and in %) are always recorded.
+Admin adjustments (v2.7, `adjust`: [{at, field 'stop'|'tp1', new}], public and forward-only):
+  * each change applies from the first path candle that OPENS at/after `at`; earlier candles keep the earlier levels;
+  * tp1: replaces take-profit 1 (ignored once TP1 was hit - the engine also refuses such a change);
+  * stop: before TP1 the admin stop replaces the stop (tighter or wider). After TP1 the stop is the MORE PROTECTIVE of the
+    admin stop and the rule stop (break-even after TP1, TP1 after TP2): an admin change never loosens a stop the rules
+    already moved; a stop exit at the admin level has exit_reason 'admin_stop'. R stays measured on the original risk.
 """
 from __future__ import annotations
 
@@ -98,10 +104,22 @@ def _rows(path: Any) -> list[tuple[int, float, float, float, float]]:
     return [(int(r[0]), float(r[1]), float(r[2]), float(r[3]), float(r[4])) for r in path]
 
 
+def protective(side: int, a: float, b: float) -> float:
+    """The stop closer to the price on the profit side (long: the higher one, short: the lower one)."""
+    return max(a, b) if side > 0 else min(a, b)
+
+
+def effective_stop(side: int, rule_level: float, admin_stop: float | None, tp1_hit: bool) -> float:
+    """Admin stop precedence (see module doc): replaces the stop before TP1, more protective of both after."""
+    if admin_stop is None:
+        return rule_level
+    return protective(side, rule_level, admin_stop) if tp1_hit else float(admin_stop)
+
+
 def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterable, *, runner_target: float | None = None,
            atr: float | None = None, params: dict[str, Any] | None = None, complete: bool = False,
            first_is_fill: bool = False, start_ts: int | None = None, bar_ms: int | None = None,
-           path_ms: int = 900_000) -> dict[str, Any]:
+           path_ms: int = 900_000, adjust: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Follow one call through `path` (ts, open, high, low, close; ts = candle open), starting at the fill.
 
     complete: the path covers the whole horizon (an unfinished call then expires at the last close).
@@ -125,8 +143,30 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
     exit_reason: str | None = None
     managed_exit_px: float | None = None
     events: list[dict[str, Any]] = []
+    adj = sorted(adjust or [], key=lambda a: int(a["at"]))
+    ai = 0
+    admin_stop: float | None = None
+
+    def rule_level() -> float:
+        if final is None:
+            return tps[0] if hit[1] else entry if hit[0] else stop
+        return tps[1] if hit[2] else tps[0] if hit[1] else entry if hit[0] else stop
+
     for i, (ts, op, hi, lo, cl) in enumerate(rows):
         fill_candle = first_is_fill and i == 0
+        changed = False
+        while ai < len(adj) and int(adj[ai]["at"]) <= ts:       # forward-only: candles opening at/after the change
+            a = adj[ai]
+            ai += 1
+            if a["field"] == "stop":
+                admin_stop, changed = float(a["new"]), True
+            elif a["field"] == "tp1" and not hit[0]:
+                tps[0], changed = float(a["new"]), True
+            else:
+                continue
+            events.append({"ts": ts, "type": f"adjust_{a['field']}", "price": float(a["new"])})
+        if changed:
+            level = trail_level(st, effective_stop(side, rule_level(), admin_stop, hit[0]), p, hit[0])
         if (side > 0 and lo <= level) or (side < 0 and hi >= level):
             stop_hit, closed_ts = True, ts
             events.append({"ts": ts, "type": "stop", "price": level})
@@ -145,13 +185,12 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
             for k in range(3):
                 if hit[k] and not before[k]:
                     events.append({"ts": ts, "type": f"tp{k + 1}", "price": tps[k]})
+            level = effective_stop(side, rule_level(), admin_stop, hit[0])
             if final is None:
-                level = tps[0] if hit[1] else entry if hit[0] else stop
                 if hit[2]:
                     closed_ts = ts
                     break
             else:
-                level = tps[1] if hit[2] else tps[0] if hit[1] else entry if hit[0] else stop
                 if (side > 0 and hi >= final) or (side < 0 and lo <= final):
                     final_hit, closed_ts = True, ts
                     hit = [True, True, True]
@@ -187,7 +226,10 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
         events.append({"ts": closed_ts, "type": "expired", "price": last_close})
     if exit_reason is None:
         if stop_hit:
-            if not hit[0]:
+            if admin_stop is not None and abs(level - admin_stop) < 1e-12 and (
+                    not hit[0] or side * (admin_stop - rule_level()) > 1e-12):
+                exit_reason = "admin_stop"           # the admin's level was the binding stop
+            elif not hit[0]:
                 exit_reason = "stop"
             elif st.get("trail") is not None and abs(level - st["trail"]) < 1e-12 and p.get("managed"):
                 exit_reason = "trail"

@@ -335,3 +335,18 @@ CREATE TABLE IF NOT EXISTS news_sentiment (
   model TEXT,
   PRIMARY KEY (ts, grp)
 );
+
+-- v2.7: the admin moved the stop-loss or take-profit 1 of an open call (public, forward-only: the record follows the
+-- original level before `at` and the new one from the first 15m candle opening at/after `at`). Never deleted.
+CREATE TABLE IF NOT EXISTS signal_adjustments (
+  id TEXT PRIMARY KEY,
+  signal_id TEXT NOT NULL,
+  at BIGINT NOT NULL,
+  field TEXT NOT NULL,              -- 'stop' or 'tp1'
+  old DOUBLE PRECISION NOT NULL,
+  new DOUBLE PRECISION NOT NULL,
+  note TEXT NOT NULL,
+  by TEXT,
+  price_at_change DOUBLE PRECISION
+);
+CREATE INDEX IF NOT EXISTS ix_signal_adjustments_signal ON signal_adjustments (signal_id, at);
