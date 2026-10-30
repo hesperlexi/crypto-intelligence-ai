@@ -160,7 +160,7 @@ def test_achievements_unlock_only_from_real_results():
     v = views.track_record(rt, {"bots": []})
     a = {x["id"]: x for x in v["achievements"]}
     assert a["signals_10"]["unlocked"] and not a["signals_50"]["unlocked"] and 0 < a["signals_50"]["progress"] < 1
-    assert a["best_trade"]["value"] == "+7.5%" and a["win_streak"]["value"] == "3 in a row" and a["all_targets"]["unlocked"]
+    assert a["best_trade"]["value"] == "+75.0% ROI" and a["best_trade"]["leverage"] == 10 and a["best_trade"]["return_pct"] == 7.5 and a["win_streak"]["value"] == "3 in a row" and a["all_targets"]["unlocked"]
     assert not a["win_rate_30d"]["unlocked"]                # 12 signals: fewer than the 20 required
     assert v["achievements"][0]["unlocked"] and not v["achievements"][-1]["unlocked"]
 
