@@ -73,7 +73,7 @@ def _clamp(v: float, lo: float, hi: float) -> float:
     return float(min(hi, max(lo, v)))
 
 
-ENGINE_VERSION = "2.5.0"
+ENGINE_VERSION = "2.6.0"
 # hard limits for the trade-management parameters (env values and AI suggestions are clamped into these)
 LIMITS = {
     "giveback_arm_r": (0.3, 1.0), "giveback_frac": (0.3, 0.7), "trail_atr_k": (1.0, 4.0),
@@ -150,6 +150,25 @@ class Settings:
     jobs_per_tick: int = field(default_factory=lambda: int(_f("JOBS_PER_TICK", 10)))
     # research: futures round trip incl. fees + slippage, % of price
     research_cost_pct: float = field(default_factory=lambda: _f("RESEARCH_COST_PCT", 0.15))
+
+    # ---- v2.6 accuracy upgrades (each proven on an untouched test split by `python -m app.research engine`) ----
+    # 1. proven-only series gate: a coin/timeframe trades only when the lower bound (one-sided bootstrap, SERIES_GATE_Q)
+    #    of its out-of-sample + live expectancy is above zero; fewer than SERIES_GATE_MIN_N trades -> no verdict
+    series_gate: bool = field(default_factory=lambda: _b("SERIES_GATE", False))
+    series_gate_min_n: int = field(default_factory=lambda: int(_f("SERIES_GATE_MIN_N", 30)))
+    series_gate_q: float = field(default_factory=lambda: _clamp(_f("SERIES_GATE_Q", 0.8), 0.5, 0.99))
+    # 2. per-series grade-B confidence threshold (instead of the flat MIN_DIR_CONFIDENCE_B); stricter default without data
+    series_conf: bool = field(default_factory=lambda: _b("SERIES_CONF", False))
+    series_conf_default: float = field(default_factory=lambda: _clamp(_f("SERIES_CONF_DEFAULT", 0.54), 0.5, 0.7))
+    # 3. entry confirmation / pullback limit, chosen per timeframe nightly (entry_policy1|TF)
+    entry_rules: bool = field(default_factory=lambda: _b("ENTRY_RULES", False))
+    # 4. structure-based stop (nearest swing / S-R level + buffer, bounded to [0.8, 3.5] ATR)
+    struct_stops: bool = field(default_factory=lambda: _b("STRUCT_STOPS", False))
+    struct_stop_buffer_atr: float = field(default_factory=lambda: _clamp(_f("STRUCT_STOP_BUFFER_ATR", 0.25), 0.0, 1.0))
+    # 5. pooled trade filter per timeframe (ml/trade_filter2.py), trained nightly on simulated + live + shadow trades
+    trade_filter2: bool = field(default_factory=lambda: _b("TRADE_FILTER2", False))
+    # 7. Gemini news sentiment: collection only; never used for decisions until a gate proves it (>= 60 days)
+    news_sentiment: bool = field(default_factory=lambda: _b("NEWS_SENTIMENT", True))
 
     def manage_params(self) -> dict:
         return {"managed": bool(self.managed_exits), "giveback_arm_r": self.giveback_arm_r,
