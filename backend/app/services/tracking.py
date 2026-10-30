@@ -232,9 +232,47 @@ def call_view(r: dict[str, Any] | None) -> dict[str, Any] | None:
         return None
     return {"id": r["id"], "status": r["status"], "fill_status": r.get("fill_status") or ("FILLED" if r["side"] else None),
             "side": "LONG" if r["side"] > 0 else "SHORT", "entry": r["entry"], "stop": r["stop"], "tp1": r["tp1"],
-            "tp2": r["tp2"], "tp3": r["tp3"], "peak_r": r.get("peak_r"), "peak_pct": r.get("peak_pct"),
+            "tp2": r["tp2"], "tp3": r["tp3"], "tp1_hit": int(r.get("tp1_hit") or 0), "peak_r": r.get("peak_r"), "peak_pct": r.get("peak_pct"),
             "exit_reason": r.get("exit_reason"), "managed": r.get("managed") or 0, "created_at": r["created_at"],
             "return_pct": r.get("return_pct"), "closed_at": r.get("closed_at"), **margin_fields(r)}
+
+
+# ---- admin adjustments (v2.7): stored forever, applied forward-only, shown on every card / row --------------------
+
+def adjustments_of(db: Database, signal_id: str) -> list[dict[str, Any]]:
+    """The admin's changes to one call, oldest first: [{at, field, old, new, note}]."""
+    return [{k: r[k] for k in ("at", "field", "old", "new", "note")} for r in db.query(
+        "SELECT at, field, old, new, note FROM signal_adjustments WHERE signal_id = ? ORDER BY at, id", (signal_id,))]
+
+
+def adjustments_for(db: Database, ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+    out: dict[str, list[dict[str, Any]]] = {}
+    ids = [i for i in ids if i]
+    for i in range(0, len(ids), 500):
+        part = ids[i:i + 500]
+        for r in db.query(f"SELECT signal_id, at, field, old, new, note FROM signal_adjustments WHERE signal_id IN "
+                          f"({','.join('?' * len(part))}) ORDER BY at, id", tuple(part)):
+            out.setdefault(r["signal_id"], []).append({k: r[k] for k in ("at", "field", "old", "new", "note")})
+    return out
+
+
+def current_levels(row: dict[str, Any], adj: list[dict[str, Any]]) -> dict[str, float]:
+    """Stop / TP1 now in force (the latest admin value, else the published one)."""
+    out = {"stop": row.get("stop"), "tp1": row.get("tp1")}
+    for a in adj:
+        out[a["field"]] = a["new"]
+    return out
+
+
+def with_adjustments(db: Database, view: dict[str, Any] | None) -> dict[str, Any] | None:
+    """A call view plus `adjustments` and the levels now in force (`stop` / `tp1`; originals in `stop0` / `tp1_0`)."""
+    if not view:
+        return view
+    adj = adjustments_of(db, view["id"])
+    if adj:
+        cur = current_levels(view, adj)
+        view = {**view, "adjustments": adj, "stop0": view["stop"], "tp1_0": view["tp1"], **cur}
+    return view
 
 
 def current_call(db: Database, symbol: str, timeframe: str) -> dict[str, Any] | None:
@@ -243,7 +281,7 @@ def current_call(db: Database, symbol: str, timeframe: str) -> dict[str, Any] | 
     if r is None:
         r = db.one("SELECT * FROM signals WHERE symbol = ? AND timeframe = ? AND side != 0 AND status != 'OPEN' "
                    "AND closed_at >= ? ORDER BY created_at DESC LIMIT 1", (symbol, timeframe, now_ms() - DAY))
-    return call_view(r)
+    return with_adjustments(db, call_view(r))
 
 
 def latest_ai(db: Database, symbol: str, timeframe: str) -> dict[str, Any] | None:
@@ -458,8 +496,10 @@ def _bar_ms(tf: str) -> int:
 
 
 def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bars: int = 30,
-                    params: dict[str, Any] | None = None) -> dict[str, Any]:
+                    params: dict[str, Any] | None = None, adjust: list[dict[str, Any]] | None = None) -> dict[str, Any]:
     """Pure: the tracked state of one OPEN signal row given its 15m path (`p15`) and own-timeframe candles (`own`).
+    `adjust`: the admin's stop / TP1 changes ({at, field, old, new}); `s` must carry the ORIGINAL levels (the row's
+    columns stay the published ones) - each change applies forward-only from its time (engine/manage.py).
     Returns the columns to store plus 'events' (decisions to log)."""
     from ..config import settings
     from ..engine import manage as M
@@ -548,7 +588,8 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
     res = M.follow(side, entry, float(s["stop"]), [s["tp1"], s["tp2"], s["tp3"]], path,
                    runner_target=run.get("target") if run.get("on") else None, atr=s.get("atr"), params=p,
                    complete=covered or wall_over, first_is_fill=first_is_fill,
-                   start_ts=int(path["ts"].iloc[0]) if len(path) else None, bar_ms=step, path_ms=pms)
+                   start_ts=int(path["ts"].iloc[0]) if len(path) else None, bar_ms=step, path_ms=pms,
+                   adjust=adjust)
     out.update(status=res["status"], tp1_hit=int(res["hits"][0]), tp2_hit=int(res["hits"][1]), tp3_hit=int(res["hits"][2]),
                stop_hit=int(res["stop_hit"]), closed_at=res["closed_ts"], return_pct=res["return_pct"],
                peak_r=res["peak_r"], peak_pct=res["peak_pct"], exit_reason=res["exit_reason"], managed=res["managed"])
@@ -587,7 +628,8 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
             own = rt.candles(s["symbol"], s["timeframe"])
         except Exception:
             own = None
-        res = evaluate_signal(s, paths[s["symbol"]], own, now, horizon_bars, params)
+        adj = adjustments_of(db, s["id"]) if table == "signals" else None
+        res = evaluate_signal(s, paths[s["symbol"]], own, now, horizon_bars, params, adj)
         events = res.pop("events")
         upd = {k: v for k, v in res.items() if k in TRACKED}
         if upd.get("status") == "OPEN":
@@ -614,9 +656,12 @@ def signal_history(db: Database, symbol: str | None = None, limit: int = 200) ->
     if symbol:
         sql, args = sql + " WHERE symbol = ?", [symbol]
     rows = db.query(sql + " ORDER BY created_at DESC LIMIT ?", args + [limit])
+    adj = adjustments_for(db, [r["id"] for r in rows])
     for r in rows:
         r["payload"] = loads(r["payload"], {})
         r.update(margin_fields(r, r["payload"]))
+        if r["id"] in adj:
+            r["adjustments"] = adj[r["id"]]
     return rows
 
 

@@ -460,6 +460,15 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
             m["uid"] = owner
         res = sink.send_push([m])
         return {"ok": res.get("sent", 0) > 0, **res}
+    if kind == "adjust_signal":
+        # admin only: decided by the job creator's email (rules: `by` is the signed-in admin's), never by the params
+        if not job.get("_admin"):
+            raise PermissionError("only the admin can change a signal's stop-loss or take-profit")
+        from .services import adjust
+        try:
+            return adjust.apply(rt, p, str(job.get("by") or ""), sink)
+        except adjust.AdjustError as exc:
+            raise ValueError(str(exc)) from None
     if kind == "backtest":
         p = {**p, "symbol": norm_symbol(p["symbol"])}
         return backtests.run(rt, p)
@@ -535,8 +544,11 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             result = run_job(rt, job, deadline, sink)
             sink.set(f"jobs/{jid}", {"status": "done", "json": dumps(result), "finished_at": now_ms()}, merge=True)
         except Exception as exc:
-            log.exception("job %s failed", jid)
-            sink.set(f"jobs/{jid}", {"status": "failed", "error": f"{type(exc).__name__}: {exc}"[:300],
+            plain = job.get("type") == "adjust_signal" and isinstance(exc, (PermissionError, ValueError))
+            if not plain:
+                log.exception("job %s failed", jid)
+            # adjust_signal refusals carry a plain-language reason for the admin (no exception class name)
+            sink.set(f"jobs/{jid}", {"status": "failed", "error": (str(exc) if plain else f"{type(exc).__name__}: {exc}")[:300],
                                      "finished_at": now_ms()}, merge=True)
         n += 1
     cutoff = now_ms() - 3 * 86_400_000
@@ -607,7 +619,8 @@ def analysis_core(a: dict[str, Any]) -> Any:
     st = a.get("setup") if isinstance(a.get("setup"), dict) else {}
     call = a.get("call") or {}
     return [a.get("decision"), a.get("grade"), a.get("status"), st.get("side"), st.get("valid"),   # not the live levels
-            a.get("record_status"), a.get("stale"), call.get("id"), call.get("status"), call.get("fill_status")]
+            a.get("record_status"), a.get("stale"), call.get("id"), call.get("status"), call.get("fill_status"),
+            len(call.get("adjustments") or [])]        # an admin stop / TP1 change goes out at once
 
 
 def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analyses: dict[tuple[str, str], dict]) -> None:
@@ -805,7 +818,12 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
     detail["written_early"] = step("publish_early", sink.flush) or 0
+    rt.adjusted_ids = set()
     detail["jobs"] = step("jobs", lambda: process_jobs(rt, sink, deadline))
+    if rt.adjusted_ids:                      # an admin changed a call's stop / TP1: publish the new levels this cycle
+        for (s, tf), a in analyses.items():
+            if (a.get("call") or {}).get("id") in rt.adjusted_ids:
+                a["call"] = tracking.current_call(rt.db, s, tf)
     engine = engine_info(rt, {"last_tick_started": started, "last_tick_finished": now_ms(),
                               "last_tick_seconds": round(time.time() - t0, 1),
                               "data_host": getattr(rt.provider, "host_used", None),
