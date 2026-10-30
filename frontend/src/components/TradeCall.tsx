@@ -4,6 +4,8 @@ import { Link, useNavigate } from "react-router-dom";
 import { DASH, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, isGoldSignal } from "../lib/format";
 import { useLive } from "../lib/live";
 import { CoinAvatar } from "./Polish";
+import { AiNote, CallStatusRow, RiskBadge } from "./SignalExtras";
+import { Explain, PLAIN, useIsPro } from "../lib/mode";
 
 export type Market = "spot" | "futures";
 type Tone = "bull" | "bear" | "wait";
@@ -16,7 +18,7 @@ export function GradeBadge({ grade, small = false }: { grade?: string | null; sm
   const a = grade === "A";
   return (
     <span title={a ? "Strong signal: trend, AI models and their track record all agree" : "Moderate signal: AI-led call where the model's out-of-sample record shows an edge"}
-      className={`inline-flex items-center rounded-md border font-bold ${small ? "px-1.5 py-0 text-[10px]" : "px-2 py-0.5 text-xs"} ${a ? "border-accent/60 bg-accent/15 text-accent" : "border-warn/50 bg-warn/10 text-warn"}`}>
+      className={`inline-flex items-center rounded-md border font-bold ${small ? "px-1.5 py-0 text-[11px]" : "px-2 py-0.5 text-xs"} ${a ? "border-accent/60 bg-accent/15 text-accent" : "border-warn/50 bg-warn/10 text-warn"}`}>
       {a ? "A · strong" : "B · moderate"}
     </span>
   );
@@ -70,6 +72,7 @@ function planText(r: any, market: Market, v: Verdict, plan: any) {
 export default function TradeCall({ r, market, m, compact = false }: { r: any; market: Market; m?: any; compact?: boolean }) {
   const { tickers } = useLive();
   const nav = useNavigate();
+  const pro = useIsPro();
   const [copied, setCopied] = useState(false);
   if (!r) return null;
   const px = tickers[r.symbol]?.last ?? r.price;
@@ -143,12 +146,18 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             {v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}
           </span>
           {v.tone !== "wait" && <GradeBadge grade={r.grade} small />}
+          {active && plan && <RiskBadge entry={plan.entry} stop={plan.stop} leverage={market === "futures" ? plan.suggested_leverage : 1} />}
         </span>
       </div>
 
       <div className="space-y-3 p-4">
+        {r.stale === true && (
+          <div className="rounded-lg border border-warn/40 bg-warn/[0.08] px-2.5 py-1.5 text-sm font-semibold text-warn" role="status">Data delayed — no trade</div>
+        )}
         <div>
           <div className={`text-base font-semibold ${v.tone === "wait" ? "" : t.text}`}>{v.headline}</div>
+          {r.record_status === "already_open" && <p className="mt-1 text-xs text-mute">Following the open call: this setup is already in the record, so it is not logged twice.</p>}
+          <div className="mt-1.5"><CallStatusRow call={r.call} px={px} /></div>
           {active && status && (
             <div className={`mt-1 flex items-center gap-1.5 text-sm ${status.ok ? "text-bull" : "text-warn"}`}>
               <span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}
@@ -166,7 +175,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           )}
           {v.tone !== "wait" && r.decision_basis && <p className="mt-1 text-xs text-mute">Why: {r.decision_basis}</p>}
           {isGoldSignal(r.symbol) && <p className="mt-1 rounded-lg border border-accent/30 bg-accent/[0.06] px-2.5 py-1.5 text-xs text-mute"><span className="font-semibold text-accent">Gold (XAU/USD).</span> Levels are in PAXG, which follows the gold price closely. On forex.com, use the same % distances from your entry (shown under each level).</p>}
-          {v.tone !== "wait" && isNum(r.filter_score) && <p className="mt-0.5 text-xs text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>}
+          {pro && v.tone !== "wait" && isNum(r.filter_score) && <p className="mt-0.5 text-xs text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>}
           {market === "spot" && v.tone === "bear" && <p className="mt-1 text-sm text-mute">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>}
         </div>
 
@@ -183,6 +192,18 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
               : <Box k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="blended: 50% at TP1, 25% TP2, 25% TP3" />}
           </div>
         )}
+        {active && plan && market === "futures" && isNum(plan.suggested_leverage) && plan.suggested_leverage > 1 && (
+          <p className="text-[11px] text-warn">ROI is shown at {plan.suggested_leverage}x leverage. Leverage magnifies losses too.</p>
+        )}
+        {active && plan && (
+          <Explain className="space-y-0.5">
+            <span className="block">{PLAIN.entry}</span>
+            <span className="block">{PLAIN.stop}</span>
+            <span className="block">{PLAIN.targets}</span>
+            {market === "futures" && <span className="block">{PLAIN.leverage}</span>}
+          </Explain>
+        )}
+        <AiNote ai={r.ai} />
 
         {/* full ladder */}
         {!compact && plan && levels.length > 0 && (
@@ -205,15 +226,16 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </div>
         )}
 
-        {/* confidence and context */}
-        <div className="grid grid-cols-3 gap-2 text-xs">
+        {/* confidence and context (advanced numbers: Pro view only) */}
+        {pro && <div className="grid grid-cols-3 gap-2 text-xs">
           <div title="How often the AI was right in past out-of-sample calls leaning the same way by a similar margin"><div className="text-mute">Hit rate (similar calls)</div><div className="num mt-0.5 text-sm font-semibold">{fmtProb(r.confidence)}</div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
           <div><div className="text-mute">Up / down</div><div className="num mt-0.5 text-sm font-semibold"><span className="text-bull">{upPct}%</span> / <span className="text-bear">{downPct}%</span></div></div>
           {market === "futures"
             ? <div><div className="text-mute">Funding 8h</div><div className="num mt-0.5 text-sm font-semibold">{isNum(funding) ? fmtPctRaw(funding * 100, 3) : "0.010%"}</div></div>
             : <div><div className="text-mute">Trend</div><div className="mt-0.5 text-sm font-semibold">{r.regime ?? DASH}</div></div>}
-        </div>
+        </div>}
+        {!pro && v.tone !== "wait" && r.grade && <Explain>{PLAIN.grade}</Explain>}
 
         <div className="grid grid-cols-[1fr_auto_auto] gap-2">
           <button className={`btn py-2 text-sm ${active ? "btn-primary" : ""}`} onClick={paper}>{active ? "Practise this trade" : "Paper trade"}</button>
