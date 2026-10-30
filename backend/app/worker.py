@@ -29,7 +29,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, membership, news, radar, telegram, replay, scanner, tracking, training
+from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
@@ -649,6 +649,9 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("settings", views.settings_view(rt))
     ctx = rt.context_cache[1] if rt.context_cache else {"enabled": False, "reason": "not fetched"}
     sink.view("context", ctx, volatile=("fetched_at",))
+    # one document for the Home page's market insights; at most hourly, and only when it changed (hash)
+    sink.view("market_context", market_insights.view(rt.db, ctx, getattr(rt, "funding_rates", None), rt.symbols(),
+                                                     getattr(rt, "headlines", None)), min_interval_s=3600)
     publish_status(rt, sink, engine)
 
 
@@ -763,6 +766,11 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         detail["news"] = step("news", lambda: sync_news(rt))
         detail["derivs"] = step("derivs", lambda: derivs.sync(rt.db, rt.symbols(), max_calls=40))
         detail["crowd"] = step("crowd", lambda: derivs.sync_crowd(rt.db, rt.symbols(), max_files=25))
+        # Home-page market insights: hourly dominance snapshot (CoinGecko /global, fetched above) and, at most every
+        # 6 hours, the altcoin season index (Binance spot daily closes)
+        detail["insights"] = step("insights", lambda: {
+            "snapshot": market_insights.record_snapshot(rt.db, rt.context_cache[1] if rt.context_cache else None),
+            "altseason": market_insights.refresh_altseason(rt.db, rt.provider)})
     if not rt.db.get_setting("tracking_be_v23b", False):    # one-time: re-follow every signal that reached TP1
         detail["tracking_be_v23b"] = tracking.reopen_for_break_even(rt.db)  # (wins and losses alike) under the BE rule
         rt.db.set_setting("tracking_be_v23b", True)
