@@ -96,7 +96,6 @@ if __name__ == "__main__":                              # python -m app.reset_v1
 
     from .config import settings
     from .db import get_db
-    from .services import market
     from .services.runtime import Runtime
     from .sinks import FirestoreSink
     from .worker import settings_project
@@ -105,7 +104,7 @@ if __name__ == "__main__":                              # python -m app.reset_v1
         sys.exit("usage: python -m app.reset_v1 dry-run")
     settings.ensure_dirs()
     db = get_db()
-    rt = Runtime(db, market.make_provider())
+    rt = Runtime(db, None)                             # no market data needed to count
     sink = FirestoreSink(db, settings_project())       # reads only: plan() never writes
     print(json.dumps({"approved": APPROVED, "done": db.get_setting("reset_v1_done", 0), **plan(rt, sink)},
                      indent=1, default=str))
