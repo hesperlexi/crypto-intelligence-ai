@@ -17,6 +17,15 @@
   --shadow: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
+/* ---- crystal / glass surface tokens (all themes; themes override what they need) ---- */
+:root {
+  --glass-blur: 14px;                                   /* backdrop blur of cards and panels (12-16px) */
+  --glass-surface: rgb(var(--panel-bg) / var(--panel-a));
+  --glass-hairline: rgb(var(--glass) / 0.09);           /* 1px fine border */
+  --glass-hairline-gold: rgb(var(--accent) / 0.22);
+  --glass-highlight: rgb(var(--glass) / 0.10);          /* soft inner top highlight */
+  --glass-shadow: 0 14px 40px -18px var(--shadow);
+}
 /* Abyss: futuristic crypto - deep space black-blue, neon cyan with a violet edge, glowing glass */
 [data-theme="abyss"] {
   --ink: 3 5 13; --panel: 9 13 28; --raised: 15 21 42; --line: 30 40 72;
@@ -55,9 +64,11 @@
 }
 [data-theme="light"] {
   --ink: 245 246 248; --panel: 255 255 255; --raised: 234 236 240; --line: 220 224 230;
-  --text: 24 26 32; --mute: 112 122 138;
-  --bull: 3 166 109; --bear: 207 48 74; --warn: 201 148 0; --accent: 201 148 0; --accent-2: 240 185 11;
-  --on-accent: 24 26 32;
+  /* text colours darkened for >= 4.5:1 contrast on white, ink and raised surfaces (gold 201,148,0 was 2.7:1,
+     green 3,166,109 3.1:1, muted 112,122,138 4.3:1). The bright gold stays as accent-2 for fills and gradients. */
+  --text: 24 26 32; --mute: 88 97 112;
+  --bull: 0 122 77; --bear: 190 30 60; --warn: 138 98 0; --accent: 138 98 0; --accent-2: 240 185 11;
+  --on-accent: 255 255 255;
   --glass: 15 23 42;
   --panel-bg: 255 255 255; --panel-a: 0.72; --bar-a: 0.78;
   --glow1: rgba(240, 185, 11, 0.16); --glow2: rgba(59, 130, 246, 0.08); --glow3: rgba(14, 203, 129, 0.08);
@@ -88,14 +99,18 @@ body {
   @apply relative rounded-2xl border border-transparent;
   background:
     linear-gradient(180deg, rgb(var(--glass) / 0.055), rgb(var(--glass) / 0) 42%),
-    rgb(var(--panel-bg) / var(--panel-a));
-  -webkit-backdrop-filter: blur(22px) saturate(160%);
-  backdrop-filter: blur(22px) saturate(160%);
+    var(--glass-surface);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(160%);
+  backdrop-filter: blur(var(--glass-blur)) saturate(160%);
   box-shadow:
-    0 1px 0 0 rgb(var(--glass) / 0.10) inset,
+    0 1px 0 0 var(--glass-highlight) inset,
     0 -1px 0 0 rgb(0 0 0 / 0.25) inset,
-    0 18px 50px -18px var(--shadow),
+    var(--glass-shadow),
     0 0 0 1px rgb(var(--accent) / 0.02);
+}
+/* browsers without backdrop-filter: a solid surface so text never sits on a busy background */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel, .glass-bar, .kpi { background: rgb(var(--panel)) !important; }
 }
 /* light-catching rim: brighter at the top-left, a touch of the accent at the bottom-right */
 .panel::before {
@@ -111,7 +126,7 @@ body {
 }
 .glass-bar {
   @apply border-glass/[0.06];
-  -webkit-backdrop-filter: blur(24px) saturate(170%); backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(16px) saturate(170%); backdrop-filter: blur(16px) saturate(170%);
   background: linear-gradient(180deg, rgb(var(--glass) / 0.04), transparent), rgb(var(--ink) / var(--bar-a));
 }
 header.glass-bar { box-shadow: 0 1px 0 0 rgb(var(--accent) / 0.0); position: sticky; }
@@ -122,7 +137,7 @@ header.glass-bar::after {
 .popover { background: rgb(var(--panel) / 0.97) !important; }
 /* grid / flex children may shrink below their content, so wide tables scroll inside their card */
 main .grid > * { min-width: 0; }
-.tile { @apply rounded-xl border border-glass/[0.07] bg-glass/[0.03]; }
+.tile { @apply rounded-xl border bg-glass/[0.03]; border-color: var(--glass-hairline); box-shadow: 0 1px 0 0 var(--glass-highlight) inset; }
 .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 .safe-top { padding-top: env(safe-area-inset-top); }
 .label { @apply text-[11px] uppercase tracking-[0.08em] text-mute; }
@@ -193,11 +208,11 @@ h1 { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spac
 }
 .hero-line path:last-child { stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: draw-line 2.2s ease-out 0.2s forwards; }
 @keyframes draw-line { to { stroke-dashoffset: 0; } }
-.kpi { display: block; border-radius: 14px; background: rgb(var(--ink) / 0.78); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); border: 1px solid rgb(var(--glass) / 0.08); transition: border-color .2s, transform .2s, box-shadow .2s; }
+.kpi { display: block; border-radius: 14px; background: rgb(var(--ink) / 0.72); backdrop-filter: blur(var(--glass-blur)); -webkit-backdrop-filter: blur(var(--glass-blur)); border: 1px solid var(--glass-hairline); box-shadow: 0 1px 0 0 var(--glass-highlight) inset; transition: border-color .2s, transform .2s, box-shadow .2s; }
 a.kpi:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px); box-shadow: 0 10px 30px -12px rgb(var(--accent) / 0.45); }
 
 /* coin tiles */
-.coin-tile { border-radius: 14px; background: linear-gradient(180deg, rgb(var(--glass) / 0.05), rgb(var(--glass) / 0.015)); border: 1px solid rgb(var(--glass) / 0.08); transition: border-color .2s, transform .2s, box-shadow .2s; }
+.coin-tile { border-radius: 14px; background: linear-gradient(180deg, rgb(var(--glass) / 0.05), rgb(var(--glass) / 0.015)); border: 1px solid var(--glass-hairline); box-shadow: 0 1px 0 0 var(--glass-highlight) inset; transition: border-color .2s, transform .2s, box-shadow .2s; }
 .coin-tile:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px); box-shadow: 0 12px 30px -14px rgb(var(--accent) / 0.5); }
 .coin-tile-mine { border-color: rgb(var(--accent) / 0.3); background: linear-gradient(180deg, rgb(var(--accent) / 0.08), rgb(var(--glass) / 0.015)); }
 
@@ -283,3 +298,32 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px
 [data-theme="trado"] .hero, [data-theme="trado"] .kpi, [data-theme="trado"] .coin-tile { background: rgb(var(--panel)); box-shadow: none; }
 [data-theme="trado"] a.kpi:hover, [data-theme="trado"] .coin-tile:hover { transform: none; box-shadow: none; }
 [data-theme="trado"] .text-gradient { background: none; color: rgb(var(--accent)); }
+
+/* light theme: the accent is a darker gold for readable text; filled buttons keep the bright gold with dark text */
+[data-theme="light"] .btn-primary { background: linear-gradient(180deg, rgb(252 213 53), rgb(240 185 11)); color: rgb(24 26 32); }
+[data-theme="light"] { --glass-hairline: rgb(15 23 42 / 0.10); --glass-highlight: rgb(255 255 255 / 0.9); --glass-shadow: 0 10px 30px -16px rgb(15 23 42 / 0.18); }
+[data-theme="abyss"] { --glass-hairline: rgb(var(--accent) / 0.14); }
+
+/* ---- logo animation (components/Logo.tsx): transform / opacity only, off with reduced motion ---- */
+.logo-anim { overflow: visible; }
+.logo-sweep { animation: logo-sweep 6s ease-in-out 1.2s infinite; will-change: transform; }
+@keyframes logo-sweep { 0%, 78% { transform: translateX(0); } 100% { transform: translateX(110px); } }
+.logo-glow { animation: logo-glow 6s ease-in-out infinite; transform-origin: center; }
+@keyframes logo-glow { 0%, 100% { opacity: .25; } 50% { opacity: .55; } }
+.logo-draw { stroke-dasharray: 1; stroke-dashoffset: 1; animation: logo-draw 1.1s cubic-bezier(.6,.1,.2,1) .1s forwards; }
+@keyframes logo-draw { to { stroke-dashoffset: 0; } }
+.logo-fade { opacity: 0; animation: logo-fade .5s ease-out .9s forwards; }
+@keyframes logo-fade { to { opacity: .6; } }
+.logo-ring { transform-origin: 32px 32px; animation: logo-spin 1.1s linear infinite; }
+@keyframes logo-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .logo-sweep, .logo-glow { animation: none !important; opacity: 0; }
+  .logo-draw { animation: none !important; stroke-dashoffset: 0; }
+  .logo-fade { animation: none !important; opacity: .6; }
+  .logo-ring { animation: none !important; }
+}
+
+/* ---- route transition: short fade + rise of the whole page (sections keep their stagger above) ---- */
+.route-fade { animation: route-fade .22s ease-out both; }
+@keyframes route-fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .route-fade { animation: none !important; } }

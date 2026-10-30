@@ -24,7 +24,7 @@ export default function TVChart({ symbol, market = "spot", tf = "1h", height = 5
     <div className="w-full">
       <iframe key={src} src={src} title={`TradingView chart ${tvSymbol}`} className="block w-full rounded-lg border-0" style={{ height }}
         allow="fullscreen" allowFullScreen loading="lazy" />
-      <p className="mt-1 text-right text-[10px] text-mute">
+      <p className="mt-1 text-right text-[11px] text-mute">
         Chart by <a href={`https://www.tradingview.com/symbols/${tvSymbol.replace(":", "-")}/`} target="_blank" rel="noopener nofollow" className="text-accent hover:underline">TradingView</a>
       </p>
     </div>
