@@ -344,6 +344,11 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         rt.db.set_setting("record_since", now_ms())
         notes["fresh_start_v23"] = {"bots": len(DEFAULT_BOTS), "admin_practice": clear_admin_practice(sink)}
         rt.db.set_setting("fresh_start_v23", True)
+    # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
+    from . import reset_v1
+    rv = reset_v1.maybe_run(rt, sink, now_ms())
+    if rv is not None:
+        notes["reset_v1"] = {k: v for k, v in rv.items() if k != "views_reset"}
     # demo bots
     _b("config: bots")
     doc = sink.get("config/bots")
