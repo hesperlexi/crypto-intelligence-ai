@@ -18,6 +18,18 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
+// Firebase App Check (reCAPTCHA v3): only switched on when a site key is provided at build time
+// (VITE_APPCHECK_SITE_KEY). Without it nothing loads and nothing changes. Enforcement is turned on in the
+// Firebase console, never here, so the Android app and older clients keep working while tokens are monitored.
+const appCheckKey = import.meta.env.VITE_APPCHECK_SITE_KEY as string | undefined;
+if (appCheckKey) {
+  import("firebase/app-check")
+    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
+      initializeAppCheck(app, { provider: new ReCaptchaV3Provider(appCheckKey), isTokenAutoRefreshEnabled: true });
+    })
+    .catch(() => {});
+}
+
 // Google Analytics for Firebase (page views and basic usage), loaded after start so it never delays the first screen.
 import("firebase/analytics")
   .then(({ getAnalytics, isSupported }) => isSupported().then((ok) => { if (ok) getAnalytics(app); }))
