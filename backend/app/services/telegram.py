@@ -132,16 +132,31 @@ def _held(ms: int | None) -> str:
 
 
 def win_item(r: dict[str, Any]) -> dict[str, Any]:
+    from .tracking import margin_fields
     target = {"TP1": r.get("tp1"), "TP2": r.get("tp2"), "TP3": r.get("tp3")}.get(r["status"])
     return {"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
             "status": r["status"], "return_pct": float(r["return_pct"]), "entry": r.get("entry"),
-            "exit_price": target, "held": _held((r.get("closed_at") or 0) - (r.get("created_at") or 0))}
+            "exit_price": target, "held": _held((r.get("closed_at") or 0) - (r.get("created_at") or 0)),
+            **margin_fields(r)}
+
+
+def result_text(x: dict[str, Any], bold: bool = True) -> str:
+    """Headline result: ROI on margin with its leverage and the price move, or the price move alone (labelled)."""
+    ret = float(x["return_pct"])
+    roi, lev = x.get("roi_pct"), x.get("leverage")
+    if roi is None and lev and ret is not None:
+        roi = ret * float(lev)
+    b = (lambda t: f"<b>{t}</b>") if bold else (lambda t: t)
+    if roi is None or not lev:
+        return f"{b(f'{ret:+.2f}%')} price move"
+    return f"{b(f'{float(roi):+.2f}% ROI')} · {int(lev)}x margin (price {ret:+.2f}%)"
 
 
 def win_text(w: dict[str, Any]) -> str:
     target = {"TP1": "Target 1 hit", "TP2": "Target 2 hit", "TP3": "All targets hit"}.get(w["status"], "Closed in profit")
     return "\n".join([
-        f"✅ <b>{_coin(w['symbol'])} {w['side']}</b> ({w['timeframe'].upper()}) · {target} · <b>+{w['return_pct']:.1f}%</b>",
+        f"✅ <b>{_coin(w['symbol'])} {w['side']}</b> ({w['timeframe'].upper()}) · {target}",
+        f"💰 {result_text(w)}",
         f"Entry {_px(w['entry'])} → {_px(w['exit_price'])} · held {w['held']}",
         "", f"Get every signal live 👉 {SITE}", f"<i>{html.escape(brand.FOOTER)}</i>"])
 
@@ -163,7 +178,7 @@ def wins_text(w: dict[str, Any]) -> str | None:
     lines = [f"🏆 <b>Wins of the {'day' if w.get('period') == 'today' else 'week'}</b>", ""]
     for x in wins[:5]:
         lines.append(f"✅ <b>{_coin(x['symbol'])}</b> {x['side']} ({x['timeframe'].upper()}) · entry {_px(x['entry'])} · "
-                     f"{target.get(x['status'], 'closed in profit')} · <b>+{x['return_pct']:.1f}%</b>")
+                     f"{target.get(x['status'], 'closed in profit')} · {result_text(x)}")
     lines += ["", f"Get every signal live with entry, stop-loss and targets 👉 {SITE}", f"<i>{html.escape(brand.FOOTER)}</i>"]
     return "\n".join(lines)
 
@@ -175,11 +190,18 @@ def weekly_text(r: dict[str, Any]) -> str | None:
     best = [t for t in (r.get("best") or []) if t["return_pct"] > 0][:3]
     lines = [f"📊 <b>Weekly results</b> · {d(r['week_start'])} – {d(r['week_end'] - 1)}", "",
              f"✅ {r['wins']} wins / {r['losses']} losses · win rate {r['win_rate']:.0%}",
-             f"📈 Total of all closed signals: <b>{r['total_return_pct']:+.1f}%</b>"]
+             (f"📈 Total ROI on margin of all closed signals: <b>{r['total_roi_pct']:+.1f}%</b> "
+              f"(price {r['total_return_pct']:+.1f}%)" if r.get("total_roi_pct") is not None
+              else f"📈 Total price move of all closed signals: <b>{r['total_return_pct']:+.1f}%</b>")]
     if best:
-        lines += ["", "Top signals:"] + [f"• {_coin(t['symbol'])} {t['side']} ({t['timeframe'].upper()}): +{t['return_pct']:.1f}%" for t in best]
+        lines += ["", "Top signals:"] + [f"• {_coin(t['symbol'])} {t['side']} ({t['timeframe'].upper()}): {result_text(t, False)}" for t in best]
     lines += ["", f"AI crypto signals from 15 USDT/month 👉 {SITE}", "<i>Past results don't guarantee future results.</i>", f"<i>{html.escape(brand.FOOTER)}</i>"]
     return "\n".join(lines)
+
+
+def _lev(s: dict[str, Any]) -> int | None:
+    from .tracking import margin_fields
+    return margin_fields(s).get("leverage")
 
 
 def teaser_text(s: dict[str, Any]) -> str:
@@ -190,6 +212,7 @@ def teaser_text(s: dict[str, Any]) -> str:
         "", f"<b>{_coin(s['symbol'])}{'' if s['symbol'].startswith('PAXG/') else '/USDT'} {side}</b> · {s['timeframe'].upper()} · grade A",
         f"Entry: {_px(s['entry'])}", f"Stop-loss: {_px(s['stop'])}",
         f"Targets: {_px(s['tp1'])} · {_px(s['tp2'])} · {_px(s['tp3'])}",
+        *([f"Suggested leverage: {lev}x"] if (lev := _lev(s)) else []),
         "", f"Members get every signal the moment it appears, with phone alerts 👉 {SITE}",
         "<i>Prices may have moved since.</i>", f"<i>{html.escape(brand.FOOTER)}</i>"])
 
