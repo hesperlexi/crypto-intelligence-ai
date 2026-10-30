@@ -13,7 +13,7 @@ import TelegramLink from "./TelegramLink";
 import { BUILD_ID } from "../lib/version";
 import { CoinAvatar } from "./Polish";
 import SiteFooter, { TRUST_LINKS } from "./SiteFooter";
-import { AnimatedLogo } from "./Logo";
+import { AnimatedLogo, HeroLogo } from "./Logo";
 import { Link } from "react-router-dom";
 
 const COINS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "DOGE/USDT"];
@@ -105,7 +105,8 @@ export default function Landing({ error }: { error: string | null }) {
         {/* hero */}
         <section className="grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
           <div>
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold tracking-wider text-accent">
+            <HeroLogo size={104} title="Crypto Intelligence AI logo" className="mb-6" />
+            <span className="flex w-fit items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold tracking-wider text-accent">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-bull" /> AI · SPOT · FUTURES
             </span>
             <h1 className="font-display mt-5 text-[42px] font-extrabold leading-[1.02] tracking-tight sm:text-6xl">

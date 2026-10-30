@@ -4,7 +4,7 @@
 import { ReactNode, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BRAND } from "../lib/brand";
-import { Logo } from "../components/Logo";
+import { AnimatedLogo } from "../components/Logo";
 import SiteFooter, { TRUST_LINKS } from "../components/SiteFooter";
 
 export const LAST_UPDATED = "30 Oct 2026";
@@ -153,7 +153,7 @@ export default function TrustPage({ kind }: { kind: TrustKind }) {
       <header className="glass-bar sticky top-0 z-30 border-b">
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
           <Link to="/" className="flex items-center gap-2.5">
-            <Logo size={32} />
+            <AnimatedLogo size={34} />
             <span className="font-display text-[15px] font-bold">Crypto Intelligence <span className="text-accent">AI</span></span>
           </Link>
           <Link to="/" className="btn px-3 py-1.5 text-sm">Home</Link>

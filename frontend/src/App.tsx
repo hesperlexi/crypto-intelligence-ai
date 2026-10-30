@@ -14,7 +14,7 @@ import { auth, db, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
-import { AnimatedLogo, Logo } from "./components/Logo";
+import { AnimatedLogo, HeroLogo } from "./components/Logo";
 import SiteFooter, { TRUST_LINKS } from "./components/SiteFooter";
 import { AdminOnly, BootLoader, ErrorBoundary, NavIcon, NotFound, RouteSkeleton, useFocusTrap } from "./components/Shell";
 import { ModeSwitch } from "./lib/mode";
@@ -135,7 +135,7 @@ export default function App() {
 
 function AccessScreen({ user, role }: { user: User; role: Role }) {
   const rec = useMyRecord();
-  const logo = <Logo size={80} title="Crypto Intelligence AI logo" className="mx-auto mb-3 drop-shadow-[0_8px_24px_rgb(var(--accent)/0.35)]" />;
+  const logo = <HeroLogo size={96} title="Crypto Intelligence AI logo" className="mx-auto mb-4" />;
   if (role === "blocked") {
     return (
       <div className="flex min-h-full items-center justify-center px-4">
@@ -198,7 +198,7 @@ function Shell({ user }: { user: User }) {
     `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-accent/10 font-medium text-accent shadow-[inset_0_-2px_0_rgb(var(--accent)),inset_0_1px_0_rgb(var(--glass)/0.06)]" : "text-mute hover:text-text"}`;
   const brand = (
     <div className="flex min-w-0 items-center gap-2.5">
-      <AnimatedLogo size={32} className="shrink-0" />
+      <AnimatedLogo size={34} className="shrink-0" />
       <NavLink to="/" className="truncate text-[15px] font-semibold tracking-tight text-text">
         Crypto Intelligence <span className="text-accent">AI</span>
       </NavLink>

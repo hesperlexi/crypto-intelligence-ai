@@ -4,7 +4,7 @@ import { Component, ErrorInfo, ReactNode, useEffect, useRef } from "react";
 import { Link, Navigate } from "react-router-dom";
 import { BRAND } from "../lib/brand";
 import { useIsAdmin } from "../lib/session";
-import { Logo, LogoSpinner } from "./Logo";
+import { HeroLogo, LogoSpinner } from "./Logo";
 
 /** Friendly page instead of a blank screen when something throws while rendering. */
 export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: string }, { error: Error | null }> {
@@ -19,7 +19,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: s
     return (
       <div className="flex min-h-[60vh] items-center justify-center px-4 py-10">
         <div className="panel w-full max-w-md p-7 text-center">
-          <Logo size={56} className="mx-auto" />
+          <HeroLogo size={72} className="mx-auto" />
           <h1 className="mt-4 text-xl font-semibold tracking-tight">Something went wrong</h1>
           <p className="mt-2 text-sm text-mute">This page could not be shown. Reloading usually fixes it. If it keeps happening, tell us what you were doing.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
@@ -36,7 +36,7 @@ export function NotFound() {
   return (
     <div className="flex min-h-[50vh] items-center justify-center px-4 py-10">
       <div className="panel w-full max-w-md p-7 text-center">
-        <Logo size={56} className="mx-auto" />
+        <HeroLogo size={72} className="mx-auto" />
         <p className="num mt-4 text-sm font-semibold text-accent">404</p>
         <h1 className="mt-1 text-xl font-semibold tracking-tight">Page not found</h1>
         <p className="mt-2 text-sm text-mute">The link may be old or mistyped. Everything else is where you left it.</p>
@@ -62,7 +62,7 @@ export function RouteSkeleton() {
 
 /** Full-screen loader before the session is known. */
 export function BootLoader() {
-  return <div className="flex min-h-full items-center justify-center py-20"><LogoSpinner size={56} /></div>;
+  return <div className="flex min-h-full items-center justify-center py-20"><LogoSpinner size={84} /></div>;
 }
 
 /** Owner-only pages: members are sent home (same rule as Users). */
