@@ -1,0 +1,175 @@
+// DEV PREVIEW ONLY. Sample documents shaped like the engine's views (backend/app/views.py, services/scanner.py,
+// engine/futures.py, docs/v1-contract.md) and the users / presence collections. Used to look at pages that sit
+// behind Google sign-in. These numbers are sample data for the preview and never reach the production bundle.
+const NOW = Date.now();
+const H = 3_600_000, D = 86_400_000;
+const v = (o: any) => ({ json: JSON.stringify(o), updated_at: NOW });
+
+const COINS: [string, number, number][] = [
+  ["BTC/USDT", 68420.5, 1.84], ["ETH/USDT", 2468.12, -0.92], ["BNB/USDT", 587.3, 0.41], ["XRP/USDT", 0.5234, 2.71],
+  ["SOL/USDT", 168.42, 3.95], ["DOGE/USDT", 0.13872, -2.15], ["LTC/USDT", 71.84, 0.18], ["AAVE/USDT", 152.6, 4.42],
+  ["AVAX/USDT", 27.41, -1.36], ["PAXG/USDT", 2741.2, 0.22],
+];
+export const PRICES = Object.fromEntries(COINS.map(([s, p, c]) => [s, { p, c }]));
+
+const REG = ["BULL", "BULLISH CONSOLIDATION", "NEUTRAL", "STRONG BULL", "BEAR", "BEARISH CONSOLIDATION", "BULL", "STRONG BULL", "BEAR", "NEUTRAL"];
+const SIG = ["BUY", "HOLD", "HOLD", "BUY", "STRONG BUY", "SELL", "HOLD", "BUY", "SELL", "HOLD"];
+const DEC = ["BUY", "NO TRADE", "NO TRADE", "BUY ON PULLBACK", "BUY", "SELL", "NO TRADE", "BUY", "SELL", "NO TRADE"];
+
+function plan(price: number, side: 1 | -1, valid = true, runner = false) {
+  const r = price * 0.018;
+  const entry = price * (1 - side * 0.002);
+  const stop = entry - side * r;
+  const tps = [1, 1.6, 2.4].map((k) => entry + side * r * k);
+  const lev = 8;
+  return {
+    side: side > 0 ? "LONG" : "SHORT", valid, reason: valid ? null : "waiting for the higher timeframe to agree",
+    entry, entry_zone: [entry * (1 - side * 0.003), entry * (1 + side * 0.002)], stop,
+    targets: tps.map((p, i) => ({ name: `TP${i + 1}`, price: p, rr: [1, 1.6, 2.4][i], probability: [0.62, 0.44, 0.29][i] })),
+    risk_reward: 1.4, risk_pct: 1.8, runner: runner ? { on: true, rr: 4, target: entry + side * r * 4 } : null,
+    suggested_leverage: lev, liquidation_at_suggested: entry * (1 - side * (1 / lev - 0.005)),
+    margin_loss_at_stop_pct: 1.8 * lev, funding_per_day_pct: -side * 0.03,
+  };
+}
+
+function futuresRows(tf: string) {
+  return COINS.map(([symbol, price], i) => {
+    const d = DEC[i];
+    const side = d === "SELL" ? -1 : d.startsWith("BUY") ? 1 : 0;
+    const p_up = side > 0 ? 0.58 : side < 0 ? 0.24 : 0.41, p_down = side < 0 ? 0.55 : side > 0 ? 0.21 : 0.37;
+    const row: any = {
+      symbol, status: "OK", timeframe: tf, price, action: d === "BUY ON PULLBACK" ? "LONG ON PULLBACK" : side > 0 ? "LONG" : side < 0 ? "SHORT" : "NO TRADE",
+      side, decision: d, decision_reason: side ? null : "the AI and the trend disagree", lean: p_up > p_down + 0.03 ? "LONG" : p_down > p_up + 0.03 ? "SHORT" : "NEUTRAL",
+      p_up, p_down, p_neutral: 1 - p_up - p_down, confidence: side ? 0.64 - i * 0.01 : 0.52, grade: side ? (i % 3 === 1 ? "B" : "A") : null,
+      decision_basis: side ? "4H trend and the AI ensemble agree; 1D trend supports it" : null,
+      filter_score: side ? 0.61 : null, filter_threshold: 0.55, regime: REG[i], signal: SIG[i], funding_rate: 0.0001,
+      record_status: side ? "logged" : "not_logged", stale: false,
+      ai: side ? { rationale: "Price is holding above the rising 4H trend after a shallow pullback; momentum is recovering and the stop sits under the last swing low.", regime: "trend", model: "advisor", at: NOW - 20 * 60_000 } : undefined,
+      call: side ? { id: `c${i}`, status: "OPEN", fill_status: d === "BUY ON PULLBACK" ? "PENDING" : "FILLED", side: side > 0 ? "LONG" : "SHORT", entry: price * (1 - side * 0.004), stop: price * (1 - side * 0.02), peak_r: 0.42, peak_pct: 0.76, exit_reason: null, managed: 0, created_at: NOW - 3 * H } : null,
+    };
+    if (side) row.plan = plan(price, side as 1 | -1, true, i === 4);
+    else row.plan = plan(price, 1, false);
+    return row;
+  });
+}
+
+function dashboard(tf: string) {
+  const rows = COINS.map(([symbol, price, ch], i) => ({ symbol, status: "OK", price, change_24h_pct: ch, regime: REG[i], signal: SIG[i], score: 40 + ((i * 17) % 50), decision: DEC[i], confidence: 0.55 + (i % 4) * 0.04, grade: DEC[i] !== "NO TRADE" ? "A" : null }));
+  const HZ = ["15M", "1H", "4H", "12H", "24H", "3D"];
+  return {
+    timeframe: tf,
+    market_status: { status: "BULL", bull: 6, bear: 2, neutral: 2, assets: 10, basis: `share of tracked assets in a bullish / bearish ${tf} regime (60% needed)` },
+    regimes: rows.map((r, i) => ({ symbol: r.symbol, regime: r.regime, confidence: 0.5 + ((i * 7) % 5) / 10 })),
+    top_signals: rows.slice(0, 6).map((r) => ({ symbol: r.symbol, signal: r.signal, score: r.score, decision: r.decision, confidence: r.confidence })),
+    opportunities: rows.filter((r) => r.decision !== "NO TRADE").slice(0, 4).map((r) => ({ symbol: r.symbol, decision: r.decision, signal: r.signal, score: r.score, confidence: r.confidence, risk_reward: 1.4 })),
+    risks: [{ symbol: "DOGE/USDT", risk: "HIGH volatility" }, { symbol: "AAVE/USDT", risk: "RSI 77 (overbought)" }],
+    heatmap: rows.map((r) => ({ symbol: r.symbol, change_24h_pct: r.change_24h_pct, signal: r.signal, regime: r.regime })),
+    forecast_table: rows.map((r, i) => ({ symbol: r.symbol, price: r.price, horizons: Object.fromEntries(HZ.map((h, j) => [h, j === 5 && i > 6 ? { status: "MODEL NOT TRAINED" } : { expected_return: ((i + j) % 5 - 2) * 0.0031, p_up: 0.5 + ((i + j) % 5 - 2) * 0.03, edge_confirmed: (i + j) % 3 !== 0 }])) })),
+    rows,
+  };
+}
+
+function trackRecord() {
+  const sigs = [
+    ["SOL/USDT", "4h", "LONG", "A", "TP2", 2.31], ["BTC/USDT", "1h", "LONG", "A", "TP1", 0.84], ["ETH/USDT", "4h", "SHORT", "B", "STOPPED", -1.62],
+    ["XRP/USDT", "1h", "LONG", "A", "TP3", 3.12], ["AAVE/USDT", "12h", "LONG", "A", "OPEN", null], ["DOGE/USDT", "15m", "SHORT", "B", "STOPPED", -0.94],
+    ["BNB/USDT", "4h", "LONG", "A", "TP1", 0.71], ["AVAX/USDT", "1h", "SHORT", "A", "TP2", 1.88], ["LTC/USDT", "1d", "LONG", "B", "EXPIRED", 0.12],
+  ].map(([symbol, timeframe, side, grade, status, ret], i) => {
+    const px = PRICES[symbol as string].p, s = side === "LONG" ? 1 : -1;
+    return { symbol, timeframe, side, grade, status, return_pct: ret, created_at: NOW - (i + 1) * 7 * H, closed_at: status === "OPEN" ? null : NOW - (i + 1) * 5 * H,
+      entry: px, stop: px * (1 - s * 0.018), tp1: px * (1 + s * 0.018), tp2: px * (1 + s * 0.029), tp3: px * (1 + s * 0.043),
+      fill_status: "FILLED", peak_pct: status === "STOPPED" ? 0.4 : null, managed: 0 };
+  });
+  const closed = sigs.filter((x) => x.status !== "OPEN").map((x) => x.return_pct as number);
+  let acc = 0;
+  const curve = sigs.slice().reverse().filter((x) => x.status !== "OPEN").map((x) => ({ ts: x.closed_at, cum_return_pct: (acc += x.return_pct as number) }));
+  return {
+    record_since: NOW - 2 * D, testing_since: NOW - 2 * D,
+    live: { summary: { closed: closed.length, win_rate: closed.filter((r) => r > 0).length / closed.length, avg_return_pct: closed.reduce((a, b) => a + b, 0) / closed.length, total_return_pct: acc },
+      open: 1, curve, signals: sigs },
+    tested: [{ symbol: "BTC/USDT", timeframe: "4h", edge: true, selective_hit_rate: 0.61, selective_ci95: [0.55, 0.67], calls_per_day: 0.8, tested_days: 410 },
+      { symbol: "SOL/USDT", timeframe: "1h", edge: true, selective_hit_rate: 0.58, selective_ci95: [0.53, 0.63], calls_per_day: 2.1, tested_days: 380 },
+      { symbol: "LTC/USDT", timeframe: "1d", edge: false, selective_hit_rate: 0.5, selective_ci95: [0.41, 0.59], calls_per_day: 0.2, tested_days: 600 }],
+    bots: [{ scorecard: true, name: "Futures signals A+B · 4H", trades: 6, win_rate: 0.67, return_pct: 3.4, benchmark_return_pct: 1.2, max_drawdown_pct: 1.9, started_at: NOW - 2 * D },
+      { scorecard: true, name: "Futures signals A+B · 1H", trades: 11, win_rate: 0.55, return_pct: 1.1, benchmark_return_pct: 1.2, max_drawdown_pct: 2.6, started_at: NOW - 2 * D }],
+    method: { live: "Every trade signal the engine published, followed candle by candle.", tested: "Walk-forward test on data the models never saw." },
+  };
+}
+
+function users() {
+  const u: Record<string, any> = {};
+  const add = (id: string, d: any) => { u[`users/${id}`] = { uid: id, photo: "", requested_at: NOW - 10 * D, ...d }; };
+  add("u_pend1", { email: "omar.h@example.com", name: "Omar Haddad", status: "pending", requested_at: NOW - 2 * H,
+    payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610290041887", proof: proofImage(), status: "submitted", submitted_at: NOW - 90 * 60_000 } });
+  add("u_pend2", { email: "lina.m@example.com", name: "Lina Mansour", status: "pending", requested_at: NOW - 26 * H,
+    payment: { method: "mexc", months: 1, amount: 15, currency: "USDT", txid: "MX88120934", proof: null, status: "submitted", submitted_at: NOW - 20 * H } });
+  add("u_new", { email: "new.person@example.com", name: "New Person", status: "pending", requested_at: NOW - 30 * 60_000 });
+  add("u_member", { email: "sara.k@example.com", name: "Sara Kim", status: "approved", expires_at: NOW + 74 * D, plan_months: 3, approved_at: NOW - 16 * D, free: false,
+    history: [{ months: 3, amount: 40, free: false, granted_at: NOW - 16 * D }], payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610140032", proof: null, status: "accepted", submitted_at: NOW - 16 * D } });
+  add("u_end", { email: "daniel.r@example.com", name: "Daniel Reyes", status: "approved", expires_at: NOW + 4 * D, plan_months: 1, approved_at: NOW - 26 * D,
+    history: [{ months: 1, amount: 15, granted_at: NOW - 26 * D }] });
+  add("u_free", { email: "tester@example.com", name: "Test Account", status: "approved", expires_at: NOW + 180 * D, plan_months: 6, approved_at: NOW - 3 * D, free: true,
+    history: [{ months: 6, amount: 0, free: true, granted_at: NOW - 3 * D }] });
+  add("u_exp", { email: "mei.l@example.com", name: "Mei Lin", status: "approved", expires_at: NOW - 5 * D, plan_months: 1, approved_at: NOW - 35 * D,
+    history: [{ months: 1, amount: 15, granted_at: NOW - 35 * D }] });
+  add("u_old", { email: "early.member@example.com", name: "Early Member", status: "approved", approved_at: NOW - 120 * D });
+  add("u_block", { email: "spam@example.com", name: "", status: "blocked" });
+  return u;
+}
+
+function presence() {
+  return {
+    "presence/u_member": { last_seen: NOW - 60_000, country: "AE", device: "iPhone app" },
+    "presence/u_end": { last_seen: NOW - 3 * H, country: "GB", device: "Desktop browser" },
+    "presence/u_pend1": { last_seen: NOW - 80 * 60_000, country: "SA", device: "Android app" },
+    "presence/u_free": { last_seen: NOW - 2 * D, country: "DE", device: "Android browser" },
+    "presence/u_exp": { last_seen: NOW - 9 * D, country: "SG", device: "Desktop app" },
+    "presence/u_old": { last_seen: NOW - 30 * 60_000, country: "AE", device: "Android app (Chrome)" },
+    "user_state/u_member": { push_ok_at: NOW - 15 * D },
+    "user_state/u_end": { push_error: { app: "web", stage: "token", code: "messaging/permission-blocked", message: "Notifications blocked in the browser", at: NOW - 2 * D } },
+  };
+}
+
+/** A small receipt-like picture drawn on a canvas (a payment screenshot stand-in). */
+function proofImage(): string {
+  try {
+    const c = document.createElement("canvas"); c.width = 360; c.height = 640;
+    const g = c.getContext("2d")!;
+    g.fillStyle = "#121417"; g.fillRect(0, 0, 360, 640);
+    g.fillStyle = "#f0b90b"; g.font = "bold 22px Inter, sans-serif"; g.fillText("Payment sent", 24, 70);
+    g.fillStyle = "#eaecef"; g.font = "bold 40px Inter, sans-serif"; g.fillText("40 USDT", 24, 140);
+    g.fillStyle = "#848e9c"; g.font = "16px Inter, sans-serif";
+    ["To: Crypto Intelligence AI", "Order ID: B2610290041887", "Status: Completed", "Sample image (preview)"].forEach((t, i) => g.fillText(t, 24, 210 + i * 36));
+    return c.toDataURL("image/png");
+  } catch { return ""; }
+}
+
+export function seed(): Record<string, any> {
+  const tfs = ["15m", "1h", "4h", "12h", "1d", "3d"];
+  const out: Record<string, any> = {
+    "config/watchlist": { symbols: COINS.map(([s], i) => ({ symbol: s, pinned: i < 2 })) },
+    "config/limits": { member_coin_limit: 5, member_coins_max: 0 },
+    "views/meta": v({ watchlist: COINS.map(([s], i) => ({ symbol: s, pinned: i < 2 ? 1 : 0 })), policy: { min_confidence: 0.55, min_model_agreement: 0.6, min_risk_reward: 1.25, require_edge_for_ml: true, require_edge_for_trade: true, edge_alpha: 0.05 }, costs: { fee_rate: 0.001, slippage_bps: 2, spread_bps: 1 } }),
+    "views/track_record": v(trackRecord()),
+    "views/wins_today": v({ period: "today", window_hours: 24, closed: 7, losses: 2, wins: [
+      { symbol: "XRP/USDT", timeframe: "1h", side: "LONG", entry: 0.5081, status: "TP3", return_pct: 3.12, closed_at: NOW - 2 * H, target: 0.5292 },
+      { symbol: "SOL/USDT", timeframe: "4h", side: "LONG", entry: 164.1, status: "TP2", return_pct: 2.31, closed_at: NOW - 5 * H, target: 168.9 },
+      { symbol: "AVAX/USDT", timeframe: "1h", side: "SHORT", entry: 27.92, status: "TP2", return_pct: 1.88, closed_at: NOW - 8 * H, target: 27.11 }] }),
+    "views/news": v({ calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: [], sources: [], next_high: { title: "CPI m/m", ts: NOW + 26 * H } }),
+    "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {} }),
+    "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
+    "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
+    "views/health": v({ status: "OK", engine: { last_tick_finished: NOW - 3 * 60_000, schedule_minutes: 5, ticks: 412 }, market_data: {}, exchange: {}, database: {}, config: {} }),
+    "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
+    "views/signals": v({ signals: [], summary: { closed: 0, note: "No closed signals yet." } }),
+    "users/u_member_self": undefined,
+    ...users(),
+    ...presence(),
+  };
+  for (const tf of tfs) {
+    out[`views/dashboard_${tf}`] = v(dashboard(tf));
+    out[`views/futures_${tf}`] = v({ timeframe: tf, rows: futuresRows(tf) });
+  }
+  delete out["users/u_member_self"];
+  return out;
+}
