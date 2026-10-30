@@ -279,7 +279,11 @@ def _table(res: dict[str, list], weeks: dict[str, float]) -> dict[str, Any]:
         return S.stats([t["r"] for t in trades], wk)
     keys = list(weeks)
     tfs = sorted({k.split(" ")[1] for k in keys}, key=lambda t: MODEL_TIMEFRAMES.index(t) if t in MODEL_TIMEFRAMES else 99)
-    return {"overall": block(keys), "by_timeframe": {tf: block([k for k in keys if k.endswith(f" {tf}")]) for tf in tfs}}
+    by = {tf: block([k for k in keys if k.endswith(f" {tf}")]) for tf in tfs}
+    overall = block(keys)
+    # timeframes have different test spans (15m ~3 weeks, 3d ~1 year): the overall rate is the sum of the timeframe rates
+    overall["trades_per_week"] = float(sum(b["trades_per_week"] or 0.0 for b in by.values()))
+    return {"overall": overall, "by_timeframe": by}
 
 
 def market_inputs(db, symbols: list[str]) -> dict[str, Any]:

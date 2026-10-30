@@ -161,12 +161,12 @@ class Settings:
     series_conf: bool = field(default_factory=lambda: _b("SERIES_CONF", False))
     series_conf_default: float = field(default_factory=lambda: _clamp(_f("SERIES_CONF_DEFAULT", 0.54), 0.5, 0.7))
     # 3. entry confirmation / pullback limit, chosen per timeframe nightly (entry_policy1|TF)
-    entry_rules: bool = field(default_factory=lambda: _b("ENTRY_RULES", False))
+    entry_rules: bool = field(default_factory=lambda: _b("ENTRY_RULES", True))      # proven 30 Oct (see CLAUDE.md)
     # 4. structure-based stop (nearest swing / S-R level + buffer, bounded to [0.8, 3.5] ATR)
     struct_stops: bool = field(default_factory=lambda: _b("STRUCT_STOPS", False))
     struct_stop_buffer_atr: float = field(default_factory=lambda: _clamp(_f("STRUCT_STOP_BUFFER_ATR", 0.25), 0.0, 1.0))
     # 5. pooled trade filter per timeframe (ml/trade_filter2.py), trained nightly on simulated + live + shadow trades
-    trade_filter2: bool = field(default_factory=lambda: _b("TRADE_FILTER2", False))
+    trade_filter2: bool = field(default_factory=lambda: _b("TRADE_FILTER2", True))  # proven 30 Oct; per timeframe exam
     # 7. Gemini news sentiment: collection only; never used for decisions until a gate proves it (>= 60 days)
     news_sentiment: bool = field(default_factory=lambda: _b("NEWS_SENTIMENT", True))
 

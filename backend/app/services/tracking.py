@@ -310,10 +310,19 @@ def _plan(a: dict[str, Any], db: Database | None = None) -> dict[str, Any]:
     if db is not None and a.get("timeframe"):
         from .series_nightly import entry_rule
         mode, k = entry_rule(db, a["timeframe"])
-        if mode in ("confirm", "pullback") and setup.get("atr"):
+        rr = [float(t.get("rr") or m) for t, m in zip(setup.get("targets", []), (1.0, 1.75, 2.5))] or [1.0, 1.75, 2.5]
+        if mode == "market":                      # proven for this timeframe: enter at the decision price, no limit
+            side = int(setup.get("side_int") or _side_of(a["decision"]))
+            px = float(a.get("price") or entry)
+            if setup.get("stop") is not None and side * (px - float(setup["stop"])) > 0:
+                d = abs(px - float(setup["stop"]))
+                entry, pending = px, False
+                tps = [px + side * m * d for m in rr] + [None, None, None]
+                rule = {"mode": "market", "k": 0.0, "rr": rr}
+        elif mode in ("confirm", "pullback") and setup.get("atr"):
             side = int(setup.get("side_int") or _side_of(a["decision"]))
             price = float(a.get("last_close") or a.get("price"))
-            rule = {"mode": mode, "k": k, "price": price, "atr": float(setup["atr"]),
+            rule = {"mode": mode, "k": k, "price": price, "atr": float(setup["atr"]), "rr": rr,
                     "level": price + side * k * float(setup["atr"]) * (1 if mode == "confirm" else -1)}
             pending = True
             if mode == "pullback":
@@ -503,7 +512,7 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
             return out
         new_entry = float(cl[ci])
         d = new_entry - stp
-        tps_new = [new_entry + m * d for m in (1.0, 1.75, 2.5)]
+        tps_new = [new_entry + m * d for m in (rule.get("rr") or (1.0, 1.75, 2.5))]
         out.update(fill_status="FILLED", filled_at=int(w["ts"].iloc[ci]) + pms, entry=new_entry,
                    tp1=tps_new[0], tp2=tps_new[1], tp3=tps_new[2])
         out["events"].append({"rule": "confirmed", "inputs": {"level": lvl, "entry": new_entry, "candle_ts": int(w["ts"].iloc[ci])}})
