@@ -6,9 +6,9 @@ import NewsBanner from "../components/NewsBanner";
 import TradeCall, { GradeBadge, Market, verdictOf } from "../components/TradeCall";
 import { Empty, ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
-import { base, fmtPctRaw, fmtPrice } from "../lib/format";
+import { base, fmtPctRaw, fmtPrice, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
-import { CALL_STATUS, fillLabel, livePnl, managedLabel, Pill, RiskBadge } from "../components/SignalExtras";
+import { CALL_STATUS, fillLabel, livePnl, managedLabel, Pill, RiskBadge, RoiFigure } from "../components/SignalExtras";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;
@@ -181,7 +181,10 @@ function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Mar
       {st && <Pill tone={st[1]}>{st[0]}</Pill>}
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
-      {pnl != null && <span className={`num text-[11px] font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`}>{fmtPctRaw(pnl, 2)}</span>}
+      {pnl != null && (isNum(c?.leverage) && c.leverage > 1
+        ? <span className={`num text-[11px] font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title={`Live ROI on margin at ${c.leverage}x · price ${fmtPctRaw(pnl, 2)}`}>{fmtPctRaw(pnl * c.leverage, 2)} ROI</span>
+        : <span className={`num text-[11px] font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live price move">{fmtPctRaw(pnl, 2)} price</span>)}
+      {c && c.status !== "OPEN" && isNum(c.return_pct) && <span className="inline-flex items-center gap-1"><RoiFigure x={c} size="sm" label={false} align="left" /></span>}
       {show && p && <RiskBadge entry={p.entry} stop={p.stop} leverage={market === "futures" ? p.suggested_leverage : 1} />}
     </div>
   );

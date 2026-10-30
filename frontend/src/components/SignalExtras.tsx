@@ -5,6 +5,7 @@
 //   row.stale           true when candles are too old to trade on
 import { useState } from "react";
 import { fmtPctRaw, isNum } from "../lib/format";
+import { roiOf, roiTone, signedPct } from "../lib/roi";
 
 type Tone = "bull" | "bear" | "warn" | "accent" | "mute";
 const PILL: Record<Tone, string> = {
@@ -82,18 +83,34 @@ export function CallStatusRow({ call, px }: { call?: any; px?: number }) {
   const open = call.status === "OPEN" && call.fill_status !== "PENDING" && call.fill_status !== "NOT_FILLED";
   const pnl = open ? livePnl(call.side, call.entry, px) : null;
   const peak = isNum(call.peak_r) || isNum(call.peak_pct);
-  if (!st && !fill && !managed && pnl == null && !peak) return null;
+  const done = call.status !== "OPEN" && isNum(call.return_pct);
+  const liveLev = isNum(call.leverage) && call.leverage > 1 ? call.leverage : null;
+  if (!st && !fill && !managed && pnl == null && !peak && !done) return null;
   return (
+    <div className="space-y-1.5">
+    {done && (
+      <div className={`relative flex items-center justify-between gap-3 overflow-hidden rounded-xl border px-3 py-2.5 ${call.return_pct > 0 ? "border-bull/35 bg-bull/[0.07]" : "border-bear/35 bg-bear/[0.07]"}`}>
+        <div className={`pointer-events-none absolute -right-8 -top-10 h-24 w-24 rounded-full blur-2xl ${call.return_pct > 0 ? "bg-bull/20" : "bg-bear/20"}`} aria-hidden="true" />
+        <div className="relative min-w-0">
+          <div className="label">Call result</div>
+          <div className="mt-1 text-xs font-semibold">{st ? st[0] : call.status}</div>
+        </div>
+        <span className="relative"><RoiFigure x={call} size="md" /></span>
+      </div>
+    )}
     <div className="flex flex-wrap items-center gap-1.5 text-xs">
-      {st && <Pill tone={st[1]}>{st[0]}</Pill>}
+      {st && !done && <Pill tone={st[1]}>{st[0]}</Pill>}
       {fill && <Pill tone={fill[1]} title={call.fill_status === "PENDING" ? "Pullback entry: the call counts once price trades through the entry" : "Price never reached the entry; not counted in the win rate"}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent" title="Closed by a managed exit rule">{managed}</Pill>}
-      {pnl != null && <span className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live, from the current price vs the entry (price move, before fees)">Live {fmtPctRaw(pnl, 2)}</span>}
+      {pnl != null && (liveLev
+        ? <span className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live, from the current price vs the entry, on margin at the suggested leverage (before fees)">Live {fmtPctRaw(pnl * liveLev, 2)} ROI <span className="font-normal text-mute">· {liveLev}x · price {fmtPctRaw(pnl, 2)}</span></span>
+        : <span className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live, from the current price vs the entry (price move, before fees)">Live {fmtPctRaw(pnl, 2)} price</span>)}
       {peak && (
         <span className="num text-mute" title="Best open profit reached since the call was published">
           Peak {isNum(call.peak_pct) ? fmtPctRaw(call.peak_pct, 2) : ""}{isNum(call.peak_r) ? `${isNum(call.peak_pct) ? " · " : ""}${call.peak_r.toFixed(2)}R` : ""}
         </span>
       )}
+    </div>
     </div>
   );
 }
@@ -111,5 +128,32 @@ export function AiNote({ ai }: { ai?: any }) {
       </button>
       {open && <p className="px-2.5 pb-2 leading-relaxed text-text/90">{text}</p>}
     </div>
+  );
+}
+
+/** Gold leverage chip ("10x"). */
+export function LevChip({ lev, className = "" }: { lev: number; className?: string }) {
+  return <span title="Leverage the signal card suggested" className={`num inline-flex h-[18px] items-center rounded-md border border-accent/45 bg-accent/10 px-1.5 text-[10px] font-bold leading-none text-accent ${className}`}>{lev}x</span>;
+}
+
+/** The headline result of a closed call: ROI on margin with its leverage chip, the price move as small text.
+ *  Without a leverage it shows the price move, labelled as such. align: text alignment of the block. */
+export function RoiFigure({ x, size = "md", align = "right", label = true }: { x: any; size?: "sm" | "md" | "lg"; align?: "left" | "right" | "center"; label?: boolean }) {
+  const r = roiOf(x);
+  if (!r) return <span className="num text-mute">—</span>;
+  const big = size === "lg" ? "text-3xl" : size === "md" ? "text-xl" : "text-sm";
+  const just = align === "right" ? "items-end text-right" : align === "center" ? "items-center text-center" : "items-start text-left";
+  return (
+    <span className={`inline-flex flex-col gap-0.5 ${just}`}>
+      <span className={`flex items-center gap-1.5 ${align === "right" ? "flex-row-reverse" : ""}`}>
+        <span className={`num font-extrabold leading-none tracking-tight ${big} ${roiTone(r.value)} ${size !== "sm" && r.value > 0 ? "drop-shadow-[0_0_12px_rgba(14,203,129,0.35)]" : ""}`}>{signedPct(r.value)}</span>
+        {r.leverage && <LevChip lev={r.leverage} />}
+      </span>
+      {label && (
+        <span className="num whitespace-nowrap text-[10px] leading-none text-mute">
+          {r.onMargin ? <>ROI on margin · price {signedPct(r.price)}</> : "price move"}
+        </span>
+      )}
+    </span>
   );
 }

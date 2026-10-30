@@ -45,7 +45,9 @@ function futuresRows(tf: string) {
       filter_score: side ? 0.61 : null, filter_threshold: 0.55, regime: REG[i], signal: SIG[i], funding_rate: 0.0001,
       record_status: side ? "logged" : "not_logged", stale: false,
       ai: side ? { rationale: "Price is holding above the rising 4H trend after a shallow pullback; momentum is recovering and the stop sits under the last swing low.", regime: "trend", model: "advisor", at: NOW - 20 * 60_000 } : undefined,
-      call: side ? { id: `c${i}`, status: "OPEN", fill_status: d === "BUY ON PULLBACK" ? "PENDING" : "FILLED", side: side > 0 ? "LONG" : "SHORT", entry: price * (1 - side * 0.004), stop: price * (1 - side * 0.02), peak_r: 0.42, peak_pct: 0.76, exit_reason: null, managed: 0, created_at: NOW - 3 * H } : null,
+      call: side ? { id: `c${i}`, status: "OPEN", fill_status: d === "BUY ON PULLBACK" ? "PENDING" : "FILLED", side: side > 0 ? "LONG" : "SHORT", entry: price * (1 - side * 0.004), stop: price * (1 - side * 0.02), peak_r: 0.42, peak_pct: 0.76, exit_reason: null, managed: 0, created_at: NOW - 3 * H, leverage: 8 }
+        : i === 6 ? { id: `c${i}`, status: "TP2", fill_status: "FILLED", side: "LONG", entry: price * 0.98, stop: price * 0.962, peak_r: 2.1, peak_pct: 3.4, exit_reason: null, managed: 0, created_at: NOW - 9 * H, closed_at: NOW - 2 * H, return_pct: 2.3, leverage: 10, roi_pct: 23 }
+        : i === 9 ? { id: `c${i}`, status: "STOPPED", fill_status: "FILLED", side: "SHORT", entry: price * 0.99, stop: price * 1.008, peak_r: 0.3, peak_pct: 0.4, exit_reason: "stop", managed: 0, created_at: NOW - 9 * H, closed_at: NOW - 3 * H, return_pct: -1.8, leverage: 8, roi_pct: -14.4 } : null,
     };
     if (side) row.plan = plan(price, side as 1 | -1, true, i === 4);
     else row.plan = plan(price, 1, false);
@@ -76,16 +78,20 @@ function trackRecord() {
     ["BNB/USDT", "4h", "LONG", "A", "TP1", 0.71], ["AVAX/USDT", "1h", "SHORT", "A", "TP2", 1.88], ["LTC/USDT", "1d", "LONG", "B", "EXPIRED", 0.12],
   ].map(([symbol, timeframe, side, grade, status, ret], i) => {
     const px = PRICES[symbol as string].p, s = side === "LONG" ? 1 : -1;
-    return { symbol, timeframe, side, grade, status, return_pct: ret, created_at: NOW - (i + 1) * 7 * H, closed_at: status === "OPEN" ? null : NOW - (i + 1) * 5 * H,
+    const leverage = Math.min(10, Math.floor(1 / (1.5 * 0.018 + 0.005)));   // engine/futures.signal_leverage for a 1.8% stop (cap 10x)
+    return { symbol, timeframe, side, grade, status, return_pct: ret, leverage, roi_pct: ret == null ? null : (ret as number) * leverage, created_at: NOW - (i + 1) * 7 * H, closed_at: status === "OPEN" ? null : NOW - (i + 1) * 5 * H,
       entry: px, stop: px * (1 - s * 0.018), tp1: px * (1 + s * 0.018), tp2: px * (1 + s * 0.029), tp3: px * (1 + s * 0.043),
       fill_status: "FILLED", peak_pct: status === "STOPPED" ? 0.4 : null, managed: 0 };
   });
   const closed = sigs.filter((x) => x.status !== "OPEN").map((x) => x.return_pct as number);
   let acc = 0;
-  const curve = sigs.slice().reverse().filter((x) => x.status !== "OPEN").map((x) => ({ ts: x.closed_at, cum_return_pct: (acc += x.return_pct as number) }));
+  let accRoi = 0;
+  const curve = sigs.slice().reverse().filter((x) => x.status !== "OPEN").map((x) => ({ ts: x.closed_at, cum_return_pct: (acc += x.return_pct as number), cum_roi_pct: (accRoi += x.roi_pct as number) }));
+  const rois = sigs.filter((x) => x.status !== "OPEN").map((x) => x.roi_pct as number);
   return {
     record_since: NOW - 2 * D, testing_since: NOW - 2 * D,
-    live: { summary: { closed: closed.length, win_rate: closed.filter((r) => r > 0).length / closed.length, avg_return_pct: closed.reduce((a, b) => a + b, 0) / closed.length, total_return_pct: acc },
+    live: { summary: { closed: closed.length, win_rate: closed.filter((r) => r > 0).length / closed.length, avg_return_pct: closed.reduce((a, b) => a + b, 0) / closed.length, total_return_pct: acc,
+      avg_roi_pct: accRoi / rois.length, total_roi_pct: accRoi, best_roi_pct: Math.max(...rois), worst_roi_pct: Math.min(...rois) },
       open: 1, curve, signals: sigs },
     tested: [{ symbol: "BTC/USDT", timeframe: "4h", edge: true, selective_hit_rate: 0.61, selective_ci95: [0.55, 0.67], calls_per_day: 0.8, tested_days: 410 },
       { symbol: "SOL/USDT", timeframe: "1h", edge: true, selective_hit_rate: 0.58, selective_ci95: [0.53, 0.63], calls_per_day: 2.1, tested_days: 380 },
@@ -93,7 +99,31 @@ function trackRecord() {
     bots: [{ scorecard: true, name: "Futures signals A+B · 4H", trades: 6, win_rate: 0.67, return_pct: 3.4, benchmark_return_pct: 1.2, max_drawdown_pct: 1.9, started_at: NOW - 2 * D },
       { scorecard: true, name: "Futures signals A+B · 1H", trades: 11, win_rate: 0.55, return_pct: 1.1, benchmark_return_pct: 1.2, max_drawdown_pct: 2.6, started_at: NOW - 2 * D }],
     method: { live: "Every trade signal the engine published, followed candle by candle.", tested: "Walk-forward test on data the models never saw." },
+    achievements: [
+      { id: "signals_10", title: "10 signals delivered", unlocked: true, value: "10", detail: "10 trade signals published and followed to the end", achieved_at: NOW - 1 * D },
+      { id: "best_trade", title: "Best signal", unlocked: true, value: "+31.2% ROI", detail: "XRP long · 10x margin · price +3.12%", achieved_at: NOW - 2 * H, roi_pct: 31.2, leverage: 10, return_pct: 3.12 },
+      { id: "win_streak", title: "Winning streak", unlocked: true, value: "4 in a row", detail: "consecutive winning signals", achieved_at: NOW - 6 * H },
+      { id: "all_targets", title: "All targets hit", unlocked: true, value: "1x", detail: "signals that reached take-profit 3", achieved_at: NOW - 2 * H },
+      { id: "best_week", title: "Best week", unlocked: true, value: "+58.4% ROI", detail: "total ROI on margin of all signals closed that week", achieved_at: NOW - 3 * D, roi_pct: 58.4 },
+      { id: "bot_futures-signal-ab-4h", title: "Beat buy & hold · 4H", unlocked: false, value: "+3.4%", detail: "scorecard bot vs +1.2% for holding", progress: 0.6 },
+      { id: "live_30", title: "30 days of public results", unlocked: false, value: "2 days", detail: "every signal public since launch", progress: 0.07 },
+    ],
   };
+}
+
+function weekly() {
+  const wk = 7 * D, start = NOW - (NOW - 4 * D) % wk;
+  const t = (symbol: string, timeframe: string, side: string, status: string, ret: number, leverage: number | null) =>
+    ({ symbol, timeframe, side, status, entry: PRICES[symbol]?.p ?? 1, return_pct: ret, leverage, roi_pct: leverage ? ret * leverage : null, grade: "A", created_at: start - D, closed_at: start - D / 2 });
+  const last = [t("XRP/USDT", "1h", "LONG", "TP3", 3.12, 10), t("SOL/USDT", "4h", "LONG", "TP2", 2.31, 10), t("AVAX/USDT", "1h", "SHORT", "TP2", 1.88, 9),
+    t("1000PEPE/USDT", "15m", "SHORT", "TP1", 0.71, null), t("BNB/USDT", "4h", "LONG", "TP1", 0.71, 10)];
+  const mk = (st: number, best: any[], complete: boolean, wins: number, losses: number, tot: number, totRoi: number) => ({
+    week_start: st, week_end: st + wk, complete, issued: wins + losses + 2, closed: wins + losses, wins, losses, win_rate: wins / (wins + losses),
+    total_return_pct: tot, total_roi_pct: totRoi, avg_return_pct: tot / (wins + losses), avg_roi_pct: totRoi / (wins + losses),
+    best, worst: t("ETH/USDT", "4h", "SHORT", "STOPPED", -1.62, 10), scorecard_bots: [{ name: "Futures signals A+B · 4H", week_return_pct: 2.4, total_return_pct: 3.4 }],
+    radar_best: { symbol: "SUI/USDT", ret_7d_pct: 14.2, vs_btc_pct: 9.8 },
+    basis: "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, before fees. ROI is on margin at the leverage each signal card suggested (price return x leverage); losses are multiplied the same way." });
+  return { reports: [mk(start, last.slice(0, 2), false, 2, 1, 3.81, 38.1), mk(start - wk, last, true, 7, 3, 6.92, 64.8)] };
 }
 
 function users() {
@@ -152,9 +182,10 @@ export function seed(): Record<string, any> {
     "views/meta": v({ watchlist: COINS.map(([s], i) => ({ symbol: s, pinned: i < 2 ? 1 : 0 })), policy: { min_confidence: 0.55, min_model_agreement: 0.6, min_risk_reward: 1.25, require_edge_for_ml: true, require_edge_for_trade: true, edge_alpha: 0.05 }, costs: { fee_rate: 0.001, slippage_bps: 2, spread_bps: 1 } }),
     "views/track_record": v(trackRecord()),
     "views/wins_today": v({ period: "today", window_hours: 24, closed: 7, losses: 2, wins: [
-      { symbol: "XRP/USDT", timeframe: "1h", side: "LONG", entry: 0.5081, status: "TP3", return_pct: 3.12, closed_at: NOW - 2 * H, target: 0.5292 },
-      { symbol: "SOL/USDT", timeframe: "4h", side: "LONG", entry: 164.1, status: "TP2", return_pct: 2.31, closed_at: NOW - 5 * H, target: 168.9 },
-      { symbol: "AVAX/USDT", timeframe: "1h", side: "SHORT", entry: 27.92, status: "TP2", return_pct: 1.88, closed_at: NOW - 8 * H, target: 27.11 }] }),
+      { symbol: "XRP/USDT", timeframe: "1h", side: "LONG", entry: 0.5081, status: "TP3", return_pct: 3.12, leverage: 10, roi_pct: 31.2, closed_at: NOW - 2 * H, target: 0.5292 },
+      { symbol: "SOL/USDT", timeframe: "4h", side: "LONG", entry: 164.1, status: "TP2", return_pct: 2.31, leverage: 10, roi_pct: 23.1, closed_at: NOW - 5 * H, target: 168.9 },
+      { symbol: "AVAX/USDT", timeframe: "1h", side: "SHORT", entry: 27.92, status: "TP2", return_pct: 1.88, leverage: 9, roi_pct: 16.92, closed_at: NOW - 8 * H, target: 27.11 },
+      { symbol: "1000PEPE/USDT", timeframe: "15m", side: "SHORT", entry: 0.00001234, status: "TP1", return_pct: 0.71, closed_at: NOW - 9 * H, target: 0.00001225 }] }),
     "views/news": v({ calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: [], sources: [], next_high: { title: "CPI m/m", ts: NOW + 26 * H } }),
     "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {} }),
     "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
@@ -162,6 +193,7 @@ export function seed(): Record<string, any> {
     "views/health": v({ status: "OK", engine: { last_tick_finished: NOW - 3 * 60_000, schedule_minutes: 5, ticks: 412 }, market_data: {}, exchange: {}, database: {}, config: {} }),
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
     "views/signals": v({ signals: [], summary: { closed: 0, note: "No closed signals yet." } }),
+    "views/weekly_report": v(weekly()),
     "users/u_member_self": undefined,
     ...users(),
     ...presence(),
