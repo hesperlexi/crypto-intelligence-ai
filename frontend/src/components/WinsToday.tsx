@@ -1,4 +1,5 @@
 // "Wins of the day" for the sign-in page: real winning signals closed in the last 24 hours (else this week).
+import { Link } from "react-router-dom";
 import { useApi } from "../lib/api";
 import { base, fmtPrice, isNum } from "../lib/format";
 import { CoinAvatar } from "./Polish";
@@ -13,6 +14,12 @@ export default function WinsToday() {
   const v = useApi<any>("/wins-today", 60_000);
   const wins: any[] = v.data?.wins ?? [];
   if (!wins.length) return null;
+  // v1 contract: `closed` (all closed calls in the same window: a list or a count) and `losses` (count). Old payloads lack them.
+  const d = v.data ?? {};
+  const closedN: number | null = Array.isArray(d.closed) ? d.closed.length : isNum(d.closed) ? d.closed : null;
+  const lossesN: number | null = isNum(d.losses) ? d.losses : null;
+  const winsN = closedN != null && lossesN != null ? Math.max(0, closedN - lossesN) : wins.length;
+  const showTally = lossesN != null || closedN != null;
   return (
     <section id="wins" className="scroll-mt-20 py-8">
       <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">
@@ -40,7 +47,14 @@ export default function WinsToday() {
           </li>
         ))}
       </ul>
+      {showTally && (
+        <p className="num mt-5 text-center text-sm">
+          <span className="font-semibold text-bull">{winsN} {winsN === 1 ? "win" : "wins"}</span> · <span className="font-semibold text-bear">{lossesN ?? 0} {lossesN === 1 ? "loss" : "losses"}</span> <span className="text-mute">in the same period</span>
+          {" · "}<Link to="/results" className="text-accent hover:underline">full record, losses included, on Results (members)</Link>
+        </p>
+      )}
       <p className="mt-3 text-center text-[11px] text-mute">Selected winning signals; the full results, losses included, are available to members inside the app. Not financial advice.</p>
+      <p className="mt-1 text-center text-[11px] text-mute">Past results do not guarantee future results. Trading crypto can lose money. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
     </section>
   );
 }

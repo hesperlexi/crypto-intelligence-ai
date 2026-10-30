@@ -10,8 +10,11 @@ import { base, fmtPctRaw, fmtPrice } from "../lib/format";
 import { useMembershipConfig } from "../lib/membership";
 import WinsToday from "./WinsToday";
 import TelegramLink from "./TelegramLink";
-import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
+import { BUILD_ID } from "../lib/version";
 import { CoinAvatar } from "./Polish";
+import SiteFooter, { TRUST_LINKS } from "./SiteFooter";
+import { AnimatedLogo } from "./Logo";
+import { Link } from "react-router-dom";
 
 const COINS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "DOGE/USDT"];
 
@@ -85,7 +88,7 @@ export default function Landing({ error }: { error: string | null }) {
       <header className="glass-bar sticky top-0 z-30 border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <img src={`/icons/icon-192.png?v=${BUILD_ID}`} alt="" className="h-9 w-9" />
+            <AnimatedLogo size={36} />
             <span className="font-display text-[15px] font-bold sm:text-base">Crypto Intelligence <span className="text-accent">AI</span></span>
           </div>
           <div className="flex items-center gap-2">
@@ -109,7 +112,7 @@ export default function Landing({ error }: { error: string | null }) {
               Know the setup<br /><span className="text-gradient">before</span> you trade.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-mute">
-              AI forecasts, ready-made trade plans and instant phone alerts for every coin you follow. Then test them risk-free before you put real money in.
+              AI forecasts, ready-made trade plans and instant phone alerts for every coin you follow. Then practise them with virtual money first, no real funds involved.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
@@ -249,6 +252,9 @@ export default function Landing({ error }: { error: string | null }) {
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>
           <p className="mx-auto mt-3 max-w-xl text-mute">Join in a minute. Analysis and practice tool, not financial advice.</p>
           <div className="mt-6">{cta(true)}</div>
+          <p className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-mute">
+            {TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="hover:text-text hover:underline">{label}</Link>)}
+          </p>
         </section>
       </main>
 
@@ -260,10 +266,7 @@ export default function Landing({ error }: { error: string | null }) {
           </div>
         </div>
       )}
-      <footer className="border-t border-glass/[0.06] px-4 py-6 text-center text-xs text-mute">
-        {COPYRIGHT} · Crypto Intelligence AI · <span className="num">v{APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual</a> · <a href={`mailto:${cfg.support_email}`} className="text-accent hover:underline">{cfg.support_email}</a> · <TelegramLink variant="link" />
-        <div className="mt-1">Research tool, not financial advice. Forecasts are probabilities, never certainties. No real orders are placed.</div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

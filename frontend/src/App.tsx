@@ -1,7 +1,7 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
-import { lazy, Suspense, useEffect, useState } from "react";
-import { Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
 import UpdateNotice from "./components/UpdateNotice";
@@ -14,6 +14,10 @@ import { auth, db, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
+import { AnimatedLogo, Logo } from "./components/Logo";
+import SiteFooter, { TRUST_LINKS } from "./components/SiteFooter";
+import { AdminOnly, BootLoader, ErrorBoundary, NavIcon, NotFound, RouteSkeleton, useFocusTrap } from "./components/Shell";
+import { ModeSwitch } from "./lib/mode";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
 import TelegramLink from "./components/TelegramLink";
@@ -48,6 +52,10 @@ const Scanner = page(() => import("./pages/Scanner"));
 const Settings = page(() => import("./pages/Settings"));
 const Signals = page(() => import("./pages/Signals"));
 const Users = page(() => import("./pages/Users"));
+// public information pages (About, Contact, Privacy, Terms, Risk): own layout signed out, inside the app signed in
+const TrustPage = page(() => import("./pages/Trust"));
+const TrustContent = page(() => import("./pages/Trust").then((m) => ({ default: m.TrustContent })));
+const TRUST: Record<string, "about" | "contact" | "privacy" | "terms" | "risk"> = { "/about": "about", "/contact": "contact", "/privacy": "privacy", "/terms": "terms", "/risk": "risk" };
 try { window.setTimeout(() => sessionStorage.removeItem("chunk-reload"), 15000); } catch { /* ignore */ }
 const prefetch = () => { void import("./pages/Signals"); void import("./pages/Paper"); void import("./pages/Results"); void import("./pages/Asset"); };
 if (typeof window !== "undefined") window.setTimeout(() => ((window as any).requestIdleCallback ?? ((f: () => void) => f()))(prefetch), 2500);
@@ -66,7 +74,7 @@ const NAV = [
 const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"]] as const;
 
 // phone bottom bar: four main sections + "More" for the rest
-const PRIMARY: [string, string, string][] = [["/", "Home", "◧"], ["/signals", "Signals", "◆"], ["/paper", "Trade", "◎"], ["/results", "Results", "▤"]];
+const PRIMARY: [string, string, string][] = [["/", "Home", "home"], ["/signals", "Signals", "signals"], ["/paper", "Trade", "trade"], ["/results", "Results", "results"]];
 
 function StatusPill({ user }: { user: User }) {
   const { connected, feed } = useLive();
@@ -107,22 +115,27 @@ function Toasts() {
 }
 
 export default function App() {
+  const loc = useLocation();
+  const trust = TRUST[loc.pathname.replace(/\/+$/, "") || "/"];
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [role, setRole] = useState<Role>("loading");
   useEffect(() => onAuthStateChanged(auth, (u) => { void (u ? loadDashboard() : loadLanding()).catch(() => {}); setUser(u); setRole("loading"); }), []);
   useEffect(() => (user ? watchRole(user, setRole) : undefined), [user]);
   useEffect(() => { if (user && role !== "loading") startPresence(); }, [user, role]);
-  if (user === undefined || (user && role === "loading")) return <div className="py-20 text-center text-sm text-mute">Loading…</div>;
-  if (!user) return <Suspense fallback={<div className="py-20 text-center text-sm text-mute">Loading…</div>}><Landing error={null} /></Suspense>;
+  // trust pages are public: shown straight away signed out, and to people waiting for access
+  const publicTrust = trust && (user === null || (user && (role === "pending" || role === "expired" || role === "blocked")));
+  if (publicTrust) return <ErrorBoundary resetKey={loc.pathname}><Suspense fallback={<BootLoader />}><div className="route-fade min-h-full"><TrustPage kind={trust} /></div></Suspense></ErrorBoundary>;
+  if (user === undefined || (user && role === "loading")) return <BootLoader />;
+  if (!user) return <ErrorBoundary resetKey={loc.pathname}><Suspense fallback={<BootLoader />}><Landing error={null} /></Suspense></ErrorBoundary>;
   const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role };
   setSession(session);
   if (role === "pending" || role === "expired" || role === "blocked") return <AccessScreen user={user} role={role} />;
-  return <SessionCtx.Provider value={session}><LiveProvider><Shell user={user} /></LiveProvider></SessionCtx.Provider>;
+  return <SessionCtx.Provider value={session}><LiveProvider><ErrorBoundary resetKey={loc.pathname}><Shell user={user} /></ErrorBoundary></LiveProvider></SessionCtx.Provider>;
 }
 
 function AccessScreen({ user, role }: { user: User; role: Role }) {
   const rec = useMyRecord();
-  const logo = <img src={`/icons/icon-512.png?v=${BUILD_ID}`} alt="Crypto Intelligence AI logo" className="mx-auto mb-3 h-20 w-20 drop-shadow-[0_8px_24px_rgb(var(--accent)/0.35)]" />;
+  const logo = <Logo size={80} title="Crypto Intelligence AI logo" className="mx-auto mb-3 drop-shadow-[0_8px_24px_rgb(var(--accent)/0.35)]" />;
   if (role === "blocked") {
     return (
       <div className="flex min-h-full items-center justify-center px-4">
@@ -156,21 +169,12 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
           <span className="flex items-center gap-4"><TelegramLink variant="link" /><SupportLink className="text-accent hover:underline" label="Problem? Contact support" /><button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button></span>
         </div>
         <p className="mt-3 text-center text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION} · Analysis and demo trading only, not financial advice.</p>
+        <p className="mt-1 flex flex-wrap justify-center gap-x-3 text-[11px]">{TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="text-mute hover:text-text">{label}</Link>)}</p>
       </div>
     </div>
   );
 }
 
-function Footer({ className = "" }: { className?: string }) {
-  return (
-    <footer className={`border-t border-glass/[0.06] px-4 py-3 text-center text-xs text-mute ${className}`}>
-      <div>{COPYRIGHT} · Crypto Intelligence AI · <span className="num">Version {APP_VERSION}</span> · <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">User manual (PDF)</a> · <SupportLink className="text-accent hover:underline" /> · <TelegramLink variant="link" /></div>
-      <div className="mt-1 hidden md:block">
-        Research tool, not financial advice. Forecasts are probabilities with uncertainty, never certainties. No real orders are placed. Demo bots and paper trading use virtual money.
-      </div>
-    </footer>
-  );
-}
 
 function usePendingCount(admin: boolean) {
   const [n, setN] = useState(0);
@@ -182,6 +186,8 @@ function usePendingCount(admin: boolean) {
 function Shell({ user }: { user: User }) {
   const loc = useLocation();
   const [more, setMore] = useState(false);
+  const closeMore = useCallback(() => setMore(false), []);
+  const sheet = useFocusTrap(more, closeMore);
   const admin = useIsAdmin();
   const pending = usePendingCount(admin);
   const nav: (readonly [string, string])[] = [...NAV, ...(admin ? [...ADMIN_NAV, ["/users", pending ? `Users (${pending})` : "Users"] as const] : [])];
@@ -192,7 +198,7 @@ function Shell({ user }: { user: User }) {
     `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-accent/10 font-medium text-accent shadow-[inset_0_-2px_0_rgb(var(--accent)),inset_0_1px_0_rgb(var(--glass)/0.06)]" : "text-mute hover:text-text"}`;
   const brand = (
     <div className="flex min-w-0 items-center gap-2.5">
-      <img src={`/icons/icon-192.png?v=${BUILD_ID}`} alt="" className="h-8 w-8" />
+      <AnimatedLogo size={32} className="shrink-0" />
       <NavLink to="/" className="truncate text-[15px] font-semibold tracking-tight text-text">
         Crypto Intelligence <span className="text-accent">AI</span>
       </NavLink>
@@ -222,6 +228,7 @@ function Shell({ user }: { user: User }) {
             </div>
             {side && <span className="hidden md:inline"><Badge tone="mute" title="This application never places real orders">Analysis only</Badge></span>}
             <div className="flex items-center gap-2">
+              <ModeSwitch className="hidden sm:inline-flex" />
               <InstallButton compact />
               <AppearanceButton />
               <StatusPill user={user} />
@@ -238,8 +245,8 @@ function Shell({ user }: { user: User }) {
         <TickerTape />
         {!admin && <RenewBanner />}
         <main className={`mx-auto w-full ${width} flex-1 px-3 py-4 sm:px-4`}>
-          <div key={loc.pathname} className="page-enter">
-          <Suspense fallback={<div className="space-y-3 py-2" aria-busy="true"><div className="skeleton h-24 rounded-xl" /><div className="skeleton h-64 rounded-xl" /></div>}>
+          <div key={loc.pathname} className="page-enter route-fade">
+          <Suspense fallback={<RouteSkeleton />}>
           <Routes>
             <Route path="/" element={<Dashboard />} />
             <Route path="/asset/:symbol" element={<Asset />} />
@@ -250,8 +257,8 @@ function Shell({ user }: { user: User }) {
             <Route path="/results" element={<Results />} />
             <Route path="/track" element={<Navigate to="/results?tab=track" replace />} />
             <Route path="/radar" element={<Radar />} />
-            <Route path="/report" element={<Report />} />
-            <Route path="/achievements" element={<Achievements />} />
+            <Route path="/report" element={<AdminOnly><Report /></AdminOnly>} />
+            <Route path="/achievements" element={<AdminOnly><Achievements /></AdminOnly>} />
             <Route path="/accuracy" element={<Navigate to="/results?tab=accuracy" replace />} />
             <Route path="/bots" element={<Navigate to="/results?tab=bots" replace />} />
             <Route path="/backtest" element={<Backtest />} />
@@ -260,15 +267,16 @@ function Shell({ user }: { user: User }) {
             <Route path="/paper" element={<Paper />} />
             <Route path="/trade" element={<Navigate to="/paper" replace />} />
             <Route path="/alerts" element={<Alerts />} />
-            <Route path="/health" element={<Health />} />
+            <Route path="/health" element={<AdminOnly><Health /></AdminOnly>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<Users />} />
-            <Route path="*" element={<div className="py-10 text-center text-mute">Page not found</div>} />
+            {Object.entries(TRUST).map(([path, kind]) => <Route key={path} path={path} element={<TrustContent kind={kind} />} />)}
+            <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
           </div>
         </main>
-        <Footer className="pb-24 md:pb-3" />
+        <SiteFooter className="pb-24 md:pb-4" />
       </div>
 
       {/* phone navigation */}
@@ -277,12 +285,12 @@ function Shell({ user }: { user: User }) {
           {PRIMARY.map(([to, label, icon]) => (
             <NavLink key={to} to={to} end={to === "/"} onClick={() => setMore(false)}
               className={({ isActive }) => `flex flex-col items-center gap-0.5 py-2 text-[11px] ${isActive ? "text-accent" : "text-mute"}`}>
-              <span className="text-lg leading-none" aria-hidden>{icon}</span>{label}
+              <NavIcon name={icon} />{label}
             </NavLink>
           ))}
-          <button onClick={() => setMore((v) => !v)} aria-expanded={more}
+          <button onClick={() => setMore((v) => !v)} aria-expanded={more} aria-controls="more-sheet"
             className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${more ? "text-accent" : "text-mute"}`}>
-            <span className="relative text-lg leading-none" aria-hidden>⋯{pending > 0 && <span className="absolute -right-2 -top-1 h-2 w-2 rounded-full bg-warn" />}</span>More
+            <span className="relative" aria-hidden><NavIcon name="more" />{pending > 0 && <span className="absolute -right-1 top-0 h-2 w-2 rounded-full bg-warn" />}</span>More
           </button>
         </div>
       </nav>
@@ -290,12 +298,15 @@ function Shell({ user }: { user: User }) {
         <div className="fixed inset-0 z-[45] md:hidden" onClick={() => setMore(false)}>
           <div className="absolute inset-0 bg-ink/60 backdrop-blur-sm" />
           {/* positioned wrapper: .panel sets its own position, so the sheet's placement lives on this div */}
-          <div className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-7rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+          <div ref={sheet} id="more-sheet" role="dialog" aria-modal="true" aria-label="More sections" className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-7rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <div className="panel animate-in p-2">
             <div className="grid grid-cols-2 gap-1">
               {nav.filter(([to]) => !PRIMARY.some((p) => p[0] === to)).map(([to, label]) => (
                 <NavLink key={to} to={to} onClick={() => setMore(false)} className={navCls}>{label}</NavLink>
               ))}
+            </div>
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
+              <span>View</span><ModeSwitch />
             </div>
             <div className="mt-2 flex items-center justify-between border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
               <span className="truncate">{user.email}</span>
