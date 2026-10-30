@@ -8,6 +8,7 @@ import { TfTabs } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge, Stat } from "../components/ui";
 import { useApi } from "../lib/api";
 import { base, DASH, fmtCompact, fmtPct, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
+import { RoiFigure } from "../components/SignalExtras";
 import { useLive } from "../lib/live";
 import { useIsPro } from "../lib/mode";
 
@@ -207,7 +208,7 @@ function WinsMini() {
               </span>
               <span className="flex items-center gap-2">
                 <span className="rounded bg-bull/15 px-1.5 text-[11px] font-bold text-bull">{label[w.status] ?? "WIN"}</span>
-                <span className="num font-semibold text-bull">+{Number(w.return_pct).toFixed(1)}%</span>
+                <RoiFigure x={w} size="sm" label={false} align="left" />
               </span>
             </li>
           ))}

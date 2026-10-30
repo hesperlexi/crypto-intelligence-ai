@@ -5,7 +5,7 @@ import { useApi } from "../lib/api";
 import { base, fmtDate, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { CoinAvatar } from "./Polish";
 import { Explain, useIsPro } from "../lib/mode";
-import { managedLabel, fillLabel, Pill } from "./SignalExtras";
+import { managedLabel, fillLabel, Pill, RoiFigure } from "./SignalExtras";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 const rate = (v: unknown) => (isNum(v) ? `${Math.round(v * 100)}%` : "—");
@@ -15,15 +15,18 @@ const STATUS: Record<string, [string, string]> = {
   STOPPED: ["Stopped", "text-bear"], EXPIRED: ["Expired", "text-mute"], OPEN: ["Open", "text-accent"],
 };
 
-function Curve({ pts }: { pts: { ts: number; cum_return_pct: number }[] }) {
+function Curve({ pts, roi }: { pts: { ts: number; cum_return_pct: number; cum_roi_pct?: number }[]; roi: boolean }) {
   if (pts.length < 2) return null;
-  const w = 600, h = 120, ys = pts.map((p) => p.cum_return_pct), lo = Math.min(0, ...ys), hi = Math.max(0, ...ys);
+  const val = (p: { cum_return_pct: number; cum_roi_pct?: number }) => (roi && isNum(p.cum_roi_pct) ? p.cum_roi_pct : p.cum_return_pct);
+  const w = 600, h = 120, ys = pts.map(val), lo = Math.min(0, ...ys), hi = Math.max(0, ...ys);
   const x = (i: number) => (i / (pts.length - 1)) * w, y = (v: number) => h - ((v - lo) / (hi - lo || 1)) * h;
-  const d = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.cum_return_pct).toFixed(1)}`).join("");
+  const d = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(val(p)).toFixed(1)}`).join("");
   const up = ys[ys.length - 1] >= 0;
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="h-28 w-full" preserveAspectRatio="none" role="img" aria-label="Cumulative result of all closed signals">
+      <defs><linearGradient id="tr-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0.22" /><stop offset="1" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0" /></linearGradient></defs>
       <line x1="0" x2={w} y1={y(0)} y2={y(0)} stroke="currentColor" className="text-glass/20" strokeDasharray="4 4" />
+      <path d={`${d}L${w},${y(0).toFixed(1)}L0,${y(0).toFixed(1)}Z`} fill="url(#tr-fill)" />
       <path d={d} fill="none" stroke={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>
   );
@@ -46,7 +49,8 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   const avgTested = edge.length ? edge.reduce((a, t) => a + (t.selective_hit_rate ?? 0), 0) / edge.length : null;
   const sigs: any[] = d.live?.signals ?? [];
 
-  const fresh = !(s.closed > 0);   // nothing closed yet (e.g. right after a fresh start of the record)
+  const fresh = !(s.closed > 0);
+  const roi = isNum(s.avg_roi_pct);          // ROI on margin available (v2.6 record); else the price move, labelled   // nothing closed yet (e.g. right after a fresh start of the record)
   return (
     <div className="space-y-3">
       {fresh ? (
@@ -62,16 +66,18 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi k="Closed signals" v={String(s.closed ?? 0)} sub={d.record_since ? `${d.testing_since ? "testing period · " : ""}since ${fmtDate(d.record_since)}${d.record_since_tf?.["15m"] ? ` (15M since ${fmtDate(d.record_since_tf["15m"])}, rule updates)` : ""} · ${d.live?.open ?? 0} open` : d.since ? `since ${fmtDate(d.since)} · ${d.live?.open ?? 0} open` : undefined} />
         <Kpi k="Win rate (live)" v={rate(s.win_rate)} sub={s.closed ? `${s.closed} closed signals` : "first results soon"} />
-        <Kpi k="Avg result per signal" v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub="before fees" />
+        {roi ? <Kpi k="Avg ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin at each card's leverage · price ${pct(s.avg_return_pct, 2)} · before fees`} />
+          : <Kpi k="Avg price move per signal" v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub="before fees" />}
         {pro ? <Kpi k="Tested hit rate" v={rate(avgTested)} sub={`${edge.length} coin/timeframes with a proven edge`} />
-          : <Kpi k="Total result" v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub="all closed signals, equal size" />}
+          : roi ? <Kpi k="Total ROI on margin" v={pct(s.total_roi_pct)} cls={tone(s.total_roi_pct)} sub={`all closed signals · price ${pct(s.total_return_pct)}`} />
+          : <Kpi k="Total price move" v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub="all closed signals, equal size" />}
       </div>
       )}
-      <Explain>Win rate: the share of closed signals that ended in profit. Avg result: the average price move per signal, before fees.</Explain>
+      <Explain>Win rate: the share of closed signals that ended in profit. ROI on margin: the price move times the leverage the signal card suggested (a 2.5% move at 10x is +25% on the margin; losses grow the same way). Before fees.</Explain>
       {(d.live?.curve?.length ?? 0) > 1 && (
         <div className="panel px-4 pt-3">
-          <div className="flex items-center justify-between text-xs text-mute"><span>Cumulative result of every closed signal (equal size)</span><span className={`num font-semibold ${tone(s.total_return_pct)}`}>{pct(s.total_return_pct)}</span></div>
-          <Curve pts={d.live.curve} />
+          <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? "Cumulative ROI on margin of every closed signal (equal margin)" : "Cumulative price move of every closed signal (equal size)"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>
+          <Curve pts={d.live.curve} roi={roi} />
         </div>
       )}
       {compact ? null : (
@@ -84,9 +90,35 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           </div>
           {(tab === "live" || (!pro && tab === "tested")) && (
             <div className="overflow-x-auto">
-              {!sigs.length ? <p className="p-4 text-sm text-mute">No trade signals yet. Each one appears here the moment it is published, and its result is filled in as the price moves.</p> : (
-                <table className="grid-table min-w-[560px] sm:min-w-[720px]">
-                  <thead><tr><th>Signal</th><th className="text-center">Grade</th><th className="text-right">Entry</th><th className="text-right">Stop</th><th className="text-right">Target 1</th><th>Result</th><th className="text-right">Return</th></tr></thead>
+              {!sigs.length ? <p className="p-4 text-sm text-mute">No trade signals yet. Each one appears here the moment it is published, and its result is filled in as the price moves.</p> : (<>
+                {/* phones: one card per signal, the result on margin up front */}
+                <ul className="divide-y divide-glass/[0.06] sm:hidden">
+                  {sigs.map((x, i) => {
+                    const [lab, cls] = STATUS[x.status] ?? [x.status, ""];
+                    return (
+                      <li key={i} className="px-4 py-3">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex min-w-0 items-center gap-2.5">
+                            <CoinAvatar symbol={x.symbol} size={30} />
+                            <div className="min-w-0">
+                              <div className="flex items-center gap-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-[11px] font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-[11px] text-mute">{String(x.timeframe).toUpperCase()}</span>{x.grade && <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded border px-1 text-[10px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}</div>
+                              <div className={`mt-0.5 whitespace-nowrap text-[11px] font-semibold ${cls}`}>{lab} <span className="num font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
+                            </div>
+                          </div>
+                          {x.status === "OPEN" ? <span className="text-sm text-accent">open</span> : <RoiFigure x={x} size="md" />}
+                        </div>
+                        <dl className="num mt-2 grid grid-cols-3 gap-2 text-[11px]">
+                          <div><dt className="text-mute">Entry</dt><dd className="font-medium">{fmtPrice(x.entry)}</dd></div>
+                          <div className="text-center"><dt className="text-mute">Stop</dt><dd className="font-medium text-bear">{fmtPrice(x.stop)}</dd></div>
+                          <div className="text-right"><dt className="text-mute">Target 1</dt><dd className="font-medium text-bull">{fmtPrice(x.tp1)}</dd></div>
+                        </dl>
+                        <RecordExtras x={x} />
+                      </li>
+                    );
+                  })}
+                </ul>
+                <table className="grid-table hidden min-w-[720px] sm:table">
+                  <thead><tr><th>Signal</th><th className="text-center">Grade</th><th className="text-right">Entry</th><th className="text-right">Stop</th><th className="text-right">Target 1</th><th>Result</th><th className="text-right">ROI on margin</th></tr></thead>
                   <tbody>
                     {sigs.map((x, i) => {
                       const [lab, cls] = STATUS[x.status] ?? [x.status, ""];
@@ -96,13 +128,13 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                           <td className="text-center">{x.grade ? <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-[11px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span> : <span className="text-mute">—</span>}</td>
                           <td className="num text-right">{fmtPrice(x.entry)}</td><td className="num text-right text-bear">{fmtPrice(x.stop)}</td><td className="num text-right text-bull">{fmtPrice(x.tp1)}</td>
                           <td className={`text-xs font-semibold ${cls}`}>{lab}<RecordExtras x={x} /></td>
-                          <td className={`num text-right font-semibold ${tone(x.return_pct)}`}>{x.status === "OPEN" ? "…" : pct(x.return_pct, 2)}</td>
+                          <td className="text-right align-middle">{x.status === "OPEN" ? <span className="text-accent">…</span> : <RoiFigure x={x} size="sm" />}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
-              )}
+              </>)}
             </div>
           )}
           {tab === "tested" && pro && (
