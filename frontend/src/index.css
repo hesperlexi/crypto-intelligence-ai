@@ -130,6 +130,7 @@ main .grid > * { min-width: 0; }
 @media (max-width: 767px) { .seg > button { min-height: 34px; } }
 .seg > button:hover { @apply text-text; }
 .seg > button[aria-pressed="true"] { @apply bg-accent/15 text-accent; }
+.seg > button.seg-strong[aria-pressed="true"] { color: rgb(24 26 32); background: linear-gradient(180deg, rgb(252 213 53), rgb(240 185 11)); }
 .seg > button:focus-visible { outline: 2px solid rgb(var(--accent) / 0.7); outline-offset: 1px; }
 @media (max-width: 767px) { .btn-sm { min-height: 36px; } }
 .btn-primary {
@@ -271,6 +272,7 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.5); transform: translateY(-2px
 [data-theme] .panel { border-radius: var(--radius, 16px); }
 /* light theme: the accent is a darker gold for readable text; filled buttons keep the bright gold with dark text */
 [data-theme="light"] .input { background: rgb(255 255 255); }
+[data-theme="light"] .text-gradient { background: linear-gradient(90deg, rgb(160 112 0), rgb(122 86 0)); -webkit-background-clip: text; background-clip: text; }
 [data-theme="light"] table.grid-table th { background: rgb(248 249 251); }
 [data-theme="light"] { --glass-hairline: rgb(15 23 42 / 0.10); --glass-highlight: rgb(255 255 255 / 0.9); --glass-shadow: 0 10px 30px -16px rgb(15 23 42 / 0.18); }
 

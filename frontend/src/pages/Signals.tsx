@@ -86,7 +86,7 @@ export default function Signals() {
           <div className="seg" role="group" aria-label="Market">
             {(["futures", "spot"] as const).map((k) => (
               <button key={k} type="button" aria-pressed={market === k} onClick={() => setMarket(k)}
-                className={`!px-4 !text-sm ${market === k ? "!bg-accent !text-ink" : ""}`}>
+                className="seg-strong !px-4 !text-sm">
                 {k === "futures" ? "Futures" : "Spot"}
               </button>
             ))}
