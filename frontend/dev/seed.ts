@@ -51,6 +51,14 @@ function futuresRows(tf: string) {
     };
     if (side) row.plan = plan(price, side as 1 | -1, true, i === 4);
     else row.plan = plan(price, 1, false);
+    if (row.call) Object.assign(row.call, { tp1: row.call.entry + (row.call.side === "LONG" ? 1 : -1) * Math.abs(row.call.entry - row.call.stop), tp1_hit: 0 });
+    if (i === 0) {
+      // v2.7 sample: the admin moved this open call's stop-loss (public, forward-only)
+      Object.assign(row.call, { entry: row.plan.entry, stop: row.plan.stop, tp1: row.plan.targets[0].price });
+      const old = row.call.stop, nu = Math.round(price * 0.9905);
+      row.call = { ...row.call, stop0: old, tp1_0: row.call.tp1, stop: nu,
+        adjustments: [{ at: NOW - 48 * 60_000, field: "stop", old, new: nu, note: "Locking in more of the move before the US CPI release" }] };
+    }
     return row;
   });
 }
@@ -81,8 +89,10 @@ function trackRecord() {
     const leverage = Math.min(10, Math.floor(1 / (1.5 * 0.018 + 0.005)));   // engine/futures.signal_leverage for a 1.8% stop (cap 10x)
     return { symbol, timeframe, side, grade, status, return_pct: ret, leverage, roi_pct: ret == null ? null : (ret as number) * leverage, created_at: NOW - (i + 1) * 7 * H, closed_at: status === "OPEN" ? null : NOW - (i + 1) * 5 * H,
       entry: px, stop: px * (1 - s * 0.018), tp1: px * (1 + s * 0.018), tp2: px * (1 + s * 0.029), tp3: px * (1 + s * 0.043),
-      fill_status: "FILLED", peak_pct: status === "STOPPED" ? 0.4 : null, managed: 0 };
+      fill_status: "FILLED", peak_pct: status === "STOPPED" ? 0.4 : null, managed: 0 } as any;
   });
+  // v2.7 sample: a closed call stopped at the level the admin moved
+  Object.assign(sigs[2], { exit_reason: "admin_stop", adjustments: [{ at: sigs[2].created_at + 3 * H, field: "stop", old: sigs[2].stop, new: sigs[2].entry * 1.0162, note: "Cutting risk: the trend turned against the short" }] });
   const closed = sigs.filter((x) => x.status !== "OPEN").map((x) => x.return_pct as number);
   let acc = 0;
   let accRoi = 0;

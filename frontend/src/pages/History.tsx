@@ -3,6 +3,7 @@ import { Badge, Card, Empty, ErrorBox, Loading, SignalBadge, signalTone, Stat } 
 import { useApi } from "../lib/api";
 import { RoiFigure } from "../components/SignalExtras";
 import { DASH, fmtDate, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, slug, tone } from "../lib/format";
+import { UpdatedBadge } from "../components/SignalAdjust";
 
 const hit = (v: number, tracked: boolean) => (!tracked ? <span className="text-mute">{DASH}</span> : v ? <span className="text-bull">HIT</span> : <span className="text-mute">not hit</span>);
 
@@ -40,10 +41,10 @@ export default function History() {
                     <td className="uppercase text-mute">{s.timeframe}</td>
                     <td><SignalBadge signal={s.signal} /></td><td><Badge tone={signalTone(s.decision)}>{s.decision}</Badge></td>
                     <td className="num text-right">{fmtPrice(s.price)}</td><td className="num text-right">{fmtProb(s.confidence)}</td>
-                    <td className="num text-right">{fmtPrice(s.stop)}</td>
+                    <td className="num text-right" title={s.adjustments?.length ? s.adjustments.map((a: any) => `${a.field === "stop" ? "Stop-loss" : "TP1"} ${fmtPrice(a.old)} → ${fmtPrice(a.new)} · ${a.note}`).join("\n") : undefined}>{fmtPrice(s.stop)}</td>
                     <td>{hit(s.tp1_hit, tracked)}</td><td>{hit(s.tp2_hit, tracked)}</td><td>{hit(s.tp3_hit, tracked)}</td>
                     <td>{!tracked ? <span className="text-mute">{DASH}</span> : s.stop_hit ? <span className="text-bear">HIT</span> : <span className="text-mute">not hit</span>}</td>
-                    <td><Badge tone={s.status === "OPEN" ? "accent" : s.status === "STOPPED" ? "bear" : s.status.startsWith("TP") ? "bull" : "mute"}>{s.status === "INFO" ? "not traded" : s.status}</Badge></td>
+                    <td><UpdatedBadge adj={s.adjustments} /> <Badge tone={s.status === "OPEN" ? "accent" : s.status === "STOPPED" ? "bear" : s.status.startsWith("TP") ? "bull" : "mute"}>{s.status === "INFO" ? "not traded" : s.status}</Badge></td>
                     <td className="text-right">{isNum(s.return_pct) && tracked ? <RoiFigure x={s} size="sm" /> : <span className="text-mute">{DASH}</span>}</td>
                   </tr>
                 );

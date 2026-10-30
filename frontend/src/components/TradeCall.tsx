@@ -5,6 +5,7 @@ import { DASH, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, isGoldSignal } f
 import { useLive } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 import { AiNote, CallStatusRow, RiskBadge } from "./SignalExtras";
+import { AdjustButton, AdjustHistory, adjustedPlan, UpdatedBadge } from "./SignalAdjust";
 import { Explain, PLAIN, useIsPro } from "../lib/mode";
 
 export type Market = "spot" | "futures";
@@ -78,7 +79,9 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   const px = tickers[r.symbol]?.last ?? r.price;
   const v = verdictOf(r, market);
   const t = TONE[v.tone];
-  const raw = r.plan;
+  // an open call the admin adjusted: the card shows the stop / TP1 now in force (history below the status)
+  const call = r.call;
+  const raw = adjustedPlan(r.plan, call);
   // spot never shorts: a short plan has no spot meaning
   const plan = raw && (market === "futures" || raw.side === "LONG") ? raw : null;
   const active = v.tone !== "wait" && !!plan && (market === "futures" || v.tone === "bull");
@@ -161,6 +164,13 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           <div className={`text-base font-semibold ${v.tone === "wait" ? "" : t.text}`}>{v.headline}</div>
           {r.record_status === "already_open" && <p className="mt-1 text-xs text-mute">Following the open call: this setup is already in the record, so it is not logged twice.</p>}
           <div className="mt-1.5"><CallStatusRow call={r.call} px={px} /></div>
+          {(call?.adjustments?.length || call?.status === "OPEN") && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 empty:hidden">
+              <UpdatedBadge adj={call?.adjustments} />
+              <AdjustButton call={call} symbol={r.symbol} timeframe={r.timeframe} />
+            </div>
+          )}
+          {call?.adjustments?.length > 0 && <div className="mt-1.5"><AdjustHistory adj={call.adjustments} /></div>}
           {active && status && (
             <div className={`mt-1 flex items-center gap-1.5 text-sm ${status.ok ? "text-bull" : "text-warn"}`}>
               <span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}

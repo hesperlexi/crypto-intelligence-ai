@@ -1,5 +1,6 @@
 // Public track record: every trade signal since launch with its real outcome, the models' results on past data
 // they never trained on (a labelled simulation), and the demo bots. Readable without an account.
+import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
 import { useState } from "react";
 import { useApi } from "../lib/api";
 import { base, fmtDate, fmtPrice, fmtTime, isNum } from "../lib/format";
@@ -185,12 +186,18 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
 function RecordExtras({ x }: { x: any }) {
   const fill = fillLabel(x.fill_status);
   const managed = x.managed === 1 ? managedLabel(x.exit_reason) : null;
-  if (!fill && !managed && !isNum(x.peak_pct)) return null;
+  const adj = x.adjustments?.length ? x.adjustments : null;
+  if (!fill && !managed && !isNum(x.peak_pct) && !adj) return null;
   return (
-    <div className="mt-0.5 flex flex-wrap items-center gap-1 font-normal">
+    <div className="font-normal">
+    <div className="mt-0.5 flex flex-wrap items-center gap-1">
+      <UpdatedBadge adj={adj} />
+      {x.exit_reason === "admin_stop" && <Pill tone="warn" title="Closed at the stop-loss the admin moved (public change, shown below)">Admin stop</Pill>}
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
       {isNum(x.peak_pct) && <span className="num text-[11px] text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</span>}
+    </div>
+    {adj && <AdjustHistory adj={adj} compact />}
     </div>
   );
 }
