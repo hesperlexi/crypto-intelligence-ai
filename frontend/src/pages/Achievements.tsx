@@ -3,112 +3,116 @@
 import { useState } from "react";
 import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
-import { fmtDate } from "../lib/format";
-import { SITE_HOST } from "../lib/brand";
+import { fmtDate, isNum } from "../lib/format";
+import { backdrop, C, cap, chip, download, fit, font, fontsReady, footer, glowText, header, M, panel, text, wrap } from "../lib/cardCanvas";
+import { LevChip } from "../components/SignalExtras";
 
-const SITE = SITE_HOST;
 const ICON: Record<string, string> = { signals: "◆", best_trade: "▲", win_streak: "⚡", all_targets: "◎", best_week: "★", green_weeks: "▣",
   win_rate_30d: "%", bot: "⚙", radar_star: "✦", proven_edges: "✓", live: "◷" };
 const iconOf = (id: string) => ICON[Object.keys(ICON).find((k) => id.startsWith(k)) ?? ""] ?? "★";
 
-function img(src: string): Promise<HTMLImageElement | null> {
-  return new Promise((res) => { const i = new Image(); i.onload = () => res(i); i.onerror = () => res(null); i.src = src; });
-}
-const F = (w: number, px: number, mono = false) => `${w} ${px}px ${mono ? "ui-monospace, Menlo, monospace" : "Inter, system-ui, sans-serif"}`;
-
-/** Largest font (down to min) at which the text fits the width. */
-function fit(g: CanvasRenderingContext2D, t: string, w: number, max: number, min: number, weight = 800, mono = false) {
-  let px = max;
-  g.font = F(weight, px, mono && t.length <= 7);
-  while (px > min && g.measureText(t).width > w) { px -= 2; g.font = F(weight, px, mono && t.length <= 7); }
-}
-
-function lines(g: CanvasRenderingContext2D, t: string, w: number, n = 2): string[] {
-  const out: string[] = []; let cur = "";
-  for (const word of t.split(" ")) {
-    const nx = cur ? `${cur} ${word}` : word;
-    if (g.measureText(nx).width > w && cur) { out.push(cur); cur = word; } else cur = nx;
-  }
-  if (cur) out.push(cur);
-  return out.length > n ? [...out.slice(0, n - 1), out.slice(n - 1).join(" ").slice(0, 40) + "…"] : out;
-}
-
-function backdrop(g: CanvasRenderingContext2D, W: number, H: number) {
-  const bg = g.createLinearGradient(0, 0, W, H); bg.addColorStop(0, "#0b0e11"); bg.addColorStop(1, "#181a20");
-  g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  const glow = g.createRadialGradient(W / 2, H * 0.36, 20, W / 2, H * 0.36, W * 0.6);
-  glow.addColorStop(0, "rgba(240,185,11,0.25)"); glow.addColorStop(1, "rgba(240,185,11,0)");
-  g.fillStyle = glow; g.fillRect(0, 0, W, H);
-  g.strokeStyle = "rgba(240,185,11,0.35)"; g.lineWidth = 4; g.strokeRect(24, 24, W - 48, H - 48);
-}
-
 function medal(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, icon: string) {
-  const ring = g.createLinearGradient(cx - r, cy - r, cx + r, cy + r); ring.addColorStop(0, "#fcd535"); ring.addColorStop(1, "#b8860b");
+  g.save();
+  g.shadowColor = "rgba(240,185,11,0.55)"; g.shadowBlur = r * 0.5;
+  const ring = g.createLinearGradient(cx - r, cy - r, cx + r, cy + r); ring.addColorStop(0, "#fcd535"); ring.addColorStop(0.5, "#f0b90b"); ring.addColorStop(1, "#8a6508");
   g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = ring; g.fill();
-  g.beginPath(); g.arc(cx, cy, r * 0.82, 0, Math.PI * 2); g.fillStyle = "#14171c"; g.fill();
-  g.fillStyle = "#f0b90b"; g.font = F(800, r * 0.8); g.textAlign = "center"; g.textBaseline = "middle"; g.fillText(icon, cx, cy + r * 0.04);
-  g.textBaseline = "alphabetic";
-}
-
-async function header(g: CanvasRenderingContext2D, W: number, y: number) {
-  const logo = await img("/icons/icon-192.png");
-  g.textAlign = "left";
-  const t1 = "Crypto Intelligence ", t2 = "AI";
-  g.font = F(800, 38);
-  const w = (logo ? 76 : 0) + g.measureText(t1 + t2).width, x = (W - w) / 2;
-  if (logo) g.drawImage(logo, x, y - 48, 62, 62);
-  g.fillStyle = "#eaecef"; g.fillText(t1, x + (logo ? 76 : 0), y);
-  g.fillStyle = "#f0b90b"; g.fillText(t2, x + (logo ? 76 : 0) + g.measureText(t1).width, y);
-}
-
-function footer(g: CanvasRenderingContext2D, W: number, H: number) {
-  g.textAlign = "center"; g.fillStyle = "#eaecef"; g.font = F(700, 28); g.fillText(`AI crypto signals · join at ${SITE}`, W / 2, H - 92);
-  g.fillStyle = "#848e9c"; g.font = F(500, 20); g.fillText("Achieved by the app's published signals. Not financial advice; past results don't guarantee future ones.", W / 2, H - 58);
+  g.restore();
+  const inner = g.createRadialGradient(cx, cy - r * 0.3, 0, cx, cy, r * 0.84); inner.addColorStop(0, "#221c10"); inner.addColorStop(1, "#0b0a08");
+  g.beginPath(); g.arc(cx, cy, r * 0.84, 0, Math.PI * 2); g.fillStyle = inner; g.fill();
+  g.beginPath(); g.arc(cx, cy, r * 0.84, 0, Math.PI * 2); g.strokeStyle = "rgba(240,185,11,0.35)"; g.lineWidth = 2; g.stroke();
+  // icon glyph centred by its measured box, not the font's line box
+  g.font = font(800, r * 0.8); g.textAlign = "center"; g.textBaseline = "alphabetic";
+  const m = g.measureText(icon);
+  const asc = m.actualBoundingBoxAscent, desc = m.actualBoundingBoxDescent;
+  g.fillStyle = C.gold; g.fillText(icon, cx, cy + (asc - desc) / 2);
   g.textAlign = "left";
 }
+
+const valueColor = (a: any) => (isNum(a.roi_pct) && a.roi_pct < 0 ? C.bear : C.bull);
 
 async function drawBadge(cv: HTMLCanvasElement, a: any) {
   const W = 1080, H = 1080; cv.width = W; cv.height = H;
   const g = cv.getContext("2d")!;
+  await fontsReady();
   backdrop(g, W, H);
-  await header(g, W, 120);
-  g.textAlign = "center"; g.fillStyle = "#f0b90b"; g.font = F(700, 28); g.fillText("ACHIEVEMENT UNLOCKED", W / 2, 200);
-  medal(g, W / 2, 400, 150, iconOf(a.id));
-  g.fillStyle = "#ffffff"; g.font = F(800, 64); g.fillText(a.title, W / 2, 650);
-  g.fillStyle = "#0ecb81"; fit(g, a.value, W - 200, 96, 48, 800, true); g.fillText(a.value, W / 2, 770);
-  g.fillStyle = "#b7bdc6"; g.font = F(500, 32); g.fillText(a.detail, W / 2, 830);
-  if (a.achieved_at) { g.fillStyle = "#848e9c"; g.font = F(500, 26); g.fillText(fmtDate(a.achieved_at), W / 2, 876); }
-  footer(g, W, H);
+  await header(g, "Achievement unlocked");
+  medal(g, W / 2, 352, 132, iconOf(a.id));
+  text(g, a.title, W / 2, 560, { weight: 800, px: 56, align: "center", maxW: W - 2 * M - 48 });
+  // hero value: "+31.2% ROI" -> the number glows, the unit sits beside it on the same baseline
+  const raw = String(a.value);
+  const roi = / ROI$/.test(raw);
+  const num = roi ? raw.replace(/ ROI$/, "") : raw;
+  const lev = isNum(a.leverage) ? a.leverage : null;
+  const unit = roi ? "ROI" : "";
+  const px = fit(g, num, W - 2 * M - (unit ? 200 : 0), 112, 48, 800);
+  g.font = font(800, px);
+  const nw = g.measureText(num).width;
+  g.font = font(800, Math.round(px * 0.42));
+  const uw = unit ? g.measureText(unit).width + 20 : 0;
+  const x0 = W / 2 - (nw + uw) / 2, by = 690;
+  glowText(g, num, x0, by, valueColor(a), { weight: 800, px, blur: 40 });
+  if (unit) text(g, unit, x0 + nw + 20, by, { weight: 800, px: Math.round(px * 0.42), color: C.gold });
+  // detail line(s), centred, wrapped
+  g.font = font(500, 28);
+  const det = wrap(g, String(a.detail), W - 2 * M - 80, 2);
+  let y = by + 64;
+  if (lev && isNum(a.return_pct)) {
+    // leverage chip + price move, centred as one group
+    const chipLabel = `${lev}x MARGIN`, mv = `price ${a.return_pct > 0 ? "+" : ""}${a.return_pct.toFixed(2)}%`;
+    g.font = font(800, 18); const cw = g.measureText(chipLabel).width + 32;
+    g.font = font(500, 24); const mw = g.measureText(mv).width;
+    const gx = W / 2 - (cw + 16 + mw) / 2;
+    const e = chip(g, gx, y - 28, chipLabel, { h: 40, px: 18 });
+    g.font = font(500, 24);
+    text(g, mv, e + 16, y - 8 + cap(g) / 2, { weight: 500, px: 24, color: C.text });
+    y += 48;
+    const sub = `${String(a.detail).split(" · ")[0]}`;
+    text(g, sub, W / 2, y, { weight: 500, px: 28, color: C.mute, align: "center", maxW: W - 2 * M - 80 });
+    y += 40;
+  } else {
+    det.forEach((ln, k) => text(g, ln, W / 2, y + k * 38, { weight: 500, px: 28, color: C.mute, align: "center" }));
+    y += det.length * 38;
+  }
+  if (a.achieved_at) text(g, fmtDate(a.achieved_at), W / 2, y + 8, { weight: 600, px: 22, color: C.dim, align: "center" });
+  g.font = font(500, 17);
+  footer(g, W, H - 168, "AI crypto signals · join the app",
+    wrap(g, "Achieved by the app's published signals, wins and losses all counted. ROI on margin = price move × the signal card's suggested leverage. Not financial advice.", W - 2 * M, 2));
 }
 
 async function drawPoster(cv: HTMLCanvasElement, list: any[]) {
   const items = list.slice(0, 9);
   const W = 1080, H = 1350; cv.width = W; cv.height = H;
   const g = cv.getContext("2d")!;
+  await fontsReady();
   backdrop(g, W, H);
-  await header(g, W, 120);
-  g.textAlign = "center"; g.fillStyle = "#f0b90b"; g.font = F(700, 30); g.fillText("OUR ACHIEVEMENTS", W / 2, 190);
-  const cols = Math.min(3, Math.max(1, items.length)), cw = 300, ch = 340, gap = 30;
+  const hy = await header(g, "Our achievements");
+  const cols = Math.min(3, Math.max(1, items.length)), gap = 24;
+  const cw = (W - 2 * M - (3 - 1) * gap) / 3, ch = 336;
   const rows = Math.ceil(items.length / cols);
-  const gridH = rows * ch + (rows - 1) * gap, top = 230 + Math.max(0, (H - 230 - 160 - gridH) / 2);
+  const gridH = rows * ch + (rows - 1) * gap;
+  const fy = H - 168;
+  const top = hy + 40 + Math.max(0, (fy - 40 - (hy + 40) - gridH) / 2);
   items.forEach((a, i) => {
     const row = Math.floor(i / cols), inRow = Math.min(cols, items.length - row * cols);
     const rowW = inRow * cw + (inRow - 1) * gap, x0 = (W - rowW) / 2;
-    const x = x0 + (i % cols) * (cw + gap), y = top + row * (ch + gap);
-    g.fillStyle = "rgba(255,255,255,0.045)"; g.fillRect(x, y, cw, ch);
-    g.strokeStyle = "rgba(240,185,11,0.25)"; g.lineWidth = 2; g.strokeRect(x, y, cw, ch);
-    medal(g, x + cw / 2, y + 90, 60, iconOf(a.id));
-    g.textAlign = "center";
-    g.fillStyle = "#0ecb81"; fit(g, a.value, cw - 30, 44, 26, 800, true); g.fillText(a.value, x + cw / 2, y + 210);
-    g.fillStyle = "#ffffff"; fit(g, a.title, cw - 24, 26, 18, 700); g.fillText(a.title, x + cw / 2, y + 252);
-    g.fillStyle = "#848e9c"; g.font = F(500, 18);
-    lines(g, String(a.detail), cw - 30).forEach((ln, k) => g.fillText(ln, x + cw / 2, y + 286 + k * 24));
+    const x = x0 + (i % cols) * (cw + gap), y = top + row * (ch + gap), cx = x + cw / 2;
+    panel(g, x, y, cw, ch, { r: 24 });
+    medal(g, cx, y + 92, 56, iconOf(a.id));
+    const raw = String(a.value), roi = / ROI$/.test(raw), num = roi ? raw.replace(/ ROI$/, "") : raw;
+    // value + optional ROI unit centred together on one baseline
+    const px = fit(g, num, cw - (roi ? 96 : 40), 44, 24, 800);
+    g.font = font(800, px); const nw = g.measureText(num).width;
+    g.font = font(800, Math.round(px * 0.5)); const uw = roi ? g.measureText("ROI").width + 10 : 0;
+    const vx = cx - (nw + uw) / 2;
+    glowText(g, num, vx, y + 214, valueColor(a), { weight: 800, px, blur: 14 });
+    if (roi) text(g, "ROI", vx + nw + 10, y + 214, { weight: 800, px: Math.round(px * 0.5), color: C.gold });
+    text(g, a.title, cx, y + 256, { weight: 700, px: 24, align: "center", maxW: cw - 32, minPx: 16 });
+    g.font = font(500, 17);
+    wrap(g, String(a.detail), cw - 40, 2).forEach((ln, k) => text(g, ln, cx, y + 288 + k * 23, { weight: 500, px: 17, color: C.mute, align: "center" }));
   });
-  footer(g, W, H);
-}
-
-function save(cv: HTMLCanvasElement, name: string) {
-  const a = document.createElement("a"); a.download = name; a.href = cv.toDataURL("image/png"); a.click();
+  g.font = font(500, 17);
+  footer(g, W, fy, "AI crypto signals · join the app",
+    wrap(g, "Achieved by the app's published signals, wins and losses all counted. ROI on margin = price move × the signal card's suggested leverage. Not financial advice; past results don't guarantee future ones.", W - 2 * M, 2));
 }
 
 export default function Achievements() {
@@ -118,8 +122,8 @@ export default function Achievements() {
   if (v.error) return <ErrorBox error={v.error} retry={v.reload} />;
   const list: any[] = v.data?.achievements ?? [];
   const unlocked = list.filter((a) => a.unlocked);
-  const dl = async (a: any) => { setBusy(a.id); const cv = document.createElement("canvas"); await drawBadge(cv, a); save(cv, `achievement-${a.id}.png`); setBusy(null); };
-  const dlAll = async () => { setBusy("all"); const cv = document.createElement("canvas"); await drawPoster(cv, unlocked); save(cv, "crypto-intelligence-achievements.png"); setBusy(null); };
+  const dl = async (a: any) => { setBusy(a.id); const cv = document.createElement("canvas"); await drawBadge(cv, a); download(cv, `achievement-${a.id}.png`); setBusy(null); };
+  const dlAll = async () => { setBusy("all"); const cv = document.createElement("canvas"); await drawPoster(cv, unlocked); download(cv, "crypto-intelligence-achievements.png"); setBusy(null); };
 
   return (
     <div className="space-y-4">
@@ -136,7 +140,11 @@ export default function Achievements() {
           <li key={a.id} className={`panel flex flex-col items-center p-5 text-center ${a.unlocked ? "border-accent/40" : "opacity-60"}`}>
             <span className={`flex h-16 w-16 items-center justify-center rounded-full border-4 text-2xl font-extrabold ${a.unlocked ? "border-accent bg-accent/10 text-accent" : "border-glass/20 text-mute"}`}>{iconOf(a.id)}</span>
             <div className="mt-3 font-semibold">{a.title}</div>
-            <div className={`num mt-1 text-2xl font-bold ${a.unlocked ? "text-bull" : "text-mute"}`}>{a.value}</div>
+            <div className="mt-1 flex items-center justify-center gap-1.5">
+              <span className={`num text-2xl font-extrabold tracking-tight ${a.unlocked ? (isNum(a.roi_pct) && a.roi_pct < 0 ? "text-bear" : "text-bull drop-shadow-[0_0_12px_rgba(14,203,129,0.35)]") : "text-mute"}`}>{String(a.value).replace(/ ROI$/, "")}</span>
+              {/ ROI$/.test(String(a.value)) && <span className="text-xs font-bold text-accent">ROI</span>}
+              {isNum(a.leverage) && <LevChip lev={a.leverage} />}
+            </div>
             <div className="mt-1 text-xs text-mute">{a.detail}</div>
             {a.unlocked ? (
               <>
