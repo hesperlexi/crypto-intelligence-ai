@@ -328,9 +328,10 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     # support email moved to the app's own domain (owner request, 27 Oct 2026); runs once
     if not rt.db.get_setting("support_email_v23", False):
         m = sink.get("config/membership") or {}
-        sink.set("config/membership", {**m, "support_email": "support@cryptointelai.com", "updated_at": now_ms()})
+        from . import brand
+        sink.set("config/membership", {**m, "support_email": brand.SUPPORT_EMAIL, "updated_at": now_ms()})
         rt.db.set_setting("support_email_v23", True)
-        notes["support_email"] = "support@cryptointelai.com"
+        notes["support_email"] = brand.SUPPORT_EMAIL
     # v2.3 fresh start (owner request, 27 Oct 2026): every bot book and the admin's practice trades are cleared -
     # wins and losses alike - the bot line-up becomes 5 spot + 5 futures signal bots, and the counted performance
     # record restarts now. Older signals stay in the Signal log; members' own practice accounts are not touched.

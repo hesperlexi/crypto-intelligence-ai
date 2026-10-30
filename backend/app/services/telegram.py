@@ -25,7 +25,10 @@ import requests
 from ..db import Database, now_ms
 
 log = logging.getLogger(__name__)
-SITE = "https://crypapp-6a9b9.web.app"
+from .. import brand
+from ..pricefmt import fmt_price
+
+SITE = brand.URL
 API = "https://api.telegram.org"
 WINS_HOUR_UTC = 16
 WEEKLY_HOUR_UTC = 6
@@ -33,7 +36,7 @@ TEASER_DELAY_MS = 60 * 60_000
 MAX_WIN_POSTS = 5
 MAX_DRAFTS = 6                     # each card is ~70 KB; a Firestore document holds 1 MB
 DRAFTS = "owner/telegram_drafts"
-DEFAULTS = {"enabled": False, "channel": "@crypappai", "post_wins": True, "post_weekly": True, "post_teaser": True,
+DEFAULTS = {"enabled": False, "channel": brand.TELEGRAM_CHANNEL, "post_wins": True, "post_weekly": True, "post_teaser": True,
             "post_each_win": True, "approve_first": True}
 
 
@@ -140,7 +143,7 @@ def win_text(w: dict[str, Any]) -> str:
     return "\n".join([
         f"✅ <b>{_coin(w['symbol'])} {w['side']}</b> ({w['timeframe'].upper()}) · {target} · <b>+{w['return_pct']:.1f}%</b>",
         f"Entry {_px(w['entry'])} → {_px(w['exit_price'])} · held {w['held']}",
-        "", f"Get every signal live 👉 {SITE}", "<i>Not financial advice.</i>"])
+        "", f"Get every signal live 👉 {SITE}", f"<i>{html.escape(brand.FOOTER)}</i>"])
 
 
 def _coin(sym: str) -> str:
@@ -149,9 +152,7 @@ def _coin(sym: str) -> str:
 
 
 def _px(v: float | None) -> str:
-    if v is None:
-        return "—"
-    return f"{v:,.2f}" if v >= 100 else f"{v:,.4f}" if v >= 1 else f"{v:.6g}"
+    return fmt_price(v)      # no scientific notation for coins below 0.0001
 
 
 def wins_text(w: dict[str, Any]) -> str | None:
@@ -163,7 +164,7 @@ def wins_text(w: dict[str, Any]) -> str | None:
     for x in wins[:5]:
         lines.append(f"✅ <b>{_coin(x['symbol'])}</b> {x['side']} ({x['timeframe'].upper()}) · entry {_px(x['entry'])} · "
                      f"{target.get(x['status'], 'closed in profit')} · <b>+{x['return_pct']:.1f}%</b>")
-    lines += ["", f"Get every signal live with entry, stop-loss and targets 👉 {SITE}", "<i>Not financial advice.</i>"]
+    lines += ["", f"Get every signal live with entry, stop-loss and targets 👉 {SITE}", f"<i>{html.escape(brand.FOOTER)}</i>"]
     return "\n".join(lines)
 
 
@@ -177,7 +178,7 @@ def weekly_text(r: dict[str, Any]) -> str | None:
              f"📈 Total of all closed signals: <b>{r['total_return_pct']:+.1f}%</b>"]
     if best:
         lines += ["", "Top signals:"] + [f"• {_coin(t['symbol'])} {t['side']} ({t['timeframe'].upper()}): +{t['return_pct']:.1f}%" for t in best]
-    lines += ["", f"AI crypto signals from 15 USDT/month 👉 {SITE}", "<i>Not financial advice. Past results don't guarantee future results.</i>"]
+    lines += ["", f"AI crypto signals from 15 USDT/month 👉 {SITE}", "<i>Past results don't guarantee future results.</i>", f"<i>{html.escape(brand.FOOTER)}</i>"]
     return "\n".join(lines)
 
 
@@ -190,7 +191,7 @@ def teaser_text(s: dict[str, Any]) -> str:
         f"Entry: {_px(s['entry'])}", f"Stop-loss: {_px(s['stop'])}",
         f"Targets: {_px(s['tp1'])} · {_px(s['tp2'])} · {_px(s['tp3'])}",
         "", f"Members get every signal the moment it appears, with phone alerts 👉 {SITE}",
-        "<i>Not financial advice. Prices may have moved since.</i>"])
+        "<i>Prices may have moved since.</i>", f"<i>{html.escape(brand.FOOTER)}</i>"])
 
 
 def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] | None,

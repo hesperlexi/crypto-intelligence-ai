@@ -21,7 +21,10 @@ RED = (234, 57, 67)
 WHITE = (240, 242, 245)
 MUTED = (138, 146, 160)
 PANEL = (24, 28, 37)
-SITE_TEXT = "crypapp-6a9b9.web.app"
+from .. import brand
+from ..pricefmt import fmt_price
+
+SITE_TEXT = brand.DISPLAY_URL
 _fonts: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}
 
 
@@ -41,9 +44,7 @@ def coin(sym: str) -> str:
 
 
 def px(v: float | None) -> str:
-    if v is None:
-        return "—"
-    return f"{v:,.2f}" if v >= 100 else f"{v:,.4f}" if v >= 1 else f"{v:.6g}"
+    return fmt_price(v)      # no scientific notation for coins below 0.0001
 
 
 def _side(s: Any) -> str:
@@ -79,9 +80,11 @@ def _base(title: str) -> tuple[Image.Image, ImageDraw.ImageDraw]:
 
 def _footer(d: ImageDraw.ImageDraw, note: str = "Not financial advice") -> None:
     d.line([(52, H - 82), (W - 52, H - 82)], fill=(44, 50, 62), width=2)
-    d.text((52, H - 62), SITE_TEXT, font=_f("Bold", 24), fill=GOLD)
+    d.text((52, H - 72), SITE_TEXT, font=_f("Bold", 24), fill=GOLD)
     fn = _f("Medium", 20)
-    d.text((W - 52 - d.textlength(note, font=fn), H - 59), note, font=fn, fill=MUTED)
+    d.text((W - 52 - d.textlength(note, font=fn), H - 69), note, font=fn, fill=MUTED)
+    small = _f("Medium", 15)                     # brand footer (name, version, site, support, disclaimer)
+    d.text((52, H - 36), brand.FOOTER, font=small, fill=MUTED)
 
 
 def _pill(d: ImageDraw.ImageDraw, x: int, y: int, text: str, fg, bg, size: int = 22) -> int:
