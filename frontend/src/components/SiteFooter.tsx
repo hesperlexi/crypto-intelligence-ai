@@ -1,8 +1,11 @@
 // Footer shared by the signed-out landing page, the public trust pages and the app shell.
+// Two centred lines: the links, then a smaller muted line with copyright, version, site, contact and disclaimer.
+// Separators are CSS (`.foot-dots-sm` / `.foot-dots-lg` in index.css), drawn only from the width where that row fits on
+// one line; narrower, the items wrap centred with even gaps, so no "·" is ever left hanging at a line end.
 import { Link } from "react-router-dom";
-import { BRAND, SITE_HOST } from "../lib/brand";
+import { BRAND } from "../lib/brand";
 import { BUILD_ID, COPYRIGHT } from "../lib/version";
-import TelegramLink from "./TelegramLink";
+import { TELEGRAM_URL } from "./TelegramLink";
 
 export const TRUST_LINKS: [string, string][] = [
   ["/about", "About"],
@@ -12,24 +15,26 @@ export const TRUST_LINKS: [string, string][] = [
   ["/risk", "Risk disclosure"],
 ];
 
-export default function SiteFooter({ className = "" }: { className?: string }) {
-  // Two lines: links with the copyright in the right corner, then one line of brand, contact and disclaimer.
+const HOST = BRAND.url.replace(/^https?:\/\/(www\.)?/, "");
+const OWNER = COPYRIGHT.split(".")[0];               // "© 2026 Hesper"
+const link = "rounded-sm transition-colors hover:text-text focus-visible:text-text focus-visible:outline focus-visible:outline-1 focus-visible:outline-offset-2 focus-visible:outline-accent/60";
+
+export default function SiteFooter({ className = "", width = "max-w-6xl" }: { className?: string; width?: string }) {
   return (
-    <footer className={`border-t border-glass/[0.06] px-4 py-3 text-xs text-mute ${className}`}>
-      <div className="mx-auto flex max-w-7xl flex-col gap-1.5">
-        <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 md:justify-between">
-          <nav aria-label="Legal and information" className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1">
-            {TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="hover:text-text">{label}</Link>)}
-            <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="hover:text-text">Manual (PDF)</a>
-            <TelegramLink variant="link" />
-          </nav>
-          <span className="whitespace-nowrap">{COPYRIGHT}</span>
-        </div>
-        <p className="text-center md:text-left">
-          {BRAND.name} v{BRAND.version} · <a href={BRAND.url} className="hover:text-text">{SITE_HOST}</a> ·{" "}
-          <a href={`mailto:${BRAND.supportEmail}`} className="text-accent hover:underline">{BRAND.supportEmail}</a> ·
-          Analysis only, not financial advice; forecasts are never certainties and practice trading uses virtual money.
-        </p>
+    <footer className={`foot border-t px-4 pt-5 ${className || "pb-6"}`}>
+      <div className={`mx-auto flex ${width} flex-col items-center gap-2.5 text-center`}>
+        <nav aria-label="Legal and information">
+          <ul className="foot-row foot-dots-sm text-[13px] text-mute">
+            {TRUST_LINKS.map(([to, label]) => <li key={to}><Link to={to} className={link}>{label}</Link></li>)}
+            <li><a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className={link}>Manual (PDF)</a></li>
+            <li><a href={TELEGRAM_URL} target="_blank" rel="noopener" className={link}>Telegram</a></li>
+          </ul>
+        </nav>
+        <ul className="foot-row foot-dots-lg text-[11.5px] text-mute/80">
+          <li className="foot-grp"><span>{OWNER}</span><span>{BRAND.name} v{BRAND.version}</span></li>
+          <li className="foot-grp"><a href={BRAND.url} className={link}>{HOST}</a><a href={`mailto:${BRAND.supportEmail}`} className="text-accent hover:underline">{BRAND.supportEmail}</a></li>
+          <li>Analysis only, not financial advice.</li>
+        </ul>
       </div>
     </footer>
   );

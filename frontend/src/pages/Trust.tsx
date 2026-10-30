@@ -160,7 +160,7 @@ export default function TrustPage({ kind }: { kind: TrustKind }) {
         </div>
       </header>
       <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8"><TrustContent kind={kind} /></main>
-      <SiteFooter />
+      <SiteFooter width="max-w-4xl" />
     </div>
   );
 }
