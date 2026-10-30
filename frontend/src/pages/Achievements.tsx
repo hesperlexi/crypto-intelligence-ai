@@ -81,17 +81,22 @@ async function drawBadge(cv: HTMLCanvasElement, a: any) {
 
 async function drawPoster(cv: HTMLCanvasElement, list: any[]) {
   const items = list.slice(0, 9);
-  const W = 1080, H = 1350; cv.width = W; cv.height = H;
-  const g = cv.getContext("2d")!;
-  await fontsReady();
-  backdrop(g, W, H);
-  const hy = await header(g, "Our achievements");
+  const W = 1080;
   const cols = Math.min(3, Math.max(1, items.length)), gap = 24;
   const cw = (W - 2 * M - (3 - 1) * gap) / 3, ch = 336;
   const rows = Math.ceil(items.length / cols);
   const gridH = rows * ch + (rows - 1) * gap;
+  // the poster grows with the number of rows, so tiles never run into the footer
+  cv.width = W; cv.height = 1350;
+  const g = cv.getContext("2d")!;
+  await fontsReady();
+  const hy0 = await header(g, "Our achievements");          // measure the header height once
+  const H = Math.max(1350, hy0 + 40 + gridH + 48 + 168);
+  cv.height = H;                                             // resizing clears the canvas: draw for real
+  backdrop(g, W, H);
+  const hy = await header(g, "Our achievements");
   const fy = H - 168;
-  const top = hy + 40 + Math.max(0, (fy - 40 - (hy + 40) - gridH) / 2);
+  const top = hy + 40 + Math.max(0, (fy - 48 - (hy + 40) - gridH) / 2);
   items.forEach((a, i) => {
     const row = Math.floor(i / cols), inRow = Math.min(cols, items.length - row * cols);
     const rowW = inRow * cw + (inRow - 1) * gap, x0 = (W - rowW) / 2;
