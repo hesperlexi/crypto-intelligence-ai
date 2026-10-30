@@ -379,6 +379,15 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             decision, why = "NO TRADE", news_risk["reason"]
             basis = f"{held} paused for the news" if basis is None else f"{basis} (paused: {news_risk['title']})"
             grade = None
+    # stale data (audit A3): if the newest closed candle is older than 2 bars, or the data-quality check fails hard,
+    # nothing is traded on it - the candle sync must have failed
+    quality = check_candles(fr.df, timeframe, as_of)
+    recent_q = check_candles(fr.df.tail(300), timeframe, as_of)     # hard failures judged on the recent candles
+    stale = bool(live and bundle is None and is_stale(recent_q, int(last["ts"]), timeframe))
+    if stale:
+        flags.append("STALE DATA")
+        if decision != "INSUFFICIENT DATA":
+            decision, why, grade = "NO TRADE", "market data is stale", None
     if decision == "NO TRADE":
         flags.append("NO TRADE")
 
@@ -396,6 +405,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             "atr": _n(last["atr"]), "atr_pct": _n(last["atr_pct"]), "bb_width": _n(last["bb_width"]),
             "bb_width_percentile": _n(last["bb_width_pct"]), "range_expansion": bool(last["range_expansion"]),
             "range_compression": bool(last["range_compression"])},
+        "stale": stale,
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
         "safety": safety_state,
         "grade": grade, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
@@ -414,16 +424,31 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         out["levels"] = levels
         out["events"] = _events(fr)
         out["indicators"] = _snapshot(last)
-        out["data_quality"] = check_candles(fr.df, timeframe, as_of)
+        out["data_quality"] = quality
     out["commentary"] = build_commentary(out)
     if live and bundle is None:
         if fc["available"]:
             tracking.log_prediction(rt.db, symbol, timeframe, fc)
-        tracking.log_signal(rt.db, out)
-        if shadow:
+        tracking.log_signal(rt.db, out)                  # sets out["record_status"] (logged / already_open / not_logged)
+        if out.get("record_status") is None and decision in TRADE_DECISIONS:
+            out["record_status"] = "not_logged"
+        if shadow and not stale:
             tracking.log_shadow(rt.db, out, shadow[0], shadow[1])
+        out["call"] = tracking.current_call(rt.db, symbol, timeframe)
+        ai = tracking.latest_ai(rt.db, symbol, timeframe)
+        if ai:
+            out["ai"] = ai
         rt.analysis_cache[key] = (time.time(), out)
     return out
+
+
+def is_stale(quality: dict[str, Any], last_ts: int, timeframe: str, now: int | None = None) -> bool:
+    """Newest closed candle older than 2 bars of its timeframe, or a hard data-quality failure."""
+    now = int(time.time() * 1000) if now is None else now
+    step = tf_ms(timeframe)
+    if now - (int(last_ts) + step) > 2 * step:
+        return True
+    return quality.get("status") == "NO DATA" or (quality.get("quality_pct") is not None and quality["quality_pct"] < 90.0)
 
 
 def higher_trend_check(matrix: dict[str, Any], timeframe: str, side: int) -> dict[str, Any] | None:

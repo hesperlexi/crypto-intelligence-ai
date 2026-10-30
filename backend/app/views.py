@@ -124,8 +124,27 @@ def models_status(rt: Runtime) -> dict[str, Any]:
     return {"training": rows, "libraries": model_status()}
 
 
+def contract_fields(r: dict[str, Any], payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    """v1 contract fields of a signal row (docs/v1-contract.md); old rows simply lack most of them."""
+    p = payload if payload is not None else (loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {}))
+    out = {"fill_status": r.get("fill_status") or (("FILLED" if r.get("side") else None) if r.get("status") != "INFO" else None),
+           "peak_r": r.get("peak_r"), "peak_pct": r.get("peak_pct"), "exit_reason": r.get("exit_reason"),
+           "managed": r.get("managed") or 0, "app_version": r.get("app_version"), "engine_version": r.get("engine_version")}
+    if isinstance(p, dict) and p.get("ai"):
+        out["ai"] = p["ai"]
+    return out
+
+
 def signals(rt: Runtime) -> dict[str, Any]:
-    return {"signals": tracking.signal_history(rt.db, None, 300), "summary": tracking.signal_summary(rt.db)}
+    rows = tracking.signal_history(rt.db, None, 300)
+    for r in rows:
+        r.update({k: v for k, v in contract_fields(r, r.get("payload")).items() if k not in ("ai",)})
+        r.pop("atr", None)
+    return {"signals": rows, "summary": tracking.signal_summary(rt.db)}
+
+
+def decisions_recent(rt: Runtime) -> dict[str, Any]:
+    return tracking.recent_decisions(rt.db, 100)
 
 
 def alerts_view(rt: Runtime, user_id: str | None = None) -> dict[str, Any]:
@@ -217,8 +236,9 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
         sigs.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
                      "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
                      "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
-                     "closed_at": r["closed_at"], "return_pct": r["return_pct"]})
-    closed = [x for x in sigs if x["status"] not in ("OPEN",) and x["return_pct"] is not None]
+                     "closed_at": r["closed_at"], "return_pct": r["return_pct"], **contract_fields(r, p)})
+    # never-filled pullback entries and void calls (no market data) have no result: listed, never counted
+    closed = [x for x in sigs if x["status"] in tracking.CLOSED_STATUSES and x["return_pct"] is not None]
 
     def summ(xs: list[dict[str, Any]]) -> dict[str, Any]:
         r = np.array([x["return_pct"] for x in xs], float)
@@ -270,6 +290,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
     first = min((x["created_at"] for x in sigs), default=None)
     out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None, "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
+            "not_filled": sum(x["status"] == "NOT_FILLED" for x in sigs), "void": sum(x["status"] == "VOID" for x in sigs),
             "signals": sigs[:limit]},
             "tested": sorted(tested, key=lambda t: (not t["edge"], -(t["selective_hit_rate"] or 0))),
             "bots": sorted(bots, key=lambda b: not b["scorecard"]),
@@ -455,4 +476,11 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
     wins = [{"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
              "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"], "closed_at": r["closed_at"],
              "target": {"TP1": r["tp1"], "TP2": r["tp2"], "TP3": r["tp3"]}.get(r["status"])} for r in rows]
-    return {"generated_at": now, "period": label if wins else None, "wins": wins}
+    # v2.5: the same window's complete count, so losses show beside the wins (never only the winners)
+    rc, rp = record_clause(rt)
+    marks = ",".join("?" * len(tracking.CLOSED_STATUSES))
+    tot = rt.db.one(f"SELECT COUNT(*) AS n, SUM(CASE WHEN return_pct <= 0 THEN 1 ELSE 0 END) AS losses FROM signals "
+                    f"WHERE status IN ({marks}) AND return_pct IS NOT NULL AND closed_at >= ? AND {rc}",
+                    (*tracking.CLOSED_STATUSES, now - hours * 3_600_000, *rp))
+    return {"generated_at": now, "period": label if wins else None, "wins": wins,
+            "window_hours": hours, "closed": int(tot["n"] or 0), "losses": int(tot["losses"] or 0)}

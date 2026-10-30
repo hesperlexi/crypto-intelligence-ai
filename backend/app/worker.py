@@ -541,7 +541,9 @@ def analysis_core(a: dict[str, Any]) -> Any:
     """The part of an analysis that must reach members at once when it changes: the call itself (new trade signals
     also go out at once on the Signals page)."""
     st = a.get("setup") if isinstance(a.get("setup"), dict) else {}
-    return [a.get("decision"), a.get("grade"), a.get("status"), st.get("side"), st.get("valid")]   # not the live levels
+    call = a.get("call") or {}
+    return [a.get("decision"), a.get("grade"), a.get("status"), st.get("side"), st.get("valid"),   # not the live levels
+            a.get("record_status"), a.get("stale"), call.get("id"), call.get("status"), call.get("fill_status")]
 
 
 def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analyses: dict[tuple[str, str], dict]) -> None:
@@ -575,6 +577,8 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("track_record", views.track_record(rt, bot_report))
     sink.view("weekly_report", views.weekly_reports(rt, bot_report))
     sink.view("wins_today", views.wins_today(rt))
+    # one document with the last 100 trade-management decisions; written only when it changed (hash-deduplicated)
+    sink.view("decisions_recent", views.decisions_recent(rt), min_interval_s=300)
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))

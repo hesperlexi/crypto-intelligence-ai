@@ -117,8 +117,10 @@ def test_signal_history_tracks_targets_and_stops():
          "confidence": 0.6, "regime": {"regime": "BULL"}, "signal": {"signal": "BUY", "score": 70, "reasons": [], "warnings": []},
          "setup": {"valid": True, "side_int": 1, "stop": px * 0.5, "risk_reward": 2.0,
                    "targets": [{"price": px * 1.0001}, {"price": px * 1.0002}, {"price": px * 1e6}]}, "flags": []}
-    assert tracking.log_signal(rt.db, a) is True
-    assert tracking.log_signal(rt.db, a) is False          # unchanged signal is not logged twice
+    pub = int(bar["ts"]) + tf_ms("4h")                    # v2.5: published when its candle closed; followed from then on
+    assert tracking.log_signal(rt.db, a, now=pub) is True
+    assert tracking.log_signal(rt.db, a, now=pub + 60_000) is False          # an open call is not logged twice
+    assert a["record_status"] == "already_open"
     tracking.update_signal_outcomes(rt)
     s = tracking.signal_history(rt.db, "BTC/USDT")[0]
     after = df[df["ts"] > bar["ts"]].iloc[:30]
@@ -343,8 +345,8 @@ def test_signals_are_followed_on_15m_candles_before_their_own_candle_closes():
          "confidence": 0.6, "regime": {"regime": "BULL"}, "signal": {"signal": "BUY", "score": 70, "reasons": [], "warnings": []},
          "setup": {"valid": True, "side_int": 1, "stop": 95.0, "risk_reward": 2.0,
                    "targets": [{"price": 105.0}, {"price": 107.0}, {"price": 110.0}]}, "flags": []}
-    assert T.log_signal(db, a)
     start = bar + tf_ms("12h")
+    assert T.log_signal(db, a, now=start)                  # v2.5: published at the candle close
     m15 = pd.DataFrame({"ts": [start + i * tf_ms("15m") for i in range(3)], "open": [100, 101, 104],
                         "high": [101, 105.5, 104.5], "low": [99.5, 100.5, 103], "close": [101, 104, 104]})
     h12 = pd.DataFrame({"ts": [bar], "open": [99], "high": [100], "low": [98], "close": [100]})   # next 12h candle not in yet
@@ -354,6 +356,6 @@ def test_signals_are_followed_on_15m_candles_before_their_own_candle_closes():
     rt = _RT()
     rt.db = db
     rt.candles = lambda s, tf: m15 if tf == "15m" else h12
-    T.update_signal_outcomes(rt)
+    T.update_signal_outcomes(rt, now=start + 3 * tf_ms("15m"))
     s = T.signal_history(db, "BTC/USDT")[0]
     assert s["tp1_hit"] == 1 and s["status"] == "OPEN"          # TP1 seen within the hour, trade still running at break-even

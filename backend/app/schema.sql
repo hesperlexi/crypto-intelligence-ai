@@ -304,3 +304,20 @@ CREATE TABLE IF NOT EXISTS shadow_signals (
   payload TEXT,
   UNIQUE (symbol, timeframe, bar_ts)
 );
+
+-- v2.5 (audit v1): every trade-management decision (logged / skipped / cooldown / re-entry cap / stale / fill /
+-- not filled / each exit), with the inputs it was made on
+CREATE TABLE IF NOT EXISTS decisions (
+  id TEXT PRIMARY KEY,
+  ts BIGINT NOT NULL,
+  symbol TEXT,
+  timeframe TEXT,
+  signal_id TEXT,
+  rule TEXT NOT NULL,
+  inputs TEXT,
+  ai_rationale TEXT,
+  engine_version TEXT,
+  app_version TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_decisions_ts ON decisions (ts);
+CREATE INDEX IF NOT EXISTS ix_decisions_pair ON decisions (symbol, timeframe, ts);
