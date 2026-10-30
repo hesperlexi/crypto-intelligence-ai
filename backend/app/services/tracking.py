@@ -213,6 +213,19 @@ def open_call(db: Database, symbol: str, timeframe: str, table: str = "signals")
                   "ORDER BY created_at DESC LIMIT 1", (symbol, timeframe))
 
 
+def margin_fields(r: dict[str, Any], payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    """`leverage` (the card's suggested leverage: stored at log time, else derived from the row's entry and stop
+    with the same function) and `roi_pct` = return_pct x leverage, the result on margin."""
+    from ..engine import futures as F
+    p = payload if payload is not None else r.get("payload")
+    if isinstance(p, str):
+        p = loads(p, {})
+    lev = (p or {}).get("leverage") if isinstance(p, dict) else None
+    if not lev:
+        lev = F.signal_leverage(r.get("entry"), r.get("stop")) if r.get("side") else None
+    return {"leverage": int(lev) if lev else None, "roi_pct": F.roi_on_margin(r.get("return_pct"), lev)}
+
+
 def call_view(r: dict[str, Any] | None) -> dict[str, Any] | None:
     """The contract's `call` object for analysis / futures rows."""
     if not r:
@@ -221,7 +234,7 @@ def call_view(r: dict[str, Any] | None) -> dict[str, Any] | None:
             "side": "LONG" if r["side"] > 0 else "SHORT", "entry": r["entry"], "stop": r["stop"], "tp1": r["tp1"],
             "tp2": r["tp2"], "tp3": r["tp3"], "peak_r": r.get("peak_r"), "peak_pct": r.get("peak_pct"),
             "exit_reason": r.get("exit_reason"), "managed": r.get("managed") or 0, "created_at": r["created_at"],
-            "return_pct": r.get("return_pct"), "closed_at": r.get("closed_at")}
+            "return_pct": r.get("return_pct"), "closed_at": r.get("closed_at"), **margin_fields(r)}
 
 
 def current_call(db: Database, symbol: str, timeframe: str) -> dict[str, Any] | None:
@@ -328,7 +341,9 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
                "decision_reason": a.get("decision_reason"), "grade": a.get("grade"),
                "runner": setup.get("runner") if tradable else None}
     if tradable:
+        from ..engine.futures import signal_leverage
         payload.update({"manage": manage_params(db), "live_price": a.get("price"),
+                        "leverage": signal_leverage(pl["entry"], pl["stop"]),
                         "decision_basis": a.get("decision_basis"),
                         "ai_inputs": {"confidence": a.get("confidence"), "regime": (a.get("regime") or {}).get("regime"),
                                       "trend": _comp(sig, "trend"), "momentum": _comp(sig, "momentum"),
@@ -542,13 +557,15 @@ def signal_history(db: Database, symbol: str | None = None, limit: int = 200) ->
     rows = db.query(sql + " ORDER BY created_at DESC LIMIT ?", args + [limit])
     for r in rows:
         r["payload"] = loads(r["payload"], {})
+        r.update(margin_fields(r, r["payload"]))
     return rows
 
 
 def signal_summary(db: Database) -> dict[str, Any]:
     """Closed calls with a result; never-filled and void calls are counted separately (visible, not in the rates)."""
     marks = ",".join("?" * len(CLOSED_STATUSES))
-    rows = db.query(f"SELECT status, return_pct FROM signals WHERE status IN ({marks}) AND return_pct IS NOT NULL",
+    rows = db.query(f"SELECT status, return_pct, side, entry, stop, payload FROM signals WHERE status IN ({marks}) "
+                    "AND return_pct IS NOT NULL",
                     CLOSED_STATUSES)
     other = {r["status"]: int(r["n"]) for r in db.query(
         "SELECT status, COUNT(*) AS n FROM signals WHERE status IN ('NOT_FILLED', 'VOID') GROUP BY status")}
@@ -556,8 +573,11 @@ def signal_summary(db: Database) -> dict[str, Any]:
     if not rows:
         return {"closed": 0, **extra, "note": "No tracked trade signals have closed yet."}
     rets = np.array([r["return_pct"] for r in rows], float)
+    rois = np.array([v if (v := margin_fields(r)["roi_pct"]) is not None else np.nan for r in rows], float)
+    rois = rois[np.isfinite(rois)]
     return {"closed": len(rows), **extra, "win_rate": float((rets > 0).mean()) if len(rets) else None,
             "avg_return_pct": float(rets.mean()) if len(rets) else None,
+            "avg_roi_pct": float(rois.mean()) if len(rois) else None,
             "by_status": {s: sum(r["status"] == s for r in rows) for s in CLOSED_STATUSES},
             "generated_at": int(time.time() * 1000)}
 

@@ -196,6 +196,15 @@ def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) 
 
 # ---- public track record ---------------------------------------------------------------------------------------
 
+def roi_summary(xs: list[dict[str, Any]]) -> dict[str, Any]:
+    """ROI on margin (return_pct x the card's suggested leverage) beside the price-return totals; same trades."""
+    r = np.array([x["roi_pct"] for x in xs if x.get("roi_pct") is not None], float)
+    if not len(r):
+        return {}
+    return {"avg_roi_pct": float(r.mean()), "total_roi_pct": float(r.sum()), "best_roi_pct": float(r.max()),
+            "worst_roi_pct": float(r.min())}
+
+
 def record_since(rt: Runtime) -> int:
     """Start of the counted record: the v2.0 launch (older signals stay in the database, labelled as the old engine)."""
     return int(rt.db.get_setting("record_since", 0) or 0)
@@ -236,7 +245,8 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
         sigs.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
                      "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
                      "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
-                     "closed_at": r["closed_at"], "return_pct": r["return_pct"], **contract_fields(r, p)})
+                     "closed_at": r["closed_at"], "return_pct": r["return_pct"], **tracking.margin_fields(r, p),
+                     **contract_fields(r, p)})
     # never-filled pullback entries and void calls (no market data) have no result: listed, never counted
     closed = [x for x in sigs if x["status"] in tracking.CLOSED_STATUSES and x["return_pct"] is not None]
 
@@ -246,16 +256,19 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
             return {"closed": 0}
         wins = r[r > 0]
         losses = r[r <= 0]
-        return {"closed": int(len(r)), "win_rate": float((r > 0).mean()), "avg_return_pct": float(r.mean()),
-                "total_return_pct": float(r.sum()), "best_pct": float(r.max()), "worst_pct": float(r.min()),
-                "profit_factor": float(wins.sum() / -losses.sum()) if len(losses) and losses.sum() < 0 else None}
+        out = {"closed": int(len(r)), "win_rate": float((r > 0).mean()), "avg_return_pct": float(r.mean()),
+               "total_return_pct": float(r.sum()), "best_pct": float(r.max()), "worst_pct": float(r.min()),
+               "profit_factor": float(wins.sum() / -losses.sum()) if len(losses) and losses.sum() < 0 else None}
+        return {**out, **roi_summary(xs)}
 
     by_tf = {tf: summ([x for x in closed if x["timeframe"] == tf]) for tf in sorted({x["timeframe"] for x in closed})}
     by_grade = {g: summ([x for x in closed if (x["grade"] or "-") == g]) for g in sorted({x["grade"] or "-" for x in closed})}
     curve, acc = [], 0.0
+    acc_roi = 0.0
     for x in sorted(closed, key=lambda x: x["closed_at"] or x["created_at"]):
         acc += x["return_pct"]
-        curve.append({"ts": x["closed_at"] or x["created_at"], "cum_return_pct": acc})
+        acc_roi += x["roi_pct"] if x.get("roi_pct") is not None else 0.0
+        curve.append({"ts": x["closed_at"] or x["created_at"], "cum_return_pct": acc, "cum_roi_pct": acc_roi})
 
     tested = []
     for s in rt.symbols():
@@ -332,7 +345,9 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
         trades.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
                        "grade": p.get("grade"), "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"],
-                       "created_at": r["created_at"], "closed_at": r["closed_at"]})
+                       **tracking.margin_fields(r, p), "created_at": r["created_at"], "closed_at": r["closed_at"]})
+    # best first by the headline number (ROI on margin; the price return where no leverage is known)
+    trades.sort(key=lambda t: t["roi_pct"] if t.get("roi_pct") is not None else t["return_pct"], reverse=True)
     rets = np.array([t["return_pct"] for t in trades], float)
     wins = [t for t in trades if t["return_pct"] > 0]
     by_coin: dict[str, float] = {}
@@ -362,10 +377,12 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
             "win_rate": float(len(wins) / len(trades)) if trades else None,
             "total_return_pct": float(rets.sum()) if len(rets) else None,
             "avg_return_pct": float(rets.mean()) if len(rets) else None,
+            **roi_summary(trades),
             "best": trades[:5], "worst": trades[-1] if trades else None,
             "best_coin": max(by_coin.items(), key=lambda kv: kv[1])[0] if by_coin else None,
             "scorecard_bots": bots, "radar_best": radar_best,
-            "basis": "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, before fees."}
+            "basis": "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, before fees. "
+                     "ROI is on margin at the leverage each signal card suggested (price return x leverage); losses are multiplied the same way."}
 
 
 def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks: int = 12) -> dict[str, Any]:
@@ -391,13 +408,17 @@ def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] 
     import numpy as np
 
     rc, rp = record_clause(rt)
-    rows = rt.db.query("SELECT symbol, side, status, return_pct, closed_at FROM signals "
+    rows = rt.db.query("SELECT symbol, side, status, return_pct, closed_at, entry, stop, payload FROM signals "
                        f"WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL AND {rc} ORDER BY closed_at", rp)
+    for r in rows:
+        r.update(tracking.margin_fields(r))
+        r.pop("payload", None)
+    head = lambda r: r["roi_pct"] if r.get("roi_pct") is not None else r["return_pct"]  # noqa: E731
     out: list[dict[str, Any]] = []
 
-    def add(aid, title, unlocked, value, detail, at=None, progress=None):
+    def add(aid, title, unlocked, value, detail, at=None, progress=None, **extra):
         out.append({"id": aid, "title": title, "unlocked": bool(unlocked), "value": value, "detail": detail,
-                    "achieved_at": at if unlocked else None, "progress": None if unlocked else progress})
+                    "achieved_at": at if unlocked else None, "progress": None if unlocked else progress, **extra})
 
     n = len(rows)
     for goal in (10, 50, 100, 250, 500, 1000):
@@ -407,9 +428,13 @@ def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] 
         if n < goal:
             break
     if rows:
-        best = max(rows, key=lambda r: r["return_pct"])
-        add("best_trade", "Best signal", best["return_pct"] > 0, f"+{best['return_pct']:.1f}%",
-            f"{best['symbol'].split('/')[0]} {'long' if best['side'] > 0 else 'short'}", best["closed_at"])
+        best = max(rows, key=head)
+        lev = best.get("leverage")
+        add("best_trade", "Best signal", best["return_pct"] > 0,
+            f"{head(best):+.1f}%" + (" ROI" if best.get("roi_pct") is not None else ""),
+            f"{best['symbol'].split('/')[0]} {'long' if best['side'] > 0 else 'short'}"
+            + (f" · {lev}x margin · price {best['return_pct']:+.2f}%" if best.get("roi_pct") is not None else " · price move"),
+            best["closed_at"], roi_pct=best.get("roi_pct"), leverage=lev, return_pct=best["return_pct"])
     streak = best_streak = 0
     streak_end = None
     for r in rows:
@@ -423,11 +448,14 @@ def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] 
         tp3[-1]["closed_at"] if tp3 else None, 0.0)
     weeks: dict[int, float] = {}
     for r in rows:
-        weeks[week_start(int(r["closed_at"]))] = weeks.get(week_start(int(r["closed_at"])), 0.0) + r["return_pct"]
+        weeks[week_start(int(r["closed_at"]))] = weeks.get(week_start(int(r["closed_at"])), 0.0) + head(r)
     green = sorted(w for w, v in weeks.items() if v > 0)
     if weeks:
         bw = max(weeks.items(), key=lambda kv: kv[1])
-        add("best_week", "Best week", bw[1] > 0, f"+{bw[1]:.1f}%", "total of all signals closed that week", bw[0] + WEEK - 1)
+        all_roi = all(r.get("roi_pct") is not None for r in rows if week_start(int(r["closed_at"])) == bw[0])
+        add("best_week", "Best week", bw[1] > 0, f"{bw[1]:+.1f}%" + (" ROI" if all_roi else ""),
+            "total ROI on margin of all signals closed that week" if all_roi else "total of all signals closed that week",
+            bw[0] + WEEK - 1, roi_pct=bw[1] if all_roi else None)
     add("green_weeks", "Profitable weeks", len(green) >= 2, f"{len(green)} of {len(weeks)}", "weeks that closed in profit",
         green[-1] + WEEK - 1 if green else None, min(1.0, len(green) / 2))
     recent = [r for r in rows if r["closed_at"] >= now_ms() - 30 * 86_400_000]
@@ -475,6 +503,7 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
             break
     wins = [{"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
              "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"], "closed_at": r["closed_at"],
+             **tracking.margin_fields(r),
              "target": {"TP1": r["tp1"], "TP2": r["tp2"], "TP3": r["tp3"]}.get(r["status"])} for r in rows]
     # v2.5: the same window's complete count, so losses show beside the wins (never only the winners)
     rc, rp = record_clause(rt)

@@ -17,6 +17,8 @@ DEFAULT_FUNDING_RATE = 0.0001        # Binance base rate: 0.01% per 8h
 MAINTENANCE_MARGIN = 0.005           # 0.5%: a conservative tier-1 rate for majors (BTC 0.4%, many alts 0.5-1%)
 FUTURES_FEE_RATE = 0.0005            # 0.05% taker
 MAX_LEVERAGE = 20
+CARD_MAX_LEVERAGE = 10               # the signal card's suggested leverage is capped here (futures_view)
+CARD_BUFFER = 1.5                    # liquidation at least 1.5x the stop distance beyond the entry
 
 
 def liquidation_price(entry: float, side: int, leverage: float, mmr: float = MAINTENANCE_MARGIN) -> float:
@@ -38,13 +40,29 @@ def safe_leverage(entry: float, stop: float | None, max_leverage: float = MAX_LE
     return int(max(1, min(max_leverage, math.floor(lev))))
 
 
+def signal_leverage(entry: float | None, stop: float | None) -> int | None:
+    """The leverage the signal card suggests for this entry and stop (futures_view `suggested_leverage`).
+    The record uses the same number to show each result on margin. None when there is no stop."""
+    if not entry or not stop:
+        return None
+    return safe_leverage(float(entry), float(stop), CARD_MAX_LEVERAGE, MAINTENANCE_MARGIN, CARD_BUFFER)
+
+
+def roi_on_margin(return_pct: float | None, leverage: float | None) -> float | None:
+    """Result on the margin put up: the price return (blended exits) times the leverage. Losses multiply too;
+    the sign never changes, so a win stays a win and a loss a loss."""
+    if return_pct is None or not leverage:
+        return None
+    return float(return_pct) * float(leverage)
+
+
 def funding_times(after_ms: int, until_ms: int) -> list[int]:
     """Funding timestamps t with after_ms < t <= until_ms."""
     first = (after_ms // FUNDING_INTERVAL_MS + 1) * FUNDING_INTERVAL_MS
     return list(range(first, until_ms + 1, FUNDING_INTERVAL_MS))
 
 
-def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage: int = 10) -> dict[str, Any]:
+def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage: int = CARD_MAX_LEVERAGE) -> dict[str, Any]:
     """Long / short call for one symbol and timeframe, built from the regular analysis."""
     sym = a.get("symbol")
     if a.get("status") != "OK":
@@ -65,7 +83,7 @@ def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage
     price = a.get("price")
     entry = setup.get("ideal_entry") or price
     stop = setup.get("stop")
-    lev = safe_leverage(entry, stop, max_leverage) if setup.get("stop") else None
+    lev = safe_leverage(entry, stop, max_leverage, MAINTENANCE_MARGIN, CARD_BUFFER) if setup.get("stop") else None
     plan_side = setup.get("side_int") or side
     rate = (funding or {}).get("rate")
     rate_used = rate if rate is not None else DEFAULT_FUNDING_RATE
