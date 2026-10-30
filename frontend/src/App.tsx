@@ -13,11 +13,9 @@ import { Role, SessionCtx, setSession, useIsAdmin, watchRole } from "./lib/sessi
 import { auth, db, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
-import Dashboard from "./pages/Dashboard";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
-import Landing from "./components/Landing";
 import TelegramLink from "./components/TelegramLink";
 import { fmtDate, useMyRecord } from "./lib/membership";
 import { startPresence } from "./lib/presence";
@@ -30,6 +28,11 @@ const page = <T,>(load: () => Promise<T>) => lazy(() => load().catch((e) => {
   } catch { /* storage blocked: just report */ }
   throw e;
 }) as Promise<any>);
+// Home and the signed-out page are split too; whichever one the sign-in state needs is fetched as soon as it is known.
+const loadDashboard = () => import("./pages/Dashboard");
+const loadLanding = () => import("./components/Landing");
+const Dashboard = page(loadDashboard);
+const Landing = page(loadLanding);
 const Alerts = page(() => import("./pages/Alerts"));
 const Asset = page(() => import("./pages/Asset"));
 const Backtest = page(() => import("./pages/Backtest"));
@@ -106,11 +109,11 @@ function Toasts() {
 export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [role, setRole] = useState<Role>("loading");
-  useEffect(() => onAuthStateChanged(auth, (u) => { setUser(u); setRole("loading"); }), []);
+  useEffect(() => onAuthStateChanged(auth, (u) => { void (u ? loadDashboard() : loadLanding()).catch(() => {}); setUser(u); setRole("loading"); }), []);
   useEffect(() => (user ? watchRole(user, setRole) : undefined), [user]);
   useEffect(() => { if (user && role !== "loading") startPresence(); }, [user, role]);
   if (user === undefined || (user && role === "loading")) return <div className="py-20 text-center text-sm text-mute">Loading…</div>;
-  if (!user) return <Landing error={null} />;
+  if (!user) return <Suspense fallback={<div className="py-20 text-center text-sm text-mute">Loading…</div>}><Landing error={null} /></Suspense>;
   const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role };
   setSession(session);
   if (role === "pending" || role === "expired" || role === "blocked") return <AccessScreen user={user} role={role} />;

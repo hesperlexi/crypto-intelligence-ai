@@ -1,4 +1,3 @@
-import { getAnalytics, isSupported } from "firebase/analytics";
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
@@ -19,8 +18,7 @@ export const auth = getAuth(app);
 export const db = getFirestore(app);
 export const googleProvider = new GoogleAuthProvider();
 
-isSupported()
-  .then((ok) => {
-    if (ok) getAnalytics(app);
-  })
+// Google Analytics for Firebase (page views and basic usage), loaded after start so it never delays the first screen.
+import("firebase/analytics")
+  .then(({ getAnalytics, isSupported }) => isSupported().then((ok) => { if (ok) getAnalytics(app); }))
   .catch(() => {});

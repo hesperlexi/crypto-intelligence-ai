@@ -1,0 +1,46 @@
+Bundle after Phase 4 (30 Oct 2026, vite 5.4.8, `npx vite build`).
+Changes: Landing and Dashboard lazy-loaded (the one the sign-in state needs is fetched as soon as auth resolves),
+vendor chunks firebase (app/auth/firestore only) / react / charts, analytics loaded via dynamic import,
+binance.ts only statically imported (warning gone), 1 s loops paused in hidden tabs and skipped when prices are unchanged.
+
+First load (entry + modulepreloads), raw / gzip:
+  before: index 822.86 / 222.96 kB (single chunk)
+  after:  index 131.5 / 44.8 + react 165.2 / 53.8 + firebase 450.3 / 105.9 = 747.0 / 204.5 kB,
+          then Landing (18.1 / 6.3) or Dashboard (18.8 / 6.4). Vendor chunks keep their hash across app deploys,
+          so returning visitors re-download only the ~45 kB gzip app chunk after an update.
+
+dist/version.json                        0.05 kB │ gzip:   0.07 kB
+dist/index.html                          2.17 kB │ gzip:   0.94 kB
+dist/assets/index-Dzk0dxZy.css          51.87 kB │ gzip:  10.68 kB
+dist/assets/limits-CXdmAZJz.js           0.71 kB │ gzip:   0.41 kB
+dist/assets/Pickers-MQaSLgS0.js          0.95 kB │ gzip:   0.48 kB
+dist/assets/LineChart-C7KK29GM.js        1.36 kB │ gzip:   0.78 kB
+dist/assets/TVChart-B9slTpw7.js          1.37 kB │ gzip:   0.87 kB
+dist/assets/NewsBanner-DettKLfz.js       1.57 kB │ gzip:   0.90 kB
+dist/assets/CandleChart-BJEFV-qI.js      4.85 kB │ gzip:   2.21 kB
+dist/assets/Signals-BKbBmsjP.js          5.07 kB │ gzip:   2.18 kB
+dist/assets/MyCoins-Cql3LExk.js          5.39 kB │ gzip:   2.43 kB
+dist/assets/News-BARYC1es.js             5.55 kB │ gzip:   2.10 kB
+dist/assets/Replay-VX-652us.js           6.51 kB │ gzip:   2.66 kB
+dist/assets/Achievements-BBr1VjHi.js     6.63 kB │ gzip:   2.92 kB
+dist/assets/Scanner-D8JIS6KR.js          7.35 kB │ gzip:   2.56 kB
+dist/assets/Radar-CQimRfXw.js            7.45 kB │ gzip:   2.58 kB
+dist/assets/Health-Dikap_eL.js           7.76 kB │ gzip:   2.60 kB
+dist/assets/Report-Df1jhFn0.js           8.81 kB │ gzip:   3.82 kB
+dist/assets/Alerts-CfYByoYC.js           8.89 kB │ gzip:   3.40 kB
+dist/assets/Backtest-BijOw8lh.js        12.75 kB │ gzip:   3.80 kB
+dist/assets/TradeCall-B8fTZndE.js       13.40 kB │ gzip:   5.01 kB
+dist/assets/index.esm-2clogORt.js       14.18 kB │ gzip:   4.21 kB
+dist/assets/Settings-Dq7iqC-f.js        15.66 kB │ gzip:   5.44 kB
+dist/assets/Users-BoKE5TJQ.js           16.69 kB │ gzip:   5.54 kB
+dist/assets/Landing-BvRlc_Mv.js         18.10 kB │ gzip:   6.26 kB
+dist/assets/index.esm2017-BftbUiRQ.js   18.16 kB │ gzip:   3.37 kB
+dist/assets/Dashboard-DvafA724.js       18.84 kB │ gzip:   6.39 kB
+dist/assets/Asset-n3yydn4W.js           26.09 kB │ gzip:   8.29 kB
+dist/assets/index.esm-ZrTnuwi6.js       26.39 kB │ gzip:   4.93 kB
+dist/assets/Paper-CSCtr910.js           38.23 kB │ gzip:  10.83 kB
+dist/assets/Results-CEn8n8kc.js         53.50 kB │ gzip:  15.35 kB
+dist/assets/index-CTP0ySGn.js          131.53 kB │ gzip:  44.81 kB
+dist/assets/charts-BprbGW_f.js         162.29 kB │ gzip:  51.74 kB
+dist/assets/react-DN72n-j2.js          165.19 kB │ gzip:  53.75 kB
+dist/assets/firebase-D8Ksqzra.js       450.26 kB │ gzip: 105.91 kB
