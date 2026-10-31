@@ -5,6 +5,7 @@ import { visibleInterval } from "./visibleInterval";
 import { db } from "./firebase";
 import { latestPrices } from "./live";
 import { isAdmin, myUid } from "./session";
+import { byNewest } from "./format";
 
 const ACC_REF = () => doc(db, "paper", `${myUid()}_spot`);   // one account per user
 let migrated = false;
@@ -68,7 +69,7 @@ export async function order(symbol: string, side: string, qty: number | null | u
       const cost = q * fill + fee;
       if (cost > acc.cash + 1e-9) throw new Error(`insufficient virtual cash: need ${cost.toFixed(2)}, have ${acc.cash.toFixed(2)}`);
       const nq = held + q;
-      positions[key] = { symbol, qty: nq, avg_price: ((pos ? pos.avg_price * held : 0) + q * fill) / nq };
+      positions[key] = { ...(pos ?? {}), symbol, qty: nq, avg_price: ((pos ? pos.avg_price * held : 0) + q * fill) / nq, opened_at: pos?.opened_at ?? Date.now(), fees: (pos?.fees ?? 0) + fee };
       acc.cash -= cost;
     } else {
       realized = q * (fill - pos.avg_price) - fee;
@@ -138,7 +139,7 @@ async function fillOrder(id: string, at: number, when: number, costs: Costs = DE
     let realized = 0, cash = acc.cash + (od.reserve ?? 0);
     if (od.side === "BUY") {
       const nq = held + od.qty;
-      positions[key] = { symbol: od.symbol, qty: nq, avg_price: ((pos ? pos.avg_price * held : 0) + od.qty * at) / nq };
+      positions[key] = { ...(pos ?? {}), symbol: od.symbol, qty: nq, avg_price: ((pos ? pos.avg_price * held : 0) + od.qty * at) / nq, opened_at: pos?.opened_at ?? when, fees: (pos?.fees ?? 0) + fee };
       cash -= od.qty * at + fee;
     } else {
       const q = Math.min(od.qty, held);
@@ -205,7 +206,8 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
       if (mark != null) { mv += p.qty * mark; upnl += p.qty * (mark - p.avg_price); }
       return { ...p, mark, market_value: mark != null ? p.qty * mark : null, unrealized_pnl: mark != null ? p.qty * (mark - p.avg_price) : null };
     });
-    const orders = Object.values<any>(acc.orders ?? {}).sort((a, b) => b.created_at - a.created_at);
+    pos.sort(byNewest);
+    const orders = Object.values<any>(acc.orders ?? {}).sort(byNewest);
     const reserved = orders.reduce((a, o) => a + (o.reserve ?? 0), 0);
     const equity = acc.cash + reserved + mv;
     const ret = equity / acc.starting_balance - 1;

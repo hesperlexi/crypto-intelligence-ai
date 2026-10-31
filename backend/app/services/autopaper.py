@@ -80,6 +80,13 @@ def candidates(rows_by_tf: dict[str, list[dict[str, Any]]]) -> list[dict[str, An
     return out
 
 
+def origin_of(sig: dict[str, Any]) -> dict[str, Any]:
+    """Which call an auto-trade came from (shown in the position's details on the Trade page)."""
+    call = sig.get("call") or {}
+    return {"id": call.get("id"), "symbol": sig["symbol"], "timeframe": sig["timeframe"], "grade": sig.get("grade"),
+            "side": "LONG" if int(sig["side"]) > 0 else "SHORT", "at": call.get("created_at")}
+
+
 def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], now: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     """Pure function: the new account document (or None to leave it) and a result record."""
     acc = acc or new_account(now)
@@ -144,7 +151,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
         key = sym.replace("/", "")
         positions[key] = {"key": key, "symbol": sym, "side": side, "qty": qty, "entry": entry, "margin": margin, "leverage": lev,
                           "liq": liq_price(entry, side, lev), "stop": stop, "take": take, "opened_at": now, "checked_at": now,
-                          "funded_until": now, "funding": 0, "fees": fee, "auto": True}
+                          "funded_until": now, "funding": 0, "fees": fee, "auto": True, "signal": origin_of(sig)}
         t = acc.get("totals") or {}
         new = {**acc, "wallet": acc["wallet"] - margin - fee, "positions": positions, "totals": {**t, "fees": (t.get("fees") or 0) + fee}}
         return new, {**res, "action": "opened", "price": entry, "qty": qty, "margin": margin, "leverage": lev, "fee": fee,
@@ -154,7 +161,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
         return (acc if reversed_ else None), {**res, "action": "skipped", "reason": f"not enough virtual balance (${acc['wallet']:.2f})"}
     oid = _rid(8)
     orders[oid] = {"id": oid, "symbol": sym, "side": side, "price": entry, "margin": margin, "leverage": lev, "stop": stop,
-                   "take": take, "reserve": reserve, "created_at": now, "checked_at": now, "auto": True,
+                   "take": take, "reserve": reserve, "created_at": now, "checked_at": now, "auto": True, "signal": origin_of(sig),
                    "expires_at": now + 6 * tf_ms(sig["timeframe"])}
     return {**acc, "wallet": acc["wallet"] - reserve, "orders": orders}, {
         **res, "action": "limit order", "price": entry, "margin": margin, "leverage": lev, "stop": stop, "take": take}

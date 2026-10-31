@@ -84,3 +84,11 @@ export function toLocalInput(ms: number): string {
   const d = new Date(ms - new Date().getTimezoneOffset() * 60000);
   return d.toISOString().slice(0, 16);
 }
+
+/** Newest first by open time (positions: opened_at, orders: created_at), ties broken by key / id: never reorders on a price tick. */
+export function byNewest(a: any, b: any): number {
+  const ta = a.opened_at ?? a.created_at ?? 0, tb = b.opened_at ?? b.created_at ?? 0;
+  if (tb !== ta) return tb - ta;
+  const ka = String(a.key ?? a.id ?? a.symbol ?? ""), kb = String(b.key ?? b.id ?? b.symbol ?? "");
+  return ka < kb ? -1 : ka > kb ? 1 : 0;
+}

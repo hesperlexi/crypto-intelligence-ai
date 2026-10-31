@@ -215,6 +215,35 @@ function marketContext() {
   };
 }
 
+/** Practice futures + spot accounts of the preview member (and the owner), for the Trade page. */
+function practice(uid: string) {
+  const px = (s: string) => PRICES[s].p;
+  const pos = (key: string, symbol: string, side: 1 | -1, lev: number, margin: number, ago: number, entryK: number, extra: any = {}) => {
+    const entry = px(symbol) * entryK, qty = margin * lev / entry;
+    return { key, symbol, side, qty, entry, margin, leverage: lev, liq: side > 0 ? entry * (1 - 1 / lev + 0.005) : entry * (1 + 1 / lev - 0.005),
+      stop: null, take: null, opened_at: NOW - ago, checked_at: NOW - 60_000, funded_until: NOW - ago, funding: 0.0001 * qty * entry * Math.floor(ago / (8 * H)), fees: qty * entry * 0.0005, ...extra };
+  };
+  const btc = pos("BTCUSDT", "BTC/USDT", 1, 10, 500, 5 * H + 12 * 60_000, 0.992, { stop: px("BTC/USDT") * 0.975, take: px("BTC/USDT") * 1.03,
+    auto: true, signal: { id: "c0", symbol: "BTC/USDT", timeframe: "4h", grade: "A", side: "LONG", at: NOW - 5 * H - 20 * 60_000 } });
+  const eth = pos("ETHUSDT", "ETH/USDT", -1, 5, 300, 26 * H, 1.011, { stop: px("ETH/USDT") * 1.03 });
+  const sol = pos("SOLUSDT", "SOL/USDT", 1, 20, 150, 40 * 60_000, 0.996);
+  const acc = { id: `acc_${uid}`, starting_balance: 10000, wallet: 8890.4, created_at: NOW - 3 * D, position_mode: "oneway",
+    positions: { BTCUSDT: btc, ETHUSDT: eth, SOLUSDT: sol },
+    orders: { o1: { id: "o1", symbol: "AVAX/USDT", side: 1, price: px("AVAX/USDT") * 0.97, margin: 200, leverage: 5, stop: px("AVAX/USDT") * 0.94, take: null, reserve: 200.2, created_at: NOW - 2 * H, checked_at: NOW - 60_000 } },
+    totals: { realized: 142.6, fees: 9.8, funding: 1.2, count: 6, wins: 4, liquidations: 0 } };
+  const out: Record<string, any> = { [`paper/${uid}_futures`]: acc,
+    [`paper/${uid}_spot`]: { id: `spot_${uid}`, starting_balance: 10000, cash: 7420.5, created_at: NOW - 3 * D, benchmark_symbol: "BTC/USDT", benchmark_price: px("BTC/USDT") * 0.97,
+      positions: { XRPUSDT: { symbol: "XRP/USDT", qty: 2100, avg_price: px("XRP/USDT") * 0.982, opened_at: NOW - 30 * H, fees: 1.08 }, BNBUSDT: { symbol: "BNB/USDT", qty: 2.2, avg_price: px("BNB/USDT") * 1.006, opened_at: NOW - 4 * H, fees: 1.3 } },
+      totals: { realized: 18.2, fees: 3.4, slippage: 0.8, count: 4 } } };
+  const trades: [string, string, number, number, number, number | null][] = [["CLOSE", "XRP/USDT", 1, 0.5161, 7 * H, 61.2], ["OPEN", "XRP/USDT", 1, 0.5081, 20 * H, null], ["CLOSE", "DOGE/USDT", -1, 0.1401, 30 * H, -24.4],
+    ["OPEN", "DOGE/USDT", -1, 0.1392, 40 * H, null], ["OPEN", "ETH/USDT", -1, eth.entry, 26 * H, null], ["OPEN", "BTC/USDT", 1, btc.entry, 5 * H, null]];
+  trades.forEach(([type, symbol, side, price, ago, pnl], i) => {
+    out[`paper_futures_trades/${uid}_t${i}`] = { account_id: acc.id, uid, type, symbol, side, price, qty: 1000 / price, fee: 0.5, realized_pnl: pnl, reason: type === "CLOSE" ? (pnl! > 0 ? "take-profit" : "stop-loss") : undefined,
+      leverage: 10, margin: 100, created_at: NOW - ago, mode: "PAPER FUTURES" };
+  });
+  return out;
+}
+
 export function seed(): Record<string, any> {
   const tfs = ["15m", "1h", "4h", "12h", "1d", "3d"];
   const out: Record<string, any> = {
@@ -239,6 +268,8 @@ export function seed(): Record<string, any> {
     "users/u_member_self": undefined,
     ...users(),
     ...presence(),
+    ...practice("u_member"),
+    ...practice("owner"),
   };
   for (const tf of tfs) {
     out[`views/dashboard_${tf}`] = v(dashboard(tf));

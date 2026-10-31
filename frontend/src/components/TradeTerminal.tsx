@@ -1,8 +1,9 @@
 // Exchange-style paper trading (Binance / MEXC layout): pair bar, live candle chart with your levels,
 // order book, order form (limit / market, leverage, size %, TP/SL) and positions / orders / history / assets.
 // Virtual money only: nothing is ever sent to an exchange.
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import CandleChart, { Candle, PriceLine } from "./CandleChart";
 import TVChart from "./TVChart";
 import AutoTrade from "./AutoTrade";
@@ -15,6 +16,7 @@ import { StreamState, useDepth, useMarketStream } from "../lib/stream";
 import { ProOnly, useIsPro } from "../lib/mode";
 import { base, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
+import { useFocusTrap } from "./Shell";
 import * as SP from "../lib/paper";
 import * as PF from "../lib/paperFutures";
 
@@ -82,9 +84,24 @@ export default function TradeTerminal() {
   const { d, err } = useAccount(market);
   const [tab, setTab] = useState<"positions" | "orders" | "history" | "assets">("positions");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const act = async (fn: () => Promise<any>, ok: string) => {
+  // stable across price ticks, so memoized rows do not re-render just because the parent did
+  const act = useCallback(async (fn: () => Promise<any>, ok: string) => {
     try { await fn(); setMsg({ ok: true, text: ok }); } catch (e: any) { setMsg({ ok: false, text: e.message }); }
-  };
+  }, []);
+  const [detail, setDetail] = useState<string | null>(null);     // key (futures) or symbol (spot) of the position in the details panel
+  useEffect(() => setDetail(null), [market]);
+  const chartRef = useRef<HTMLDivElement>(null);       // the pair bar right above the chart
+  const paramsRef = useRef(params); paramsRef.current = params;
+  /** Pair name clicked in a list: show that coin on the chart (same timeframe), and bring the chart into view. */
+  const showPair = useCallback((s: string) => {
+    const p = new URLSearchParams(paramsRef.current); p.set("symbol", s); ["side", "lev", "sl", "tp", "limit"].forEach((k) => p.delete(k));
+    setParams(p, { replace: true });
+    const el = chartRef.current;
+    if (el) {
+      const r = el.getBoundingClientRect();
+      if (r.top < 64 || r.top > window.innerHeight * 0.4) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [setParams]);
   const positions: any[] = d?.positions ?? [];
   const orders: any[] = d?.orders ?? [];
   const [tf, setTf] = useState<string>("15m");
@@ -94,8 +111,8 @@ export default function TradeTerminal() {
   return (
     <StreamCtx.Provider value={stream}>
     <div className="space-y-3">
-      <PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })}
-        onMarket={(m) => setQ({ market: m, symbol: m === "spot" && isGold(symbol) ? (symbols[0] ?? "BTC/USDT") : symbol })} />
+      <div ref={chartRef} className="scroll-mt-20 md:scroll-mt-32"><PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })}
+        onMarket={(m) => setQ({ market: m, symbol: m === "spot" && isGold(symbol) ? (symbols[0] ?? "BTC/USDT") : symbol })} /></div>
       <SignalStrip symbol={symbol} market={market} />
       {market === "futures" && <AutoTrade />}
       {msg && <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-bull/40 bg-bull/10 text-bull" : "border-bear/40 bg-bear/10 text-bear"}`}>{msg.text}</div>}
@@ -116,12 +133,13 @@ export default function TradeTerminal() {
         </div>
         <div className="p-3">
           {!d ? <div className="skeleton h-16 rounded-lg" /> :
-            tab === "positions" ? (market === "futures" ? <FutPositions rows={positions} act={act} hedges={d.hedges} /> : <SpotHoldings rows={positions} act={act} />) :
-            tab === "orders" ? <Orders rows={orders} market={market} act={act} /> :
-            tab === "history" ? <History rows={d.trades ?? []} market={market} /> :
+            tab === "positions" ? (market === "futures" ? <FutPositions rows={positions} act={act} hedges={d.hedges} onOpen={setDetail} onPair={showPair} /> : <SpotHoldings rows={positions} act={act} onOpen={setDetail} onPair={showPair} />) :
+            tab === "orders" ? <Orders rows={orders} market={market} act={act} onPair={showPair} /> :
+            tab === "history" ? <History rows={d.trades ?? []} market={market} onPair={showPair} /> :
             <Assets d={d} market={market} act={act} />}
         </div>
       </section>
+      {d && detail && <PositionDrawer market={market} d={d} id={detail} act={act} onPair={showPair} onClose={() => setDetail(null)} />}
       <p className="text-xs text-mute">Practice account with virtual USDT. Market orders fill at the live price plus a small spread and slippage; limit orders fill when the price reaches them (checked on every 15-minute candle, also while the app is closed). Fees: spot 0.1%, futures 0.05% market / 0.02% limit.</p>
     </div>
     </StreamCtx.Provider>
@@ -397,67 +415,98 @@ function ModeToggle({ d, act }: { d: any; act: (fn: () => Promise<any>, ok: stri
 }
 
 /* ---------------------------------------------------------------- bottom tabs */
-function FutPositions({ rows, act, hedges }: { rows: any[]; act: (fn: () => Promise<any>, ok: string) => Promise<void>; hedges?: any[] }) {
+type Act = (fn: () => Promise<any>, ok: string) => Promise<void>;
+const sideName = (side: number) => (side > 0 ? "Long" : "Short");
+const signed = (v: number | null | undefined, digits = 2) => (isNum(v) ? `${v >= 0 ? "+" : ""}${fmtNum(v, digits)}` : "—");
+
+/** Pair name in a list: switches the chart to that coin (does not open the row's details). */
+function PairButton({ symbol, onPair, className = "" }: { symbol: string; onPair: (s: string) => void; className?: string }) {
+  return (
+    <button type="button" className={`rounded-sm font-semibold underline-offset-2 hover:text-accent hover:underline focus-visible:outline focus-visible:outline-1 focus-visible:outline-accent/60 ${className}`}
+      title={`Show ${symbol} on the chart`} onClick={(e) => { e.stopPropagation(); onPair(symbol); }}>{symbol}</button>
+  );
+}
+
+/** Props of a clickable card row: opens the details panel by mouse, Enter or Space. */
+const openable = (open: () => void, label: string) => ({
+  role: "button", tabIndex: 0, "aria-label": label, onClick: open,
+  onKeyDown: (e: React.KeyboardEvent) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); open(); } },
+});
+
+function FutPositions({ rows, act, hedges, onOpen, onPair }: { rows: any[]; act: Act; hedges?: any[]; onOpen: (key: string) => void; onPair: (s: string) => void }) {
   const [edit, setEdit] = useState<string | null>(null);
-  const [sl, setSl] = useState(""); const [tp, setTp] = useState("");
   if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No open positions. Use the order form, or tap “Use this plan” on the AI call.</p>;
   return (
     <div className="space-y-2">
       {hedges?.map((h: any) => <div key={h.symbol} className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 text-xs">{h.symbol} hedged · combined P&L <span className={tone(h.pnl)}>${fmtNum(h.pnl)}</span> · net {h.net >= 0 ? "long" : "short"} ${fmtNum(Math.abs(h.net), 0)}</div>)}
-      {rows.map((p) => (
-        <div key={p.key} className="rounded-xl border border-glass/[0.08] p-3">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className={`h-8 w-1 rounded-full ${p.side > 0 ? "bg-bull" : "bg-bear"}`} />
-              <span className="font-semibold">{p.symbol}</span>
-              <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${p.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{p.side > 0 ? "Long" : "Short"} {fmtNum(p.leverage, 1)}x</span>
-              {p.auto && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[11px] font-bold text-accent" title="Opened automatically from an app signal">AUTO</span>}
-            </div>
-            <div className="text-right"><div className={`num font-semibold ${tone(p.upnl)}`}>{p.upnl != null ? `${p.upnl >= 0 ? "+" : ""}${fmtNum(p.upnl)} USDT` : "—"}</div><div className={`num text-xs ${tone(p.upnl)}`}>{fmtPctRaw(p.roe_pct, 1)} ROE</div></div>
-          </div>
-          <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4 xl:grid-cols-8">
-            {([["Size", `${fmtNum(p.notional, 0)} USDT`], ["Entry", fmtPrice(p.entry)], ["Mark", fmtPrice(p.mark)], ["Liq. price", fmtPrice(p.liq)], ["Margin", `${fmtNum(p.margin)} USDT`],
-              ["TP", p.take ? fmtPrice(p.take) : "—"], ["SL", p.stop ? fmtPrice(p.stop) : "—"], ["Funding", `${fmtNum(-(p.funding ?? 0), 3)} USDT`]] as const).map(([k, v]) => (
-              <div key={k} className="min-w-0"><dt className="text-[11px] text-mute">{k}</dt><dd className={`num mt-0.5 truncate text-[13px] font-medium ${k === "Liq. price" ? "text-warn" : k === "TP" ? "text-bull" : k === "SL" ? "text-bear" : ""}`}>{v}</dd></div>
-            ))}
-          </dl>
-          {edit === p.key && (
-            <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2">
-              <input className="input num h-9" placeholder="Take-profit" inputMode="decimal" value={tp} onChange={(e) => setTp(e.target.value)} aria-label="Take-profit" />
-              <input className="input num h-9" placeholder="Stop-loss" inputMode="decimal" value={sl} onChange={(e) => setSl(e.target.value)} aria-label="Stop-loss" />
-              <button className="btn btn-primary h-9 px-3 text-xs" onClick={() => act(async () => { await PF.setOrders(p.key, Number(sl) || null, Number(tp) || null); setEdit(null); }, "TP / SL updated.")}>Save</button>
-            </div>
-          )}
-          <div className="mt-2 flex flex-wrap justify-end gap-2">
-            <button className="btn px-3 py-1 text-xs" onClick={() => { setEdit(edit === p.key ? null : p.key); setSl(p.stop ? String(p.stop) : ""); setTp(p.take ? String(p.take) : ""); }}>TP / SL</button>
-            <button className="btn px-3 py-1 text-xs" onClick={() => act(() => PF.close(p.key, 0.5), `Closed half of ${p.symbol}.`)}>Close 50%</button>
-            <button className="btn border-bear/40 px-3 py-1 text-xs text-bear" onClick={() => act(() => PF.close(p.key, 1), `Closed ${p.symbol} at market.`)}>Close all</button>
-          </div>
-        </div>
-      ))}
+      {rows.map((p) => <FutPositionRow key={p.key} p={p} act={act} editing={edit === p.key} setEdit={setEdit} onOpen={onOpen} onPair={onPair} />)}
+      <p className="text-[11px] text-mute">Tap a position for all its details. Tap the pair name to show it on the chart.</p>
     </div>
   );
 }
 
-function SpotHoldings({ rows, act }: { rows: any[]; act: (fn: () => Promise<any>, ok: string) => Promise<void> }) {
+/** What a position row shows, rounded as displayed: the row re-renders only when one of these changes. */
+const futSig = (p: any) => [p.key, p.symbol, p.side, fmtNum(p.leverage, 1), fmtNum(p.upnl), fmtPctRaw(p.roe_pct, 1), fmtNum(p.notional, 0), fmtPrice(p.entry),
+  fmtPrice(p.mark), fmtPrice(p.liq), fmtNum(p.margin), p.take, p.stop, fmtNum(p.funding ?? 0, 3), p.auto ? 1 : 0].join("|");
+
+const FutPositionRow = memo(function FutPositionRow({ p, act, editing, setEdit, onOpen, onPair }: { p: any; act: Act; editing: boolean; setEdit: (k: string | null) => void; onOpen: (key: string) => void; onPair: (s: string) => void }) {
+  const [sl, setSl] = useState(""); const [tp, setTp] = useState("");
+  return (
+    <div className="cursor-pointer rounded-xl border border-glass/[0.08] p-3 transition-colors hover:border-accent/30 focus-visible:outline focus-visible:outline-1 focus-visible:outline-accent/60" {...openable(() => onOpen(p.key), `${p.symbol} ${sideName(p.side)} position: show details`)}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <span className={`h-8 w-1 rounded-full ${p.side > 0 ? "bg-bull" : "bg-bear"}`} />
+          <PairButton symbol={p.symbol} onPair={onPair} />
+          <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${p.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{sideName(p.side)} {fmtNum(p.leverage, 1)}x</span>
+          {p.auto && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[11px] font-bold text-accent" title="Opened automatically from an app signal">AUTO</span>}
+        </div>
+        <div className="text-right"><div className={`num font-semibold ${tone(p.upnl)}`}>{p.upnl != null ? `${signed(p.upnl)} USDT` : "—"}</div><div className={`num text-xs ${tone(p.upnl)}`}>{fmtPctRaw(p.roe_pct, 1)} ROE</div></div>
+      </div>
+      <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4 xl:grid-cols-8">
+        {([["Size", `${fmtNum(p.notional, 0)} USDT`], ["Entry", fmtPrice(p.entry)], ["Mark", fmtPrice(p.mark)], ["Liq. price", fmtPrice(p.liq)], ["Margin", `${fmtNum(p.margin)} USDT`],
+          ["TP", p.take ? fmtPrice(p.take) : "—"], ["SL", p.stop ? fmtPrice(p.stop) : "—"], ["Funding", `${fmtNum(-(p.funding ?? 0), 3)} USDT`]] as const).map(([k, v]) => (
+          <div key={k} className="min-w-0"><dt className="text-[11px] text-mute">{k}</dt><dd className={`num mt-0.5 truncate text-[13px] font-medium ${k === "Liq. price" ? "text-warn" : k === "TP" ? "text-bull" : k === "SL" ? "text-bear" : ""}`}>{v}</dd></div>
+        ))}
+      </dl>
+      {editing && (
+        <div className="mt-2 grid grid-cols-[1fr_1fr_auto] gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+          <input className="input num h-9" placeholder="Take-profit" inputMode="decimal" value={tp} onChange={(e) => setTp(e.target.value)} aria-label="Take-profit" />
+          <input className="input num h-9" placeholder="Stop-loss" inputMode="decimal" value={sl} onChange={(e) => setSl(e.target.value)} aria-label="Stop-loss" />
+          <button className="btn btn-primary h-9 px-3 text-xs" onClick={() => act(async () => { await PF.setOrders(p.key, Number(sl) || null, Number(tp) || null); setEdit(null); }, "TP / SL updated.")}>Save</button>
+        </div>
+      )}
+      <div className="mt-2 flex flex-wrap justify-end gap-2" onClick={(e) => e.stopPropagation()} onKeyDown={(e) => e.stopPropagation()}>
+        <button className="btn px-3 py-1 text-xs" onClick={() => { setEdit(editing ? null : p.key); setSl(p.stop ? String(p.stop) : ""); setTp(p.take ? String(p.take) : ""); }}>TP / SL</button>
+        <button className="btn px-3 py-1 text-xs" onClick={() => act(() => PF.close(p.key, 0.5), `Closed half of ${p.symbol}.`)}>Close 50%</button>
+        <button className="btn border-bear/40 px-3 py-1 text-xs text-bear" onClick={() => act(() => PF.close(p.key, 1), `Closed ${p.symbol} at market.`)}>Close all</button>
+      </div>
+    </div>
+  );
+}, (a, b) => a.editing === b.editing && a.act === b.act && a.onOpen === b.onOpen && a.onPair === b.onPair && futSig(a.p) === futSig(b.p));
+
+function SpotHoldings({ rows, act, onOpen, onPair }: { rows: any[]; act: Act; onOpen: (symbol: string) => void; onPair: (s: string) => void }) {
   if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No coins held yet. Buy from the order form.</p>;
   return (
     <div className="space-y-2">
-      {rows.map((p) => {
-        const pct = p.mark && p.avg_price ? (p.mark / p.avg_price - 1) * 100 : null;
-        return (
-          <div key={p.symbol} className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-glass/[0.08] p-3">
-            <div className="flex items-center gap-2.5"><CoinAvatar symbol={p.symbol} size={28} /><div><div className="font-semibold">{base(p.symbol)}</div><div className="num text-xs text-mute">{fmtNum(p.qty, 6)} · avg {fmtPrice(p.avg_price)}</div></div></div>
-            <div className="text-right"><div className="num">{fmtNum(p.market_value)} USDT</div><div className={`num text-xs ${tone(p.unrealized_pnl)}`}>{p.unrealized_pnl != null ? `${p.unrealized_pnl >= 0 ? "+" : ""}${fmtNum(p.unrealized_pnl)} (${fmtPctRaw(pct, 1)})` : "—"}</div></div>
-            <button className="btn px-3 py-1 text-xs" onClick={() => act(() => SP.order(p.symbol, "SELL", p.qty, null), `Sold all ${base(p.symbol)}.`)}>Sell all</button>
-          </div>
-        );
-      })}
+      {rows.map((p) => <SpotHoldingRow key={p.symbol} p={p} act={act} onOpen={onOpen} onPair={onPair} />)}
+      <p className="text-[11px] text-mute">Tap a coin for its details. Tap the pair name to show it on the chart.</p>
     </div>
   );
 }
 
-function Orders({ rows, market, act }: { rows: any[]; market: Mkt; act: (fn: () => Promise<any>, ok: string) => Promise<void> }) {
+const spotSig = (p: any) => [p.symbol, fmtNum(p.qty, 6), fmtPrice(p.avg_price), fmtNum(p.market_value), fmtNum(p.unrealized_pnl), fmtPrice(p.mark)].join("|");
+const SpotHoldingRow = memo(function SpotHoldingRow({ p, act, onOpen, onPair }: { p: any; act: Act; onOpen: (symbol: string) => void; onPair: (s: string) => void }) {
+  const pct = p.mark && p.avg_price ? (p.mark / p.avg_price - 1) * 100 : null;
+  return (
+    <div className="flex cursor-pointer flex-wrap items-center justify-between gap-3 rounded-xl border border-glass/[0.08] p-3 transition-colors hover:border-accent/30 focus-visible:outline focus-visible:outline-1 focus-visible:outline-accent/60" {...openable(() => onOpen(p.symbol), `${p.symbol} holding: show details`)}>
+      <div className="flex items-center gap-2.5"><CoinAvatar symbol={p.symbol} size={28} /><div><PairButton symbol={p.symbol} onPair={onPair} /><div className="num text-xs text-mute">{fmtNum(p.qty, 6)} · avg {fmtPrice(p.avg_price)}</div></div></div>
+      <div className="text-right"><div className="num">{fmtNum(p.market_value)} USDT</div><div className={`num text-xs ${tone(p.unrealized_pnl)}`}>{p.unrealized_pnl != null ? `${signed(p.unrealized_pnl)} (${fmtPctRaw(pct, 1)})` : "—"}</div></div>
+      <button className="btn px-3 py-1 text-xs" onClick={(e) => { e.stopPropagation(); act(() => SP.order(p.symbol, "SELL", p.qty, null), `Sold all ${base(p.symbol)}.`); }}>Sell all</button>
+    </div>
+  );
+}, (a, b) => a.act === b.act && a.onOpen === b.onOpen && a.onPair === b.onPair && spotSig(a.p) === spotSig(b.p));
+
+function Orders({ rows, market, act, onPair }: { rows: any[]; market: Mkt; act: Act; onPair: (s: string) => void }) {
   if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No open orders. Choose “Limit” in the order form to buy or sell at your price.</p>;
   return (
     <div className="overflow-x-auto"><table className="grid-table">
@@ -465,7 +514,7 @@ function Orders({ rows, market, act }: { rows: any[]; market: Mkt; act: (fn: () 
       <tbody>{rows.map((o) => {
         const buy = o.side === "BUY" || o.side > 0;
         return (
-          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium">{o.symbol}{o.auto && <span className="ml-1 rounded bg-accent/15 px-1 text-[11px] font-bold text-accent">AUTO</span>}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
+          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium"><PairButton symbol={o.symbol} onPair={onPair} className="font-medium" />{o.auto && <span className="ml-1 rounded bg-accent/15 px-1 text-[11px] font-bold text-accent">AUTO</span>}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
             <td className={buy ? "text-bull" : "text-bear"}>{market === "futures" ? (buy ? "Long" : "Short") : buy ? "Buy" : "Sell"}</td>
             <td className="num text-right">{fmtPrice(o.price)}</td><td className="num text-right">{market === "futures" ? `${fmtNum(o.margin)} USDT` : fmtNum(o.qty, 6)}</td>
             <td className="text-right"><button className="btn px-2 py-0.5 text-xs" onClick={() => act(() => (market === "futures" ? PF.cancelOrder(o.id) : SP.cancelOrder(o.id)), "Order cancelled; the funds are back.")}>Cancel</button></td></tr>
@@ -475,7 +524,7 @@ function Orders({ rows, market, act }: { rows: any[]; market: Mkt; act: (fn: () 
   );
 }
 
-function History({ rows, market }: { rows: any[]; market: Mkt }) {
+function History({ rows, market, onPair }: { rows: any[]; market: Mkt; onPair: (s: string) => void }) {
   if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No trades yet.</p>;
   return (
     <div className="max-h-96 overflow-auto"><table className="grid-table">
@@ -484,7 +533,7 @@ function History({ rows, market }: { rows: any[]; market: Mkt }) {
         const label = market === "futures" ? `${t.type === "OPEN" ? "Open" : "Close"} ${t.side > 0 ? "long" : "short"}${t.reason && t.reason !== "manual" ? ` · ${t.reason}` : ""}${t.order_type === "LIMIT" ? " · limit" : ""}` : `${t.side === "BUY" ? "Buy" : "Sell"}${t.order_type === "LIMIT" ? " · limit" : ""}`;
         const pnl = t.realized_pnl;
         return (
-          <tr key={t.id}><td className="text-mute">{fmtTime(t.created_at)}</td><td className="font-medium">{t.symbol}</td><td className={(market === "futures" ? t.side > 0 : t.side === "BUY") ? "text-bull" : "text-bear"}>{label}</td>
+          <tr key={t.id}><td className="text-mute">{fmtTime(t.created_at)}</td><td><PairButton symbol={t.symbol} onPair={onPair} className="font-medium" /></td><td className={(market === "futures" ? t.side > 0 : t.side === "BUY") ? "text-bull" : "text-bear"}>{label}</td>
             <td className="num text-right">{fmtPrice(t.price)}</td><td className="num text-right">{fmtNum(t.qty, 6)}</td><td className="num text-right text-mute">{fmtNum(t.fee, 3)}</td>
             <td className={`num text-right ${tone(pnl)}`}>{isNum(pnl) && (market === "spot" ? t.side === "SELL" : t.type === "CLOSE") ? `${pnl >= 0 ? "+" : ""}${fmtNum(pnl)}` : "—"}</td></tr>
         );
@@ -517,5 +566,118 @@ function Assets({ d, market, act }: { d: any; market: Mkt; act: (fn: () => Promi
         <button className="btn ml-auto" onClick={() => nav("/bots")}>Compare with the demo bots →</button>
       </div>
     </div>
+  );
+}
+
+/* ---------------------------------------------------------------- position details (side panel on a computer, bottom sheet on a phone) */
+function duration(ms: number): string {
+  const m = Math.max(0, Math.floor(ms / 60_000));
+  if (m < 60) return `${m} min`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h} h ${m % 60} min`;
+  return `${Math.floor(h / 24)} d ${h % 24} h`;
+}
+
+function PositionDrawer({ market, d, id, act, onPair, onClose }: { market: Mkt; d: any; id: string; act: Act; onPair: (s: string) => void; onClose: () => void }) {
+  const ref = useFocusTrap(true, onClose);
+  const p = market === "futures" ? (d.positions ?? []).find((x: any) => x.key === id) : (d.positions ?? []).find((x: any) => x.symbol === id);
+  const [edit, setEdit] = useState(false);
+  const [sl, setSl] = useState(""); const [tp, setTp] = useState("");
+  const [, tick] = useState(0);
+  useEffect(() => { const t = window.setInterval(() => tick((n) => n + 1), 30_000); return () => window.clearInterval(t); }, []);   // open-for counter
+  const title = p ? `${p.symbol} ${market === "futures" ? sideName(p.side) : "holding"}` : "Position closed";
+  const rows: [string, React.ReactNode, string?][] = [];
+  if (p && market === "futures") {
+    const sig = p.signal;
+    rows.push(
+      ["Pair", <PairButton symbol={p.symbol} onPair={(s) => { onPair(s); onClose(); }} />],
+      ["Side", sideName(p.side), p.side > 0 ? "text-bull" : "text-bear"],
+      ["Leverage", `${fmtNum(p.leverage, 1)}x`],
+      ["Margin mode", `Isolated · ${d.mode === "hedge" ? "Hedge" : "One-way"} mode`],
+      ["Size", <>{fmtNum(p.qty, 6)} {base(p.symbol)}<span className="block text-[11px] text-mute">{fmtNum(p.notional, 2)} USDT notional</span></>],
+      ["Entry price", fmtPrice(p.entry)],
+      ["Mark price", <>{fmtPrice(p.mark)}<span className="block text-[11px] text-mute">live futures price</span></>],
+      ["Unrealised P&L", <>{p.upnl != null ? `${signed(p.upnl)} USDT` : "—"}<span className="block text-[11px]">{fmtPctRaw(p.roe_pct, 2)} ROI on margin</span></>, tone(p.upnl)],
+      ["Margin", `${fmtNum(p.margin)} USDT`],
+      ["Liquidation price", fmtPrice(p.liq), "text-warn"],
+      ["Take-profit", p.take ? fmtPrice(p.take) : "not set", p.take ? "text-bull" : "text-mute"],
+      ["Stop-loss", p.stop ? fmtPrice(p.stop) : "not set", p.stop ? "text-bear" : "text-mute"],
+      ["Fees paid", `${fmtNum(p.fees ?? 0, 3)} USDT`],
+      ["Funding", `${fmtNum(-(p.funding ?? 0), 3)} USDT`, tone(-(p.funding ?? 0))],
+      ["Opened", <>{fmtTime(p.opened_at)}<span className="block text-[11px] text-mute">open for {duration(Date.now() - p.opened_at)}</span></>],
+      ["Origin", p.auto
+        ? <>Auto-trade{sig ? <> from the <b>{sig.timeframe?.toUpperCase()}</b> {sig.side === "SHORT" ? "short" : "long"} signal{sig.grade ? ` (grade ${sig.grade})` : ""}{sig.at ? `, ${fmtTime(sig.at)}` : ""}</> : " from an app signal"}
+            <span className="mt-0.5 flex flex-wrap justify-end gap-x-3 text-[11px]">
+              <Link className="text-accent hover:underline" to={`/signals?market=futures&symbol=${encodeURIComponent(p.symbol)}${sig?.timeframe ? `&timeframe=${sig.timeframe}` : ""}`}>Open signal</Link>
+              <Link className="text-accent hover:underline" to={`/results?tab=log&coin=${encodeURIComponent(base(p.symbol))}${sig?.timeframe ? `&tf=${sig.timeframe}` : ""}`}>Signal log</Link>
+            </span></>
+        : "Manual (your order)"],
+    );
+  } else if (p) {
+    const pct = p.mark && p.avg_price ? (p.mark / p.avg_price - 1) * 100 : null;
+    rows.push(
+      ["Pair", <PairButton symbol={p.symbol} onPair={(s) => { onPair(s); onClose(); }} />],
+      ["Market", "Spot · no leverage"],
+      ["Quantity", `${fmtNum(p.qty, 6)} ${base(p.symbol)}`],
+      ["Average buy price", fmtPrice(p.avg_price)],
+      ["Live price", fmtPrice(p.mark)],
+      ["Value", `${fmtNum(p.market_value)} USDT`],
+      ["Unrealised P&L", <>{p.unrealized_pnl != null ? `${signed(p.unrealized_pnl)} USDT` : "—"}<span className="block text-[11px]">{fmtPctRaw(pct, 2)}</span></>, tone(p.unrealized_pnl)],
+      ["Cost", `${fmtNum(p.qty * p.avg_price)} USDT`],
+      ...(p.fees != null ? [["Buy fees paid", `${fmtNum(p.fees, 3)} USDT`] as [string, string]] : []),
+      ...(p.opened_at ? [["First bought", <>{fmtTime(p.opened_at)}<span className="block text-[11px] text-mute">held for {duration(Date.now() - p.opened_at)}</span></>] as [string, React.ReactNode]] : []),
+      ["Origin", "Manual (your order)"],
+    );
+  }
+  // portal: the page wrapper animates with a transform, which would trap a fixed overlay under the header / bottom bar
+  return createPortal(
+    <div className="fixed inset-0 z-[60]" onClick={onClose}>
+      <div className="absolute inset-0 bg-ink/60 backdrop-blur-sm" />
+      <div ref={ref} role="dialog" aria-modal="true" aria-label={`${title}: details`} onClick={(e) => e.stopPropagation()}
+        className="absolute inset-x-0 bottom-0 max-h-[88dvh] sm:inset-x-auto sm:bottom-0 sm:right-0 sm:top-0 sm:max-h-none sm:w-[420px]">
+        <div className="panel animate-in flex h-full max-h-[88dvh] flex-col rounded-b-none p-0 sm:max-h-none sm:rounded-none sm:rounded-l-2xl">
+          <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-glass/20 sm:hidden" aria-hidden="true" />
+          <div className="flex items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-3">
+            <div className="flex min-w-0 items-center gap-2.5">
+              {p && <CoinAvatar symbol={p.symbol} size={28} />}
+              <div className="min-w-0"><h2 className="truncate font-display text-base font-bold">{title}</h2>
+                <p className="text-[11px] text-mute">{market === "futures" ? "Perpetual · USDT-M · practice account" : "Spot · practice account"}</p></div>
+            </div>
+            <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close details" onClick={onClose}>✕</button>
+          </div>
+          <div className="min-h-0 flex-1 overflow-y-auto px-4 py-2 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            {!p ? <p className="py-8 text-center text-sm text-mute">This position is no longer open. Its result is in Order history.</p> : (
+              <>
+                <dl className="divide-y divide-glass/[0.06] text-sm">
+                  {rows.map(([k, v, c]) => (
+                    <div key={k} className="flex items-start justify-between gap-4 py-2">
+                      <dt className="shrink-0 text-mute">{k}</dt><dd className={`num min-w-0 text-right font-medium ${c ?? ""}`}>{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+                {market === "futures" && edit && (
+                  <div className="mt-3 grid grid-cols-[1fr_1fr_auto] gap-2">
+                    <input className="input num h-9" placeholder="Take-profit" inputMode="decimal" value={tp} onChange={(e) => setTp(e.target.value)} aria-label="Take-profit" />
+                    <input className="input num h-9" placeholder="Stop-loss" inputMode="decimal" value={sl} onChange={(e) => setSl(e.target.value)} aria-label="Stop-loss" />
+                    <button className="btn btn-primary h-9 px-3 text-xs" onClick={() => act(async () => { await PF.setOrders(p.key, Number(sl) || null, Number(tp) || null); setEdit(false); }, "TP / SL updated.")}>Save</button>
+                  </div>
+                )}
+                <div className="mt-3 flex flex-wrap justify-end gap-2">
+                  {market === "futures" ? (<>
+                    <button className="btn px-3 py-1.5 text-xs" onClick={() => { setEdit((v) => !v); setSl(p.stop ? String(p.stop) : ""); setTp(p.take ? String(p.take) : ""); }}>Edit TP / SL</button>
+                    <button className="btn px-3 py-1.5 text-xs" onClick={() => act(() => PF.close(p.key, 0.5), `Closed half of ${p.symbol}.`)}>Close 50%</button>
+                    <button className="btn border-bear/40 px-3 py-1.5 text-xs text-bear" onClick={() => act(() => PF.close(p.key, 1), `Closed ${p.symbol} at market.`)}>Close all</button>
+                  </>) : (
+                    <button className="btn px-3 py-1.5 text-xs" onClick={() => act(() => SP.order(p.symbol, "SELL", p.qty, null), `Sold all ${base(p.symbol)}.`)}>Sell all</button>
+                  )}
+                </div>
+                <p className="mt-3 text-[11px] text-mute">{market === "futures" ? "Virtual money only. P&L follows the live price; fees and funding are already taken from the margin and wallet." : "Virtual money only. P&L follows the live spot price; the selling fee is paid when you sell."}</p>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }

@@ -24,7 +24,9 @@ def test_auto_paper_opens_once_respects_settings_and_balance(tmp_path):
     acc = sink.get("paper/m1_futures")
     pos = acc["positions"]["BTCUSDT"]
     assert pos["auto"] and pos["margin"] == 300 and pos["leverage"] == 5          # grade A: 1.2x the chosen $250 and pos["stop"] == 96 and pos["take"] == 108
+    assert pos["signal"]["timeframe"] == "1h" and pos["signal"]["grade"] == "A" and pos["signal"]["side"] == "LONG"
     od = next(iter(acc["orders"].values()))
+    assert od["signal"]["symbol"] == "ETH/USDT" and od["signal"]["side"] == "SHORT"
     assert od["symbol"] == "ETH/USDT" and od["price"] == 100.0 and od["side"] == -1      # outside the zone: limit at the ideal entry
     assert abs(acc["wallet"] - (10_000 - pos["margin"] - pos["fees"] - od["reserve"])) < 1e-6
     assert sink.get("paper/gone_futures") is None and sink.get("paper/off_futures") is None
