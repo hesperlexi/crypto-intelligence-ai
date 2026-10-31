@@ -122,7 +122,7 @@ export default function Dashboard() {
       {/* directly below the Fear & Greed row: dominance, altcoin season, market pulse, top headline */}
       <MarketInsights />
 
-      <Card title="Forecast table — expected return per horizon" right={<span className="text-xs text-mute">each horizon uses its own timeframe model</span>}>
+      <Card ai title="Forecast table — expected return per horizon" right={<span className="text-xs text-mute">each horizon uses its own timeframe model</span>}>
         <div className="table-wrap">
           <table className="grid-table">
             <thead><tr><th>Asset</th><th className="text-right">Current</th>{HORIZONS.map((h) => <th key={h} className="text-right">{h}</th>)}</tr></thead>

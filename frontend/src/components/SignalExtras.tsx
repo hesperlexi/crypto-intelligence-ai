@@ -6,18 +6,19 @@
 import { useState } from "react";
 import { fmtPctRaw, isNum } from "../lib/format";
 import { roiOf, roiTone, signedPct } from "../lib/roi";
+import { AiTag } from "./ui";
 
 type Tone = "bull" | "bear" | "warn" | "accent" | "mute";
 const PILL: Record<Tone, string> = {
-  bull: "border-bull/40 bg-bull/10 text-bull",
-  bear: "border-bear/40 bg-bear/10 text-bear",
-  warn: "border-warn/40 bg-warn/10 text-warn",
-  accent: "border-accent/40 bg-accent/10 text-accent",
-  mute: "border-glass/15 bg-glass/[0.05] text-mute",
+  bull: "border-bull/30 bg-bull/[0.08] text-bull",
+  bear: "border-bear/30 bg-bear/[0.08] text-bear",
+  warn: "border-warn/30 bg-warn/[0.08] text-warn",
+  accent: "border-accent/30 bg-accent/[0.08] text-accent",
+  mute: "border-glass/[0.12] bg-glass/[0.04] text-mute",
 };
 
 export function Pill({ tone = "mute", children, title }: { tone?: Tone; children: React.ReactNode; title?: string }) {
-  return <span title={title} className={`inline-flex items-center whitespace-nowrap rounded-md border px-1.5 py-0.5 text-[11px] font-semibold leading-none ${PILL[tone]}`}>{children}</span>;
+  return <span title={title} className={`inline-flex items-center whitespace-nowrap rounded-[5px] border px-1.5 py-[3px] text-[11px] font-semibold leading-none ${PILL[tone]}`}>{children}</span>;
 }
 
 /** Call status as shown on cards (same words as the track record). */
@@ -117,18 +118,23 @@ export function CallStatusRow({ call, px }: { call?: any; px?: number }) {
   );
 }
 
-/** Collapsible AI advisor note. */
+/** Collapsible AI advisor note (the shared AI marker: .ai-block + AiTag). The advisor's regime label, when present,
+ *  is shown as its own words next to the tag. */
 export function AiNote({ ai }: { ai?: any }) {
   const [open, setOpen] = useState(false);
   const text: string | undefined = typeof ai?.rationale === "string" ? ai.rationale.trim() : undefined;
   if (!text) return null;
+  const regime: string | undefined = typeof ai?.regime === "string" && ai.regime.trim() ? ai.regime.trim() : undefined;
   return (
-    <div className="rounded-lg border border-glass/[0.08] bg-ink/30 text-xs">
-      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-2 px-2.5 py-1.5 text-left text-mute hover:text-text">
-        <span className="font-semibold">AI note · analysis only</span>
-        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className={`transition-transform ${open ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
+    <div className="ai-block text-xs">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-mute transition-colors hover:text-text">
+        <span className="flex min-w-0 items-center gap-2">
+          <AiTag />
+          <span className="truncate font-medium">Advisor note · analysis only{regime ? <span className="text-mute/80"> · regime: {regime}</span> : null}</span>
+        </span>
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className={`shrink-0 transition-transform ${open ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
       </button>
-      {open && <p className="px-2.5 pb-2 leading-relaxed text-text/90">{text}</p>}
+      {open && <p className="px-2.5 pb-2.5 leading-relaxed text-text/90">{text}</p>}
     </div>
   );
 }
@@ -148,7 +154,7 @@ export function RoiFigure({ x, size = "md", align = "right", label = true }: { x
   return (
     <span className={`inline-flex flex-col gap-0.5 ${just}`}>
       <span className={`flex items-center gap-1.5 ${align === "right" ? "flex-row-reverse" : ""}`}>
-        <span className={`num font-extrabold leading-none tracking-tight ${big} ${roiTone(r.value)} ${size !== "sm" && r.value > 0 ? "drop-shadow-[0_0_12px_rgba(14,203,129,0.35)]" : ""}`}>{signedPct(r.value)}</span>
+        <span className={`num font-extrabold leading-none tracking-tight ${big} ${roiTone(r.value)}`}>{signedPct(r.value)}</span>
         {r.leverage && <LevChip lev={r.leverage} />}
       </span>
       {label && (

@@ -5,6 +5,7 @@ import { DASH, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, isGoldSignal } f
 import { useLive } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 import { AiNote, CallStatusRow, RiskBadge } from "./SignalExtras";
+import { AiTag } from "./ui";
 import { AdjustButton, AdjustHistory, adjustedPlan, UpdatedBadge } from "./SignalAdjust";
 import { Explain, PLAIN, useIsPro } from "../lib/mode";
 
@@ -240,13 +241,16 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
         )}
 
         {/* confidence and context (advanced numbers: Pro view only) */}
-        {pro && <div className="grid grid-cols-3 gap-2 text-xs">
+        {pro && <div className="ai-block px-2.5 py-2">
+          <div className="mb-1.5"><AiTag label="AI confidence" /></div>
+          <div className="grid grid-cols-3 gap-2 text-xs">
           <div title="How often the AI was right in past out-of-sample calls leaning the same way by a similar margin"><div className="text-mute">Hit rate (similar calls)</div><div className="num mt-0.5 text-sm font-semibold">{fmtProb(r.confidence)}</div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
+            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-ai" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
           <div><div className="text-mute">Up / down</div><div className="num mt-0.5 text-sm font-semibold"><span className="text-bull">{upPct}%</span> / <span className="text-bear">{downPct}%</span></div></div>
           {market === "futures"
             ? <div><div className="text-mute">Funding 8h</div><div className="num mt-0.5 text-sm font-semibold">{isNum(funding) ? fmtPctRaw(funding * 100, 3) : "0.010%"}</div></div>
             : <div><div className="text-mute">Trend</div><div className="mt-0.5 text-sm font-semibold">{r.regime ?? DASH}</div></div>}
+          </div>
         </div>}
         {!pro && v.tone !== "wait" && r.grade && <Explain>{PLAIN.grade}</Explain>}
 

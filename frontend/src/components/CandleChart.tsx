@@ -96,7 +96,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     const precision = pricePrecision(last[4]);
     const priceFormat = { type: "price" as const, precision, minMove: 1 / 10 ** precision };
     const series = chart.addCandlestickSeries({
-      upColor: "#0ecb81", downColor: "#f6465d", wickUpColor: "#0ecb81", wickDownColor: "#f6465d", borderVisible: false, priceFormat,
+      upColor: cc.bull, downColor: cc.bear, wickUpColor: cc.bull, wickDownColor: cc.bear, borderVisible: false, priceFormat,
     });
     const all = tailRef.current.size ? (() => {
       const m = new Map<number, Candle>(candles.map((c) => [c[0], c]));
@@ -110,15 +110,15 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
 
     if (future.length) {
       const fs = chart.addCandlestickSeries({
-        upColor: "rgba(14,203,129,0.35)", downColor: "rgba(246,70,93,0.35)", wickUpColor: "rgba(14,203,129,0.35)",
-        wickDownColor: "rgba(246,70,93,0.35)", borderVisible: false, priceFormat, priceLineVisible: false, lastValueVisible: false,
+        upColor: cc.bullSoft(0.35), downColor: cc.bearSoft(0.35), wickUpColor: cc.bullSoft(0.35),
+        wickDownColor: cc.bearSoft(0.35), borderVisible: false, priceFormat, priceLineVisible: false, lastValueVisible: false,
       });
       fs.setData(future.map((c) => ({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] })));
     }
 
     const volume = chart.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "", priceLineVisible: false, lastValueVisible: false });
     volume.priceScale().applyOptions({ scaleMargins: { top: 0.86, bottom: 0 } });
-    volume.setData(candles.map((c) => ({ time: t(c[0]), value: c[5], color: c[4] >= c[1] ? "rgba(14,203,129,0.3)" : "rgba(246,70,93,0.3)" })));
+    volume.setData(candles.map((c) => ({ time: t(c[0]), value: c[5], color: c[4] >= c[1] ? cc.bullSoft(0.28) : cc.bearSoft(0.28) })));
 
     if (overlays?.ts) {
       const first = candles[0][0];

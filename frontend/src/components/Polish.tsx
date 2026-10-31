@@ -124,7 +124,7 @@ export function DashboardHero({ rows, status, tf }: { rows?: any[]; status?: any
           <div className="kpi col-span-2 flex items-center justify-between gap-3 p-3 sm:p-4">
             <div>
               <div className="label">Market mood</div>
-              <div className="mt-1 flex items-center gap-2 text-sm"><span className={`h-2 w-2 rounded-full ${mood === "BULL" ? "bg-bull" : mood === "BEAR" ? "bg-bear" : "bg-warn"} shadow-[0_0_10px_currentColor]`} />{status ? `${status.bull} bull · ${status.neutral} neutral · ${status.bear} bear` : "—"}</div>
+              <div className="mt-1 flex items-center gap-2 text-sm"><span className={`h-2 w-2 rounded-full ${mood === "BULL" ? "bg-bull" : mood === "BEAR" ? "bg-bear" : "bg-warn"}`} />{status ? `${status.bull} bull · ${status.neutral} neutral · ${status.bear} bear` : "—"}</div>
             </div>
             <div className="flex h-2 w-24 shrink-0 overflow-hidden rounded-full bg-glass/[0.06] sm:w-32" aria-hidden="true">
               {status && <><div className="bg-bull" style={{ flex: status.bull || 0 }} /><div className="bg-warn/70" style={{ flex: status.neutral || 0 }} /><div className="bg-bear" style={{ flex: status.bear || 0 }} /></>}

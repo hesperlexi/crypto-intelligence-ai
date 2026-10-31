@@ -138,7 +138,7 @@ export default function Asset() {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <Card title="Forecast by horizon">
+            <Card ai title="Forecast by horizon">
               <div className="table-wrap">
                 <table className="grid-table">
                   <thead><tr><th>Horizon</th><th className="text-right">Expected</th><th className="text-right">P(up)</th><th className="text-right">80% range</th><th>Status</th></tr></thead>
@@ -205,13 +205,13 @@ export default function Asset() {
 
 function ForecastCard({ fc, tf, price }: { fc: any; tf: string; price: number }) {
   if (!fc?.available) {
-    return <Card title="AI forecast"><Empty><Badge tone="warn">{fc?.status ?? "NO FORECAST"}</Badge><div className="mt-2">{fc?.reason}</div>{!MODEL_TFS.includes(tf as any) && <div className="mt-1">Pick 15m, 1h, 4h, 12h, 1d or 3d for a model forecast.</div>}</Empty></Card>;
+    return <Card ai title="Forecast"><Empty><Badge tone="warn">{fc?.status ?? "NO FORECAST"}</Badge><div className="mt-2">{fc?.reason}</div>{!MODEL_TFS.includes(tf as any) && <div className="mt-1">Pick 15m, 1h, 4h, 12h, 1d or 3d for a model forecast.</div>}</Empty></Card>;
   }
   const d = fc.distribution;
   const p = fc.probabilities;
   const raw = fc.raw_probabilities;
   return (
-    <Card title={`AI forecast · next ${tf.toUpperCase()} bar`} right={<span className="text-xs text-mute">from the close at {fmtPrice(price)}</span>}>
+    <Card ai title={`Forecast · next ${tf.toUpperCase()} bar`} right={<span className="text-xs text-mute">from the close at {fmtPrice(price)}</span>}>
       <ProbBar up={p.up} neutral={p.neutral} down={p.down} />
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Stat label="Point forecast" value={d ? fmtPrice(d.expected_price) : DASH} sub={<span className={tone(fc.expected_return)}>{fmtPct(fc.expected_return)}</span>} />
@@ -254,7 +254,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
   const isAdm = useIsAdmin();
   const canTrain = MODEL_TFS.includes(tf as any) && isAdm;
   return (
-    <Card title="Model consensus" right={canTrain ? <button className="btn px-2 py-0.5 text-xs" disabled={busy} onClick={train}>Retrain</button> : undefined}>
+    <Card ai title="Model consensus" right={canTrain ? <button className="btn px-2 py-0.5 text-xs" disabled={busy} onClick={train}>Retrain</button> : undefined}>
       {msg && <p className="mb-2 text-xs text-accent">{msg}</p>}
       {!fc?.available ? <Empty>{fc?.reason ?? "No model"}</Empty> : (
         <>

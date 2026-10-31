@@ -49,7 +49,7 @@ export default function WinsToday() {
             <div className="relative mt-3 flex items-end justify-between gap-3 px-4">
               <div>
                 <div className="label">{r?.onMargin ? "ROI on margin" : "Price move"}</div>
-                <div className="num mt-1 text-[32px] font-extrabold leading-none tracking-tight text-bull drop-shadow-[0_0_14px_rgba(14,203,129,0.45)]">{r ? signedPct(r.value) : "—"}</div>
+                <div className="num mt-1 text-[32px] font-extrabold leading-none tracking-tight text-bull">{r ? signedPct(r.value) : "—"}</div>
               </div>
               {r?.leverage && (
                 <div className="text-right">

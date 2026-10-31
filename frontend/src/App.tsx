@@ -107,7 +107,7 @@ function Toasts() {
   return (
     <div className="fixed bottom-20 right-4 z-50 flex md:bottom-4 w-80 max-w-[calc(100vw-2rem)] flex-col gap-2" aria-live="polite">
       {alerts.map((a) => (
-        <div key={a.id} className="panel flex items-start justify-between gap-3 border-accent/50 p-3 text-sm">
+        <div key={a.id} className="panel popover sheet-in flex items-start justify-between gap-3 p-3 text-sm">
           <span>{a.message}</span>
           <button className="text-mute hover:text-text" onClick={() => dismissAlert(a.id)} aria-label="Dismiss alert">
             ✕
@@ -206,8 +206,8 @@ function Shell({ user }: { user: User }) {
   const { a } = useAppearance();
   const side = a.nav === "side";
   const width = a.width === "wide" ? "max-w-none" : "max-w-[1600px]";
-  const navCls = ({ isActive }: { isActive: boolean }) =>
-    `whitespace-nowrap rounded-lg px-3 py-1.5 text-sm transition-colors ${isActive ? "bg-accent/10 font-medium text-accent shadow-[inset_0_-2px_0_rgb(var(--accent)),inset_0_1px_0_rgb(var(--glass)/0.06)]" : "text-mute hover:text-text"}`;
+  // active state comes from NavLink's aria-current="page" (index.css .nav-link: gold rule under / beside the item)
+  const navCls = "nav-link";
   const brand = (
     <div className="flex min-w-0 items-center gap-2.5">
       <AnimatedLogo size={34} className="shrink-0" />
@@ -222,7 +222,7 @@ function Shell({ user }: { user: User }) {
       {side && (
         <aside className="glass-bar sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r md:flex">
           <div className="px-4 py-3.5">{brand}</div>
-          <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto px-2" aria-label="Sections">
+          <nav className="nav-side flex flex-1 flex-col gap-0.5 overflow-y-auto px-2" aria-label="Sections">
             {nav.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
           </nav>
           <div className="border-t border-glass/[0.06] px-4 py-3 text-xs text-mute">
@@ -247,7 +247,7 @@ function Shell({ user }: { user: User }) {
             </div>
           </div>
           {!side && (
-            <nav className={`mx-auto hidden ${width} gap-1 overflow-x-auto px-3 pb-2 md:flex`} aria-label="Sections">
+            <nav className={`nav-top mx-auto hidden ${width} gap-0.5 overflow-x-auto px-3 pb-1.5 sm:px-4 md:flex`} aria-label="Sections">
               {nav.map(([to, label]) => (
                 <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>
               ))}
@@ -297,23 +297,23 @@ function Shell({ user }: { user: User }) {
         <div className="grid grid-cols-5">
           {PRIMARY.map(([to, label, icon]) => (
             <NavLink key={to} to={to} end={to === "/"} onClick={() => setMore(false)}
-              className={({ isActive }) => `flex flex-col items-center gap-0.5 py-2 text-[11px] ${isActive ? "text-accent" : "text-mute"}`}>
+              className="tab-link flex flex-col items-center gap-0.5 py-2 text-[11px]">
               <NavIcon name={icon} />{label}
             </NavLink>
           ))}
           <button onClick={() => setMore((v) => !v)} aria-expanded={more} aria-controls="more-sheet"
-            className={`flex flex-col items-center gap-0.5 py-2 text-[11px] ${more ? "text-accent" : "text-mute"}`}>
+            className="tab-link flex flex-col items-center gap-0.5 py-2 text-[11px]">
             <span className="relative" aria-hidden><NavIcon name="more" />{pending > 0 && <span className="absolute -right-1 top-0 h-2 w-2 rounded-full bg-warn" />}</span>More
           </button>
         </div>
       </nav>
       {more && (
         <div className="fixed inset-0 z-[45] md:hidden" onClick={() => setMore(false)}>
-          <div className="absolute inset-0 bg-ink/60 backdrop-blur-sm" />
+          <div className="fade-in absolute inset-0 bg-ink/70" />
           {/* positioned wrapper: .panel sets its own position, so the sheet's placement lives on this div */}
           <div ref={sheet} id="more-sheet" role="dialog" aria-modal="true" aria-label="More sections" className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-7rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="panel animate-in p-2">
-            <div className="grid grid-cols-2 gap-1">
+          <div className="panel popover sheet-in p-2">
+            <div className="nav-sheet grid grid-cols-2 gap-1">
               {nav.filter(([to]) => !PRIMARY.some((p) => p[0] === to)).map(([to, label]) => (
                 <NavLink key={to} to={to} onClick={() => setMore(false)} className={navCls}>{label}</NavLink>
               ))}
