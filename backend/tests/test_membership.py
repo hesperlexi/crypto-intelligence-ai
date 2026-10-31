@@ -229,7 +229,7 @@ def test_testing_gold_swaps_xaut_for_paxg_once(tmp_path):
     assert set(rt.symbols()) == {"BTC/USDT"}
 
 
-def test_paused_15m_removes_its_bots_once(tmp_path):
+def test_15m_resumes_grade_a_only_with_one_bot(tmp_path):
     from app.db import Database
     from app.services.runtime import Runtime
     from app.sinks import LocalSink
@@ -238,12 +238,14 @@ def test_paused_15m_removes_its_bots_once(tmp_path):
     class _P:
         name = "test"
     rt = Runtime(Database("sqlite:///:memory:"), _P())
-    for f in ("watchlist_majors_v2", "gold_paxg_v21", "fresh_start_v23", "testing_v24", "testing_v24b"):
+    for f in ("watchlist_majors_v2", "gold_paxg_v21", "fresh_start_v23", "testing_v24", "testing_v24b", "pause_15m_v26"):
         rt.db.set_setting(f, True)
     sink = LocalSink(tmp_path)
-    sink.set("config/bots", {"bots": [{"id": "a", "timeframe": "15m", "market": "futures"},
-                                      {"id": "b", "timeframe": "1h", "market": "futures"}],
-                             "defaults_added": ["a", "b"] + [d["id"] for d in worker.DEFAULT_BOTS]})
+    sink.set("config/bots", {"bots": [{"id": "b", "timeframe": "1h", "market": "futures"}],
+                             "defaults_added": ["b"] + [d["id"] for d in worker.DEFAULT_BOTS]})
     notes = worker.sync_config(rt, sink)
-    assert notes.get("pause_15m_bots_removed") == 1
-    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["b"]
+    assert notes.get("resume_15m_bot") == "futures-signal-a-15m"
+    bots = sink.get("config/bots")["bots"]
+    assert [b["id"] for b in bots] == ["b", "futures-signal-a-15m"] and bots[1]["grades"] == "A"
+    worker.sync_config(rt, sink)                          # once only (a later removal sticks)
+    assert len(sink.get("config/bots")["bots"]) == 2

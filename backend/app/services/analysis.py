@@ -34,7 +34,9 @@ COST_MULT = 3.0
 ONE_CALL_TFS = ("15m",)
 # timeframes whose trade calls are paused (owner decision 30 Oct 2026: 15m lost money on unseen data, -0.17R per trade);
 # the analysis, chart and forecast still run, only no trade call is issued. Env PAUSED_TFS, comma separated ("" = none).
-PAUSED_TFS = tuple(t.strip() for t in os.environ.get("PAUSED_TFS", "15m").split(",") if t.strip())      # no opposite call while a call on the same coin/timeframe is still open
+# v2.8 (owner decision 31 Oct 2026): 15m resumed, grade A calls only (A_ONLY_TFS, env, comma separated).
+PAUSED_TFS = tuple(t.strip() for t in os.environ.get("PAUSED_TFS", "").split(",") if t.strip())
+A_ONLY_TFS = tuple(t.strip() for t in os.environ.get("A_ONLY_TFS", "15m").split(",") if t.strip())      # no opposite call while a call on the same coin/timeframe is still open
 
 
 def round_trip_cost(futures: bool = True) -> float:
@@ -365,6 +367,10 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         why = (f"{timeframe.upper()} trade calls are paused: on past calls they lost money after costs. "
                "The chart and forecast stay available")
         flags.append("TIMEFRAME PAUSED")
+    if decision in TRADE_DECISIONS and timeframe in A_ONLY_TFS and grade != "A" and live and bundle is None and as_of is None:
+        decision, grade = "NO TRADE", None
+        why = f"{timeframe.upper()} trade calls are grade A only; this setup is grade B"
+        flags.append("GRADE A ONLY")
 
     # one call at a time on quick timeframes (v2.3): while a 15m call on this coin is still running, an opposite 15m
     # call is not issued (the 15m view can swing within the hour; flip-flopping cut winners and entered losers)

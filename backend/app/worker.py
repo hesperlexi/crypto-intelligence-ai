@@ -356,6 +356,20 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/bots", {**doc, "bots": keep, "updated_at": now_ms()})
                 notes["pause_15m_bots_removed"] = len(doc["bots"]) - len(keep)
         rt.db.set_setting("pause_15m_v26", True)
+    # v2.8 (owner decision, 31 Oct 2026): 15m resumed for grade A calls only -> the futures 15m demo bot comes back
+    # once, trading grade A only
+    if not rt.db.get_setting("resume_15m_a_v28", False):
+        from .services.analysis import A_ONLY_TFS, PAUSED_TFS
+        doc = sink.get("config/bots") or {}
+        if "15m" not in PAUSED_TFS and isinstance(doc.get("bots"), list) and \
+                not any(b.get("timeframe") == "15m" for b in doc["bots"]):
+            from .services.bots import _sig_bot
+            b = {**_sig_bot("15m", True), "reset_token": "v28"}
+            if "15m" in A_ONLY_TFS:
+                b = {**b, "grades": "A", "id": "futures-signal-a-15m", "name": "Futures signal bot 15M · grade A"}
+            sink.set("config/bots", {**doc, "bots": doc["bots"] + [b], "updated_at": now_ms()})
+            notes["resume_15m_bot"] = b["id"]
+        rt.db.set_setting("resume_15m_a_v28", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())
