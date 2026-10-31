@@ -93,6 +93,25 @@ jobs:
           json.dump(d, open("../out/scalp15-latest.json", "w"), indent=1)
           EOF
           cp ../out/scalp15-latest.json ../out/scalp15-$stamp.json
+      - name: Run the grade research (A only vs A+B vs paused, per timeframe)
+        env:
+          DATABASE_URL: sqlite:///./data/crypto_ai.db
+        run: |
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
+            printf '{"ok": false, "command": "grades", "reason": "engine state cache not restored"}\n' > ../out/grades-latest.json
+          else
+            python -m app.research grades --budget 7200 --out ../out/grades-latest.json > /dev/null 2> ../out/grades.err \
+              || python -c "import json; e=open('../out/grades.err').read()[-4000:]; json.dump({'ok': False, 'command': 'grades', 'reason': 'the grades research failed', 'stderr_tail': e}, open('../out/grades-latest.json', 'w'))"
+          fi
+          python - <<'EOF'
+          import json
+          d = json.load(open("../out/grades-latest.json"))
+          d["commit"] = "${{ github.sha }}"
+          d["cache_key"] = "${{ steps.state.outputs.cache-matched-key }}"
+          json.dump(d, open("../out/grades-latest.json", "w"), indent=1)
+          EOF
+          cp ../out/grades-latest.json ../out/grades-$stamp.json
       - name: Commit the results to the research-results branch
         working-directory: .
         run: |
@@ -112,8 +131,9 @@ jobs:
             mkdir -p ../rr/results
             cp out/horizon-*.json ../rr/results/
             cp out/scalp15-*.json ../rr/results/ 2>/dev/null || true
-            ( cd ../rr && git add results/horizon-*.json && { git add results/scalp15-*.json 2>/dev/null || true; } && \
-              { git commit -m "Horizon / scalp15 research results for ${GITHUB_SHA::7}" || { echo "nothing new"; exit 0; }; } && \
+            cp out/grades-*.json ../rr/results/ 2>/dev/null || true
+            ( cd ../rr && git add -A results/ && \
+              { git commit -m "Horizon / scalp15 / grades research results for ${GITHUB_SHA::7}" || { echo "nothing new"; exit 0; }; } && \
               git push origin HEAD:research-results ) && exit 0
             echo "push failed (another run committed meanwhile), retrying"; sleep $((attempt * 10))
           done
