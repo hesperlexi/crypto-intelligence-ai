@@ -129,3 +129,14 @@ def test_models_research_runs_on_the_synthetic_runtime():
     assert out["fits"] and all(f.get("rows", 0) >= RM.MIN_TRAIN or f.get("skipped") for f in out["fits"])
     for k, s in out["series"].items():
         assert s["no_prediction_rows"]["A"] < s["oos_bars"]
+
+
+def test_align_columns_fills_missing_feature_blocks():
+    a, b = _fake_series("A/USDT", seed=1), _fake_series("B/USDT", seed=2)
+    a.cols = list("abcdef")
+    b.X, b.Xz, b.cols = b.X[:, :4], b.Xz[:, :4], list("abcd")
+    cols = RM.align_columns([a, b])
+    assert cols == list("abcdef") and b.X.shape[1] == 6 and np.isnan(b.X[:, 4:]).all()
+    assert np.isfinite(b.X[:, :4]).all()
+    out = RM.walk_forward([a, b], RM.boundaries([a, b], 3), "trade", pooled=True)
+    assert np.isfinite(out["B/USDT 4h"]["p_long"]).any()

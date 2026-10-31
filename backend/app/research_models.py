@@ -156,7 +156,7 @@ class Series:
     labels: dict[str, np.ndarray]     # trade labels (every frame row)
     ydir: np.ndarray
     first: int                        # first frame row with labels computed
-    preds: dict[str, Any] = field(default_factory=dict)
+    cols: list[str] = field(default_factory=list)
 
     @property
     def key(self) -> str:
@@ -200,7 +200,26 @@ def prepare(rt, symbol: str, tf: str, cost: float, cache: dict) -> Series | None
     labels = trade_labels(call, ind["high"].to_numpy(float), ind["low"].to_numpy(float), ind["close"].to_numpy(float),
                           cost, rows=np.arange(first, n))
     return Series(symbol, tf, ctx, paths, tune, test, cut, ts, Xdf.to_numpy(float),
-                  rolling_z(Xdf).to_numpy(float), labels, direction_labels(ind), first)
+                  rolling_z(Xdf).to_numpy(float), labels, direction_labels(ind), first, list(Xdf.columns))
+
+
+def align_columns(items: list[Series]) -> list[str]:
+    """Same feature columns for every series of a timeframe (a coin without e.g. a higher-timeframe frame gets those
+    columns as missing values), so pooled fits can stack them."""
+    cols = list(dict.fromkeys(c for s in items for c in s.cols))
+    for s in items:
+        if s.cols == cols:
+            continue
+        pos = {c: i for i, c in enumerate(s.cols)}
+        for attr in ("X", "Xz"):
+            old = getattr(s, attr)
+            new = np.full((old.shape[0], len(cols)), np.nan)
+            for j, c in enumerate(cols):
+                if c in pos:
+                    new[:, j] = old[:, pos[c]]
+            setattr(s, attr, new)
+        s.cols = cols
+    return cols
 
 
 # ---- walk-forward fitting ------------------------------------------------------------------------------------------------
@@ -519,6 +538,7 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
             items.append(it)
         if not items:
             continue
+        align_columns(items)
         log.info("%s: %d series prepared in %.0fs", tf, len(items), time.time() - t_tf)
         bounds = boundaries(items, K_CHUNKS.get(tf, 6))
         try:
