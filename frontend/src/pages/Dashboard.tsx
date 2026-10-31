@@ -6,9 +6,9 @@ import MyCoins from "../components/MyCoins";
 import { DashboardHero } from "../components/Polish";
 import NewsBanner, { countdown } from "../components/NewsBanner";
 import { TfTabs } from "../components/Pickers";
-import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge, Stat } from "../components/ui";
+import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge } from "../components/ui";
 import { useApi } from "../lib/api";
-import { base, DASH, fmtCompact, fmtPct, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
+import { base, DASH, fmtPct, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
 import { RoiFigure } from "../components/SignalExtras";
 import { useLive } from "../lib/live";
 import { useIsPro } from "../lib/mode";
@@ -34,43 +34,14 @@ export default function Dashboard() {
   const sentiment = ctx.data?.sentiment;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <NewsBanner />
-      <DashboardHero rows={d?.rows} status={ms} tf={tf} />
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="font-display text-lg font-semibold tracking-tight">Market overview</h2>
-          <p className="page-sub">Signals and regimes on the {tf.toUpperCase()} timeframe{refreshAt ? " · forecasts refreshed just now" : ""}</p>
-        </div>
-        <TfTabs value={tf} onChange={setTf} />
-      </div>
+      <DashboardHero rows={d?.rows} status={ms} tf={tf} sentiment={sentiment} market={market} basket={cross.data?.basket} />
+      <SectionHead title="Market overview" sub={`Signals and regimes on the ${tf.toUpperCase()} timeframe${refreshAt ? " · forecasts refreshed just now" : ""}`} right={<TfTabs value={tf} onChange={setTf} />} />
       {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
       {!d && dash.loading && <Loading what="Loading market overview" />}
 
       <MyCoins rows={d?.rows} />
-
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Market status">
-          {ms ? (
-            <>
-              <div className="flex items-center gap-2">
-                <Badge tone={regimeTone(ms.status)}>{ms.status}</Badge>
-                <span className="num text-sm text-mute">{ms.bull} bull · {ms.neutral} neutral · {ms.bear} bear</span>
-              </div>
-              <Note>{ms.basis}</Note>
-            </>
-          ) : <Empty>{DASH}</Empty>}
-        </Card>
-        <Card title="Total market">
-          {market ? (
-            <Stat label="Market cap (CoinGecko)" value={`$${fmtCompact(market.total_market_cap_usd)}`}
-              sub={<><span className={tone(market.market_cap_change_24h_pct)}>{fmtPctRaw(market.market_cap_change_24h_pct)} 24h</span> · BTC dom. {fmtPctRaw(market.btc_dominance, 1, false)}</>} />
-          ) : cross.data?.basket ? (
-            <Stat label="Tracked-asset basket, 20d" value={<span className={tone(cross.data.basket.return)}>{fmtPct(cross.data.basket.return)}</span>}
-              sub="Equal-weight proxy, not total market cap" />
-          ) : <Empty>No market-wide data available</Empty>}
-        </Card>
-      </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
         <Card title="Market regime" right={<span className="text-[11px] text-mute">{(d?.regimes ?? []).length} coins</span>}>
@@ -122,6 +93,8 @@ export default function Dashboard() {
       {/* directly below the Fear & Greed row: dominance, altcoin season, market pulse, top headline */}
       <MarketInsights />
 
+      <SectionHead title="Models & forecasts" sub="Each horizon uses its own timeframe model. Context, not advice." />
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
       <Card ai title="Forecast table — expected return per horizon" right={<span className="text-xs text-mute">each horizon uses its own timeframe model</span>}>
         <div className="table-wrap">
           <table className="grid-table">
@@ -148,7 +121,7 @@ export default function Dashboard() {
       </Card>
 
       <Card title="Market heatmap — 24h change">
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
           {(d?.heatmap ?? []).map((h: any) => {
             const ch = tickers[h.symbol]?.change_pct ?? h.change_24h_pct;
             return (
@@ -160,6 +133,7 @@ export default function Dashboard() {
           })}
         </div>
       </Card>
+      </div>
 
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Top opportunities">
@@ -182,6 +156,19 @@ export default function Dashboard() {
   );
 }
 
+
+/** Section header used down the Home page: title, one line of context, optional controls on the right. */
+function SectionHead({ title, sub, right }: { title: string; sub?: string; right?: React.ReactNode }) {
+  return (
+    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-glass/[0.07] pb-3 pt-3">
+      <div className="min-w-0">
+        <h2 className="section-title">{title}</h2>
+        {sub && <p className="mt-1 text-sm text-mute">{sub}</p>}
+      </div>
+      {right}
+    </div>
+  );
+}
 
 /* ---- extra dashboard sections (they keep the three cards in this row the same height) ---------------------- */
 function MiniHead({ title, to }: { title: string; to: string }) {

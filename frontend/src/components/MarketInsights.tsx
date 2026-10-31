@@ -220,9 +220,9 @@ export default function MarketInsights() {
   const stale = useMemo(() => isNum(d?.generated_at) && Date.now() - d.generated_at > 3 * 3_600_000, [d?.generated_at]);
   return (
     <section aria-labelledby="mi-title" className="space-y-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="mi-title" className="font-display text-lg font-semibold tracking-tight">Market insights</h2>
-        <span className="text-[11px] text-mute">{d ? `Updated ${ago(d.generated_at)}${stale ? " (engine catching up)" : ""}` : "Context only, not advice"}</span>
+      <div className="flex flex-wrap items-end justify-between gap-2 border-b border-glass/[0.07] pb-3 pt-3">
+        <h2 id="mi-title" className="section-title">Market insights</h2>
+        <span className="text-xs text-mute">{d ? `Updated ${ago(d.generated_at)}${stale ? " (engine catching up)" : ""}` : "Context only, not advice"}</span>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Dominance d={d?.dominance} />

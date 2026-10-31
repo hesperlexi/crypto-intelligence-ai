@@ -38,8 +38,8 @@ export function UpdatedBadge({ adj }: { adj?: Adjustment[] | null }) {
 export function AdjustHistory({ adj, compact = false }: { adj?: Adjustment[] | null; compact?: boolean }) {
   if (!adj?.length) return null;
   return (
-    <div className={`rounded-lg border border-warn/30 bg-warn/[0.05] ${compact ? "mt-1 px-2 py-1" : "px-2.5 py-2"}`}>
-      {!compact && <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-warn">Changed by the admin · applies from the time shown</div>}
+    <div className={`border-l-2 border-warn/60 ${compact ? "mt-1 pl-2" : "pl-3"}`}>
+      {!compact && <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-warn">Changed by the admin · applies from the time shown</div>}
       <ul className="space-y-0.5">
         {[...adj].reverse().map((a, i) => (
           <li key={i} className="text-[11px] leading-snug text-mute">

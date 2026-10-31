@@ -20,7 +20,7 @@ export function GradeBadge({ grade, small = false }: { grade?: string | null; sm
   const a = grade === "A";
   return (
     <span title={a ? "Strong signal: trend, AI models and their track record all agree" : "Moderate signal: AI-led call where the model's out-of-sample record shows an edge"}
-      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-md border font-bold leading-none ${small ? "px-1.5 py-0.5 text-[11px]" : "px-2 py-1 text-xs"} ${a ? "border-accent/60 bg-accent/15 text-accent" : "border-warn/50 bg-warn/10 text-warn"}`}>
+      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-[5px] border font-semibold leading-none ${small ? "px-1.5 py-[3px] text-[11px]" : "px-2 py-1 text-xs"} ${a ? "border-accent/45 bg-accent/[0.12] text-accent" : "border-glass/20 bg-glass/[0.05] text-text/85"}`}>
       {a ? "A · strong" : "B · moderate"}
     </span>
   );
@@ -134,80 +134,83 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
     );
   }
 
+  const tfLabel = String(r.timeframe ?? "").toUpperCase();
+  const lev = market === "futures" && isNum(plan?.suggested_leverage) ? plan.suggested_leverage : null;
+  // context lines (quiet section): only what applies to this card
+  const notes = [
+    r.record_status === "already_open" && <p key="open">Following the open call: this setup is already in the record, so it is not logged twice.</p>,
+    v.tone !== "wait" && r.decision_basis && <p key="why"><span className="text-text/80">Why:</span> {r.decision_basis}</p>,
+    pro && v.tone !== "wait" && isNum(r.filter_score) && <p key="filter" className="text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>,
+    isGoldSignal(r.symbol) && <p key="gold"><span className="font-semibold text-accent">Gold (XAU/USD).</span> Levels are in PAXG, which follows the gold price closely. On forex.com, use the same % distances from your entry (shown under each level).</p>,
+    market === "spot" && v.tone === "bear" && <p key="spot">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>,
+  ].filter(Boolean);
+
   return (
-    <section className={`panel overflow-hidden border ${t.ring}`}>
-      {/* header: coin, price, verdict */}
-      <div className={`flex items-center justify-between gap-3 px-4 py-3 ${t.soft}`}>
+    <section className={`panel signal-card overflow-hidden sc-${v.tone}`}>
+      {/* header row: coin · timeframe · market | grade · side */}
+      <header className="sc-head">
         <Link to={`/asset/${slug(r.symbol)}`} className="flex min-w-0 items-center gap-3 hover:text-accent">
-          <CoinAvatar symbol={r.symbol} size={compact ? 32 : 40} />
+          <CoinAvatar symbol={r.symbol} size={compact ? 32 : 38} />
           <div className="min-w-0">
-            <div className="font-display text-lg font-bold leading-tight">{base(r.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
-            <div className="num text-sm text-mute">{fmtPrice(px)} · {String(r.timeframe ?? "").toUpperCase()} {market}</div>
+            <div className="flex items-baseline gap-1.5"><span className="font-display text-lg font-bold leading-tight">{base(r.symbol)}</span><span className="text-xs text-mute">/USDT</span></div>
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-mute">
+              <span className="sc-chip">{tfLabel}</span><span className="sc-chip">{market}</span><span className="num">{fmtPrice(px)}</span>
+            </div>
           </div>
         </Link>
-        <span className={`shrink-0 rounded-lg px-3 py-1.5 text-sm font-extrabold tracking-wide ${t.pill}`}>
-          {v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}
-        </span>
-      </div>
+        <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-2">
+          {v.tone !== "wait" && <GradeBadge grade={r.grade} small />}
+          <span className={`sc-side sc-side-${v.tone}`}>{v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}</span>
+        </div>
+      </header>
 
-      <div className="space-y-3 p-4">
-        {v.tone !== "wait" && (r.grade || (active && plan)) && (
-          <div className="flex flex-wrap items-center gap-1.5">
-            <GradeBadge grade={r.grade} small />
-            {active && plan && <RiskBadge entry={plan.entry} stop={plan.stop} leverage={market === "futures" ? plan.suggested_leverage : 1} />}
-            {active && plan && market === "futures" && isNum(plan.suggested_leverage) && <span className="num text-[11px] text-mute">· {plan.suggested_leverage}x suggested</span>}
-          </div>
-        )}
+      <div className="space-y-3.5 p-4 sm:p-5">
         {r.stale === true && (
-          <div className="rounded-lg border border-warn/40 bg-warn/[0.08] px-2.5 py-1.5 text-sm font-semibold text-warn" role="status">Data delayed — no trade</div>
+          <div className="sc-alert sc-alert-warn font-semibold" role="status">Data delayed — no trade</div>
         )}
+        {/* decision */}
         <div>
-          <div className={`text-base font-semibold ${v.tone === "wait" ? "" : t.text}`}>{v.headline}</div>
-          {r.record_status === "already_open" && <p className="mt-1 text-xs text-mute">Following the open call: this setup is already in the record, so it is not logged twice.</p>}
-          <div className="mt-1.5"><CallStatusRow call={r.call} px={px} /></div>
+          <h3 className={`sc-headline ${v.tone === "wait" ? "" : t.text}`}>{v.headline}</h3>
+          {active && plan && (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-mute">
+              <RiskBadge entry={plan.entry} stop={plan.stop} leverage={market === "futures" ? plan.suggested_leverage : 1} />
+              {lev != null && <span className="num">{lev}x suggested</span>}
+              {status && <span className={`flex items-center gap-1.5 ${status.ok ? "text-bull" : "text-warn"}`}><span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}</span>}
+            </div>
+          )}
+          {v.tone === "wait" && (
+            <p className="mt-1.5 text-sm text-mute">
+              Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}. Set an alert and the app tells you when a setup appears.
+            </p>
+          )}
+          <div className="mt-2.5 empty:hidden"><CallStatusRow call={r.call} px={px} /></div>
           {(call?.adjustments?.length || call?.status === "OPEN") && (
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5 empty:hidden">
+            <div className="mt-2 flex flex-wrap items-center gap-1.5 empty:hidden">
               <UpdatedBadge adj={call?.adjustments} />
               <AdjustButton call={call} symbol={r.symbol} timeframe={r.timeframe} />
             </div>
           )}
-          {call?.adjustments?.length > 0 && <div className="mt-1.5"><AdjustHistory adj={call.adjustments} /></div>}
-          {active && status && (
-            <div className={`mt-1 flex items-center gap-1.5 text-sm ${status.ok ? "text-bull" : "text-warn"}`}>
-              <span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}
-            </div>
-          )}
-          {r.news_risk && (
-            <div className="mt-1.5 rounded-lg border border-bear/40 bg-bear/[0.08] px-2.5 py-1.5 text-xs text-bear">
-              ⚠ Major US data ({r.news_risk.title}) {r.news_risk.when}: new entries pause until 30 min after the release.
-            </div>
-          )}
-          {v.tone === "wait" && (
-            <p className="mt-1 text-sm text-mute">
-              Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}. Set an alert and the app tells you when a setup appears.
-            </p>
-          )}
-          {v.tone !== "wait" && r.decision_basis && <p className="mt-1 text-xs text-mute">Why: {r.decision_basis}</p>}
-          {isGoldSignal(r.symbol) && <p className="mt-1 rounded-lg border border-accent/30 bg-accent/[0.06] px-2.5 py-1.5 text-xs text-mute"><span className="font-semibold text-accent">Gold (XAU/USD).</span> Levels are in PAXG, which follows the gold price closely. On forex.com, use the same % distances from your entry (shown under each level).</p>}
-          {pro && v.tone !== "wait" && isNum(r.filter_score) && <p className="mt-0.5 text-xs text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>}
-          {market === "spot" && v.tone === "bear" && <p className="mt-1 text-sm text-mute">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>}
         </div>
 
-        {/* the numbers that matter */}
-        {active && plan && (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            <Box k={market === "futures" ? (side === "LONG" ? "Long entry" : "Short entry") : "Buy at"} v={fmtPrice(plan.entry)} cls="text-accent" sub={plan.entry_zone ? `${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined} />
-            <Box k="Stop-loss" v={fmtPrice(plan.stop)} cls="text-bear" sub={pct(plan.stop, plan.entry) != null ? fmtPctRaw(pct(plan.stop, plan.entry)!, 1) : undefined} />
-            {plan.runner?.on
-              ? <Box k={`AI: let it run · 1:${plan.runner.rr}`} v={fmtPrice(plan.runner.target)} cls="text-bull" sub={roiSub(plan.runner.target)} />
-              : <Box k="TP1 · 1:1 · close 50%" v={fmtPrice(plan.targets?.[0]?.price)} cls="text-bull" sub={roiSub(plan.targets?.[0]?.price)} />}
-            {market === "futures"
-              ? <Box k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />
-              : <Box k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="blended: 50% at TP1, 25% TP2, 25% TP3" />}
-          </div>
+        {r.news_risk && (
+          <div className="sc-alert sc-alert-bear">⚠ Major US data ({r.news_risk.title}) {r.news_risk.when}: new entries pause until 30 min after the release.</div>
         )}
-        {active && plan && market === "futures" && isNum(plan.suggested_leverage) && plan.suggested_leverage > 1 && (
-          <p className="text-[11px] text-warn">ROI is shown at {plan.suggested_leverage}x leverage. Leverage magnifies losses too.</p>
+
+        {/* the numbers that matter: one aligned strip */}
+        {active && plan && (
+          <div>
+            <div className="metric-strip">
+              <Metric k={market === "futures" ? (side === "LONG" ? "Long entry" : "Short entry") : "Buy at"} v={fmtPrice(plan.entry)} cls="text-accent" sub={plan.entry_zone ? `${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined} />
+              <Metric k="Stop-loss" v={fmtPrice(plan.stop)} cls="text-bear" sub={pct(plan.stop, plan.entry) != null ? fmtPctRaw(pct(plan.stop, plan.entry)!, 1) : undefined} />
+              {plan.runner?.on
+                ? <Metric k={`AI: let it run · 1:${plan.runner.rr}`} v={fmtPrice(plan.runner.target)} cls="text-bull" sub={roiSub(plan.runner.target)} />
+                : <Metric k="TP1 · 1:1 · close 50%" v={fmtPrice(plan.targets?.[0]?.price)} cls="text-bull" sub={roiSub(plan.targets?.[0]?.price)} />}
+              {market === "futures"
+                ? <Metric k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />
+                : <Metric k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="blended: 50% at TP1, 25% TP2, 25% TP3" />}
+            </div>
+            {lev != null && lev > 1 && <p className="mt-1.5 text-[11px] text-warn">ROI is shown at {lev}x leverage. Leverage magnifies losses too.</p>}
+          </div>
         )}
         {active && plan && (
           <Explain className="space-y-0.5">
@@ -217,17 +220,16 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             {market === "futures" && <span className="block">{PLAIN.leverage}</span>}
           </Explain>
         )}
-        <AiNote ai={r.ai} />
 
         {/* full ladder */}
         {!compact && plan && levels.length > 0 && (
-          <div className={`rounded-xl border border-glass/[0.08] bg-ink/40 p-2 ${active ? "" : "opacity-70"}`}>
-            {!active && <div className="px-2 pb-1 text-xs text-mute">Watching a possible {plan.side} — not valid yet{plan.reason ? `: ${plan.reason}` : ""}</div>}
-            <ul>
+          <div className={`sc-section ${active ? "" : "opacity-70"}`}>
+            <div className="sc-label">{active ? "Price levels" : `Watching a possible ${plan.side} — not valid yet${plan.reason ? `: ${plan.reason}` : ""}`}</div>
+            <ul className="sc-ladder">
               {levels.map((l) => (
-                <li key={l.k} className={`flex items-baseline justify-between gap-3 rounded-lg px-2 py-1.5 ${l.k === "Price now" ? "bg-glass/[0.06]" : ""}`}>
+                <li key={l.k} className={l.k === "Price now" ? "is-now" : ""}>
                   <span className="min-w-0"><span className={`font-medium ${l.cls}`}>{l.k}</span>{l.note && <span className="ml-2 hidden text-xs text-mute sm:inline">{l.note}</span>}</span>
-                  <span className="num shrink-0 text-right"><span className={l.cls}>{fmtPrice(l.price)}</span>{l.k !== "Price now" && isNum(px) && <span className="ml-2 text-xs text-mute">{fmtPctRaw(pct(l.price, px)!, 1)}</span>}</span>
+                  <span className="num shrink-0 text-right"><span className={l.cls}>{fmtPrice(l.price)}</span>{l.k !== "Price now" && isNum(px) && <span className="ml-2 inline-block w-12 text-xs text-mute">{fmtPctRaw(pct(l.price, px)!, 1)}</span>}</span>
                 </li>
               ))}
             </ul>
@@ -240,39 +242,56 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </div>
         )}
 
-        {/* confidence and context (advanced numbers: Pro view only) */}
-        {pro && <div className="ai-block px-2.5 py-2">
-          <div className="mb-1.5"><AiTag label="AI confidence" /></div>
-          <div className="grid grid-cols-3 gap-2 text-xs">
-          <div title="How often the AI was right in past out-of-sample calls leaning the same way by a similar margin"><div className="text-mute">Hit rate (similar calls)</div><div className="num mt-0.5 text-sm font-semibold">{fmtProb(r.confidence)}</div>
-            <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-ai" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
-          <div><div className="text-mute">Up / down</div><div className="num mt-0.5 text-sm font-semibold"><span className="text-bull">{upPct}%</span> / <span className="text-bear">{downPct}%</span></div></div>
-          {market === "futures"
-            ? <div><div className="text-mute">Funding 8h</div><div className="num mt-0.5 text-sm font-semibold">{isNum(funding) ? fmtPctRaw(funding * 100, 3) : "0.010%"}</div></div>
-            : <div><div className="text-mute">Trend</div><div className="mt-0.5 text-sm font-semibold">{r.regime ?? DASH}</div></div>}
+        {/* secondary: admin changes and context, quiet */}
+        {call?.adjustments?.length > 0 && (
+          <div className="sc-section"><AdjustHistory adj={call.adjustments} /></div>
+        )}
+        {notes.length > 0 && (
+          <div className="sc-section space-y-1 text-xs leading-relaxed text-mute">
+            <div className="sc-label">Context</div>
+            {notes}
           </div>
-        </div>}
+        )}
+
+        {/* AI: advisor note + confidence (advanced numbers: Pro view only) */}
+        {(r.ai?.rationale || pro) && (
+          <div className="sc-section space-y-2">
+            <AiNote ai={r.ai} />
+            {pro && <div className="ai-block px-3 py-2">
+              <div className="mb-1.5"><AiTag label="AI confidence" /></div>
+              <div className="grid grid-cols-3 gap-3 text-xs">
+                <div title="How often the AI was right in past out-of-sample calls leaning the same way by a similar margin"><div className="text-mute">Hit rate (similar calls)</div><div className="num mt-0.5 text-base font-semibold">{fmtProb(r.confidence)}</div>
+                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-ai" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
+                <div><div className="text-mute">Up / down</div><div className="num mt-0.5 text-base font-semibold"><span className="text-bull">{upPct}%</span> / <span className="text-bear">{downPct}%</span></div></div>
+                {market === "futures"
+                  ? <div><div className="text-mute">Funding 8h</div><div className="num mt-0.5 text-base font-semibold">{isNum(funding) ? fmtPctRaw(funding * 100, 3) : "0.010%"}</div></div>
+                  : <div><div className="text-mute">Trend</div><div className="mt-0.5 text-base font-semibold">{r.regime ?? DASH}</div></div>}
+              </div>
+            </div>}
+          </div>
+        )}
         {!pro && v.tone !== "wait" && r.grade && <Explain>{PLAIN.grade}</Explain>}
 
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2">
+        <div className="grid grid-cols-[1fr_auto_auto] gap-2 pt-1">
           <button className={`btn ${active ? "btn-primary" : ""}`} onClick={paper}>{active ? "Practise this trade" : "Paper trade"}</button>
           <Link className="btn px-3" to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=${market}`} aria-label="Set an alert" title="Alert me when a setup appears">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg>
           </Link>
           <button className="btn px-3" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
         </div>
-        {!compact && <p className="text-[11px] text-mute">Plan for the next {String(r.timeframe ?? "").toUpperCase()} candles, refreshed every few minutes. A probability, not a promise: always use the stop-loss.</p>}
+        {!compact && <p className="text-[11px] text-mute">Plan for the next {tfLabel} candles, refreshed every few minutes. A probability, not a promise: always use the stop-loss.</p>}
       </div>
     </section>
   );
 }
 
-function Box({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
+/** One cell of the key-numbers strip: small label, big tabular value, quiet sub line. */
+function Metric({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
   return (
-    <div className="min-w-0 rounded-xl border border-glass/[0.08] bg-ink/40 px-3 py-2.5">
-      <div className="truncate text-[11px] font-semibold uppercase tracking-wide text-mute">{k}</div>
-      <div className={`num mt-1 truncate text-lg font-semibold leading-tight ${cls}`}>{v}</div>
-      {sub && <div className="num mt-0.5 text-[11px] leading-snug text-mute">{sub}</div>}
+    <div className="metric">
+      <div className="metric-k" title={k}>{k}</div>
+      <div className={`metric-v num ${cls}`}>{v}</div>
+      {sub && <div className="metric-sub num">{sub}</div>}
     </div>
   );
 }

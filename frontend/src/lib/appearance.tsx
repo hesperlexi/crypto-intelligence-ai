@@ -4,11 +4,11 @@ import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useRe
  *  Theme ids are stable keys in saved preferences: "gold" is Midnight Gold and "light" is Ivory. The colours of each
  *  theme live in index.css under [data-theme="<id>"]. */
 export const THEMES = [
-  { id: "gold", name: "Midnight Gold", sub: "Default · near-black, gold", dark: true },
-  { id: "obsidian", name: "Obsidian", sub: "Deep black, champagne gold", dark: true },
-  { id: "graphite", name: "Graphite Pro", sub: "Neutral grey, muted gold", dark: true },
-  { id: "aurora", name: "Aurora", sub: "Navy, gold, cyan accent", dark: true },
-  { id: "light", name: "Ivory", sub: "Light, cool grey, deep gold", dark: false },
+  { id: "gold", name: "Midnight Gold", sub: "Default · warm black, rich gold", dark: true },
+  { id: "obsidian", name: "Obsidian", sub: "Pure black, champagne gold", dark: true },
+  { id: "graphite", name: "Graphite Pro", sub: "Mid-grey graphite, brass gold", dark: true },
+  { id: "aurora", name: "Aurora", sub: "Navy blue, gold and cyan", dark: true },
+  { id: "light", name: "Ivory", sub: "Light paper, deep gold", dark: false },
   { id: "system", name: "System", sub: "Follows the device", dark: true },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]["id"];
@@ -85,7 +85,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     el.dataset.glass = a.glass ? "on" : "off";
     el.style.colorScheme = isLightTheme(resolved) ? "light" : "dark";
     const bg = getComputedStyle(el).getPropertyValue("--ink").trim();
-    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg ? `rgb(${bg.split(/\s+/).join(",")})` : "#0b0e13");
+    document.querySelector('meta[name="theme-color"]')?.setAttribute("content", bg ? `rgb(${bg.split(/\s+/).join(",")})` : "#0d0c0a");
     try { localStorage.setItem(KEY, JSON.stringify(a)); } catch { /* private mode: not remembered */ }
     return () => { if (timer) { window.clearTimeout(timer); el.classList.remove("theme-switching"); } };
   }, [a, resolved]);

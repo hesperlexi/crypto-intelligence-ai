@@ -3,13 +3,13 @@ import { useSearchParams } from "react-router-dom";
 import { TfTabs, useSymbols } from "../components/Pickers";
 import { CoinAvatar } from "../components/Polish";
 import NewsBanner from "../components/NewsBanner";
-import TradeCall, { GradeBadge, Market, verdictOf } from "../components/TradeCall";
+import TradeCall, { Market, verdictOf } from "../components/TradeCall";
 import { Empty, ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
 import { base, fmtPctRaw, fmtPrice, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
-import { CALL_STATUS, fillLabel, livePnl, managedLabel, Pill, RiskBadge, RoiFigure } from "../components/SignalExtras";
-import { AdjustHistory, adjustedPlan, UpdatedBadge } from "../components/SignalAdjust";
+import { CALL_STATUS, fillLabel, livePnl, managedLabel, riskLevel, RoiFigure } from "../components/SignalExtras";
+import { AdjustHistory, adjustedPlan } from "../components/SignalAdjust";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;
@@ -123,7 +123,7 @@ export default function Signals() {
               const on = r.symbol === row?.symbol;
               return (
                 <button key={r.symbol} role="tab" aria-selected={on} onClick={() => pick(r.symbol)}
-                  className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-2 text-sm transition ${on ? "border-accent bg-accent/10" : "border-glass/10 bg-glass/[0.03] hover:border-accent/40"}`}>
+                  className={`flex shrink-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm transition-colors ${on ? "border-accent/60 bg-accent/[0.07]" : "border-glass/[0.08] bg-glass/[0.02] hover:border-glass/25"}`}>
                   <CoinAvatar symbol={r.symbol} size={20} />
                   <span className="font-semibold">{base(r.symbol)}</span>
                   <span className={`h-2 w-2 rounded-full ${DOT[vv.tone]}`} aria-hidden="true" />
@@ -136,24 +136,39 @@ export default function Signals() {
           <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,1fr)]">
             <TradeCall r={row} market={market} m={mkt.data?.rows?.[row?.symbol]} />
 
-            {/* all coins at a glance */}
-            <section className="panel self-start p-0">
-              <div className="card-head border-b border-glass/[0.06] px-4 py-2.5"><h2 className="label">All coins · {market}</h2></div>
+            {/* all coins at a glance: table-like rows, side rule on the left */}
+            <section className="panel self-start overflow-hidden p-0">
+              <div className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">All coins · {market}</h2><span className="text-[11px] text-mute">{active} active</span></div>
+              <div className="sig-row sig-head label border-b border-glass/[0.06]" aria-hidden="true">
+                <span>Coin</span><span className="text-right">Entry</span><span className="text-right">Stop</span><span className="text-right">TP1</span><span className="text-right">Call</span>
+              </div>
               <ul className="divide-y divide-glass/[0.06]">
                 {rows.map((r) => {
                   const vv = verdictOf(r, market);
                   const p = adjustedPlan(r.plan, r.call);
                   const show = vv.tone !== "wait" && p && (market === "futures" || p.side === "LONG");
+                  const px = tickers[r.symbol]?.last ?? r.price;
                   return (
                     <li key={r.symbol}>
-                      <button onClick={() => pick(r.symbol)} className={`grid w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 px-4 py-3 text-left hover:bg-glass/[0.04] ${r.symbol === row?.symbol ? "bg-accent/[0.06]" : ""}`}>
-                        <CoinAvatar symbol={r.symbol} size={28} />
-                        <div className="min-w-0">
-                          <div className="flex min-w-0 items-center gap-2"><span className="font-semibold">{base(r.symbol)}</span>{vv.tone !== "wait" && <GradeBadge grade={r.grade} small />}<span className="num ml-auto truncate text-xs text-mute sm:ml-0">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</span></div>
-                          <div className="num truncate text-xs text-mute">{r.stale === true ? "Data delayed — no trade" : show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
-                          <RowExtras r={r} show={!!show} market={market} px={tickers[r.symbol]?.last ?? r.price} />
+                      <button onClick={() => pick(r.symbol)} aria-current={r.symbol === row?.symbol ? "true" : undefined} className="sig-row"
+                        style={{ ["--side" as any]: vv.tone === "bull" ? "rgb(var(--bull))" : vv.tone === "bear" ? "rgb(var(--bear))" : "rgb(var(--glass) / 0.15)" }}>
+                        <div className="flex min-w-0 items-center gap-2.5">
+                          <CoinAvatar symbol={r.symbol} size={26} />
+                          <div className="min-w-0">
+                            <div className="flex min-w-0 items-center gap-1.5"><span className="truncate font-semibold">{base(r.symbol)}</span>{vv.tone !== "wait" && (r.grade === "A" || r.grade === "B") && <span className={`grade-mini ${r.grade === "A" ? "is-a" : ""}`} title={r.grade === "A" ? "Grade A · strong: trend, AI models and their track record all agree" : "Grade B · moderate: AI-led call where the model's out-of-sample record shows an edge"}>{r.grade}</span>}</div>
+                            <div className="num truncate text-[11px] text-mute">{fmtPrice(px)}</div>
+                          </div>
                         </div>
-                        <span className={`max-w-[6.5rem] whitespace-normal rounded-md px-2 py-1 text-center text-[11px] font-bold leading-tight ${vv.tone === "bull" ? "bg-bull/15 text-bull" : vv.tone === "bear" ? "bg-bear/15 text-bear" : "bg-glass/10 text-mute"}`}>{vv.label}</span>
+                        {/* desktop: aligned price columns */}
+                        {show ? (<>
+                          <span className="num hidden text-right text-sm text-accent sm:block">{fmtPrice(p.entry)}</span>
+                          <span className="num hidden text-right text-sm text-bear sm:block">{fmtPrice(p.stop)}</span>
+                          <span className="num hidden text-right text-sm text-bull sm:block">{fmtPrice(p.targets?.[0]?.price)}</span>
+                        </>) : <span className="hidden truncate text-right text-xs text-mute sm:col-span-3 sm:block">{r.stale === true ? "Data delayed — no trade" : `leans ${r.lean ?? "—"} · no setup`}</span>}
+                        <span className={`sig-side ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
+                        {/* phone: the levels as one line; both: status line */}
+                        <div className="num col-span-full min-w-0 truncate pl-[2.1rem] text-[11px] text-mute sm:hidden">{r.stale === true ? "Data delayed — no trade" : show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
+                        <div className="col-span-full min-w-0 pl-[2.1rem] empty:hidden"><RowExtras r={r} show={!!show} market={market} px={px} /></div>
                       </button>
                     </li>
                   );
@@ -168,7 +183,9 @@ export default function Signals() {
   );
 }
 
-/** Small status line under a row: call status, fill, managed exit, live P&L, risk. Nothing for old rows. */
+/** Small status line under a row: call status, fill, managed exit, live P&L, risk — as quiet text, not pills.
+ *  Nothing for old rows. */
+const TONE_TXT = { bull: "text-bull", bear: "text-bear", warn: "text-warn", accent: "text-accent", mute: "text-mute" } as const;
 function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Market; px?: number }) {
   const c = r.call;
   const st = c ? CALL_STATUS[c.status] : null;
@@ -176,19 +193,23 @@ function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Mar
   const managed = c?.managed === 1 ? managedLabel(c.exit_reason) : null;
   const pnl = c?.status === "OPEN" && c.fill_status !== "PENDING" && c.fill_status !== "NOT_FILLED" ? livePnl(c.side, c.entry, px) : null;
   const p = r.plan;
-  if (!st && !fill && !managed && pnl == null && !(show && p) && !c?.adjustments?.length) return null;
+  const risk = show && p ? riskLevel(p.entry, p.stop, market === "futures" ? p.suggested_leverage : 1) : null;
+  const last = c?.adjustments?.length ? c.adjustments[c.adjustments.length - 1] : null;
+  if (!st && !fill && !managed && pnl == null && !risk && !last) return null;
+  const items: React.ReactNode[] = [];
+  if (last) items.push(<span key="u" className="font-semibold text-warn" title="Changed by the admin. Results use the original levels before each change and the new ones after it.">Updated</span>);
+  if (st) items.push(<span key="s" className={`font-semibold ${TONE_TXT[st[1]]}`}>{st[0]}</span>);
+  if (fill) items.push(<span key="f" className={TONE_TXT[fill[1]]}>{fill[0]}</span>);
+  if (managed) items.push(<span key="m" className="text-accent">{managed}</span>);
+  if (pnl != null) items.push(isNum(c?.leverage) && c.leverage > 1
+    ? <span key="p" className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title={`Live ROI on margin at ${c.leverage}x · price ${fmtPctRaw(pnl, 2)}`}>{fmtPctRaw(pnl * c.leverage, 2)} ROI</span>
+    : <span key="p" className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live price move">{fmtPctRaw(pnl, 2)} price</span>);
+  if (c && c.status !== "OPEN" && isNum(c.return_pct)) items.push(<span key="r" className="inline-flex items-center"><RoiFigure x={c} size="sm" label={false} align="left" /></span>);
+  if (risk) items.push(<span key="k" className={risk.level === "Low" ? "text-bull" : risk.level === "Medium" ? "text-warn" : "text-bear"} title={`If the stop is hit: about ${risk.lossAtStop.toFixed(1)}% of the position's margin`}>{risk.level} risk</span>);
   return (
     <>
-    <div className="mt-1 flex flex-wrap items-center gap-1">
-      <UpdatedBadge adj={c?.adjustments} />
-      {st && <Pill tone={st[1]}>{st[0]}</Pill>}
-      {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
-      {managed && <Pill tone="accent">{managed}</Pill>}
-      {pnl != null && (isNum(c?.leverage) && c.leverage > 1
-        ? <span className={`num text-[11px] font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title={`Live ROI on margin at ${c.leverage}x · price ${fmtPctRaw(pnl, 2)}`}>{fmtPctRaw(pnl * c.leverage, 2)} ROI</span>
-        : <span className={`num text-[11px] font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live price move">{fmtPctRaw(pnl, 2)} price</span>)}
-      {c && c.status !== "OPEN" && isNum(c.return_pct) && <span className="inline-flex items-center gap-1"><RoiFigure x={c} size="sm" label={false} align="left" /></span>}
-      {show && p && <RiskBadge entry={p.entry} stop={p.stop} leverage={market === "futures" ? p.suggested_leverage : 1} />}
+    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px]">
+      {items.map((it, i) => <span key={i} className="inline-flex items-center gap-1.5">{i > 0 && <span className="text-mute/50" aria-hidden="true">·</span>}{it}</span>)}
     </div>
     {c?.adjustments?.length > 0 && <AdjustHistory adj={c.adjustments.slice(-1)} compact />}
     </>

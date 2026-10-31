@@ -15,69 +15,69 @@
    Theme ids are stable: "gold" = Midnight Gold, "light" = Ivory (saved preferences keep working).
    ===================================================================================================== */
 :root, [data-theme="gold"] {
-  /* Midnight Gold (default): near-black blue-grey, brand gold */
-  --ink: 11 14 19; --panel: 17 21 28; --raised: 24 29 38; --line: 36 42 53;
-  --text: 232 234 238; --mute: 139 148 163;
-  --bull: 28 199 130; --bear: 242 88 100; --warn: 240 150 58;
-  --accent: 236 183 34; --accent-2: 250 212 92; --ai: 140 166 236;
-  --primary: 236 183 34; --primary-2: 246 197 60; --on-primary: 17 19 24; --on-accent: 17 19 24;
-  --glass: 255 255 255;
-  --panel-bg: 17 21 28; --panel-a: 0.86; --bar-a: 0.86;
-  --glow1: rgba(236, 183, 34, 0.055); --glow2: rgba(140, 166, 236, 0.03);
-  --shadow: rgba(0, 0, 0, 0.55);
+  /* Midnight Gold (default): warm near-black, rich gold */
+  --ink: 13 12 10; --panel: 23 21 18; --raised: 33 30 26; --line: 52 47 40;
+  --text: 241 237 229; --mute: 160 151 137;
+  --bull: 34 197 128; --bear: 240 86 96; --warn: 242 138 60;
+  --accent: 234 178 36; --accent-2: 250 210 100; --ai: 146 164 240;
+  --primary: 234 178 36; --primary-2: 246 194 64; --on-primary: 20 16 8; --on-accent: 20 16 8;
+  --glass: 255 244 222;
+  --panel-bg: 23 21 18; --panel-a: 0.9; --bar-a: 0.9;
+  --glow1: rgba(234, 178, 36, 0.075); --glow2: rgba(234, 120, 36, 0.03);
+  --shadow: rgba(0, 0, 0, 0.6);
   color-scheme: dark;
 }
 [data-theme="obsidian"] {
-  /* Obsidian: deeper black, champagne gold, a cool-blue secondary */
-  --ink: 5 6 8; --panel: 12 13 16; --raised: 19 21 25; --line: 31 34 40;
-  --text: 236 235 232; --mute: 134 138 148;
-  --bull: 46 196 140; --bear: 236 92 96; --warn: 230 152 74;
-  --accent: 215 187 130; --accent-2: 236 214 168; --ai: 124 164 226;
-  --primary: 215 187 130; --primary-2: 228 203 152; --on-primary: 14 13 10; --on-accent: 14 13 10;
+  /* Obsidian: pure black, high contrast, champagne gold, crisp white text */
+  --ink: 0 0 0; --panel: 10 10 11; --raised: 22 22 24; --line: 44 44 48;
+  --text: 252 252 252; --mute: 160 160 166;
+  --bull: 52 211 153; --bear: 248 96 104; --warn: 236 150 76;
+  --accent: 228 207 160; --accent-2: 244 230 198; --ai: 128 176 255;
+  --primary: 228 207 160; --primary-2: 240 222 182; --on-primary: 8 8 8; --on-accent: 8 8 8;
   --glass: 255 255 255;
-  --panel-bg: 12 13 16; --panel-a: 0.9; --bar-a: 0.88;
-  --glow1: rgba(124, 164, 226, 0.04); --glow2: rgba(215, 187, 130, 0.03);
-  --shadow: rgba(0, 0, 0, 0.7);
+  --panel-bg: 10 10 11; --panel-a: 0.94; --bar-a: 0.92;
+  --glow1: rgba(128, 176, 255, 0.035); --glow2: rgba(228, 207, 160, 0.02);
+  --shadow: rgba(0, 0, 0, 0.85);
   color-scheme: dark;
 }
 [data-theme="graphite"] {
-  /* Graphite Pro: neutral graphite greys, muted gold */
-  --ink: 26 27 30; --panel: 34 35 39; --raised: 42 44 48; --line: 54 56 61;
-  --text: 230 230 228; --mute: 156 157 160;
-  --bull: 84 192 134; --bear: 238 114 112; --warn: 220 152 84;
-  --accent: 204 172 98; --accent-2: 222 196 132; --ai: 154 174 206;
-  --primary: 204 172 98; --primary-2: 216 186 116; --on-primary: 24 22 18; --on-accent: 24 22 18;
+  /* Graphite Pro: mid-grey graphite, clearly lighter than the blacks, muted brass */
+  --ink: 46 48 52; --panel: 57 60 65; --raised: 70 73 79; --line: 86 90 97;
+  --text: 238 238 236; --mute: 182 184 188;
+  --bull: 110 214 154; --bear: 255 152 146; --warn: 242 178 112;
+  --accent: 214 180 106; --accent-2: 230 202 140; --ai: 166 190 230;
+  --primary: 206 170 96; --primary-2: 218 186 116; --on-primary: 30 26 18; --on-accent: 30 26 18;
   --glass: 255 255 255;
-  --panel-bg: 34 35 39; --panel-a: 0.94; --bar-a: 0.92;
-  --glow1: rgba(255, 255, 255, 0.015); --glow2: rgba(204, 172, 98, 0.02);
-  --shadow: rgba(0, 0, 0, 0.45);
+  --panel-bg: 57 60 65; --panel-a: 0.96; --bar-a: 0.94;
+  --glow1: rgba(255, 255, 255, 0.025); --glow2: rgba(214, 180, 106, 0.02);
+  --shadow: rgba(0, 0, 0, 0.35);
   color-scheme: dark;
 }
 [data-theme="aurora"] {
-  /* Aurora: dark navy, gold, a restrained cyan secondary */
-  --ink: 8 13 26; --panel: 13 20 37; --raised: 19 28 49; --line: 31 43 68;
-  --text: 230 236 245; --mute: 134 152 180;
-  --bull: 36 202 152; --bear: 244 96 116; --warn: 242 152 64;
-  --accent: 238 188 52; --accent-2: 248 214 120; --ai: 84 200 220;
-  --primary: 238 188 52; --primary-2: 246 202 82; --on-primary: 10 14 26; --on-accent: 10 14 26;
-  --glass: 225 235 255;
-  --panel-bg: 13 20 37; --panel-a: 0.86; --bar-a: 0.86;
-  --glow1: rgba(84, 200, 220, 0.05); --glow2: rgba(238, 188, 52, 0.035);
-  --shadow: rgba(2, 6, 18, 0.65);
+  /* Aurora: blue-navy surfaces, gold, a cyan secondary */
+  --ink: 8 17 38; --panel: 14 28 58; --raised: 21 39 76; --line: 37 59 102;
+  --text: 232 240 252; --mute: 146 166 202;
+  --bull: 40 210 160; --bear: 248 100 122; --warn: 246 156 70;
+  --accent: 244 194 62; --accent-2: 250 218 128; --ai: 64 214 232;
+  --primary: 244 194 62; --primary-2: 250 208 92; --on-primary: 8 16 36; --on-accent: 8 16 36;
+  --glass: 210 228 255;
+  --panel-bg: 14 28 58; --panel-a: 0.88; --bar-a: 0.88;
+  --glow1: rgba(64, 214, 232, 0.08); --glow2: rgba(80, 110, 255, 0.07);
+  --shadow: rgba(2, 8, 24, 0.7);
   color-scheme: dark;
 }
 [data-theme="light"] {
-  /* Ivory: cool grey paper, deep gold. Text colours ≥ 4.5:1 on white and on raised surfaces;
+  /* Ivory: warm-neutral paper, deep gold. Text colours ≥ 4.5:1 on white and on raised surfaces;
      the bright gold is only used as a fill (primary button) with dark text on it. */
-  --ink: 246 247 249; --panel: 255 255 255; --raised: 238 240 243; --line: 222 225 230;
-  --text: 20 23 30; --mute: 84 92 106;
+  --ink: 247 246 242; --panel: 255 255 255; --raised: 239 238 233; --line: 224 222 214;
+  --text: 22 22 26; --mute: 86 88 98;
   --bull: 0 122 77; --bear: 186 28 56; --warn: 166 82 0;
   --accent: 133 94 0; --accent-2: 222 170 30; --ai: 44 82 168;
-  --primary: 226 172 30; --primary-2: 236 184 52; --on-primary: 20 23 30; --on-accent: 255 255 255;
-  --glass: 15 23 42;
-  --panel-bg: 255 255 255; --panel-a: 0.94; --bar-a: 0.9;
-  --glow1: rgba(222, 170, 30, 0.06); --glow2: rgba(44, 82, 168, 0.025);
-  --shadow: rgba(15, 23, 42, 0.10);
+  --primary: 226 172 30; --primary-2: 236 184 52; --on-primary: 22 22 26; --on-accent: 255 255 255;
+  --glass: 30 26 16;
+  --panel-bg: 255 255 255; --panel-a: 0.95; --bar-a: 0.92;
+  --glow1: rgba(222, 170, 30, 0.07); --glow2: rgba(44, 82, 168, 0.025);
+  --shadow: rgba(30, 26, 16, 0.10);
   color-scheme: light;
 }
 
@@ -98,6 +98,8 @@
   --glass-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.18);
   --ease-out: cubic-bezier(.2, .7, .2, 1);
 }
+[data-theme="graphite"] { --hair: rgb(255 255 255 / 0.1); --hair-strong: rgb(255 255 255 / 0.18); --input-bg: rgb(var(--ink) / 0.7); }
+[data-theme="obsidian"] { --hair: rgb(255 255 255 / 0.09); }
 [data-theme="light"] {
   --hair: rgb(15 23 42 / 0.09); --hair-strong: rgb(15 23 42 / 0.16);
   --elev-1: 0 1px 2px 0 rgb(15 23 42 / 0.05), 0 0 0 0 transparent;
@@ -132,9 +134,11 @@ html.theme-switching, html.theme-switching *, html.theme-switching *::before, ht
 .tabular { font-variant-numeric: tabular-nums; }
 
 /* ---- type scale: display / page title / section / label ---- */
-.font-display { font-family: Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.024em; }
-h1 { font-family: Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.024em; }
-.page-title { @apply text-[22px] font-semibold leading-tight sm:text-[26px]; font-family: Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.026em; }
+/* Sora is the brand display face (headings); Inter carries text and numbers */
+.font-display { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
+h1 { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
+.page-title { @apply text-[22px] font-semibold leading-tight sm:text-[28px]; font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.022em; }
+.section-title { @apply text-[17px] font-semibold leading-tight sm:text-lg; font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.015em; }
 .page-sub { @apply mt-1 text-sm text-mute; }
 .label { @apply text-[11px] font-semibold uppercase tracking-[0.08em] text-mute; }
 .text-gradient { color: rgb(var(--accent)); }
@@ -349,12 +353,14 @@ table.grid-table td.num, table.grid-table td .num { font-variant-numeric: tabula
 .hero {
   border-radius: var(--r-xl);
   background:
-    radial-gradient(60% 120% at 100% 0%, rgb(var(--accent) / 0.07), transparent 62%),
+    radial-gradient(55% 140% at 100% 0%, rgb(var(--accent) / 0.11), transparent 62%),
+    radial-gradient(40% 90% at 0% 0%, rgb(var(--ai) / 0.04), transparent 70%),
     rgb(var(--panel));
   border: 1px solid var(--hair);
   box-shadow: var(--elev-1);
 }
-.hero-line { opacity: 0.7; }
+.hero-line { opacity: 0.55; }
+.hero { overflow: hidden; }
 .hero-line path:last-child { stroke-dasharray: 2400; stroke-dashoffset: 2400; animation: draw-line 2.2s ease-out 0.2s forwards; }
 @keyframes draw-line { to { stroke-dashoffset: 0; } }
 .kpi { display: block; border-radius: var(--r-lg); background: rgb(var(--ink) / 0.55); border: 1px solid var(--hair); transition: border-color .18s, background-color .18s; }
@@ -367,8 +373,8 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.4); background: rgb(var(--ink)
 .coin-tile-mine { border-color: rgb(var(--accent) / 0.22); }
 
 /* ticker tape */
-.ticker-tape { overflow: hidden; background: rgb(var(--ink) / 0.6); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
-.ticker-track { display: flex; width: max-content; padding: 6px 0; animation: ticker linear infinite; }
+.ticker-tape { overflow: hidden; background: rgb(var(--ink) / 0.35); mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent); }
+.ticker-track { display: flex; width: max-content; padding: 5px 0; animation: ticker linear infinite; }
 .ticker-tape:hover .ticker-track { animation-play-state: paused; }
 @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
@@ -503,3 +509,77 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.4); background: rgb(var(--ink)
 
 /* underline tabs (role="tab" with border-b-2 in TrackRecord / TradeTerminal / AuthPanel): smooth state change */
 [role="tab"] { transition: color .15s, border-color .2s; }
+
+/* =====================================================================================================
+   SIGNAL CARD (TradeCall): header row · decision headline · key-number strip · quiet sections
+   ===================================================================================================== */
+.signal-card { --tone: var(--mute); }
+.signal-card.sc-bull { --tone: var(--bull); }
+.signal-card.sc-bear { --tone: var(--bear); }
+.signal-card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; background: rgb(var(--tone) / 0.85); }
+.signal-card.sc-wait::before { background: rgb(var(--glass) / 0.12); }
+.sc-head {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; padding: 0.9rem 1rem;
+  border-bottom: 1px solid var(--hair);
+  background: linear-gradient(180deg, rgb(var(--tone) / 0.07), transparent);
+}
+@media (min-width: 640px) { .sc-head { padding: 1rem 1.25rem; } }
+.sc-chip { display: inline-flex; align-items: center; border-radius: 4px; padding: 2px 5px; font-size: 10px; font-weight: 600; line-height: 1; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(var(--text) / 0.8); background: rgb(var(--glass) / 0.07); }
+.sc-side { display: inline-flex; align-items: center; white-space: nowrap; border-radius: var(--r-md); padding: 0.45rem 0.8rem; font-size: 0.8125rem; font-weight: 800; letter-spacing: 0.04em; line-height: 1; }
+.sc-side-bull { background: rgb(var(--bull)); color: rgb(var(--ink)); }
+.sc-side-bear { background: rgb(var(--bear)); color: #fff; }
+.sc-side-wait { background: rgb(var(--glass) / 0.08); color: rgb(var(--text) / 0.85); box-shadow: 0 0 0 1px var(--hair-strong) inset; }
+[data-theme="light"] .sc-side-bull { color: #fff; }
+.sc-headline { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; font-size: 1.375rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; }
+@media (min-width: 640px) { .sc-headline { font-size: 1.5rem; } }
+.sc-section { border-top: 1px solid var(--hair); padding-top: 0.75rem; }
+.sc-label { margin-bottom: 0.4rem; font-size: 10.5px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--mute)); }
+.sc-alert { border-left: 2px solid; padding: 0.15rem 0 0.15rem 0.75rem; font-size: 0.8125rem; line-height: 1.45; }
+.sc-alert-warn { border-color: rgb(var(--warn) / 0.8); color: rgb(var(--warn)); }
+.sc-alert-bear { border-color: rgb(var(--bear) / 0.8); color: rgb(var(--bear)); }
+.sc-ladder > li { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; padding: 0.3rem 0; font-size: 0.875rem; border-bottom: 1px dashed rgb(var(--glass) / 0.07); }
+.sc-ladder > li:last-child { border-bottom: 0; }
+.sc-ladder > li.is-now { margin: 0 -0.5rem; padding-left: 0.5rem; padding-right: 0.5rem; border-radius: 6px; border-bottom-color: transparent; background: rgb(var(--glass) / 0.06); }
+
+/* key-number strip: one bordered band, cells split by hairlines (2 x 2 on phones, 4 across from sm) */
+.metric-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border: 1px solid var(--hair); border-radius: var(--r-lg); background: rgb(var(--ink) / 0.35); overflow: hidden; }
+@media (min-width: 640px) { .metric-strip { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.metric { min-width: 0; padding: 0.8rem 0.9rem; box-shadow: -1px 0 0 0 var(--hair), 0 -1px 0 0 var(--hair); }
+.metric-k { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 10.5px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: rgb(var(--mute)); }
+.metric-v { margin-top: 0.3rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 1.375rem; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; }
+@media (min-width: 1024px) { .metric-v { font-size: 1.5rem; } }
+.metric-sub { margin-top: 0.25rem; font-size: 11px; line-height: 1.35; color: rgb(var(--mute)); }
+
+/* all-coins list (Signals): table-like rows with a side rule */
+.sig-row { position: relative; display: grid; width: 100%; align-items: center; column-gap: 0.75rem; row-gap: 0.2rem; padding: 0.6rem 1rem 0.6rem 1.1rem; text-align: left; transition: background-color .12s; grid-template-columns: minmax(0, 1fr) auto; }
+@media (min-width: 640px) { .sig-row { grid-template-columns: minmax(0, 1.2fr) repeat(3, minmax(0, 1fr)) 5.5rem; } }
+.sig-row:hover { background: rgb(var(--glass) / 0.035); }
+.sig-row[aria-current="true"] { background: rgb(var(--accent) / 0.06); }
+.sig-row::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--side, transparent); }
+.sig-head { display: none; }
+@media (min-width: 640px) { .sig-head { display: grid; padding-top: 0.5rem; padding-bottom: 0.5rem; } .sig-head:hover { background: none; } }
+.sig-side { font-size: 11px; font-weight: 800; letter-spacing: 0.05em; text-align: right; line-height: 1.2; }
+
+/* =====================================================================================================
+   HOME overview band: headline + mood, then one strip of market metrics (6 across on desktop)
+   ===================================================================================================== */
+.hero-strip { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); border-top: 1px solid var(--hair); background: rgb(var(--ink) / 0.3); }
+@media (min-width: 768px) { .hero-strip { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .hero-strip { grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+.hero-metric { display: block; min-width: 0; padding: 0.95rem 1.1rem; box-shadow: -1px 0 0 0 var(--hair), 0 -1px 0 0 var(--hair); transition: background-color .15s; }
+@media (min-width: 640px) { .hero-metric { padding: 1.05rem 1.4rem; } }
+a.hero-metric:hover { background: rgb(var(--glass) / 0.035); }
+
+/* ---- top bar groups, admin menu, phone tab icons ---- */
+.nav-top .nav-group { position: relative; margin-left: 0.5rem; padding-left: 0.5rem; }
+.nav-top .nav-group::before { content: ""; position: absolute; left: 0; top: 22%; bottom: 22%; width: 1px; background: var(--hair-strong); }
+@media (max-width: 1023px) { .nav-top .nav-link { padding-left: 0.5rem; padding-right: 0.5rem; font-size: 0.8125rem; } .nav-top .nav-link::after { left: 0.5rem; right: 0.5rem; } .nav-top .nav-group { margin-left: 0.25rem; padding-left: 0.25rem; } }
+.nav-link[aria-current="page"] { color: rgb(var(--text)); }
+.menu-item { display: flex; align-items: center; border-radius: 6px; padding: 0.5rem 0.65rem; font-size: 0.875rem; color: rgb(var(--text) / 0.85); transition: background-color .12s, color .12s; }
+.menu-item:hover { background: rgb(var(--glass) / 0.06); color: rgb(var(--text)); }
+.menu-item.is-active { color: rgb(var(--accent)); background: rgb(var(--accent) / 0.08); }
+.tab-ico { display: inline-flex; align-items: center; justify-content: center; height: 28px; width: 52px; border-radius: 999px; transition: background-color .2s; }
+.tab-link[aria-current="page"] .tab-ico, .tab-link[aria-expanded="true"] .tab-ico { background: rgb(var(--accent) / 0.13); }
+.tab-link::before { display: none; }
+.grade-mini { display: inline-flex; height: 16px; min-width: 16px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 4px; padding: 0 4px; font-size: 10px; font-weight: 700; line-height: 1; color: rgb(var(--text) / 0.8); background: rgb(var(--glass) / 0.08); box-shadow: 0 0 0 1px var(--hair-strong) inset; }
+.grade-mini.is-a { color: rgb(var(--accent)); background: rgb(var(--accent) / 0.12); box-shadow: 0 0 0 1px rgb(var(--accent) / 0.4) inset; }

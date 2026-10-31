@@ -1,6 +1,6 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
 import { collection, onSnapshot } from "firebase/firestore";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
@@ -76,6 +76,41 @@ const NAV = [
 ] as const;
 // owner-only tools: marketing material and system health
 const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"]] as const;
+// desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu)
+const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
+
+/** Owner tools in one compact menu (Weekly report, Achievements, Health, Users). */
+function AdminMenu({ items, pending }: { items: (readonly [string, string])[]; pending: number }) {
+  const loc = useLocation();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const activeHere = items.some(([to]) => loc.pathname.startsWith(to));
+  useEffect(() => setOpen(false), [loc.pathname]);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", esc); };
+  }, [open]);
+  return (
+    <div className="relative" ref={ref}>
+      <button type="button" className="nav-link gap-1.5" aria-haspopup="menu" aria-expanded={open} aria-current={activeHere ? "page" : undefined} onClick={() => setOpen((v) => !v)}>
+        Admin
+        {pending > 0 && <span className="num rounded-full bg-warn/15 px-1.5 text-[10px] font-bold leading-4 text-warn">{pending}</span>}
+        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className={`transition-transform ${open ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
+      </button>
+      {open && (
+        <div role="menu" className="panel popover animate-in absolute right-0 top-[calc(100%+8px)] z-50 w-52 p-1.5">
+          {items.map(([to, label]) => (
+            <NavLink key={to} to={to} role="menuitem" className={({ isActive }) => `menu-item ${isActive ? "is-active" : ""}`}>{label}</NavLink>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 // phone bottom bar: four main sections + "More" for the rest
 const PRIMARY: [string, string, string][] = [["/", "Home", "home"], ["/signals", "Signals", "signals"], ["/paper", "Trade", "trade"], ["/results", "Results", "results"]];
@@ -208,10 +243,11 @@ function Shell({ user }: { user: User }) {
   const width = a.width === "wide" ? "max-w-none" : "max-w-[1600px]";
   // active state comes from NavLink's aria-current="page" (index.css .nav-link: gold rule under / beside the item)
   const navCls = "nav-link";
-  const brand = (
+  const adminItems: (readonly [string, string])[] = admin ? [...ADMIN_NAV, ["/users", pending ? `Users (${pending})` : "Users"] as const] : [];
+  const brand = (wrap = false) => (
     <div className="flex min-w-0 items-center gap-2.5">
       <AnimatedLogo size={34} className="shrink-0" />
-      <NavLink to="/" className="truncate text-[15px] font-semibold tracking-tight text-text">
+      <NavLink to="/" className={`font-display text-[15px] font-semibold tracking-tight text-text ${wrap ? "leading-tight" : "truncate"}`}>
         Crypto Intelligence <span className="text-accent">AI</span>
       </NavLink>
     </div>
@@ -221,9 +257,14 @@ function Shell({ user }: { user: User }) {
       {/* computer: optional sidebar */}
       {side && (
         <aside className="glass-bar sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r md:flex">
-          <div className="px-4 py-3.5">{brand}</div>
-          <nav className="nav-side flex flex-1 flex-col gap-0.5 overflow-y-auto px-2" aria-label="Sections">
-            {nav.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
+          <div className="px-4 py-3.5">{brand(true)}</div>
+          <nav className="nav-side flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3" aria-label="Sections">
+            {[...NAV_GROUPS, ...(admin ? [adminItems] : [])].map((g, i) => (
+              <div key={i} className={`flex flex-col gap-0.5 ${i ? "mt-2 border-t border-glass/[0.07] pt-2" : ""}`}>
+                {i === NAV_GROUPS.length && <div className="label px-3 pb-1 pt-1">Admin</div>}
+                {g.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
+              </div>
+            ))}
           </nav>
           <div className="border-t border-glass/[0.06] px-4 py-3 text-xs text-mute">
             <div className="truncate">{user.email}</div>
@@ -235,7 +276,7 @@ function Shell({ user }: { user: User }) {
         <header className="glass-bar safe-top sticky top-0 z-40 border-b">
           <div className={`mx-auto flex ${width} items-center justify-between gap-3 px-3 py-2.5 sm:px-4`}>
             <div className={`flex min-w-0 items-center gap-2.5 ${side ? "md:hidden" : ""}`}>
-              {brand}
+              {brand()}
               <span className="hidden sm:inline"><Badge tone="mute" title="This application never places real orders">Analysis only</Badge></span>
             </div>
             {side && <span className="hidden md:inline"><Badge tone="mute" title="This application never places real orders">Analysis only</Badge></span>}
@@ -247,10 +288,13 @@ function Shell({ user }: { user: User }) {
             </div>
           </div>
           {!side && (
-            <nav className={`nav-top mx-auto hidden ${width} gap-0.5 overflow-x-auto px-3 pb-1.5 sm:px-4 md:flex`} aria-label="Sections">
-              {nav.map(([to, label]) => (
-                <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>
+            <nav className={`nav-top mx-auto hidden ${width} items-center px-3 pb-1.5 sm:px-4 md:flex`} aria-label="Sections">
+              {NAV_GROUPS.map((g, i) => (
+                <div key={i} className={`flex items-center gap-0.5 ${i ? "nav-group" : ""}`}>
+                  {g.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
+                </div>
               ))}
+              {admin && <div className="ml-auto"><AdminMenu items={adminItems} pending={pending} /></div>}
             </nav>
           )}
         </header>
@@ -298,12 +342,12 @@ function Shell({ user }: { user: User }) {
           {PRIMARY.map(([to, label, icon]) => (
             <NavLink key={to} to={to} end={to === "/"} onClick={() => setMore(false)}
               className="tab-link flex flex-col items-center gap-0.5 py-2 text-[11px]">
-              <NavIcon name={icon} />{label}
+              <span className="tab-ico"><NavIcon name={icon} /></span>{label}
             </NavLink>
           ))}
           <button onClick={() => setMore((v) => !v)} aria-expanded={more} aria-controls="more-sheet"
             className="tab-link flex flex-col items-center gap-0.5 py-2 text-[11px]">
-            <span className="relative" aria-hidden><NavIcon name="more" />{pending > 0 && <span className="absolute -right-1 top-0 h-2 w-2 rounded-full bg-warn" />}</span>More
+            <span className="tab-ico relative" aria-hidden><NavIcon name="more" />{pending > 0 && <span className="absolute -right-1 top-0 h-2 w-2 rounded-full bg-warn" />}</span>More
           </button>
         </div>
       </nav>
