@@ -9181,7 +9181,7 @@
   "fill_window_bars": 3,
   "reentry_cooldown_bars": 2
  },
- "seconds": 56.1,
+ "seconds": 58.0,
  "method": "Proposal: 15m calls of grade A only, TP1 as near as possible with the stop moved to break-even immediately after TP1 (to\nraise the win rate), traded at 20x-25x leverage. Replayed on the same calls as `python -m app.research horizon`: the\nmodels' walk-forward OUT-OF-SAMPLE predictions turned into calls by the live decision rules (series_policy.decide, which\nreproduces the live grading: A = technical tilt firm and the AI's side agreeing, margin clearing the proven policy\nmargin and directional confidence >= MIN_DIR_CONFIDENCE_A; B = AI-led / weaker; bigger-trend check A -> B), with the live\n15m entry rule and trade filter chosen on the tuning part, one call at a time per series plus the re-entry cooldown.\n\nVariants (each on the 15m series, grade A only):\n  TP1 at 0.3R / 0.5R / 0.75R / 1.0R (current)  x  exits (i) `ladder`: 50 % at TP1, stop -> break-even, 25 % at TP2 1.75R,\n  25 % at TP3 2.5R, stop -> TP1 after TP2 (the current ladder) or (ii) `all_tp1`: 100 % closed at TP1\n  x  horizon 30 or 250 candles (then EXPIRED at the last close).\nBaselines: the current rules (grades A + B, TP1 1R ladder) at 30 and 250 candles. The same TP1 / exit grid is also run\non grades A + B (`AB_tp...`), because grade A alone is rare.\nCosts: RESEARCH_COST_PCT (0.15 %) round trip headline, also 0.10 % and 0.20 %; every R and % is after costs.\nLeverage: liquidation distance from engine/futures.liquidation_price (1/lev - 0.5 % maintenance margin): 4.5 % at 20x,\n3.5 % at 25x. A trade is `liquidated` when its stop lies beyond the liquidation price and its adverse excursion from\nthe entry, up to its exit (or up to TP1, after which the stop is at break-even or better), reaches that distance; a stop\nnearer than the liquidation price fills first (no gaps modelled); stop first inside a candle (conservative). ROI on margin\n= net price return x leverage, a liquidated trade = -100 % of margin. Also reported: the share of trades whose stop lies\nbeyond the liquidation price (they can be liquidated before the stop).\nHeadline: the untouched last 30 % of each series (same split as research_engine); all-data numbers too. Confidence:\nper-series bootstrap, share of resamples with expectancy > 0, and share beating the current rules.",
  "approximations": [
   "grading is the live logic replayed by series_policy.decide; per-member model agreement is not stored out-of-sample and is treated as passed (as in research_engine), no order book",
@@ -9191,6 +9191,6 @@
   "liquidation uses a flat 0.5 % maintenance margin (engine/futures.py); funding not charged",
   "15m paths are 15m candles: the order of high / low inside one candle is unknown, stop first"
  ],
- "commit": "a9c718c905d57ba0d94d6ff3acaaf16a8b697fc8",
- "cache_key": "engine-state-41164070403-1-5"
+ "commit": "43df4397959312cd7a1a806a68a48f01c32da031",
+ "cache_key": "engine-state-41182077807-1-2"
 }

@@ -1,0 +1,2525 @@
+{
+ "ok": true,
+ "command": "grades",
+ "results": {
+  "3d h30": {
+   "test": {
+    "weeks": 58.714285714285715,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 6,
+     "B": 75,
+     "series": 13
+    },
+    "variants": {
+     "A_only": {
+      "n": 2,
+      "win_rate": 0.0,
+      "expectancy_r": -1.0037804771271812,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 2.0075609542543624,
+      "total_r": -2.0075609542543624,
+      "trades_per_week": 0.0340632603406326,
+      "open_at_data_end": 3,
+      "tp1_hit_rate": 0.0,
+      "expectancy_pct_of_price": -40.281474068918214,
+      "expired_share": 0.0,
+      "risk_pct_median": 40.131474068918216,
+      "risk_pct_p90": 43.5460206079299,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 708.625,
+      "exits": {
+       "stop": 2,
+       "tp1": 0,
+       "break_even": 0,
+       "trail": 0,
+       "tp3": 0,
+       "expired": 0
+      },
+      "stop_beyond_liq_20x": 1.0,
+      "liquidated_20x": 1.0,
+      "roi_margin_avg_20x": -100.0,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 1.0,
+      "liquidated_25x": 1.0,
+      "roi_margin_avg_25x": -100.0,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "total_r": -2.2559998588280026,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6,
+      "tp1_hit_rate": 0.2222222222222222,
+      "expectancy_pct_of_price": -2.4442512174047533,
+      "expired_share": 0.3888888888888889,
+      "risk_pct_median": 29.723404617269374,
+      "risk_pct_p90": 48.09802428771852,
+      "grade_A_share": 0.05555555555555555,
+      "hold_hours_median": 1219.875,
+      "exits": {
+       "stop": 8,
+       "tp1": 0,
+       "break_even": 0,
+       "trail": 0,
+       "tp3": 3,
+       "expired": 7
+      },
+      "stop_beyond_liq_20x": 0.9444444444444444,
+      "liquidated_20x": 0.8333333333333334,
+      "roi_margin_avg_20x": 24.752371737872195,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 1.0,
+      "liquidated_25x": 0.8888888888888888,
+      "roi_margin_avg_25x": -8.52731656053321,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.0,
+      "expectancy_90ci": [
+       -1.0041825497955144,
+       -1.003378404458848
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.3015,
+      "expectancy_90ci": [
+       -0.5297331386472941,
+       0.3217886482863139
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.0,
+      "share_better_total_r": 0.5275
+     }
+    }
+   },
+   "all": {
+    "weeks": 239.57142857142858,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 55,
+     "B": 388,
+     "series": 13
+    },
+    "variants": {
+     "A_only": {
+      "n": 15,
+      "win_rate": 0.5333333333333333,
+      "expectancy_r": -0.02488067896266573,
+      "profit_factor": 0.940661557800709,
+      "max_drawdown_r": 2.790260922948621,
+      "total_r": -0.373210184439986,
+      "trades_per_week": 0.0626118067978533,
+      "open_at_data_end": 3,
+      "tp1_hit_rate": 0.3333333333333333,
+      "expectancy_pct_of_price": -8.912807529563732,
+      "expired_share": 0.4,
+      "risk_pct_median": 27.866096357558117,
+      "risk_pct_p90": 53.15594901213125,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 1368.0,
+      "exits": {
+       "stop": 5,
+       "tp1": 0,
+       "break_even": 1,
+       "trail": 2,
+       "tp3": 1,
+       "expired": 6
+      },
+      "stop_beyond_liq_20x": 1.0,
+      "liquidated_20x": 0.8666666666666667,
+      "roi_margin_avg_20x": -56.32370278743622,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 1.0,
+      "liquidated_25x": 0.8666666666666667,
+      "roi_margin_avg_25x": -48.73796181762861,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 84,
+      "win_rate": 0.4523809523809524,
+      "expectancy_r": -0.12288953126351114,
+      "profit_factor": 0.7385647882272142,
+      "max_drawdown_r": 11.502102551289234,
+      "total_r": -10.322720626134936,
+      "trades_per_week": 0.3506261180679785,
+      "open_at_data_end": 6,
+      "tp1_hit_rate": 0.2857142857142857,
+      "expectancy_pct_of_price": -6.411407748368599,
+      "expired_share": 0.35714285714285715,
+      "risk_pct_median": 30.180449226143566,
+      "risk_pct_p90": 53.177444011731374,
+      "grade_A_share": 0.09523809523809523,
+      "hold_hours_median": 1620.0,
+      "exits": {
+       "stop": 36,
+       "tp1": 0,
+       "break_even": 8,
+       "trail": 3,
+       "tp3": 7,
+       "expired": 30
+      },
+      "stop_beyond_liq_20x": 0.9880952380952381,
+      "liquidated_20x": 0.8571428571428571,
+      "roi_margin_avg_20x": -29.62107444824434,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 1.0,
+      "liquidated_25x": 0.8690476190476191,
+      "roi_margin_avg_25x": -19.376707021151052,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.4505,
+      "expectancy_90ci": [
+       -0.5582815049235211,
+       0.48956143012102266
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.15,
+      "expectancy_90ci": [
+       -0.3202254904824284,
+       0.09102134551886654
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.6045,
+      "share_better_total_r": 0.866
+     }
+    }
+   }
+  },
+  "1d h30": {
+   "test": {
+    "weeks": 80.42857142857143,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 63,
+     "B": 326,
+     "series": 23
+    },
+    "variants": {
+     "A_only": {
+      "n": 27,
+      "win_rate": 0.48148148148148145,
+      "expectancy_r": -0.03258465867273043,
+      "profit_factor": 0.917393064223546,
+      "max_drawdown_r": 5.466017706462228,
+      "total_r": -0.8797857841637217,
+      "trades_per_week": 0.33570159857904086,
+      "open_at_data_end": 1,
+      "tp1_hit_rate": 0.37037037037037035,
+      "expectancy_pct_of_price": -0.7653485202597468,
+      "expired_share": 0.37037037037037035,
+      "risk_pct_median": 11.793275160076957,
+      "risk_pct_p90": 27.852916441447487,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 528.0,
+      "exits": {
+       "stop": 10,
+       "tp1": 0,
+       "break_even": 4,
+       "trail": 3,
+       "tp3": 0,
+       "expired": 10
+      },
+      "stop_beyond_liq_20x": 0.9259259259259259,
+      "liquidated_20x": 0.6666666666666666,
+      "roi_margin_avg_20x": -12.254557880004175,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 0.9259259259259259,
+      "liquidated_25x": 0.7037037037037037,
+      "roi_margin_avg_25x": -5.007850897299579,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 110,
+      "win_rate": 0.4727272727272727,
+      "expectancy_r": -0.05267294330013961,
+      "profit_factor": 0.8812514124103404,
+      "max_drawdown_r": 11.257641042543419,
+      "total_r": -5.794023763015357,
+      "trades_per_week": 1.3676731793960923,
+      "open_at_data_end": 5,
+      "tp1_hit_rate": 0.3090909090909091,
+      "expectancy_pct_of_price": -0.25573862191663393,
+      "expired_share": 0.35454545454545455,
+      "risk_pct_median": 13.307687950556343,
+      "risk_pct_p90": 26.214569033072,
+      "grade_A_share": 0.17272727272727273,
+      "hold_hours_median": 385.5,
+      "exits": {
+       "stop": 45,
+       "tp1": 0,
+       "break_even": 6,
+       "trail": 11,
+       "tp3": 9,
+       "expired": 39
+      },
+      "stop_beyond_liq_20x": 0.9181818181818182,
+      "liquidated_20x": 0.6636363636363637,
+      "roi_margin_avg_20x": -10.277085802403581,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 0.9545454545454546,
+      "liquidated_25x": 0.7363636363636363,
+      "roi_margin_avg_25x": -19.436872265421144,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.418,
+      "expectancy_90ci": [
+       -0.36165309950439184,
+       0.2292259399527355
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.2735,
+      "expectancy_90ci": [
+       -0.189217729710872,
+       0.07498122996173967
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.5285,
+      "share_better_total_r": 0.692
+     }
+    }
+   },
+   "all": {
+    "weeks": 282.7142857142857,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 296,
+     "B": 1522,
+     "series": 23
+    },
+    "variants": {
+     "A_only": {
+      "n": 114,
+      "win_rate": 0.5877192982456141,
+      "expectancy_r": 0.1101169326763931,
+      "profit_factor": 1.307338479976649,
+      "max_drawdown_r": 7.407097328091432,
+      "total_r": 12.553330325108814,
+      "trades_per_week": 0.4032339565437089,
+      "open_at_data_end": 1,
+      "tp1_hit_rate": 0.43859649122807015,
+      "expectancy_pct_of_price": 1.3648091187502736,
+      "expired_share": 0.35964912280701755,
+      "risk_pct_median": 14.605793404749866,
+      "risk_pct_p90": 29.05781240581184,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 552.0,
+      "exits": {
+       "stop": 39,
+       "tp1": 0,
+       "break_even": 16,
+       "trail": 10,
+       "tp3": 8,
+       "expired": 41
+      },
+      "stop_beyond_liq_20x": 0.9385964912280702,
+      "liquidated_20x": 0.6842105263157895,
+      "roi_margin_avg_20x": -9.906154606465275,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 0.9824561403508771,
+      "liquidated_25x": 0.7280701754385965,
+      "roi_margin_avg_25x": -7.335122021061021,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 461,
+      "win_rate": 0.527114967462039,
+      "expectancy_r": 0.017924564151036073,
+      "profit_factor": 1.043359169495466,
+      "max_drawdown_r": 35.37899033635655,
+      "total_r": 8.26322407362763,
+      "trades_per_week": 1.630621526023244,
+      "open_at_data_end": 5,
+      "tp1_hit_rate": 0.37310195227765725,
+      "expectancy_pct_of_price": 0.21892297784026168,
+      "expired_share": 0.3579175704989154,
+      "risk_pct_median": 15.395347962833892,
+      "risk_pct_p90": 29.457181848793713,
+      "grade_A_share": 0.14099783080260303,
+      "hold_hours_median": 479.0,
+      "exits": {
+       "stop": 172,
+       "tp1": 0,
+       "break_even": 45,
+       "trail": 40,
+       "tp3": 39,
+       "expired": 165
+      },
+      "stop_beyond_liq_20x": 0.9392624728850325,
+      "liquidated_20x": 0.7114967462039046,
+      "roi_margin_avg_20x": -10.955920816842353,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 0.9696312364425163,
+      "liquidated_25x": 0.7635574837310195,
+      "roi_margin_avg_25x": -11.76125962653431,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.872,
+      "expectancy_90ci": [
+       -0.050984525676888756,
+       0.26009516738279725
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.6725,
+      "expectancy_90ci": [
+       -0.04770507081875927,
+       0.08904201925407597
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.861,
+      "share_better_total_r": 0.6135
+     }
+    }
+   }
+  },
+  "12h h30": {
+   "test": {
+    "weeks": 63.357142857142854,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 119,
+     "B": 747,
+     "series": 27
+    },
+    "variants": {
+     "A_only": {
+      "n": 36,
+      "win_rate": 0.5277777777777778,
+      "expectancy_r": 0.030173508750227604,
+      "profit_factor": 1.0727382653394182,
+      "max_drawdown_r": 3.5389971775072047,
+      "total_r": 1.0862463150081938,
+      "trades_per_week": 0.5682074408117249,
+      "open_at_data_end": 3,
+      "tp1_hit_rate": 0.3611111111111111,
+      "expectancy_pct_of_price": -0.48427014390386464,
+      "expired_share": 0.3888888888888889,
+      "risk_pct_median": 7.250125545923918,
+      "risk_pct_p90": 16.885976680466225,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 275.75,
+      "exits": {
+       "stop": 14,
+       "tp1": 0,
+       "break_even": 3,
+       "trail": 1,
+       "tp3": 4,
+       "expired": 14
+      },
+      "stop_beyond_liq_20x": 0.6944444444444444,
+      "liquidated_20x": 0.4722222222222222,
+      "roi_margin_avg_20x": -4.125320791007493,
+      "roi_margin_median_20x": -64.80167892049138,
+      "stop_beyond_liq_25x": 0.8055555555555556,
+      "liquidated_25x": 0.5277777777777778,
+      "roi_margin_avg_25x": -2.3172376036784854,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 192,
+      "win_rate": 0.5,
+      "expectancy_r": -0.012484492663942479,
+      "profit_factor": 0.9718703771062319,
+      "max_drawdown_r": 12.360562051413645,
+      "total_r": -2.397022591476956,
+      "trades_per_week": 3.0304396843292,
+      "open_at_data_end": 5,
+      "tp1_hit_rate": 0.3958333333333333,
+      "expectancy_pct_of_price": -0.0331369459085773,
+      "expired_share": 0.375,
+      "risk_pct_median": 7.9585478229528,
+      "risk_pct_p90": 15.541080384340711,
+      "grade_A_share": 0.109375,
+      "hold_hours_median": 220.125,
+      "exits": {
+       "stop": 77,
+       "tp1": 0,
+       "break_even": 19,
+       "trail": 11,
+       "tp3": 13,
+       "expired": 72
+      },
+      "stop_beyond_liq_20x": 0.734375,
+      "liquidated_20x": 0.453125,
+      "roi_margin_avg_20x": -1.2102797482279357,
+      "roi_margin_median_20x": -77.60543408818954,
+      "stop_beyond_liq_25x": 0.8229166666666666,
+      "liquidated_25x": 0.5625,
+      "roi_margin_avg_25x": -5.057598065486949,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.583,
+      "expectancy_90ci": [
+       -0.2409363128392091,
+       0.2112421172677217
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.406,
+      "expectancy_90ci": [
+       -0.1286566183417929,
+       0.09861376971351112
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.595,
+      "share_better_total_r": 0.605
+     }
+    }
+   },
+   "all": {
+    "weeks": 218.5,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 523,
+     "B": 2934,
+     "series": 27
+    },
+    "variants": {
+     "A_only": {
+      "n": 168,
+      "win_rate": 0.5535714285714286,
+      "expectancy_r": 0.12478354150491125,
+      "profit_factor": 1.3627296113197302,
+      "max_drawdown_r": 6.883159071620399,
+      "total_r": 20.96363497282509,
+      "trades_per_week": 0.7688787185354691,
+      "open_at_data_end": 3,
+      "tp1_hit_rate": 0.39880952380952384,
+      "expectancy_pct_of_price": 0.7900281903136714,
+      "expired_share": 0.44047619047619047,
+      "risk_pct_median": 9.068994663150738,
+      "risk_pct_p90": 17.53558754466398,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 306.0,
+      "exits": {
+       "stop": 50,
+       "tp1": 0,
+       "break_even": 15,
+       "trail": 11,
+       "tp3": 18,
+       "expired": 74
+      },
+      "stop_beyond_liq_20x": 0.7738095238095238,
+      "liquidated_20x": 0.49404761904761907,
+      "roi_margin_avg_20x": -1.9621204397011092,
+      "roi_margin_median_20x": -80.15328656987697,
+      "stop_beyond_liq_25x": 0.8154761904761905,
+      "liquidated_25x": 0.5714285714285714,
+      "roi_margin_avg_25x": -1.0191305885299646,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 747,
+      "win_rate": 0.5127175368139224,
+      "expectancy_r": -0.004488581179300482,
+      "profit_factor": 0.9893743043380738,
+      "max_drawdown_r": 18.038060226296736,
+      "total_r": -3.35297014093746,
+      "trades_per_week": 3.4187643020594964,
+      "open_at_data_end": 5,
+      "tp1_hit_rate": 0.3708165997322624,
+      "expectancy_pct_of_price": -0.08372808465710195,
+      "expired_share": 0.3815261044176707,
+      "risk_pct_median": 9.955165383895835,
+      "risk_pct_p90": 17.931246920345355,
+      "grade_A_share": 0.1285140562248996,
+      "hold_hours_median": 252.0,
+      "exits": {
+       "stop": 282,
+       "tp1": 0,
+       "break_even": 69,
+       "trail": 57,
+       "tp3": 54,
+       "expired": 285
+      },
+      "stop_beyond_liq_20x": 0.8179384203480589,
+      "liquidated_20x": 0.5327978580990629,
+      "roi_margin_avg_20x": -5.068749785806114,
+      "roi_margin_median_20x": -100.0,
+      "stop_beyond_liq_25x": 0.8661311914323963,
+      "liquidated_25x": 0.6198125836680054,
+      "roi_margin_avg_25x": -7.369589300159548,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.9455,
+      "expectancy_90ci": [
+       -0.0034846181001864773,
+       0.22895575878693128
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.4535,
+      "expectancy_90ci": [
+       -0.060724948320241445,
+       0.046511634887941564
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.9705,
+      "share_better_total_r": 0.879
+     }
+    }
+   }
+  },
+  "4h h100": {
+   "test": {
+    "weeks": 42.11904761904762,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 189,
+     "B": 2205,
+     "series": 29
+    },
+    "variants": {
+     "A_only": {
+      "n": 58,
+      "win_rate": 0.5172413793103449,
+      "expectancy_r": 0.1229350204453294,
+      "profit_factor": 1.2607091354293838,
+      "max_drawdown_r": 10.861779989757174,
+      "total_r": 7.130231185829105,
+      "trades_per_week": 1.3770491803278688,
+      "open_at_data_end": 2,
+      "tp1_hit_rate": 0.4827586206896552,
+      "expectancy_pct_of_price": 0.6328369274624065,
+      "expired_share": 0.1206896551724138,
+      "risk_pct_median": 6.682765871371291,
+      "risk_pct_p90": 10.885102352942368,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 125.375,
+      "exits": {
+       "stop": 26,
+       "tp1": 0,
+       "break_even": 5,
+       "trail": 7,
+       "tp3": 13,
+       "expired": 7
+      },
+      "stop_beyond_liq_20x": 0.7586206896551724,
+      "liquidated_20x": 0.4827586206896552,
+      "roi_margin_avg_20x": 4.459877840167618,
+      "roi_margin_median_20x": -90.30033281630045,
+      "stop_beyond_liq_25x": 0.8448275862068966,
+      "liquidated_25x": 0.603448275862069,
+      "roi_margin_avg_25x": -10.425549437428849,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 356,
+      "win_rate": 0.550561797752809,
+      "expectancy_r": 0.09151038231606565,
+      "profit_factor": 1.2062430197629201,
+      "max_drawdown_r": 29.806128064948012,
+      "total_r": 32.57769610451937,
+      "trades_per_week": 8.452232899943471,
+      "open_at_data_end": 12,
+      "tp1_hit_rate": 0.5140449438202247,
+      "expectancy_pct_of_price": 0.29930448624729217,
+      "expired_share": 0.11797752808988764,
+      "risk_pct_median": 5.887682773964498,
+      "risk_pct_p90": 10.475206772718984,
+      "grade_A_share": 0.05898876404494382,
+      "hold_hours_median": 97.625,
+      "exits": {
+       "stop": 151,
+       "tp1": 0,
+       "break_even": 66,
+       "trail": 38,
+       "tp3": 59,
+       "expired": 42
+      },
+      "stop_beyond_liq_20x": 0.6797752808988764,
+      "liquidated_20x": 0.40168539325842695,
+      "roi_margin_avg_20x": 1.9844947732786096,
+      "roi_margin_median_20x": -51.13259127502012,
+      "stop_beyond_liq_25x": 0.8117977528089888,
+      "liquidated_25x": 0.5084269662921348,
+      "roi_margin_avg_25x": 1.1925652231966741,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.8725,
+      "expectancy_90ci": [
+       -0.055460423716760375,
+       0.3224855448754068
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.972,
+      "expectancy_90ci": [
+       0.010832355442208015,
+       0.18051400333559892
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.6205,
+      "share_better_total_r": 0.0775
+     }
+    }
+   },
+   "all": {
+    "weeks": 142.83333333333334,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 718,
+     "B": 6912,
+     "series": 29
+    },
+    "variants": {
+     "A_only": {
+      "n": 265,
+      "win_rate": 0.5245283018867924,
+      "expectancy_r": 0.053603562632620394,
+      "profit_factor": 1.112429180115903,
+      "max_drawdown_r": 21.38880032237689,
+      "total_r": 14.204944097644404,
+      "trades_per_week": 1.8553092182030337,
+      "open_at_data_end": 2,
+      "tp1_hit_rate": 0.5056603773584906,
+      "expectancy_pct_of_price": 0.14413250240976422,
+      "expired_share": 0.07924528301886792,
+      "risk_pct_median": 7.060981208842314,
+      "risk_pct_p90": 11.644170268445086,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 93.5,
+      "exits": {
+       "stop": 120,
+       "tp1": 0,
+       "break_even": 44,
+       "trail": 39,
+       "tp3": 41,
+       "expired": 21
+      },
+      "stop_beyond_liq_20x": 0.7584905660377359,
+      "liquidated_20x": 0.45660377358490567,
+      "roi_margin_avg_20x": 7.086277391148314,
+      "roi_margin_median_20x": -56.8029252261536,
+      "stop_beyond_liq_25x": 0.8415094339622642,
+      "liquidated_25x": 0.539622641509434,
+      "roi_margin_avg_25x": 4.440470313163859,
+      "roi_margin_median_25x": -100.0
+     },
+     "A_plus_B": {
+      "n": 1450,
+      "win_rate": 0.5282758620689655,
+      "expectancy_r": 0.046912202359773766,
+      "profit_factor": 1.099531516202581,
+      "max_drawdown_r": 41.90608978296467,
+      "total_r": 68.02269342167196,
+      "trades_per_week": 10.15169194865811,
+      "open_at_data_end": 12,
+      "tp1_hit_rate": 0.5041379310344828,
+      "expectancy_pct_of_price": 0.08455791416444848,
+      "expired_share": 0.08758620689655172,
+      "risk_pct_median": 6.9022266676927035,
+      "risk_pct_p90": 12.495912331960762,
+      "grade_A_share": 0.060689655172413794,
+      "hold_hours_median": 91.375,
+      "exits": {
+       "stop": 656,
+       "tp1": 0,
+       "break_even": 263,
+       "trail": 178,
+       "tp3": 226,
+       "expired": 127
+      },
+      "stop_beyond_liq_20x": 0.7289655172413793,
+      "liquidated_20x": 0.46,
+      "roi_margin_avg_20x": -0.5798437802107406,
+      "roi_margin_median_20x": -75.44349930103843,
+      "stop_beyond_liq_25x": 0.8372413793103448,
+      "liquidated_25x": 0.5475862068965517,
+      "roi_margin_avg_25x": -0.9060947320855756,
+      "roi_margin_median_25x": -100.0
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.826,
+      "expectancy_90ci": [
+       -0.04243394176019922,
+       0.15309874244738328
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.9905,
+      "expectancy_90ci": [
+       0.012300750340442416,
+       0.08589294472907343
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.554,
+      "share_better_total_r": 0.0155
+     }
+    }
+   }
+  },
+  "1h h200": {
+   "test": {
+    "weeks": 10.529761904761905,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 67,
+     "B": 1233,
+     "series": 32
+    },
+    "variants": {
+     "A_only": {
+      "n": 32,
+      "win_rate": 0.53125,
+      "expectancy_r": 0.013426518028847118,
+      "profit_factor": 1.0263234995990738,
+      "max_drawdown_r": 6.376542795902613,
+      "total_r": 0.42964857692310776,
+      "trades_per_week": 3.0390050876201244,
+      "open_at_data_end": 0,
+      "tp1_hit_rate": 0.53125,
+      "expectancy_pct_of_price": -0.09953825584952425,
+      "expired_share": 0.0,
+      "risk_pct_median": 1.630342880933501,
+      "risk_pct_p90": 5.453064560192955,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 17.625,
+      "exits": {
+       "stop": 15,
+       "tp1": 0,
+       "break_even": 5,
+       "trail": 7,
+       "tp3": 5,
+       "expired": 0
+      },
+      "stop_beyond_liq_20x": 0.25,
+      "liquidated_20x": 0.15625,
+      "roi_margin_avg_20x": -5.123501018720093,
+      "roi_margin_median_20x": -5.165298581347841,
+      "stop_beyond_liq_25x": 0.25,
+      "liquidated_25x": 0.15625,
+      "roi_margin_avg_25x": -2.498126273400114,
+      "roi_margin_median_25x": -6.456623226684802
+     },
+     "A_plus_B": {
+      "n": 308,
+      "win_rate": 0.5097402597402597,
+      "expectancy_r": -0.06341255455873197,
+      "profit_factor": 0.8801726874245939,
+      "max_drawdown_r": 26.131159178386486,
+      "total_r": -19.53106680408945,
+      "trades_per_week": 29.250423968343696,
+      "open_at_data_end": 4,
+      "tp1_hit_rate": 0.5097402597402597,
+      "expectancy_pct_of_price": -0.23523741571421478,
+      "expired_share": 0.006493506493506494,
+      "risk_pct_median": 2.456425501554791,
+      "risk_pct_p90": 5.6947471421732825,
+      "grade_A_share": 0.04220779220779221,
+      "hold_hours_median": 18.375,
+      "exits": {
+       "stop": 151,
+       "tp1": 0,
+       "break_even": 69,
+       "trail": 42,
+       "tp3": 44,
+       "expired": 2
+      },
+      "stop_beyond_liq_20x": 0.19155844155844157,
+      "liquidated_20x": 0.1038961038961039,
+      "roi_margin_avg_20x": -2.7088019451518357,
+      "roi_margin_median_20x": 3.4583460738601994,
+      "stop_beyond_liq_25x": 0.31493506493506496,
+      "liquidated_25x": 0.18181818181818182,
+      "roi_margin_avg_25x": -4.171183783412661,
+      "roi_margin_median_25x": -18.493277380746267
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.5245,
+      "expectancy_90ci": [
+       -0.2619305571081874,
+       0.2546417732430567
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.142,
+      "expectancy_90ci": [
+       -0.15367438330287156,
+       0.03800627209484688
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.7105,
+      "share_better_total_r": 0.883
+     }
+    }
+   },
+   "all": {
+    "weeks": 35.708333333333336,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 263,
+     "B": 5016,
+     "series": 32
+    },
+    "variants": {
+     "A_only": {
+      "n": 127,
+      "win_rate": 0.4645669291338583,
+      "expectancy_r": -0.12717193230856624,
+      "profit_factor": 0.7780356078553265,
+      "max_drawdown_r": 24.485492174823943,
+      "total_r": -16.150835403187912,
+      "trades_per_week": 3.55659276546091,
+      "open_at_data_end": 0,
+      "tp1_hit_rate": 0.4645669291338583,
+      "expectancy_pct_of_price": -0.3438822322788255,
+      "expired_share": 0.015748031496062992,
+      "risk_pct_median": 2.920241400173273,
+      "risk_pct_p90": 5.4894208950691805,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 20.5,
+      "exits": {
+       "stop": 68,
+       "tp1": 0,
+       "break_even": 23,
+       "trail": 17,
+       "tp3": 17,
+       "expired": 2
+      },
+      "stop_beyond_liq_20x": 0.2125984251968504,
+      "liquidated_20x": 0.12598425196850394,
+      "roi_margin_avg_20x": -7.097005086868655,
+      "roi_margin_median_20x": -24.09296356324419,
+      "stop_beyond_liq_25x": 0.3464566929133858,
+      "liquidated_25x": 0.2047244094488189,
+      "roi_margin_avg_25x": -6.995098542218725,
+      "roi_margin_median_25x": -30.864756708745965
+     },
+     "A_plus_B": {
+      "n": 1179,
+      "win_rate": 0.49872773536895676,
+      "expectancy_r": -0.08149808165242634,
+      "profit_factor": 0.8482870365442935,
+      "max_drawdown_r": 101.81512076800632,
+      "total_r": -96.08623826821065,
+      "trades_per_week": 33.017502917152854,
+      "open_at_data_end": 4,
+      "tp1_hit_rate": 0.4961832061068702,
+      "expectancy_pct_of_price": -0.23235617570340045,
+      "expired_share": 0.009329940627650551,
+      "risk_pct_median": 2.6662394756147907,
+      "risk_pct_p90": 5.2041713417881885,
+      "grade_A_share": 0.037319762510602206,
+      "hold_hours_median": 22.75,
+      "exits": {
+       "stop": 590,
+       "tp1": 0,
+       "break_even": 255,
+       "trail": 163,
+       "tp3": 160,
+       "expired": 11
+      },
+      "stop_beyond_liq_20x": 0.16878710771840544,
+      "liquidated_20x": 0.0916030534351145,
+      "roi_margin_avg_20x": -3.740901403968781,
+      "roi_margin_median_20x": -15.75249376604215,
+      "stop_beyond_liq_25x": 0.32061068702290074,
+      "liquidated_25x": 0.17387616624257846,
+      "roi_margin_avg_25x": -4.670789115781268,
+      "roi_margin_median_25x": -23.53420200632436
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.0565,
+      "expectancy_90ci": [
+       -0.2772416381979829,
+       0.004800112151419739
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.0035,
+      "expectancy_90ci": [
+       -0.13054846276512966,
+       -0.031367552506387474
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.263,
+      "share_better_total_r": 0.9955
+     }
+    }
+   }
+  },
+  "15m h250": {
+   "test": {
+    "weeks": 3.9583333333333335,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 14,
+     "B": 919,
+     "series": 32
+    },
+    "variants": {
+     "A_only": {
+      "n": 9,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.2495991689340319,
+      "profit_factor": 1.7173407052766658,
+      "max_drawdown_r": 1.6384276594860954,
+      "total_r": 2.246392520406287,
+      "trades_per_week": 2.2736842105263158,
+      "open_at_data_end": 1,
+      "tp1_hit_rate": 0.6666666666666666,
+      "expectancy_pct_of_price": 0.09426863105932733,
+      "expired_share": 0.0,
+      "risk_pct_median": 2.989732319082808,
+      "risk_pct_p90": 3.769930836919726,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 8.25,
+      "exits": {
+       "stop": 3,
+       "tp1": 0,
+       "break_even": 3,
+       "trail": 1,
+       "tp3": 2,
+       "expired": 0
+      },
+      "stop_beyond_liq_20x": 0.0,
+      "liquidated_20x": 0.0,
+      "roi_margin_avg_20x": 1.8853726211865462,
+      "roi_margin_median_20x": 31.5522956424984,
+      "stop_beyond_liq_25x": 0.2222222222222222,
+      "liquidated_25x": 0.1111111111111111,
+      "roi_margin_avg_25x": 3.738964017944315,
+      "roi_margin_median_25x": 39.440369553123
+     },
+     "A_plus_B": {
+      "n": 317,
+      "win_rate": 0.48580441640378547,
+      "expectancy_r": -0.1706286465051267,
+      "profit_factor": 0.7028824981977649,
+      "max_drawdown_r": 59.52345418125044,
+      "total_r": -54.08928094212517,
+      "trades_per_week": 80.08421052631579,
+      "open_at_data_end": 1,
+      "tp1_hit_rate": 0.48580441640378547,
+      "expectancy_pct_of_price": -0.27845833975427886,
+      "expired_share": 0.0031545741324921135,
+      "risk_pct_median": 1.4428910547031932,
+      "risk_pct_p90": 3.167795492724103,
+      "grade_A_share": 0.025236593059936908,
+      "hold_hours_median": 5.5,
+      "exits": {
+       "stop": 163,
+       "tp1": 0,
+       "break_even": 77,
+       "trail": 34,
+       "tp3": 42,
+       "expired": 1
+      },
+      "stop_beyond_liq_20x": 0.012618296529968454,
+      "liquidated_20x": 0.006309148264984227,
+      "roi_margin_avg_20x": -5.539373015089575,
+      "roi_margin_median_20x": -14.413454532910094,
+      "stop_beyond_liq_25x": 0.07886435331230283,
+      "liquidated_25x": 0.04100946372239748,
+      "roi_margin_avg_25x": -6.566474440435195,
+      "roi_margin_median_25x": -18.016818166137618
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.7460799190692969,
+      "expectancy_90ci": [
+       -0.5529104734621643,
+       1.0933314894041923
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.0045,
+      "expectancy_90ci": [
+       -0.27351867845870836,
+       -0.06398355008818166
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.8598887202832575,
+      "share_better_total_r": 0.999
+     }
+    }
+   },
+   "all": {
+    "weeks": 13.34672619047619,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 73,
+     "B": 3567,
+     "series": 32
+    },
+    "variants": {
+     "A_only": {
+      "n": 53,
+      "win_rate": 0.6037735849056604,
+      "expectancy_r": 0.1536615440369038,
+      "profit_factor": 1.3700428149228574,
+      "max_drawdown_r": 7.313526672412728,
+      "total_r": 8.1440618339559,
+      "trades_per_week": 3.9710112610101462,
+      "open_at_data_end": 1,
+      "tp1_hit_rate": 0.6037735849056604,
+      "expectancy_pct_of_price": 0.3919751853229559,
+      "expired_share": 0.018867924528301886,
+      "risk_pct_median": 2.19007636539939,
+      "risk_pct_p90": 4.928322309201888,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 7.25,
+      "exits": {
+       "stop": 20,
+       "tp1": 0,
+       "break_even": 12,
+       "trail": 12,
+       "tp3": 8,
+       "expired": 1
+      },
+      "stop_beyond_liq_20x": 0.1509433962264151,
+      "liquidated_20x": 0.07547169811320754,
+      "roi_margin_avg_20x": 5.835241629887605,
+      "roi_margin_median_20x": 17.00438529007309,
+      "stop_beyond_liq_25x": 0.2641509433962264,
+      "liquidated_25x": 0.1320754716981132,
+      "roi_margin_avg_25x": 4.745498208438429,
+      "roi_margin_median_25x": 17.700842043538863
+     },
+     "A_plus_B": {
+      "n": 1193,
+      "win_rate": 0.4911986588432523,
+      "expectancy_r": -0.11617652167658434,
+      "profit_factor": 0.7926451986266422,
+      "max_drawdown_r": 140.5176102283863,
+      "total_r": -138.5985903601651,
+      "trades_per_week": 89.38521574311518,
+      "open_at_data_end": 1,
+      "tp1_hit_rate": 0.4911986588432523,
+      "expectancy_pct_of_price": -0.1980112351509224,
+      "expired_share": 0.004191114836546521,
+      "risk_pct_median": 1.7045722710908369,
+      "risk_pct_p90": 3.3000985486066132,
+      "grade_A_share": 0.020955574182732608,
+      "hold_hours_median": 5.75,
+      "exits": {
+       "stop": 605,
+       "tp1": 0,
+       "break_even": 248,
+       "trail": 163,
+       "tp3": 172,
+       "expired": 5
+      },
+      "stop_beyond_liq_20x": 0.02933780385582565,
+      "liquidated_20x": 0.018440905280804692,
+      "roi_margin_avg_20x": -4.146919292999799,
+      "roi_margin_median_20x": -14.563836621093504,
+      "stop_beyond_liq_25x": 0.08549874266554904,
+      "liquidated_25x": 0.04861693210393965,
+      "roi_margin_avg_25x": -4.880984934140177,
+      "roi_margin_median_25x": -18.20797305447416
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.9615,
+      "expectancy_90ci": [
+       0.008104400178343555,
+       0.3049608302662354
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.0,
+      "expectancy_90ci": [
+       -0.16248962428997812,
+       -0.0675183546512089
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.9995,
+      "share_better_total_r": 1.0
+     }
+    }
+   }
+  },
+  "15m h30": {
+   "test": {
+    "weeks": 3.9583333333333335,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 14,
+     "B": 919,
+     "series": 32
+    },
+    "variants": {
+     "A_only": {
+      "n": 10,
+      "win_rate": 0.5,
+      "expectancy_r": 0.09316334181439859,
+      "profit_factor": 1.2865979099671254,
+      "max_drawdown_r": 1.8840740798946114,
+      "total_r": 0.9316334181439859,
+      "trades_per_week": 2.526315789473684,
+      "open_at_data_end": 0,
+      "tp1_hit_rate": 0.3,
+      "expectancy_pct_of_price": -0.059617904002712906,
+      "expired_share": 0.7,
+      "risk_pct_median": 3.094611292921865,
+      "risk_pct_p90": 3.7230399936612315,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 7.5,
+      "exits": {
+       "stop": 2,
+       "tp1": 0,
+       "break_even": 0,
+       "trail": 1,
+       "tp3": 0,
+       "expired": 7
+      },
+      "stop_beyond_liq_20x": 0.0,
+      "liquidated_20x": 0.0,
+      "roi_margin_avg_20x": -1.1923580800542593,
+      "roi_margin_median_20x": 0.27206630260468145,
+      "stop_beyond_liq_25x": 0.3,
+      "liquidated_25x": 0.0,
+      "roi_margin_avg_25x": -1.4904476000678266,
+      "roi_margin_median_25x": 0.3400828782558518
+     },
+     "A_plus_B": {
+      "n": 373,
+      "win_rate": 0.4691689008042895,
+      "expectancy_r": -0.15950457585949124,
+      "profit_factor": 0.685261200320385,
+      "max_drawdown_r": 64.13142032091113,
+      "total_r": -59.495206795590235,
+      "trades_per_week": 94.23157894736842,
+      "open_at_data_end": 0,
+      "tp1_hit_rate": 0.3753351206434316,
+      "expectancy_pct_of_price": -0.23138568898242184,
+      "expired_share": 0.3672922252010724,
+      "risk_pct_median": 1.4559556796003992,
+      "risk_pct_p90": 2.989485702821309,
+      "grade_A_share": 0.021447721179624665,
+      "hold_hours_median": 4.75,
+      "exits": {
+       "stop": 147,
+       "tp1": 0,
+       "break_even": 43,
+       "trail": 24,
+       "tp3": 22,
+       "expired": 137
+      },
+      "stop_beyond_liq_20x": 0.00804289544235925,
+      "liquidated_20x": 0.0,
+      "roi_margin_avg_20x": -4.627713779648437,
+      "roi_margin_median_20x": -6.59610106936703,
+      "stop_beyond_liq_25x": 0.06970509383378017,
+      "liquidated_25x": 0.02680965147453083,
+      "roi_margin_avg_25x": -6.327011926769756,
+      "roi_margin_median_25x": -8.775125628140836
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.6248746238716149,
+      "expectancy_90ci": [
+       -0.6967275462247878,
+       0.5411165032517224
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.0,
+      "expectancy_90ci": [
+       -0.2221329835139722,
+       -0.09660339567696319
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.7668004012036108,
+      "share_better_total_r": 1.0
+     }
+    }
+   },
+   "all": {
+    "weeks": 13.34672619047619,
+    "calls_by_grade_before_one_at_a_time": {
+     "A": 73,
+     "B": 3567,
+     "series": 32
+    },
+    "variants": {
+     "A_only": {
+      "n": 55,
+      "win_rate": 0.5454545454545454,
+      "expectancy_r": 0.03872168461089258,
+      "profit_factor": 1.1063262428783147,
+      "max_drawdown_r": 8.172808491513774,
+      "total_r": 2.1296926535990917,
+      "trades_per_week": 4.120860742557699,
+      "open_at_data_end": 0,
+      "tp1_hit_rate": 0.4,
+      "expectancy_pct_of_price": 0.043984335088516714,
+      "expired_share": 0.4909090909090909,
+      "risk_pct_median": 2.432015571342506,
+      "risk_pct_p90": 4.919873079724951,
+      "grade_A_share": 1.0,
+      "hold_hours_median": 7.25,
+      "exits": {
+       "stop": 14,
+       "tp1": 0,
+       "break_even": 5,
+       "trail": 8,
+       "tp3": 1,
+       "expired": 27
+      },
+      "stop_beyond_liq_20x": 0.14545454545454545,
+      "liquidated_20x": 0.05454545454545454,
+      "roi_margin_avg_20x": -0.14635188802167995,
+      "roi_margin_median_20x": 1.8737261852016545,
+      "stop_beyond_liq_25x": 0.2727272727272727,
+      "liquidated_25x": 0.07272727272727272,
+      "roi_margin_avg_25x": 1.0366174643689359,
+      "roi_margin_median_25x": 2.342157731502068
+     },
+     "A_plus_B": {
+      "n": 1476,
+      "win_rate": 0.46883468834688347,
+      "expectancy_r": -0.1113937223177773,
+      "profit_factor": 0.7587431224255192,
+      "max_drawdown_r": 167.55676180073652,
+      "total_r": -164.4171341410393,
+      "trades_per_week": 110.58891738209388,
+      "open_at_data_end": 0,
+      "tp1_hit_rate": 0.3617886178861789,
+      "expectancy_pct_of_price": -0.18806218886421203,
+      "expired_share": 0.4037940379403794,
+      "risk_pct_median": 1.6649013843977194,
+      "risk_pct_p90": 3.212668443807619,
+      "grade_A_share": 0.02032520325203252,
+      "hold_hours_median": 5.5,
+      "exits": {
+       "stop": 529,
+       "tp1": 0,
+       "break_even": 158,
+       "trail": 90,
+       "tp3": 103,
+       "expired": 596
+      },
+      "stop_beyond_liq_20x": 0.026422764227642278,
+      "liquidated_20x": 0.008130081300813009,
+      "roi_margin_avg_20x": -3.820913509275118,
+      "roi_margin_median_20x": -4.286440289283708,
+      "stop_beyond_liq_25x": 0.07723577235772358,
+      "liquidated_25x": 0.027777777777777776,
+      "roi_margin_avg_25x": -5.043857834827425,
+      "roi_margin_median_25x": -6.298464610305917
+     },
+     "paused": {
+      "n": 0,
+      "trades_per_week": 0.0,
+      "expectancy_r": 0.0,
+      "total_r": 0.0,
+      "max_drawdown_r": 0.0
+     }
+    },
+    "bootstrap": {
+     "A_only": {
+      "share_expectancy_above_0": 0.743,
+      "expectancy_90ci": [
+       -0.07101868999485159,
+       0.1478795476230022
+      ]
+     },
+     "A_plus_B": {
+      "share_expectancy_above_0": 0.0,
+      "expectancy_90ci": [
+       -0.14438051131714802,
+       -0.07428158152557694
+      ]
+     },
+     "A_only_vs_A_plus_B": {
+      "share_better_expectancy": 0.9875,
+      "share_better_total_r": 1.0
+     }
+    }
+   }
+  }
+ },
+ "series": {
+  "ADA/USDT 3d": {
+   "oos_bars": 480,
+   "test_bars": 114
+  },
+  "BCH/USDT 3d": {
+   "oos_bars": 280,
+   "test_bars": 54
+  },
+  "BNB/USDT 3d": {
+   "oos_bars": 520,
+   "test_bars": 126
+  },
+  "BTC/USDT 3d": {
+   "oos_bars": 560,
+   "test_bars": 138
+  },
+  "DOGE/USDT 3d": {
+   "oos_bars": 320,
+   "test_bars": 66
+  },
+  "ETH/USDT 3d": {
+   "oos_bars": 560,
+   "test_bars": 138
+  },
+  "HBAR/USDT 3d": {
+   "oos_bars": 320,
+   "test_bars": 66
+  },
+  "LINK/USDT 3d": {
+   "oos_bars": 400,
+   "test_bars": 90
+  },
+  "LTC/USDT 3d": {
+   "oos_bars": 520,
+   "test_bars": 126
+  },
+  "TRX/USDT 3d": {
+   "oos_bars": 440,
+   "test_bars": 102
+  },
+  "XLM/USDT 3d": {
+   "oos_bars": 480,
+   "test_bars": 114
+  },
+  "XRP/USDT 3d": {
+   "oos_bars": 480,
+   "test_bars": 114
+  },
+  "ZEC/USDT 3d": {
+   "oos_bars": 360,
+   "test_bars": 78
+  },
+  "AAVE/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "ADA/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "APT/USDT 1d": {
+   "oos_bars": 360,
+   "test_bars": 78
+  },
+  "AVAX/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "BCH/USDT 1d": {
+   "oos_bars": 1440,
+   "test_bars": 402
+  },
+  "BNB/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "BTC/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "DOGE/USDT 1d": {
+   "oos_bars": 1620,
+   "test_bars": 456
+  },
+  "DOT/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "ETH/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "GALA/USDT 1d": {
+   "oos_bars": 810,
+   "test_bars": 213
+  },
+  "HBAR/USDT 1d": {
+   "oos_bars": 1530,
+   "test_bars": 429
+  },
+  "INJ/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "LINK/USDT 1d": {
+   "oos_bars": 1800,
+   "test_bars": 510
+  },
+  "LTC/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "NEAR/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "PAXG/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "SOL/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "TRX/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "UNI/USDT 1d": {
+   "oos_bars": 1170,
+   "test_bars": 321
+  },
+  "XLM/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "XRP/USDT 1d": {
+   "oos_bars": 1980,
+   "test_bars": 564
+  },
+  "ZEC/USDT 1d": {
+   "oos_bars": 1710,
+   "test_bars": 483
+  },
+  "AAVE/USDT 12h": {
+   "oos_bars": 2520,
+   "test_bars": 726
+  },
+  "ADA/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "APT/USDT 12h": {
+   "oos_bars": 1080,
+   "test_bars": 294
+  },
+  "AVAX/USDT 12h": {
+   "oos_bars": 2520,
+   "test_bars": 726
+  },
+  "BCH/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "BNB/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "BTC/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "DOGE/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "DOT/USDT 12h": {
+   "oos_bars": 2520,
+   "test_bars": 726
+  },
+  "ENA/USDT 12h": {
+   "oos_bars": 280,
+   "test_bars": 54
+  },
+  "ETH/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "GALA/USDT 12h": {
+   "oos_bars": 1800,
+   "test_bars": 510
+  },
+  "HBAR/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "INJ/USDT 12h": {
+   "oos_bars": 2520,
+   "test_bars": 726
+  },
+  "LINK/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "LTC/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "NEAR/USDT 12h": {
+   "oos_bars": 2520,
+   "test_bars": 726
+  },
+  "PAXG/USDT 12h": {
+   "oos_bars": 2520,
+   "test_bars": 726
+  },
+  "PEPE/USDT 12h": {
+   "oos_bars": 540,
+   "test_bars": 132
+  },
+  "SOL/USDT 12h": {
+   "oos_bars": 2700,
+   "test_bars": 780
+  },
+  "SUI/USDT 12h": {
+   "oos_bars": 540,
+   "test_bars": 132
+  },
+  "TRX/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "UNI/USDT 12h": {
+   "oos_bars": 2520,
+   "test_bars": 726
+  },
+  "WLD/USDT 12h": {
+   "oos_bars": 540,
+   "test_bars": 132
+  },
+  "XLM/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "XRP/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "ZEC/USDT 12h": {
+   "oos_bars": 3060,
+   "test_bars": 888
+  },
+  "AAVE/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ADA/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "APT/USDT 4h": {
+   "oos_bars": 3240,
+   "test_bars": 942
+  },
+  "AVAX/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BCH/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BIO/USDT 4h": {
+   "oos_bars": 628,
+   "test_bars": 159
+  },
+  "BNB/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BTC/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "DOGE/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "DOT/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ENA/USDT 4h": {
+   "oos_bars": 908,
+   "test_bars": 243
+  },
+  "ERA/USDT 4h": {
+   "oos_bars": 434,
+   "test_bars": 100
+  },
+  "ETH/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "GALA/USDT 4h": {
+   "oos_bars": 5940,
+   "test_bars": 1752
+  },
+  "HBAR/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "INJ/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "LINK/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "LTC/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "NEAR/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "PAXG/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "PEPE/USDT 4h": {
+   "oos_bars": 2160,
+   "test_bars": 618
+  },
+  "SOL/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "SUI/USDT 4h": {
+   "oos_bars": 2160,
+   "test_bars": 618
+  },
+  "TRX/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "UNI/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "WLD/USDT 4h": {
+   "oos_bars": 1620,
+   "test_bars": 456
+  },
+  "XLM/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "XRP/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ZEC/USDT 4h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "AAVE/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ADA/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "APT/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "AVAX/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BCH/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BIO/USDT 1h": {
+   "oos_bars": 5400,
+   "test_bars": 1590
+  },
+  "BNB/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BTC/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "DOGE/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "DOT/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ENA/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ERA/USDT 1h": {
+   "oos_bars": 1836,
+   "test_bars": 521
+  },
+  "ETH/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "GALA/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "GRAM/USDT 1h": {
+   "oos_bars": 436,
+   "test_bars": 101
+  },
+  "HBAR/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "INJ/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "LINK/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "LTC/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "NEAR/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "NVDAB/USDT 1h": {
+   "oos_bars": 532,
+   "test_bars": 130
+  },
+  "PAXG/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "PEPE/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "SOL/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "SUI/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "TRX/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "UNI/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "WLD/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "XAUT/USDT 1h": {
+   "oos_bars": 828,
+   "test_bars": 219
+  },
+  "XLM/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "XRP/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ZEC/USDT 1h": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "AAVE/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ADA/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "APT/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "AVAX/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 2288
+  },
+  "BCH/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BIO/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BNB/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "BTC/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "DOGE/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "DOT/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ENA/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ERA/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 2661
+  },
+  "ETH/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "GALA/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "GRAM/USDT 15m": {
+   "oos_bars": 1828,
+   "test_bars": 519
+  },
+  "HBAR/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "INJ/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "LINK/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "LTC/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "NEAR/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "NVDAB/USDT 15m": {
+   "oos_bars": 2228,
+   "test_bars": 639
+  },
+  "PAXG/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "PEPE/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "SOL/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "SUI/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "TRX/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "UNI/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "WLD/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "XAUT/USDT 15m": {
+   "oos_bars": 3392,
+   "test_bars": 988
+  },
+  "XLM/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "XRP/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  },
+  "ZEC/USDT 15m": {
+   "oos_bars": 6000,
+   "test_bars": 1770
+  }
+ },
+ "skipped": [
+  "AAVE/USDT 3d: no model / too few out-of-sample bars",
+  "APT/USDT 3d: no model / too few out-of-sample bars",
+  "AVAX/USDT 3d: span too short to split",
+  "BIO/USDT 3d: no model / too few out-of-sample bars",
+  "DOT/USDT 3d: span too short to split",
+  "ENA/USDT 3d: no model / too few out-of-sample bars",
+  "ERA/USDT 3d: no model / too few out-of-sample bars",
+  "GALA/USDT 3d: no model / too few out-of-sample bars",
+  "GRAM/USDT 3d: no model / too few out-of-sample bars",
+  "INJ/USDT 3d: no model / too few out-of-sample bars",
+  "NEAR/USDT 3d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 3d: no model / too few out-of-sample bars",
+  "PAXG/USDT 3d: span too short to split",
+  "PEPE/USDT 3d: no model / too few out-of-sample bars",
+  "SOL/USDT 3d: span too short to split",
+  "SUI/USDT 3d: no model / too few out-of-sample bars",
+  "UNI/USDT 3d: span too short to split",
+  "WLD/USDT 3d: no model / too few out-of-sample bars",
+  "XAUT/USDT 3d: no model / too few out-of-sample bars",
+  "BIO/USDT 1d: no model / too few out-of-sample bars",
+  "ENA/USDT 1d: no model / too few out-of-sample bars",
+  "ERA/USDT 1d: no model / too few out-of-sample bars",
+  "GRAM/USDT 1d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 1d: no model / too few out-of-sample bars",
+  "PEPE/USDT 1d: no model / too few out-of-sample bars",
+  "SUI/USDT 1d: no model / too few out-of-sample bars",
+  "WLD/USDT 1d: no model / too few out-of-sample bars",
+  "XAUT/USDT 1d: no model / too few out-of-sample bars",
+  "BIO/USDT 12h: no model / too few out-of-sample bars",
+  "ERA/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 12h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 12h: no model / too few out-of-sample bars",
+  "XAUT/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 4h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 4h: no model / too few out-of-sample bars",
+  "XAUT/USDT 4h: no model / too few out-of-sample bars"
+ ],
+ "entry_choice": {
+  "15m": {
+   "chosen": "market:0.0",
+   "best_early": "market:0.0",
+   "confirmed_late": true
+  },
+  "1h": {
+   "chosen": "old:0.0",
+   "best_early": "confirm:0.0",
+   "confirmed_late": false
+  },
+  "4h": {
+   "chosen": "market:0.0",
+   "best_early": "market:0.0",
+   "confirmed_late": true
+  },
+  "12h": {
+   "chosen": "pullback:0.25",
+   "best_early": "pullback:0.25",
+   "confirmed_late": true
+  },
+  "1d": {
+   "chosen": "old:0.0",
+   "best_early": "confirm:0.25",
+   "confirmed_late": false
+  },
+  "3d": {
+   "chosen": "old:0.0",
+   "best_early": "confirm:0.25",
+   "confirmed_late": false
+  }
+ },
+ "filters": {
+  "3d": {
+   "enabled": false,
+   "reason": "only 282 trades to learn from",
+   "n": 282
+  },
+  "1d": {
+   "enabled": false,
+   "keep_fraction": 0.7,
+   "n": 1158,
+   "exam": {
+    "n": 290,
+    "kept": 163,
+    "avg_r_all": 0.18687064158816286,
+    "avg_r_kept": 0.21566436757911067
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "12h": {
+   "enabled": false,
+   "keep_fraction": 0.8,
+   "n": 2090,
+   "exam": {
+    "n": 523,
+    "kept": 359,
+    "avg_r_all": 0.10282374934664676,
+    "avg_r_kept": 0.09884770605471818
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "4h": {
+   "enabled": false,
+   "keep_fraction": 0.8,
+   "n": 4278,
+   "exam": {
+    "n": 1070,
+    "kept": 854,
+    "avg_r_all": 0.1308262668606972,
+    "avg_r_kept": 0.14772384593843008
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "1h": {
+   "enabled": false,
+   "keep_fraction": 0.8,
+   "n": 3630,
+   "exam": {
+    "n": 908,
+    "kept": 671,
+    "avg_r_all": -0.02242339557260554,
+    "avg_r_kept": -0.07335299579152374
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "15m": {
+   "enabled": false,
+   "keep_fraction": 0.5,
+   "n": 2097,
+   "exam": {
+    "n": 525,
+    "kept": 275,
+    "avg_r_all": -0.21343456375385028,
+    "avg_r_kept": -0.27865815247517034
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  }
+ },
+ "headline_test": {
+  "3d h30": {
+   "A_only": {
+    "n": 2,
+    "trades_per_week": 0.0340632603406326,
+    "win_rate": 0.0,
+    "expectancy_r": -1.0037804771271812,
+    "total_r": -2.0075609542543624,
+    "profit_factor": 0.0,
+    "max_drawdown_r": 2.0075609542543624,
+    "expired_share": 0.0,
+    "open_at_data_end": 3,
+    "boot_share_exp_gt_0": 0.0
+   },
+   "A_plus_B": {
+    "n": 18,
+    "trades_per_week": 0.30656934306569344,
+    "win_rate": 0.4444444444444444,
+    "expectancy_r": -0.1253333254904446,
+    "total_r": -2.2559998588280026,
+    "profit_factor": 0.7609879602759396,
+    "max_drawdown_r": 3.5472635827930725,
+    "expired_share": 0.3888888888888889,
+    "open_at_data_end": 6,
+    "boot_share_exp_gt_0": 0.3015
+   },
+   "A_only_vs_A_plus_B": {
+    "share_better_expectancy": 0.0,
+    "share_better_total_r": 0.5275
+   },
+   "calls": {
+    "A": 6,
+    "B": 75,
+    "series": 13
+   }
+  },
+  "1d h30": {
+   "A_only": {
+    "n": 27,
+    "trades_per_week": 0.33570159857904086,
+    "win_rate": 0.48148148148148145,
+    "expectancy_r": -0.03258465867273043,
+    "total_r": -0.8797857841637217,
+    "profit_factor": 0.917393064223546,
+    "max_drawdown_r": 5.466017706462228,
+    "expired_share": 0.37037037037037035,
+    "open_at_data_end": 1,
+    "boot_share_exp_gt_0": 0.418
+   },
+   "A_plus_B": {
+    "n": 110,
+    "trades_per_week": 1.3676731793960923,
+    "win_rate": 0.4727272727272727,
+    "expectancy_r": -0.05267294330013961,
+    "total_r": -5.794023763015357,
+    "profit_factor": 0.8812514124103404,
+    "max_drawdown_r": 11.257641042543419,
+    "expired_share": 0.35454545454545455,
+    "open_at_data_end": 5,
+    "boot_share_exp_gt_0": 0.2735
+   },
+   "A_only_vs_A_plus_B": {
+    "share_better_expectancy": 0.5285,
+    "share_better_total_r": 0.692
+   },
+   "calls": {
+    "A": 63,
+    "B": 326,
+    "series": 23
+   }
+  },
+  "12h h30": {
+   "A_only": {
+    "n": 36,
+    "trades_per_week": 0.5682074408117249,
+    "win_rate": 0.5277777777777778,
+    "expectancy_r": 0.030173508750227604,
+    "total_r": 1.0862463150081938,
+    "profit_factor": 1.0727382653394182,
+    "max_drawdown_r": 3.5389971775072047,
+    "expired_share": 0.3888888888888889,
+    "open_at_data_end": 3,
+    "boot_share_exp_gt_0": 0.583
+   },
+   "A_plus_B": {
+    "n": 192,
+    "trades_per_week": 3.0304396843292,
+    "win_rate": 0.5,
+    "expectancy_r": -0.012484492663942479,
+    "total_r": -2.397022591476956,
+    "profit_factor": 0.9718703771062319,
+    "max_drawdown_r": 12.360562051413645,
+    "expired_share": 0.375,
+    "open_at_data_end": 5,
+    "boot_share_exp_gt_0": 0.406
+   },
+   "A_only_vs_A_plus_B": {
+    "share_better_expectancy": 0.595,
+    "share_better_total_r": 0.605
+   },
+   "calls": {
+    "A": 119,
+    "B": 747,
+    "series": 27
+   }
+  },
+  "4h h100": {
+   "A_only": {
+    "n": 58,
+    "trades_per_week": 1.3770491803278688,
+    "win_rate": 0.5172413793103449,
+    "expectancy_r": 0.1229350204453294,
+    "total_r": 7.130231185829105,
+    "profit_factor": 1.2607091354293838,
+    "max_drawdown_r": 10.861779989757174,
+    "expired_share": 0.1206896551724138,
+    "open_at_data_end": 2,
+    "boot_share_exp_gt_0": 0.8725
+   },
+   "A_plus_B": {
+    "n": 356,
+    "trades_per_week": 8.452232899943471,
+    "win_rate": 0.550561797752809,
+    "expectancy_r": 0.09151038231606565,
+    "total_r": 32.57769610451937,
+    "profit_factor": 1.2062430197629201,
+    "max_drawdown_r": 29.806128064948012,
+    "expired_share": 0.11797752808988764,
+    "open_at_data_end": 12,
+    "boot_share_exp_gt_0": 0.972
+   },
+   "A_only_vs_A_plus_B": {
+    "share_better_expectancy": 0.6205,
+    "share_better_total_r": 0.0775
+   },
+   "calls": {
+    "A": 189,
+    "B": 2205,
+    "series": 29
+   }
+  },
+  "1h h200": {
+   "A_only": {
+    "n": 32,
+    "trades_per_week": 3.0390050876201244,
+    "win_rate": 0.53125,
+    "expectancy_r": 0.013426518028847118,
+    "total_r": 0.42964857692310776,
+    "profit_factor": 1.0263234995990738,
+    "max_drawdown_r": 6.376542795902613,
+    "expired_share": 0.0,
+    "open_at_data_end": 0,
+    "boot_share_exp_gt_0": 0.5245
+   },
+   "A_plus_B": {
+    "n": 308,
+    "trades_per_week": 29.250423968343696,
+    "win_rate": 0.5097402597402597,
+    "expectancy_r": -0.06341255455873197,
+    "total_r": -19.53106680408945,
+    "profit_factor": 0.8801726874245939,
+    "max_drawdown_r": 26.131159178386486,
+    "expired_share": 0.006493506493506494,
+    "open_at_data_end": 4,
+    "boot_share_exp_gt_0": 0.142
+   },
+   "A_only_vs_A_plus_B": {
+    "share_better_expectancy": 0.7105,
+    "share_better_total_r": 0.883
+   },
+   "calls": {
+    "A": 67,
+    "B": 1233,
+    "series": 32
+   }
+  },
+  "15m h250": {
+   "A_only": {
+    "n": 9,
+    "trades_per_week": 2.2736842105263158,
+    "win_rate": 0.6666666666666666,
+    "expectancy_r": 0.2495991689340319,
+    "total_r": 2.246392520406287,
+    "profit_factor": 1.7173407052766658,
+    "max_drawdown_r": 1.6384276594860954,
+    "expired_share": 0.0,
+    "open_at_data_end": 1,
+    "boot_share_exp_gt_0": 0.7460799190692969
+   },
+   "A_plus_B": {
+    "n": 317,
+    "trades_per_week": 80.08421052631579,
+    "win_rate": 0.48580441640378547,
+    "expectancy_r": -0.1706286465051267,
+    "total_r": -54.08928094212517,
+    "profit_factor": 0.7028824981977649,
+    "max_drawdown_r": 59.52345418125044,
+    "expired_share": 0.0031545741324921135,
+    "open_at_data_end": 1,
+    "boot_share_exp_gt_0": 0.0045
+   },
+   "A_only_vs_A_plus_B": {
+    "share_better_expectancy": 0.8598887202832575,
+    "share_better_total_r": 0.999
+   },
+   "calls": {
+    "A": 14,
+    "B": 919,
+    "series": 32
+   }
+  },
+  "15m h30": {
+   "A_only": {
+    "n": 10,
+    "trades_per_week": 2.526315789473684,
+    "win_rate": 0.5,
+    "expectancy_r": 0.09316334181439859,
+    "total_r": 0.9316334181439859,
+    "profit_factor": 1.2865979099671254,
+    "max_drawdown_r": 1.8840740798946114,
+    "expired_share": 0.7,
+    "open_at_data_end": 0,
+    "boot_share_exp_gt_0": 0.6248746238716149
+   },
+   "A_plus_B": {
+    "n": 373,
+    "trades_per_week": 94.23157894736842,
+    "win_rate": 0.4691689008042895,
+    "expectancy_r": -0.15950457585949124,
+    "total_r": -59.495206795590235,
+    "profit_factor": 0.685261200320385,
+    "max_drawdown_r": 64.13142032091113,
+    "expired_share": 0.3672922252010724,
+    "open_at_data_end": 0,
+    "boot_share_exp_gt_0": 0.0
+   },
+   "A_only_vs_A_plus_B": {
+    "share_better_expectancy": 0.7668004012036108,
+    "share_better_total_r": 1.0
+   },
+   "calls": {
+    "A": 14,
+    "B": 919,
+    "series": 32
+   }
+  }
+ },
+ "engine_version": "2.6.0",
+ "cost_pct_round_trip": 0.15,
+ "tune_share": 0.7,
+ "symbols": [
+  "AAVE/USDT",
+  "ADA/USDT",
+  "APT/USDT",
+  "AVAX/USDT",
+  "BCH/USDT",
+  "BIO/USDT",
+  "BNB/USDT",
+  "BTC/USDT",
+  "DOGE/USDT",
+  "DOT/USDT",
+  "ENA/USDT",
+  "ERA/USDT",
+  "ETH/USDT",
+  "GALA/USDT",
+  "GRAM/USDT",
+  "HBAR/USDT",
+  "INJ/USDT",
+  "LINK/USDT",
+  "LTC/USDT",
+  "NEAR/USDT",
+  "NVDAB/USDT",
+  "PAXG/USDT",
+  "PEPE/USDT",
+  "SOL/USDT",
+  "SUI/USDT",
+  "TRX/USDT",
+  "UNI/USDT",
+  "WLD/USDT",
+  "XAUT/USDT",
+  "XLM/USDT",
+  "XRP/USDT",
+  "ZEC/USDT"
+ ],
+ "settings": {
+  "entry_rules": true,
+  "trade_filter2": true,
+  "min_dir_confidence_a": 0.53,
+  "min_dir_confidence_b": 0.505
+ },
+ "seconds": 87.2,
+ "method": "Owner question: instead of pausing 1d and 3d, open them for grade A only? For every timeframe (15m for reference, 1h,\n4h, 12h, 1d, 3d) the models' walk-forward OUT-OF-SAMPLE calls are replayed through the live decision rules\n(series_policy.decide - the live grading: A = technical tilt firm, the AI's side agreeing, margin clearing the proven\npolicy margin and directional confidence >= MIN_DIR_CONFIDENCE_A; B = AI-led / weaker; one higher timeframe against ->\nA becomes B; per-member model agreement is not stored out-of-sample and is treated as passed), with the live entry rule\nand trade filter per timeframe (chosen / trained on the tuning part), the record's exits (50 / 25 / 25 at 1R / 1.75R /\n2.5R, break-even after TP1, TP1 after TP2), the live time limits (1h 200, 4h 100, others 30 candles; 15m also at its\ndemo-bot 250), RESEARCH_COST_PCT round-trip costs, one call at a time per series plus the re-entry cooldown.\n\"Paused\" = no trades (0 R). Headline: the untouched last 30 % of each series (same split as research_engine); all-data\nnumbers too (partly in-sample: the A threshold's confidence is measured on the tuning part). Confidence: per-series\nbootstrap, share of resamples with expectancy > 0 and share where A-only beats A + B (expectancy and total R).",
+ "approximations": [
+  "grading = series_policy.decide replay of the live logic; per-member model agreement treated as passed, no order book; directional confidence measured against the tuning part",
+  "TP2 / TP3 on the fixed ladder 1.75R / 2.5R (live picks them from history)",
+  "entry rule and trade filter chosen / trained with the 30-candle current rules on the tuning part",
+  "plan base-rate check and safety switch not replayed"
+ ],
+ "commit": "43df4397959312cd7a1a806a68a48f01c32da031",
+ "cache_key": "engine-state-41182077807-1-2"
+}
