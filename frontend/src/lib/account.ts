@@ -140,3 +140,11 @@ export function useAccountRecord(uid: string | null | undefined): any | null | u
   }, [uid]);
   return r;
 }
+
+/* ---------------------------------------------------------------- the one-time username prompt */
+// Shown only to accounts created on this device (watchRole marks them) and only until answered ("Later" or saved).
+// Existing members are never stopped by it; they choose a username when they first post in Community.
+const askKey = (uid: string) => `ask-username-${uid}`;
+export function markNewAccount(uid: string) { try { localStorage.setItem(askKey(uid), "1"); } catch { /* ignore */ } }
+export function shouldAskUsername(uid: string): boolean { try { return localStorage.getItem(askKey(uid)) === "1"; } catch { return false; } }
+export function answeredUsername(uid: string) { try { localStorage.removeItem(askKey(uid)); } catch { /* ignore */ } }

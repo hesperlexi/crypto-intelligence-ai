@@ -154,7 +154,8 @@ Achievements, Health, Users.
 - Sign-in: Google or email + password (`lib/account.ts`, `components/AuthPanel.tsx`: sign in / create / forgot, "Check your
   inbox" with 60 s client resend limit). Unverified email accounts never reach Firestore (rules need `email_verified`).
   Needs the **Email/Password provider enabled in the Firebase console**. `users/{uid}.provider` = google | password.
-- Usernames: chosen once after sign-in (`UsernameScreen`), `usernames/{name}` = {uid, created_at} + `users/{uid}.username`
+- Usernames: optional; offered once to new accounts (`UsernameScreen`, "Later" skips, localStorage `ask-username-<uid>`), required
+  only to post (Community composer shows `UsernameForm`). Existing members are never blocked. `usernames/{name}` = {uid, created_at} + `users/{uid}.username`
   in one batch (owner: `owner/profile.username`); reserved list kept in step between `account.ts` and the rules.
 - Community `pages/Community.tsx`: `posts/{id}` {author_uid, username, text 1-500, created_at, admin?}, 20 per page; rules pace
   posts with `post_meta/{uid}.last` (≥30 s). Trade page: stable newest-first order (`format.byNewest`), memoized rows,

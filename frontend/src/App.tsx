@@ -23,7 +23,7 @@ import { TickerTape } from "./components/Polish";
 import TelegramLink from "./components/TelegramLink";
 import { fmtDate, useMyRecord } from "./lib/membership";
 import { startPresence } from "./lib/presence";
-import { needsVerification, useMyUsername } from "./lib/account";
+import { answeredUsername, needsVerification, shouldAskUsername, useMyUsername } from "./lib/account";
 import { UsernameScreen, VerifyEmailScreen } from "./components/AuthPanel";
 
 // pages load on first visit (smaller first download); the busiest ones are fetched in the background after start.
@@ -136,9 +136,9 @@ export default function App() {
   if (user && unverified) return <VerifyEmailScreen user={user} onVerified={() => setVerified((n) => n + 1)} />;
   if (user === undefined || (user && role === "loading")) return <BootLoader />;
   if (!user) return <ErrorBoundary resetKey={loc.pathname}><Suspense fallback={<BootLoader />}><Landing error={null} /></Suspense></ErrorBoundary>;
-  // every account picks a username once (shown on Community posts), whatever the sign-in method
-  if (role !== "blocked" && username === undefined) return <BootLoader />;
-  if (role !== "blocked" && username === null) return <UsernameScreen user={user} admin={role === "admin"} />;
+  // new accounts are offered a username once (skippable); nobody is blocked: it is only required to post in Community
+  if (role !== "blocked" && username === null && shouldAskUsername(user.uid))
+    return <UsernameScreen user={user} admin={role === "admin"} onDone={() => { answeredUsername(user.uid); setVerified((n) => n + 1); }} />;
   const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role, username: username ?? "" };
   setSession(session);
   if (role === "pending" || role === "expired" || role === "blocked") return <AccessScreen user={user} role={role} />;

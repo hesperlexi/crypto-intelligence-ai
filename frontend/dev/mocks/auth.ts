@@ -1,5 +1,6 @@
 // DEV PREVIEW ONLY. Stand-in for "firebase/auth". The preview role comes from ?preview=<role> (kept per tab):
-//   admin | member | pending | signedout | unverified (new email account, inbox screen) | nousername (picker)
+//   admin | member | pending | signedout | unverified (new email account, inbox screen) | nousername (new account: picker)
+//   | oldmember (approved member from before usernames: app opens, Community asks for a name)
 // Email sign-up / sign-in in the preview never checks a password: it just switches the preview role.
 export type User = { uid: string; email: string | null; displayName: string | null; photoURL: string | null; emailVerified: boolean;
   providerData: { providerId: string }[]; getIdToken: (force?: boolean) => Promise<string> };
@@ -16,6 +17,7 @@ function current(): User | null {
     pending: mk("u_new", "new.person@example.com", "New Person", "password"),
     unverified: mk("u_email", "alex@example.com", null, "password", sessionStorage.getItem("preview-verified") === "1"),
     nousername: mk("u_nouser", "jordan@example.com", "Jordan Lee", "password"),
+    oldmember: mk("u_old", "early.member@example.com", "Early Member", "google.com"),
   };
   return who[as] ?? who.admin;
 }

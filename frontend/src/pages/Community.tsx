@@ -4,6 +4,8 @@
 import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, orderBy, query, startAfter, writeBatch } from "firebase/firestore";
 import { FormEvent, memo, useEffect, useMemo, useState } from "react";
 import { Empty } from "../components/ui";
+import { UsernameForm } from "../components/AuthPanel";
+import { auth } from "../lib/firebase";
 import { db } from "../lib/firebase";
 import { ago, fmtTime } from "../lib/format";
 import { useSession } from "../lib/session";
@@ -132,7 +134,13 @@ export default function Community() {
         <h1 className="page-title">Community</h1>
         <p className="page-sub">Talk with other members. Be kind, no spam, no promotions. Nothing here is financial advice.</p>
       </div>
-      {s && s.username ? <Composer uid={s.uid} username={s.username} admin={admin} /> : null}
+      {s && s.username ? <Composer uid={s.uid} username={s.username} admin={admin} />
+        : s && auth.currentUser ? (
+          <div className="panel p-3 sm:p-4">
+            <p className="mb-3 text-sm"><span className="font-semibold">Choose a username to post.</span> <span className="text-mute">Other members see it next to your posts; it can't be changed later.</span></p>
+            <UsernameForm user={auth.currentUser} admin={admin} compact />
+          </div>
+        ) : null}
       {feed.err && <p className="rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">Could not load posts. Please try again later.</p>}
       {!feed.loaded && !feed.err ? (
         <ul className="space-y-3" aria-busy="true">{[0, 1, 2].map((i) => <li key={i} className="skeleton h-24 rounded-2xl" />)}</ul>

@@ -175,14 +175,15 @@ export function VerifyEmailScreen({ user, onVerified }: { user: User; onVerified
   );
 }
 
-/** One-time username picker (any sign-in method, once the email is confirmed). */
-export function UsernameScreen({ user, admin }: { user: User; admin: boolean }) {
+/** Username field + save button with live "taken" check (used by the one-time screen and the Community composer). */
+export function UsernameForm({ user, admin, onSaved, compact = false }: { user: User; admin: boolean; onSaved?: (n: string) => void; compact?: boolean }) {
   const [name, setName] = useState(() => (user.displayName ?? user.email?.split("@")[0] ?? "").toLowerCase().replace(/[^a-z0-9_]/g, "").slice(0, 20));
   const [state, setState] = useState<null | "checking" | "free" | "taken">(null);
   const [err, setErr] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const n = name.trim().toLowerCase();
   const problem = n ? usernameProblem(n, admin) : null;
+  const hid = useId();
   useEffect(() => {
     setState(null);
     if (!n || problem) return;
@@ -193,27 +194,38 @@ export function UsernameScreen({ user, admin }: { user: User; admin: boolean }) 
   const save = async (e: FormEvent) => {
     e.preventDefault();
     setErr(null); setBusy(true);
-    try { await claimUsername(user, n, { admin }); } catch (e2) { setErr((e2 as Error).message); }
+    try { const saved = await claimUsername(user, n, { admin }); onSaved?.(saved); } catch (e2) { setErr((e2 as Error).message); }
     setBusy(false);
   };
   return (
-    <CenterCard>
-      <h1 className="text-xl font-semibold tracking-tight">Choose your username</h1>
-      <p className="mt-2 text-sm text-mute">Other members see it next to your posts in Community. It can't be changed later, and your email stays private.</p>
-      <form className="mt-5 text-left" onSubmit={save} noValidate>
-        <label className="block text-xs text-mute">Username
-          <div className="mt-1 flex items-center rounded-lg border border-glass/[0.14] bg-ink/50 focus-within:border-accent/70 focus-within:shadow-[0_0_0_3px_rgb(var(--accent)/0.15)]">
+    <form className="text-left" onSubmit={save} noValidate>
+      <label className="block text-xs text-mute">Username
+        <div className={`mt-1 flex items-center gap-2 ${compact ? "" : "flex-col items-stretch"}`}>
+          <div className="flex min-w-0 flex-1 items-center rounded-lg border border-glass/[0.14] bg-ink/50 focus-within:border-accent/70 focus-within:shadow-[0_0_0_3px_rgb(var(--accent)/0.15)]">
             <span className="pl-3 text-mute">@</span>
             <input className="min-w-0 flex-1 bg-transparent px-1.5 py-2.5 text-sm text-text outline-none focus-visible:outline-none" value={name} maxLength={20} autoCapitalize="none" autoCorrect="off" spellCheck={false}
-              onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s/g, "_"))} aria-describedby="uname-help" aria-invalid={!!problem || state === "taken"} />
+              onChange={(e) => setName(e.target.value.toLowerCase().replace(/\s/g, "_"))} aria-describedby={hid} aria-invalid={!!problem || state === "taken"} />
           </div>
-        </label>
-        <p id="uname-help" className={`mt-1.5 text-xs ${problem || state === "taken" ? "text-warn" : state === "free" ? "text-bull" : "text-mute"}`} aria-live="polite">
-          {problem ?? (state === "taken" ? "That username is taken." : state === "free" ? "Available." : state === "checking" ? "Checking…" : "3-20 characters: letters a-z, numbers and _.")}
-        </p>
-        {err && <p role="alert" className="mt-2 rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">{err}</p>}
-        <button type="submit" className="btn btn-primary mt-4 w-full py-2.5" disabled={busy || !n || !!problem || state === "taken" || state === "checking"}>{busy ? "Saving…" : "Save username"}</button>
-      </form>
+          {compact && <button type="submit" className="btn btn-primary shrink-0 px-4 py-2 text-sm" disabled={busy || !n || !!problem || state === "taken" || state === "checking"}>{busy ? "Saving…" : "Save"}</button>}
+        </div>
+      </label>
+      <p id={hid} className={`mt-1.5 text-xs ${problem || state === "taken" ? "text-warn" : state === "free" ? "text-bull" : "text-mute"}`} aria-live="polite">
+        {problem ?? (state === "taken" ? "That username is taken." : state === "free" ? "Available." : state === "checking" ? "Checking…" : "3-20 characters: letters a-z, numbers and _.")}
+      </p>
+      {err && <p role="alert" className="mt-2 rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">{err}</p>}
+      {!compact && <button type="submit" className="btn btn-primary mt-4 w-full py-2.5" disabled={busy || !n || !!problem || state === "taken" || state === "checking"}>{busy ? "Saving…" : "Save username"}</button>}
+    </form>
+  );
+}
+
+/** Username picker shown once to new accounts. Optional: "Later" opens the app; a username is only needed to post in Community. */
+export function UsernameScreen({ user, admin, onDone }: { user: User; admin: boolean; onDone: () => void }) {
+  return (
+    <CenterCard>
+      <h1 className="text-xl font-semibold tracking-tight">Choose your username</h1>
+      <p className="mt-2 text-sm text-mute">Other members see it next to your posts in Community. It can't be changed later, and your email stays private. You can also do this later: it's only needed to post.</p>
+      <div className="mt-5"><UsernameForm user={user} admin={admin} onSaved={onDone} /></div>
+      <button className="btn mt-2 w-full" onClick={onDone}>Later</button>
       <p className="mt-4 text-xs text-mute">Signed in as <span className="text-text [overflow-wrap:anywhere]">{user.email}</span> · <button className="text-accent hover:underline" onClick={() => signOut(auth)}>Sign out</button></p>
     </CenterCard>
   );

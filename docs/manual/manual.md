@@ -15,7 +15,7 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 Your password goes only to the sign-in service (Google Firebase); the app never sees or stores it.
 
-**Choose a username.** The first time you sign in (with Google or email, once your email is confirmed) you pick a **username**: 3 to 20 characters, using letters a-z, numbers and _. It must be unique, some names are reserved (such as admin or support), and it **can't be changed later**. Other members see it next to your posts in Community; your email stays private.
+**Choose a username.** New accounts are offered a **username** after the first sign-in (press **Later** to skip; you only need one to post in Community, which asks for it): 3 to 20 characters, using letters a-z, numbers and _. It must be unique, some names are reserved (such as admin or support), and it **can't be changed later**. Other members see it next to your posts in Community; your email stays private.
 
 **Install it** so it opens like a normal app and can send notifications:
 
@@ -23,7 +23,7 @@ Your password goes only to the sign-in service (Google Firebase); the app never 
 2. **Android or desktop, from Chrome:** open the site, then menu → **Install app** (or **Add to Home screen**).
 3. **iPhone or iPad:** open the site in **Safari**, tap **Share → Add to Home Screen**, and always open it from that icon. On iOS, notifications only work this way.
 
-**Access.** After signing in (and choosing a username), new accounts see the membership screen: choose a plan, pay, and send the proof (section 2). The app opens by itself as soon as the owner approves your payment.
+**Access.** After signing in, new accounts see the membership screen: choose a plan, pay, and send the proof (section 2). The app opens by itself as soon as the owner approves your payment.
 
 **What you get.** Every prediction and trade signal (spot and futures), Accuracy and the demo bots, backtests and replays, your own practice accounts, alerts and phone notifications, and up to 5 coins of your own.
 
@@ -196,7 +196,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 Open **Community** (on phones under **More**). It is a shared wall where members post short messages, newest first.
 
 - **Write a post:** type in the box at the top and press **Post**. Text only, up to **500 characters**; no pictures. Web addresses are shown as plain text (not clickable), so copy them if you want to open one. You can post once every **30 seconds**.
-- **Your name:** posts show your **username** and how long ago they were posted. Posts by the app owner have an **ADMIN** badge.
+- **Your name:** the first time you post, Community asks you to choose a username. Posts show your **username** and how long ago they were posted. Posts by the app owner have an **ADMIN** badge.
 - **Delete:** you can delete your own posts with **Delete** (posts cannot be edited). The owner can remove any post that breaks the rules.
 - **Older posts:** the newest 20 are shown; press **Show older posts** for more.
 - **Be kind:** no spam, no promotions and no sharing of personal details. Nothing posted in Community is financial advice, and other members can be wrong.
