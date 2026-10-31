@@ -34,7 +34,16 @@ COST_MULT = 3.0
 ONE_CALL_TFS = ("15m",)
 # timeframes whose trade calls are paused (owner decision 30 Oct 2026: 15m lost money on unseen data, -0.17R per trade);
 # the analysis, chart and forecast still run, only no trade call is issued. Env PAUSED_TFS, comma separated ("" = none).
-PAUSED_TFS = tuple(t.strip() for t in os.environ.get("PAUSED_TFS", "15m").split(",") if t.strip())      # no opposite call while a call on the same coin/timeframe is still open
+# v2.8 (owner decision 31 Oct 2026, from the time-limit / timeframe study `research_horizon.py`): 1d and 3d paused
+# (they lost after costs on unseen calls); 1h grade A only; 15m demo bots only (grade A, never on the public list)
+def _tfs(name: str, default: str) -> tuple[str, ...]:
+    return tuple(t.strip() for t in os.environ.get(name, default).split(",") if t.strip())
+
+
+PAUSED_TFS = _tfs("PAUSED_TFS", "1d,3d")
+A_ONLY_TFS = _tfs("A_ONLY_TFS", "1h")
+# demo-only timeframes: the public decision is NO TRADE ("DEMO BOTS ONLY"); the call the demo bots may take is in `demo`
+DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "15m")
 
 
 def round_trip_cost(futures: bool = True) -> float:
@@ -365,6 +374,10 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         why = (f"{timeframe.upper()} trade calls are paused: on past calls they lost money after costs. "
                "The chart and forecast stay available")
         flags.append("TIMEFRAME PAUSED")
+    if decision in TRADE_DECISIONS and timeframe in A_ONLY_TFS and grade != "A" and live and bundle is None and as_of is None:
+        decision, grade = "NO TRADE", None
+        why = f"{timeframe.upper()} trade calls are grade A only; this setup is grade B"
+        flags.append("GRADE A ONLY")
 
     # one call at a time on quick timeframes (v2.3): while a 15m call on this coin is still running, an opposite 15m
     # call is not issued (the 15m view can swing within the hour; flip-flopping cut winners and entered losers)
@@ -430,6 +443,13 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         flags.append("STALE DATA")
         if decision != "INSUFFICIENT DATA":
             decision, why, grade = "NO TRADE", "market data is stale", None
+    demo = None
+    if decision in TRADE_DECISIONS and timeframe in DEMO_ONLY_TFS and live and bundle is None and as_of is None:
+        # v2.8: the demo bots may take it (their own grade rule applies); it is never published or recorded as a signal
+        demo = {"decision": decision, "grade": grade}
+        decision, grade = "NO TRADE", None
+        why = f"{timeframe.upper()} calls go to the demo bots only while they are tested"
+        flags.append("DEMO BOTS ONLY")
     if decision == "NO TRADE":
         flags.append("NO TRADE")
 
@@ -450,7 +470,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         "stale": stale,
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
         "safety": safety_state,
-        "grade": grade, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
+        "grade": grade, "demo": demo, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
         "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"), "filter2": filter2,
         "series_policy": spol if (spol.get("blocked") or spol.get("conf_b") is not None) else None,
         "confidence": confidence, "confidence_detail": conf_detail,

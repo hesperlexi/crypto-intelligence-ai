@@ -152,6 +152,15 @@ def performance_windows(db: Database, bundle: dict[str, Any], recent_days: int =
 #   * every trade-management step is written to the `decisions` table.
 
 TRADE_DECISIONS = ("BUY", "BUY ON PULLBACK", "SELL")
+# v2.8 (owner decision 31 Oct 2026, study research_horizon.py): how many candles of its own timeframe a call is followed
+# before it closes at the market price ("time limit"). Stored on each call at publication, so a change never alters
+# the rule of a call already running; calls without it keep 30.
+DEFAULT_HORIZON = 30
+HORIZON_BARS = {"15m": 250, "1h": 200, "4h": 100}
+
+
+def horizon_for(tf: str) -> int:
+    return int(HORIZON_BARS.get(tf, DEFAULT_HORIZON))
 CLOSED_STATUSES = ("STOPPED", "TP1", "TP2", "TP3", "EXPIRED")     # count in statistics (with a return)
 NO_RESULT_STATUSES = ("NOT_FILLED", "VOID")                       # listed, never counted
 UNSTABLE_REGIMES = ("HIGH-VOLATILITY / UNSTABLE",)
@@ -407,6 +416,7 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
     if tradable:
         from ..engine.futures import signal_leverage
         payload.update({"manage": manage_params(db), "live_price": a.get("price"),
+                        "horizon_bars": horizon_for(a["timeframe"]),
                         "leverage": signal_leverage(pl["entry"], pl["stop"]),
                         "decision_basis": a.get("decision_basis"),
                         "ai_inputs": {"confidence": a.get("confidence"), "regime": (a.get("regime") or {}).get("regime"),
@@ -484,7 +494,8 @@ def log_shadow(db: Database, a: dict[str, Any], decision: str, setup: dict[str, 
         (new_id(), now, a["symbol"], a["timeframe"], a["bar_ts"], (a.get("signal") or {}).get("signal", ""), decision,
          (a.get("signal") or {}).get("score"), a.get("confidence"), (a.get("regime") or {}).get("regime"), a["price"],
          pl["side"], pl["entry"], pl["stop"], *pl["tps"], pl["rr"], fc.get("model_version"),
-         dumps({"shadow": True, "runner": setup.get("runner"), "manage": manage_params(db)}),
+         dumps({"shadow": True, "runner": setup.get("runner"), "manage": manage_params(db),
+                "horizon_bars": horizon_for(a["timeframe"])}),
          pl["fill_status"], now if pl["fill_status"] == "FILLED" else None, pl["atr"], app_v, eng_v))
     return n > 0
 
@@ -507,9 +518,10 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
 
     step = _bar_ms(s["timeframe"])
     created = int(s["created_at"])
+    pay = loads(s.get("payload"), {}) or {}
+    horizon_bars = int(pay.get("horizon_bars") or horizon_bars)     # v2.8: the call's own time limit
     end = created + step * horizon_bars
     path_ms = tf_ms(PATH_TF)
-    pay = loads(s.get("payload"), {}) or {}
     # each call keeps the management rules it was published with (rows from before v2.5: standard rules)
     p = pay.get("manage") or {"managed": False}
     # A1: only candles that open at/after publication (the forming candle at publication is never used)

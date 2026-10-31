@@ -146,7 +146,7 @@ def test_reentry_cooldown_and_cap():
 
 def test_a7_wall_clock_expiry_and_void():
     created = BAR + H1
-    end = created + 30 * H1
+    end = created + T.horizon_for("1h") * H1      # v2.8: 1h calls run 200 candles
     rt = RT(_df([[created, 100, 100.5, 99.5, 100.4]]))          # data stops after the first candle
     T.log_signal(rt.db, _a(), now=created)
     T.update_signal_outcomes(rt, now=created + 5 * H1)

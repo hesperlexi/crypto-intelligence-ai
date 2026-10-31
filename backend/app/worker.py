@@ -163,6 +163,13 @@ def clear_all_practice(sink: BaseSink) -> dict[str, Any]:
     return out
 
 
+def _off_bot(b: dict[str, Any]) -> bool:
+    """A bot on a paused timeframe, or a public-signal bot on a demo-only timeframe (v2.6 / v2.8)."""
+    from .services.analysis import DEMO_ONLY_TFS, PAUSED_TFS
+    tf = b.get("timeframe")
+    return tf in PAUSED_TFS or (tf in DEMO_ONLY_TFS and not b.get("demo_only"))
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
@@ -348,14 +355,38 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     # v2.6 (owner decision, 30 Oct 2026): 15m trade calls are paused (analysis.PAUSED_TFS), so the 15m demo bots are
     # removed once; their ids stay in defaults_added, so they are not added back automatically
     if not rt.db.get_setting("pause_15m_v26", False):
-        from .services.analysis import PAUSED_TFS
         doc = sink.get("config/bots") or {}
         if isinstance(doc.get("bots"), list):
-            keep = [b for b in doc["bots"] if b.get("timeframe") not in PAUSED_TFS]
+            keep = [b for b in doc["bots"] if not _off_bot(b)]
             if len(keep) != len(doc["bots"]):
                 sink.set("config/bots", {**doc, "bots": keep, "updated_at": now_ms()})
                 notes["pause_15m_bots_removed"] = len(doc["bots"]) - len(keep)
         rt.db.set_setting("pause_15m_v26", True)
+    # v2.8 timeframe policy (owner decision, 31 Oct 2026): 1d / 3d paused -> their bots go; 1h grade A only and held
+    # up to 200 candles, 4h up to 100 (as the record); 15m comes back as one demo-only bot (grade A, TP1, 20x)
+    if not rt.db.get_setting("tf_policy_v28", False):
+        from .services.analysis import A_ONLY_TFS, DEMO_ONLY_TFS
+        from .services.bots import _HOLD, DEMO_15M
+        doc = sink.get("config/bots") or {}
+        if isinstance(doc.get("bots"), list):
+            out = []
+            for b in doc["bots"]:
+                tf = b.get("timeframe")
+                if _off_bot(b):
+                    continue
+                if b.get("mode") == "decision" and tf in ("1h", "4h"):
+                    b = {**b, "max_hold_bars": _HOLD[tf]}
+                if b.get("mode") == "decision" and tf in A_ONLY_TFS:
+                    b = {**b, "grades": "A", "name": str(b.get("name") or "").replace("grades A+B", "grade A")}
+                out.append(b)
+            added = []
+            if "15m" in DEMO_ONLY_TFS and not any(b.get("id") == DEMO_15M["id"] for b in out):
+                out.append(dict(DEMO_15M))
+                added.append(DEMO_15M["id"])
+            seen = sorted(set(doc.get("defaults_added") or []) | {DEMO_15M["id"]})
+            sink.set("config/bots", {**doc, "bots": out, "defaults_added": seen, "updated_at": now_ms()})
+            notes["tf_policy_v28"] = {"removed": len(doc["bots"]) - (len(out) - len(added)), "added": added}
+        rt.db.set_setting("tf_policy_v28", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())
@@ -372,9 +403,8 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         bots_cfg = doc["bots"]
         # one-time additions: default bots introduced in a later version are added once (deleting them later sticks)
         seen = set(doc.get("defaults_added") or [b.get("id") for b in bots_cfg])
-        from .services.analysis import PAUSED_TFS
         new = [b for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}
-               and b.get("timeframe") not in PAUSED_TFS]
+               and not _off_bot(b)]
         if new or not doc.get("defaults_added"):
             bots_cfg = bots_cfg + new
             sink.set("config/bots", {**doc, "bots": bots_cfg, "updated_at": now_ms(),

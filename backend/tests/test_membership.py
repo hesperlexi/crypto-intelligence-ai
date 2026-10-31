@@ -246,4 +246,4 @@ def test_paused_15m_removes_its_bots_once(tmp_path):
                              "defaults_added": ["a", "b"] + [d["id"] for d in worker.DEFAULT_BOTS]})
     notes = worker.sync_config(rt, sink)
     assert notes.get("pause_15m_bots_removed") == 1
-    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["b"]
+    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["b", "futures-demo-a-15m"]      # v2.8: the 15m demo-only bot

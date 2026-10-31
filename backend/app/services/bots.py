@@ -50,7 +50,22 @@ MAX_EQUITY_POINTS = 3000
 _FUT = {"market": "futures", "safe_leverage": True}
 # v2.3 fresh start: 5 spot + 5 futures bots, each trading exactly what the Signals page shows (grades A and B) on one
 # timeframe. The futures 1H / 4H bots keep the scorecard ids. reset_token "v23" restarts every bot with a clean book.
-_HOLD = {"15m": 48, "1h": 48, "4h": 42, "12h": 30, "1d": 30}
+_HOLD = {"15m": 48, "1h": 200, "4h": 100, "12h": 30, "1d": 30}     # v2.8: 1h 200, 4h 100 (as the record)
+
+
+def demo_view(a: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
+    """v2.8: a demo-only bot sees the call held back from the public list (analysis `demo`), others the public one."""
+    d = a.get("demo") if cfg.get("demo_only") else None
+    return {**a, "decision": d["decision"], "grade": d["grade"]} if d else a
+
+
+# v2.8 (owner decision 31 Oct 2026): 15m runs in this demo bot only - grade A, up to 20x (safe leverage per trade),
+# the whole position closes at TP1, held up to 250 candles; never on the public signal list or record
+DEMO_15M = {"id": "futures-demo-a-15m", "name": "Futures demo bot 15M · grade A · TP1", "enabled": True,
+            "mode": "decision", "timeframe": "15m", "symbols": "all", "starting_balance": 10_000.0,
+            "risk_per_trade_pct": 1.0, "max_position_pct": 20.0, "max_open_positions": 6, "allow_short": True,
+            "pending_bars": 6, "max_hold_bars": 250, "reset_token": "v28", "grades": "A", "demo_only": True,
+            "tp1_only": True, "leverage": 20.0, **_FUT}
 
 
 def _sig_bot(tf: str, futures: bool) -> dict[str, Any]:
@@ -80,7 +95,8 @@ FIELDS = {"name": str, "enabled": bool, "mode": str, "timeframe": str, "symbols"
           "starting_balance": float, "risk_per_trade_pct": float, "max_position_pct": float,
           "max_open_positions": int, "allow_short": bool, "pending_bars": int, "max_hold_bars": int,
           "position_pct": float, "min_probability": float, "reset_token": str, "market": str, "leverage": float,
-          "safe_leverage": bool, "confident_only": bool, "grades": str, "edge_sizing": bool, "max_same_side": int}
+          "safe_leverage": bool, "confident_only": bool, "grades": str, "edge_sizing": bool, "max_same_side": int,
+          "demo_only": bool, "tp1_only": bool}
 
 
 def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
@@ -567,7 +583,7 @@ class BotEngine:
         for s in syms:
             if s in busy or len(state["positions"]) + len(state["pending"]) >= cfg["max_open_positions"]:
                 continue
-            a = analysis.analyze(self.rt, s, cfg["timeframe"], detail=False)
+            a = demo_view(analysis.analyze(self.rt, s, cfg["timeframe"], detail=False), cfg)
             if a.get("status") != "OK" or a.get("decision") not in analysis.TRADE_DECISIONS:
                 continue
             if a.get("grade") and a["grade"] not in str(cfg.get("grades") or "A"):
@@ -586,6 +602,8 @@ class BotEngine:
             if px is None:
                 continue
             stop, targets = float(setup["stop"]), [float(t["price"]) for t in setup["targets"]]
+            if cfg.get("tp1_only"):
+                targets = targets[:1]                 # v2.8 15m demo: the whole position closes at TP1
             # the plan must still make sense at the price the bot can actually get
             if side * (px - stop) <= 0 or side * (targets[0] - px) <= 0:
                 continue
@@ -599,7 +617,7 @@ class BotEngine:
                     "edge_confirmed": fc.get("edge_confirmed"), "rr": setup.get("risk_reward"),
                     "bar_ts": a["bar_ts"], "timeframe": cfg["timeframe"], "atr": setup.get("atr")}
             run = setup.get("runner") or {}
-            if run.get("on") and run.get("target"):
+            if run.get("on") and run.get("target") and not cfg.get("tp1_only"):
                 info["run_target"] = float(run["target"])         # v2.3: AI let-it-run exit for this trade
             eq = self.equity(state)
             entry = float(setup["ideal_entry"]) if a["decision"] == "BUY ON PULLBACK" else px

@@ -132,11 +132,24 @@ To end testing: restore the watchlist/limits and re-add spot bots (no automatic 
   15m (−0.17R) and 1h (−0.10R); 4h (+0.06R) and 12h are the only positive timeframes.
 - Market inputs (item 6): deriv/htf gates are tested per series; ~4 series use futures data, ~8 use higher-timeframe
   context. 3d had no htf map → now tested against 1w. BTC regime/tech in the trade's direction are filter2 features.
-- **15m trade calls paused** (owner decision 30 Oct 2026; `analysis.PAUSED_TFS`, env `PAUSED_TFS`, default "15m"): live
+- **15m trade calls paused** (owner decision 30 Oct 2026; superseded by v2.8 below): live
   15m decisions → NO TRADE ("TIMEFRAME PAUSED"), chart/forecast unchanged, research replays unaffected; 15m bots removed
   once (flag `pause_15m_v26`) and never re-added. 1h kept by owner choice although −0.10R on the test.
 - News sentiment: `services/sentiment.py` hourly Gemini score of the RSS headlines (calendar only if none) →
   table `news_sentiment` (known_at, no look-ahead); `ml/sentiment_gate.py` stub, off until ≥60 days. `NEWS_SENTIMENT`.
+
+## v2.8 timeframe policy + admin close (31 Oct 2026, owner decisions)
+- Study `python -m app.research horizon|scalp15` (branch `research-horizon`, workflow `research-horizon.yml`, results
+  `research-results/results/horizon-*.json`, `scalp15-*.json`): longer time limits help only 4h (+0.056R → +0.092R);
+  1h 200 weak; 12h/1d/15m worse. 15m grade A is ~2-3 calls/week (too few to judge); a nearer TP1 raises win rate, not profit.
+- Live: `analysis.PAUSED_TFS` "1d,3d"; `A_ONLY_TFS` "1h"; `DEMO_ONLY_TFS` "15m" (public NO TRADE "DEMO BOTS ONLY", call in
+  analysis `demo`, taken only by bots with `demo_only`). Time limit per call `tracking.HORIZON_BARS` (15m 250, 1h 200,
+  4h 100, else 30), stored in the call payload `horizon_bars` at publication (older calls keep 30). One-time
+  `tf_policy_v28`: 1d bots removed, 1h bots grade A + 200 bars, 4h bots 100 bars, `bots.DEMO_15M` added (grade A,
+  `tp1_only`, 20x safe leverage, 250 bars). `worker._off_bot` decides which bots stay off.
+- Admin "Close now" (`adjust.close`, job `adjust_signal` with `action: close`): closes an open call at the engine's
+  price; candles closed before the click follow normal rules; `signal_adjustments.field = 'close'`, exit_reason
+  `admin_close` ("Closed by admin"); bots holding it close too; members notified.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
