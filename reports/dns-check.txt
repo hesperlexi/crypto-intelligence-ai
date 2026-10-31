@@ -1,10 +1,11 @@
-checked: 2026-10-31T12:20:12Z
+checked: 2026-10-31T12:52:33Z
 == MX cryptointelai.com
-10 mx1.improvmx.com.
-20 mx2.improvmx.com.
+50 mx3.zoho.com.
+20 mx2.zoho.com.
+10 mx.zoho.com.
 == TXT cryptointelai.com
-"v=spf1 +a +mx +ip4:139.162.173.118 include:spf.antispamcloud.com ~all"
-"v=spf1 include:spf.improvmx.com ~all"
+"v=spf1 include:zohomail.com ~all"
+"zoho-verification=zb31211893.zmverify.zoho.com"
 "hosting-site=crypapp-6a9b9"
 == TXT _dmarc.cryptointelai.com
 "v=DMARC1; p=none; rua=mailto:support@cryptointelai.com"
@@ -13,6 +14,8 @@ checked: 2026-10-31T12:20:12Z
 == CNAME dkimprovmx1._domainkey.cryptointelai.com
 == CNAME dkimprovmx2._domainkey.cryptointelai.com
 == TXT firebase1._domainkey.cryptointelai.com
+== TXT zmail._domainkey.cryptointelai.com
+"v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCCDtp0OwJQeTlnsgmKScjM5YEMA/Vwn9WyAjzPH6M75og3uieKh9nzRkUPunAXykY6po6eEofb088NuNAJjSSzXiEBUr08v9TuYHRQeJStydMtO5w3YurUDLIBMROW5zFtalEnOneKk8XQpEHpYCxG59+FFegLuvR7uiEXNO1NeQIDAQAB"
 == CNAME firebase1._domainkey.cryptointelai.com
 == CNAME firebase2._domainkey.cryptointelai.com
 == A cryptointelai.com
