@@ -53,3 +53,17 @@ def test_migration_runs_once(tmp_path):
     sink.set("config/bots", {**sink.get("config/bots"), "bots": list(out.values())})
     worker.sync_config(rt, sink)                                   # once only: removing the demo bot sticks
     assert DEMO_15M["id"] not in {b["id"] for b in sink.get("config/bots")["bots"]}
+
+
+def test_drop_inline_proofs_keeps_pending_ones(tmp_path):
+    from app.sinks import LocalSink
+    sink = LocalSink(tmp_path)
+    users = {"a": {"payment": {"status": "accepted", "proof": "data:image/png;base64,AAA", "amount": 0}},
+             "b": {"payment": {"status": "submitted", "proof": "data:image/png;base64,BBB"}},
+             "c": {"payment": {"status": "accepted", "proof": None}}, "d": {}}
+    for k, v in users.items():
+        sink.set(f"users/{k}", v)
+    assert worker.drop_inline_proofs(sink, users, 1) == 1
+    a = sink.get("users/a")["payment"]
+    assert a["proof"] is None and a["amount"] == 0 and a["status"] == "accepted"
+    assert sink.get("users/b")["payment"]["proof"].startswith("data:image")

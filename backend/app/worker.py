@@ -193,6 +193,17 @@ def policy_default_bots() -> list[dict[str, Any]]:
     return out
 
 
+def drop_inline_proofs(sink: BaseSink, users: dict[str, dict[str, Any]], now: int) -> int:
+    n = 0
+    for uid, u in users.items():
+        p = u.get("payment") if isinstance(u.get("payment"), dict) else None
+        if not p or not p.get("proof") or p.get("status") == "submitted":
+            continue
+        sink.set(f"users/{uid}", {"payment": {**p, "proof": None, "has_proof": False, "proof_deleted_at": now}}, merge=True)
+        n += 1
+    return n
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
@@ -206,6 +217,11 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         _b("config: membership notifications")
         notes["membership_push"] = sink.send_push(msgs)
     rt.db.set_setting("membership_notified", seen)
+    # owner request 31 Oct 2026: delete the old payment screenshots kept inside users/{uid} (all from free members);
+    # a proof still waiting to be checked is kept. Once only.
+    if not rt.db.get_setting("drop_inline_proofs_v1", False):
+        notes["inline_proofs_deleted"] = drop_inline_proofs(sink, users, now)
+        rt.db.set_setting("drop_inline_proofs_v1", True)
     if inactive:
         notes["inactive_members"] = len(inactive)
     # coins members added for themselves (active members only, a few each, capped overall)

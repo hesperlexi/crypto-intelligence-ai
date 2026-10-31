@@ -1,0 +1,24 @@
+name: DNS / email check (manual)
+# Read-only: public DNS records of the domain (mail routing, SPF, DKIM, DMARC) -> reports/dns-check.txt
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  dns:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          D=cryptointelai.com
+          {
+            echo "checked: $(date -u +%FT%TZ)"
+            for q in "MX $D" "TXT $D" "TXT _dmarc.$D" "TXT dkimprovmx1._domainkey.$D" "TXT dkimprovmx2._domainkey.$D" \
+                     "CNAME dkimprovmx1._domainkey.$D" "CNAME dkimprovmx2._domainkey.$D" "TXT firebase1._domainkey.$D" \
+                     "CNAME firebase1._domainkey.$D" "CNAME firebase2._domainkey.$D" "A $D" "CNAME www.$D" "NS $D"; do
+              echo "== $q"; dig +short @1.1.1.1 $q
+            done
+          } > /tmp/dns.txt
+          cat /tmp/dns.txt
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/dns.txt reports/dns-check.txt && git add reports && git commit -qm "DNS check" && (for i in 1 2 3 4 5; do git pull -q --rebase origin reports && git push -q origin reports && break; sleep $((i*4)); done)
