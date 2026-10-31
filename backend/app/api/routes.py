@@ -163,7 +163,7 @@ async def derivatives(symbol: str):
 
 @router.get("/analysis/{symbol}")
 def full_analysis(symbol: str, timeframe: str = "4h"):
-    return ok(analysis.analyze(get_runtime(), sym(symbol), tf_ok(timeframe)))
+    return ok(analysis.public_view(analysis.analyze(get_runtime(), sym(symbol), tf_ok(timeframe))))
 
 
 @router.get("/signal/{symbol}")

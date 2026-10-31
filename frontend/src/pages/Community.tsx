@@ -9,7 +9,7 @@ import { auth } from "../lib/firebase";
 import { db } from "../lib/firebase";
 import { ago, fmtTime } from "../lib/format";
 import { useSession } from "../lib/session";
-import { postDoc, postMeta } from "../lib/writeShapes";
+import { postDoc, postId, postMeta } from "../lib/writeShapes";
 
 export const POST_MAX = 500;
 const PAGE = 20;
@@ -68,7 +68,7 @@ function Composer({ uid, username, admin }: { uid: string; username: string; adm
     try {
       // the post and the pace marker are written together: the rules accept the post only with a matching marker
       const b = writeBatch(db);
-      b.set(doc(collection(db, "posts")), postDoc(uid, username, text.trim(), now, admin));
+      b.set(doc(db, "posts", postId(uid, now)), postDoc(uid, username, text.trim(), now, admin));
       b.set(doc(db, "post_meta", uid), postMeta(now));
       await b.commit();
       try { localStorage.setItem(LAST_KEY, String(now)); } catch { /* ignore */ }

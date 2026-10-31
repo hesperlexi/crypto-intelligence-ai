@@ -168,14 +168,18 @@ export function Row({ k, v, className = "" }: { k: ReactNode; v: ReactNode; clas
   );
 }
 
-export function Tabs<T extends string>({ value, options, onChange, label }: { value: T; options: readonly T[]; onChange: (v: T) => void; label?: string }) {
+/** notes: an optional small muted suffix per option (e.g. "paused"), with a longer explanation as its tooltip. */
+export function Tabs<T extends string>({ value, options, onChange, label, notes }: { value: T; options: readonly T[]; onChange: (v: T) => void; label?: string; notes?: Partial<Record<string, readonly [string, string]>> }) {
   return (
     <div className="seg max-w-full flex-wrap" role="group" aria-label={label}>
-      {options.map((o) => (
-        <button key={o} type="button" className="num uppercase" aria-pressed={o === value} onClick={() => onChange(o)}>
-          {o}
-        </button>
-      ))}
+      {options.map((o) => {
+        const n = notes?.[o];
+        return (
+          <button key={o} type="button" className="num uppercase" aria-pressed={o === value} onClick={() => onChange(o)} title={n?.[1]}>
+            {o}{n && <span className="ml-1 text-[10px] font-normal normal-case text-mute">{n[0]}</span>}
+          </button>
+        );
+      })}
     </div>
   );
 }

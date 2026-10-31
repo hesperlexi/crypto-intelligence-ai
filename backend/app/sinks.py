@@ -101,10 +101,54 @@ class BaseSink:
             except Exception:
                 pass
 
+    # Members write to the same daily quota (presence every <=4 min while the app is open, practice trades, alerts,
+    # settings), and the engine cannot count those writes. So it keeps an estimate for them and goes lean earlier:
+    # people seen in the last 24 h (presence/{uid}.last_seen) x MEMBER_WRITES_PER_DAY (60 ~ 3 h open + a few trades),
+    # capped at MEMBER_RESERVE_MAX; the engine's own budget never drops below MIN_ENGINE_BUDGET. Refreshed at most
+    # hourly (one read per presence document). Shown on Health (firestore_member_reserve, firestore_engine_budget).
+    MEMBER_WRITES_PER_DAY = int(os.environ.get("FIRESTORE_MEMBER_WRITES_PER_DAY", "60"))
+    MEMBER_RESERVE_MAX = int(os.environ.get("FIRESTORE_MEMBER_RESERVE_MAX", "8000"))
+    MIN_ENGINE_BUDGET = 3000
+    MEMBER_REFRESH_S = 3600
+
+    def member_estimate(self) -> dict[str, Any]:
+        if self.db is None:
+            return {"active": 0, "reserve": 0, "at": 0}
+        try:
+            return self.db.get_setting("fs_member_est", None) or {"active": 0, "reserve": 0, "at": 0}
+        except Exception:
+            return {"active": 0, "reserve": 0, "at": 0}
+
+    def member_reserve(self) -> int:
+        return int(self.member_estimate().get("reserve", 0) or 0)
+
+    def engine_budget(self) -> int:
+        """Writes the engine may use today before going lean: the budget minus the members' estimated share."""
+        return max(self.MIN_ENGINE_BUDGET, self.DAILY_BUDGET - self.member_reserve())
+
+    def refresh_member_estimate(self, force: bool = False) -> dict[str, Any]:
+        """Re-count the people active in the last 24 h (at most hourly). Never raises: keeps the old estimate."""
+        est = self.member_estimate()
+        if self.db is None or (not force and _now() - int(est.get("at", 0) or 0) < self.MEMBER_REFRESH_S * 1000):
+            return est
+        try:
+            since = _now() - 86_400_000
+            active = 0
+            for _, d in self.list("presence"):
+                seen = d.get("last_seen") or d.get("at") or 0
+                if isinstance(seen, (int, float)) and seen >= since:
+                    active += 1
+            est = {"active": active, "reserve": min(self.MEMBER_RESERVE_MAX, active * self.MEMBER_WRITES_PER_DAY), "at": _now()}
+            self.db.set_setting("fs_member_est", est)
+        except Exception:
+            pass
+        return est
+
     @property
     def lean(self) -> bool:
-        """Near the daily limit: publish only the essentials, at most every 30 minutes."""
-        return self.db is not None and self.writes_today() >= self.DAILY_BUDGET
+        """Near the daily limit: publish only the essentials, at most every 30 minutes. The limit leaves room for the
+        members' own writes (engine_budget)."""
+        return self.db is not None and self.writes_today() >= self.engine_budget()
 
     @staticmethod
     def is_quota_error(exc: BaseException) -> bool:

@@ -1,5 +1,5 @@
 import { doc, onSnapshot } from "firebase/firestore";
-import { createContext, ReactNode, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { bsym, futures24h, listedPairs, tickers as restTickers, toTicker } from "./binance";
 import { Race, raceSocket } from "./ws";
 import { db } from "./firebase";
@@ -32,6 +32,24 @@ interface LiveState {
 
 /** Latest SPOT prices for non-React code (spot paper trading, position sizing). */
 export const latestPrices: Record<string, number> = {};
+
+// Prices arrive up to ~16 times a second (spot + futures streams, 125 ms batches). Putting every batch in the React
+// context re-rendered every page that reads it (Signals, Dashboard, cards) as often. So:
+//  - the context (useLive) gets a price snapshot at most every SLOW_MS (2 per second),
+//  - this small store holds the newest prices at full speed, for the trade terminal (useFastTickers) and for
+//    components that follow one coin (useTicker), which re-render only when that coin's price changes.
+const SLOW_MS = 500;
+type Snap = { tickers: Record<string, Ticker>; spotTickers: Record<string, Ticker> };
+const EMPTY: Snap = { tickers: {}, spotTickers: {} };
+let fastSnap: Snap = EMPTY;
+const fastSubs = new Set<() => void>();
+function setFast(next: Snap) {
+  if (next.tickers === fastSnap.tickers && next.spotTickers === fastSnap.spotTickers) return;
+  fastSnap = next;
+  fastSubs.forEach((f) => f());
+}
+const subscribeFast = (f: () => void) => { fastSubs.add(f); return () => { fastSubs.delete(f); }; };
+const getFast = () => fastSnap;
 
 const Ctx = createContext<LiveState>({ tickers: {}, spotTickers: {}, connected: false, feed: null, alerts: [], refreshAt: 0, symbols: [], dismissAlert: () => {} });
 // several endpoints: some networks block port 9443 or one of the hosts
@@ -258,18 +276,47 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     return out;
   }, [tickers, fut]);
 
+  // full speed for the trade terminal and per-coin subscribers
+  useEffect(() => { setFast({ tickers: merged, spotTickers: tickers }); }, [merged, tickers]);
+  useEffect(() => () => { setFast(EMPTY); }, []);
+  // the context: a snapshot at most every SLOW_MS (the first prices go out at once)
+  const latest = useRef({ merged, tickers, lastMsg });
+  latest.current = { merged, tickers, lastMsg };
+  const [slow, setSlow] = useState({ merged, tickers, lastMsg });
+  const hasPrices = Object.keys(merged).length > 0;
+  useEffect(() => {
+    const push = () => setSlow((s) => {
+      const l = latest.current;
+      return s.merged === l.merged && s.tickers === l.tickers && s.lastMsg === l.lastMsg ? s : { ...l };
+    });
+    push();
+    const id = window.setInterval(push, SLOW_MS);
+    return () => window.clearInterval(id);
+  }, [hasPrices]);
+
   const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 2s" : all.length ? "RECONNECTING" : "IDLE";
-  const feed = {
-    status, last_update_ms: lastMsg,
-    transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 2 s (stream reconnecting)" : "reconnecting to Binance…",
-  };
-  const dismissAlert = (id: string) => setAlerts((a) => a.filter((x) => x.id !== id));
-  return <Ctx.Provider value={{ tickers: merged, spotTickers: tickers, connected, feed, alerts, refreshAt, symbols: all, dismissAlert }}>{children}</Ctx.Provider>;
+  const dismissAlert = useCallback((id: string) => setAlerts((a) => a.filter((x) => x.id !== id)), []);
+  const symbolList = useMemo(() => (key ? key.split(",") : []), [key]);
+  const value = useMemo<LiveState>(() => ({
+    tickers: slow.merged, spotTickers: slow.tickers, connected, alerts, refreshAt, symbols: symbolList, dismissAlert,
+    feed: {
+      status, last_update_ms: slow.lastMsg,
+      transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 2 s (stream reconnecting)" : "reconnecting to Binance…",
+    },
+  }), [slow, connected, alerts, refreshAt, symbolList, dismissAlert, status, mode]);
+  return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
+/** Live state for pages: prices refreshed at most twice a second (see SLOW_MS). */
 export const useLive = () => useContext(Ctx);
 
-export function useTicker(symbol: string | undefined): Ticker | undefined {
-  const { tickers } = useLive();
-  return symbol ? tickers[symbol] : undefined;
+/** Every price at full speed (~8 updates a second): for the trade terminal, where the price must move in real time. */
+export function useFastTickers(): Snap {
+  return useSyncExternalStore(subscribeFast, getFast, getFast);
+}
+
+/** One coin's live price at full speed; the component re-renders only when that coin's price changes. */
+export function useTicker(symbol: string | undefined, market: "futures" | "spot" = "futures"): Ticker | undefined {
+  const get = useCallback(() => (symbol ? (market === "spot" ? fastSnap.spotTickers : fastSnap.tickers)[symbol] : undefined), [symbol, market]);
+  return useSyncExternalStore(subscribeFast, get, get);
 }

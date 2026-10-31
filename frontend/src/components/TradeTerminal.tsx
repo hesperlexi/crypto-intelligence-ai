@@ -15,7 +15,7 @@ import { futuresTicker, listedPairs } from "../lib/binance";
 import { StreamState, useDepth, useMarketStream } from "../lib/stream";
 import { ProOnly, useIsPro } from "../lib/mode";
 import { base, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
-import { useLive } from "../lib/live";
+import { useFastTickers } from "../lib/live";
 import { useFocusTrap } from "./Shell";
 import * as SP from "../lib/paper";
 import * as PF from "../lib/paperFutures";
@@ -40,7 +40,7 @@ function useGoldListed(): boolean {
 /** 24h stats: the live spot feed for the app's coins, Binance futures for gold (refreshed every 15 s). */
 /** Spot screens use spot prices; futures screens the perpetual's own price. */
 function useMktTickers(market: Mkt) {
-  const { tickers, spotTickers } = useLive();
+  const { tickers, spotTickers } = useFastTickers();     // full speed here: the terminal's price moves in real time
   return market === "spot" ? spotTickers : tickers;
 }
 

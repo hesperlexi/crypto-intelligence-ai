@@ -35,6 +35,14 @@ service cloud.firestore {
               'root', 'system', 'owner', 'staff', 'team', 'official', 'help', 'security', 'null', 'undefined', 'anonymous', 'everyone'])
             && !n.matches('.*(admin|support|moderator|cryptointel).*')));
     }
+    // a payment screenshot: an image data URL (PNG, JPEG or WebP, base64) under ~900 KB; anything else is refused
+    function validProof(p) {
+      return p is string && p.size() < 900000 && p.matches('^data:image/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$');
+    }
+    // the proof field inside a payment map: missing, null or a valid image
+    function proofOk(pay) {
+      return !('proof' in pay) || pay.proof == null || validProof(pay.proof);
+    }
     // optional string field of at most 64 characters (null allowed)
     function shortText(d, k) {
       return !(k in d) || d[k] == null || (d[k] is string && d[k].size() <= 64);
@@ -58,19 +66,31 @@ service cloud.firestore {
         && (!('name' in request.resource.data) || (request.resource.data.name is string && request.resource.data.name.size() <= 200))
         && (!('photo' in request.resource.data) || (request.resource.data.photo is string && request.resource.data.photo.size() <= 2048))
         && (!('payment' in request.resource.data) || (request.resource.data.payment.status == 'submitted'
-            && (!('proof' in request.resource.data.payment) || request.resource.data.payment.proof == null
-                || request.resource.data.payment.proof.size() < 900000)));
+            && proofOk(request.resource.data.payment)));
       // the person may only send (or replace) a payment proof, and choose a username once (together with its
       // usernames/{name} claim, see below); status, end date and history stay with the admin
       allow update: if isAdmin() || (signedIn() && me() == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['payment'])
         && request.resource.data.payment.status == 'submitted'
-        && (request.resource.data.payment.proof == null || request.resource.data.payment.proof.size() < 900000))
+        && proofOk(request.resource.data.payment))
         || (signedIn() && me() == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username'])
         && !('username' in resource.data)
         && validUsername(request.resource.data.username)
         && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == me());
+      allow delete: if isAdmin();
+    }
+
+    // payment screenshots (since v2.1, Oct 2026) live here instead of inside users/{uid}.payment, so the admin's Users
+    // list does not download every image: the person writes their own, the admin reads one when opening the proof
+    // viewer. Older proofs stay inline in users/{uid}.payment.proof and are still shown.
+    match /payment_proofs/{uid} {
+      allow read: if isAdmin() || (signedIn() && me() == uid);
+      allow create, update: if signedIn() && me() == uid
+        && request.resource.data.keys().hasOnly(['uid', 'proof', 'submitted_at'])
+        && request.resource.data.uid == me()
+        && validProof(request.resource.data.proof)
+        && request.resource.data.submitted_at is number;
       allow delete: if isAdmin();
     }
 
@@ -99,10 +119,12 @@ service cloud.firestore {
     // Community: members' posts. Text only (1-500 characters), signed with the author's username, never edited;
     // the author or the admin may delete. At most one post per 30 seconds per person: each post also moves
     // post_meta/{uid}.last to the post's time, and that document only moves forward in steps of 30 s or more.
+    // The post id is <uid>_<created_at>, so one batch cannot add a second post under the same post_meta step.
     function nowMs() { return request.time.toMillis(); }
     match /posts/{id} {
       allow read: if allowed();
       allow create: if allowed()
+        && id == me() + '_' + string(request.resource.data.created_at)
         && request.resource.data.keys().hasOnly(['author_uid', 'username', 'text', 'created_at', 'admin'])
         && request.resource.data.keys().hasAll(['author_uid', 'username', 'text', 'created_at'])
         && request.resource.data.author_uid == me()
@@ -173,10 +195,13 @@ service cloud.firestore {
       allow delete: if isAdmin() || (isMember() && resource.data.owner_uid == me());
     }
     match /jobs/{id} {
-      allow read: if allowed();
-      // created_at a number, small params; a member's test notification may only target themselves
-      // (the engine also sends it only to the job owner, and limits jobs per person per day)
-      allow create: if request.resource.data.status == 'queued'
+      // a job (and its result) is read by the person who queued it, or by the admin
+      allow read: if isAdmin() || (allowed() && resource.data.by == request.auth.token.email);
+      // signed by the person's own address (by), created_at a number, small params; a member's test notification may
+      // only target themselves (the engine also sends it only to the job owner, and limits jobs per person per day)
+      allow create: if signedIn()
+        && request.resource.data.by == request.auth.token.email
+        && request.resource.data.status == 'queued'
         && request.resource.data.created_at is number
         && (!('params' in request.resource.data) || (request.resource.data.params is map && request.resource.data.params.size() <= 24))
         && (isAdmin() || (isMember() && request.resource.data.type in ['backtest', 'replay', 'test_push']

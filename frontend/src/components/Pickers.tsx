@@ -38,6 +38,6 @@ export function SymbolSelect({ value, onChange, symbols, stacked = false }: { va
   );
 }
 
-export function TfTabs({ value, onChange, options = MODEL_TFS }: { value: string; onChange: (t: string) => void; options?: readonly string[] }) {
-  return <Tabs value={value} options={options} onChange={onChange} label="Timeframe" />;
+export function TfTabs({ value, onChange, options = MODEL_TFS, notes }: { value: string; onChange: (t: string) => void; options?: readonly string[]; notes?: Partial<Record<string, readonly [string, string]>> }) {
+  return <Tabs value={value} options={options} onChange={onChange} label="Timeframe" notes={notes} />;
 }

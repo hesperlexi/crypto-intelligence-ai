@@ -1,4 +1,5 @@
 import react from "@vitejs/plugin-react";
+import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, Plugin } from "vite";
@@ -8,12 +9,23 @@ const backend = process.env.VITE_BACKEND || "http://localhost:8000";
 
 // Version shown in the app. Every build gets its own id; the running app compares it with /version.json
 // and reloads itself when a newer deploy is live.
-// The release version is set here (also in package.json and the Android app). Updates are detected by the
-// build id, so every deploy still reaches phones without changing the version.
-const APP_VERSION = "2.0.0";
+// The release version has one source: frontend/package.json "version" (also read by dev/vite.preview.config.ts, the
+// Android build in deploy.yml and backend/app/brand.py). Updates are detected by the build id, so every deploy still
+// reaches phones without changing the version.
+const APP_VERSION: string = JSON.parse(fs.readFileSync(new URL("./package.json", import.meta.url), "utf8")).version;
 const stamp = new Date().toISOString().replace(/\D/g, "").slice(0, 12);
 const BUILD_ID = `${(process.env.GITHUB_SHA || "local").slice(0, 7)}-${stamp}`;
 const V = encodeURIComponent(BUILD_ID);
+
+// Videos keep their cached copy across deploys: their ?v= is a hash of the file's content (src/lib/media.ts).
+export const MEDIA_FILES = ["/demo.mp4", "/ads/friends-ad.mp4"];
+export function mediaVersions(publicDir: string): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const f of MEDIA_FILES) {
+    try { out[f] = crypto.createHash("sha1").update(fs.readFileSync(path.join(publicDir, f))).digest("hex").slice(0, 10); } catch { /* missing file: bare path */ }
+  }
+  return out;
+}
 
 function versionFiles(): Plugin {
   return {
@@ -59,7 +71,8 @@ export default defineConfig({
       },
     },
   },
-  define: { __APP_VERSION__: JSON.stringify(APP_VERSION), __BUILD_ID__: JSON.stringify(BUILD_ID) },
+  define: { __APP_VERSION__: JSON.stringify(APP_VERSION), __BUILD_ID__: JSON.stringify(BUILD_ID),
+    __MEDIA_VERSIONS__: JSON.stringify(mediaVersions(path.join(path.dirname(new URL(import.meta.url).pathname), "public"))) },
   server: {
     port: 5173,
     proxy: {

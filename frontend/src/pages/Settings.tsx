@@ -9,6 +9,7 @@ import { checkForUpdate } from "../lib/updater";
 import * as push from "../lib/push";
 import { myUid, useIsAdmin } from "../lib/session";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
+import { mediaUrl } from "../lib/media";
 import { ContactCard, MembershipCard } from "../components/Membership";
 import TelegramCard from "../components/TelegramCard";
 import { post, put, queueJob, useApi } from "../lib/api";
@@ -167,7 +168,7 @@ function ManualCard() {
       <div className="mt-3 flex flex-wrap gap-2">
         <a className="btn btn-primary" href={href} target="_blank" rel="noopener">Open manual</a>
         <a className="btn" href={href} download="Crypto-Intelligence-AI-User-Manual.pdf">Download PDF</a>
-        <a className="btn" href={`/demo.mp4?v=${BUILD_ID}`} target="_blank" rel="noopener">▶ Demo video</a>
+        <a className="btn" href={mediaUrl("/demo.mp4")} target="_blank" rel="noopener">▶ Demo video</a>
       </div>
     </Card>
   );

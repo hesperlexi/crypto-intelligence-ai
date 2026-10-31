@@ -131,3 +131,19 @@ def test_bot_position_closes_at_the_admin_price():
     assert ev and ev[0]["reason"] == "closed by admin" and not state["positions"]
     tr = rt.db.one("SELECT * FROM bot_trades")
     assert tr["exit_reason"] == "closed by admin" and tr["exit"] == pytest.approx(101.0, rel=2e-3)
+
+
+def test_close_at_exactly_the_entry_says_break_even():
+    created = BAR + H1
+    rt = RT([[created, 100, 100.6, 99.6, 100.4], [created + M15, 100.4, 101.0, 99.8, 100.0]])
+    T.log_signal(rt.db, _a(), now=created)
+    sid = rt.db.one("SELECT id FROM signals")["id"]
+    sink = LocalSink(tempfile.mkdtemp(), rt.db)
+    sent = []
+    sink.send_push = lambda msgs: (sent.extend(msgs), {"sent": len(msgs)})[1]
+    out = A.close(rt, {"signal_id": sid, "action": "close", "note": "flat market"}, "boss@example.com", sink,
+                  now=created + M15 + 10 * 60_000)
+    assert out["return_pct"] == pytest.approx(0.0) and "at break-even" in out["message"] and "loss" not in out["message"]
+    assert "break-even" in sent[-1]["body"]
+    msg = A.close_message({"id": "x", "symbol": "BTC/USDT", "timeframe": "1h", "side": 1}, 100.0, 0.0, 0.0, "n")
+    assert "0.00% (break-even)" in msg["body"]

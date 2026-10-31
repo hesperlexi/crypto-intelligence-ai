@@ -162,6 +162,13 @@ function users() {
     payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610290041887", proof: proofImage(), status: "submitted", submitted_at: NOW - 90 * 60_000 } });
   add("u_pend2", { email: "lina.m@example.com", name: "", username: "lina_trades", provider: "password", status: "pending", requested_at: NOW - 26 * H,
     payment: { method: "mexc", months: 1, amount: 15, currency: "USDT", txid: "MX88120934", proof: null, status: "submitted", submitted_at: NOW - 20 * H } });
+  // proofs sent with v2.1+: the screenshot lives in payment_proofs/{uid}; the payment only says has_proof
+  add("u_pend3", { email: "karim.b@example.com", name: "Karim Benali", username: "karim_b", provider: "google", status: "pending", requested_at: NOW - 3 * H,
+    payment: { method: "binance", months: 6, amount: 70, currency: "USDT", txid: "B2610310077", proof: null, has_proof: true, status: "submitted", submitted_at: NOW - 40 * 60_000 } });
+  u["payment_proofs/u_pend3"] = { uid: "u_pend3", proof: proofImage(), submitted_at: NOW - 40 * 60_000 };
+  // an old record whose inline "proof" is not an image: the Users page must show "invalid image", never render it
+  add("u_badproof", { email: "odd.upload@example.com", name: "Odd Upload", provider: "google", status: "pending", requested_at: NOW - 5 * H,
+    payment: { method: "binance", months: 1, amount: 15, currency: "USDT", txid: "B2610319999", proof: "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", status: "submitted", submitted_at: NOW - 4 * H } });
   add("u_new", { email: "new.person@example.com", name: "New Person", username: "newperson", provider: "password", status: "pending", requested_at: NOW - 30 * 60_000 });
   add("u_member", { email: "sara.k@example.com", name: "Sara Kim", username: "sara_k", provider: "google", status: "approved", expires_at: NOW + 74 * D, plan_months: 3, approved_at: NOW - 16 * D, free: false,
     history: [{ months: 3, amount: 40, free: false, granted_at: NOW - 16 * D }], payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610140032", proof: null, status: "accepted", submitted_at: NOW - 16 * D } });
@@ -353,7 +360,7 @@ export function seed(): Record<string, any> {
     "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
     "views/market_context": v(marketContext()),
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
-    "views/health": v({ status: "OK", engine: { last_tick_finished: NOW - 3 * 60_000, schedule_minutes: 5, ticks: 412 }, market_data: {}, exchange: {}, database: {}, config: {} }),
+    "views/health": v(health()),
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
     "views/signals": v(signalLog()),
     "views/weekly_report": v(weekly()),
@@ -370,4 +377,26 @@ export function seed(): Record<string, any> {
   }
   delete out["users/u_member_self"];
   return out;
+}
+
+/** views/health: the same shape backend/app/services/health.report + worker.engine_info publish. */
+function health() {
+  const tfs = ["15m", "1h", "4h", "12h", "1d", "3d"];
+  const syms = COINS.slice(0, 4).map(([s]) => s);
+  return {
+    status: "LIVE", generated_at: NOW, uptime_s: 18_000,
+    engine: { last_tick_started: NOW - 4 * 60_000, last_tick_finished: NOW - 3 * 60_000, last_tick_seconds: 61.4, schedule_minutes: 5, ticks: 412,
+      data_host: "https://data-api.binance.vision", failed_steps: [], last_train: { finished_at: NOW - 9 * H },
+      firestore_writes_today: 8_430, firestore_write_budget: 15_000, firestore_lean: false, firestore_members_active: 23,
+      firestore_member_reserve: 1_380, firestore_engine_budget: 13_620, firestore_free_limit: 20_000 },
+    market_data: { status: "LIVE", transport: "REST", last_update_ms: NOW - 3 * 60_000, age_s: 180, reconnects: 0, last_error: null, quality_pct: 99.97, stale_series: 0 },
+    exchange: { errors: 0, clock_skew_ms: 42, last_error: null },
+    database: { ok: true, engine: "sqlite" },
+    series: syms.flatMap((s) => tfs.map((tf) => ({ symbol: s, timeframe: tf, status: "OK", candles: 30_000, missing: 0, duplicates: 0, malformed: 0, quality_pct: 100, age_s: 240 }))),
+    models: syms.flatMap((s) => tfs.map((tf, i) => ({ symbol: s, timeframe: tf, version: `v-${s.slice(0, 3)}-${tf}`, trained_at: NOW - 9 * H, age_h: 9, edge_confirmed: i % 2 === 0, state: "active", progress: null, message: null }))),
+    model_libraries: [{ name: "lightgbm", label: "LightGBM", available: true }, { name: "torch", label: "Deep models (PyTorch)", available: false, reason: "not installed on the engine" }],
+    recent_errors: [{ ts: NOW - 2 * H, where: "engine news_publish", error: "TimeoutError: calendar feed did not answer" }],
+    safety: [],
+    config: { exchange: "binance", background_jobs: false, websocket_feed: false, deep_models: false, forecast_refresh_s: 300, retrain_interval_h: 24, mode: "ANALYSIS ONLY - no real orders are ever placed" },
+  };
 }

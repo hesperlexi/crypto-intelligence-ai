@@ -158,6 +158,18 @@ posts the fingerprint within 30 min of publication (older ones marked -1, never 
 Record rows carry `proof` {hash, sealed_at, text only when closed}; `components/SealProof.tsx` (row pill, VerifyBox),
 public page `/verify` (Trust kind "verify"). No extra Firestore documents.
 
+## Audit fixes (31 Oct 2026, branch `audit-fixes`)
+- Version has one source: `frontend/package.json` (read by `vite.config.ts`, the preview config, `deploy.yml` APK and `brand.py`).
+- Rules: `jobs` signed (`by` == token email), readable only by the creator or admin; posts need id `<uid>_<created_at>`;
+  payment screenshots must match `^data:image/(png|jpeg|webp);base64,`. New proofs go to `payment_proofs/{uid}`
+  (owner write, admin read; payment keeps `proof: null, has_proof: true`); old inline proofs still shown. Users page loads
+  the image only in the proof viewer; the admin badge uses two narrow queries (`status == pending`, `payment.status == submitted`).
+- Write budget: `sinks.BaseSink` reserves members' writes (people seen in 24 h × `FIRESTORE_MEMBER_WRITES_PER_DAY` 60, cap
+  `FIRESTORE_MEMBER_RESERVE_MAX` 8000, engine floor 3000), refreshed hourly from `presence`; lean at `engine_budget()`. Health shows it.
+- Published analysis views drop `demo` (`analysis.public_view`); bots keep it. Missing `config/bots` → `worker.policy_default_bots()`.
+- Live prices: `useLive()` context ≤2 updates/s; `useFastTickers()` (trade terminal, futures practice) and `useTicker(sym)` full speed.
+- Videos: `?v=` = content hash (`lib/media.ts`, `__MEDIA_VERSIONS__`), not the build id.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

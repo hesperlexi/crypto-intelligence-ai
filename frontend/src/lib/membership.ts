@@ -1,8 +1,8 @@
 import { BRAND } from "./brand";
 // Paid memberships: a member pays with Binance Pay, uploads the proof, and the owner approves it for a number
 // of months. Prices live in config/membership (editable on the Users page); these are the defaults.
-import { arrayUnion, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
-import { paymentProof } from "./writeShapes";
+import { arrayUnion, doc, getDoc, onSnapshot, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { isProofImage, paymentProof, proofImageDoc } from "./writeShapes";
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { getSession } from "./session";
@@ -89,14 +89,17 @@ export async function submitPayment(plan: Plan, txid: string, proof: string | nu
   if (!s) throw new Error("not signed in");
   const t = txid.trim();
   if (!proof && t.length < 6) throw new Error(`Add the payment screenshot or the ${method === "mexc" ? "MEXC" : "Binance"} order / transaction ID.`);
-  const payment = paymentProof({ method, months: plan.months, amount: plan.price, currency, txid: t || null, proof: proof || null }, Date.now());
+  if (proof && !isProofImage(proof)) throw new Error("That image could not be read. Please choose a PNG or JPG screenshot.");
+  const now = Date.now();
+  const payment = paymentProof({ method, months: plan.months, amount: plan.price, currency, txid: t || null, proof: proof || null }, now);
   const ref = doc(db, "users", s.uid);
   const cur = await getDoc(ref);
-  if (!cur.exists()) {
-    await setDoc(ref, { uid: s.uid, email: s.email, name: s.name, photo: "", status: "pending", requested_at: Date.now(), payment });
-  } else {
-    await updateDoc(ref, { payment });
-  }
+  // one batch: the screenshot in payment_proofs/{uid}, the payment details (without the image) in users/{uid}
+  const b = writeBatch(db);
+  if (proof) b.set(doc(db, "payment_proofs", s.uid), proofImageDoc(s.uid, proof, now));
+  if (!cur.exists()) b.set(ref, { uid: s.uid, email: s.email, name: s.name, photo: "", status: "pending", requested_at: now, payment });
+  else b.update(ref, { payment });
+  await b.commit();
 }
 
 /** Admin: accept a payment (or grant time without one). Extends from the current end date if still active. */

@@ -6,7 +6,7 @@
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { addDoc, collection, deleteDoc, doc, Firestore, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { readFileSync, writeFileSync } from "node:fs";
-import { newUserRecord, ownerProfile, paymentProof, postDoc, postMeta, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
+import { newUserRecord, ownerProfile, paymentProof, postDoc, postId, postMeta, proofImageDoc, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
 
 const ADMIN = { uid: "owner", email: "admin@example.com" };
 const NOW = () => Date.now();
@@ -52,7 +52,7 @@ function claim(db: Firestore, uid: string, name: string, owner = false) {
 function post(db: Firestore, uid: string, username: string, text: string, opts: { admin?: boolean; at?: number } = {}) {
   const at = opts.at ?? NOW();
   const b = writeBatch(db);
-  b.set(doc(collection(db, "posts")), postDoc(uid, username, text, at, !!opts.admin));
+  b.set(doc(db, "posts", postId(uid, at)), postDoc(uid, username, text, at, !!opts.admin));
   b.set(doc(db, "post_meta", uid), postMeta(at));
   return b.commit();
 }
@@ -140,6 +140,69 @@ async function main() {
     await seed({ "users/p1": pending("p1", "p1@example.com") });
     await assertSucceeds(updateDoc(doc(as("p1", "p1@example.com"), "users", "p1"), { payment: paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: "B123456", proof: null }, NOW()) }));
   });
+  const IMG = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDA==";
+  await test("payment with a screenshot: payment_proofs/{uid} + users payment in one batch (lib/membership.ts)", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com") });
+    const db = as("p1", "p1@example.com");
+    const at = NOW();
+    const b = writeBatch(db);
+    b.set(doc(db, "payment_proofs", "p1"), proofImageDoc("p1", IMG, at));
+    b.update(doc(db, "users", "p1"), { payment: paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: null, proof: IMG }, at) });
+    await assertSucceeds(b.commit());
+  });
+  await test("first payment from a new account (users create + payment_proofs) is allowed", async () => {
+    const db = as("n1", "n1@example.com");
+    const at = NOW();
+    const b = writeBatch(db);
+    b.set(doc(db, "payment_proofs", "n1"), proofImageDoc("n1", IMG, at));
+    b.set(doc(db, "users", "n1"), { uid: "n1", email: "n1@example.com", name: "", photo: "", status: "pending", requested_at: at,
+      payment: paymentProof({ method: "mexc", months: 3, amount: 40, currency: "USDT", txid: "M1234567", proof: IMG }, at) });
+    await assertSucceeds(b.commit());
+  });
+  for (const [label, bad] of [["an HTML data URL", "data:text/html;base64,PHNjcmlwdD4="], ["an SVG image", "data:image/svg+xml;base64,PHN2Zz4="],
+    ["a javascript: link", "javascript:alert(1)"], ["a web address", "https://example.com/x.png"], ["base64 with markup", "data:image/png;base64,<script>"]] as const) {
+    await test(`payment_proofs with ${label} is denied`, async () => {
+      await seed({ "users/p1": pending("p1", "p1@example.com") });
+      await assertFails(setDoc(doc(as("p1", "p1@example.com"), "payment_proofs", "p1"), proofImageDoc("p1", bad, NOW())));
+    });
+    await test(`legacy inline users.payment.proof with ${label} is denied`, async () => {
+      await seed({ "users/p1": pending("p1", "p1@example.com") });
+      const pay = { ...paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: null, proof: null }, NOW()), proof: bad };
+      await assertFails(updateDoc(doc(as("p1", "p1@example.com"), "users", "p1"), { payment: pay }));
+    });
+  }
+  await test("legacy inline users.payment.proof with a JPEG data URL is still allowed", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com") });
+    const pay = { ...paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: null, proof: null }, NOW()), proof: IMG };
+    await assertSucceeds(updateDoc(doc(as("p1", "p1@example.com"), "users", "p1"), { payment: pay }));
+  });
+  await test("a realistic ~600 KB JPEG proof is allowed (pattern check on a large string)", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com") });
+    await assertSucceeds(setDoc(doc(as("p1", "p1@example.com"), "payment_proofs", "p1"), proofImageDoc("p1", "data:image/jpeg;base64," + "/9j/".repeat(150_000), NOW())));
+  });
+  await test("payment proof image over 900 KB is denied", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com") });
+    await assertFails(setDoc(doc(as("p1", "p1@example.com"), "payment_proofs", "p1"), proofImageDoc("p1", "data:image/png;base64," + "A".repeat(900_000), NOW())));
+  });
+  await test("payment_proofs of another uid cannot be written", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com") });
+    await assertFails(setDoc(doc(as("p1", "p1@example.com"), "payment_proofs", "p2"), proofImageDoc("p2", IMG, NOW())));
+  });
+  await test("payment_proofs: own and admin reads allowed, other members denied", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com"), "users/m2": approved("m2", "m2@example.com"), "payment_proofs/p1": proofImageDoc("p1", IMG, NOW()) });
+    const { getDoc, getDocs } = await import("firebase/firestore");
+    await assertSucceeds(getDoc(doc(as("p1", "p1@example.com"), "payment_proofs", "p1")));
+    await assertSucceeds(getDoc(doc(admin(), "payment_proofs", "p1")));
+    await assertFails(getDoc(doc(as("m2", "m2@example.com"), "payment_proofs", "p1")));
+    await assertFails(getDocs(collection(as("m2", "m2@example.com"), "payment_proofs")));
+  });
+  await test("admin badge queries (status == pending, payment.status == submitted) are allowed for the admin only", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com"), "users/m1": approved("m1", "m1@example.com") });
+    const { getDocs, query, where } = await import("firebase/firestore");
+    await assertSucceeds(getDocs(query(collection(admin(), "users"), where("status", "==", "pending"))));
+    await assertSucceeds(getDocs(query(collection(admin(), "users"), where("payment.status", "==", "submitted"))));
+    await assertFails(getDocs(query(collection(as("m1", "m1@example.com"), "users"), where("status", "==", "pending"))));
+  });
   await test("member editing status is denied", async () => {
     await seed({ "users/p1": pending("p1", "p1@example.com") });
     await assertFails(updateDoc(doc(as("p1", "p1@example.com"), "users", "p1"), { status: "approved" }));
@@ -201,8 +264,9 @@ async function main() {
     await seed(community);
     const db = as("m1", "m1@example.com");
     const b = writeBatch(db);
-    b.set(doc(collection(db, "posts")), postDoc("m2", "dreyes", "hi", NOW(), false));
-    b.set(doc(db, "post_meta", "m1"), postMeta(NOW()));
+    const at = NOW();
+    b.set(doc(db, "posts", postId("m1", at)), postDoc("m2", "dreyes", "hi", at, false));
+    b.set(doc(db, "post_meta", "m1"), postMeta(at));
     await assertFails(b.commit());
   });
   await test("post with 0 characters is denied", async () => {
@@ -227,14 +291,15 @@ async function main() {
   });
   await test("post without the post_meta marker is denied", async () => {
     await seed(community);
-    await assertFails(addDoc(collection(as("m1", "m1@example.com"), "posts"), postDoc("m1", "sara_k", "no marker", NOW(), false)));
+    const at = NOW();
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "posts", postId("m1", at)), postDoc("m1", "sara_k", "no marker", at, false)));
   });
   await test("post with extra fields is denied", async () => {
     await seed(community);
     const db = as("m1", "m1@example.com");
     const at = NOW();
     const b = writeBatch(db);
-    b.set(doc(collection(db, "posts")), { ...postDoc("m1", "sara_k", "hi", at, false), image: "https://x" });
+    b.set(doc(db, "posts", postId("m1", at)), { ...postDoc("m1", "sara_k", "hi", at, false), image: "https://x" });
     b.set(doc(db, "post_meta", "m1"), postMeta(at));
     await assertFails(b.commit());
   });
@@ -243,6 +308,35 @@ async function main() {
     const db = as("m1", "m1@example.com");
     await assertSucceeds(post(db, "m1", "sara_k", "first"));
     await assertFails(post(db, "m1", "sara_k", "second, too soon", { at: NOW() + 5_000 }));
+  });
+  await test("two posts in one batch are denied (one post_meta step, post id = uid_created_at)", async () => {
+    await seed(community);
+    const db = as("m1", "m1@example.com");
+    const at = NOW();
+    const b = writeBatch(db);
+    b.set(doc(db, "posts", postId("m1", at)), postDoc("m1", "sara_k", "first", at, false));
+    b.set(doc(db, "posts", postId("m1", at + 1)), postDoc("m1", "sara_k", "second", at + 1, false));
+    b.set(doc(db, "post_meta", "m1"), postMeta(at));
+    await assertFails(b.commit());
+  });
+  await test("two posts with random ids and the same created_at in one batch are denied", async () => {
+    await seed(community);
+    const db = as("m1", "m1@example.com");
+    const at = NOW();
+    const b = writeBatch(db);
+    b.set(doc(collection(db, "posts")), postDoc("m1", "sara_k", "first", at, false));
+    b.set(doc(collection(db, "posts")), postDoc("m1", "sara_k", "second", at, false));
+    b.set(doc(db, "post_meta", "m1"), postMeta(at));
+    await assertFails(b.commit());
+  });
+  await test("post whose id is not uid_created_at is denied", async () => {
+    await seed(community);
+    const db = as("m1", "m1@example.com");
+    const at = NOW();
+    const b = writeBatch(db);
+    b.set(doc(db, "posts", postId("m2", at)), postDoc("m1", "sara_k", "wrong id", at, false));
+    b.set(doc(db, "post_meta", "m1"), postMeta(at));
+    await assertFails(b.commit());
   });
   await test("second post 30 s later is allowed", async () => {
     await seed({ ...community, "post_meta/m1": { last: NOW() - 31_000 } });
@@ -285,6 +379,38 @@ async function main() {
   await test("jobs create: test_push to own uid", async () => {
     await seed(member);
     await assertSucceeds(addDoc(collection(as("m1", "m1@example.com"), "jobs"), { type: "test_push", params: { uid: "m1" }, status: "queued", created_at: NOW(), by: "m1@example.com" }));
+  });
+  await test("jobs create with a spoofed by (someone else's address) is denied", async () => {
+    await seed(member);
+    await assertFails(addDoc(collection(as("m1", "m1@example.com"), "jobs"), { type: "backtest", params: { symbol: "BTC/USDT", timeframe: "4h" }, status: "queued", created_at: NOW(), by: "admin@example.com" }));
+  });
+  await test("jobs create without by is denied", async () => {
+    await seed(member);
+    await assertFails(addDoc(collection(as("m1", "m1@example.com"), "jobs"), { type: "backtest", params: { symbol: "BTC/USDT", timeframe: "4h" }, status: "queued", created_at: NOW() }));
+  });
+  await test("jobs create: admin-only job type by a member is denied", async () => {
+    await seed(member);
+    await assertFails(addDoc(collection(as("m1", "m1@example.com"), "jobs"), { type: "adjust_signal", params: { signal_id: "x", action: "close", note: "nope" }, status: "queued", created_at: NOW(), by: "m1@example.com" }));
+  });
+  await test("jobs create: admin queues an admin job signed with its own address", async () => {
+    await assertSucceeds(addDoc(collection(admin(), "jobs"), { type: "adjust_signal", params: { signal_id: "x", action: "close", note: "taking profit" }, status: "queued", created_at: NOW(), by: ADMIN.email }));
+  });
+  await test("jobs read: the creator reads their own job, another member cannot, the admin can", async () => {
+    await seed({ ...member, "users/m2": approved("m2", "m2@example.com"),
+      "jobs/j1": { type: "backtest", params: {}, status: "done", created_at: NOW(), by: "m1@example.com", json: "{}" } });
+    const { getDoc, getDocs } = await import("firebase/firestore");
+    await assertSucceeds(getDoc(doc(as("m1", "m1@example.com"), "jobs", "j1")));
+    await assertFails(getDoc(doc(as("m2", "m2@example.com"), "jobs", "j1")));
+    await assertFails(getDocs(collection(as("m2", "m2@example.com"), "jobs")));
+    await assertSucceeds(getDoc(doc(admin(), "jobs", "j1")));
+    await assertSucceeds(getDocs(collection(admin(), "jobs")));
+  });
+  await test("jobs: queue then watch own job (lib/api.ts queueJob flow)", async () => {
+    await seed(member);
+    const { getDoc } = await import("firebase/firestore");
+    const db = as("m1", "m1@example.com");
+    const ref = await addDoc(collection(db, "jobs"), { type: "replay", params: { symbol: "BTC/USDT" }, status: "queued", created_at: NOW(), by: "m1@example.com" });
+    await assertSucceeds(getDoc(ref));
   });
   await test("jobs create: test_push to another uid is denied", async () => {
     await seed(member);

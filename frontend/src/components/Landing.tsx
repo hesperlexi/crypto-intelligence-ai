@@ -11,6 +11,7 @@ import { useMembershipConfig } from "../lib/membership";
 import WinsToday from "./WinsToday";
 import TelegramLink from "./TelegramLink";
 import { BUILD_ID } from "../lib/version";
+import { mediaUrl } from "../lib/media";
 import { CoinAvatar } from "./Polish";
 import SiteFooter, { TRUST_LINKS } from "./SiteFooter";
 import { AuthDialog, AuthMode, GoogleIcon } from "./AuthPanel";
@@ -275,8 +276,8 @@ export default function Landing({ error }: { error: string | null }) {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4" onClick={() => setDemo(null)} role="dialog" aria-label={demo === "demo" ? "App demo video" : "Why traders use it video"}>
           <div className="relative flex h-full max-h-[90vh] w-auto flex-col items-center gap-2" onClick={(e) => e.stopPropagation()}>
             {demo === "demo"
-              ? <video src={`/demo.mp4?v=${BUILD_ID}`} className="h-full max-h-[86vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />
-              : <video src={`/ads/friends-ad.mp4?v=${BUILD_ID}`} poster="/ads/friends-ad.jpg" className="h-full max-h-[86vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />}
+              ? <video src={mediaUrl("/demo.mp4")} className="h-full max-h-[86vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />
+              : <video src={mediaUrl("/ads/friends-ad.mp4")} poster="/ads/friends-ad.jpg" className="h-full max-h-[86vh] rounded-2xl shadow-2xl" controls autoPlay playsInline />}
             <button className="absolute -right-2 -top-2 h-9 w-9 rounded-full bg-panel text-lg" aria-label="Close video" onClick={() => setDemo(null)}>✕</button>
           </div>
         </div>

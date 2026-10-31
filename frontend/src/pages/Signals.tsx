@@ -12,6 +12,13 @@ import { CALL_STATUS, fillLabel, livePnl, managedLabel, riskLevel, RoiFigure } f
 import { AdjustHistory, adjustedPlan } from "../components/SignalAdjust";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
+// Timeframe policy (v2.8): mirrors backend/app/services/analysis.py DEMO_ONLY_TFS ("15m") and PAUSED_TFS ("1d,3d").
+// The engine does not publish these lists, so they are kept here; change both together.
+const TF_NOTES: Partial<Record<string, readonly [string, string]>> = {
+  "15m": ["demo only", "15m calls go to the demo bots only while they are tested; no public 15m trades"],
+  "1d": ["paused", "1D trade calls are paused; the chart and forecast still update"],
+  "3d": ["paused", "3D trade calls are paused; the chart and forecast still update"],
+};
 const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;
 const TXT = { bull: "text-bull", bear: "text-bear", wait: "text-mute" } as const;
 type Dir = "all" | "long" | "short";
@@ -92,7 +99,7 @@ export default function Signals() {
               </button>
             ))}
           </div>
-          <TfTabs value={tf} onChange={setTf} options={TFS} />
+          <TfTabs value={tf} onChange={setTf} options={TFS} notes={TF_NOTES} />
         </div>
       </div>
 

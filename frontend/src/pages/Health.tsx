@@ -5,20 +5,59 @@ import { useLive } from "../lib/live";
 
 const toneOf = (s: string) => (["LIVE", "OK", "active", "done"].includes(s) ? "bull" : ["DOWN", "failed"].includes(s) ? "bear" : ["POLLING", "running", "queued"].includes(s) ? "accent" : "warn") as "bull" | "bear" | "accent" | "warn";
 
+const FREE_LIMIT = 20_000;      // Firebase free (Spark) plan: document writes per day (day = midnight US Pacific)
+const DEFAULT_BUDGET = 15_000;  // backend sinks.FIRESTORE_DAILY_BUDGET default: the engine goes lean above it
+const arr = (x: any): any[] => (Array.isArray(x) ? x : []);
+
+/** Firestore writes today against the engine's budget and the free plan's hard limit. */
+function WritesCard({ e }: { e: any }) {
+  const n = isNum(e?.firestore_writes_today) ? e.firestore_writes_today : null;
+  const budget = isNum(e?.firestore_write_budget) ? e.firestore_write_budget : DEFAULT_BUDGET;
+  const limit = isNum(e?.firestore_free_limit) ? e.firestore_free_limit : FREE_LIMIT;
+  const engineBudget = isNum(e?.firestore_engine_budget) ? e.firestore_engine_budget : budget;
+  const reserve = isNum(e?.firestore_member_reserve) ? e.firestore_member_reserve : null;
+  const pct = n != null ? Math.min(100, (n / limit) * 100) : 0;
+  const tone = n == null ? "" : n >= limit * 0.95 ? "text-bear" : n >= engineBudget || e?.firestore_lean ? "text-warn" : "text-bull";
+  return (
+    <Card title="Database writes today (Firebase free plan)" right={e?.firestore_lean ? <Badge tone="warn">lean mode</Badge> : n != null ? <Badge tone="bull">normal</Badge> : undefined}>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <Stat label="Engine writes today" value={<span className={tone}>{n != null ? fmtNum(n, 0) : DASH}</span>}
+          sub={`budget ${fmtNum(budget, 0)} · free limit ${fmtNum(limit, 0)} a day (resets at midnight US Pacific)`} />
+        <div className="text-right text-xs text-mute">
+          {reserve != null && <div>kept for members: <span className="num text-text">{fmtNum(reserve, 0)}</span>{isNum(e?.firestore_members_active) ? ` (${e.firestore_members_active} active in 24 h)` : ""}</div>}
+          <div>engine goes lean at <span className="num text-text">{fmtNum(engineBudget, 0)}</span></div>
+        </div>
+      </div>
+      <div className="relative mt-3 h-2.5 overflow-hidden rounded-full bg-glass/[0.08]" role="img" aria-label={n != null ? `${fmtNum(n, 0)} of ${fmtNum(limit, 0)} writes used` : "no data"}>
+        <div className={`h-full rounded-full ${n != null && n >= engineBudget ? "bg-warn" : "bg-accent"}`} style={{ width: `${pct}%` }} />
+        <div className="absolute inset-y-0 w-px bg-text/60" style={{ left: `${Math.min(100, (engineBudget / limit) * 100)}%` }} title="lean from here" />
+      </div>
+      <Note>Counts only the engine's own writes; members' writes (presence, practice trades, alerts) also use the {fmtNum(limit, 0)} limit, so the engine keeps room for them. Above its budget it publishes only the essentials, every 30 min.</Note>
+    </Card>
+  );
+}
+
 export default function Health() {
   const h = useApi<any>("/system/health", 10000);
   const { connected, feed } = useLive();
-  const d = h.data;
+  const raw = h.data;
+  // the engine publishes {error} instead of the view when it could not build it (e.g. too large for one document)
+  const viewError: string | null = raw && typeof raw === "object" && raw.error && !raw.status ? String(raw.error) : null;
+  const d = raw && !viewError ? { ...raw, engine: raw.engine ?? {}, market_data: raw.market_data ?? {}, exchange: raw.exchange ?? {},
+    database: raw.database ?? {}, config: raw.config ?? {}, series: arr(raw.series), models: arr(raw.models),
+    model_libraries: arr(raw.model_libraries), recent_errors: arr(raw.recent_errors), safety: arr(raw.safety) } : null;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
         <h1 className="page-title">System health</h1>
-        {d && <Badge tone={toneOf(d.status)}>● {d.status}</Badge>}
+        {d?.status && <Badge tone={toneOf(d.status)}>● {d.status}</Badge>}
       </div>
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
+      {viewError && <ErrorBox error={`The engine could not publish the health report: ${viewError}`} retry={h.reload} />}
       {!d && h.loading && <Loading />}
       {d && (
         <>
+          <WritesCard e={d.engine} />
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <Card title="Prediction engine">
               <Stat label="Last cycle" value={d.engine?.last_tick_finished ? ago(d.engine.last_tick_finished) : "not run yet"}
@@ -26,7 +65,7 @@ export default function Health() {
                 className={d.engine?.last_tick_finished && Date.now() - d.engine.last_tick_finished > 45 * 60_000 ? "text-warn" : ""} />
               <div className="mt-3">
                 <Row k="Cycle duration" v={isNum(d.engine?.last_tick_seconds) ? `${d.engine.last_tick_seconds}s` : DASH} />
-                <Row k="Failed steps" v={d.engine?.failed_steps?.length ? d.engine.failed_steps.join(", ") : "none"} className={d.engine?.failed_steps?.length ? "text-warn" : ""} />
+                <Row k="Failed steps" v={arr(d.engine.failed_steps).length ? arr(d.engine.failed_steps).join(", ") : "none"} className={arr(d.engine.failed_steps).length ? "text-warn" : ""} />
                 <Row k="Market data host" v={d.engine?.data_host?.replace("https://", "") ?? DASH} />
                 <Row k="Last training run" v={d.engine?.last_train?.finished_at ? ago(d.engine.last_train.finished_at) : "not yet"} />
               </div>
@@ -39,16 +78,16 @@ export default function Health() {
             <Card title="Market data at last cycle">
               <Stat label="Candle data quality" value={isNum(d.market_data.quality_pct) ? `${fmtNum(d.market_data.quality_pct, 2)}%` : DASH} />
               <div className="mt-3">
-                <Row k="Stale series" v={d.market_data.stale_series} className={d.market_data.stale_series ? "text-warn" : ""} />
-                <Row k="API errors in cycle" v={d.exchange.errors} className={d.exchange.errors ? "text-warn" : ""} />
+                <Row k="Stale series" v={d.market_data.stale_series ?? DASH} className={d.market_data.stale_series ? "text-warn" : ""} />
+                <Row k="API errors in cycle" v={d.exchange.errors ?? DASH} className={d.exchange.errors ? "text-warn" : ""} />
                 <Row k="Clock difference" v={isNum(d.exchange.clock_skew_ms) ? `${d.exchange.clock_skew_ms} ms` : DASH} />
               </div>
               {d.exchange.last_error && <Note>Last error: {d.exchange.last_error}</Note>}
             </Card>
             <Card title="Configuration">
               <Row k="Mode" v="Analysis + demo only" />
-              <Row k="Database (engine state)" v={`${d.database.engine} · ${d.database.ok ? "OK" : "DOWN"}`} />
-              <Row k="Retrain interval" v={`${d.config.retrain_interval_h}h`} />
+              <Row k="Database (engine state)" v={d.database.engine ? `${d.database.engine} · ${d.database.ok ? "OK" : "DOWN"}` : DASH} />
+              <Row k="Retrain interval" v={isNum(d.config.retrain_interval_h) ? `${d.config.retrain_interval_h}h` : DASH} />
               <Row k="Deep models" v={d.config.deep_models ? "enabled" : "disabled"} />
             </Card>
           </div>

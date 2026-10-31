@@ -57,7 +57,7 @@ jobs:
           set -o pipefail
           exec > >(tee build.log) 2>&1
           set -x
-          ver="2.0.0"
+          ver=$(python3 -c 'import json;print(json.load(open("../frontend/package.json"))["version"])')   # one source: frontend/package.json
           sed -e "s/__VERSION_NAME__/${ver}/g" -e "s/__VERSION_CODE__/${GITHUB_RUN_NUMBER}/" twa-manifest.template.json > twa-manifest.json
           mkdir -p ~/.bubblewrap
           echo "{\"jdkPath\": \"${JAVA_HOME}\", \"androidSdkPath\": \"${ANDROID_SDK_ROOT:-$ANDROID_HOME}\"}" > ~/.bubblewrap/config.json

@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, onSnapshot, updateDoc } from "firebase/firestore";
+import { collection, deleteDoc, doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import { countryName, flagUrl, ONLINE_MS } from "../lib/presence";
 import { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -9,6 +9,7 @@ import { fmtTime } from "../lib/format";
 import { daysLeft, fmtDate, grantMembership, markFree, MembershipConfig, planLabel, rejectPayment, saveMembershipConfig, useMembershipConfig } from "../lib/membership";
 import { roleOf, useIsAdmin } from "../lib/session";
 import { Limits, saveLimits, useLimits } from "../lib/limits";
+import { isProofImage } from "../lib/writeShapes";
 
 type Filter = "todo" | "members" | "free" | "ending" | "expired" | "blocked" | "all";
 type Sort = "action" | "newest" | "expiry" | "active" | "name";
@@ -27,6 +28,32 @@ const PAGE = 25;
 /** A free member (u.free, set by grantMembership(…, free = true) or markFree) sees no payment-proof tools, unless they
  *  have sent a new payment proof: then the normal paid flow (proof, accept, reject) is shown so it can be checked. */
 const isFreeView = (u: any) => !!u.free && u.payment?.status !== "submitted";
+/** Whether a payment has a screenshot: inline in older records (payment.proof), or in payment_proofs/{uid} (has_proof). */
+const hasProof = (p: any) => !!p && (p.proof != null || !!p.has_proof);
+
+/** The payment screenshot, loaded only when the proof viewer opens. Older records carry it inline; newer ones keep
+ *  it in payment_proofs/{uid}. Anything that is not an image data URL (PNG / JPEG / WebP) is never rendered. */
+type ProofImage = { state: "none" | "loading" | "ok" | "invalid" | "error"; src?: string };
+function useProofImage(u: any): ProofImage {
+  const p = u?.payment;
+  const inline = p?.proof;
+  const [img, setImg] = useState<ProofImage>({ state: "loading" });
+  useEffect(() => {
+    if (inline != null) { setImg(isProofImage(inline) ? { state: "ok", src: inline } : { state: "invalid" }); return; }
+    if (!p?.has_proof) { setImg({ state: "none" }); return; }
+    let live = true;
+    setImg({ state: "loading" });
+    getDoc(doc(db, "payment_proofs", u.id)).then((s) => {
+      if (!live) return;
+      const src = s.data()?.proof;
+      setImg(src == null ? { state: "none" } : isProofImage(src) ? { state: "ok", src } : { state: "invalid" });
+    }, () => { if (live) setImg({ state: "error" }); });
+    return () => { live = false; };
+  }, [u?.id, inline, p?.has_proof, p?.submitted_at]);
+  return img;
+}
+const InvalidImage = ({ className = "" }: { className?: string }) => <span className={`text-bear ${className}`}>invalid image</span>;
+
 const displayName = (u: any) => u.name || (u.username ? `@${u.username}` : u.email);
 
 /** Admin: check payment proofs, approve members for 1 / 3 / 6 / 12 months, extend, block, set prices and limits. */
@@ -123,7 +150,7 @@ export default function Users() {
 
       {/* toolbar: status tabs, search, sort */}
       <div className="space-y-2">
-        <div className="-mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <div className="-mx-3 overflow-x-auto px-3 sm:mx-0 sm:px-0">{/* main has px-3 on phones: -mx-3 bleeds to the edge without overflowing */}
           <div className="seg" role="group" aria-label="Filter by status">
             {FILTERS.map(([k, l]) => (
               <button key={k} type="button" aria-pressed={filter === k} onClick={() => setFilter(k)} className="whitespace-nowrap">
@@ -496,7 +523,7 @@ function PaymentCell({ u, onProof }: { u: any; onProof: () => void }) {
       <div className="num"><span className="font-semibold text-text">{p.amount} {p.currency}</span> <span className="text-mute">· {planLabel(p.months)}</span></div>
       <div className="mt-0.5 flex items-center gap-2">
         <span className={tone}>{p.status === "submitted" ? "to check" : p.status}</span>
-        <button type="button" className="text-accent underline-offset-2 hover:underline" onClick={onProof} aria-label={`${p.proof ? "View proof" : "Payment details"} from ${u.email}`}>{p.proof ? "View proof" : "Details"}</button>
+        <button type="button" className="text-accent underline-offset-2 hover:underline" onClick={onProof} aria-label={`${hasProof(p) ? "View proof" : "Payment details"} from ${u.email}`}>{hasProof(p) ? "View proof" : "Details"}</button>
       </div>
     </div>
   );
@@ -582,7 +609,10 @@ function UserCard({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any
       {p && !a.freeView && (
         <button type="button" onClick={onProof} className={`mt-2 flex w-full items-center gap-3 rounded-lg border p-2 text-left ${check ? "border-accent/40 bg-accent/[0.06]" : "border-glass/10 bg-glass/[0.02]"}`}
           aria-label={`${check ? "Check payment proof" : "Last payment"} from ${u.email}`}>
-          {p.proof ? <img src={p.proof} alt="" className="h-11 w-8 shrink-0 rounded object-cover ring-1 ring-glass/20" /> : <span className="flex h-11 w-8 shrink-0 items-center justify-center rounded bg-glass/[0.05] text-[9px] leading-tight text-mute">no<br />image</span>}
+          {p.proof != null && isProofImage(p.proof) ? <img src={p.proof} alt="" className="h-11 w-8 shrink-0 rounded object-cover ring-1 ring-glass/20" />
+            : <span className={`flex h-11 w-8 shrink-0 items-center justify-center rounded bg-glass/[0.05] text-center text-[9px] leading-tight ${p.proof != null ? "text-bear" : "text-mute"}`}>
+                {p.proof != null ? <>invalid<br />image</> : p.has_proof ? <svg aria-label="screenshot" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 17l-5-5-9 8" /></svg> : <>no<br />image</>}
+              </span>}
           <span className="min-w-0 flex-1">
             <span className="block text-[13px] font-semibold">{check ? "Payment proof to check" : p.status === "accepted" ? "Last payment · accepted" : "Last payment · rejected"}</span>
             <span className="num block truncate text-xs text-mute"><span className={check ? "text-accent" : ""}>{p.amount} {p.currency}</span> · {planLabel(p.months)} · {p.method === "mexc" ? "MEXC" : "Binance"}</span>
@@ -621,6 +651,7 @@ function ProofViewer({ u, cfg, act, onClose }: { u: any; cfg: MembershipConfig; 
   const a = useUserActions(u, cfg, act);
   const p = a.p ?? {};
   const ref = useFocusTrap(true, onClose);
+  const img = useProofImage(u);
   return (
     <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
       <div ref={ref} role="dialog" aria-modal="true" aria-label={`Payment proof from ${u.email}`} onClick={(e) => e.stopPropagation()}
@@ -631,7 +662,10 @@ function ProofViewer({ u, cfg, act, onClose }: { u: any; cfg: MembershipConfig; 
         </div>
         <div className="min-h-0 flex-1 space-y-4 overflow-y-auto p-4 md:grid md:grid-cols-[minmax(0,1fr)_16rem] md:gap-4 md:space-y-0">
           <div className="flex min-h-[12rem] min-w-0 shrink-0 items-center justify-center rounded-xl bg-black/40 p-2">
-            {p.proof ? <a href={p.proof} target="_blank" rel="noopener" title="Open the original" className="block max-w-full"><img src={p.proof} alt="Payment screenshot" className="mx-auto block max-h-[40dvh] max-w-full rounded-lg object-contain md:max-h-[64dvh]" /></a>
+            {img.state === "ok" ? <a href={img.src} target="_blank" rel="noopener" title="Open the original" className="block max-w-full"><img src={img.src} alt="Payment screenshot" className="mx-auto block max-h-[40dvh] max-w-full rounded-lg object-contain md:max-h-[64dvh]" /></a>
+              : img.state === "loading" ? <p className="text-sm text-mute">Loading the screenshot…</p>
+              : img.state === "invalid" ? <p className="text-sm"><InvalidImage /> <span className="text-mute">· the uploaded file is not a PNG, JPEG or WebP image, so it is not shown. Check the order ID instead.</span></p>
+              : img.state === "error" ? <p className="text-sm text-bear">Could not load the screenshot. Close and open again.</p>
               : <p className="text-sm text-mute">No screenshot was uploaded. Check the order ID in your exchange history.</p>}
           </div>
           <div className="space-y-4">

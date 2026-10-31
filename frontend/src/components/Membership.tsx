@@ -2,6 +2,7 @@ import { useState } from "react";
 import { compressImage, daysLeft, fmtDate, PayMethod, Plan, planLabel, submitPayment, supportLink, useMembershipConfig, useMyRecord } from "../lib/membership";
 import { BinanceLogo, MexcLogo } from "./PayLogos";
 import { Badge, Card } from "./ui";
+import { isProofImage } from "../lib/writeShapes";
 
 /** Choose a plan → pay with Binance (QR) or MEXC (UID transfer) → upload proof. Used on the access screen and in Settings. */
 export function PaymentPanel({ record, compact = false }: { record: any; compact?: boolean }) {
@@ -127,7 +128,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
       <div className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-mute">4 · Send the proof</div>
       <div className="mt-2 grid gap-3 sm:grid-cols-2">
         <label className="flex min-h-[96px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-accent/40 bg-accent/[0.04] p-3 text-center text-sm hover:bg-accent/[0.08]">
-          {proof ? <img src={proof} alt="Payment screenshot" className="max-h-40 rounded-lg" /> : <><span className="text-accent">＋ Upload screenshot</span><span className="text-xs text-mute">PNG or JPG from your gallery</span></>}
+          {proof ? (isProofImage(proof) ? <img src={proof} alt="Payment screenshot" className="max-h-40 rounded-lg" /> : <span className="text-bear">invalid image</span>) : <><span className="text-accent">＋ Upload screenshot</span><span className="text-xs text-mute">PNG or JPG from your gallery</span></>}
           <input type="file" accept="image/*" className="hidden" onChange={(e) => pick(e.target.files?.[0])} />
         </label>
         <label className="text-xs text-mute">{exch} order ID / transaction ID (recommended)

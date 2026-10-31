@@ -4,13 +4,13 @@ import { SymbolSelect, useSymbols } from "./Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Note, Stat } from "./ui";
 import { useApi } from "../lib/api";
 import { DASH, fmtNum, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from "../lib/format";
-import { useLive } from "../lib/live";
+import { useFastTickers } from "../lib/live";
 import * as PF from "../lib/paperFutures";
 
 /** Manual futures paper trading: long / short with leverage, stop-loss, take-profit, liquidation and funding. */
 export default function FuturesPaper() {
   const symbols = useSymbols();
-  const { tickers } = useLive();
+  const { tickers } = useFastTickers();
   const [params] = useSearchParams();
   const st = useApi<any>("/paper/futures");
   const [symbol, setSymbol] = useState(params.get("symbol") ?? "BTC/USDT");
@@ -171,7 +171,7 @@ export default function FuturesPaper() {
 }
 
 function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Promise<any>, ok: string) => void }) {
-  const { tickers } = useLive();
+  const { tickers } = useFastTickers();
   const rows = (d?.positions ?? []).map((p: any) => {
     const mark = tickers[p.symbol]?.last ?? p.mark;
     const u = mark != null ? p.side * p.qty * (mark - p.entry) : null;

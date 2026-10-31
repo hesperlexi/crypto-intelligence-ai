@@ -30,7 +30,7 @@ function spa(): Plugin {
 export default defineConfig({
   root,
   plugins: [react(), spa()],
-  define: { __APP_VERSION__: JSON.stringify("2.0.0"), __BUILD_ID__: JSON.stringify("preview") },
+  define: { __APP_VERSION__: JSON.stringify(JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8")).version), __BUILD_ID__: JSON.stringify("preview") },
   resolve: {
     alias: [
       { find: /^firebase\/firestore$/, replacement: m("firestore.ts") },

@@ -197,7 +197,8 @@ def close_message(sig: dict[str, Any], price: float, ret: float | None, roi: flo
     if ret is None:
         res = ""
     else:
-        res = f" Result {'+' if ret > 0 else ''}{ret:.2f}%" + (f" ({'+' if roi > 0 else ''}{roi:.2f}% ROI)" if roi is not None else "") + "."
+        res = (" Result 0.00% (break-even)." if abs(ret) < 1e-9 else
+               f" Result {'+' if ret > 0 else ''}{ret:.2f}%" + (f" ({'+' if roi > 0 else ''}{roi:.2f}% ROI)" if roi is not None else "") + ".")
     return {"title": head, "body": f"Closed by the admin at {fmt_price(price)}.{res} Note: {note}"[:400],
             "url": f"/signals?symbol={sig['symbol']}&timeframe={sig['timeframe']}&market=futures",
             "tag": f"close-{sig['id']}", "broadcast": "1"}
@@ -242,7 +243,7 @@ def close(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
         bots = BotEngine(rt).apply_close(sig, price, at)
     except Exception as exc:                     # the record close stands; bots are best effort
         bots = f"not applied: {type(exc).__name__}"
-    word = "" if ret is None else (" as a win" if ret > 0 else " as a loss")
+    word = "" if ret is None else (" at break-even" if abs(ret) < 1e-9 else " as a win" if ret > 0 else " as a loss")
     out: dict[str, Any] = {"ok": True, "signal_id": sid, "at": at, "price": price, "return_pct": ret, "roi_pct": roi,
                            "bots_closed": bots,
                            "message": f"Closed at {fmt_price(price)}{word}. The record shows it within a few minutes and members are notified."}

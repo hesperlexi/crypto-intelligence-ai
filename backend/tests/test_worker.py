@@ -36,6 +36,11 @@ def test_engine_cycle_publishes_views_runs_jobs_and_bots():
         assert _view(sink, name) is not None, name
     assert sink.get("config/bots")["bots"] and sink.get("config/watchlist")["symbols"]
     assert _view(sink, "health")["engine"]["ticks"] == 1
+    # the demo bots' held-back call never reaches a published analysis view
+    import pathlib
+    for f in (pathlib.Path(sink.root) / "views").glob("analysis_*.json"):
+        assert "demo" not in json.loads(json.loads(f.read_text())["json"]), f.name
+    assert "firestore_engine_budget" in _view(sink, "health")["engine"]
 
     # the website edits configuration and queues work
     sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}, {"symbol": "ETH/USDT"},
@@ -347,3 +352,54 @@ def test_sink_paces_views_counts_writes_and_backs_off_on_quota(tmp_path):
     assert s.flush() == 0 and s.blocked()                       # no exception, no retries
     s.view("c", {"y": 1})
     assert s.flush() == 0 and s.held == 2
+
+
+def test_sink_keeps_room_for_member_writes(tmp_path):
+    """Members' own writes (presence, practice trades) share the daily quota: the engine reserves an estimate for
+    the people active in the last 24 h and goes lean earlier."""
+    from app.db import Database
+    from app.sinks import LocalSink, _now
+    s = LocalSink(tmp_path / "out", Database(str(tmp_path / "x.db")))
+    s.DAILY_BUDGET, s.MEMBER_WRITES_PER_DAY, s.MEMBER_RESERVE_MAX, s.MIN_ENGINE_BUDGET = 100, 20, 50, 10
+    assert s.engine_budget() == 100 and s.member_reserve() == 0
+    now = _now()
+    s.set("presence/a", {"last_seen": now - 60_000})
+    s.set("presence/b", {"last_seen": now - 3_600_000, "country": "AE"})
+    s.set("presence/old", {"last_seen": now - 3 * 86_400_000})      # not active in the last day: no reserve
+    est = s.refresh_member_estimate()
+    assert est["active"] == 2 and s.member_reserve() == 40 and s.engine_budget() == 60
+    s.set("presence/c", {"last_seen": now})
+    assert s.refresh_member_estimate()["active"] == 2                # refreshed at most hourly
+    assert s.refresh_member_estimate(force=True)["active"] == 3 and s.member_reserve() == 50   # capped
+    s.db.set_setting("fs_writes", {"day": s.quota_day()[0], "n": 49})
+    assert not s.lean
+    s.db.set_setting("fs_writes", {"day": s.quota_day()[0], "n": 50})
+    assert s.lean                                                    # 100 - 50 reserved
+    s.MEMBER_RESERVE_MAX, s.MEMBER_WRITES_PER_DAY = 1000, 500
+    s.refresh_member_estimate(force=True)
+    assert s.engine_budget() == 10                                   # never below the engine's minimum
+
+
+def test_public_analysis_view_drops_the_demo_call():
+    from app.services import analysis
+    a = {"decision": "NO TRADE", "demo": {"decision": "BUY", "grade": "A"}, "setup": {"valid": True}}
+    pub = analysis.public_view(a)
+    assert "demo" not in pub and pub["decision"] == "NO TRADE" and a["demo"]["decision"] == "BUY"   # engine copy kept
+
+
+def test_default_bots_follow_the_timeframe_policy():
+    from app.services.analysis import A_ONLY_TFS, DEMO_ONLY_TFS, PAUSED_TFS
+    from app.services.bots import DEMO_15M
+    bots = worker.policy_default_bots()
+    ids = {b["id"] for b in bots}
+    assert not any(b["timeframe"] in PAUSED_TFS for b in bots)
+    assert all(b.get("demo_only") for b in bots if b["timeframe"] in DEMO_ONLY_TFS)
+    if "15m" in DEMO_ONLY_TFS:
+        assert DEMO_15M["id"] in ids
+    for b in bots:
+        if b["timeframe"] in A_ONLY_TFS:
+            assert b["grades"] == "A" and "grades A+B" not in b["name"]
+        if b["timeframe"] == "1h":
+            assert b["max_hold_bars"] == 200
+        if b["timeframe"] == "4h":
+            assert b["max_hold_bars"] == 100

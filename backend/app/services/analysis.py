@@ -45,6 +45,14 @@ A_ONLY_TFS = _tfs("A_ONLY_TFS", "1h")
 # demo-only timeframes: the public decision is NO TRADE ("DEMO BOTS ONLY"); the call the demo bots may take is in `demo`
 DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "15m")
 
+# fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
+PRIVATE_FIELDS = ("demo",)
+
+
+def public_view(a: dict[str, Any]) -> dict[str, Any]:
+    """The analysis as members may see it: without the demo bots' held-back call (`demo`)."""
+    return {k: v for k, v in a.items() if k not in PRIVATE_FIELDS} if isinstance(a, dict) else a
+
 
 def round_trip_cost(futures: bool = True) -> float:
     """Fraction of price paid to enter and exit once (fees + slippage + half spread, both sides)."""

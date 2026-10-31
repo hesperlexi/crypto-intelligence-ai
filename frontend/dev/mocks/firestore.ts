@@ -51,7 +51,7 @@ function docsOf(c: Coll) {
   const out: any[] = [];
   for (const [k, v] of store) {
     if (!k.startsWith(pre) || k.slice(pre.length).includes("/")) continue;
-    if (c.filters.every(([f, op, val]) => op === "==" ? v[f] === val : true)) {
+    if (c.filters.every(([f, op, val]) => op === "==" ? f.split(".").reduce((o: any, k) => o?.[k], v) === val : true)) {
       const id = k.slice(pre.length);
       out.push({ id, ref: doc(null, ...k.split("/")), data: () => structuredClone(v), exists: () => true, _v: v });
     }

@@ -170,6 +170,29 @@ def _off_bot(b: dict[str, Any]) -> bool:
     return tf in PAUSED_TFS or (tf in DEMO_ONLY_TFS and not b.get("demo_only"))
 
 
+def _policy_bot(b: dict[str, Any]) -> dict[str, Any]:
+    """v2.8 timeframe policy on one bot: 1h / 4h decision bots held as the record (200 / 100 candles), 1h grade A only."""
+    from .services.analysis import A_ONLY_TFS
+    from .services.bots import _HOLD
+    tf = b.get("timeframe")
+    if b.get("mode") == "decision" and tf in ("1h", "4h"):
+        b = {**b, "max_hold_bars": _HOLD[tf]}
+    if b.get("mode") == "decision" and tf in A_ONLY_TFS:
+        b = {**b, "grades": "A", "name": str(b.get("name") or "").replace("grades A+B", "grade A")}
+    return b
+
+
+def policy_default_bots() -> list[dict[str, Any]]:
+    """The default bot line-up under the current timeframe policy: no bots on paused / demo-only timeframes (except
+    the 15m demo bot), 1h grade A + 200 candles, 4h 100 candles (used when config/bots is missing)."""
+    from .services.analysis import DEMO_ONLY_TFS
+    from .services.bots import DEMO_15M
+    out = [_policy_bot(dict(b)) for b in DEFAULT_BOTS if not _off_bot(b)]
+    if "15m" in DEMO_ONLY_TFS and not _off_bot(DEMO_15M):
+        out.append(dict(DEMO_15M))
+    return out
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
@@ -365,20 +388,15 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     # v2.8 timeframe policy (owner decision, 31 Oct 2026): 1d / 3d paused -> their bots go; 1h grade A only and held
     # up to 200 candles, 4h up to 100 (as the record); 15m comes back as one demo-only bot (grade A, TP1, 20x)
     if not rt.db.get_setting("tf_policy_v28", False):
-        from .services.analysis import A_ONLY_TFS, DEMO_ONLY_TFS
-        from .services.bots import _HOLD, DEMO_15M
+        from .services.analysis import DEMO_ONLY_TFS
+        from .services.bots import DEMO_15M
         doc = sink.get("config/bots") or {}
         if isinstance(doc.get("bots"), list):
             out = []
             for b in doc["bots"]:
-                tf = b.get("timeframe")
                 if _off_bot(b):
                     continue
-                if b.get("mode") == "decision" and tf in ("1h", "4h"):
-                    b = {**b, "max_hold_bars": _HOLD[tf]}
-                if b.get("mode") == "decision" and tf in A_ONLY_TFS:
-                    b = {**b, "grades": "A", "name": str(b.get("name") or "").replace("grades A+B", "grade A")}
-                out.append(b)
+                out.append(_policy_bot(b))
             added = []
             if "15m" in DEMO_ONLY_TFS and not any(b.get("id") == DEMO_15M["id"] for b in out):
                 out.append(dict(DEMO_15M))
@@ -396,14 +414,16 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     _b("config: bots")
     doc = sink.get("config/bots")
     if doc is None or not isinstance(doc.get("bots"), list):
-        sink.set("config/bots", {"bots": DEFAULT_BOTS, "updated_at": now_ms(),
-                                 "defaults_added": [b["id"] for b in DEFAULT_BOTS]})
-        bots_cfg = DEFAULT_BOTS
+        # no line-up stored (e.g. the document was deleted): the defaults under the current timeframe policy
+        from .services.bots import DEMO_15M
+        bots_cfg = policy_default_bots()
+        sink.set("config/bots", {"bots": bots_cfg, "updated_at": now_ms(),
+                                 "defaults_added": sorted({b["id"] for b in DEFAULT_BOTS} | {DEMO_15M["id"]})})
     else:
         bots_cfg = doc["bots"]
         # one-time additions: default bots introduced in a later version are added once (deleting them later sticks)
         seen = set(doc.get("defaults_added") or [b.get("id") for b in bots_cfg])
-        new = [b for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}
+        new = [_policy_bot(b) for b in DEFAULT_BOTS if b["id"] not in seen and b["id"] not in {x.get("id") for x in bots_cfg}
                and not _off_bot(b)]
         if new or not doc.get("defaults_added"):
             bots_cfg = bots_cfg + new
@@ -669,7 +689,9 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
         publish_status(rt, sink, engine)
         return
     for (s, tf), a in analyses.items():
-        sink.view(f"analysis_{views.slug(s)}_{tf}", a, min_interval_s=ANALYSIS_EVERY_S.get(tf, 900), core=analysis_core(a))
+        # the demo bots' held-back 15m call stays in the engine (bots read `analyses` directly), never in the view
+        sink.view(f"analysis_{views.slug(s)}_{tf}", analysis.public_view(a), min_interval_s=ANALYSIS_EVERY_S.get(tf, 900),
+                  core=analysis_core(a))
     for tf in MODEL_TIMEFRAMES:
         sink.view(f"dashboard_{tf}", scanner.dashboard(rt, tf), min_interval_s=600)
     publish_models(rt, sink)
@@ -861,8 +883,13 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "data_host": getattr(rt.provider, "host_used", None),
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
-    engine["firestore_writes_today"] = sink.writes_today()     # Firebase free plan: 20,000 a day
+    engine["firestore_writes_today"] = sink.writes_today()     # Firebase free plan: 20,000 a day (engine writes only)
     engine["firestore_write_budget"] = sink.DAILY_BUDGET
+    est = step("member_writes", lambda: sink.refresh_member_estimate()) or {}
+    engine["firestore_members_active"] = est.get("active", 0)          # people seen in the last 24 h
+    engine["firestore_member_reserve"] = sink.member_reserve()         # writes kept for them (estimate)
+    engine["firestore_engine_budget"] = sink.engine_budget()           # the engine goes lean at this count
+    engine["firestore_free_limit"] = 20000
     engine["firestore_lean"] = sink.lean
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
     if analyses:

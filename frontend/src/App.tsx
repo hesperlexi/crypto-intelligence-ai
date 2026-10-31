@@ -1,5 +1,5 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
@@ -165,8 +165,9 @@ export default function App() {
   useEffect(() => (user && !unverified ? watchRole(user, setRole) : undefined), [user, unverified, verified]);
   useEffect(() => { if (user && !unverified && role !== "loading") startPresence(); }, [user, unverified, role]);
   const username = useMyUsername(user && !unverified && role !== "loading" && role !== "blocked" ? user.uid : null, role === "admin");
-  // trust pages are public: shown straight away signed out, and to people waiting for access
-  const publicTrust = trust && (user === null || (user && (role === "pending" || role === "expired" || role === "blocked")));
+  // trust pages are public: shown straight away signed out, to email accounts that have not confirmed their address
+  // yet, and to people waiting for access
+  const publicTrust = trust && (user === null || (user && (unverified || role === "pending" || role === "expired" || role === "blocked")));
   if (publicTrust) return <ErrorBoundary resetKey={loc.pathname}><Suspense fallback={<BootLoader />}><div className="route-fade min-h-full"><TrustPage kind={trust} /></div></Suspense></ErrorBoundary>;
   if (user && unverified) return <VerifyEmailScreen user={user} onVerified={() => setVerified((n) => n + 1)} />;
   if (user === undefined || (user && role === "loading")) return <BootLoader />;
@@ -225,8 +226,18 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
 
 function usePendingCount(admin: boolean) {
   const [n, setN] = useState(0);
-  // waiting = new requests plus payment proofs (new members and renewals) not yet checked
-  useEffect(() => (admin ? onSnapshot(collection(db, "users"), (q) => setN(q.docs.filter((d) => { const u = d.data(); return u.status === "pending" || u.payment?.status === "submitted"; }).length), () => setN(0)) : undefined), [admin]);
+  // waiting = new requests plus payment proofs (new members and renewals) not yet checked. Two narrow queries (only
+  // those documents, not the whole users collection), counted once per person.
+  useEffect(() => {
+    if (!admin) return undefined;
+    const pendingIds = new Set<string>(), submittedIds = new Set<string>();
+    const count = () => setN(new Set([...pendingIds, ...submittedIds]).size);
+    const watch = (field: string, value: string, into: Set<string>) => onSnapshot(query(collection(db, "users"), where(field, "==", value)),
+      (q) => { into.clear(); q.docs.forEach((d) => into.add(d.id)); count(); }, () => { into.clear(); count(); });
+    const un1 = watch("status", "pending", pendingIds);
+    const un2 = watch("payment.status", "submitted", submittedIds);
+    return () => { un1(); un2(); };
+  }, [admin]);
   return n;
 }
 
