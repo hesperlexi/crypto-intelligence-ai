@@ -466,6 +466,8 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
             raise PermissionError("only the admin can change a signal's stop-loss or take-profit")
         from .services import adjust
         try:
+            if p.get("action") == "close":           # v2.8: close the call now at the market price
+                return adjust.close(rt, p, str(job.get("by") or ""), sink)
             return adjust.apply(rt, p, str(job.get("by") or ""), sink)
         except adjust.AdjustError as exc:
             raise ValueError(str(exc)) from None

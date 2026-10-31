@@ -362,7 +362,10 @@ class BotEngine:
         for pos in list(state["positions"]):
             side = pos["side"]
             done = None
+            ac = pos.get("admin_close")
             for ts, op, hi, lo, cl in self._path(pos["symbol"], pos["last_check"]):
+                if ac and ts + step > int(ac["at"]):
+                    break                     # v2.8: the admin closed the call before this candle closed
                 pos["last_check"] = ts
                 self._admin_levels(pos, ts)
                 if self._liq_hit(pos, op, hi, lo):
@@ -430,6 +433,9 @@ class BotEngine:
                     self._reduce(state, pos, pos["qty_open"], cl, False)
                     done = ("time exit", ts + step)
                     break
+            if not done and ac:
+                self._reduce(state, pos, pos["qty_open"], float(ac["price"]), False)
+                done = ("closed by admin", int(ac["at"]))
             if done:
                 t = self._close_trade(cfg["id"], state, pos, done[1], done[0])
                 events.append({"bot": cfg["id"], "type": "close", "symbol": pos["symbol"], "reason": done[0], "pnl": t["pnl"]})
@@ -472,6 +478,32 @@ class BotEngine:
                 info = x.get("info") or {}
                 if x.get("symbol") == sig["symbol"] and int(x.get("side") or 0) == side and int(info.get("bar_ts") or 0) >= bar:
                     x["adj"] = list(x.get("adj") or []) + [{"at": int(at), "field": f, "new": float(v)} for f, v in changes]
+                    hit += 1
+            if hit:
+                self.db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))
+                n += hit
+        return n
+
+    def apply_close(self, sig: dict[str, Any], price: float, at: int) -> int:
+        """v2.8: every bot position taken from this call closes at `price` (after the candles that closed before
+        `at` are followed normally); a pending entry from it is cancelled. Returns how many were changed."""
+        n = 0
+        side, tf, bar = int(sig["side"]), sig["timeframe"], int(sig["bar_ts"])
+        for row in self.db.query("SELECT id, config, state FROM bots"):
+            cfg, state = loads(row["config"], {}), loads(row["state"], {})
+            if cfg.get("mode") != "decision" or cfg.get("timeframe") != tf:
+                continue
+            hit = 0
+            mine = lambda x: x.get("symbol") == sig["symbol"] and int(x.get("side") or 0) == side and \
+                int((x.get("info") or {}).get("bar_ts") or 0) >= bar
+            for x in state.get("positions") or []:
+                if mine(x) and not x.get("admin_close"):
+                    x["admin_close"] = {"at": int(at), "price": float(price)}
+                    hit += 1
+            for o in list(state.get("pending") or []):
+                if mine(o):
+                    state["cash"] = state.get("cash", 0.0) + o.get("reserved", 0.0)
+                    state["pending"].remove(o)
                     hit += 1
             if hit:
                 self.db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))

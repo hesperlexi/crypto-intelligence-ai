@@ -129,6 +129,8 @@ def apply(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
     stop, tp1 = _num(params.get("stop"), "stop"), _num(params.get("tp1"), "tp1")
     sig = db.one("SELECT * FROM signals WHERE id = ?", (sid,)) if sid else None
     adj = tracking.adjustments_of(db, sid) if sig else []
+    if any(a["field"] == "close" for a in adj):
+        raise AdjustError("this signal is being closed by the admin, so its levels can no longer change")
     cur = tracking.current_levels(sig, adj) if sig else {}
     price = latest_price(rt, sig["symbol"]) if sig else None
     ch = validate(sig, cur, price, stop, tp1, note)
@@ -150,6 +152,102 @@ def apply(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
                            "message": "Saved. The change applies from the next 15-minute candle and members are notified."}
     if sink is not None:
         out["push"] = sink.send_push([message(sig, ch, note)])
+    adjusted = getattr(rt, "adjusted_ids", None)
+    if isinstance(adjusted, set):
+        adjusted.add(sid)
+    return out
+
+
+# ---- v2.8 admin close: close an open call now, at the market price (public, the result is what the price gives) ----
+
+def close_validate(sig: dict[str, Any] | None, price: float | None, note: str, already: bool,
+                   still_open: bool) -> None:
+    """Pure: AdjustError with the reason, else None."""
+    if not sig:
+        raise AdjustError("this signal was not found")
+    if sig.get("status") != "OPEN" or not sig.get("side"):
+        raise AdjustError(f"only an open signal can be closed (this one is {str(sig.get('status')).lower()})")
+    if sig.get("fill_status") == "PENDING":
+        raise AdjustError("the entry has not filled yet, so there is no trade to close")
+    if already:
+        raise AdjustError("this signal is already being closed")
+    if not (3 <= len(note) <= 200):
+        raise AdjustError("a note of 3 to 200 characters is required (members see it)")
+    if price is None or price <= 0:
+        raise AdjustError("the engine has no current price for this coin; try again in a few minutes")
+    if not still_open:
+        raise AdjustError("the price already reached a stop or target in the last minutes; the record closes it on "
+                          "its own at the next update")
+
+
+def close_result(sig: dict[str, Any], adj: list[dict[str, Any]], p15: Any, price: float, at: int) -> dict[str, Any]:
+    """What the record will show: the same follow as tracking, with the close at `price` (forming candle included)."""
+    res = tracking.evaluate_signal(sig, p15, None, at, adjust=list(adj) + [{"at": at, "field": "close", "old": price,
+                                                                          "new": price, "note": ""}])
+    if res.get("status") == "OPEN" and p15 is not None and len(p15):
+        # the path ends inside the current candle: the close is final once that candle's data is in
+        res = {**res, "status": "CLOSING"}
+    return res
+
+
+def close_message(sig: dict[str, Any], price: float, ret: float | None, roi: float | None, note: str) -> dict[str, str]:
+    coin = str(sig["symbol"]).split("/")[0]
+    coin = "GOLD" if coin == "PAXG" else coin
+    head = f"{coin} {str(sig['timeframe']).upper()} {'long' if int(sig['side']) > 0 else 'short'} closed"
+    if ret is None:
+        res = ""
+    else:
+        res = f" Result {'+' if ret > 0 else ''}{ret:.2f}%" + (f" ({'+' if roi > 0 else ''}{roi:.2f}% ROI)" if roi is not None else "") + "."
+    return {"title": head, "body": f"Closed by the admin at {fmt_price(price)}.{res} Note: {note}"[:400],
+            "url": f"/signals?symbol={sig['symbol']}&timeframe={sig['timeframe']}&market=futures",
+            "tag": f"close-{sig['id']}", "broadcast": "1"}
+
+
+def close(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int | None = None) -> dict[str, Any]:
+    """Close an open call at the engine's current market price (the caller has checked that `by` is an admin).
+    The record follows every candle that closed before now with the normal rules, then closes the rest at this
+    price; win or loss is what that price gives. Members are notified; the bots holding the call close too."""
+    from ..engine import futures as F
+    db = rt.db
+    sid = str(params.get("signal_id") or "").strip()
+    note = " ".join(str(params.get("note") or "").split())
+    sig = db.one("SELECT * FROM signals WHERE id = ?", (sid,)) if sid else None
+    adj = tracking.adjustments_of(db, sid) if sig else []
+    price = latest_price(rt, sig["symbol"]) if sig else None
+    at = int(now or now_ms())
+    p15 = None
+    still_open = True
+    if sig and price:
+        try:
+            p15 = rt.candles(sig["symbol"], tracking.PATH_TF, include_forming=True)
+        except TypeError:
+            p15 = rt.candles(sig["symbol"], tracking.PATH_TF)
+        except Exception:
+            p15 = None
+        # the forming candle counts here: a level it already touched before the click wins over the close
+        chk = tracking.evaluate_signal(sig, p15, None, at, adjust=adj)
+        still_open = chk.get("status", "OPEN") == "OPEN"
+    close_validate(sig, price, note, any(a["field"] == "close" for a in adj), still_open)
+    res = close_result(sig, adj, p15, price, at)
+    ret = res.get("return_pct")
+    lev = F.signal_leverage(sig.get("entry"), sig.get("stop"))
+    roi = F.roi_on_margin(ret, lev)
+    db.execute("INSERT INTO signal_adjustments (id, signal_id, at, field, old, new, note, by, price_at_change) "
+               "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (new_id(), sid, at, "close", price, price, note, by, price))
+    tracking.log_decision(db, "admin_close", sig["symbol"], sig["timeframe"], sid,
+                          {"price": price, "note": note, "by": by, "return_pct": ret, "tp1_hit": bool(sig.get("tp1_hit"))}, ts=at)
+    bots = 0
+    try:
+        from .bots import BotEngine
+        bots = BotEngine(rt).apply_close(sig, price, at)
+    except Exception as exc:                     # the record close stands; bots are best effort
+        bots = f"not applied: {type(exc).__name__}"
+    word = "" if ret is None else (" as a win" if ret > 0 else " as a loss")
+    out: dict[str, Any] = {"ok": True, "signal_id": sid, "at": at, "price": price, "return_pct": ret, "roi_pct": roi,
+                           "bots_closed": bots,
+                           "message": f"Closed at {fmt_price(price)}{word}. The record shows it within a few minutes and members are notified."}
+    if sink is not None:
+        out["push"] = sink.send_push([close_message(sig, price, ret, roi, note)])
     adjusted = getattr(rt, "adjusted_ids", None)
     if isinstance(adjusted, set):
         adjusted.add(sid)

@@ -249,6 +249,13 @@ def _png(img: Image.Image) -> bytes:
 
 TARGET = {"TP1": "TARGET 1 HIT", "TP2": "TARGET 2 HIT", "TP3": "ALL TARGETS HIT", "STOPPED": "STOPPED OUT",
           "EXPIRED": "CLOSED AT TIME LIMIT"}
+def _label(x: dict[str, Any], default: str) -> str:
+    """Result label; a call the admin closed at market says so (v2.8)."""
+    if x.get("exit_reason") == "admin_close":
+        return "CLOSED BY ADMIN"
+    return TARGET.get(str(x.get("status") or ""), default)
+
+
 HIT = {"TP1": "TP1", "TP2": "TP1 · TP2", "TP3": "TP1 · TP2 · TP3"}
 
 
@@ -263,7 +270,7 @@ def result_card(w: dict[str, Any]) -> bytes:
     status = str(w.get("status") or "")
     lw = 528                                                # left column 56..584, right column 616..1144
     y = 144
-    x = _pill(d, M, y, TARGET.get(status, "CLOSED IN PROFIT" if win else "CLOSED"), INK, GREEN if win else RED)
+    x = _pill(d, M, y, _label(w, "CLOSED IN PROFIT" if win else "CLOSED"), INK, GREEN if win else RED)
     x = _side_pill(d, x + 12, y, side)
     _chip(d, x + 12, y, str(w["timeframe"]).upper())
     name = pair(w["symbol"])
@@ -325,7 +332,7 @@ def wins_card(wins: list[dict[str, Any]], period: str = "today", closed: int | N
         _side_pill(d, cols["side"], int(mid - 15), side, 15, 30, w=96)
         _chip(d, cols["tf"], int(mid - 15), str(x["timeframe"]).upper(), 15, 30, w=72)
         rf = _f("Medium", 19)
-        d.text((cols["res"], mid + _cap(rf) / 2), TARGET.get(x.get("status", ""), "IN PROFIT").title(), font=rf,
+        d.text((cols["res"], mid + _cap(rf) / 2), _label(x, "IN PROFIT").title(), font=rf,
                fill=MUTED, anchor="ls")
         val, lev, price = result(x)
         d.text((cols["price"], mid + _cap(rf) / 2), pct(price), font=rf, fill=WHITE, anchor="rs")

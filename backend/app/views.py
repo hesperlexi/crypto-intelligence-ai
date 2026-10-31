@@ -504,7 +504,7 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
             break
     wins = [{"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
              "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"], "closed_at": r["closed_at"],
-             **tracking.margin_fields(r),
+             "exit_reason": r.get("exit_reason"), **tracking.margin_fields(r),
              "target": {"TP1": r["tp1"], "TP2": r["tp2"], "TP3": r["tp3"]}.get(r["status"])} for r in rows]
     # v2.5: the same window's complete count, so losses show beside the wins (never only the winners)
     rc, rp = record_clause(rt)

@@ -9,12 +9,12 @@ import { useLive } from "../lib/live";
 import { useIsAdmin } from "../lib/session";
 import { Pill } from "./SignalExtras";
 
-export type Adjustment = { at: number; field: "stop" | "tp1"; old: number; new: number; note: string };
+export type Adjustment = { at: number; field: "stop" | "tp1" | "close"; old: number; new: number; note: string };
 /** The plan with the admin's levels for the fields that were adjusted on the same-side open call (else the plan as is). */
 export function adjustedPlan(plan: any, call: any): any {
   const adj: Adjustment[] | undefined = call?.adjustments;
   if (!plan || !adj?.length || call.status !== "OPEN" || plan.side !== call.side) return plan;
-  const f = new Set(adj.map((a) => a.field));
+  const f = new Set<string>(adj.map((a) => a.field));
   return {
     ...plan,
     ...(f.has("stop") ? { stop: call.stop } : {}),
@@ -22,7 +22,7 @@ export function adjustedPlan(plan: any, call: any): any {
   };
 }
 
-const LABEL = { stop: "Stop-loss", tp1: "Take-profit 1" } as const;
+const LABEL = { stop: "Stop-loss", tp1: "Take-profit 1", close: "Closed at market" } as const;
 const MAX_DIST = 0.5;
 
 const hhmm = (ms: number) => new Date(ms).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -39,12 +39,14 @@ export function AdjustHistory({ adj, compact = false }: { adj?: Adjustment[] | n
   if (!adj?.length) return null;
   return (
     <div className={`rounded-lg border border-warn/30 bg-warn/[0.05] ${compact ? "mt-1 px-2 py-1" : "px-2.5 py-2"}`}>
-      {!compact && <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-warn">Updated by the admin · applies from the time shown</div>}
+      {!compact && <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-warn">Changed by the admin · applies from the time shown</div>}
       <ul className="space-y-0.5">
         {[...adj].reverse().map((a, i) => (
           <li key={i} className="text-[11px] leading-snug text-mute">
             <span className="num">{hhmm(a.at)}</span> · <span className="font-semibold text-text">{LABEL[a.field] ?? a.field}</span>{" "}
-            <span className="num">{fmtPrice(a.old)} → <span className={a.field === "stop" ? "text-bear" : "text-bull"}>{fmtPrice(a.new)}</span></span>
+            {a.field === "close"
+              ? <span className="num text-warn">{fmtPrice(a.new)}</span>
+              : <span className="num">{fmtPrice(a.old)} → <span className={a.field === "stop" ? "text-bear" : "text-bull"}>{fmtPrice(a.new)}</span></span>}
             {a.note ? <> · <span className="break-words">{a.note}</span></> : null}
           </li>
         ))}
@@ -85,12 +87,108 @@ export function adjustProblem(call: any, px: number | undefined, stop: number | 
 export function AdjustButton({ call, symbol, timeframe }: { call: any; symbol: string; timeframe?: string }) {
   const admin = useIsAdmin();
   const [open, setOpen] = useState(false);
+  const [closing, setClosing] = useState(false);
   if (!admin || !call || call.status !== "OPEN" || !call.id) return null;
+  const canClose = call.fill_status !== "PENDING" && !(call.adjustments ?? []).some((a: Adjustment) => a.field === "close");
   return (
     <>
       <button type="button" className="btn btn-sm px-2.5 text-xs" onClick={() => setOpen(true)} title="Move the stop-loss or take-profit 1 (admin, public)">Adjust</button>
+      {canClose && <button type="button" className="btn btn-sm px-2.5 text-xs" onClick={() => setClosing(true)} title="Close this call now at the market price (admin, public)">Close now</button>}
       {open && <AdjustModal call={call} symbol={symbol} timeframe={timeframe} onClose={() => setOpen(false)} />}
+      {closing && <CloseModal call={call} symbol={symbol} timeframe={timeframe} onClose={() => setClosing(false)} />}
     </>
+  );
+}
+
+/** Estimated result of closing now (legs already closed at their targets, the rest at `px`), % of the entry. */
+export function closeEstimate(call: any, px: number | undefined): number | null {
+  if (!isNum(px) || !isNum(call?.entry)) return null;
+  const s = call.side === "SHORT" ? -1 : 1, e = Number(call.entry);
+  const leg = (p: number) => s * (p / e - 1);
+  const t1 = call.tp1_hit && isNum(call.tp1) ? leg(Number(call.tp1)) : leg(px);
+  const t2 = call.tp2_hit && isNum(call.tp2) ? leg(Number(call.tp2)) : leg(px);
+  return (0.5 * t1 + 0.25 * t2 + 0.25 * leg(px)) * 100;
+}
+
+export function CloseModal({ call, symbol, timeframe, onClose }: { call: any; symbol: string; timeframe?: string; onClose: () => void }) {
+  const { tickers } = useLive();
+  const px: number | undefined = tickers[symbol]?.last ?? undefined;
+  const [note, setNote] = useState("");
+  const [step, setStep] = useState<"edit" | "sending" | "done" | "failed">("edit");
+  const [msg, setMsg] = useState("");
+  useEffect(() => {
+    const k = (e: KeyboardEvent) => e.key === "Escape" && step !== "sending" && onClose();
+    window.addEventListener("keydown", k);
+    return () => window.removeEventListener("keydown", k);
+  }, [onClose, step]);
+  const est = closeEstimate(call, px);
+  const lev = isNum(call.leverage) ? Number(call.leverage) : null;
+  const n = note.trim();
+  const problem = !isNum(px) ? "Waiting for the live price…" : n.length < 3 || n.length > 200 ? "Write a note of 3 to 200 characters: members see it." : null;
+  const tf = String(timeframe ?? "").toUpperCase();
+  const sign = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+  const send = async () => {
+    setStep("sending");
+    setMsg("Queued: the engine closes it on its next run (within about 5 minutes), at its price at that moment.");
+    try {
+      const j = await queueJob("adjust_signal", { signal_id: call.id, action: "close", note: n });
+      const r: any = await j.done;
+      setStep("done");
+      setMsg(`${r?.message ?? "Closed."}${isNum(r?.push?.sent) ? ` Notification sent to ${r.push.sent} device${r.push.sent === 1 ? "" : "s"}.` : ""}`);
+    } catch (e: any) {
+      setStep("failed");
+      setMsg(e?.message ?? "The close was refused.");
+    }
+  };
+  return createPortal(
+    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => step !== "sending" && onClose()} role="dialog" aria-modal="true" aria-label="Close signal">
+      <div className="panel max-h-[92vh] w-full max-w-md overflow-y-auto rounded-b-none sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
+          <h2 className="label">Close {base(symbol)} {tf} {call.side === "SHORT" ? "short" : "long"} now</h2>
+          <button className="btn btn-ghost px-3" onClick={onClose} disabled={step === "sending"} aria-label="Close window">Cancel</button>
+        </div>
+        <div className="space-y-3 p-4 text-sm">
+          <div className="num grid grid-cols-3 gap-2 text-xs">
+            <div><div className="text-mute">Entry</div><div className="font-semibold text-accent">{fmtPrice(call.entry)}</div></div>
+            <div><div className="text-mute">Price now</div><div className="font-semibold">{fmtPrice(px)}</div></div>
+            <div><div className="text-mute">Result now</div>
+              <div className={`font-semibold ${est == null ? "" : est > 0 ? "text-bull" : "text-bear"}`}>
+                {est == null ? "—" : sign(est)}{est != null && lev ? <span className="block text-[11px] font-normal text-mute">{sign(est * lev)} ROI · {lev}x</span> : null}
+              </div>
+            </div>
+          </div>
+          {step === "edit" && (
+            <>
+              <p className="rounded-lg border border-glass/10 bg-ink/40 px-2.5 py-2 text-xs text-mute">
+                The call closes at the market price when the engine runs. It counts as a <span className="text-bull">win</span> if that price is in profit and a <span className="text-bear">loss</span> if not{call.tp1_hit ? " (the part already closed at target 1 stays counted)" : ""}. It is shown as “Closed by admin” in the record for good, and every member gets a notification.
+              </p>
+              <label className="block">
+                <span className="text-xs text-mute">Note for members (required, 3–200 characters)</span>
+                <textarea className="input mt-1 min-h-[72px] w-full py-2" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Taking profit before the weekend; the move has stalled" />
+                <span className="num block text-right text-[11px] text-mute">{n.length}/200</span>
+              </label>
+              {problem && <p className="rounded-lg border border-warn/40 bg-warn/[0.08] px-2.5 py-1.5 text-xs text-warn" role="status">{problem}</p>}
+              <div className="flex justify-end gap-2">
+                <button className="btn" onClick={onClose}>Cancel</button>
+                <button className="btn btn-primary" disabled={!!problem} onClick={send}>Close and publish</button>
+              </div>
+            </>
+          )}
+          {step !== "edit" && (
+            <>
+              <p className={`rounded-lg border px-2.5 py-2 text-sm ${step === "done" ? "border-bull/40 bg-bull/[0.08] text-bull" : step === "failed" ? "border-bear/40 bg-bear/[0.08] text-bear" : "border-glass/15 text-mute"}`} role="status">
+                {step === "failed" ? `Not closed: ${msg}` : msg}
+              </p>
+              <div className="flex justify-end gap-2">
+                {step === "failed" && <button className="btn" onClick={() => setStep("edit")}>Try again</button>}
+                <button className="btn" onClick={onClose} disabled={step === "sending"}>{step === "sending" ? "Waiting…" : "Done"}</button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
 

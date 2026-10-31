@@ -143,8 +143,13 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
     exit_reason: str | None = None
     managed_exit_px: float | None = None
     events: list[dict[str, Any]] = []
-    adj = sorted(adjust or [], key=lambda a: int(a["at"]))
+    adj = sorted((a for a in adjust or [] if a.get("field") != "close"), key=lambda a: int(a["at"]))
+    # v2.8 admin close: the rest of the position closes at the engine's market price at `at` (forward-only: every
+    # candle that closed before that moment is followed normally first)
+    closes = sorted((a for a in adjust or [] if a.get("field") == "close"), key=lambda a: int(a["at"]))
+    admin_close = closes[0] if closes else None
     ai = 0
+    close_due = False
     admin_stop: float | None = None
 
     def rule_level() -> float:
@@ -153,6 +158,9 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
         return tps[1] if hit[2] else tps[0] if hit[1] else entry if hit[0] else stop
 
     for i, (ts, op, hi, lo, cl) in enumerate(rows):
+        if admin_close is not None and ts + path_ms > int(admin_close["at"]):
+            close_due = True                        # this candle had not closed when the admin closed the call
+            break
         fill_candle = first_is_fill and i == 0
         changed = False
         while ai < len(adj) and int(adj[ai]["at"]) <= ts:       # forward-only: candles opening at/after the change
@@ -201,6 +209,13 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
             managed_exit_px, closed_ts, exit_reason = cl, ts, "time"
             events.append({"ts": ts, "type": "time", "price": cl})
             break
+    if admin_close is not None and closed_ts is None and rows and not close_due:
+        # every candle that closed before the admin's close must be in the path (late data: wait for it)
+        at = int(admin_close["at"])
+        close_due = rows[-1][0] + path_ms >= at - at % path_ms
+    if admin_close is not None and closed_ts is None and close_due:
+        managed_exit_px, closed_ts, exit_reason = float(admin_close["new"]), int(admin_close["at"]), "admin_close"
+        events.append({"ts": closed_ts, "type": "admin_close", "price": managed_exit_px})
     if not rows:
         return {"status": "OPEN", "hits": hit, "stop_hit": False, "exit_reason": None, "exit_price": None, "legs": [],
                 "return_pct": None, "return_r": None, "peak_r": 0.0, "peak_pct": 0.0, "closed_ts": None, "managed": 0,
@@ -213,7 +228,7 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
     else:
         legs = [{"weight": 1.0, "price": final if final_hit else fallback}]
     ret = float(sum(l["weight"] * side * (l["price"] / entry - 1) for l in legs)) * 100
-    if exit_reason in ("giveback", "time"):
+    if exit_reason in ("giveback", "time", "admin_close"):
         status = "TP2" if hit[1] else "TP1" if hit[0] else "EXPIRED"
     elif final is None:
         status = "STOPPED" if stop_hit and not hit[0] else "TP3" if hit[2] else \

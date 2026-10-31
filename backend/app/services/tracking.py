@@ -232,7 +232,7 @@ def call_view(r: dict[str, Any] | None) -> dict[str, Any] | None:
         return None
     return {"id": r["id"], "status": r["status"], "fill_status": r.get("fill_status") or ("FILLED" if r["side"] else None),
             "side": "LONG" if r["side"] > 0 else "SHORT", "entry": r["entry"], "stop": r["stop"], "tp1": r["tp1"],
-            "tp2": r["tp2"], "tp3": r["tp3"], "tp1_hit": int(r.get("tp1_hit") or 0), "peak_r": r.get("peak_r"), "peak_pct": r.get("peak_pct"),
+            "tp2": r["tp2"], "tp3": r["tp3"], "tp1_hit": int(r.get("tp1_hit") or 0), "tp2_hit": int(r.get("tp2_hit") or 0), "peak_r": r.get("peak_r"), "peak_pct": r.get("peak_pct"),
             "exit_reason": r.get("exit_reason"), "managed": r.get("managed") or 0, "created_at": r["created_at"],
             "return_pct": r.get("return_pct"), "closed_at": r.get("closed_at"), **margin_fields(r)}
 
@@ -260,7 +260,8 @@ def current_levels(row: dict[str, Any], adj: list[dict[str, Any]]) -> dict[str, 
     """Stop / TP1 now in force (the latest admin value, else the published one)."""
     out = {"stop": row.get("stop"), "tp1": row.get("tp1")}
     for a in adj:
-        out[a["field"]] = a["new"]
+        if a["field"] in out:                   # an admin close (field 'close') is not a level
+            out[a["field"]] = a["new"]
     return out
 
 

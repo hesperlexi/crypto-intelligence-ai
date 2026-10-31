@@ -77,7 +77,7 @@ export function livePnl(side: string | undefined, entry: number | undefined, px:
 /** Status, fill, managed exit, live P&L and peak profit of the tracked call. Renders nothing for old rows. */
 export function CallStatusRow({ call, px }: { call?: any; px?: number }) {
   if (!call) return null;
-  const st = CALL_STATUS[call.status];
+  const st = call.exit_reason === "admin_close" && call.status === "EXPIRED" ? (["Closed", "mute"] as [string, Tone]) : CALL_STATUS[call.status];
   const fill = fillLabel(call.fill_status);
   const managed = call.managed === 1 ? managedLabel(call.exit_reason) : null;
   const open = call.status === "OPEN" && call.fill_status !== "PENDING" && call.fill_status !== "NOT_FILLED";
@@ -103,6 +103,7 @@ export function CallStatusRow({ call, px }: { call?: any; px?: number }) {
       {fill && <Pill tone={fill[1]} title={call.fill_status === "PENDING" ? "Pullback entry: the call counts once price trades through the entry" : "Price never reached the entry; not counted in the win rate"}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent" title="Closed by a managed exit rule">{managed}</Pill>}
       {call.exit_reason === "admin_stop" && call.status !== "OPEN" && <Pill tone="warn" title="Closed at the stop-loss the admin moved (public change)">Admin stop</Pill>}
+      {call.exit_reason === "admin_close" && call.status !== "OPEN" && <Pill tone="warn" title="Closed by the admin at the market price (public); the result is what that price gave">Closed by admin</Pill>}
       {pnl != null && (liveLev
         ? <span className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live, from the current price vs the entry, on margin at the suggested leverage (before fees)">Live {fmtPctRaw(pnl * liveLev, 2)} ROI <span className="font-normal text-mute">· {liveLev}x · price {fmtPctRaw(pnl, 2)}</span></span>
         : <span className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live, from the current price vs the entry (price move, before fees)">Live {fmtPctRaw(pnl, 2)} price</span>)}

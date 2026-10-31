@@ -95,7 +95,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                 {/* phones: one card per signal, the result on margin up front */}
                 <ul className="divide-y divide-glass/[0.06] sm:hidden">
                   {sigs.map((x, i) => {
-                    const [lab, cls] = STATUS[x.status] ?? [x.status, ""];
+                    const [lab, cls] = x.exit_reason === "admin_close" && x.status === "EXPIRED" ? ["Closed", "text-mute"] : STATUS[x.status] ?? [x.status, ""];
                     return (
                       <li key={i} className="px-4 py-3">
                         <div className="flex items-start justify-between gap-3">
@@ -122,7 +122,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                   <thead><tr><th>Signal</th><th className="text-center">Grade</th><th className="text-right">Entry</th><th className="text-right">Stop</th><th className="text-right">Target 1</th><th>Result</th><th className="text-right">ROI on margin</th></tr></thead>
                   <tbody>
                     {sigs.map((x, i) => {
-                      const [lab, cls] = STATUS[x.status] ?? [x.status, ""];
+                      const [lab, cls] = x.exit_reason === "admin_close" && x.status === "EXPIRED" ? ["Closed", "text-mute"] : STATUS[x.status] ?? [x.status, ""];
                       return (
                         <tr key={i}>
                           <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span></div><div className="num mt-0.5 pl-[30px] text-[11px] text-mute">{fmtTime(x.created_at)}</div></td>
@@ -193,6 +193,7 @@ function RecordExtras({ x }: { x: any }) {
     <div className="mt-0.5 flex flex-wrap items-center gap-1">
       <UpdatedBadge adj={adj} />
       {x.exit_reason === "admin_stop" && <Pill tone="warn" title="Closed at the stop-loss the admin moved (public change, shown below)">Admin stop</Pill>}
+      {x.exit_reason === "admin_close" && <Pill tone="warn" title="Closed by the admin at the market price (public, shown below); the result is what that price gave">Closed by admin</Pill>}
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
       {isNum(x.peak_pct) && <span className="num text-[11px] text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</span>}
