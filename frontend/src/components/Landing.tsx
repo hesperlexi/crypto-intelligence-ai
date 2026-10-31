@@ -13,6 +13,8 @@ import TelegramLink from "./TelegramLink";
 import { BUILD_ID } from "../lib/version";
 import { CoinAvatar } from "./Polish";
 import SiteFooter, { TRUST_LINKS } from "./SiteFooter";
+import { AuthDialog, AuthMode, GoogleIcon } from "./AuthPanel";
+import { authMessage } from "../lib/account";
 import { AnimatedLogo, HeroLogo } from "./Logo";
 import { Link } from "react-router-dom";
 
@@ -36,6 +38,7 @@ export default function Landing({ error }: { error: string | null }) {
   const [busy, setBusy] = useState(false);
   const [px, setPx] = useState<Record<string, any>>({});
   const [demo, setDemo] = useState<null | "demo" | "story">(null);
+  const [dialog, setDialog] = useState<AuthMode | null>(null);
   useEffect(() => {
     // 24h stats over REST every 30 s, the price itself from every trade (Binance WebSocket), shown ~8x a second
     let alive = true, pending: Record<string, number> = {};
@@ -70,7 +73,7 @@ export default function Landing({ error }: { error: string | null }) {
   }, []);
   const signIn = async () => {
     setBusy(true);
-    try { await signInWithPopup(auth, googleProvider); } catch (e: any) { setErr(e.message); }
+    try { await signInWithPopup(auth, googleProvider); } catch (e: any) { setErr(authMessage(e)); }
     setBusy(false);
   };
   const cfg = useMembershipConfig();
@@ -78,8 +81,14 @@ export default function Landing({ error }: { error: string | null }) {
   const monthly = plans[0].price;
   const cta = (big = false) => (
     <button className={`btn btn-primary ${big ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"}`} onClick={signIn} disabled={busy}>
-      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 48 48" className="mr-2 inline-block align-[-3px]"><path fill="currentColor" d="M44.5 20H24v8.5h11.8C34.7 33.9 30.1 37 24 37c-7.2 0-13-5.8-13-13s5.8-13 13-13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.6 4.1 29.6 2 24 2 11.8 2 2 11.8 2 24s9.8 22 22 22c11 0 21-8 21-22 0-1.3-.2-2.7-.5-4z" /></svg>
-      {busy ? "Opening Google…" : "Get started with Google"}
+      <GoogleIcon />
+      {busy ? "Opening Google…" : "Continue with Google"}
+    </button>
+  );
+  const emailCta = (big = false) => (
+    <button className={`btn ${big ? "px-5 py-3 text-base" : "px-4 py-2 text-sm"}`} onClick={() => setDialog("signup")}>
+      <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="mr-2 inline-block align-[-3px]"><rect x="3" y="5" width="18" height="14" rx="2" /><path d="M3 7l9 6 9-6" /></svg>
+      Sign up with email
     </button>
   );
 
@@ -96,7 +105,7 @@ export default function Landing({ error }: { error: string | null }) {
             <span className="hidden px-2 text-sm sm:inline"><TelegramLink variant="link" /></span>
             <a href="#pricing" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Pricing</a>
             <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Manual</a>
-            <button className="btn px-3 py-1.5 text-sm" onClick={signIn} disabled={busy}>Sign in</button>
+            <button className="btn px-3 py-1.5 text-sm" onClick={() => setDialog("signin")} disabled={busy}>Sign in</button>
           </div>
         </div>
       </header>
@@ -117,12 +126,14 @@ export default function Landing({ error }: { error: string | null }) {
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
+              {emailCta(true)}
               <button className="btn px-5 py-3 text-base" onClick={() => setDemo("demo")}>▶ App demo (70 s)</button>
               <button className="btn px-5 py-3 text-base" onClick={() => setDemo("story")}>▶ Why traders use it (45 s)</button>
               <TelegramLink label="Free signals on Telegram" />
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
-            <p className="mt-5 text-xs text-mute">No exchange keys needed · the app never places real orders · from {(plans[plans.length - 1].price / 12).toFixed(2)} USDT/month</p>
+            <p className="mt-3 text-sm text-mute">Already have an account? <button className="text-accent hover:underline" onClick={() => setDialog("signin")}>Sign in</button> · <button className="text-accent hover:underline" onClick={() => setDialog("reset")}>Forgot password?</button></p>
+            <p className="mt-3 text-xs text-mute">No exchange keys needed · the app never places real orders · from {(plans[plans.length - 1].price / 12).toFixed(2)} USDT/month</p>
           </div>
 
           {/* product preview */}
@@ -197,7 +208,7 @@ export default function Landing({ error }: { error: string | null }) {
         <section id="how" className="scroll-mt-20 py-8">
           <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Start in three steps</h2>
           <ol className="mt-10 grid gap-4 md:grid-cols-3">
-            {[["Sign in", "Use your Google account. No exchange keys, no forms."],
+            {[["Sign in", "Use your Google account or any email address. No exchange keys needed."],
               ["Choose a plan", "Pay in seconds with Binance or MEXC and upload the receipt. Access opens as soon as it is checked."],
               ["Get signals", "Follow your coins, add your own, set alerts and practise with paper trading."]].map(([t, p], i) => (
               <li key={t} className="panel relative p-5">
@@ -226,7 +237,7 @@ export default function Landing({ error }: { error: string | null }) {
                   <ul className="mt-4 flex-1 space-y-1.5 text-sm text-mute">
                     <li>✓ All signals & AI forecasts</li><li>✓ Futures & phone alerts</li><li>✓ Paper trading & demo bots</li>
                   </ul>
-                  <button className={`btn mt-5 w-full ${best ? "btn-primary" : ""}`} onClick={signIn} disabled={busy}>Choose {p.label}</button>
+                  <button className={`btn mt-5 w-full ${best ? "btn-primary" : ""}`} onClick={() => setDialog("signup")} disabled={busy}>Choose {p.label}</button>
                 </div>
               );
             })}
@@ -253,7 +264,7 @@ export default function Landing({ error }: { error: string | null }) {
         <section className="hero mb-12 rounded-2xl p-8 text-center sm:p-12">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>
           <p className="mx-auto mt-3 max-w-xl text-mute">Join in a minute. Analysis and practice tool, not financial advice.</p>
-          <div className="mt-6">{cta(true)}</div>
+          <div className="mt-6 flex flex-wrap justify-center gap-3">{cta(true)}{emailCta(true)}</div>
           <p className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-mute">
             {TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="hover:text-text hover:underline">{label}</Link>)}
           </p>
@@ -270,6 +281,7 @@ export default function Landing({ error }: { error: string | null }) {
           </div>
         </div>
       )}
+      {dialog && <AuthDialog mode={dialog} onClose={() => setDialog(null)} />}
       <SiteFooter />
     </div>
   );
