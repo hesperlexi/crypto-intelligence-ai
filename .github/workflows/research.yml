@@ -6,11 +6,16 @@ name: Research (read-only replays of the recorded calls)
 #   * results are committed to the `research-results` branch under results/.
 on:
   push:
-    branches: [audit-v1-upgrade, engine-v26]
+    branches: [audit-v1-upgrade, engine-v26, research-v27]
     paths:
       - "backend/**"
       - ".github/workflows/research.yml"
   workflow_dispatch:
+    inputs:
+      commands:
+        description: "research commands to run (space separated: giveback compare engine models)"
+        required: false
+        default: "giveback compare engine"
 
 concurrency:
   group: research
@@ -19,7 +24,7 @@ concurrency:
 jobs:
   research:
     runs-on: ubuntu-latest
-    timeout-minutes: 330      # the v2.6 engine proof has a 4 h budget (python -m app.research engine --budget)
+    timeout-minutes: 340      # engine proof 4 h budget; models study 4 h 20 min budget (--budget), checkpointed
     permissions:
       contents: write          # commit the JSON results to the research-results branch
     defaults:
@@ -47,24 +52,34 @@ jobs:
       - name: Run the research
         env:
           DATABASE_URL: sqlite:///./data/crypto_ai.db
+          # v2.7 branch: only the model study (python -m app.research models); elsewhere the v2.6 set
+          COMMANDS: ${{ github.event.inputs.commands || (github.ref_name == 'research-v27' && 'models' || 'giveback compare engine') }}
         run: |
           mkdir -p ../out
           stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          echo "commands: $COMMANDS"
           if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
-            for c in giveback compare engine; do
+            for c in $COMMANDS; do
               printf '{"ok": false, "command": "%s", "reason": "engine state cache not restored (no engine-state-* cache available)", "commit": "%s"}\n' "$c" "${GITHUB_SHA}" > ../out/$c-latest.json
             done
           else
-            python -m app.research giveback --out ../out/giveback-latest.json > /dev/null
-            python -m app.research compare --out ../out/compare-latest.json > /dev/null
-            # v2.6 proof: OLD pipeline vs each change vs all proven changes on an untouched 30 % test split
-            python -m app.research engine --budget 14400 --out ../out/engine-latest.json > /dev/null \
-              || printf '{"ok": false, "command": "engine", "reason": "the engine research failed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/engine-latest.json
+            for c in $COMMANDS; do
+              case "$c" in
+                giveback|compare) python -m app.research $c --out ../out/$c-latest.json > /dev/null ;;
+                # v2.6 proof: OLD pipeline vs each change vs all proven changes on an untouched 30 % test split
+                engine) python -m app.research engine --budget 14400 --out ../out/engine-latest.json > /dev/null \
+                  || printf '{"ok": false, "command": "engine", "reason": "the engine research failed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/engine-latest.json ;;
+                # v2.7: CURRENT vs trade-outcome labels (A) vs pooled models (B) vs A+B; per-timeframe checkpoints in --out
+                models) timeout 18600 python -m app.research models --budget 15600 --out ../out/models-latest.json > /dev/null \
+                  || { [ -s ../out/models-latest.json ] || printf '{"ok": false, "command": "models", "reason": "the models research failed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/models-latest.json; } ;;
+              esac
+            done
           fi
-          for c in giveback compare engine; do cp ../out/$c-latest.json ../out/$c-$stamp.json; done
+          for c in $COMMANDS; do [ -f ../out/$c-latest.json ] && cp ../out/$c-latest.json ../out/$c-$stamp.json; done
           echo "cache key: ${{ steps.state.outputs.cache-matched-key }}" > ../out/source.txt
           echo "commit: ${GITHUB_SHA}" >> ../out/source.txt
       - name: Commit the results to the research-results branch
+        if: always()
         working-directory: .
         run: |
           git config user.name "github-actions[bot]"
@@ -79,6 +94,7 @@ jobs:
             git -C ../rr rm -rf --quiet . || true
           fi
           mkdir -p ../rr/results
+          [ -n "$(ls -A out 2>/dev/null)" ] || { echo "no results"; exit 0; }
           cp out/* ../rr/results/
           cd ../rr
           git add results
