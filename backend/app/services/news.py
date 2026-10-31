@@ -135,7 +135,9 @@ def due_notifications(db: Database, now: int | None = None, lead_min: int = 30) 
 
 
 def _text(el: ET.Element | None) -> str:
-    return re.sub(r"<[^>]+>", "", (el.text or "") if el is not None else "").strip()
+    import html
+    raw = re.sub(r"<[^>]+>", " ", (el.text or "") if el is not None else "")
+    return re.sub(r"\s+", " ", html.unescape(raw)).strip()
 
 
 def headlines(session: Any = None, limit: int = 30) -> dict[str, Any]:
@@ -168,14 +170,43 @@ def headlines(session: Any = None, limit: int = 30) -> dict[str, Any]:
     return {"items": out[:limit], "errors": errors}
 
 
+# coins a headline is about (shown as tags on the News page; display only, no decision reads them)
+COIN_WORDS = {"BTC": ("bitcoin", "btc"), "ETH": ("ethereum", "ether", "eth"), "SOL": ("solana", "sol"),
+              "XRP": ("xrp", "ripple"), "BNB": ("bnb", "binance coin"), "DOGE": ("dogecoin", "doge"),
+              "LTC": ("litecoin", "ltc"), "AAVE": ("aave",), "AVAX": ("avalanche", "avax"), "GOLD": ("gold", "paxg"),
+              "ADA": ("cardano", "ada"), "TON": ("toncoin",), "LINK": ("chainlink",), "DOT": ("polkadot",)}
+
+
+def coin_tags(title: str) -> list[str]:
+    t = " " + re.sub(r"[^a-z0-9]+", " ", title.lower()) + " "
+    return [c for c, words in COIN_WORDS.items() if any(f" {w} " in t for w in words)][:3]
+
+
+def _sentiment(db: Database, now: int) -> dict[str, Any] | None:
+    """The AI news-mood scores (services/sentiment.py, Gemini on the headlines): latest per group + 48 h of market."""
+    try:
+        latest = {r["grp"]: {"score": float(r["score"]), "ts": int(r["ts"]), "source": r["source"],
+                             "headlines": r["n_headlines"]}
+                  for r in db.query("SELECT s.* FROM news_sentiment s JOIN (SELECT grp, MAX(ts) AS t FROM news_sentiment "
+                                    "GROUP BY grp) m ON s.grp = m.grp AND s.ts = m.t")}
+        series = [{"ts": int(r["ts"]), "score": float(r["score"])} for r in db.query(
+            "SELECT ts, score FROM news_sentiment WHERE grp = 'market' AND ts >= ? ORDER BY ts", (now - 48 * 3_600_000,))]
+    except Exception:
+        return None
+    if not latest:
+        return None
+    return {"latest": latest, "series": series}
+
+
 def news_view(db: Database, heads: dict[str, Any] | None, cal_status: dict[str, Any] | None) -> dict[str, Any]:
     now = now_ms()
-    return {"generated_at": now,
+    items = [{**h, "coins": coin_tags(h.get("title") or "")} for h in (heads or {}).get("items", [])]
+    return {"generated_at": now, "sentiment": _sentiment(db, now),
             "calendar": events(db, now - 2 * 86_400_000, now + 10 * 86_400_000),
             "risk_now": event_risk(db, now),
             "next_high": next((e for e in events(db, now - AFTER_MS, now + 10 * 86_400_000)
                                if e["impact"] == "High" and e["country"] == "USD"), None),
-            "headlines": (heads or {}).get("items", []),
+            "headlines": items,
             "sources": {"calendar": "Forex Factory weekly economic calendar",
                         "headlines": ", ".join(s for s, _ in HEADLINE_FEEDS)},
             "errors": (cal_status or {}).get("errors", []) + (heads or {}).get("errors", [])}

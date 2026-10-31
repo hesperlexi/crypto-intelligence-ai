@@ -2,6 +2,22 @@
 // engine/futures.py, docs/v1-contract.md) and the users / presence collections. Used to look at pages that sit
 // behind Google sign-in. These numbers are sample data for the preview and never reach the production bundle.
 const NOW = Date.now();
+// preview-only sample headlines (illustrative, never shipped to the live app)
+function newsHeads() {
+  const src = ["CoinDesk", "Cointelegraph", "Decrypt"];
+  const t: [string, string[]][] = [
+    ["Sample headline: Bitcoin holds above key support as ETF flows turn positive", ["BTC"]],
+    ["Sample headline: Ethereum developers set date for next network upgrade", ["ETH"]],
+    ["Sample headline: Solana network activity climbs to a monthly high", ["SOL"]],
+    ["Sample headline: Traders watch US inflation data due this week", []],
+    ["Sample headline: XRP and Dogecoin lead large-cap gains in Asian hours", ["XRP", "DOGE"]],
+    ["Sample headline: Gold-backed tokens see record weekly volume", ["GOLD"]],
+    ["Sample headline: Avalanche foundation announces developer grants", ["AVAX"]],
+    ["Sample headline: Exchange reserves of Bitcoin fall to a multi-year low", ["BTC"]],
+  ];
+  return t.map(([title, coins], i) => ({ title, coins, source: src[i % 3], url: "https://example.com/" + i, ts: NOW - (i * 1.7 + 0.3) * 3_600_000,
+    summary: i % 2 ? null : "Sample summary text for the preview only. The live page shows the first lines the news site publishes with each story." }));
+}
 const H = 3_600_000, D = 86_400_000;
 const v = (o: any) => ({ json: JSON.stringify(o), updated_at: NOW });
 
@@ -293,7 +309,9 @@ export function seed(): Record<string, any> {
       { symbol: "SOL/USDT", timeframe: "4h", side: "LONG", entry: 164.1, status: "TP2", return_pct: 2.31, leverage: 10, roi_pct: 23.1, closed_at: NOW - 5 * H, target: 168.9 },
       { symbol: "AVAX/USDT", timeframe: "1h", side: "SHORT", entry: 27.92, status: "TP2", return_pct: 1.88, leverage: 9, roi_pct: 16.92, closed_at: NOW - 8 * H, target: 27.11 },
       { symbol: "1000PEPE/USDT", timeframe: "15m", side: "SHORT", entry: 0.00001234, status: "TP1", return_pct: 0.71, closed_at: NOW - 9 * H, target: 0.00001225 }] }),
-    "views/news": v({ calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: [], sources: [], next_high: { title: "CPI m/m", ts: NOW + 26 * H } }),
+    "views/news": v({ calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: newsHeads(), sources: { calendar: "Forex Factory weekly economic calendar", headlines: "CoinDesk, Cointelegraph, Decrypt" }, next_high: { title: "CPI m/m", ts: NOW + 26 * H },
+      sentiment: { latest: { market: { score: 0.28, ts: NOW - 0.4 * H, source: "headlines", headlines: 18 }, BTC: { score: 0.41, ts: NOW - 0.4 * H }, ETH: { score: 0.12, ts: NOW - 0.4 * H }, alts: { score: -0.18, ts: NOW - 0.4 * H } },
+        series: Array.from({ length: 48 }, (_, i) => ({ ts: NOW - (47 - i) * H, score: Math.round((0.25 * Math.sin(i / 6) + i / 120) * 100) / 100 })) } }),
     "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {} }),
     "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
     "views/market_context": v(marketContext()),
