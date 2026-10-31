@@ -1,8 +1,8 @@
 {
-  "at": "2026-10-31T06:29:55.177Z",
-  "sha": "080ff5bb0f3fb13cc603fb3599f60f6905715b5e",
-  "total": 62,
-  "passed": 62,
+  "at": "2026-10-31T12:11:21.900Z",
+  "sha": "21b2130699ce9399050d2a12859e813607b5f80e",
+  "total": 89,
+  "passed": 89,
   "failed": 0,
   "results": [
     {
@@ -110,6 +110,78 @@
       "ok": true
     },
     {
+      "name": "payment with a screenshot: payment_proofs/{uid} + users payment in one batch (lib/membership.ts)",
+      "ok": true
+    },
+    {
+      "name": "first payment from a new account (users create + payment_proofs) is allowed",
+      "ok": true
+    },
+    {
+      "name": "payment_proofs with an HTML data URL is denied",
+      "ok": true
+    },
+    {
+      "name": "legacy inline users.payment.proof with an HTML data URL is denied",
+      "ok": true
+    },
+    {
+      "name": "payment_proofs with an SVG image is denied",
+      "ok": true
+    },
+    {
+      "name": "legacy inline users.payment.proof with an SVG image is denied",
+      "ok": true
+    },
+    {
+      "name": "payment_proofs with a javascript: link is denied",
+      "ok": true
+    },
+    {
+      "name": "legacy inline users.payment.proof with a javascript: link is denied",
+      "ok": true
+    },
+    {
+      "name": "payment_proofs with a web address is denied",
+      "ok": true
+    },
+    {
+      "name": "legacy inline users.payment.proof with a web address is denied",
+      "ok": true
+    },
+    {
+      "name": "payment_proofs with base64 with markup is denied",
+      "ok": true
+    },
+    {
+      "name": "legacy inline users.payment.proof with base64 with markup is denied",
+      "ok": true
+    },
+    {
+      "name": "legacy inline users.payment.proof with a JPEG data URL is still allowed",
+      "ok": true
+    },
+    {
+      "name": "a realistic ~600 KB JPEG proof is allowed (pattern check on a large string)",
+      "ok": true
+    },
+    {
+      "name": "payment proof image over 900 KB is denied",
+      "ok": true
+    },
+    {
+      "name": "payment_proofs of another uid cannot be written",
+      "ok": true
+    },
+    {
+      "name": "payment_proofs: own and admin reads allowed, other members denied",
+      "ok": true
+    },
+    {
+      "name": "admin badge queries (status == pending, payment.status == submitted) are allowed for the admin only",
+      "ok": true
+    },
+    {
       "name": "member editing status is denied",
       "ok": true
     },
@@ -194,6 +266,18 @@
       "ok": true
     },
     {
+      "name": "two posts in one batch are denied (one post_meta step, post id = uid_created_at)",
+      "ok": true
+    },
+    {
+      "name": "two posts with random ids and the same created_at in one batch are denied",
+      "ok": true
+    },
+    {
+      "name": "post whose id is not uid_created_at is denied",
+      "ok": true
+    },
+    {
       "name": "second post 30 s later is allowed",
       "ok": true
     },
@@ -227,6 +311,30 @@
     },
     {
       "name": "jobs create: test_push to own uid",
+      "ok": true
+    },
+    {
+      "name": "jobs create with a spoofed by (someone else's address) is denied",
+      "ok": true
+    },
+    {
+      "name": "jobs create without by is denied",
+      "ok": true
+    },
+    {
+      "name": "jobs create: admin-only job type by a member is denied",
+      "ok": true
+    },
+    {
+      "name": "jobs create: admin queues an admin job signed with its own address",
+      "ok": true
+    },
+    {
+      "name": "jobs read: the creator reads their own job, another member cannot, the admin can",
+      "ok": true
+    },
+    {
+      "name": "jobs: queue then watch own job (lib/api.ts queueJob flow)",
       "ok": true
     },
     {
