@@ -6,10 +6,11 @@ import { Link } from "react-router-dom";
 import { BRAND } from "../lib/brand";
 import { AnimatedLogo } from "../components/Logo";
 import SiteFooter, { TRUST_LINKS } from "../components/SiteFooter";
+import { VerifyBox } from "../components/SealProof";
 
 export const LAST_UPDATED = "31 Oct 2026";
-export type TrustKind = "about" | "contact" | "terms" | "risk";
-export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk" };
+export type TrustKind = "about" | "contact" | "terms" | "risk" | "verify";
+export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/verify": "verify" };
 
 const Mail = () => <a className="text-accent hover:underline" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>;
 
@@ -92,8 +93,20 @@ function Risk() {
   );
 }
 
+function Verify() {
+  return (
+    <>
+      <p>Every signal is sealed when it is published: a SHA-256 fingerprint of its coin, direction, entry, stop-loss, targets,
+        publication time and a secret salt is posted to our public Telegram channel at once. When the signal closes, the full
+        sealed text is posted. Paste it below (with the earlier fingerprint) to check that nothing was changed or added later.</p>
+      <div className="mt-5 text-text"><VerifyBox /></div>
+    </>
+  );
+}
+
 const PAGES: Record<TrustKind, [string, () => JSX.Element]> = {
   about: ["About", About], contact: ["Contact", Contact], terms: ["Terms of Use", Terms], risk: ["Risk Disclosure", Risk],
+  verify: ["Verify our signals", Verify],
 };
 
 /** The page body (used inside the app shell). */

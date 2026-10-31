@@ -4,6 +4,7 @@ import TrackRecord from "../components/TrackRecord";
 import Accuracy from "./Accuracy";
 import Bots from "./Bots";
 import History from "./History";
+import { VerifyBox } from "../components/SealProof";
 
 const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["tools", "Tools"]] as const;
 type Tab = (typeof TABS)[number][0];
@@ -30,7 +31,7 @@ export default function Results() {
             className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm transition-colors ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
         ))}
       </div>
-      {tab === "track" && <TrackRecord />}
+      {tab === "track" && <><TrackRecord /><VerifyBox /></>}
       {tab === "bots" && <Bots />}
       {tab === "accuracy" && <Accuracy />}
       {tab === "log" && <History />}

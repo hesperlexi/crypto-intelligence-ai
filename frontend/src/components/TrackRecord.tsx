@@ -7,6 +7,7 @@ import { base, fmtDate, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { CoinAvatar } from "./Polish";
 import { Explain, useIsPro } from "../lib/mode";
 import { managedLabel, fillLabel, Pill, RoiFigure } from "./SignalExtras";
+import { SealPill } from "./SealProof";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 const rate = (v: unknown) => (isNum(v) ? `${Math.round(v * 100)}%` : "—");
@@ -187,7 +188,7 @@ function RecordExtras({ x }: { x: any }) {
   const fill = fillLabel(x.fill_status);
   const managed = x.managed === 1 ? managedLabel(x.exit_reason) : null;
   const adj = x.adjustments?.length ? x.adjustments : null;
-  if (!fill && !managed && !isNum(x.peak_pct) && !adj) return null;
+  if (!fill && !managed && !isNum(x.peak_pct) && !adj && !x.proof) return null;
   return (
     <div className="font-normal">
     <div className="mt-0.5 flex flex-wrap items-center gap-1">
@@ -197,6 +198,7 @@ function RecordExtras({ x }: { x: any }) {
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
       {isNum(x.peak_pct) && <span className="num text-[11px] text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</span>}
+      <SealPill proof={x.proof} />
     </div>
     {adj && <AdjustHistory adj={adj} compact />}
     </div>

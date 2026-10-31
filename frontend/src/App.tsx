@@ -58,7 +58,7 @@ const Community = page(() => import("./pages/Community"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
 const TrustContent = page(() => import("./pages/Trust").then((m) => ({ default: m.TrustContent })));
-const TRUST: Record<string, "about" | "contact" | "terms" | "risk"> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk" };
+const TRUST: Record<string, "about" | "contact" | "terms" | "risk" | "verify"> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/verify": "verify" };
 try { window.setTimeout(() => sessionStorage.removeItem("chunk-reload"), 15000); } catch { /* ignore */ }
 const prefetch = () => { void import("./pages/Signals"); void import("./pages/Paper"); void import("./pages/Results"); void import("./pages/Asset"); };
 if (typeof window !== "undefined") window.setTimeout(() => ((window as any).requestIdleCallback ?? ((f: () => void) => f()))(prefetch), 2500);

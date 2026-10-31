@@ -473,6 +473,14 @@ def log_signal(db: Database, a: dict[str, Any], now: int | None = None) -> bool:
     a["record_status"] = res["status"]
     if res["reason"]:
         a["record_reason"] = res["reason"]
+    if res.get("written"):
+        try:                                   # v2.9 sealed-signal proof of the published levels
+            from . import proof
+            row = db.one("SELECT * FROM signals WHERE symbol = ? AND timeframe = ? AND bar_ts = ?",
+                         (a["symbol"], a["timeframe"], a["bar_ts"]))
+            proof.seal(db, row)
+        except Exception:                      # the proof never blocks a signal
+            pass
     return bool(res.get("written"))
 
 

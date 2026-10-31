@@ -37,7 +37,7 @@ MAX_WIN_POSTS = 5
 MAX_DRAFTS = 6                     # each card is ~70 KB; a Firestore document holds 1 MB
 DRAFTS = "owner/telegram_drafts"
 DEFAULTS = {"enabled": False, "channel": brand.TELEGRAM_CHANNEL, "post_wins": True, "post_weekly": True, "post_teaser": True,
-            "post_each_win": True, "approve_first": True}
+            "post_each_win": True, "approve_first": True, "post_proofs": True}
 
 
 def config(sink) -> dict[str, Any]:
@@ -280,6 +280,11 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
                 post("win", win_text(w), "tg_win_last", int(r["closed_at"]), ("win_card", w))
                 if len(out["sent"]) == n:      # failed: keep the marker, try again next run
                     break
+    if cfg["post_proofs"]:
+        try:
+            out["sent"] += proofs(rt, cfg, now, session)
+        except Exception as exc:
+            errors.append(f"proof: {exc}"[:200])
     status = {"ok": not errors, "checked_at": now, "errors": errors, "last_sent": out["sent"] or None}
     try:
         prev = sink.get("owner/telegram_status") or {}
@@ -292,6 +297,69 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         pass
     out["errors"] = errors
     return out
+
+
+# ---- v2.9 sealed-signal proof (services/proof.py) --------------------------------------------------------------
+# Posted straight away, never as drafts: a fingerprint only proves something if it is public before the result.
+SEAL_FRESH_MS = 30 * 60_000          # calls older than this when first seen are not sealed late (no back-dating)
+MAX_PROOF_POSTS = 6
+
+
+def _utc(ms: int) -> str:
+    return datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%d %b %H:%M UTC")
+
+
+def seal_text(rows: list[dict[str, Any]]) -> str:
+    lines = [f"🔒 <b>Sealed signal{'s' if len(rows) > 1 else ''}</b> · members have {'them' if len(rows) > 1 else 'it'} now", ""]
+    for r in rows:
+        lines.append(f"{r['timeframe'].upper()} · published {_utc(int(r['created_at']))}")
+        lines.append(f"<code>{r['hash']}</code>")
+    lines += ["", "Coin and levels stay hidden until the trade closes; then the full text is posted here. Anyone can check "
+              "that its SHA-256 equals this fingerprint, so it cannot have been changed or added later.",
+              f"How to verify 👉 {SITE}/verify"]
+    return "\n".join(lines)
+
+
+def reveal_text(r: dict[str, Any]) -> str:
+    from .tracking import margin_fields
+    res = {"TP1": "Target 1 hit", "TP2": "Target 2 hit", "TP3": "All targets hit", "STOPPED": "Stopped out",
+           "EXPIRED": "Closed at the time limit", "NOT_FILLED": "Entry never filled (not counted)",
+           "VOID": "No market data (not counted)"}.get(r["status"], r["status"])
+    if r.get("exit_reason") == "admin_close":
+        res = "Closed by the admin"
+    head = f"🔓 <b>Signal revealed</b> · {_coin(r['symbol'])} {'LONG' if r['side'] > 0 else 'SHORT'} ({r['timeframe'].upper()}) · {res}"
+    lines = [head]
+    if r.get("return_pct") is not None:
+        lines.append(f"{'✅' if r['return_pct'] > 0 else '❌'} {result_text({'return_pct': r['return_pct'], **margin_fields(r)})}")
+    lines += ["", "Sealed text:", f"<code>{html.escape(r['text'])}</code>",
+              f"Fingerprint posted {_utc(int(r['sealed_post_at']))}:", f"<code>{r['hash']}</code>",
+              "", f"SHA-256 of the text = the fingerprint. Verify 👉 {SITE}/verify"]
+    return "\n".join(lines)
+
+
+def proofs(rt, cfg: dict[str, Any], now: int, session: Any = None) -> list[str]:
+    db: Database = rt.db
+    sent: list[str] = []
+    rows = db.query("SELECT p.*, s.timeframe FROM signal_proofs p JOIN signals s ON s.id = p.signal_id "
+                    "WHERE p.sealed_post_at IS NULL ORDER BY p.created_at LIMIT 50")
+    fresh = [r for r in rows if now - int(r["created_at"]) <= SEAL_FRESH_MS]
+    stale = [r for r in rows if now - int(r["created_at"]) > SEAL_FRESH_MS]
+    for r in stale:                                    # missed the window: never sealed (it would prove nothing)
+        db.execute("UPDATE signal_proofs SET sealed_post_at = -1 WHERE signal_id = ?", (r["signal_id"],))
+    for i in range(0, len(fresh), MAX_PROOF_POSTS):
+        part = fresh[i:i + MAX_PROOF_POSTS]
+        send(cfg, seal_text(part), session)
+        for r in part:
+            db.execute("UPDATE signal_proofs SET sealed_post_at = ? WHERE signal_id = ?", (now, r["signal_id"]))
+        sent.append(f"seal x{len(part)}")
+    done = db.query("SELECT p.text, p.hash, p.sealed_post_at, p.signal_id, s.* FROM signal_proofs p JOIN signals s ON "
+                    "s.id = p.signal_id WHERE p.sealed_post_at > 0 AND p.revealed_post_at IS NULL "
+                    "AND s.status NOT IN ('OPEN', 'INFO') ORDER BY s.closed_at LIMIT ?", (MAX_PROOF_POSTS,))
+    for r in done:
+        send(cfg, reveal_text(r), session)
+        db.execute("UPDATE signal_proofs SET revealed_post_at = ? WHERE signal_id = ?", (now, r["signal_id"]))
+        sent.append("reveal")
+    return sent
 
 
 def test_post(sink) -> dict[str, Any]:

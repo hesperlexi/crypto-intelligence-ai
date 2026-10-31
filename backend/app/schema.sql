@@ -350,3 +350,15 @@ CREATE TABLE IF NOT EXISTS signal_adjustments (
   price_at_change DOUBLE PRECISION
 );
 CREATE INDEX IF NOT EXISTS ix_signal_adjustments_signal ON signal_adjustments (signal_id, at);
+
+-- v2.9 sealed-signal proof: a SHA-256 fingerprint of each published call (with a secret salt) posted to the public
+-- Telegram channel at publication; the full text is revealed when the call closes, so anyone can check it was not
+-- changed or added afterwards (services/proof.py)
+CREATE TABLE IF NOT EXISTS signal_proofs (
+  signal_id TEXT PRIMARY KEY,
+  created_at BIGINT NOT NULL,
+  text TEXT NOT NULL,
+  hash TEXT NOT NULL,
+  sealed_post_at BIGINT,
+  revealed_post_at BIGINT
+);

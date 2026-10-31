@@ -151,6 +151,13 @@ To end testing: restore the watchlist/limits and re-add spot bots (no automatic 
   price; candles closed before the click follow normal rules; `signal_adjustments.field = 'close'`, exit_reason
   `admin_close` ("Closed by admin"); bots holding it close too; members notified.
 
+## v2.9 sealed-signal proof (31 Oct 2026)
+`services/proof.py`: at publication (`tracking.log_signal`) each call gets `signal_proofs` {text = CIA-SEAL-1|id|symbol|TF|side|
+levels|published|salt, hash = SHA-256}. Telegram autopilot (`telegram.proofs`, option `post_proofs`, sent directly, never drafts)
+posts the fingerprint within 30 min of publication (older ones marked -1, never back-dated) and the text after close.
+Record rows carry `proof` {hash, sealed_at, text only when closed}; `components/SealProof.tsx` (row pill, VerifyBox),
+public page `/verify` (Trust kind "verify"). No extra Firestore documents.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
