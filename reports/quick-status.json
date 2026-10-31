@@ -1,0 +1,1071 @@
+{
+ "watchlist": [
+  "BTC/USDT",
+  "ETH/USDT",
+  "BNB/USDT",
+  "XRP/USDT",
+  "SOL/USDT",
+  "DOGE/USDT",
+  "LTC/USDT",
+  "AAVE/USDT",
+  "AVAX/USDT",
+  "PAXG/USDT",
+  "PEPE/USDT",
+  "ENA/USDT",
+  "GALA/USDT",
+  "NVDAB/USDT"
+ ],
+ "views": {
+  "15m": {
+   "rows": 14,
+   "updated": 1793429684118,
+   "tradable": [
+    {
+     "symbol": "AAVE/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "LTC/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "SOL/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "GALA/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "PAXG/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.69,
+     "targets_rr": [
+      1.0,
+      1.75,
+      3.0
+     ]
+    },
+    {
+     "symbol": "ENA/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "XRP/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "NVDAB/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.75,
+     "targets_rr": [
+      1.0,
+      2.0,
+      3.0
+     ]
+    }
+   ],
+   "statuses": [
+    "OK"
+   ],
+   "gold": {
+    "status": "OK",
+    "reason": null,
+    "decision": "NO TRADE",
+    "grade": null
+   }
+  },
+  "1h": {
+   "rows": 14,
+   "updated": 1793429684120,
+   "tradable": [
+    {
+     "symbol": "DOGE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "XRP/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "ETH/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.56,
+     "targets_rr": [
+      1.0,
+      1.75,
+      2.5
+     ]
+    },
+    {
+     "symbol": "LTC/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "PAXG/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.75,
+     "targets_rr": [
+      1.0,
+      2.0,
+      3.0
+     ]
+    },
+    {
+     "symbol": "SOL/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.5,
+     "targets_rr": [
+      1.0,
+      1.75,
+      2.25
+     ]
+    },
+    {
+     "symbol": "NVDAB/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.69,
+     "targets_rr": [
+      1.0,
+      2.0,
+      2.75
+     ]
+    }
+   ],
+   "statuses": [
+    "OK"
+   ],
+   "gold": {
+    "status": "OK",
+    "reason": null,
+    "decision": "NO TRADE",
+    "grade": null
+   }
+  },
+  "4h": {
+   "rows": 14,
+   "updated": 1793429684122,
+   "tradable": [
+    {
+     "symbol": "GALA/USDT",
+     "side": "SHORT",
+     "grade": "B",
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "BNB/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "AAVE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "ETH/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "SOL/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "LTC/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "PEPE/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "DOGE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    }
+   ],
+   "statuses": [
+    "OK"
+   ],
+   "gold": {
+    "status": "OK",
+    "reason": null,
+    "decision": "HOLD",
+    "grade": null
+   }
+  },
+  "12h": {
+   "rows": 13,
+   "updated": 1793427426990,
+   "tradable": [
+    {
+     "symbol": "GALA/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "DOGE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "AVAX/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "LTC/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "BTC/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.38,
+     "targets_rr": [
+      1.0,
+      1.5,
+      2.0
+     ]
+    },
+    {
+     "symbol": "AAVE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "XRP/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "BNB/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.38,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.25
+     ]
+    }
+   ],
+   "statuses": [
+    "OK"
+   ],
+   "gold": {
+    "status": "OK",
+    "reason": null,
+    "decision": "HOLD",
+    "grade": null
+   }
+  },
+  "1d": {
+   "rows": 13,
+   "updated": 1793427426992,
+   "tradable": [
+    {
+     "symbol": "ETH/USDT",
+     "side": "SHORT",
+     "grade": "B",
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "SOL/USDT",
+     "side": "SHORT",
+     "grade": "B",
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "BNB/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.38,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.25
+     ]
+    },
+    {
+     "symbol": "DOGE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "GALA/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "XRP/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "LTC/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "PAXG/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    }
+   ],
+   "statuses": [
+    "OK"
+   ],
+   "gold": {
+    "status": "OK",
+    "reason": null,
+    "decision": "HOLD",
+    "grade": null
+   }
+  },
+  "3d": {
+   "rows": 13,
+   "updated": 1793427426994,
+   "tradable": [
+    {
+     "symbol": "SOL/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "DOGE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "ETH/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "BNB/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.38,
+     "targets_rr": [
+      1.0,
+      1.5,
+      2.0
+     ]
+    },
+    {
+     "symbol": "XRP/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "PAXG/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "PEPE/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "GALA/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    }
+   ],
+   "statuses": [
+    "OK"
+   ],
+   "gold": {
+    "status": "OK",
+    "reason": null,
+    "decision": "HOLD",
+    "grade": null
+   }
+  }
+ },
+ "health": {
+  "status": "LIVE",
+  "engine": {
+   "failed_steps": [],
+   "last_tick_seconds": 84.9
+  },
+  "models_15m": [
+   {
+    "symbol": "BTC/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "ETH/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "SOL/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "XRP/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "LTC/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "BNB/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "AAVE/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "AVAX/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "DOGE/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "PAXG/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "PEPE/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "ENA/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "GALA/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "NVDAB/USDT",
+    "state": "active",
+    "message": ""
+   }
+  ],
+  "series_15m": [
+   {
+    "symbol": "BTC/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "ETH/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "SOL/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "XRP/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "LTC/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "BNB/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "AAVE/USDT",
+    "candles": 30441,
+    "status": "OK"
+   },
+   {
+    "symbol": "AVAX/USDT",
+    "candles": 30441,
+    "status": "OK"
+   },
+   {
+    "symbol": "DOGE/USDT",
+    "candles": 30441,
+    "status": "OK"
+   },
+   {
+    "symbol": "PAXG/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "PEPE/USDT",
+    "candles": 30443,
+    "status": "OK"
+   },
+   {
+    "symbol": "ENA/USDT",
+    "candles": 30442,
+    "status": "OK"
+   },
+   {
+    "symbol": "GALA/USDT",
+    "candles": 30048,
+    "status": "OK"
+   },
+   {
+    "symbol": "NVDAB/USDT",
+    "candles": 13588,
+    "status": "OK"
+   }
+  ]
+ },
+ "model_age_h": {
+  "15m": {
+   "n": 14,
+   "fresh_12h": 2,
+   "max": 109.3,
+   "missing": 0
+  },
+  "1h": {
+   "n": 14,
+   "fresh_12h": 14,
+   "max": 3.9,
+   "missing": 0
+  },
+  "4h": {
+   "n": 14,
+   "fresh_12h": 14,
+   "max": 3.9,
+   "missing": 0
+  },
+  "12h": {
+   "n": 14,
+   "fresh_12h": 13,
+   "max": 3.9,
+   "missing": 1
+  },
+  "1d": {
+   "n": 14,
+   "fresh_12h": 13,
+   "max": 3.9,
+   "missing": 1
+  },
+  "3d": {
+   "n": 14,
+   "fresh_12h": 12,
+   "max": 3.9,
+   "missing": 2
+  }
+ },
+ "last_train": {
+  "started_at": 1793416688898,
+  "finished_at": 1793416739588,
+  "detail": {
+   "shards": 15,
+   "imported": 64,
+   "skipped": 0,
+   "pruned_files": 64,
+   "failed": [],
+   "derivs": {
+    "funding": {
+     "calls": 0,
+     "rows": 0,
+     "unsupported": [],
+     "errors": []
+    },
+    "crowd": {
+     "files": 13,
+     "rows": 0,
+     "missing": [],
+     "errors": []
+    }
+   },
+   "series_policy": {
+    "series": 72,
+    "skipped": [],
+    "errors": [],
+    "entry": {
+     "3d": "old:0.0",
+     "1d": "pullback:0.5",
+     "12h": "market:0.0",
+     "4h": "old:0.0",
+     "1h": "old:0.0",
+     "15m": "market:0.0"
+    },
+    "filters": {
+     "3d": {
+      "enabled": false,
+      "reason": "only 115 trades to learn from",
+      "n": 115
+     },
+     "1d": {
+      "enabled": true,
+      "keep_fraction": 0.4,
+      "n": 698,
+      "exam": {
+       "n": 175,
+       "kept": 67,
+       "avg_r_all": 0.1940526417713896,
+       "avg_r_kept": 0.2720811212398701
+      },
+      "threshold": 0.6418534464081391,
+      "reason": "kept trades earned +0.27R vs +0.19R for all, on unseen trades"
+     },
+     "12h": {
+      "enabled": false,
+      "keep_fraction": 0.4,
+      "n": 1643,
+      "exam": {
+       "n": 411,
+       "kept": 166,
+       "avg_r_all": 0.11066317440721718,
+       "avg_r_kept": -0.06613507795111796
+      },
+      "reason": "the filter did not improve results on unseen trades"
+     },
+     "4h": {
+      "enabled": true,
+      "keep_fraction": 0.6,
+      "n": 3115,
+      "exam": {
+       "n": 779,
+       "kept": 431,
+       "avg_r_all": 0.1499401560978786,
+       "avg_r_kept": 0.194494884116499
+      },
+      "threshold": 0.5191909669927899,
+      "reason": "kept trades earned +0.19R vs +0.15R for all, on unseen trades"
+     },
+     "1h": {
+      "enabled": false,
+      "keep_fraction": 0.8,
+      "n": 1877,
+      "exam": {
+       "n": 470,
+       "kept": 394,
+       "avg_r_all": -0.1242022445201722,
+       "avg_r_kept": -0.10879355598436473
+      },
+      "reason": "the filter did not improve results on unseen trades"
+     },
+     "15m": {
+      "enabled": true,
+      "keep_fraction": 0.5,
+      "n": 1078,
+      "exam": {
+       "n": 270,
+       "kept": 118,
+       "avg_r_all": -0.10827731275034631,
+       "avg_r_kept": -0.0685503632908022
+      },
+      "threshold": 0.4742028468013778,
+      "reason": "kept trades earned -0.07R vs -0.11R for all, on unseen trades"
+     }
+    },
+    "seconds": 43.7
+   }
+  }
+ },
+ "safety": [],
+ "release": {
+  "version": "2.1.0",
+  "updated_at": 1793386630880,
+  "launched_at": 1793386630880
+ },
+ "track_record": {
+  "record_since": 1793386630880,
+  "live_signals": 7,
+  "updated": 1793429684114
+ },
+ "record_live": {
+  "summary": {
+   "closed": 0
+  },
+  "by_timeframe": null,
+  "signals": [
+   {
+    "symbol": "PAXG/USDT",
+    "timeframe": "4h",
+    "side": "SHORT",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "FILLED",
+    "return_pct": 0.2668721604185742,
+    "roi_pct": 2.668721604185742,
+    "peak_r": 0.2113634917622575,
+    "exit_reason": null,
+    "created_at": 1793419219608,
+    "closed_at": null
+   },
+   {
+    "symbol": "ETH/USDT",
+    "timeframe": "1d",
+    "side": "SHORT",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "PENDING",
+    "return_pct": null,
+    "roi_pct": null,
+    "peak_r": 0.0,
+    "exit_reason": null,
+    "created_at": 1793417108487,
+    "closed_at": null
+   },
+   {
+    "symbol": "DOGE/USDT",
+    "timeframe": "12h",
+    "side": "SHORT",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "FILLED",
+    "return_pct": 2.3603048422366157,
+    "roi_pct": 14.161829053419694,
+    "peak_r": 0.2920955216570824,
+    "exit_reason": null,
+    "created_at": 1793405181623,
+    "closed_at": null
+   },
+   {
+    "symbol": "BNB/USDT",
+    "timeframe": "1d",
+    "side": "LONG",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "PENDING",
+    "return_pct": null,
+    "roi_pct": null,
+    "peak_r": 0.0,
+    "exit_reason": null,
+    "created_at": 1793405159843,
+    "closed_at": null
+   },
+   {
+    "symbol": "LTC/USDT",
+    "timeframe": "12h",
+    "side": "SHORT",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "FILLED",
+    "return_pct": 2.9689047571782146,
+    "roi_pct": 17.813428543069286,
+    "peak_r": 0.33624618610651913,
+    "exit_reason": null,
+    "created_at": 1793404864691,
+    "closed_at": null
+   },
+   {
+    "symbol": "GALA/USDT",
+    "timeframe": "4h",
+    "side": "SHORT",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "FILLED",
+    "return_pct": -1.0063598906781213,
+    "roi_pct": -6.038159344068728,
+    "peak_r": 0.20115823562972715,
+    "exit_reason": null,
+    "created_at": 1793386850485,
+    "closed_at": null
+   },
+   {
+    "symbol": "SOL/USDT",
+    "timeframe": "1d",
+    "side": "SHORT",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "FILLED",
+    "return_pct": 0.5508134928199238,
+    "roi_pct": 2.203253971279695,
+    "peak_r": 0.1905575226410861,
+    "exit_reason": null,
+    "created_at": 1793386794361,
+    "closed_at": null
+   }
+  ]
+ },
+ "counts": {
+  "paper": 3,
+  "paper_trades": 0,
+  "paper_futures_trades": 8,
+  "auto_paper_state": 4,
+  "jobs": 2
+ },
+ "bots": [
+  {
+   "id": "futures-signal-ab-1h",
+   "reset_token": "v1"
+  },
+  {
+   "id": "futures-signal-ab-4h",
+   "reset_token": "v1"
+  },
+  {
+   "id": "futures-signal-ab-12h",
+   "reset_token": "v1"
+  },
+  {
+   "id": "futures-signal-ab-1d",
+   "reset_token": "v1"
+  },
+  {
+   "id": "fut-prediction-0dpzd",
+   "reset_token": "1"
+  }
+ ]
+}
