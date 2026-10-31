@@ -1,0 +1,6721 @@
+{
+ "ok": true,
+ "command": "horizon",
+ "results": {
+  "test": {
+   "sequential": {
+    "variants": {
+     "current": {
+      "overall": {
+       "n": 1552,
+       "win_rate": 0.5032216494845361,
+       "expectancy_r": -0.04543156400394709,
+       "profit_factor": 0.897476645979148,
+       "max_drawdown_r": 122.53320175276448,
+       "total_r": -70.50978733412589,
+       "trades_per_week": 145.11489314963708,
+       "expired_share": 0.38917525773195877,
+       "hold_candles_median": 21.0,
+       "hold_candles_p90": 30.0,
+       "hold_days_median": 1.25,
+       "hold_days_p90": 13.540625,
+       "status": {
+        "STOPPED": 575,
+        "TP1": 323,
+        "TP2": 140,
+        "TP3": 118,
+        "EXPIRED": 396
+       },
+       "exits": {
+        "stop": 575,
+        "break_even": 158,
+        "trail": 97,
+        "tp3": 118,
+        "expired": 604
+       },
+       "on_15m_candles": 0.9387886597938144,
+       "open_at_data_end": 23
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 373,
+        "win_rate": 0.4691689008042895,
+        "expectancy_r": -0.15950457585949124,
+        "profit_factor": 0.685261200320385,
+        "max_drawdown_r": 64.13142032091113,
+        "total_r": -59.495206795590235,
+        "trades_per_week": 94.23157894736842,
+        "expired_share": 0.3672922252010724,
+        "hold_candles_median": 19.0,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.19791666666666666,
+        "hold_days_p90": 0.3125,
+        "status": {
+         "STOPPED": 147,
+         "TP1": 83,
+         "TP2": 35,
+         "TP3": 22,
+         "EXPIRED": 86
+        },
+        "exits": {
+         "stop": 147,
+         "break_even": 43,
+         "trail": 24,
+         "tp3": 22,
+         "expired": 137
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 0
+       },
+       "1h": {
+        "n": 362,
+        "win_rate": 0.4889502762430939,
+        "expectancy_r": -0.07778270906309674,
+        "profit_factor": 0.8324366768962174,
+        "max_drawdown_r": 32.56910196633219,
+        "total_r": -28.15734068084102,
+        "trades_per_week": 34.37874505370266,
+        "expired_share": 0.3342541436464088,
+        "hold_candles_median": 18.625,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.7760416666666667,
+        "hold_days_p90": 1.25,
+        "status": {
+         "STOPPED": 137,
+         "TP1": 80,
+         "TP2": 31,
+         "TP3": 32,
+         "EXPIRED": 82
+        },
+        "exits": {
+         "stop": 137,
+         "break_even": 50,
+         "trail": 22,
+         "tp3": 32,
+         "expired": 121
+        },
+        "on_15m_candles": 0.9972375690607734,
+        "open_at_data_end": 2
+       },
+       "4h": {
+        "n": 497,
+        "win_rate": 0.5492957746478874,
+        "expectancy_r": 0.055512688844317246,
+        "profit_factor": 1.1473589533658821,
+        "max_drawdown_r": 33.27164409003995,
+        "total_r": 27.589806355625672,
+        "trades_per_week": 11.799886941775014,
+        "expired_share": 0.45875251509054327,
+        "hold_candles_median": 25.375,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 4.229166666666667,
+        "hold_days_p90": 5.0,
+        "status": {
+         "STOPPED": 161,
+         "TP1": 104,
+         "TP2": 41,
+         "TP3": 39,
+         "EXPIRED": 152
+        },
+        "exits": {
+         "stop": 161,
+         "break_even": 40,
+         "trail": 29,
+         "tp3": 39,
+         "expired": 228
+        },
+        "on_15m_candles": 0.993963782696177,
+        "open_at_data_end": 5
+       },
+       "12h": {
+        "n": 192,
+        "win_rate": 0.5,
+        "expectancy_r": -0.012484492663942479,
+        "profit_factor": 0.9718703771062319,
+        "max_drawdown_r": 12.360562051413645,
+        "total_r": -2.397022591476956,
+        "trades_per_week": 3.0304396843292,
+        "expired_share": 0.375,
+        "hold_candles_median": 18.34375,
+        "hold_candles_p90": 29.958333333333332,
+        "hold_days_median": 9.171875,
+        "hold_days_p90": 14.979166666666666,
+        "status": {
+         "STOPPED": 77,
+         "TP1": 43,
+         "TP2": 20,
+         "TP3": 13,
+         "EXPIRED": 39
+        },
+        "exits": {
+         "stop": 77,
+         "break_even": 19,
+         "trail": 11,
+         "tp3": 13,
+         "expired": 72
+        },
+        "on_15m_candles": 0.7291666666666666,
+        "open_at_data_end": 5
+       },
+       "1d": {
+        "n": 110,
+        "win_rate": 0.4727272727272727,
+        "expectancy_r": -0.05267294330013961,
+        "profit_factor": 0.8812514124103404,
+        "max_drawdown_r": 11.257641042543419,
+        "total_r": -5.794023763015357,
+        "trades_per_week": 1.3676731793960923,
+        "expired_share": 0.35454545454545455,
+        "hold_candles_median": 16.0625,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 16.0625,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 45,
+         "TP1": 12,
+         "TP2": 13,
+         "TP3": 9,
+         "EXPIRED": 31
+        },
+        "exits": {
+         "stop": 45,
+         "break_even": 6,
+         "trail": 11,
+         "tp3": 9,
+         "expired": 39
+        },
+        "on_15m_candles": 0.7090909090909091,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d30": {
+      "overall": {
+       "n": 1260,
+       "win_rate": 0.5079365079365079,
+       "expectancy_r": -0.04385663478938244,
+       "profit_factor": 0.913592478187748,
+       "max_drawdown_r": 116.44181989498189,
+       "total_r": -55.259359834621876,
+       "trades_per_week": 121.84442446046947,
+       "expired_share": 0.07857142857142857,
+       "hold_candles_median": 21.0,
+       "hold_candles_p90": 80.0,
+       "hold_days_median": 1.5364583333333335,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 593,
+        "TP1": 272,
+        "TP2": 157,
+        "TP3": 176,
+        "EXPIRED": 62
+       },
+       "exits": {
+        "stop": 593,
+        "break_even": 246,
+        "trail": 146,
+        "tp3": 176,
+        "expired": 99
+       },
+       "on_15m_candles": 0.9317460317460318,
+       "open_at_data_end": 35
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 317,
+        "win_rate": 0.48580441640378547,
+        "expectancy_r": -0.1706286465051267,
+        "profit_factor": 0.7028824981977649,
+        "max_drawdown_r": 59.52345418125044,
+        "total_r": -54.08928094212517,
+        "trades_per_week": 80.08421052631579,
+        "expired_share": 0.0031545741324921135,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 84.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.875,
+        "status": {
+         "STOPPED": 163,
+         "TP1": 78,
+         "TP2": 34,
+         "TP3": 42,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 163,
+         "break_even": 77,
+         "trail": 34,
+         "tp3": 42,
+         "expired": 1
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 308,
+        "win_rate": 0.5097402597402597,
+        "expectancy_r": -0.06341255455873197,
+        "profit_factor": 0.8801726874245939,
+        "max_drawdown_r": 26.131159178386486,
+        "total_r": -19.53106680408945,
+        "trades_per_week": 29.250423968343696,
+        "expired_share": 0.006493506493506494,
+        "hold_candles_median": 18.375,
+        "hold_candles_p90": 64.75000000000006,
+        "hold_days_median": 0.765625,
+        "hold_days_p90": 2.6979166666666687,
+        "status": {
+         "STOPPED": 151,
+         "TP1": 70,
+         "TP2": 43,
+         "TP3": 44,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 151,
+         "break_even": 69,
+         "trail": 42,
+         "tp3": 44,
+         "expired": 2
+        },
+        "on_15m_candles": 0.9967532467532467,
+        "open_at_data_end": 4
+       },
+       "4h": {
+        "n": 356,
+        "win_rate": 0.550561797752809,
+        "expectancy_r": 0.09151038231606565,
+        "profit_factor": 1.2062430197629201,
+        "max_drawdown_r": 29.806128064948012,
+        "total_r": 32.57769610451937,
+        "trades_per_week": 8.452232899943471,
+        "expired_share": 0.11797752808988764,
+        "hold_candles_median": 24.40625,
+        "hold_candles_p90": 100.0,
+        "hold_days_median": 4.067708333333334,
+        "hold_days_p90": 16.666666666666668,
+        "status": {
+         "STOPPED": 151,
+         "TP1": 80,
+         "TP2": 44,
+         "TP3": 59,
+         "EXPIRED": 22
+        },
+        "exits": {
+         "stop": 151,
+         "break_even": 66,
+         "trail": 38,
+         "tp3": 59,
+         "expired": 42
+        },
+        "on_15m_candles": 0.9915730337078652,
+        "open_at_data_end": 12
+       },
+       "12h": {
+        "n": 151,
+        "win_rate": 0.48344370860927155,
+        "expectancy_r": -0.040838970669425635,
+        "profit_factor": 0.9212338071617518,
+        "max_drawdown_r": 11.208683652333654,
+        "total_r": -6.166684571083271,
+        "trades_per_week": 2.3833145434047354,
+        "expired_share": 0.052980132450331126,
+        "hold_candles_median": 18.770833333333332,
+        "hold_candles_p90": 73.72916666666667,
+        "hold_days_median": 9.385416666666666,
+        "hold_days_p90": 36.864583333333336,
+        "status": {
+         "STOPPED": 75,
+         "TP1": 31,
+         "TP2": 23,
+         "TP3": 19,
+         "EXPIRED": 3
+        },
+        "exits": {
+         "stop": 75,
+         "break_even": 28,
+         "trail": 21,
+         "tp3": 19,
+         "expired": 8
+        },
+        "on_15m_candles": 0.7152317880794702,
+        "open_at_data_end": 7
+       },
+       "1d": {
+        "n": 110,
+        "win_rate": 0.4727272727272727,
+        "expectancy_r": -0.05267294330013961,
+        "profit_factor": 0.8812514124103404,
+        "max_drawdown_r": 11.257641042543419,
+        "total_r": -5.794023763015357,
+        "trades_per_week": 1.3676731793960923,
+        "expired_share": 0.35454545454545455,
+        "hold_candles_median": 16.0625,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 16.0625,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 45,
+         "TP1": 12,
+         "TP2": 13,
+         "TP3": 9,
+         "EXPIRED": 31
+        },
+        "exits": {
+         "stop": 45,
+         "break_even": 6,
+         "trail": 11,
+         "tp3": 9,
+         "expired": 39
+        },
+        "on_15m_candles": 0.7090909090909091,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d60": {
+      "overall": {
+       "n": 1247,
+       "win_rate": 0.5060144346431436,
+       "expectancy_r": -0.04634445380418315,
+       "profit_factor": 0.9100643438535198,
+       "max_drawdown_r": 115.98255934675404,
+       "total_r": -57.79153389381639,
+       "trades_per_week": 121.68279035744993,
+       "expired_share": 0.061748195669607056,
+       "hold_candles_median": 21.0,
+       "hold_candles_p90": 80.10000000000002,
+       "hold_days_median": 1.5104166666666667,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 597,
+        "TP1": 273,
+        "TP2": 159,
+        "TP3": 177,
+        "EXPIRED": 41
+       },
+       "exits": {
+        "stop": 597,
+        "break_even": 249,
+        "trail": 147,
+        "tp3": 177,
+        "expired": 77
+       },
+       "on_15m_candles": 0.9326383319967922,
+       "open_at_data_end": 35
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 317,
+        "win_rate": 0.48580441640378547,
+        "expectancy_r": -0.1706286465051267,
+        "profit_factor": 0.7028824981977649,
+        "max_drawdown_r": 59.52345418125044,
+        "total_r": -54.08928094212517,
+        "trades_per_week": 80.08421052631579,
+        "expired_share": 0.0031545741324921135,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 84.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.875,
+        "status": {
+         "STOPPED": 163,
+         "TP1": 78,
+         "TP2": 34,
+         "TP3": 42,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 163,
+         "break_even": 77,
+         "trail": 34,
+         "tp3": 42,
+         "expired": 1
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 308,
+        "win_rate": 0.5097402597402597,
+        "expectancy_r": -0.06341255455873197,
+        "profit_factor": 0.8801726874245939,
+        "max_drawdown_r": 26.131159178386486,
+        "total_r": -19.53106680408945,
+        "trades_per_week": 29.250423968343696,
+        "expired_share": 0.006493506493506494,
+        "hold_candles_median": 18.375,
+        "hold_candles_p90": 64.75000000000006,
+        "hold_days_median": 0.765625,
+        "hold_days_p90": 2.6979166666666687,
+        "status": {
+         "STOPPED": 151,
+         "TP1": 70,
+         "TP2": 43,
+         "TP3": 44,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 151,
+         "break_even": 69,
+         "trail": 42,
+         "tp3": 44,
+         "expired": 2
+        },
+        "on_15m_candles": 0.9967532467532467,
+        "open_at_data_end": 4
+       },
+       "4h": {
+        "n": 356,
+        "win_rate": 0.550561797752809,
+        "expectancy_r": 0.09151038231606565,
+        "profit_factor": 1.2062430197629201,
+        "max_drawdown_r": 29.806128064948012,
+        "total_r": 32.57769610451937,
+        "trades_per_week": 8.452232899943471,
+        "expired_share": 0.11797752808988764,
+        "hold_candles_median": 24.40625,
+        "hold_candles_p90": 100.0,
+        "hold_days_median": 4.067708333333334,
+        "hold_days_p90": 16.666666666666668,
+        "status": {
+         "STOPPED": 151,
+         "TP1": 80,
+         "TP2": 44,
+         "TP3": 59,
+         "EXPIRED": 22
+        },
+        "exits": {
+         "stop": 151,
+         "break_even": 66,
+         "trail": 38,
+         "tp3": 59,
+         "expired": 42
+        },
+        "on_15m_candles": 0.9915730337078652,
+        "open_at_data_end": 12
+       },
+       "12h": {
+        "n": 151,
+        "win_rate": 0.48344370860927155,
+        "expectancy_r": -0.040838970669425635,
+        "profit_factor": 0.9212338071617518,
+        "max_drawdown_r": 11.208683652333654,
+        "total_r": -6.166684571083271,
+        "trades_per_week": 2.3833145434047354,
+        "expired_share": 0.052980132450331126,
+        "hold_candles_median": 18.770833333333332,
+        "hold_candles_p90": 73.72916666666667,
+        "hold_days_median": 9.385416666666666,
+        "hold_days_p90": 36.864583333333336,
+        "status": {
+         "STOPPED": 75,
+         "TP1": 31,
+         "TP2": 23,
+         "TP3": 19,
+         "EXPIRED": 3
+        },
+        "exits": {
+         "stop": 75,
+         "break_even": 28,
+         "trail": 21,
+         "tp3": 19,
+         "expired": 8
+        },
+        "on_15m_candles": 0.7152317880794702,
+        "open_at_data_end": 7
+       },
+       "1d": {
+        "n": 97,
+        "win_rate": 0.44329896907216493,
+        "expectancy_r": -0.08583709095061724,
+        "profit_factor": 0.8394475397302776,
+        "max_drawdown_r": 16.329898675254448,
+        "total_r": -8.326197822209872,
+        "trades_per_week": 1.206039076376554,
+        "expired_share": 0.17525773195876287,
+        "hold_candles_median": 16.572916666666668,
+        "hold_candles_p90": 60.0,
+        "hold_days_median": 16.572916666666668,
+        "hold_days_p90": 60.0,
+        "status": {
+         "STOPPED": 49,
+         "TP1": 13,
+         "TP2": 15,
+         "TP3": 10,
+         "EXPIRED": 10
+        },
+        "exits": {
+         "stop": 49,
+         "break_even": 9,
+         "trail": 12,
+         "tp3": 10,
+         "expired": 17
+        },
+        "on_15m_candles": 0.6907216494845361,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d100": {
+      "overall": {
+       "n": 1240,
+       "win_rate": 0.5048387096774194,
+       "expectancy_r": -0.04915866599612463,
+       "profit_factor": 0.9052289909938379,
+       "max_drawdown_r": 113.9524206020007,
+       "total_r": -60.95674583519454,
+       "trades_per_week": 121.59575660967019,
+       "expired_share": 0.05403225806451613,
+       "hold_candles_median": 21.0,
+       "hold_candles_p90": 84.85000000000014,
+       "hold_days_median": 1.5052083333333335,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 599,
+        "TP1": 272,
+        "TP2": 159,
+        "TP3": 177,
+        "EXPIRED": 33
+       },
+       "exits": {
+        "stop": 599,
+        "break_even": 249,
+        "trail": 148,
+        "tp3": 177,
+        "expired": 67
+       },
+       "on_15m_candles": 0.932258064516129,
+       "open_at_data_end": 35
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 317,
+        "win_rate": 0.48580441640378547,
+        "expectancy_r": -0.1706286465051267,
+        "profit_factor": 0.7028824981977649,
+        "max_drawdown_r": 59.52345418125044,
+        "total_r": -54.08928094212517,
+        "trades_per_week": 80.08421052631579,
+        "expired_share": 0.0031545741324921135,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 84.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.875,
+        "status": {
+         "STOPPED": 163,
+         "TP1": 78,
+         "TP2": 34,
+         "TP3": 42,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 163,
+         "break_even": 77,
+         "trail": 34,
+         "tp3": 42,
+         "expired": 1
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 308,
+        "win_rate": 0.5097402597402597,
+        "expectancy_r": -0.06341255455873197,
+        "profit_factor": 0.8801726874245939,
+        "max_drawdown_r": 26.131159178386486,
+        "total_r": -19.53106680408945,
+        "trades_per_week": 29.250423968343696,
+        "expired_share": 0.006493506493506494,
+        "hold_candles_median": 18.375,
+        "hold_candles_p90": 64.75000000000006,
+        "hold_days_median": 0.765625,
+        "hold_days_p90": 2.6979166666666687,
+        "status": {
+         "STOPPED": 151,
+         "TP1": 70,
+         "TP2": 43,
+         "TP3": 44,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 151,
+         "break_even": 69,
+         "trail": 42,
+         "tp3": 44,
+         "expired": 2
+        },
+        "on_15m_candles": 0.9967532467532467,
+        "open_at_data_end": 4
+       },
+       "4h": {
+        "n": 356,
+        "win_rate": 0.550561797752809,
+        "expectancy_r": 0.09151038231606565,
+        "profit_factor": 1.2062430197629201,
+        "max_drawdown_r": 29.806128064948012,
+        "total_r": 32.57769610451937,
+        "trades_per_week": 8.452232899943471,
+        "expired_share": 0.11797752808988764,
+        "hold_candles_median": 24.40625,
+        "hold_candles_p90": 100.0,
+        "hold_days_median": 4.067708333333334,
+        "hold_days_p90": 16.666666666666668,
+        "status": {
+         "STOPPED": 151,
+         "TP1": 80,
+         "TP2": 44,
+         "TP3": 59,
+         "EXPIRED": 22
+        },
+        "exits": {
+         "stop": 151,
+         "break_even": 66,
+         "trail": 38,
+         "tp3": 59,
+         "expired": 42
+        },
+        "on_15m_candles": 0.9915730337078652,
+        "open_at_data_end": 12
+       },
+       "12h": {
+        "n": 151,
+        "win_rate": 0.48344370860927155,
+        "expectancy_r": -0.040838970669425635,
+        "profit_factor": 0.9212338071617518,
+        "max_drawdown_r": 11.208683652333654,
+        "total_r": -6.166684571083271,
+        "trades_per_week": 2.3833145434047354,
+        "expired_share": 0.052980132450331126,
+        "hold_candles_median": 18.770833333333332,
+        "hold_candles_p90": 73.72916666666667,
+        "hold_days_median": 9.385416666666666,
+        "hold_days_p90": 36.864583333333336,
+        "status": {
+         "STOPPED": 75,
+         "TP1": 31,
+         "TP2": 23,
+         "TP3": 19,
+         "EXPIRED": 3
+        },
+        "exits": {
+         "stop": 75,
+         "break_even": 28,
+         "trail": 21,
+         "tp3": 19,
+         "expired": 8
+        },
+        "on_15m_candles": 0.7152317880794702,
+        "open_at_data_end": 7
+       },
+       "1d": {
+        "n": 90,
+        "win_rate": 0.4222222222222222,
+        "expectancy_r": -0.12768233070653334,
+        "profit_factor": 0.7810011126280811,
+        "max_drawdown_r": 21.16607899615135,
+        "total_r": -11.491409763588,
+        "trades_per_week": 1.119005328596803,
+        "expired_share": 0.07777777777777778,
+        "hold_candles_median": 16.348958333333336,
+        "hold_candles_p90": 92.17187500000001,
+        "hold_days_median": 16.348958333333336,
+        "hold_days_p90": 92.17187500000001,
+        "status": {
+         "STOPPED": 51,
+         "TP1": 12,
+         "TP2": 15,
+         "TP3": 10,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 51,
+         "break_even": 9,
+         "trail": 13,
+         "tp3": 10,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6666666666666666,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     }
+    },
+    "bootstrap_vs_base": {
+     "base": "current",
+     "overall": {
+      "proposal_1d30": {
+       "mean_gain_expectancy_r": 0.0024839863978896913,
+       "share_better_expectancy": 0.575,
+       "expectancy_gain_90ci": [
+        -0.023806433813728416,
+        0.026882200413846848
+       ],
+       "mean_gain_total_r": 16.45171817278896,
+       "share_better_total_r": 0.79
+      },
+      "proposal_1d60": {
+       "mean_gain_expectancy_r": -0.00014277275763018428,
+       "share_better_expectancy": 0.484,
+       "expectancy_gain_90ci": [
+        -0.026617390366389916,
+        0.02705931905819959
+       ],
+       "mean_gain_total_r": 13.75312315459649,
+       "share_better_total_r": 0.755
+      },
+      "proposal_1d100": {
+       "mean_gain_expectancy_r": -0.002911385123723004,
+       "share_better_expectancy": 0.421,
+       "expectancy_gain_90ci": [
+        -0.029602119011658035,
+        0.024355138740700208
+       ],
+       "mean_gain_total_r": 10.65741997308157,
+       "share_better_total_r": 0.698
+      }
+     },
+     "by_timeframe": {
+      "15m": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.010884975126066827,
+        "share_better_expectancy": 0.378,
+        "expectancy_gain_90ci": [
+         -0.06840292036341174,
+         0.04716536140719831
+        ],
+        "mean_gain_total_r": 5.385376913198147,
+        "share_better_total_r": 0.668
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.010884975126066827,
+        "share_better_expectancy": 0.378,
+        "expectancy_gain_90ci": [
+         -0.06840292036341174,
+         0.04716536140719831
+        ],
+        "mean_gain_total_r": 5.385376913198147,
+        "share_better_total_r": 0.668
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.010884975126066827,
+        "share_better_expectancy": 0.378,
+        "expectancy_gain_90ci": [
+         -0.06840292036341174,
+         0.04716536140719831
+        ],
+        "mean_gain_total_r": 5.385376913198147,
+        "share_better_total_r": 0.668
+       }
+      },
+      "1h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.015558792479253092,
+        "share_better_expectancy": 0.727,
+        "expectancy_gain_90ci": [
+         -0.025260317717788788,
+         0.058655592584344295
+        ],
+        "mean_gain_total_r": 8.614907031638506,
+        "share_better_total_r": 0.884
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.015558792479253092,
+        "share_better_expectancy": 0.727,
+        "expectancy_gain_90ci": [
+         -0.025260317717788788,
+         0.058655592584344295
+        ],
+        "mean_gain_total_r": 8.614907031638506,
+        "share_better_total_r": 0.884
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.015558792479253092,
+        "share_better_expectancy": 0.727,
+        "expectancy_gain_90ci": [
+         -0.025260317717788788,
+         0.058655592584344295
+        ],
+        "mean_gain_total_r": 8.614907031638506,
+        "share_better_total_r": 0.884
+       }
+      },
+      "4h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.035567768200176354,
+        "share_better_expectancy": 0.938,
+        "expectancy_gain_90ci": [
+         -0.0020731840668152023,
+         0.07381703581603859
+        ],
+        "mean_gain_total_r": 5.015796905870238,
+        "share_better_total_r": 0.675
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.035567768200176354,
+        "share_better_expectancy": 0.938,
+        "expectancy_gain_90ci": [
+         -0.0020731840668152023,
+         0.07381703581603859
+        ],
+        "mean_gain_total_r": 5.015796905870238,
+        "share_better_total_r": 0.675
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.035567768200176354,
+        "share_better_expectancy": 0.938,
+        "expectancy_gain_90ci": [
+         -0.0020731840668152023,
+         0.07381703581603859
+        ],
+        "mean_gain_total_r": 5.015796905870238,
+        "share_better_total_r": 0.675
+       }
+      },
+      "12h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.031802357672820365,
+        "share_better_expectancy": 0.285,
+        "expectancy_gain_90ci": [
+         -0.12375274559262252,
+         0.05165850607795439
+        ],
+        "mean_gain_total_r": -3.6494240971750886,
+        "share_better_total_r": 0.324
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.031802357672820365,
+        "share_better_expectancy": 0.285,
+        "expectancy_gain_90ci": [
+         -0.12375274559262252,
+         0.05165850607795439
+        ],
+        "mean_gain_total_r": -3.6494240971750886,
+        "share_better_total_r": 0.324
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.031802357672820365,
+        "share_better_expectancy": 0.285,
+        "expectancy_gain_90ci": [
+         -0.12375274559262252,
+         0.05165850607795439
+        ],
+        "mean_gain_total_r": -3.6494240971750886,
+        "share_better_total_r": 0.324
+       }
+      },
+      "1d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.03464885964702376,
+        "share_better_expectancy": 0.289,
+        "expectancy_gain_90ci": [
+         -0.13536619237269415,
+         0.0663611289984011
+        ],
+        "mean_gain_total_r": -2.601818159022742,
+        "share_better_total_r": 0.328
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.0777851866256369,
+        "share_better_expectancy": 0.148,
+        "expectancy_gain_90ci": [
+         -0.19651810847795162,
+         0.034994404365711954
+        ],
+        "mean_gain_total_r": -5.874917818108714,
+        "share_better_total_r": 0.191
+       }
+      },
+      "3d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       }
+      }
+     }
+    }
+   },
+   "identical_entries": {
+    "variants": {
+     "current": {
+      "overall": {
+       "n": 1552,
+       "win_rate": 0.5032216494845361,
+       "expectancy_r": -0.04543156400394709,
+       "profit_factor": 0.897476645979148,
+       "max_drawdown_r": 122.53320175276448,
+       "total_r": -70.50978733412589,
+       "trades_per_week": 145.11489314963708,
+       "expired_share": 0.38917525773195877,
+       "hold_candles_median": 21.0,
+       "hold_candles_p90": 30.0,
+       "hold_days_median": 1.25,
+       "hold_days_p90": 13.540625,
+       "status": {
+        "STOPPED": 575,
+        "TP1": 323,
+        "TP2": 140,
+        "TP3": 118,
+        "EXPIRED": 396
+       },
+       "exits": {
+        "stop": 575,
+        "break_even": 158,
+        "trail": 97,
+        "tp3": 118,
+        "expired": 604
+       },
+       "on_15m_candles": 0.9387886597938144,
+       "open_at_data_end": 23
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 373,
+        "win_rate": 0.4691689008042895,
+        "expectancy_r": -0.15950457585949124,
+        "profit_factor": 0.685261200320385,
+        "max_drawdown_r": 64.13142032091113,
+        "total_r": -59.495206795590235,
+        "trades_per_week": 94.23157894736842,
+        "expired_share": 0.3672922252010724,
+        "hold_candles_median": 19.0,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.19791666666666666,
+        "hold_days_p90": 0.3125,
+        "status": {
+         "STOPPED": 147,
+         "TP1": 83,
+         "TP2": 35,
+         "TP3": 22,
+         "EXPIRED": 86
+        },
+        "exits": {
+         "stop": 147,
+         "break_even": 43,
+         "trail": 24,
+         "tp3": 22,
+         "expired": 137
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 0
+       },
+       "1h": {
+        "n": 362,
+        "win_rate": 0.4889502762430939,
+        "expectancy_r": -0.07778270906309674,
+        "profit_factor": 0.8324366768962174,
+        "max_drawdown_r": 32.56910196633219,
+        "total_r": -28.15734068084102,
+        "trades_per_week": 34.37874505370266,
+        "expired_share": 0.3342541436464088,
+        "hold_candles_median": 18.625,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.7760416666666667,
+        "hold_days_p90": 1.25,
+        "status": {
+         "STOPPED": 137,
+         "TP1": 80,
+         "TP2": 31,
+         "TP3": 32,
+         "EXPIRED": 82
+        },
+        "exits": {
+         "stop": 137,
+         "break_even": 50,
+         "trail": 22,
+         "tp3": 32,
+         "expired": 121
+        },
+        "on_15m_candles": 0.9972375690607734,
+        "open_at_data_end": 2
+       },
+       "4h": {
+        "n": 497,
+        "win_rate": 0.5492957746478874,
+        "expectancy_r": 0.055512688844317246,
+        "profit_factor": 1.1473589533658821,
+        "max_drawdown_r": 33.27164409003995,
+        "total_r": 27.589806355625672,
+        "trades_per_week": 11.799886941775014,
+        "expired_share": 0.45875251509054327,
+        "hold_candles_median": 25.375,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 4.229166666666667,
+        "hold_days_p90": 5.0,
+        "status": {
+         "STOPPED": 161,
+         "TP1": 104,
+         "TP2": 41,
+         "TP3": 39,
+         "EXPIRED": 152
+        },
+        "exits": {
+         "stop": 161,
+         "break_even": 40,
+         "trail": 29,
+         "tp3": 39,
+         "expired": 228
+        },
+        "on_15m_candles": 0.993963782696177,
+        "open_at_data_end": 5
+       },
+       "12h": {
+        "n": 192,
+        "win_rate": 0.5,
+        "expectancy_r": -0.012484492663942479,
+        "profit_factor": 0.9718703771062319,
+        "max_drawdown_r": 12.360562051413645,
+        "total_r": -2.397022591476956,
+        "trades_per_week": 3.0304396843292,
+        "expired_share": 0.375,
+        "hold_candles_median": 18.34375,
+        "hold_candles_p90": 29.958333333333332,
+        "hold_days_median": 9.171875,
+        "hold_days_p90": 14.979166666666666,
+        "status": {
+         "STOPPED": 77,
+         "TP1": 43,
+         "TP2": 20,
+         "TP3": 13,
+         "EXPIRED": 39
+        },
+        "exits": {
+         "stop": 77,
+         "break_even": 19,
+         "trail": 11,
+         "tp3": 13,
+         "expired": 72
+        },
+        "on_15m_candles": 0.7291666666666666,
+        "open_at_data_end": 5
+       },
+       "1d": {
+        "n": 110,
+        "win_rate": 0.4727272727272727,
+        "expectancy_r": -0.05267294330013961,
+        "profit_factor": 0.8812514124103404,
+        "max_drawdown_r": 11.257641042543419,
+        "total_r": -5.794023763015357,
+        "trades_per_week": 1.3676731793960923,
+        "expired_share": 0.35454545454545455,
+        "hold_candles_median": 16.0625,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 16.0625,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 45,
+         "TP1": 12,
+         "TP2": 13,
+         "TP3": 9,
+         "EXPIRED": 31
+        },
+        "exits": {
+         "stop": 45,
+         "break_even": 6,
+         "trail": 11,
+         "tp3": 9,
+         "expired": 39
+        },
+        "on_15m_candles": 0.7090909090909091,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d30": {
+      "overall": {
+       "n": 1529,
+       "win_rate": 0.5022890778286462,
+       "expectancy_r": -0.05347825573007343,
+       "profit_factor": 0.8961251129943416,
+       "max_drawdown_r": 157.21614597109203,
+       "total_r": -81.76825301128227,
+       "trades_per_week": 144.15808727492964,
+       "expired_share": 0.06998037933289732,
+       "hold_candles_median": 20.6875,
+       "hold_candles_p90": 79.61250000000001,
+       "hold_days_median": 1.5729166666666667,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 733,
+        "TP1": 330,
+        "TP2": 184,
+        "TP3": 218,
+        "EXPIRED": 64
+       },
+       "exits": {
+        "stop": 733,
+        "break_even": 301,
+        "trail": 170,
+        "tp3": 218,
+        "expired": 107
+       },
+       "on_15m_candles": 0.9378678875081753,
+       "open_at_data_end": 46
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 372,
+        "win_rate": 0.4838709677419355,
+        "expectancy_r": -0.18103916198726788,
+        "profit_factor": 0.6856684583219468,
+        "max_drawdown_r": 71.68083181713259,
+        "total_r": -67.34656825926365,
+        "trades_per_week": 93.97894736842105,
+        "expired_share": 0.002688172043010753,
+        "hold_candles_median": 19.0,
+        "hold_candles_p90": 76.0,
+        "hold_days_median": 0.19791666666666666,
+        "hold_days_p90": 0.7916666666666666,
+        "status": {
+         "STOPPED": 192,
+         "TP1": 94,
+         "TP2": 39,
+         "TP3": 47,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 192,
+         "break_even": 93,
+         "trail": 39,
+         "tp3": 47,
+         "expired": 1
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 359,
+        "win_rate": 0.5069637883008357,
+        "expectancy_r": -0.08230103675095761,
+        "profit_factor": 0.8450371929601046,
+        "max_drawdown_r": 36.832054219824954,
+        "total_r": -29.54607219359378,
+        "trades_per_week": 34.09383832673827,
+        "expired_share": 0.005571030640668524,
+        "hold_candles_median": 18.25,
+        "hold_candles_p90": 76.5,
+        "hold_days_median": 0.7604166666666666,
+        "hold_days_p90": 3.1875,
+        "status": {
+         "STOPPED": 177,
+         "TP1": 86,
+         "TP2": 48,
+         "TP3": 48,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 177,
+         "break_even": 85,
+         "trail": 47,
+         "tp3": 48,
+         "expired": 2
+        },
+        "on_15m_candles": 0.9972144846796658,
+        "open_at_data_end": 5
+       },
+       "4h": {
+        "n": 482,
+        "win_rate": 0.5311203319502075,
+        "expectancy_r": 0.07067247280296259,
+        "profit_factor": 1.1512691977490055,
+        "max_drawdown_r": 46.32828148078221,
+        "total_r": 34.06413189102797,
+        "trades_per_week": 11.44375353306953,
+        "expired_share": 0.0975103734439834,
+        "hold_candles_median": 24.21875,
+        "hold_candles_p90": 95.08750000000006,
+        "hold_days_median": 4.036458333333334,
+        "hold_days_p90": 15.847916666666675,
+        "status": {
+         "STOPPED": 216,
+         "TP1": 97,
+         "TP2": 56,
+         "TP3": 89,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 216,
+         "break_even": 81,
+         "trail": 49,
+         "tp3": 89,
+         "expired": 47
+        },
+        "on_15m_candles": 0.9937759336099585,
+        "open_at_data_end": 20
+       },
+       "12h": {
+        "n": 188,
+        "win_rate": 0.4787234042553192,
+        "expectancy_r": -0.057924046955369415,
+        "profit_factor": 0.8898261960721555,
+        "max_drawdown_r": 15.981835553648526,
+        "total_r": -10.88972082760945,
+        "trades_per_week": 2.967305524239008,
+        "expired_share": 0.05851063829787234,
+        "hold_candles_median": 17.885416666666664,
+        "hold_candles_p90": 73.91041666666668,
+        "hold_days_median": 8.942708333333332,
+        "hold_days_p90": 36.95520833333334,
+        "status": {
+         "STOPPED": 95,
+         "TP1": 40,
+         "TP2": 28,
+         "TP3": 22,
+         "EXPIRED": 3
+        },
+        "exits": {
+         "stop": 95,
+         "break_even": 36,
+         "trail": 24,
+         "tp3": 22,
+         "expired": 11
+        },
+        "on_15m_candles": 0.723404255319149,
+        "open_at_data_end": 9
+       },
+       "1d": {
+        "n": 110,
+        "win_rate": 0.4727272727272727,
+        "expectancy_r": -0.05267294330013961,
+        "profit_factor": 0.8812514124103404,
+        "max_drawdown_r": 11.257641042543419,
+        "total_r": -5.794023763015357,
+        "trades_per_week": 1.3676731793960923,
+        "expired_share": 0.35454545454545455,
+        "hold_candles_median": 16.0625,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 16.0625,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 45,
+         "TP1": 12,
+         "TP2": 13,
+         "TP3": 9,
+         "EXPIRED": 31
+        },
+        "exits": {
+         "stop": 45,
+         "break_even": 6,
+         "trail": 11,
+         "tp3": 9,
+         "expired": 39
+        },
+        "on_15m_candles": 0.7090909090909091,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d60": {
+      "overall": {
+       "n": 1529,
+       "win_rate": 0.5003270111183781,
+       "expectancy_r": -0.05562768964746728,
+       "profit_factor": 0.8933310661257572,
+       "max_drawdown_r": 158.25485468082158,
+       "total_r": -85.05473747097747,
+       "trades_per_week": 144.15808727492964,
+       "expired_share": 0.05624591236102027,
+       "hold_candles_median": 20.6875,
+       "hold_candles_p90": 79.61250000000001,
+       "hold_days_median": 1.5729166666666667,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 744,
+        "TP1": 332,
+        "TP2": 188,
+        "TP3": 221,
+        "EXPIRED": 44
+       },
+       "exits": {
+        "stop": 744,
+        "break_even": 305,
+        "trail": 173,
+        "tp3": 221,
+        "expired": 86
+       },
+       "on_15m_candles": 0.9378678875081753,
+       "open_at_data_end": 46
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 372,
+        "win_rate": 0.4838709677419355,
+        "expectancy_r": -0.18103916198726788,
+        "profit_factor": 0.6856684583219468,
+        "max_drawdown_r": 71.68083181713259,
+        "total_r": -67.34656825926365,
+        "trades_per_week": 93.97894736842105,
+        "expired_share": 0.002688172043010753,
+        "hold_candles_median": 19.0,
+        "hold_candles_p90": 76.0,
+        "hold_days_median": 0.19791666666666666,
+        "hold_days_p90": 0.7916666666666666,
+        "status": {
+         "STOPPED": 192,
+         "TP1": 94,
+         "TP2": 39,
+         "TP3": 47,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 192,
+         "break_even": 93,
+         "trail": 39,
+         "tp3": 47,
+         "expired": 1
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 359,
+        "win_rate": 0.5069637883008357,
+        "expectancy_r": -0.08230103675095761,
+        "profit_factor": 0.8450371929601046,
+        "max_drawdown_r": 36.832054219824954,
+        "total_r": -29.54607219359378,
+        "trades_per_week": 34.09383832673827,
+        "expired_share": 0.005571030640668524,
+        "hold_candles_median": 18.25,
+        "hold_candles_p90": 76.5,
+        "hold_days_median": 0.7604166666666666,
+        "hold_days_p90": 3.1875,
+        "status": {
+         "STOPPED": 177,
+         "TP1": 86,
+         "TP2": 48,
+         "TP3": 48,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 177,
+         "break_even": 85,
+         "trail": 47,
+         "tp3": 48,
+         "expired": 2
+        },
+        "on_15m_candles": 0.9972144846796658,
+        "open_at_data_end": 5
+       },
+       "4h": {
+        "n": 482,
+        "win_rate": 0.5311203319502075,
+        "expectancy_r": 0.07067247280296259,
+        "profit_factor": 1.1512691977490055,
+        "max_drawdown_r": 46.32828148078221,
+        "total_r": 34.06413189102797,
+        "trades_per_week": 11.44375353306953,
+        "expired_share": 0.0975103734439834,
+        "hold_candles_median": 24.21875,
+        "hold_candles_p90": 95.08750000000006,
+        "hold_days_median": 4.036458333333334,
+        "hold_days_p90": 15.847916666666675,
+        "status": {
+         "STOPPED": 216,
+         "TP1": 97,
+         "TP2": 56,
+         "TP3": 89,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 216,
+         "break_even": 81,
+         "trail": 49,
+         "tp3": 89,
+         "expired": 47
+        },
+        "on_15m_candles": 0.9937759336099585,
+        "open_at_data_end": 20
+       },
+       "12h": {
+        "n": 188,
+        "win_rate": 0.4787234042553192,
+        "expectancy_r": -0.057924046955369415,
+        "profit_factor": 0.8898261960721555,
+        "max_drawdown_r": 15.981835553648526,
+        "total_r": -10.88972082760945,
+        "trades_per_week": 2.967305524239008,
+        "expired_share": 0.05851063829787234,
+        "hold_candles_median": 17.885416666666664,
+        "hold_candles_p90": 73.91041666666668,
+        "hold_days_median": 8.942708333333332,
+        "hold_days_p90": 36.95520833333334,
+        "status": {
+         "STOPPED": 95,
+         "TP1": 40,
+         "TP2": 28,
+         "TP3": 22,
+         "EXPIRED": 3
+        },
+        "exits": {
+         "stop": 95,
+         "break_even": 36,
+         "trail": 24,
+         "tp3": 22,
+         "expired": 11
+        },
+        "on_15m_candles": 0.723404255319149,
+        "open_at_data_end": 9
+       },
+       "1d": {
+        "n": 110,
+        "win_rate": 0.44545454545454544,
+        "expectancy_r": -0.08255007475191424,
+        "profit_factor": 0.8460497339979609,
+        "max_drawdown_r": 19.274895106225184,
+        "total_r": -9.080508222710566,
+        "trades_per_week": 1.3676731793960923,
+        "expired_share": 0.16363636363636364,
+        "hold_candles_median": 16.0625,
+        "hold_candles_p90": 60.0,
+        "hold_days_median": 16.0625,
+        "hold_days_p90": 60.0,
+        "status": {
+         "STOPPED": 56,
+         "TP1": 14,
+         "TP2": 17,
+         "TP3": 12,
+         "EXPIRED": 11
+        },
+        "exits": {
+         "stop": 56,
+         "break_even": 10,
+         "trail": 14,
+         "tp3": 12,
+         "expired": 18
+        },
+        "on_15m_candles": 0.7090909090909091,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d100": {
+      "overall": {
+       "n": 1529,
+       "win_rate": 0.499672988881622,
+       "expectancy_r": -0.05596919251193295,
+       "profit_factor": 0.893165849348824,
+       "max_drawdown_r": 158.2548546808216,
+       "total_r": -85.57689535074547,
+       "trades_per_week": 144.15808727492964,
+       "expired_share": 0.050359712230215826,
+       "hold_candles_median": 20.6875,
+       "hold_candles_p90": 83.80000000000001,
+       "hold_days_median": 1.5729166666666667,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 749,
+        "TP1": 333,
+        "TP2": 189,
+        "TP3": 223,
+        "EXPIRED": 35
+       },
+       "exits": {
+        "stop": 749,
+        "break_even": 305,
+        "trail": 175,
+        "tp3": 223,
+        "expired": 77
+       },
+       "on_15m_candles": 0.9378678875081753,
+       "open_at_data_end": 46
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 372,
+        "win_rate": 0.4838709677419355,
+        "expectancy_r": -0.18103916198726788,
+        "profit_factor": 0.6856684583219468,
+        "max_drawdown_r": 71.68083181713259,
+        "total_r": -67.34656825926365,
+        "trades_per_week": 93.97894736842105,
+        "expired_share": 0.002688172043010753,
+        "hold_candles_median": 19.0,
+        "hold_candles_p90": 76.0,
+        "hold_days_median": 0.19791666666666666,
+        "hold_days_p90": 0.7916666666666666,
+        "status": {
+         "STOPPED": 192,
+         "TP1": 94,
+         "TP2": 39,
+         "TP3": 47,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 192,
+         "break_even": 93,
+         "trail": 39,
+         "tp3": 47,
+         "expired": 1
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 359,
+        "win_rate": 0.5069637883008357,
+        "expectancy_r": -0.08230103675095761,
+        "profit_factor": 0.8450371929601046,
+        "max_drawdown_r": 36.832054219824954,
+        "total_r": -29.54607219359378,
+        "trades_per_week": 34.09383832673827,
+        "expired_share": 0.005571030640668524,
+        "hold_candles_median": 18.25,
+        "hold_candles_p90": 76.5,
+        "hold_days_median": 0.7604166666666666,
+        "hold_days_p90": 3.1875,
+        "status": {
+         "STOPPED": 177,
+         "TP1": 86,
+         "TP2": 48,
+         "TP3": 48,
+         "EXPIRED": 0
+        },
+        "exits": {
+         "stop": 177,
+         "break_even": 85,
+         "trail": 47,
+         "tp3": 48,
+         "expired": 2
+        },
+        "on_15m_candles": 0.9972144846796658,
+        "open_at_data_end": 5
+       },
+       "4h": {
+        "n": 482,
+        "win_rate": 0.5311203319502075,
+        "expectancy_r": 0.07067247280296259,
+        "profit_factor": 1.1512691977490055,
+        "max_drawdown_r": 46.32828148078221,
+        "total_r": 34.06413189102797,
+        "trades_per_week": 11.44375353306953,
+        "expired_share": 0.0975103734439834,
+        "hold_candles_median": 24.21875,
+        "hold_candles_p90": 95.08750000000006,
+        "hold_days_median": 4.036458333333334,
+        "hold_days_p90": 15.847916666666675,
+        "status": {
+         "STOPPED": 216,
+         "TP1": 97,
+         "TP2": 56,
+         "TP3": 89,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 216,
+         "break_even": 81,
+         "trail": 49,
+         "tp3": 89,
+         "expired": 47
+        },
+        "on_15m_candles": 0.9937759336099585,
+        "open_at_data_end": 20
+       },
+       "12h": {
+        "n": 188,
+        "win_rate": 0.4787234042553192,
+        "expectancy_r": -0.057924046955369415,
+        "profit_factor": 0.8898261960721555,
+        "max_drawdown_r": 15.981835553648526,
+        "total_r": -10.88972082760945,
+        "trades_per_week": 2.967305524239008,
+        "expired_share": 0.05851063829787234,
+        "hold_candles_median": 17.885416666666664,
+        "hold_candles_p90": 73.91041666666668,
+        "hold_days_median": 8.942708333333332,
+        "hold_days_p90": 36.95520833333334,
+        "status": {
+         "STOPPED": 95,
+         "TP1": 40,
+         "TP2": 28,
+         "TP3": 22,
+         "EXPIRED": 3
+        },
+        "exits": {
+         "stop": 95,
+         "break_even": 36,
+         "trail": 24,
+         "tp3": 22,
+         "expired": 11
+        },
+        "on_15m_candles": 0.723404255319149,
+        "open_at_data_end": 9
+       },
+       "1d": {
+        "n": 110,
+        "win_rate": 0.43636363636363634,
+        "expectancy_r": -0.08729696456798691,
+        "profit_factor": 0.8466954112486731,
+        "max_drawdown_r": 20.897712806839664,
+        "total_r": -9.60266610247856,
+        "trades_per_week": 1.3676731793960923,
+        "expired_share": 0.08181818181818182,
+        "hold_candles_median": 16.0625,
+        "hold_candles_p90": 92.17187500000001,
+        "hold_days_median": 16.0625,
+        "hold_days_p90": 92.17187500000001,
+        "status": {
+         "STOPPED": 61,
+         "TP1": 15,
+         "TP2": 18,
+         "TP3": 14,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 61,
+         "break_even": 10,
+         "trail": 16,
+         "tp3": 14,
+         "expired": 9
+        },
+        "on_15m_candles": 0.7090909090909091,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 18,
+        "win_rate": 0.4444444444444444,
+        "expectancy_r": -0.1253333254904446,
+        "profit_factor": 0.7609879602759396,
+        "max_drawdown_r": 3.5472635827930725,
+        "total_r": -2.2559998588280026,
+        "trades_per_week": 0.30656934306569344,
+        "expired_share": 0.3888888888888889,
+        "hold_candles_median": 16.942708333333336,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 50.828125,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 8,
+         "TP1": 1,
+         "TP2": 0,
+         "TP3": 3,
+         "EXPIRED": 6
+        },
+        "exits": {
+         "stop": 8,
+         "break_even": 0,
+         "trail": 0,
+         "tp3": 3,
+         "expired": 7
+        },
+        "on_15m_candles": 0.6111111111111112,
+        "open_at_data_end": 6
+       }
+      }
+     }
+    },
+    "bootstrap_vs_base": {
+     "base": "current",
+     "overall": {
+      "proposal_1d30": {
+       "mean_gain_expectancy_r": -0.007782104271325222,
+       "share_better_expectancy": 0.254,
+       "expectancy_gain_90ci": [
+        -0.02716188386775214,
+        0.012772299813305318
+       ],
+       "mean_gain_total_r": -10.890397120616813,
+       "share_better_total_r": 0.268
+      },
+      "proposal_1d60": {
+       "mean_gain_expectancy_r": -0.010164629046353317,
+       "share_better_expectancy": 0.213,
+       "expectancy_gain_90ci": [
+        -0.030272790544101442,
+        0.010083441687460677
+       ],
+       "mean_gain_total_r": -14.481173115523642,
+       "share_better_total_r": 0.228
+      },
+      "proposal_1d100": {
+       "mean_gain_expectancy_r": -0.0105256743533904,
+       "share_better_expectancy": 0.206,
+       "expectancy_gain_90ci": [
+        -0.030516742569694295,
+        0.010827947542745485
+       ],
+       "mean_gain_total_r": -15.017120833363531,
+       "share_better_total_r": 0.221
+      }
+     },
+     "by_timeframe": {
+      "15m": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.022151676607457142,
+        "share_better_expectancy": 0.185,
+        "expectancy_gain_90ci": [
+         -0.06403468529069467,
+         0.019479550100604457
+        ],
+        "mean_gain_total_r": -7.803922147222033,
+        "share_better_total_r": 0.192
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.022151676607457142,
+        "share_better_expectancy": 0.185,
+        "expectancy_gain_90ci": [
+         -0.06403468529069467,
+         0.019479550100604457
+        ],
+        "mean_gain_total_r": -7.803922147222033,
+        "share_better_total_r": 0.192
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.022151676607457142,
+        "share_better_expectancy": 0.185,
+        "expectancy_gain_90ci": [
+         -0.06403468529069467,
+         0.019479550100604457
+        ],
+        "mean_gain_total_r": -7.803922147222033,
+        "share_better_total_r": 0.192
+       }
+      },
+      "1h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.004231110064216572,
+        "share_better_expectancy": 0.421,
+        "expectancy_gain_90ci": [
+         -0.045218627456488594,
+         0.03782235373102918
+        ],
+        "mean_gain_total_r": -1.439356192734288,
+        "share_better_total_r": 0.432
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.004231110064216572,
+        "share_better_expectancy": 0.421,
+        "expectancy_gain_90ci": [
+         -0.045218627456488594,
+         0.03782235373102918
+        ],
+        "mean_gain_total_r": -1.439356192734288,
+        "share_better_total_r": 0.432
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.004231110064216572,
+        "share_better_expectancy": 0.421,
+        "expectancy_gain_90ci": [
+         -0.045218627456488594,
+         0.03782235373102918
+        ],
+        "mean_gain_total_r": -1.439356192734288,
+        "share_better_total_r": 0.432
+       }
+      },
+      "4h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.016079040452115556,
+        "share_better_expectancy": 0.763,
+        "expectancy_gain_90ci": [
+         -0.02050630492096469,
+         0.052731513615780844
+        ],
+        "mean_gain_total_r": 6.655345779270827,
+        "share_better_total_r": 0.735
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.016079040452115556,
+        "share_better_expectancy": 0.763,
+        "expectancy_gain_90ci": [
+         -0.02050630492096469,
+         0.052731513615780844
+        ],
+        "mean_gain_total_r": 6.655345779270827,
+        "share_better_total_r": 0.735
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.016079040452115556,
+        "share_better_expectancy": 0.763,
+        "expectancy_gain_90ci": [
+         -0.02050630492096469,
+         0.052731513615780844
+        ],
+        "mean_gain_total_r": 6.655345779270827,
+        "share_better_total_r": 0.735
+       }
+      },
+      "12h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.047588959750760766,
+        "share_better_expectancy": 0.128,
+        "expectancy_gain_90ci": [
+         -0.11136889992250626,
+         0.01942707454511674
+        ],
+        "mean_gain_total_r": -8.52732124780352,
+        "share_better_total_r": 0.127
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.047588959750760766,
+        "share_better_expectancy": 0.128,
+        "expectancy_gain_90ci": [
+         -0.11136889992250626,
+         0.01942707454511674
+        ],
+        "mean_gain_total_r": -8.52732124780352,
+        "share_better_total_r": 0.127
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.047588959750760766,
+        "share_better_expectancy": 0.128,
+        "expectancy_gain_90ci": [
+         -0.11136889992250626,
+         0.01942707454511674
+        ],
+        "mean_gain_total_r": -8.52732124780352,
+        "share_better_total_r": 0.127
+       }
+      },
+      "1d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.03424132596974803,
+        "share_better_expectancy": 0.276,
+        "expectancy_gain_90ci": [
+         -0.12363362917768865,
+         0.050869200567619385
+        ],
+        "mean_gain_total_r": -3.2716446222810873,
+        "share_better_total_r": 0.276
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.03966695329355697,
+        "share_better_expectancy": 0.281,
+        "expectancy_gain_90ci": [
+         -0.14214069853650146,
+         0.06217096456893677
+        ],
+        "mean_gain_total_r": -3.8210810409464155,
+        "share_better_total_r": 0.281
+       }
+      },
+      "3d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       }
+      }
+     }
+    }
+   }
+  },
+  "all": {
+   "sequential": {
+    "variants": {
+     "current": {
+      "overall": {
+       "n": 6179,
+       "win_rate": 0.4966823110535685,
+       "expectancy_r": -0.04383618899061765,
+       "profit_factor": 0.8986254115725084,
+       "max_drawdown_r": 331.3880997759523,
+       "total_r": -270.86381177302644,
+       "trades_per_week": 171.73221987666932,
+       "expired_share": 0.3997410584236932,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 30.0,
+       "hold_days_median": 1.25,
+       "hold_days_p90": 14.462499999999997,
+       "status": {
+        "STOPPED": 2233,
+        "TP1": 1269,
+        "TP2": 561,
+        "TP3": 435,
+        "EXPIRED": 1681
+       },
+       "exits": {
+        "stop": 2233,
+        "break_even": 642,
+        "trail": 399,
+        "tp3": 435,
+        "expired": 2470
+       },
+       "on_15m_candles": 0.6269622916329504,
+       "open_at_data_end": 23
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1476,
+        "win_rate": 0.46883468834688347,
+        "expectancy_r": -0.1113937223177773,
+        "profit_factor": 0.7587431224255192,
+        "max_drawdown_r": 167.55676180073652,
+        "total_r": -164.4171341410393,
+        "trades_per_week": 110.58891738209388,
+        "expired_share": 0.4037940379403794,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.3125,
+        "status": {
+         "STOPPED": 529,
+         "TP1": 307,
+         "TP2": 124,
+         "TP3": 103,
+         "EXPIRED": 413
+        },
+        "exits": {
+         "stop": 529,
+         "break_even": 158,
+         "trail": 90,
+         "tp3": 103,
+         "expired": 596
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 0
+       },
+       "1h": {
+        "n": 1517,
+        "win_rate": 0.48055372445616346,
+        "expectancy_r": -0.09384725462350448,
+        "profit_factor": 0.7923511807398511,
+        "max_drawdown_r": 145.39516291639055,
+        "total_r": -142.3662852638563,
+        "trades_per_week": 42.4830805134189,
+        "expired_share": 0.4106789716545814,
+        "hold_candles_median": 23.25,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.96875,
+        "hold_days_p90": 1.25,
+        "status": {
+         "STOPPED": 562,
+         "TP1": 337,
+         "TP2": 130,
+         "TP3": 77,
+         "EXPIRED": 411
+        },
+        "exits": {
+         "stop": 562,
+         "break_even": 173,
+         "trail": 82,
+         "tp3": 77,
+         "expired": 623
+        },
+        "on_15m_candles": 0.999340804218853,
+        "open_at_data_end": 2
+       },
+       "4h": {
+        "n": 1894,
+        "win_rate": 0.5195353748680043,
+        "expectancy_r": 0.021822636919384335,
+        "profit_factor": 1.0544428241267665,
+        "max_drawdown_r": 52.68822299860898,
+        "total_r": 41.33207432531393,
+        "trades_per_week": 13.260210035005834,
+        "expired_share": 0.40707497360084477,
+        "hold_candles_median": 22.71875,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 3.7864583333333335,
+        "hold_days_p90": 5.0,
+        "status": {
+         "STOPPED": 652,
+         "TP1": 384,
+         "TP2": 175,
+         "TP3": 155,
+         "EXPIRED": 528
+        },
+        "exits": {
+         "stop": 652,
+         "break_even": 189,
+         "trail": 127,
+         "tp3": 155,
+         "expired": 771
+        },
+        "on_15m_candles": 0.3331573389651531,
+        "open_at_data_end": 5
+       },
+       "12h": {
+        "n": 747,
+        "win_rate": 0.5127175368139224,
+        "expectancy_r": -0.004488581179300482,
+        "profit_factor": 0.9893743043380738,
+        "max_drawdown_r": 18.038060226296736,
+        "total_r": -3.35297014093746,
+        "trades_per_week": 3.4187643020594964,
+        "expired_share": 0.3815261044176707,
+        "hold_candles_median": 21.0,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 10.5,
+        "hold_days_p90": 15.0,
+        "status": {
+         "STOPPED": 282,
+         "TP1": 141,
+         "TP2": 82,
+         "TP3": 54,
+         "EXPIRED": 188
+        },
+        "exits": {
+         "stop": 282,
+         "break_even": 69,
+         "trail": 57,
+         "tp3": 54,
+         "expired": 285
+        },
+        "on_15m_candles": 0.20214190093708165,
+        "open_at_data_end": 5
+       },
+       "1d": {
+        "n": 461,
+        "win_rate": 0.527114967462039,
+        "expectancy_r": 0.017924564151036073,
+        "profit_factor": 1.043359169495466,
+        "max_drawdown_r": 35.37899033635655,
+        "total_r": 8.26322407362763,
+        "trades_per_week": 1.630621526023244,
+        "expired_share": 0.3579175704989154,
+        "hold_candles_median": 19.958333333333332,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 19.958333333333332,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 172,
+         "TP1": 87,
+         "TP2": 46,
+         "TP3": 39,
+         "EXPIRED": 117
+        },
+        "exits": {
+         "stop": 172,
+         "break_even": 45,
+         "trail": 40,
+         "tp3": 39,
+         "expired": 165
+        },
+        "on_15m_candles": 0.18872017353579176,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d30": {
+      "overall": {
+       "n": 4980,
+       "win_rate": 0.5066265060240964,
+       "expectancy_r": -0.03604250216778112,
+       "profit_factor": 0.9288832941840971,
+       "max_drawdown_r": 252.97479239733715,
+       "total_r": -179.49166079554996,
+       "trades_per_week": 137.34115024386406,
+       "expired_share": 0.07530120481927711,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 86.0,
+       "hold_days_median": 1.8333333333333333,
+       "hold_days_p90": 19.0,
+       "status": {
+        "STOPPED": 2358,
+        "TP1": 1035,
+        "TP2": 663,
+        "TP3": 692,
+        "EXPIRED": 232
+       },
+       "exits": {
+        "stop": 2358,
+        "break_even": 930,
+        "trail": 625,
+        "tp3": 692,
+        "expired": 375
+       },
+       "on_15m_candles": 0.6092369477911647,
+       "open_at_data_end": 35
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1193,
+        "win_rate": 0.4911986588432523,
+        "expectancy_r": -0.11617652167658434,
+        "profit_factor": 0.7926451986266422,
+        "max_drawdown_r": 140.5176102283863,
+        "total_r": -138.5985903601651,
+        "trades_per_week": 89.38521574311518,
+        "expired_share": 0.004191114836546521,
+        "hold_candles_median": 23.0,
+        "hold_candles_p90": 90.0,
+        "hold_days_median": 0.23958333333333334,
+        "hold_days_p90": 0.9375,
+        "status": {
+         "STOPPED": 605,
+         "TP1": 249,
+         "TP2": 165,
+         "TP3": 172,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 605,
+         "break_even": 248,
+         "trail": 163,
+         "tp3": 172,
+         "expired": 5
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 1179,
+        "win_rate": 0.49872773536895676,
+        "expectancy_r": -0.08149808165242634,
+        "profit_factor": 0.8482870365442935,
+        "max_drawdown_r": 101.81512076800632,
+        "total_r": -96.08623826821065,
+        "trades_per_week": 33.017502917152854,
+        "expired_share": 0.009329940627650551,
+        "hold_candles_median": 22.75,
+        "hold_candles_p90": 91.60000000000002,
+        "hold_days_median": 0.9479166666666666,
+        "hold_days_p90": 3.8166666666666678,
+        "status": {
+         "STOPPED": 590,
+         "TP1": 261,
+         "TP2": 164,
+         "TP3": 160,
+         "EXPIRED": 4
+        },
+        "exits": {
+         "stop": 590,
+         "break_even": 255,
+         "trail": 163,
+         "tp3": 160,
+         "expired": 11
+        },
+        "on_15m_candles": 0.9991518235793045,
+        "open_at_data_end": 4
+       },
+       "4h": {
+        "n": 1450,
+        "win_rate": 0.5282758620689655,
+        "expectancy_r": 0.046912202359773766,
+        "profit_factor": 1.099531516202581,
+        "max_drawdown_r": 41.90608978296467,
+        "total_r": 68.02269342167196,
+        "trades_per_week": 10.15169194865811,
+        "expired_share": 0.08758620689655172,
+        "hold_candles_median": 22.84375,
+        "hold_candles_p90": 93.0,
+        "hold_days_median": 3.807291666666667,
+        "hold_days_p90": 15.5,
+        "status": {
+         "STOPPED": 656,
+         "TP1": 305,
+         "TP2": 200,
+         "TP3": 226,
+         "EXPIRED": 63
+        },
+        "exits": {
+         "stop": 656,
+         "break_even": 263,
+         "trail": 178,
+         "tp3": 226,
+         "expired": 127
+        },
+        "on_15m_candles": 0.3082758620689655,
+        "open_at_data_end": 12
+       },
+       "12h": {
+        "n": 613,
+        "win_rate": 0.4926590538336052,
+        "expectancy_r": -0.017569378525838245,
+        "profit_factor": 0.9651069407055649,
+        "max_drawdown_r": 25.5486231607071,
+        "total_r": -10.770029036338844,
+        "trades_per_week": 2.805491990846682,
+        "expired_share": 0.06035889070146819,
+        "hold_candles_median": 21.375,
+        "hold_candles_p90": 81.80000000000007,
+        "hold_days_median": 10.6875,
+        "hold_days_p90": 40.900000000000034,
+        "status": {
+         "STOPPED": 299,
+         "TP1": 120,
+         "TP2": 84,
+         "TP3": 88,
+         "EXPIRED": 22
+        },
+        "exits": {
+         "stop": 299,
+         "break_even": 111,
+         "trail": 78,
+         "tp3": 88,
+         "expired": 37
+        },
+        "on_15m_candles": 0.18923327895595432,
+        "open_at_data_end": 7
+       },
+       "1d": {
+        "n": 461,
+        "win_rate": 0.527114967462039,
+        "expectancy_r": 0.017924564151036073,
+        "profit_factor": 1.043359169495466,
+        "max_drawdown_r": 35.37899033635655,
+        "total_r": 8.26322407362763,
+        "trades_per_week": 1.630621526023244,
+        "expired_share": 0.3579175704989154,
+        "hold_candles_median": 19.958333333333332,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 19.958333333333332,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 172,
+         "TP1": 87,
+         "TP2": 46,
+         "TP3": 39,
+         "EXPIRED": 117
+        },
+        "exits": {
+         "stop": 172,
+         "break_even": 45,
+         "trail": 40,
+         "tp3": 39,
+         "expired": 165
+        },
+        "on_15m_candles": 0.18872017353579176,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d60": {
+      "overall": {
+       "n": 4924,
+       "win_rate": 0.5046709991876523,
+       "expectancy_r": -0.038179751925434595,
+       "profit_factor": 0.9255323130061556,
+       "max_drawdown_r": 259.7351488706012,
+       "total_r": -187.99709848083995,
+       "trades_per_week": 137.14307040556187,
+       "expired_share": 0.056051990251827784,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 86.0,
+       "hold_days_median": 1.78125,
+       "hold_days_p90": 17.666666666666668,
+       "status": {
+        "STOPPED": 2370,
+        "TP1": 1025,
+        "TP2": 667,
+        "TP3": 702,
+        "EXPIRED": 160
+       },
+       "exits": {
+        "stop": 2370,
+        "break_even": 943,
+        "trail": 633,
+        "tp3": 702,
+        "expired": 276
+       },
+       "on_15m_candles": 0.6133225020308692,
+       "open_at_data_end": 35
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1193,
+        "win_rate": 0.4911986588432523,
+        "expectancy_r": -0.11617652167658434,
+        "profit_factor": 0.7926451986266422,
+        "max_drawdown_r": 140.5176102283863,
+        "total_r": -138.5985903601651,
+        "trades_per_week": 89.38521574311518,
+        "expired_share": 0.004191114836546521,
+        "hold_candles_median": 23.0,
+        "hold_candles_p90": 90.0,
+        "hold_days_median": 0.23958333333333334,
+        "hold_days_p90": 0.9375,
+        "status": {
+         "STOPPED": 605,
+         "TP1": 249,
+         "TP2": 165,
+         "TP3": 172,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 605,
+         "break_even": 248,
+         "trail": 163,
+         "tp3": 172,
+         "expired": 5
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 1179,
+        "win_rate": 0.49872773536895676,
+        "expectancy_r": -0.08149808165242634,
+        "profit_factor": 0.8482870365442935,
+        "max_drawdown_r": 101.81512076800632,
+        "total_r": -96.08623826821065,
+        "trades_per_week": 33.017502917152854,
+        "expired_share": 0.009329940627650551,
+        "hold_candles_median": 22.75,
+        "hold_candles_p90": 91.60000000000002,
+        "hold_days_median": 0.9479166666666666,
+        "hold_days_p90": 3.8166666666666678,
+        "status": {
+         "STOPPED": 590,
+         "TP1": 261,
+         "TP2": 164,
+         "TP3": 160,
+         "EXPIRED": 4
+        },
+        "exits": {
+         "stop": 590,
+         "break_even": 255,
+         "trail": 163,
+         "tp3": 160,
+         "expired": 11
+        },
+        "on_15m_candles": 0.9991518235793045,
+        "open_at_data_end": 4
+       },
+       "4h": {
+        "n": 1450,
+        "win_rate": 0.5282758620689655,
+        "expectancy_r": 0.046912202359773766,
+        "profit_factor": 1.099531516202581,
+        "max_drawdown_r": 41.90608978296467,
+        "total_r": 68.02269342167196,
+        "trades_per_week": 10.15169194865811,
+        "expired_share": 0.08758620689655172,
+        "hold_candles_median": 22.84375,
+        "hold_candles_p90": 93.0,
+        "hold_days_median": 3.807291666666667,
+        "hold_days_p90": 15.5,
+        "status": {
+         "STOPPED": 656,
+         "TP1": 305,
+         "TP2": 200,
+         "TP3": 226,
+         "EXPIRED": 63
+        },
+        "exits": {
+         "stop": 656,
+         "break_even": 263,
+         "trail": 178,
+         "tp3": 226,
+         "expired": 127
+        },
+        "on_15m_candles": 0.3082758620689655,
+        "open_at_data_end": 12
+       },
+       "12h": {
+        "n": 613,
+        "win_rate": 0.4926590538336052,
+        "expectancy_r": -0.017569378525838245,
+        "profit_factor": 0.9651069407055649,
+        "max_drawdown_r": 25.5486231607071,
+        "total_r": -10.770029036338844,
+        "trades_per_week": 2.805491990846682,
+        "expired_share": 0.06035889070146819,
+        "hold_candles_median": 21.375,
+        "hold_candles_p90": 81.80000000000007,
+        "hold_days_median": 10.6875,
+        "hold_days_p90": 40.900000000000034,
+        "status": {
+         "STOPPED": 299,
+         "TP1": 120,
+         "TP2": 84,
+         "TP3": 88,
+         "EXPIRED": 22
+        },
+        "exits": {
+         "stop": 299,
+         "break_even": 111,
+         "trail": 78,
+         "tp3": 88,
+         "expired": 37
+        },
+        "on_15m_candles": 0.18923327895595432,
+        "open_at_data_end": 7
+       },
+       "1d": {
+        "n": 405,
+        "win_rate": 0.5061728395061729,
+        "expectancy_r": -0.0005980583004009226,
+        "profit_factor": 0.9987333196876954,
+        "max_drawdown_r": 27.525618412495387,
+        "total_r": -0.24221361166237365,
+        "trades_per_week": 1.4325416877210713,
+        "expired_share": 0.16296296296296298,
+        "hold_candles_median": 19.0,
+        "hold_candles_p90": 60.0,
+        "hold_days_median": 19.0,
+        "hold_days_p90": 60.0,
+        "status": {
+         "STOPPED": 184,
+         "TP1": 77,
+         "TP2": 50,
+         "TP3": 49,
+         "EXPIRED": 45
+        },
+        "exits": {
+         "stop": 184,
+         "break_even": 58,
+         "trail": 48,
+         "tp3": 49,
+         "expired": 66
+        },
+        "on_15m_candles": 0.18024691358024691,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d100": {
+      "overall": {
+       "n": 4890,
+       "win_rate": 0.5034764826175869,
+       "expectancy_r": -0.03929624655983732,
+       "profit_factor": 0.9237306368178794,
+       "max_drawdown_r": 262.13890404977695,
+       "total_r": -192.1586456776045,
+       "trades_per_week": 137.0228076465927,
+       "expired_share": 0.050715746421267895,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 90.0,
+       "hold_days_median": 1.7239583333333335,
+       "hold_days_p90": 17.0,
+       "status": {
+        "STOPPED": 2366,
+        "TP1": 1026,
+        "TP2": 663,
+        "TP3": 704,
+        "EXPIRED": 131
+       },
+       "exits": {
+        "stop": 2366,
+        "break_even": 943,
+        "trail": 629,
+        "tp3": 704,
+        "expired": 248
+       },
+       "on_15m_candles": 0.6159509202453988,
+       "open_at_data_end": 35
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1193,
+        "win_rate": 0.4911986588432523,
+        "expectancy_r": -0.11617652167658434,
+        "profit_factor": 0.7926451986266422,
+        "max_drawdown_r": 140.5176102283863,
+        "total_r": -138.5985903601651,
+        "trades_per_week": 89.38521574311518,
+        "expired_share": 0.004191114836546521,
+        "hold_candles_median": 23.0,
+        "hold_candles_p90": 90.0,
+        "hold_days_median": 0.23958333333333334,
+        "hold_days_p90": 0.9375,
+        "status": {
+         "STOPPED": 605,
+         "TP1": 249,
+         "TP2": 165,
+         "TP3": 172,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 605,
+         "break_even": 248,
+         "trail": 163,
+         "tp3": 172,
+         "expired": 5
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 1179,
+        "win_rate": 0.49872773536895676,
+        "expectancy_r": -0.08149808165242634,
+        "profit_factor": 0.8482870365442935,
+        "max_drawdown_r": 101.81512076800632,
+        "total_r": -96.08623826821065,
+        "trades_per_week": 33.017502917152854,
+        "expired_share": 0.009329940627650551,
+        "hold_candles_median": 22.75,
+        "hold_candles_p90": 91.60000000000002,
+        "hold_days_median": 0.9479166666666666,
+        "hold_days_p90": 3.8166666666666678,
+        "status": {
+         "STOPPED": 590,
+         "TP1": 261,
+         "TP2": 164,
+         "TP3": 160,
+         "EXPIRED": 4
+        },
+        "exits": {
+         "stop": 590,
+         "break_even": 255,
+         "trail": 163,
+         "tp3": 160,
+         "expired": 11
+        },
+        "on_15m_candles": 0.9991518235793045,
+        "open_at_data_end": 4
+       },
+       "4h": {
+        "n": 1450,
+        "win_rate": 0.5282758620689655,
+        "expectancy_r": 0.046912202359773766,
+        "profit_factor": 1.099531516202581,
+        "max_drawdown_r": 41.90608978296467,
+        "total_r": 68.02269342167196,
+        "trades_per_week": 10.15169194865811,
+        "expired_share": 0.08758620689655172,
+        "hold_candles_median": 22.84375,
+        "hold_candles_p90": 93.0,
+        "hold_days_median": 3.807291666666667,
+        "hold_days_p90": 15.5,
+        "status": {
+         "STOPPED": 656,
+         "TP1": 305,
+         "TP2": 200,
+         "TP3": 226,
+         "EXPIRED": 63
+        },
+        "exits": {
+         "stop": 656,
+         "break_even": 263,
+         "trail": 178,
+         "tp3": 226,
+         "expired": 127
+        },
+        "on_15m_candles": 0.3082758620689655,
+        "open_at_data_end": 12
+       },
+       "12h": {
+        "n": 613,
+        "win_rate": 0.4926590538336052,
+        "expectancy_r": -0.017569378525838245,
+        "profit_factor": 0.9651069407055649,
+        "max_drawdown_r": 25.5486231607071,
+        "total_r": -10.770029036338844,
+        "trades_per_week": 2.805491990846682,
+        "expired_share": 0.06035889070146819,
+        "hold_candles_median": 21.375,
+        "hold_candles_p90": 81.80000000000007,
+        "hold_days_median": 10.6875,
+        "hold_days_p90": 40.900000000000034,
+        "status": {
+         "STOPPED": 299,
+         "TP1": 120,
+         "TP2": 84,
+         "TP3": 88,
+         "EXPIRED": 22
+        },
+        "exits": {
+         "stop": 299,
+         "break_even": 111,
+         "trail": 78,
+         "tp3": 88,
+         "expired": 37
+        },
+        "on_15m_candles": 0.18923327895595432,
+        "open_at_data_end": 7
+       },
+       "1d": {
+        "n": 371,
+        "win_rate": 0.49056603773584906,
+        "expectancy_r": -0.011869975224870457,
+        "profit_factor": 0.976342542398112,
+        "max_drawdown_r": 25.414537918676327,
+        "total_r": -4.40376080842694,
+        "trades_per_week": 1.3122789287518948,
+        "expired_share": 0.10242587601078167,
+        "hold_candles_median": 19.0,
+        "hold_candles_p90": 99.0,
+        "hold_days_median": 19.0,
+        "hold_days_p90": 99.0,
+        "status": {
+         "STOPPED": 180,
+         "TP1": 78,
+         "TP2": 46,
+         "TP3": 51,
+         "EXPIRED": 16
+        },
+        "exits": {
+         "stop": 180,
+         "break_even": 58,
+         "trail": 44,
+         "tp3": 51,
+         "expired": 38
+        },
+        "on_15m_candles": 0.1752021563342318,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     }
+    },
+    "bootstrap_vs_base": {
+     "base": "current",
+     "overall": {
+      "proposal_1d30": {
+       "mean_gain_expectancy_r": 0.008297984789953864,
+       "share_better_expectancy": 0.88,
+       "expectancy_gain_90ci": [
+        -0.0036445060002320722,
+        0.01967937080653341
+       ],
+       "mean_gain_total_r": 94.35426226174677,
+       "share_better_total_r": 0.996
+      },
+      "proposal_1d60": {
+       "mean_gain_expectancy_r": 0.006176196337500603,
+       "share_better_expectancy": 0.779,
+       "expectancy_gain_90ci": [
+        -0.006483387905105421,
+        0.01839513529850818
+       ],
+       "mean_gain_total_r": 85.93684878504341,
+       "share_better_total_r": 0.992
+      },
+      "proposal_1d100": {
+       "mean_gain_expectancy_r": 0.005085657175125893,
+       "share_better_expectancy": 0.737,
+       "expectancy_gain_90ci": [
+        -0.007366192076150908,
+        0.01794266880555953
+       ],
+       "mean_gain_total_r": 81.88582393827828,
+       "share_better_total_r": 0.988
+      }
+     },
+     "by_timeframe": {
+      "15m": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.004019528424433291,
+        "share_better_expectancy": 0.41,
+        "expectancy_gain_90ci": [
+         -0.031587653792558554,
+         0.022708294006967993
+        ],
+        "mean_gain_total_r": 26.357870786251958,
+        "share_better_total_r": 0.889
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.004019528424433291,
+        "share_better_expectancy": 0.41,
+        "expectancy_gain_90ci": [
+         -0.031587653792558554,
+         0.022708294006967993
+        ],
+        "mean_gain_total_r": 26.357870786251958,
+        "share_better_total_r": 0.889
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.004019528424433291,
+        "share_better_expectancy": 0.41,
+        "expectancy_gain_90ci": [
+         -0.031587653792558554,
+         0.022708294006967993
+        ],
+        "mean_gain_total_r": 26.357870786251958,
+        "share_better_total_r": 0.889
+       }
+      },
+      "1h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.013267221696612682,
+        "share_better_expectancy": 0.78,
+        "expectancy_gain_90ci": [
+         -0.01503597307792778,
+         0.04281613855126137
+        ],
+        "mean_gain_total_r": 46.66227853701707,
+        "share_better_total_r": 0.992
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.013267221696612682,
+        "share_better_expectancy": 0.78,
+        "expectancy_gain_90ci": [
+         -0.01503597307792778,
+         0.04281613855126137
+        ],
+        "mean_gain_total_r": 46.66227853701707,
+        "share_better_total_r": 0.992
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.013267221696612682,
+        "share_better_expectancy": 0.78,
+        "expectancy_gain_90ci": [
+         -0.01503597307792778,
+         0.04281613855126137
+        ],
+        "mean_gain_total_r": 46.66227853701707,
+        "share_better_total_r": 0.992
+       }
+      },
+      "4h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0251645600730891,
+        "share_better_expectancy": 0.995,
+        "expectancy_gain_90ci": [
+         0.009279652160402439,
+         0.04196411600240871
+        ],
+        "mean_gain_total_r": 26.20483110210667,
+        "share_better_total_r": 0.97
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.0251645600730891,
+        "share_better_expectancy": 0.995,
+        "expectancy_gain_90ci": [
+         0.009279652160402439,
+         0.04196411600240871
+        ],
+        "mean_gain_total_r": 26.20483110210667,
+        "share_better_total_r": 0.97
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.0251645600730891,
+        "share_better_expectancy": 0.995,
+        "expectancy_gain_90ci": [
+         0.009279652160402439,
+         0.04196411600240871
+        ],
+        "mean_gain_total_r": 26.20483110210667,
+        "share_better_total_r": 0.97
+       }
+      },
+      "12h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.013670782636860892,
+        "share_better_expectancy": 0.312,
+        "expectancy_gain_90ci": [
+         -0.05732514167923018,
+         0.026648794598851267
+        ],
+        "mean_gain_total_r": -7.48805892305679,
+        "share_better_total_r": 0.312
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.013670782636860892,
+        "share_better_expectancy": 0.312,
+        "expectancy_gain_90ci": [
+         -0.05732514167923018,
+         0.026648794598851267
+        ],
+        "mean_gain_total_r": -7.48805892305679,
+        "share_better_total_r": 0.312
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.013670782636860892,
+        "share_better_expectancy": 0.312,
+        "expectancy_gain_90ci": [
+         -0.05732514167923018,
+         0.026648794598851267
+        ],
+        "mean_gain_total_r": -7.48805892305679,
+        "share_better_total_r": 0.312
+       }
+      },
+      "1d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.01944057945001662,
+        "share_better_expectancy": 0.183,
+        "expectancy_gain_90ci": [
+         -0.057243149146061593,
+         0.0159941075493473
+        ],
+        "mean_gain_total_r": -8.742520844934253,
+        "share_better_total_r": 0.171
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.030067413420459224,
+        "share_better_expectancy": 0.134,
+        "expectancy_gain_90ci": [
+         -0.07555125291371878,
+         0.012375924862053094
+        ],
+        "mean_gain_total_r": -12.709563145498137,
+        "share_better_total_r": 0.107
+       }
+      },
+      "3d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       }
+      }
+     }
+    }
+   },
+   "identical_entries": {
+    "variants": {
+     "current": {
+      "overall": {
+       "n": 6179,
+       "win_rate": 0.4966823110535685,
+       "expectancy_r": -0.04383618899061765,
+       "profit_factor": 0.8986254115725084,
+       "max_drawdown_r": 331.3880997759523,
+       "total_r": -270.86381177302644,
+       "trades_per_week": 171.73221987666932,
+       "expired_share": 0.3997410584236932,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 30.0,
+       "hold_days_median": 1.25,
+       "hold_days_p90": 14.462499999999997,
+       "status": {
+        "STOPPED": 2233,
+        "TP1": 1269,
+        "TP2": 561,
+        "TP3": 435,
+        "EXPIRED": 1681
+       },
+       "exits": {
+        "stop": 2233,
+        "break_even": 642,
+        "trail": 399,
+        "tp3": 435,
+        "expired": 2470
+       },
+       "on_15m_candles": 0.6269622916329504,
+       "open_at_data_end": 23
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1476,
+        "win_rate": 0.46883468834688347,
+        "expectancy_r": -0.1113937223177773,
+        "profit_factor": 0.7587431224255192,
+        "max_drawdown_r": 167.55676180073652,
+        "total_r": -164.4171341410393,
+        "trades_per_week": 110.58891738209388,
+        "expired_share": 0.4037940379403794,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.3125,
+        "status": {
+         "STOPPED": 529,
+         "TP1": 307,
+         "TP2": 124,
+         "TP3": 103,
+         "EXPIRED": 413
+        },
+        "exits": {
+         "stop": 529,
+         "break_even": 158,
+         "trail": 90,
+         "tp3": 103,
+         "expired": 596
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 0
+       },
+       "1h": {
+        "n": 1517,
+        "win_rate": 0.48055372445616346,
+        "expectancy_r": -0.09384725462350448,
+        "profit_factor": 0.7923511807398511,
+        "max_drawdown_r": 145.39516291639055,
+        "total_r": -142.3662852638563,
+        "trades_per_week": 42.4830805134189,
+        "expired_share": 0.4106789716545814,
+        "hold_candles_median": 23.25,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 0.96875,
+        "hold_days_p90": 1.25,
+        "status": {
+         "STOPPED": 562,
+         "TP1": 337,
+         "TP2": 130,
+         "TP3": 77,
+         "EXPIRED": 411
+        },
+        "exits": {
+         "stop": 562,
+         "break_even": 173,
+         "trail": 82,
+         "tp3": 77,
+         "expired": 623
+        },
+        "on_15m_candles": 0.999340804218853,
+        "open_at_data_end": 2
+       },
+       "4h": {
+        "n": 1894,
+        "win_rate": 0.5195353748680043,
+        "expectancy_r": 0.021822636919384335,
+        "profit_factor": 1.0544428241267665,
+        "max_drawdown_r": 52.68822299860898,
+        "total_r": 41.33207432531393,
+        "trades_per_week": 13.260210035005834,
+        "expired_share": 0.40707497360084477,
+        "hold_candles_median": 22.71875,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 3.7864583333333335,
+        "hold_days_p90": 5.0,
+        "status": {
+         "STOPPED": 652,
+         "TP1": 384,
+         "TP2": 175,
+         "TP3": 155,
+         "EXPIRED": 528
+        },
+        "exits": {
+         "stop": 652,
+         "break_even": 189,
+         "trail": 127,
+         "tp3": 155,
+         "expired": 771
+        },
+        "on_15m_candles": 0.3331573389651531,
+        "open_at_data_end": 5
+       },
+       "12h": {
+        "n": 747,
+        "win_rate": 0.5127175368139224,
+        "expectancy_r": -0.004488581179300482,
+        "profit_factor": 0.9893743043380738,
+        "max_drawdown_r": 18.038060226296736,
+        "total_r": -3.35297014093746,
+        "trades_per_week": 3.4187643020594964,
+        "expired_share": 0.3815261044176707,
+        "hold_candles_median": 21.0,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 10.5,
+        "hold_days_p90": 15.0,
+        "status": {
+         "STOPPED": 282,
+         "TP1": 141,
+         "TP2": 82,
+         "TP3": 54,
+         "EXPIRED": 188
+        },
+        "exits": {
+         "stop": 282,
+         "break_even": 69,
+         "trail": 57,
+         "tp3": 54,
+         "expired": 285
+        },
+        "on_15m_candles": 0.20214190093708165,
+        "open_at_data_end": 5
+       },
+       "1d": {
+        "n": 461,
+        "win_rate": 0.527114967462039,
+        "expectancy_r": 0.017924564151036073,
+        "profit_factor": 1.043359169495466,
+        "max_drawdown_r": 35.37899033635655,
+        "total_r": 8.26322407362763,
+        "trades_per_week": 1.630621526023244,
+        "expired_share": 0.3579175704989154,
+        "hold_candles_median": 19.958333333333332,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 19.958333333333332,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 172,
+         "TP1": 87,
+         "TP2": 46,
+         "TP3": 39,
+         "EXPIRED": 117
+        },
+        "exits": {
+         "stop": 172,
+         "break_even": 45,
+         "trail": 40,
+         "tp3": 39,
+         "expired": 165
+        },
+        "on_15m_candles": 0.18872017353579176,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d30": {
+      "overall": {
+       "n": 6156,
+       "win_rate": 0.5017868745938922,
+       "expectancy_r": -0.049691583328557325,
+       "profit_factor": 0.9034277574671191,
+       "max_drawdown_r": 374.9604591597998,
+       "total_r": -305.9013869705989,
+       "trades_per_week": 171.4499569944891,
+       "expired_share": 0.06562703053931124,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 83.0,
+       "hold_days_median": 1.6875,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 2962,
+        "TP1": 1296,
+        "TP2": 811,
+        "TP3": 845,
+        "EXPIRED": 242
+       },
+       "exits": {
+        "stop": 2962,
+        "break_even": 1180,
+        "trail": 765,
+        "tp3": 845,
+        "expired": 404
+       },
+       "on_15m_candles": 0.6255685510071475,
+       "open_at_data_end": 46
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1475,
+        "win_rate": 0.48542372881355933,
+        "expectancy_r": -0.13829899792286254,
+        "profit_factor": 0.7562490801305277,
+        "max_drawdown_r": 207.99076730849097,
+        "total_r": -203.99102193622227,
+        "trades_per_week": 110.51399264132012,
+        "expired_share": 0.003389830508474576,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 86.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.8958333333333334,
+        "status": {
+         "STOPPED": 757,
+         "TP1": 318,
+         "TP2": 197,
+         "TP3": 201,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 757,
+         "break_even": 317,
+         "trail": 195,
+         "tp3": 201,
+         "expired": 5
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 1514,
+        "win_rate": 0.49735799207397624,
+        "expectancy_r": -0.08666184575103161,
+        "profit_factor": 0.8390825638930676,
+        "max_drawdown_r": 141.5223227810638,
+        "total_r": -131.20603446706187,
+        "trades_per_week": 42.39906651108518,
+        "expired_share": 0.007926023778071334,
+        "hold_candles_median": 23.25,
+        "hold_candles_p90": 89.67500000000001,
+        "hold_days_median": 0.96875,
+        "hold_days_p90": 3.7364583333333337,
+        "status": {
+         "STOPPED": 760,
+         "TP1": 338,
+         "TP2": 208,
+         "TP3": 204,
+         "EXPIRED": 4
+        },
+        "exits": {
+         "stop": 760,
+         "break_even": 332,
+         "trail": 206,
+         "tp3": 204,
+         "expired": 12
+        },
+        "on_15m_candles": 0.9993394980184941,
+        "open_at_data_end": 5
+       },
+       "4h": {
+        "n": 1879,
+        "win_rate": 0.5178286322511975,
+        "expectancy_r": 0.02631636037184872,
+        "profit_factor": 1.054334786664942,
+        "max_drawdown_r": 63.82264823366413,
+        "total_r": 49.44844113870374,
+        "trades_per_week": 13.15519253208868,
+        "expired_share": 0.07716870675891431,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 86.47500000000002,
+        "hold_days_median": 3.6666666666666665,
+        "hold_days_p90": 14.412500000000005,
+        "status": {
+         "STOPPED": 874,
+         "TP1": 389,
+         "TP2": 247,
+         "TP3": 298,
+         "EXPIRED": 71
+        },
+        "exits": {
+         "stop": 874,
+         "break_even": 340,
+         "trail": 222,
+         "tp3": 298,
+         "expired": 145
+        },
+        "on_15m_candles": 0.32783395423097395,
+        "open_at_data_end": 20
+       },
+       "12h": {
+        "n": 743,
+        "win_rate": 0.49259757738896365,
+        "expectancy_r": -0.02435164892800966,
+        "profit_factor": 0.9517789182707003,
+        "max_drawdown_r": 23.124674545446506,
+        "total_r": -18.093275153511176,
+        "trades_per_week": 3.40045766590389,
+        "expired_share": 0.063257065948856,
+        "hold_candles_median": 21.0,
+        "hold_candles_p90": 80.0,
+        "hold_days_median": 10.5,
+        "hold_days_p90": 40.0,
+        "status": {
+         "STOPPED": 363,
+         "TP1": 151,
+         "TP2": 109,
+         "TP3": 96,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 363,
+         "break_even": 138,
+         "trail": 99,
+         "tp3": 96,
+         "expired": 47
+        },
+        "on_15m_candles": 0.19784656796769853,
+        "open_at_data_end": 9
+       },
+       "1d": {
+        "n": 461,
+        "win_rate": 0.527114967462039,
+        "expectancy_r": 0.017924564151036073,
+        "profit_factor": 1.043359169495466,
+        "max_drawdown_r": 35.37899033635655,
+        "total_r": 8.26322407362763,
+        "trades_per_week": 1.630621526023244,
+        "expired_share": 0.3579175704989154,
+        "hold_candles_median": 19.958333333333332,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 19.958333333333332,
+        "hold_days_p90": 30.0,
+        "status": {
+         "STOPPED": 172,
+         "TP1": 87,
+         "TP2": 46,
+         "TP3": 39,
+         "EXPIRED": 117
+        },
+        "exits": {
+         "stop": 172,
+         "break_even": 45,
+         "trail": 40,
+         "tp3": 39,
+         "expired": 165
+        },
+        "on_15m_candles": 0.18872017353579176,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d60": {
+      "overall": {
+       "n": 6156,
+       "win_rate": 0.49935022742040286,
+       "expectancy_r": -0.05267750642565935,
+       "profit_factor": 0.89867757009336,
+       "max_drawdown_r": 386.53376408876403,
+       "total_r": -324.28272955635896,
+       "trades_per_week": 171.4499569944891,
+       "expired_share": 0.05084470435347628,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 83.0,
+       "hold_days_median": 1.6875,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 3005,
+        "TP1": 1294,
+        "TP2": 826,
+        "TP3": 857,
+        "EXPIRED": 174
+       },
+       "exits": {
+        "stop": 3005,
+        "break_even": 1198,
+        "trail": 783,
+        "tp3": 857,
+        "expired": 313
+       },
+       "on_15m_candles": 0.6255685510071475,
+       "open_at_data_end": 46
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1475,
+        "win_rate": 0.48542372881355933,
+        "expectancy_r": -0.13829899792286254,
+        "profit_factor": 0.7562490801305277,
+        "max_drawdown_r": 207.99076730849097,
+        "total_r": -203.99102193622227,
+        "trades_per_week": 110.51399264132012,
+        "expired_share": 0.003389830508474576,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 86.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.8958333333333334,
+        "status": {
+         "STOPPED": 757,
+         "TP1": 318,
+         "TP2": 197,
+         "TP3": 201,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 757,
+         "break_even": 317,
+         "trail": 195,
+         "tp3": 201,
+         "expired": 5
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 1514,
+        "win_rate": 0.49735799207397624,
+        "expectancy_r": -0.08666184575103161,
+        "profit_factor": 0.8390825638930676,
+        "max_drawdown_r": 141.5223227810638,
+        "total_r": -131.20603446706187,
+        "trades_per_week": 42.39906651108518,
+        "expired_share": 0.007926023778071334,
+        "hold_candles_median": 23.25,
+        "hold_candles_p90": 89.67500000000001,
+        "hold_days_median": 0.96875,
+        "hold_days_p90": 3.7364583333333337,
+        "status": {
+         "STOPPED": 760,
+         "TP1": 338,
+         "TP2": 208,
+         "TP3": 204,
+         "EXPIRED": 4
+        },
+        "exits": {
+         "stop": 760,
+         "break_even": 332,
+         "trail": 206,
+         "tp3": 204,
+         "expired": 12
+        },
+        "on_15m_candles": 0.9993394980184941,
+        "open_at_data_end": 5
+       },
+       "4h": {
+        "n": 1879,
+        "win_rate": 0.5178286322511975,
+        "expectancy_r": 0.02631636037184872,
+        "profit_factor": 1.054334786664942,
+        "max_drawdown_r": 63.82264823366413,
+        "total_r": 49.44844113870374,
+        "trades_per_week": 13.15519253208868,
+        "expired_share": 0.07716870675891431,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 86.47500000000002,
+        "hold_days_median": 3.6666666666666665,
+        "hold_days_p90": 14.412500000000005,
+        "status": {
+         "STOPPED": 874,
+         "TP1": 389,
+         "TP2": 247,
+         "TP3": 298,
+         "EXPIRED": 71
+        },
+        "exits": {
+         "stop": 874,
+         "break_even": 340,
+         "trail": 222,
+         "tp3": 298,
+         "expired": 145
+        },
+        "on_15m_candles": 0.32783395423097395,
+        "open_at_data_end": 20
+       },
+       "12h": {
+        "n": 743,
+        "win_rate": 0.49259757738896365,
+        "expectancy_r": -0.02435164892800966,
+        "profit_factor": 0.9517789182707003,
+        "max_drawdown_r": 23.124674545446506,
+        "total_r": -18.093275153511176,
+        "trades_per_week": 3.40045766590389,
+        "expired_share": 0.063257065948856,
+        "hold_candles_median": 21.0,
+        "hold_candles_p90": 80.0,
+        "hold_days_median": 10.5,
+        "hold_days_p90": 40.0,
+        "status": {
+         "STOPPED": 363,
+         "TP1": 151,
+         "TP2": 109,
+         "TP3": 96,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 363,
+         "break_even": 138,
+         "trail": 99,
+         "tp3": 96,
+         "expired": 47
+        },
+        "on_15m_candles": 0.19784656796769853,
+        "open_at_data_end": 9
+       },
+       "1d": {
+        "n": 461,
+        "win_rate": 0.4945770065075922,
+        "expectancy_r": -0.0219481963386821,
+        "profit_factor": 0.9547263120662723,
+        "max_drawdown_r": 41.99445515337498,
+        "total_r": -10.118118512132448,
+        "trades_per_week": 1.630621526023244,
+        "expired_share": 0.16052060737527116,
+        "hold_candles_median": 19.958333333333332,
+        "hold_candles_p90": 60.0,
+        "hold_days_median": 19.958333333333332,
+        "hold_days_p90": 60.0,
+        "status": {
+         "STOPPED": 215,
+         "TP1": 85,
+         "TP2": 61,
+         "TP3": 51,
+         "EXPIRED": 49
+        },
+        "exits": {
+         "stop": 215,
+         "break_even": 63,
+         "trail": 58,
+         "tp3": 51,
+         "expired": 74
+        },
+        "on_15m_candles": 0.18872017353579176,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     },
+     "proposal_1d100": {
+      "overall": {
+       "n": 6156,
+       "win_rate": 0.4987004548408057,
+       "expectancy_r": -0.05304691990052413,
+       "profit_factor": 0.8983240825422295,
+       "max_drawdown_r": 387.2930465015184,
+       "total_r": -326.55683890762657,
+       "trades_per_week": 171.4499569944891,
+       "expired_share": 0.04597141000649772,
+       "hold_candles_median": 22.0,
+       "hold_candles_p90": 86.25,
+       "hold_days_median": 1.6875,
+       "hold_days_p90": 16.666666666666668,
+       "status": {
+        "STOPPED": 3018,
+        "TP1": 1304,
+        "TP2": 830,
+        "TP3": 862,
+        "EXPIRED": 142
+       },
+       "exits": {
+        "stop": 3018,
+        "break_even": 1206,
+        "trail": 787,
+        "tp3": 862,
+        "expired": 283
+       },
+       "on_15m_candles": 0.6255685510071475,
+       "open_at_data_end": 46
+      },
+      "by_timeframe": {
+       "15m": {
+        "n": 1475,
+        "win_rate": 0.48542372881355933,
+        "expectancy_r": -0.13829899792286254,
+        "profit_factor": 0.7562490801305277,
+        "max_drawdown_r": 207.99076730849097,
+        "total_r": -203.99102193622227,
+        "trades_per_week": 110.51399264132012,
+        "expired_share": 0.003389830508474576,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 86.0,
+        "hold_days_median": 0.22916666666666666,
+        "hold_days_p90": 0.8958333333333334,
+        "status": {
+         "STOPPED": 757,
+         "TP1": 318,
+         "TP2": 197,
+         "TP3": 201,
+         "EXPIRED": 2
+        },
+        "exits": {
+         "stop": 757,
+         "break_even": 317,
+         "trail": 195,
+         "tp3": 201,
+         "expired": 5
+        },
+        "on_15m_candles": 1.0,
+        "open_at_data_end": 1
+       },
+       "1h": {
+        "n": 1514,
+        "win_rate": 0.49735799207397624,
+        "expectancy_r": -0.08666184575103161,
+        "profit_factor": 0.8390825638930676,
+        "max_drawdown_r": 141.5223227810638,
+        "total_r": -131.20603446706187,
+        "trades_per_week": 42.39906651108518,
+        "expired_share": 0.007926023778071334,
+        "hold_candles_median": 23.25,
+        "hold_candles_p90": 89.67500000000001,
+        "hold_days_median": 0.96875,
+        "hold_days_p90": 3.7364583333333337,
+        "status": {
+         "STOPPED": 760,
+         "TP1": 338,
+         "TP2": 208,
+         "TP3": 204,
+         "EXPIRED": 4
+        },
+        "exits": {
+         "stop": 760,
+         "break_even": 332,
+         "trail": 206,
+         "tp3": 204,
+         "expired": 12
+        },
+        "on_15m_candles": 0.9993394980184941,
+        "open_at_data_end": 5
+       },
+       "4h": {
+        "n": 1879,
+        "win_rate": 0.5178286322511975,
+        "expectancy_r": 0.02631636037184872,
+        "profit_factor": 1.054334786664942,
+        "max_drawdown_r": 63.82264823366413,
+        "total_r": 49.44844113870374,
+        "trades_per_week": 13.15519253208868,
+        "expired_share": 0.07716870675891431,
+        "hold_candles_median": 22.0,
+        "hold_candles_p90": 86.47500000000002,
+        "hold_days_median": 3.6666666666666665,
+        "hold_days_p90": 14.412500000000005,
+        "status": {
+         "STOPPED": 874,
+         "TP1": 389,
+         "TP2": 247,
+         "TP3": 298,
+         "EXPIRED": 71
+        },
+        "exits": {
+         "stop": 874,
+         "break_even": 340,
+         "trail": 222,
+         "tp3": 298,
+         "expired": 145
+        },
+        "on_15m_candles": 0.32783395423097395,
+        "open_at_data_end": 20
+       },
+       "12h": {
+        "n": 743,
+        "win_rate": 0.49259757738896365,
+        "expectancy_r": -0.02435164892800966,
+        "profit_factor": 0.9517789182707003,
+        "max_drawdown_r": 23.124674545446506,
+        "total_r": -18.093275153511176,
+        "trades_per_week": 3.40045766590389,
+        "expired_share": 0.063257065948856,
+        "hold_candles_median": 21.0,
+        "hold_candles_p90": 80.0,
+        "hold_days_median": 10.5,
+        "hold_days_p90": 40.0,
+        "status": {
+         "STOPPED": 363,
+         "TP1": 151,
+         "TP2": 109,
+         "TP3": 96,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 363,
+         "break_even": 138,
+         "trail": 99,
+         "tp3": 96,
+         "expired": 47
+        },
+        "on_15m_candles": 0.19784656796769853,
+        "open_at_data_end": 9
+       },
+       "1d": {
+        "n": 461,
+        "win_rate": 0.48590021691973967,
+        "expectancy_r": -0.026881188423861332,
+        "profit_factor": 0.9472058264408152,
+        "max_drawdown_r": 40.47812795794559,
+        "total_r": -12.392227863400073,
+        "trades_per_week": 1.630621526023244,
+        "expired_share": 0.09544468546637744,
+        "hold_candles_median": 19.958333333333332,
+        "hold_candles_p90": 96.0,
+        "hold_days_median": 19.958333333333332,
+        "hold_days_p90": 96.0,
+        "status": {
+         "STOPPED": 228,
+         "TP1": 95,
+         "TP2": 65,
+         "TP3": 56,
+         "EXPIRED": 17
+        },
+        "exits": {
+         "stop": 228,
+         "break_even": 71,
+         "trail": 62,
+         "tp3": 56,
+         "expired": 44
+        },
+        "on_15m_candles": 0.18872017353579176,
+        "open_at_data_end": 5
+       },
+       "3d": {
+        "n": 84,
+        "win_rate": 0.4523809523809524,
+        "expectancy_r": -0.12288953126351114,
+        "profit_factor": 0.7385647882272142,
+        "max_drawdown_r": 11.502102551289234,
+        "total_r": -10.322720626134936,
+        "trades_per_week": 0.3506261180679785,
+        "expired_share": 0.35714285714285715,
+        "hold_candles_median": 22.5,
+        "hold_candles_p90": 30.0,
+        "hold_days_median": 67.5,
+        "hold_days_p90": 90.0,
+        "status": {
+         "STOPPED": 36,
+         "TP1": 13,
+         "TP2": 4,
+         "TP3": 7,
+         "EXPIRED": 24
+        },
+        "exits": {
+         "stop": 36,
+         "break_even": 8,
+         "trail": 3,
+         "tp3": 7,
+         "expired": 30
+        },
+        "on_15m_candles": 0.15476190476190477,
+        "open_at_data_end": 6
+       }
+      }
+     }
+    },
+    "bootstrap_vs_base": {
+     "base": "current",
+     "overall": {
+      "proposal_1d30": {
+       "mean_gain_expectancy_r": -0.005824483982717271,
+       "share_better_expectancy": 0.214,
+       "expectancy_gain_90ci": [
+        -0.017130304798105525,
+        0.005473271391039094
+       ],
+       "mean_gain_total_r": -35.04283885674978,
+       "share_better_total_r": 0.22
+      },
+      "proposal_1d60": {
+       "mean_gain_expectancy_r": -0.00882690173324842,
+       "share_better_expectancy": 0.118,
+       "expectancy_gain_90ci": [
+        -0.020441641880842087,
+        0.0029530323176441137
+       ],
+       "mean_gain_total_r": -53.4110882355074,
+       "share_better_total_r": 0.121
+      },
+      "proposal_1d100": {
+       "mean_gain_expectancy_r": -0.009222410728643037,
+       "share_better_expectancy": 0.111,
+       "expectancy_gain_90ci": [
+        -0.020700877012604164,
+        0.00269611207918194
+       ],
+       "mean_gain_total_r": -55.83519615843262,
+       "share_better_total_r": 0.112
+      }
+     },
+     "by_timeframe": {
+      "15m": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.025787054407872687,
+        "share_better_expectancy": 0.036,
+        "expectancy_gain_90ci": [
+         -0.04939746138280521,
+         -0.0026471624076487735
+        ],
+        "mean_gain_total_r": -38.22462301494705,
+        "share_better_total_r": 0.036
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.025787054407872687,
+        "share_better_expectancy": 0.036,
+        "expectancy_gain_90ci": [
+         -0.04939746138280521,
+         -0.0026471624076487735
+        ],
+        "mean_gain_total_r": -38.22462301494705,
+        "share_better_total_r": 0.036
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.025787054407872687,
+        "share_better_expectancy": 0.036,
+        "expectancy_gain_90ci": [
+         -0.04939746138280521,
+         -0.0026471624076487735
+        ],
+        "mean_gain_total_r": -38.22462301494705,
+        "share_better_total_r": 0.036
+       }
+      },
+      "1h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.007089686152366634,
+        "share_better_expectancy": 0.681,
+        "expectancy_gain_90ci": [
+         -0.01607354950989716,
+         0.03117682891722702
+        ],
+        "mean_gain_total_r": 10.535718135588153,
+        "share_better_total_r": 0.686
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.007089686152366634,
+        "share_better_expectancy": 0.681,
+        "expectancy_gain_90ci": [
+         -0.01607354950989716,
+         0.03117682891722702
+        ],
+        "mean_gain_total_r": 10.535718135588153,
+        "share_better_total_r": 0.686
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.007089686152366634,
+        "share_better_expectancy": 0.681,
+        "expectancy_gain_90ci": [
+         -0.01607354950989716,
+         0.03117682891722702
+        ],
+        "mean_gain_total_r": 10.535718135588153,
+        "share_better_total_r": 0.686
+       }
+      },
+      "4h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.004363811000169392,
+        "share_better_expectancy": 0.629,
+        "expectancy_gain_90ci": [
+         -0.013585430080550727,
+         0.024704071409716977
+        ],
+        "mean_gain_total_r": 8.02194846151518,
+        "share_better_total_r": 0.624
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.004363811000169392,
+        "share_better_expectancy": 0.629,
+        "expectancy_gain_90ci": [
+         -0.013585430080550727,
+         0.024704071409716977
+        ],
+        "mean_gain_total_r": 8.02194846151518,
+        "share_better_total_r": 0.624
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.004363811000169392,
+        "share_better_expectancy": 0.629,
+        "expectancy_gain_90ci": [
+         -0.013585430080550727,
+         0.024704071409716977
+        ],
+        "mean_gain_total_r": 8.02194846151518,
+        "share_better_total_r": 0.624
+       }
+      },
+      "12h": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": -0.01910009218898275,
+        "share_better_expectancy": 0.182,
+        "expectancy_gain_90ci": [
+         -0.05322329573567154,
+         0.013787851900926186
+        ],
+        "mean_gain_total_r": -14.484507399175582,
+        "share_better_total_r": 0.182
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.01910009218898275,
+        "share_better_expectancy": 0.182,
+        "expectancy_gain_90ci": [
+         -0.05322329573567154,
+         0.013787851900926186
+        ],
+        "mean_gain_total_r": -14.484507399175582,
+        "share_better_total_r": 0.182
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.01910009218898275,
+        "share_better_expectancy": 0.182,
+        "expectancy_gain_90ci": [
+         -0.05322329573567154,
+         0.013787851900926186
+        ],
+        "mean_gain_total_r": -14.484507399175582,
+        "share_better_total_r": 0.182
+       }
+      },
+      "1d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": -0.041003537907234135,
+        "share_better_expectancy": 0.039,
+        "expectancy_gain_90ci": [
+         -0.07802064438934907,
+         -0.0042757869960309905
+        ],
+        "mean_gain_total_r": -18.282781701672466,
+        "share_better_total_r": 0.039
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": -0.04603410021273254,
+        "share_better_expectancy": 0.036,
+        "expectancy_gain_90ci": [
+         -0.08347463395671675,
+         -0.004164422416726599
+        ],
+        "mean_gain_total_r": -20.511110946193632,
+        "share_better_total_r": 0.036
+       }
+      },
+      "3d": {
+       "proposal_1d30": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d60": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       },
+       "proposal_1d100": {
+        "mean_gain_expectancy_r": 0.0,
+        "share_better_expectancy": 0.0,
+        "expectancy_gain_90ci": [
+         0.0,
+         0.0
+        ],
+        "mean_gain_total_r": 0.0,
+        "share_better_total_r": 0.0
+       }
+      }
+     }
+    }
+   }
+  }
+ },
+ "variants": {
+  "current": 30,
+  "proposal_1d30": {
+   "15m": 250,
+   "1h": 200,
+   "4h": 100,
+   "12h": 100,
+   "3d": 30,
+   "1d": 30
+  },
+  "proposal_1d60": {
+   "15m": 250,
+   "1h": 200,
+   "4h": 100,
+   "12h": 100,
+   "3d": 30,
+   "1d": 60
+  },
+  "proposal_1d100": {
+   "15m": 250,
+   "1h": 200,
+   "4h": 100,
+   "12h": 100,
+   "3d": 30,
+   "1d": 100
+  }
+ },
+ "base": "current",
+ "series": {
+  "ADA/USDT 3d": {
+   "oos_bars": 480,
+   "tune_bars": 336,
+   "test_bars": 114,
+   "cut": 1755207360000,
+   "seconds_tune": 1.3,
+   "seconds_horizons": 0.0
+  },
+  "BCH/USDT 3d": {
+   "oos_bars": 280,
+   "tune_bars": 196,
+   "test_bars": 54,
+   "cut": 1770932160000,
+   "seconds_tune": 1.2,
+   "seconds_horizons": 0.0
+  },
+  "BNB/USDT 3d": {
+   "oos_bars": 520,
+   "tune_bars": 364,
+   "test_bars": 126,
+   "cut": 1752356160000,
+   "seconds_tune": 1.4,
+   "seconds_horizons": 0.0
+  },
+  "BTC/USDT 3d": {
+   "oos_bars": 560,
+   "tune_bars": 392,
+   "test_bars": 138,
+   "cut": 1749245760000,
+   "seconds_tune": 1.2,
+   "seconds_horizons": 0.0
+  },
+  "DOGE/USDT 3d": {
+   "oos_bars": 320,
+   "tune_bars": 224,
+   "test_bars": 66,
+   "cut": 1767908160000,
+   "seconds_tune": 1.2,
+   "seconds_horizons": 0.0
+  },
+  "ETH/USDT 3d": {
+   "oos_bars": 560,
+   "tune_bars": 392,
+   "test_bars": 138,
+   "cut": 1749245760000,
+   "seconds_tune": 1.3,
+   "seconds_horizons": 0.0
+  },
+  "HBAR/USDT 3d": {
+   "oos_bars": 320,
+   "tune_bars": 224,
+   "test_bars": 66,
+   "cut": 1767821760000,
+   "seconds_tune": 1.3,
+   "seconds_horizons": 0.0
+  },
+  "LINK/USDT 3d": {
+   "oos_bars": 400,
+   "tune_bars": 280,
+   "test_bars": 90,
+   "cut": 1761514560000,
+   "seconds_tune": 1.3,
+   "seconds_horizons": 0.0
+  },
+  "LTC/USDT 3d": {
+   "oos_bars": 520,
+   "tune_bars": 364,
+   "test_bars": 126,
+   "cut": 1752442560000,
+   "seconds_tune": 1.3,
+   "seconds_horizons": 0.0
+  },
+  "TRX/USDT 3d": {
+   "oos_bars": 440,
+   "tune_bars": 308,
+   "test_bars": 102,
+   "cut": 1758404160000,
+   "seconds_tune": 1.2,
+   "seconds_horizons": 0.0
+  },
+  "XLM/USDT 3d": {
+   "oos_bars": 480,
+   "tune_bars": 336,
+   "test_bars": 114,
+   "cut": 1755380160000,
+   "seconds_tune": 1.3,
+   "seconds_horizons": 0.0
+  },
+  "XRP/USDT 3d": {
+   "oos_bars": 480,
+   "tune_bars": 336,
+   "test_bars": 114,
+   "cut": 1755639360000,
+   "seconds_tune": 1.2,
+   "seconds_horizons": 0.0
+  },
+  "ZEC/USDT 3d": {
+   "oos_bars": 360,
+   "tune_bars": 252,
+   "test_bars": 78,
+   "cut": 1764711359999,
+   "seconds_tune": 1.4,
+   "seconds_horizons": 0.0
+  },
+  "AAVE/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762931520000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ADA/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741677120000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "APT/USDT 1d": {
+   "oos_bars": 360,
+   "tune_bars": 252,
+   "test_bars": 78,
+   "cut": 1783667520000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "AVAX/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762931520000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "BCH/USDT 1d": {
+   "oos_bars": 1440,
+   "tune_bars": 1008,
+   "test_bars": 402,
+   "cut": 1755673920000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BNB/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741936320000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BTC/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741936320000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "DOGE/USDT 1d": {
+   "oos_bars": 1620,
+   "tune_bars": 1134,
+   "test_bars": 456,
+   "cut": 1751267520000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "DOT/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762672320000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ETH/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741936320000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "GALA/USDT 1d": {
+   "oos_bars": 810,
+   "tune_bars": 567,
+   "test_bars": 213,
+   "cut": 1772262720000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "HBAR/USDT 1d": {
+   "oos_bars": 1530,
+   "tune_bars": 1071,
+   "test_bars": 429,
+   "cut": 1753341120000,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "INJ/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762672320000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "LINK/USDT 1d": {
+   "oos_bars": 1800,
+   "tune_bars": 1260,
+   "test_bars": 510,
+   "cut": 1746342720000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "LTC/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741936320000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "NEAR/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762672320000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "PAXG/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762931520000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "SOL/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762931520000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "TRX/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741677120000,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "UNI/USDT 1d": {
+   "oos_bars": 1170,
+   "tune_bars": 819,
+   "test_bars": 321,
+   "cut": 1762672320000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "XLM/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741677120000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "XRP/USDT 1d": {
+   "oos_bars": 1980,
+   "tune_bars": 1386,
+   "test_bars": 564,
+   "cut": 1741936320000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ZEC/USDT 1d": {
+   "oos_bars": 1710,
+   "tune_bars": 1197,
+   "test_bars": 483,
+   "cut": 1748675520000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "AAVE/USDT 12h": {
+   "oos_bars": 2520,
+   "tune_bars": 1764,
+   "test_bars": 726,
+   "cut": 1760672160000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ADA/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753414560000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "APT/USDT 12h": {
+   "oos_bars": 1080,
+   "tune_bars": 756,
+   "test_bars": 294,
+   "cut": 1779075359999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "AVAX/USDT 12h": {
+   "oos_bars": 2520,
+   "tune_bars": 1764,
+   "test_bars": 726,
+   "cut": 1760672160000,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "BCH/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753414560000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "BNB/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753673760000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BTC/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753673760000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "DOGE/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753673760000,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "DOT/USDT 12h": {
+   "oos_bars": 2520,
+   "tune_bars": 1764,
+   "test_bars": 726,
+   "cut": 1760412960000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ENA/USDT 12h": {
+   "oos_bars": 280,
+   "tune_bars": 196,
+   "test_bars": 54,
+   "cut": 1789702559999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ETH/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753673760000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "GALA/USDT 12h": {
+   "oos_bars": 1800,
+   "tune_bars": 1260,
+   "test_bars": 510,
+   "cut": 1770003360000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "HBAR/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753414560000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "INJ/USDT 12h": {
+   "oos_bars": 2520,
+   "tune_bars": 1764,
+   "test_bars": 726,
+   "cut": 1760412960000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "LINK/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753414560000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "LTC/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753673760000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "NEAR/USDT 12h": {
+   "oos_bars": 2520,
+   "tune_bars": 1764,
+   "test_bars": 726,
+   "cut": 1760412960000,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.0
+  },
+  "PAXG/USDT 12h": {
+   "oos_bars": 2520,
+   "tune_bars": 1764,
+   "test_bars": 726,
+   "cut": 1760672160000,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "PEPE/USDT 12h": {
+   "oos_bars": 540,
+   "tune_bars": 378,
+   "test_bars": 132,
+   "cut": 1786332959999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "SOL/USDT 12h": {
+   "oos_bars": 2700,
+   "tune_bars": 1890,
+   "test_bars": 780,
+   "cut": 1758339360000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "SUI/USDT 12h": {
+   "oos_bars": 540,
+   "tune_bars": 378,
+   "test_bars": 132,
+   "cut": 1786073759999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "TRX/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753414560000,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "UNI/USDT 12h": {
+   "oos_bars": 2520,
+   "tune_bars": 1764,
+   "test_bars": 726,
+   "cut": 1760412960000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "WLD/USDT 12h": {
+   "oos_bars": 540,
+   "tune_bars": 378,
+   "test_bars": 132,
+   "cut": 1786073759999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "XLM/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753414560000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "XRP/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753673760000,
+   "seconds_tune": 0.7,
+   "seconds_horizons": 0.0
+  },
+  "ZEC/USDT 12h": {
+   "oos_bars": 3060,
+   "tune_bars": 2142,
+   "test_bars": 888,
+   "cut": 1753414560000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "AAVE/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "ADA/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "APT/USDT 4h": {
+   "oos_bars": 3240,
+   "tune_bars": 2268,
+   "test_bars": 942,
+   "cut": 1779124319999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "AVAX/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BCH/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "BIO/USDT 4h": {
+   "oos_bars": 628,
+   "tune_bars": 439,
+   "test_bars": 159,
+   "cut": 1790408160000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "BNB/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "BTC/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "DOGE/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.1
+  },
+  "DOT/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "ENA/USDT 4h": {
+   "oos_bars": 908,
+   "tune_bars": 635,
+   "test_bars": 243,
+   "cut": 1789457760000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ERA/USDT 4h": {
+   "oos_bars": 434,
+   "tune_bars": 304,
+   "test_bars": 100,
+   "cut": 1791246240000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ETH/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.1
+  },
+  "GALA/USDT 4h": {
+   "oos_bars": 5940,
+   "tune_bars": 4158,
+   "test_bars": 1752,
+   "cut": 1767719520000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "HBAR/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "INJ/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "LINK/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "LTC/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "NEAR/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "PAXG/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.0
+  },
+  "PEPE/USDT 4h": {
+   "oos_bars": 2160,
+   "tune_bars": 1512,
+   "test_bars": 618,
+   "cut": 1784049120000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "SOL/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "SUI/USDT 4h": {
+   "oos_bars": 2160,
+   "tune_bars": 1512,
+   "test_bars": 618,
+   "cut": 1783789920000,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "TRX/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.1
+  },
+  "UNI/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.7,
+   "seconds_horizons": 0.0
+  },
+  "WLD/USDT 4h": {
+   "oos_bars": 1620,
+   "tune_bars": 1134,
+   "test_bars": 456,
+   "cut": 1786122719999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "XLM/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "XRP/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767460319999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ZEC/USDT 4h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1767201119999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "AAVE/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ADA/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "APT/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "AVAX/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "BCH/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786666679999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BIO/USDT 1h": {
+   "oos_bars": 5400,
+   "tune_bars": 3780,
+   "test_bars": 1590,
+   "cut": 1787318280000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BNB/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "BTC/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "DOGE/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "DOT/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ENA/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ERA/USDT 1h": {
+   "oos_bars": 1836,
+   "tune_bars": 1285,
+   "test_bars": 521,
+   "cut": 1791167400000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ETH/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.7,
+   "seconds_horizons": 0.0
+  },
+  "GALA/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "GRAM/USDT 1h": {
+   "oos_bars": 436,
+   "tune_bars": 305,
+   "test_bars": 101,
+   "cut": 1792675800000,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "HBAR/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "INJ/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "LINK/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "LTC/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "NEAR/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "NVDAB/USDT 1h": {
+   "oos_bars": 532,
+   "tune_bars": 372,
+   "test_bars": 130,
+   "cut": 1792845720000,
+   "seconds_tune": 0.1,
+   "seconds_horizons": 0.0
+  },
+  "PAXG/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.0
+  },
+  "PEPE/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "SOL/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "SUI/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.1
+  },
+  "TRX/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "UNI/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "WLD/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.5,
+   "seconds_horizons": 0.0
+  },
+  "XAUT/USDT 1h": {
+   "oos_bars": 828,
+   "tune_bars": 579,
+   "test_bars": 219,
+   "cut": 1792256039999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "XLM/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "XRP/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786929479999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ZEC/USDT 1h": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1786670279999,
+   "seconds_tune": 0.9,
+   "seconds_horizons": 0.1
+  },
+  "AAVE/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ADA/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "APT/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "AVAX/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 3682,
+   "test_bars": 2288,
+   "cut": 1790948250000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BCH/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "BIO/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BNB/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "BTC/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "DOGE/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "DOT/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ENA/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ERA/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 3309,
+   "test_bars": 2661,
+   "cut": 1790612370000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "ETH/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "GALA/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791764369999,
+   "seconds_tune": 0.1,
+   "seconds_horizons": 0.0
+  },
+  "GRAM/USDT 15m": {
+   "oos_bars": 1828,
+   "tune_bars": 1279,
+   "test_bars": 519,
+   "cut": 1792540710000,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "HBAR/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "INJ/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "LINK/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "LTC/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "NEAR/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "NVDAB/USDT 15m": {
+   "oos_bars": 2228,
+   "tune_bars": 1559,
+   "test_bars": 639,
+   "cut": 1792824210000,
+   "seconds_tune": 0.0,
+   "seconds_horizons": 0.0
+  },
+  "PAXG/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "PEPE/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "SOL/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791507869999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "SUI/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "TRX/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "UNI/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "WLD/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.4,
+   "seconds_horizons": 0.0
+  },
+  "XAUT/USDT 15m": {
+   "oos_bars": 3392,
+   "tune_bars": 2374,
+   "test_bars": 988,
+   "cut": 1792118429999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  },
+  "XLM/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "XRP/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.2,
+   "seconds_horizons": 0.0
+  },
+  "ZEC/USDT 15m": {
+   "oos_bars": 6000,
+   "tune_bars": 4200,
+   "test_bars": 1770,
+   "cut": 1791414269999,
+   "seconds_tune": 0.3,
+   "seconds_horizons": 0.0
+  }
+ },
+ "skipped": [
+  "AAVE/USDT 3d: no model / too few out-of-sample bars",
+  "APT/USDT 3d: no model / too few out-of-sample bars",
+  "AVAX/USDT 3d: span too short to split",
+  "BIO/USDT 3d: no model / too few out-of-sample bars",
+  "DOT/USDT 3d: span too short to split",
+  "ENA/USDT 3d: no model / too few out-of-sample bars",
+  "ERA/USDT 3d: no model / too few out-of-sample bars",
+  "GALA/USDT 3d: no model / too few out-of-sample bars",
+  "GRAM/USDT 3d: no model / too few out-of-sample bars",
+  "INJ/USDT 3d: no model / too few out-of-sample bars",
+  "NEAR/USDT 3d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 3d: no model / too few out-of-sample bars",
+  "PAXG/USDT 3d: span too short to split",
+  "PEPE/USDT 3d: no model / too few out-of-sample bars",
+  "SOL/USDT 3d: span too short to split",
+  "SUI/USDT 3d: no model / too few out-of-sample bars",
+  "UNI/USDT 3d: span too short to split",
+  "WLD/USDT 3d: no model / too few out-of-sample bars",
+  "XAUT/USDT 3d: no model / too few out-of-sample bars",
+  "BIO/USDT 1d: no model / too few out-of-sample bars",
+  "ENA/USDT 1d: no model / too few out-of-sample bars",
+  "ERA/USDT 1d: no model / too few out-of-sample bars",
+  "GRAM/USDT 1d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 1d: no model / too few out-of-sample bars",
+  "PEPE/USDT 1d: no model / too few out-of-sample bars",
+  "SUI/USDT 1d: no model / too few out-of-sample bars",
+  "WLD/USDT 1d: no model / too few out-of-sample bars",
+  "XAUT/USDT 1d: no model / too few out-of-sample bars",
+  "BIO/USDT 12h: no model / too few out-of-sample bars",
+  "ERA/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 12h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 12h: no model / too few out-of-sample bars",
+  "XAUT/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 4h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 4h: no model / too few out-of-sample bars",
+  "XAUT/USDT 4h: no model / too few out-of-sample bars"
+ ],
+ "entry_choice": {
+  "15m": {
+   "chosen": "market:0.0",
+   "best_early": "market:0.0",
+   "confirmed_late": true
+  },
+  "1h": {
+   "chosen": "old:0.0",
+   "best_early": "confirm:0.0",
+   "confirmed_late": false
+  },
+  "4h": {
+   "chosen": "market:0.0",
+   "best_early": "market:0.0",
+   "confirmed_late": true
+  },
+  "12h": {
+   "chosen": "pullback:0.25",
+   "best_early": "pullback:0.25",
+   "confirmed_late": true
+  },
+  "1d": {
+   "chosen": "old:0.0",
+   "best_early": "confirm:0.25",
+   "confirmed_late": false
+  },
+  "3d": {
+   "chosen": "old:0.0",
+   "best_early": "confirm:0.25",
+   "confirmed_late": false
+  }
+ },
+ "filters": {
+  "3d": {
+   "enabled": false,
+   "reason": "only 282 trades to learn from",
+   "n": 282
+  },
+  "1d": {
+   "enabled": false,
+   "keep_fraction": 0.7,
+   "n": 1158,
+   "exam": {
+    "n": 290,
+    "kept": 163,
+    "avg_r_all": 0.18687064158816286,
+    "avg_r_kept": 0.21566436757911067
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "12h": {
+   "enabled": false,
+   "keep_fraction": 0.8,
+   "n": 2090,
+   "exam": {
+    "n": 523,
+    "kept": 359,
+    "avg_r_all": 0.10282374934664676,
+    "avg_r_kept": 0.09884770605471818
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "4h": {
+   "enabled": false,
+   "keep_fraction": 0.8,
+   "n": 4278,
+   "exam": {
+    "n": 1070,
+    "kept": 854,
+    "avg_r_all": 0.1308262668606972,
+    "avg_r_kept": 0.14772384593843008
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "1h": {
+   "enabled": false,
+   "keep_fraction": 0.8,
+   "n": 3630,
+   "exam": {
+    "n": 908,
+    "kept": 671,
+    "avg_r_all": -0.02242339557260554,
+    "avg_r_kept": -0.07335299579152374
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  },
+  "15m": {
+   "enabled": false,
+   "keep_fraction": 0.5,
+   "n": 2097,
+   "exam": {
+    "n": 525,
+    "kept": 275,
+    "avg_r_all": -0.21343456375385028,
+    "avg_r_kept": -0.27865815247517034
+   },
+   "reason": "the filter did not improve results on unseen trades"
+  }
+ },
+ "headline_test": {
+  "sequential": {
+   "table": {
+    "current": {
+     "overall": {
+      "n": 1552,
+      "win_rate": 0.5032216494845361,
+      "expectancy_r": -0.04543156400394709,
+      "total_r": -70.50978733412589,
+      "profit_factor": 0.897476645979148,
+      "max_drawdown_r": 122.53320175276448,
+      "expired_share": 0.38917525773195877,
+      "hold_candles_median": 21.0,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 1.25,
+      "hold_days_p90": 13.540625,
+      "trades_per_week": 145.11489314963708,
+      "open_at_data_end": 23
+     },
+     "15m": {
+      "n": 373,
+      "win_rate": 0.4691689008042895,
+      "expectancy_r": -0.15950457585949124,
+      "total_r": -59.495206795590235,
+      "profit_factor": 0.685261200320385,
+      "max_drawdown_r": 64.13142032091113,
+      "expired_share": 0.3672922252010724,
+      "hold_candles_median": 19.0,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 0.19791666666666666,
+      "hold_days_p90": 0.3125,
+      "trades_per_week": 94.23157894736842,
+      "open_at_data_end": 0
+     },
+     "1h": {
+      "n": 362,
+      "win_rate": 0.4889502762430939,
+      "expectancy_r": -0.07778270906309674,
+      "total_r": -28.15734068084102,
+      "profit_factor": 0.8324366768962174,
+      "max_drawdown_r": 32.56910196633219,
+      "expired_share": 0.3342541436464088,
+      "hold_candles_median": 18.625,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 0.7760416666666667,
+      "hold_days_p90": 1.25,
+      "trades_per_week": 34.37874505370266,
+      "open_at_data_end": 2
+     },
+     "4h": {
+      "n": 497,
+      "win_rate": 0.5492957746478874,
+      "expectancy_r": 0.055512688844317246,
+      "total_r": 27.589806355625672,
+      "profit_factor": 1.1473589533658821,
+      "max_drawdown_r": 33.27164409003995,
+      "expired_share": 0.45875251509054327,
+      "hold_candles_median": 25.375,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 4.229166666666667,
+      "hold_days_p90": 5.0,
+      "trades_per_week": 11.799886941775014,
+      "open_at_data_end": 5
+     },
+     "12h": {
+      "n": 192,
+      "win_rate": 0.5,
+      "expectancy_r": -0.012484492663942479,
+      "total_r": -2.397022591476956,
+      "profit_factor": 0.9718703771062319,
+      "max_drawdown_r": 12.360562051413645,
+      "expired_share": 0.375,
+      "hold_candles_median": 18.34375,
+      "hold_candles_p90": 29.958333333333332,
+      "hold_days_median": 9.171875,
+      "hold_days_p90": 14.979166666666666,
+      "trades_per_week": 3.0304396843292,
+      "open_at_data_end": 5
+     },
+     "1d": {
+      "n": 110,
+      "win_rate": 0.4727272727272727,
+      "expectancy_r": -0.05267294330013961,
+      "total_r": -5.794023763015357,
+      "profit_factor": 0.8812514124103404,
+      "max_drawdown_r": 11.257641042543419,
+      "expired_share": 0.35454545454545455,
+      "hold_candles_median": 16.0625,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 16.0625,
+      "hold_days_p90": 30.0,
+      "trades_per_week": 1.3676731793960923,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    },
+    "proposal_1d30": {
+     "overall": {
+      "n": 1260,
+      "win_rate": 0.5079365079365079,
+      "expectancy_r": -0.04385663478938244,
+      "total_r": -55.259359834621876,
+      "profit_factor": 0.913592478187748,
+      "max_drawdown_r": 116.44181989498189,
+      "expired_share": 0.07857142857142857,
+      "hold_candles_median": 21.0,
+      "hold_candles_p90": 80.0,
+      "hold_days_median": 1.5364583333333335,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 121.84442446046947,
+      "open_at_data_end": 35
+     },
+     "15m": {
+      "n": 317,
+      "win_rate": 0.48580441640378547,
+      "expectancy_r": -0.1706286465051267,
+      "total_r": -54.08928094212517,
+      "profit_factor": 0.7028824981977649,
+      "max_drawdown_r": 59.52345418125044,
+      "expired_share": 0.0031545741324921135,
+      "hold_candles_median": 22.0,
+      "hold_candles_p90": 84.0,
+      "hold_days_median": 0.22916666666666666,
+      "hold_days_p90": 0.875,
+      "trades_per_week": 80.08421052631579,
+      "open_at_data_end": 1
+     },
+     "1h": {
+      "n": 308,
+      "win_rate": 0.5097402597402597,
+      "expectancy_r": -0.06341255455873197,
+      "total_r": -19.53106680408945,
+      "profit_factor": 0.8801726874245939,
+      "max_drawdown_r": 26.131159178386486,
+      "expired_share": 0.006493506493506494,
+      "hold_candles_median": 18.375,
+      "hold_candles_p90": 64.75000000000006,
+      "hold_days_median": 0.765625,
+      "hold_days_p90": 2.6979166666666687,
+      "trades_per_week": 29.250423968343696,
+      "open_at_data_end": 4
+     },
+     "4h": {
+      "n": 356,
+      "win_rate": 0.550561797752809,
+      "expectancy_r": 0.09151038231606565,
+      "total_r": 32.57769610451937,
+      "profit_factor": 1.2062430197629201,
+      "max_drawdown_r": 29.806128064948012,
+      "expired_share": 0.11797752808988764,
+      "hold_candles_median": 24.40625,
+      "hold_candles_p90": 100.0,
+      "hold_days_median": 4.067708333333334,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 8.452232899943471,
+      "open_at_data_end": 12
+     },
+     "12h": {
+      "n": 151,
+      "win_rate": 0.48344370860927155,
+      "expectancy_r": -0.040838970669425635,
+      "total_r": -6.166684571083271,
+      "profit_factor": 0.9212338071617518,
+      "max_drawdown_r": 11.208683652333654,
+      "expired_share": 0.052980132450331126,
+      "hold_candles_median": 18.770833333333332,
+      "hold_candles_p90": 73.72916666666667,
+      "hold_days_median": 9.385416666666666,
+      "hold_days_p90": 36.864583333333336,
+      "trades_per_week": 2.3833145434047354,
+      "open_at_data_end": 7
+     },
+     "1d": {
+      "n": 110,
+      "win_rate": 0.4727272727272727,
+      "expectancy_r": -0.05267294330013961,
+      "total_r": -5.794023763015357,
+      "profit_factor": 0.8812514124103404,
+      "max_drawdown_r": 11.257641042543419,
+      "expired_share": 0.35454545454545455,
+      "hold_candles_median": 16.0625,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 16.0625,
+      "hold_days_p90": 30.0,
+      "trades_per_week": 1.3676731793960923,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    },
+    "proposal_1d60": {
+     "overall": {
+      "n": 1247,
+      "win_rate": 0.5060144346431436,
+      "expectancy_r": -0.04634445380418315,
+      "total_r": -57.79153389381639,
+      "profit_factor": 0.9100643438535198,
+      "max_drawdown_r": 115.98255934675404,
+      "expired_share": 0.061748195669607056,
+      "hold_candles_median": 21.0,
+      "hold_candles_p90": 80.10000000000002,
+      "hold_days_median": 1.5104166666666667,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 121.68279035744993,
+      "open_at_data_end": 35
+     },
+     "15m": {
+      "n": 317,
+      "win_rate": 0.48580441640378547,
+      "expectancy_r": -0.1706286465051267,
+      "total_r": -54.08928094212517,
+      "profit_factor": 0.7028824981977649,
+      "max_drawdown_r": 59.52345418125044,
+      "expired_share": 0.0031545741324921135,
+      "hold_candles_median": 22.0,
+      "hold_candles_p90": 84.0,
+      "hold_days_median": 0.22916666666666666,
+      "hold_days_p90": 0.875,
+      "trades_per_week": 80.08421052631579,
+      "open_at_data_end": 1
+     },
+     "1h": {
+      "n": 308,
+      "win_rate": 0.5097402597402597,
+      "expectancy_r": -0.06341255455873197,
+      "total_r": -19.53106680408945,
+      "profit_factor": 0.8801726874245939,
+      "max_drawdown_r": 26.131159178386486,
+      "expired_share": 0.006493506493506494,
+      "hold_candles_median": 18.375,
+      "hold_candles_p90": 64.75000000000006,
+      "hold_days_median": 0.765625,
+      "hold_days_p90": 2.6979166666666687,
+      "trades_per_week": 29.250423968343696,
+      "open_at_data_end": 4
+     },
+     "4h": {
+      "n": 356,
+      "win_rate": 0.550561797752809,
+      "expectancy_r": 0.09151038231606565,
+      "total_r": 32.57769610451937,
+      "profit_factor": 1.2062430197629201,
+      "max_drawdown_r": 29.806128064948012,
+      "expired_share": 0.11797752808988764,
+      "hold_candles_median": 24.40625,
+      "hold_candles_p90": 100.0,
+      "hold_days_median": 4.067708333333334,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 8.452232899943471,
+      "open_at_data_end": 12
+     },
+     "12h": {
+      "n": 151,
+      "win_rate": 0.48344370860927155,
+      "expectancy_r": -0.040838970669425635,
+      "total_r": -6.166684571083271,
+      "profit_factor": 0.9212338071617518,
+      "max_drawdown_r": 11.208683652333654,
+      "expired_share": 0.052980132450331126,
+      "hold_candles_median": 18.770833333333332,
+      "hold_candles_p90": 73.72916666666667,
+      "hold_days_median": 9.385416666666666,
+      "hold_days_p90": 36.864583333333336,
+      "trades_per_week": 2.3833145434047354,
+      "open_at_data_end": 7
+     },
+     "1d": {
+      "n": 97,
+      "win_rate": 0.44329896907216493,
+      "expectancy_r": -0.08583709095061724,
+      "total_r": -8.326197822209872,
+      "profit_factor": 0.8394475397302776,
+      "max_drawdown_r": 16.329898675254448,
+      "expired_share": 0.17525773195876287,
+      "hold_candles_median": 16.572916666666668,
+      "hold_candles_p90": 60.0,
+      "hold_days_median": 16.572916666666668,
+      "hold_days_p90": 60.0,
+      "trades_per_week": 1.206039076376554,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    },
+    "proposal_1d100": {
+     "overall": {
+      "n": 1240,
+      "win_rate": 0.5048387096774194,
+      "expectancy_r": -0.04915866599612463,
+      "total_r": -60.95674583519454,
+      "profit_factor": 0.9052289909938379,
+      "max_drawdown_r": 113.9524206020007,
+      "expired_share": 0.05403225806451613,
+      "hold_candles_median": 21.0,
+      "hold_candles_p90": 84.85000000000014,
+      "hold_days_median": 1.5052083333333335,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 121.59575660967019,
+      "open_at_data_end": 35
+     },
+     "15m": {
+      "n": 317,
+      "win_rate": 0.48580441640378547,
+      "expectancy_r": -0.1706286465051267,
+      "total_r": -54.08928094212517,
+      "profit_factor": 0.7028824981977649,
+      "max_drawdown_r": 59.52345418125044,
+      "expired_share": 0.0031545741324921135,
+      "hold_candles_median": 22.0,
+      "hold_candles_p90": 84.0,
+      "hold_days_median": 0.22916666666666666,
+      "hold_days_p90": 0.875,
+      "trades_per_week": 80.08421052631579,
+      "open_at_data_end": 1
+     },
+     "1h": {
+      "n": 308,
+      "win_rate": 0.5097402597402597,
+      "expectancy_r": -0.06341255455873197,
+      "total_r": -19.53106680408945,
+      "profit_factor": 0.8801726874245939,
+      "max_drawdown_r": 26.131159178386486,
+      "expired_share": 0.006493506493506494,
+      "hold_candles_median": 18.375,
+      "hold_candles_p90": 64.75000000000006,
+      "hold_days_median": 0.765625,
+      "hold_days_p90": 2.6979166666666687,
+      "trades_per_week": 29.250423968343696,
+      "open_at_data_end": 4
+     },
+     "4h": {
+      "n": 356,
+      "win_rate": 0.550561797752809,
+      "expectancy_r": 0.09151038231606565,
+      "total_r": 32.57769610451937,
+      "profit_factor": 1.2062430197629201,
+      "max_drawdown_r": 29.806128064948012,
+      "expired_share": 0.11797752808988764,
+      "hold_candles_median": 24.40625,
+      "hold_candles_p90": 100.0,
+      "hold_days_median": 4.067708333333334,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 8.452232899943471,
+      "open_at_data_end": 12
+     },
+     "12h": {
+      "n": 151,
+      "win_rate": 0.48344370860927155,
+      "expectancy_r": -0.040838970669425635,
+      "total_r": -6.166684571083271,
+      "profit_factor": 0.9212338071617518,
+      "max_drawdown_r": 11.208683652333654,
+      "expired_share": 0.052980132450331126,
+      "hold_candles_median": 18.770833333333332,
+      "hold_candles_p90": 73.72916666666667,
+      "hold_days_median": 9.385416666666666,
+      "hold_days_p90": 36.864583333333336,
+      "trades_per_week": 2.3833145434047354,
+      "open_at_data_end": 7
+     },
+     "1d": {
+      "n": 90,
+      "win_rate": 0.4222222222222222,
+      "expectancy_r": -0.12768233070653334,
+      "total_r": -11.491409763588,
+      "profit_factor": 0.7810011126280811,
+      "max_drawdown_r": 21.16607899615135,
+      "expired_share": 0.07777777777777778,
+      "hold_candles_median": 16.348958333333336,
+      "hold_candles_p90": 92.17187500000001,
+      "hold_days_median": 16.348958333333336,
+      "hold_days_p90": 92.17187500000001,
+      "trades_per_week": 1.119005328596803,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    }
+   },
+   "share_better_expectancy_vs_base": {
+    "proposal_1d30": 0.575,
+    "proposal_1d60": 0.484,
+    "proposal_1d100": 0.421
+   }
+  },
+  "identical_entries": {
+   "table": {
+    "current": {
+     "overall": {
+      "n": 1552,
+      "win_rate": 0.5032216494845361,
+      "expectancy_r": -0.04543156400394709,
+      "total_r": -70.50978733412589,
+      "profit_factor": 0.897476645979148,
+      "max_drawdown_r": 122.53320175276448,
+      "expired_share": 0.38917525773195877,
+      "hold_candles_median": 21.0,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 1.25,
+      "hold_days_p90": 13.540625,
+      "trades_per_week": 145.11489314963708,
+      "open_at_data_end": 23
+     },
+     "15m": {
+      "n": 373,
+      "win_rate": 0.4691689008042895,
+      "expectancy_r": -0.15950457585949124,
+      "total_r": -59.495206795590235,
+      "profit_factor": 0.685261200320385,
+      "max_drawdown_r": 64.13142032091113,
+      "expired_share": 0.3672922252010724,
+      "hold_candles_median": 19.0,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 0.19791666666666666,
+      "hold_days_p90": 0.3125,
+      "trades_per_week": 94.23157894736842,
+      "open_at_data_end": 0
+     },
+     "1h": {
+      "n": 362,
+      "win_rate": 0.4889502762430939,
+      "expectancy_r": -0.07778270906309674,
+      "total_r": -28.15734068084102,
+      "profit_factor": 0.8324366768962174,
+      "max_drawdown_r": 32.56910196633219,
+      "expired_share": 0.3342541436464088,
+      "hold_candles_median": 18.625,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 0.7760416666666667,
+      "hold_days_p90": 1.25,
+      "trades_per_week": 34.37874505370266,
+      "open_at_data_end": 2
+     },
+     "4h": {
+      "n": 497,
+      "win_rate": 0.5492957746478874,
+      "expectancy_r": 0.055512688844317246,
+      "total_r": 27.589806355625672,
+      "profit_factor": 1.1473589533658821,
+      "max_drawdown_r": 33.27164409003995,
+      "expired_share": 0.45875251509054327,
+      "hold_candles_median": 25.375,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 4.229166666666667,
+      "hold_days_p90": 5.0,
+      "trades_per_week": 11.799886941775014,
+      "open_at_data_end": 5
+     },
+     "12h": {
+      "n": 192,
+      "win_rate": 0.5,
+      "expectancy_r": -0.012484492663942479,
+      "total_r": -2.397022591476956,
+      "profit_factor": 0.9718703771062319,
+      "max_drawdown_r": 12.360562051413645,
+      "expired_share": 0.375,
+      "hold_candles_median": 18.34375,
+      "hold_candles_p90": 29.958333333333332,
+      "hold_days_median": 9.171875,
+      "hold_days_p90": 14.979166666666666,
+      "trades_per_week": 3.0304396843292,
+      "open_at_data_end": 5
+     },
+     "1d": {
+      "n": 110,
+      "win_rate": 0.4727272727272727,
+      "expectancy_r": -0.05267294330013961,
+      "total_r": -5.794023763015357,
+      "profit_factor": 0.8812514124103404,
+      "max_drawdown_r": 11.257641042543419,
+      "expired_share": 0.35454545454545455,
+      "hold_candles_median": 16.0625,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 16.0625,
+      "hold_days_p90": 30.0,
+      "trades_per_week": 1.3676731793960923,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    },
+    "proposal_1d30": {
+     "overall": {
+      "n": 1529,
+      "win_rate": 0.5022890778286462,
+      "expectancy_r": -0.05347825573007343,
+      "total_r": -81.76825301128227,
+      "profit_factor": 0.8961251129943416,
+      "max_drawdown_r": 157.21614597109203,
+      "expired_share": 0.06998037933289732,
+      "hold_candles_median": 20.6875,
+      "hold_candles_p90": 79.61250000000001,
+      "hold_days_median": 1.5729166666666667,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 144.15808727492964,
+      "open_at_data_end": 46
+     },
+     "15m": {
+      "n": 372,
+      "win_rate": 0.4838709677419355,
+      "expectancy_r": -0.18103916198726788,
+      "total_r": -67.34656825926365,
+      "profit_factor": 0.6856684583219468,
+      "max_drawdown_r": 71.68083181713259,
+      "expired_share": 0.002688172043010753,
+      "hold_candles_median": 19.0,
+      "hold_candles_p90": 76.0,
+      "hold_days_median": 0.19791666666666666,
+      "hold_days_p90": 0.7916666666666666,
+      "trades_per_week": 93.97894736842105,
+      "open_at_data_end": 1
+     },
+     "1h": {
+      "n": 359,
+      "win_rate": 0.5069637883008357,
+      "expectancy_r": -0.08230103675095761,
+      "total_r": -29.54607219359378,
+      "profit_factor": 0.8450371929601046,
+      "max_drawdown_r": 36.832054219824954,
+      "expired_share": 0.005571030640668524,
+      "hold_candles_median": 18.25,
+      "hold_candles_p90": 76.5,
+      "hold_days_median": 0.7604166666666666,
+      "hold_days_p90": 3.1875,
+      "trades_per_week": 34.09383832673827,
+      "open_at_data_end": 5
+     },
+     "4h": {
+      "n": 482,
+      "win_rate": 0.5311203319502075,
+      "expectancy_r": 0.07067247280296259,
+      "total_r": 34.06413189102797,
+      "profit_factor": 1.1512691977490055,
+      "max_drawdown_r": 46.32828148078221,
+      "expired_share": 0.0975103734439834,
+      "hold_candles_median": 24.21875,
+      "hold_candles_p90": 95.08750000000006,
+      "hold_days_median": 4.036458333333334,
+      "hold_days_p90": 15.847916666666675,
+      "trades_per_week": 11.44375353306953,
+      "open_at_data_end": 20
+     },
+     "12h": {
+      "n": 188,
+      "win_rate": 0.4787234042553192,
+      "expectancy_r": -0.057924046955369415,
+      "total_r": -10.88972082760945,
+      "profit_factor": 0.8898261960721555,
+      "max_drawdown_r": 15.981835553648526,
+      "expired_share": 0.05851063829787234,
+      "hold_candles_median": 17.885416666666664,
+      "hold_candles_p90": 73.91041666666668,
+      "hold_days_median": 8.942708333333332,
+      "hold_days_p90": 36.95520833333334,
+      "trades_per_week": 2.967305524239008,
+      "open_at_data_end": 9
+     },
+     "1d": {
+      "n": 110,
+      "win_rate": 0.4727272727272727,
+      "expectancy_r": -0.05267294330013961,
+      "total_r": -5.794023763015357,
+      "profit_factor": 0.8812514124103404,
+      "max_drawdown_r": 11.257641042543419,
+      "expired_share": 0.35454545454545455,
+      "hold_candles_median": 16.0625,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 16.0625,
+      "hold_days_p90": 30.0,
+      "trades_per_week": 1.3676731793960923,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    },
+    "proposal_1d60": {
+     "overall": {
+      "n": 1529,
+      "win_rate": 0.5003270111183781,
+      "expectancy_r": -0.05562768964746728,
+      "total_r": -85.05473747097747,
+      "profit_factor": 0.8933310661257572,
+      "max_drawdown_r": 158.25485468082158,
+      "expired_share": 0.05624591236102027,
+      "hold_candles_median": 20.6875,
+      "hold_candles_p90": 79.61250000000001,
+      "hold_days_median": 1.5729166666666667,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 144.15808727492964,
+      "open_at_data_end": 46
+     },
+     "15m": {
+      "n": 372,
+      "win_rate": 0.4838709677419355,
+      "expectancy_r": -0.18103916198726788,
+      "total_r": -67.34656825926365,
+      "profit_factor": 0.6856684583219468,
+      "max_drawdown_r": 71.68083181713259,
+      "expired_share": 0.002688172043010753,
+      "hold_candles_median": 19.0,
+      "hold_candles_p90": 76.0,
+      "hold_days_median": 0.19791666666666666,
+      "hold_days_p90": 0.7916666666666666,
+      "trades_per_week": 93.97894736842105,
+      "open_at_data_end": 1
+     },
+     "1h": {
+      "n": 359,
+      "win_rate": 0.5069637883008357,
+      "expectancy_r": -0.08230103675095761,
+      "total_r": -29.54607219359378,
+      "profit_factor": 0.8450371929601046,
+      "max_drawdown_r": 36.832054219824954,
+      "expired_share": 0.005571030640668524,
+      "hold_candles_median": 18.25,
+      "hold_candles_p90": 76.5,
+      "hold_days_median": 0.7604166666666666,
+      "hold_days_p90": 3.1875,
+      "trades_per_week": 34.09383832673827,
+      "open_at_data_end": 5
+     },
+     "4h": {
+      "n": 482,
+      "win_rate": 0.5311203319502075,
+      "expectancy_r": 0.07067247280296259,
+      "total_r": 34.06413189102797,
+      "profit_factor": 1.1512691977490055,
+      "max_drawdown_r": 46.32828148078221,
+      "expired_share": 0.0975103734439834,
+      "hold_candles_median": 24.21875,
+      "hold_candles_p90": 95.08750000000006,
+      "hold_days_median": 4.036458333333334,
+      "hold_days_p90": 15.847916666666675,
+      "trades_per_week": 11.44375353306953,
+      "open_at_data_end": 20
+     },
+     "12h": {
+      "n": 188,
+      "win_rate": 0.4787234042553192,
+      "expectancy_r": -0.057924046955369415,
+      "total_r": -10.88972082760945,
+      "profit_factor": 0.8898261960721555,
+      "max_drawdown_r": 15.981835553648526,
+      "expired_share": 0.05851063829787234,
+      "hold_candles_median": 17.885416666666664,
+      "hold_candles_p90": 73.91041666666668,
+      "hold_days_median": 8.942708333333332,
+      "hold_days_p90": 36.95520833333334,
+      "trades_per_week": 2.967305524239008,
+      "open_at_data_end": 9
+     },
+     "1d": {
+      "n": 110,
+      "win_rate": 0.44545454545454544,
+      "expectancy_r": -0.08255007475191424,
+      "total_r": -9.080508222710566,
+      "profit_factor": 0.8460497339979609,
+      "max_drawdown_r": 19.274895106225184,
+      "expired_share": 0.16363636363636364,
+      "hold_candles_median": 16.0625,
+      "hold_candles_p90": 60.0,
+      "hold_days_median": 16.0625,
+      "hold_days_p90": 60.0,
+      "trades_per_week": 1.3676731793960923,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    },
+    "proposal_1d100": {
+     "overall": {
+      "n": 1529,
+      "win_rate": 0.499672988881622,
+      "expectancy_r": -0.05596919251193295,
+      "total_r": -85.57689535074547,
+      "profit_factor": 0.893165849348824,
+      "max_drawdown_r": 158.2548546808216,
+      "expired_share": 0.050359712230215826,
+      "hold_candles_median": 20.6875,
+      "hold_candles_p90": 83.80000000000001,
+      "hold_days_median": 1.5729166666666667,
+      "hold_days_p90": 16.666666666666668,
+      "trades_per_week": 144.15808727492964,
+      "open_at_data_end": 46
+     },
+     "15m": {
+      "n": 372,
+      "win_rate": 0.4838709677419355,
+      "expectancy_r": -0.18103916198726788,
+      "total_r": -67.34656825926365,
+      "profit_factor": 0.6856684583219468,
+      "max_drawdown_r": 71.68083181713259,
+      "expired_share": 0.002688172043010753,
+      "hold_candles_median": 19.0,
+      "hold_candles_p90": 76.0,
+      "hold_days_median": 0.19791666666666666,
+      "hold_days_p90": 0.7916666666666666,
+      "trades_per_week": 93.97894736842105,
+      "open_at_data_end": 1
+     },
+     "1h": {
+      "n": 359,
+      "win_rate": 0.5069637883008357,
+      "expectancy_r": -0.08230103675095761,
+      "total_r": -29.54607219359378,
+      "profit_factor": 0.8450371929601046,
+      "max_drawdown_r": 36.832054219824954,
+      "expired_share": 0.005571030640668524,
+      "hold_candles_median": 18.25,
+      "hold_candles_p90": 76.5,
+      "hold_days_median": 0.7604166666666666,
+      "hold_days_p90": 3.1875,
+      "trades_per_week": 34.09383832673827,
+      "open_at_data_end": 5
+     },
+     "4h": {
+      "n": 482,
+      "win_rate": 0.5311203319502075,
+      "expectancy_r": 0.07067247280296259,
+      "total_r": 34.06413189102797,
+      "profit_factor": 1.1512691977490055,
+      "max_drawdown_r": 46.32828148078221,
+      "expired_share": 0.0975103734439834,
+      "hold_candles_median": 24.21875,
+      "hold_candles_p90": 95.08750000000006,
+      "hold_days_median": 4.036458333333334,
+      "hold_days_p90": 15.847916666666675,
+      "trades_per_week": 11.44375353306953,
+      "open_at_data_end": 20
+     },
+     "12h": {
+      "n": 188,
+      "win_rate": 0.4787234042553192,
+      "expectancy_r": -0.057924046955369415,
+      "total_r": -10.88972082760945,
+      "profit_factor": 0.8898261960721555,
+      "max_drawdown_r": 15.981835553648526,
+      "expired_share": 0.05851063829787234,
+      "hold_candles_median": 17.885416666666664,
+      "hold_candles_p90": 73.91041666666668,
+      "hold_days_median": 8.942708333333332,
+      "hold_days_p90": 36.95520833333334,
+      "trades_per_week": 2.967305524239008,
+      "open_at_data_end": 9
+     },
+     "1d": {
+      "n": 110,
+      "win_rate": 0.43636363636363634,
+      "expectancy_r": -0.08729696456798691,
+      "total_r": -9.60266610247856,
+      "profit_factor": 0.8466954112486731,
+      "max_drawdown_r": 20.897712806839664,
+      "expired_share": 0.08181818181818182,
+      "hold_candles_median": 16.0625,
+      "hold_candles_p90": 92.17187500000001,
+      "hold_days_median": 16.0625,
+      "hold_days_p90": 92.17187500000001,
+      "trades_per_week": 1.3676731793960923,
+      "open_at_data_end": 5
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.1253333254904446,
+      "total_r": -2.2559998588280026,
+      "profit_factor": 0.7609879602759396,
+      "max_drawdown_r": 3.5472635827930725,
+      "expired_share": 0.3888888888888889,
+      "hold_candles_median": 16.942708333333336,
+      "hold_candles_p90": 30.0,
+      "hold_days_median": 50.828125,
+      "hold_days_p90": 90.0,
+      "trades_per_week": 0.30656934306569344,
+      "open_at_data_end": 6
+     }
+    }
+   },
+   "share_better_expectancy_vs_base": {
+    "proposal_1d30": 0.254,
+    "proposal_1d60": 0.213,
+    "proposal_1d100": 0.206
+   }
+  }
+ },
+ "engine_version": "2.6.0",
+ "cost_pct_round_trip": 0.15,
+ "tune_share": 0.7,
+ "plan": "proposal",
+ "symbols": [
+  "AAVE/USDT",
+  "ADA/USDT",
+  "APT/USDT",
+  "AVAX/USDT",
+  "BCH/USDT",
+  "BIO/USDT",
+  "BNB/USDT",
+  "BTC/USDT",
+  "DOGE/USDT",
+  "DOT/USDT",
+  "ENA/USDT",
+  "ERA/USDT",
+  "ETH/USDT",
+  "GALA/USDT",
+  "GRAM/USDT",
+  "HBAR/USDT",
+  "INJ/USDT",
+  "LINK/USDT",
+  "LTC/USDT",
+  "NEAR/USDT",
+  "NVDAB/USDT",
+  "PAXG/USDT",
+  "PEPE/USDT",
+  "SOL/USDT",
+  "SUI/USDT",
+  "TRX/USDT",
+  "UNI/USDT",
+  "WLD/USDT",
+  "XAUT/USDT",
+  "XLM/USDT",
+  "XRP/USDT",
+  "ZEC/USDT"
+ ],
+ "timeframes": [
+  "15m",
+  "1h",
+  "4h",
+  "12h",
+  "1d",
+  "3d"
+ ],
+ "settings": {
+  "entry_rules": true,
+  "trade_filter2": true,
+  "series_gate": false,
+  "series_conf": false,
+  "struct_stops": false,
+  "fill_window_bars": 3,
+  "reentry_cooldown_bars": 2
+ },
+ "seconds": 90.6,
+ "method": "Today a call is followed for SP.HORIZON_BARS = 30 candles of its timeframe and then closes at market (\"EXPIRED\").\nThis replays the same calls as `python -m app.research engine` - the models' walk-forward OUT-OF-SAMPLE predictions\nturned into calls by the live decision rules (series_policy.decide) with the CURRENT settings (ENTRY_RULES on: the\nentry rule per timeframe chosen on the tuning part as the nightly job does; TRADE_FILTER2 on: pooled filter per\ntimeframe trained on tuning trades, used only where its own exam passes; SERIES_GATE / SERIES_CONF / STRUCT_STOPS off;\n15m paused, so it is left out unless asked for) - simulated with the record's exit rules and RESEARCH_COST_PCT\nround-trip costs, one call at a time per series with the re-entry cooldown, under several horizons: 30, 60, 90 candles\nand no limit (followed to the end of the stored candles) - `--plan uniform` (default) - or per-timeframe limits\n(`--plan proposal`: the owner's 15m 250 / 1h 200 / 4h 100 / 12h 100 / 3d 30 candles with 1d at 30, 60 or 100, against\n30 everywhere; 15m included and reported although its calls are paused live).\n\nEach call keeps the candle source the 30-candle run uses (15m when they cover the first 30 candles, else the\ntimeframe's own candles), so a longer horizon only adds candles after the old limit: every difference comes from the\ntime limit, not from a change of candle resolution. A call still open at the end of the stored candles is not scored;\nit is counted (`open_at_data_end`) and, in the sequential pipeline, blocks its series until the end (as live).\n\nTwo views per horizon:\n  (a) identical entries: exactly the calls the 30-candle pipeline took, each followed under the longer horizon;\n  (b) sequential pipeline: a longer trade blocks the series longer (one call at a time), so the set of calls changes.\nHeadline: the untouched last 30 % of each series (same split as research_engine); all-data numbers are given too\n(the entry rule and filter were chosen on the first 70 %, so all-data is partly in-sample for those choices).\nConfidence: per-series bootstrap (series resampled with replacement), share of resamples where a horizon's expectancy\n(and total R) beats the 30-candle one.",
+ "approximations": [
+  "same as research_engine: model agreement treated as passed, no order book, fixed target ladder 1R / 1.75R / 2.5R, plan base-rate check and safety switch not replayed",
+  "the entry rule and the trade filter are chosen / trained once with the 30-candle horizon (as live) and kept fixed for every horizon",
+  "the test split starts 30 candles after the tuning cut for every horizon"
+ ],
+ "commit": "82748f7f410967cd8e7b9e42953b0cb55430a580",
+ "cache_key": "engine-state-41164070403-1-5"
+}

@@ -4413,7 +4413,7 @@
    "tune_bars": 364,
    "test_bars": 126,
    "cut": 1752356160000,
-   "seconds_tune": 1.3,
+   "seconds_tune": 1.4,
    "seconds_horizons": 0.0
   },
   "BTC/USDT 3d": {
@@ -4437,7 +4437,7 @@
    "tune_bars": 392,
    "test_bars": 138,
    "cut": 1749245760000,
-   "seconds_tune": 1.2,
+   "seconds_tune": 1.3,
    "seconds_horizons": 0.0
   },
   "HBAR/USDT 3d": {
@@ -4453,7 +4453,7 @@
    "tune_bars": 280,
    "test_bars": 90,
    "cut": 1761514560000,
-   "seconds_tune": 1.2,
+   "seconds_tune": 1.3,
    "seconds_horizons": 0.0
   },
   "LTC/USDT 3d": {
@@ -4477,7 +4477,7 @@
    "tune_bars": 336,
    "test_bars": 114,
    "cut": 1755380160000,
-   "seconds_tune": 1.4,
+   "seconds_tune": 1.3,
    "seconds_horizons": 0.0
   },
   "XRP/USDT 3d": {
@@ -4493,7 +4493,7 @@
    "tune_bars": 252,
    "test_bars": 78,
    "cut": 1764711359999,
-   "seconds_tune": 1.3,
+   "seconds_tune": 1.4,
    "seconds_horizons": 0.0
   },
   "AAVE/USDT 1d": {
@@ -4629,7 +4629,7 @@
    "tune_bars": 819,
    "test_bars": 321,
    "cut": 1762931520000,
-   "seconds_tune": 0.3,
+   "seconds_tune": 0.2,
    "seconds_horizons": 0.0
   },
   "SOL/USDT 1d": {
@@ -5086,7 +5086,7 @@
    "test_bars": 1770,
    "cut": 1767201119999,
    "seconds_tune": 0.5,
-   "seconds_horizons": 0.0
+   "seconds_horizons": 0.1
   },
   "UNI/USDT 4h": {
    "oos_bars": 6000,
@@ -5525,7 +5525,7 @@
    "tune_bars": 4200,
    "test_bars": 1770,
    "cut": 1791414269999,
-   "seconds_tune": 0.5,
+   "seconds_tune": 0.4,
    "seconds_horizons": 0.0
   },
   "LTC/USDT 15m": {
@@ -5549,7 +5549,7 @@
    "tune_bars": 1559,
    "test_bars": 639,
    "cut": 1792824210000,
-   "seconds_tune": 0.1,
+   "seconds_tune": 0.0,
    "seconds_horizons": 0.0
   },
   "PAXG/USDT 15m": {
@@ -6709,13 +6709,13 @@
   "fill_window_bars": 3,
   "reentry_cooldown_bars": 2
  },
- "seconds": 89.8,
+ "seconds": 90.6,
  "method": "Today a call is followed for SP.HORIZON_BARS = 30 candles of its timeframe and then closes at market (\"EXPIRED\").\nThis replays the same calls as `python -m app.research engine` - the models' walk-forward OUT-OF-SAMPLE predictions\nturned into calls by the live decision rules (series_policy.decide) with the CURRENT settings (ENTRY_RULES on: the\nentry rule per timeframe chosen on the tuning part as the nightly job does; TRADE_FILTER2 on: pooled filter per\ntimeframe trained on tuning trades, used only where its own exam passes; SERIES_GATE / SERIES_CONF / STRUCT_STOPS off;\n15m paused, so it is left out unless asked for) - simulated with the record's exit rules and RESEARCH_COST_PCT\nround-trip costs, one call at a time per series with the re-entry cooldown, under several horizons: 30, 60, 90 candles\nand no limit (followed to the end of the stored candles) - `--plan uniform` (default) - or per-timeframe limits\n(`--plan proposal`: the owner's 15m 250 / 1h 200 / 4h 100 / 12h 100 / 3d 30 candles with 1d at 30, 60 or 100, against\n30 everywhere; 15m included and reported although its calls are paused live).\n\nEach call keeps the candle source the 30-candle run uses (15m when they cover the first 30 candles, else the\ntimeframe's own candles), so a longer horizon only adds candles after the old limit: every difference comes from the\ntime limit, not from a change of candle resolution. A call still open at the end of the stored candles is not scored;\nit is counted (`open_at_data_end`) and, in the sequential pipeline, blocks its series until the end (as live).\n\nTwo views per horizon:\n  (a) identical entries: exactly the calls the 30-candle pipeline took, each followed under the longer horizon;\n  (b) sequential pipeline: a longer trade blocks the series longer (one call at a time), so the set of calls changes.\nHeadline: the untouched last 30 % of each series (same split as research_engine); all-data numbers are given too\n(the entry rule and filter were chosen on the first 70 %, so all-data is partly in-sample for those choices).\nConfidence: per-series bootstrap (series resampled with replacement), share of resamples where a horizon's expectancy\n(and total R) beats the 30-candle one.",
  "approximations": [
   "same as research_engine: model agreement treated as passed, no order book, fixed target ladder 1R / 1.75R / 2.5R, plan base-rate check and safety switch not replayed",
   "the entry rule and the trade filter are chosen / trained once with the 30-candle horizon (as live) and kept fixed for every horizon",
   "the test split starts 30 candles after the tuning cut for every horizon"
  ],
- "commit": "79da0b801637c7da9137cdb374887ea79cbc3580",
+ "commit": "82748f7f410967cd8e7b9e42953b0cb55430a580",
  "cache_key": "engine-state-41164070403-1-5"
 }
