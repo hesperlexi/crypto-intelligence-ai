@@ -1,1 +1,257 @@
-{"at":"2026-10-31T06:29:06Z","sha":"2b40b9a6eee652988695c70bcdb52ec5983739a7","total":0,"passed":0,"failed":-1,"error":"no results.json (emulator or script failed to start)","log_tail":"\u001b[33m\u001b[1m\u26a0  emulators:\u001b[22m\u001b[39m You are not currently authenticated so some features may not work correctly. Please run \u001b[1mfirebase login\u001b[22m to authenticate the CLI.\n\u001b[36m\u001b[1mi  emulators:\u001b[22m\u001b[39m Starting emulators: firestore\n\u001b[36m\u001b[1mi  emulators:\u001b[22m\u001b[39m Detected demo project ID \"demo-test\", emulated services will use a demo configuration and attempts to access non-emulated services for this project will fail.\n\u001b[36m\u001b[1mi  emulators:\u001b[22m\u001b[39m Shutting down emulators.\n\u001b[36m\u001b[1mi  hub:\u001b[22m\u001b[39m Stopping emulator hub\n\n\u001b[1m\u001b[31mError:\u001b[39m\u001b[22m \u001b[1m../../firestore.rules\u001b[22m is outside of project directory\n"}
+{
+  "at": "2026-10-31T06:29:55.177Z",
+  "sha": "080ff5bb0f3fb13cc603fb3599f60f6905715b5e",
+  "total": 62,
+  "passed": 62,
+  "failed": 0,
+  "results": [
+    {
+      "name": "existing approved Google member sets a username (users.username + usernames/{name} batch)",
+      "ok": true
+    },
+    {
+      "name": "second user taking the same username is denied",
+      "ok": true
+    },
+    {
+      "name": "changing the username later is denied",
+      "ok": true
+    },
+    {
+      "name": "username update alone (without the usernames/{name} claim) is denied",
+      "ok": true
+    },
+    {
+      "name": "claiming a name for someone else's account is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"admin\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"support\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"hesper\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"cryptointelai\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"my_admin_1\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"ab\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"aaaaaaaaaaaaaaaaaaaaa\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"Upper\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"has space\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"dash-name\" is denied",
+      "ok": true
+    },
+    {
+      "name": "reserved / invalid username \"crypto\" is denied",
+      "ok": true
+    },
+    {
+      "name": "username claim with extra fields is denied",
+      "ok": true
+    },
+    {
+      "name": "owner (admin) sets a username via owner/profile",
+      "ok": true
+    },
+    {
+      "name": "member cannot use the owner/profile path",
+      "ok": true
+    },
+    {
+      "name": "usernames: get allowed, list denied, delete by member denied, delete by admin allowed",
+      "ok": true
+    },
+    {
+      "name": "email/password user (verified) creates the pending users doc",
+      "ok": true
+    },
+    {
+      "name": "email/password user NOT verified cannot create the users doc",
+      "ok": true
+    },
+    {
+      "name": "Google user creates the pending users doc",
+      "ok": true
+    },
+    {
+      "name": "creating the users doc as approved is denied",
+      "ok": true
+    },
+    {
+      "name": "creating the users doc with a username (skipping the claim) is denied",
+      "ok": true
+    },
+    {
+      "name": "payment proof update is still allowed",
+      "ok": true
+    },
+    {
+      "name": "member editing status is denied",
+      "ok": true
+    },
+    {
+      "name": "member editing expires_at is denied",
+      "ok": true
+    },
+    {
+      "name": "username together with a status change is denied",
+      "ok": true
+    },
+    {
+      "name": "pending user sets a username (skippable screen for new sign-ups)",
+      "ok": true
+    },
+    {
+      "name": "member creates a post",
+      "ok": true
+    },
+    {
+      "name": "admin creates a post with the admin badge",
+      "ok": true
+    },
+    {
+      "name": "member faking the admin badge is denied",
+      "ok": true
+    },
+    {
+      "name": "pending (non-member) post is denied",
+      "ok": true
+    },
+    {
+      "name": "signed-in stranger without a users doc cannot post",
+      "ok": true
+    },
+    {
+      "name": "expired member post is denied",
+      "ok": true
+    },
+    {
+      "name": "member without a username cannot post",
+      "ok": true
+    },
+    {
+      "name": "post with someone else's username is denied",
+      "ok": true
+    },
+    {
+      "name": "post as another author_uid is denied",
+      "ok": true
+    },
+    {
+      "name": "post with 0 characters is denied",
+      "ok": true
+    },
+    {
+      "name": "post with only spaces is denied",
+      "ok": true
+    },
+    {
+      "name": "post with 500 characters is allowed",
+      "ok": true
+    },
+    {
+      "name": "post with 501 characters is denied",
+      "ok": true
+    },
+    {
+      "name": "post with an old created_at is denied",
+      "ok": true
+    },
+    {
+      "name": "post without the post_meta marker is denied",
+      "ok": true
+    },
+    {
+      "name": "post with extra fields is denied",
+      "ok": true
+    },
+    {
+      "name": "second post within 30 s is denied (post_meta)",
+      "ok": true
+    },
+    {
+      "name": "second post 30 s later is allowed",
+      "ok": true
+    },
+    {
+      "name": "editing a post is denied",
+      "ok": true
+    },
+    {
+      "name": "author deletes own post",
+      "ok": true
+    },
+    {
+      "name": "other member deleting a post is denied",
+      "ok": true
+    },
+    {
+      "name": "admin deletes any post",
+      "ok": true
+    },
+    {
+      "name": "posts readable by members and admin, not by pending users",
+      "ok": true
+    },
+    {
+      "name": "presence write (lib/presence.ts shape)",
+      "ok": true
+    },
+    {
+      "name": "jobs create: backtest",
+      "ok": true
+    },
+    {
+      "name": "jobs create: test_push to own uid",
+      "ok": true
+    },
+    {
+      "name": "jobs create: test_push to another uid is denied",
+      "ok": true
+    },
+    {
+      "name": "paper/{uid}_futures write",
+      "ok": true
+    },
+    {
+      "name": "paper of another uid is denied",
+      "ok": true
+    },
+    {
+      "name": "alerts create",
+      "ok": true
+    },
+    {
+      "name": "push_tokens create",
+      "ok": true
+    },
+    {
+      "name": "pending user cannot write paper or alerts",
+      "ok": true
+    }
+  ]
+}
