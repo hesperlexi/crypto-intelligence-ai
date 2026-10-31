@@ -23,6 +23,8 @@ import { TickerTape } from "./components/Polish";
 import TelegramLink from "./components/TelegramLink";
 import { fmtDate, useMyRecord } from "./lib/membership";
 import { startPresence } from "./lib/presence";
+import { answeredUsername, needsVerification, shouldAskUsername, useMyUsername } from "./lib/account";
+import { UsernameScreen, VerifyEmailScreen } from "./components/AuthPanel";
 
 // pages load on first visit (smaller first download); the busiest ones are fetched in the background after start.
 // After an update an old page may ask for a file that no longer exists: reload once to get the new version.
@@ -52,10 +54,11 @@ const Scanner = page(() => import("./pages/Scanner"));
 const Settings = page(() => import("./pages/Settings"));
 const Signals = page(() => import("./pages/Signals"));
 const Users = page(() => import("./pages/Users"));
-// public information pages (About, Contact, Privacy, Terms, Risk): own layout signed out, inside the app signed in
+const Community = page(() => import("./pages/Community"));
+// public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
 const TrustContent = page(() => import("./pages/Trust").then((m) => ({ default: m.TrustContent })));
-const TRUST: Record<string, "about" | "contact" | "privacy" | "terms" | "risk"> = { "/about": "about", "/contact": "contact", "/privacy": "privacy", "/terms": "terms", "/risk": "risk" };
+const TRUST: Record<string, "about" | "contact" | "terms" | "risk"> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk" };
 try { window.setTimeout(() => sessionStorage.removeItem("chunk-reload"), 15000); } catch { /* ignore */ }
 const prefetch = () => { void import("./pages/Signals"); void import("./pages/Paper"); void import("./pages/Results"); void import("./pages/Asset"); };
 if (typeof window !== "undefined") window.setTimeout(() => ((window as any).requestIdleCallback ?? ((f: () => void) => f()))(prefetch), 2500);
@@ -67,6 +70,7 @@ const NAV = [
   ["/news", "News"],
   ["/radar", "Radar"],
   ["/results", "Results"],
+  ["/community", "Community"],
   ["/alerts", "Alerts"],
   ["/settings", "Settings"],
 ] as const;
@@ -119,15 +123,23 @@ export default function App() {
   const trust = TRUST[loc.pathname.replace(/\/+$/, "") || "/"];
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [role, setRole] = useState<Role>("loading");
+  const [verified, setVerified] = useState(0);          // bumped when an email account confirms its address
   useEffect(() => onAuthStateChanged(auth, (u) => { void (u ? loadDashboard() : loadLanding()).catch(() => {}); setUser(u); setRole("loading"); }), []);
-  useEffect(() => (user ? watchRole(user, setRole) : undefined), [user]);
-  useEffect(() => { if (user && role !== "loading") startPresence(); }, [user, role]);
+  // email accounts must confirm their address first: until then the database rules refuse them, so nothing is read
+  const unverified = needsVerification(user);
+  useEffect(() => (user && !unverified ? watchRole(user, setRole) : undefined), [user, unverified, verified]);
+  useEffect(() => { if (user && !unverified && role !== "loading") startPresence(); }, [user, unverified, role]);
+  const username = useMyUsername(user && !unverified && role !== "loading" && role !== "blocked" ? user.uid : null, role === "admin");
   // trust pages are public: shown straight away signed out, and to people waiting for access
   const publicTrust = trust && (user === null || (user && (role === "pending" || role === "expired" || role === "blocked")));
   if (publicTrust) return <ErrorBoundary resetKey={loc.pathname}><Suspense fallback={<BootLoader />}><div className="route-fade min-h-full"><TrustPage kind={trust} /></div></Suspense></ErrorBoundary>;
+  if (user && unverified) return <VerifyEmailScreen user={user} onVerified={() => setVerified((n) => n + 1)} />;
   if (user === undefined || (user && role === "loading")) return <BootLoader />;
   if (!user) return <ErrorBoundary resetKey={loc.pathname}><Suspense fallback={<BootLoader />}><Landing error={null} /></Suspense></ErrorBoundary>;
-  const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role };
+  // new accounts are offered a username once (skippable); nobody is blocked: it is only required to post in Community
+  if (role !== "blocked" && username === null && shouldAskUsername(user.uid))
+    return <UsernameScreen user={user} admin={role === "admin"} onDone={() => { answeredUsername(user.uid); setVerified((n) => n + 1); }} />;
+  const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role, username: username ?? "" };
   setSession(session);
   if (role === "pending" || role === "expired" || role === "blocked") return <AccessScreen user={user} role={role} />;
   return <SessionCtx.Provider value={session}><LiveProvider><ErrorBoundary resetKey={loc.pathname}><Shell user={user} /></ErrorBoundary></LiveProvider></SessionCtx.Provider>;
@@ -270,13 +282,14 @@ function Shell({ user }: { user: User }) {
             <Route path="/health" element={<AdminOnly><Health /></AdminOnly>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<Users />} />
+            <Route path="/community" element={<Community />} />
             {Object.entries(TRUST).map(([path, kind]) => <Route key={path} path={path} element={<TrustContent kind={kind} />} />)}
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
           </div>
         </main>
-        <SiteFooter className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-6" width={width} />
+        <SiteFooter links={false} className="pb-[calc(5.5rem+env(safe-area-inset-bottom))] md:pb-6" width={width} />
       </div>
 
       {/* phone navigation */}

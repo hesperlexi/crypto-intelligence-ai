@@ -12,6 +12,7 @@ import { db } from "./firebase";
 import { latestPrices } from "./live";
 import { visibleInterval } from "./visibleInterval";
 import { isAdmin, myUid } from "./session";
+import { byNewest } from "./format";
 
 const ACC_REF = () => doc(db, "paper", `${myUid()}_futures`);   // one account per user
 let migrated = false;
@@ -221,7 +222,7 @@ async function fillOrder(id: string, at: number, when: number) {
     const qty = (od.margin * od.leverage) / at;
     const fee = qty * at * MAKER;
     const { pos, key } = mergeFill(positions, od.symbol, od.side, qty, at, od.leverage, od.margin, fee, od.stop, od.take, when, hedge);
-    if (od.auto) positions[key] = { ...positions[key], auto: true };
+    if (od.auto) positions[key] = { ...positions[key], auto: true, ...(od.signal ? { signal: od.signal } : {}) };
     const t = acc.totals;
     tx.update(ACC_REF(), { wallet: acc.wallet + od.reserve - od.margin - fee, positions, orders, totals: { ...t, fees: t.fees + fee } });
     return { account_id: acc.id, od, qty, fee, pos, hedge };
@@ -412,9 +413,11 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
       const pnl = ps.reduce((a, p) => a + (p.upnl ?? 0), 0);
       return { symbol, long, short, net: long - short, pnl, margin: ps.reduce((a, p) => a + p.margin, 0) };
     });
+    // stable order (Firestore map keys come back in no fixed order): newest first by open time, then by key
+    positions.sort(byNewest);
     const marginUsed = positions.reduce((s, p) => s + p.margin, 0);
     const upnl = positions.reduce((s, p) => s + (p.upnl ?? 0), 0);
-    const orders = Object.values<any>(acc.orders ?? {}).sort((a, b) => b.created_at - a.created_at);
+    const orders = Object.values<any>(acc.orders ?? {}).sort(byNewest);
     const reserved = orders.reduce((s, o) => s + (o.reserve ?? 0), 0);
     const equity = acc.wallet + reserved + positions.reduce((s, p) => s + Math.max(0, p.margin + (p.upnl ?? 0)), 0);
     const closes = trades.filter((t) => t.type === "CLOSE");

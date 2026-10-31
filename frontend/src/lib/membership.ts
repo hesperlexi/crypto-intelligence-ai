@@ -2,6 +2,7 @@ import { BRAND } from "./brand";
 // Paid memberships: a member pays with Binance Pay, uploads the proof, and the owner approves it for a number
 // of months. Prices live in config/membership (editable on the Users page); these are the defaults.
 import { arrayUnion, doc, getDoc, onSnapshot, setDoc, updateDoc } from "firebase/firestore";
+import { paymentProof } from "./writeShapes";
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { getSession } from "./session";
@@ -88,8 +89,7 @@ export async function submitPayment(plan: Plan, txid: string, proof: string | nu
   if (!s) throw new Error("not signed in");
   const t = txid.trim();
   if (!proof && t.length < 6) throw new Error(`Add the payment screenshot or the ${method === "mexc" ? "MEXC" : "Binance"} order / transaction ID.`);
-  const payment = { method, months: plan.months, amount: plan.price, currency, txid: t || null, proof: proof || null,
-    status: "submitted", submitted_at: Date.now() };
+  const payment = paymentProof({ method, months: plan.months, amount: plan.price, currency, txid: t || null, proof: proof || null }, Date.now());
   const ref = doc(db, "users", s.uid);
   const cur = await getDoc(ref);
   if (!cur.exists()) {

@@ -42,7 +42,7 @@ export default function Users() {
   const last = (u: any) => seen[u.id]?.last_seen ?? 0;
   const needle = q.trim().toLowerCase();
   const list = all.filter(MATCH[filter])
-    .filter((u) => !needle || `${u.name ?? ""} ${u.email ?? ""} ${u.payment?.txid ?? ""}`.toLowerCase().includes(needle))
+    .filter((u) => !needle || `${u.name ?? ""} ${u.email ?? ""} ${u.username ?? ""} ${u.payment?.txid ?? ""}`.toLowerCase().includes(needle))
     .sort((a, b) => Number(todo(b)) - Number(todo(a)) || last(b) - last(a) || (b.payment?.submitted_at ?? b.requested_at ?? 0) - (a.payment?.submitted_at ?? a.requested_at ?? 0));
   const now = Date.now();
   const within = (ms: number) => all.filter((u) => now - last(u) < ms).length;
@@ -101,7 +101,7 @@ export default function Users() {
         </div>
         <label className="sm:w-64">
           <span className="sr-only">Search users</span>
-          <input className="input input-sm" type="search" placeholder="Search name, email or order ID" value={q} onChange={(e) => setQ(e.target.value)} />
+          <input className="input input-sm" type="search" placeholder="Search name, username, email or order ID" value={q} onChange={(e) => setQ(e.target.value)} />
         </label>
       </div>
       {err && <ErrorBox error={err} />}
@@ -289,6 +289,17 @@ function PaymentCell({ u, onProof }: { u: any; onProof: () => void }) {
   );
 }
 
+/** Username and sign-in method (accounts made before 31 Oct 2026 have neither field: they used Google). */
+function Ident({ u }: { u: any }) {
+  const how = u.provider === "password" ? "Email & password" : "Google";
+  return (
+    <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-1.5 text-[11px] text-mute">
+      {u.username ? <span className="truncate font-medium text-text/90">@{u.username}</span> : <span className="italic">no username yet</span>}
+      <span className="rounded border border-glass/15 px-1 leading-4" title={`Signs in with ${how}`}>{u.provider === "password" ? "Email" : "Google"}</span>
+    </div>
+  );
+}
+
 function UserRow({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any; cfg: MembershipConfig; act: Act; onProof: () => void }) {
   const a = useUserActions(u, cfg, act);
   return (
@@ -297,8 +308,9 @@ function UserRow({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any;
         <div className="flex min-w-0 items-center gap-3">
           <Avatar u={u} />
           <div className="min-w-0">
-            <div className="truncate font-medium">{u.name || u.email}</div>
+            <div className="truncate font-medium">{u.name || (u.username ? `@${u.username}` : u.email)}</div>
             <div className="truncate text-xs text-mute">{u.email}</div>
+            <Ident u={u} />
             {st?.push_error && <div className="truncate text-[11px] text-bear" title={st.push_error.message}>notifications failing</div>}
           </div>
         </div>
@@ -332,8 +344,9 @@ function UserCard({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any
         <div className="flex min-w-0 items-center gap-3">
           <Avatar u={u} size={40} />
           <div className="min-w-0">
-            <div className="truncate font-medium">{u.name || u.email}</div>
+            <div className="truncate font-medium">{u.name || (u.username ? `@${u.username}` : u.email)}</div>
             <div className="truncate text-xs text-mute">{u.email}</div>
+            <Ident u={u} />
           </div>
         </div>
         <StatusBadge u={u} />

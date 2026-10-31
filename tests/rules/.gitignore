@@ -1,0 +1,4 @@
+node_modules/
+results.json
+firestore-debug.log
+firestore.rules

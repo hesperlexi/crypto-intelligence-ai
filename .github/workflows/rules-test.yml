@@ -1,0 +1,80 @@
+# Firestore security rules tests in the Firestore emulator (no secrets, no deploy).
+# Renders firestore.rules from the template with a test admin address, runs tests/rules (which use the website's own
+# write shapes from frontend/src/lib/writeShapes.ts), prints a summary, and commits the JSON results to the
+# research-results branch as results/rules-test-latest.json.
+name: rules-test
+on:
+  push:
+    branches: [features-oct31]
+  workflow_dispatch:
+
+concurrency:
+  group: rules-test-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rules:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write          # commit the JSON results to the research-results branch
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: tests/rules/package-lock.json
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Render firestore.rules (test admin)
+        env:
+          ADMIN_EMAILS: admin@example.com
+        run: |
+          python scripts/make_rules.py
+          cp firestore.rules tests/rules/firestore.rules     # firebase-tools only reads rules inside its project folder
+      - name: Install test tools
+        working-directory: tests/rules
+        run: npm ci --no-audit --no-fund
+      - name: Run rules tests in the Firestore emulator
+        id: run
+        working-directory: tests/rules
+        run: |
+          set +e
+          npx firebase emulators:exec --only firestore --project demo-test "npm test" 2>&1 | tee run.log
+          code=${PIPESTATUS[0]}
+          echo "----- summary -----"
+          grep -E "^(PASS|FAIL)|RULES TESTS" run.log || true
+          if [ ! -f results.json ]; then
+            printf '{"at":"%s","sha":"%s","total":0,"passed":0,"failed":-1,"error":"no results.json (emulator or script failed to start)","log_tail":%s}\n' \
+              "$(date -u +%FT%TZ)" "$GITHUB_SHA" "$(tail -c 3000 run.log | python3 -c 'import json,sys;print(json.dumps(sys.stdin.read()))')" > results.json
+          fi
+          echo "code=$code" >> "$GITHUB_OUTPUT"
+      - name: Commit the results to the research-results branch
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin research-results >/dev/null 2>&1; then
+            git fetch --depth 1 origin research-results
+            git worktree add ../rr FETCH_HEAD
+            git -C ../rr checkout -B research-results
+          else
+            git worktree add --detach ../rr
+            git -C ../rr checkout --orphan research-results
+            git -C ../rr rm -rf --quiet . || true
+          fi
+          mkdir -p ../rr/results
+          cp tests/rules/results.json ../rr/results/rules-test-latest.json
+          cd ../rr
+          git add results/rules-test-latest.json
+          git commit -m "Rules test results for ${GITHUB_SHA::7}" || { echo "nothing new"; exit 0; }
+          for i in 1 2 3; do git push origin HEAD:research-results && break; git pull --rebase origin research-results || true; done
+      - name: Fail when a rules test failed
+        if: steps.run.outputs.code != '0'
+        run: exit 1

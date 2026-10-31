@@ -1,15 +1,15 @@
-// Public information pages: About, Contact, Privacy, Terms, Risk disclosure. Reachable signed out (own layout)
+// Public information pages: About, Contact, Terms, Risk disclosure (the Privacy Policy text is archived in docs/legal/privacy-policy.md). Reachable signed out (own layout)
 // and signed in (inside the app shell). Written from what the app actually does; anything we cannot state
-// (company details, refunds, jurisdiction) points to support instead of being made up.
+// (company details, jurisdiction) points to support instead of being made up.
 import { ReactNode, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { BRAND } from "../lib/brand";
 import { AnimatedLogo } from "../components/Logo";
 import SiteFooter, { TRUST_LINKS } from "../components/SiteFooter";
 
-export const LAST_UPDATED = "30 Oct 2026";
-export type TrustKind = "about" | "contact" | "privacy" | "terms" | "risk";
-export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/privacy": "privacy", "/terms": "terms", "/risk": "risk" };
+export const LAST_UPDATED = "31 Oct 2026";
+export type TrustKind = "about" | "contact" | "terms" | "risk";
+export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk" };
 
 const Mail = () => <a className="text-accent hover:underline" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>;
 
@@ -52,38 +52,6 @@ function Contact() {
   );
 }
 
-function Privacy() {
-  return (
-    <>
-      <p>This page explains what {BRAND.name} stores about you and why. We do not sell your data.</p>
-      <H>Sign-in</H>
-      <p>You sign in with your Google account (Firebase Authentication). We receive your name, email address and a user ID from Google. We never see your Google password.</p>
-      <H>What we store (Google Cloud Firestore)</H>
-      <ul className="list-disc space-y-1 pl-5">
-        <li><b>Account and membership:</b> email, name, user ID, membership status, plan and expiry date, and its history.</li>
-        <li><b>Payments:</b> the payment method you chose, plan, amount, and the payment screenshot and/or order / transaction ID you submit, so the owner can check it.</li>
-        <li><b>Activity:</b> when you last used the app, an approximate country worked out from your device's time zone (or language setting), your time zone, and the type of device (for example "Android app" or "Desktop browser"). No GPS or location permission is used.</li>
-        <li><b>Notifications:</b> if you turn on notifications, a push token for your device with the browser description, and the last notification error (to help fix delivery problems).</li>
-        <li><b>Your settings and use of the app:</b> practice-trading accounts and trades (virtual money), auto-trade settings, alert rules, coins you added and when you last read your alerts.</li>
-      </ul>
-      <H>Data your browser fetches from others</H>
-      <ul className="list-disc space-y-1 pl-5">
-        <li>Live prices and charts are loaded by your browser directly from Binance (and its public data host). Binance sees your IP address as with any website.</li>
-        <li>Some charts are embedded from TradingView, coin icons come from a public CDN (jsDelivr), and the owner's user list shows country flags from flagcdn.com.</li>
-        <li>Fonts are loaded from Google Fonts.</li>
-      </ul>
-      <H>Analytics</H>
-      <p>The app uses Google Analytics for Firebase, which records page views and basic usage (such as device type and approximate region) to help us understand how the app is used.</p>
-      <H>Who can see it</H>
-      <p>Your data is protected by sign-in and database rules: you can read your own data, and the owner of the app can see member records to approve payments and give support. The app's automated engine reads what it needs to run alerts and auto-trade.</p>
-      <H>Your choices</H>
-      <p>You can turn notifications off in Settings at any time. To ask for a copy of your data or for its deletion, email <Mail />.</p>
-      <H>Questions</H>
-      <p>Details on data retention, the responsible company and your rights where you live: please contact <Mail />.</p>
-    </>
-  );
-}
-
 function Terms() {
   return (
     <>
@@ -94,14 +62,14 @@ function Terms() {
       <p>Everything in the app is analysis for information and education. It is not financial, investment or trading advice, and no result is guaranteed. You alone decide whether to trade and you are responsible for your own trades. Read the <Link to="/risk" className="text-accent hover:underline">Risk disclosure</Link>.</p>
       <H>Accounts and membership</H>
       <ul className="list-disc space-y-1 pl-5">
-        <li>You sign in with Google and keep your account to yourself.</li>
+        <li>You sign in with Google or with your email address and a password, and keep your account to yourself.</li>
+        <li>Your username and anything you post in Community are visible to other members. Keep posts respectful; the owner can remove posts or block an account.</li>
         <li>Membership is paid manually in USDT (Binance or MEXC). Access opens after the owner checks your payment proof; it ends on the expiry date shown in the app unless you renew.</li>
         <li>The owner can refuse a membership request or block an account. If you think this happened by mistake, contact support.</li>
       </ul>
-      <H>Refunds, company details and applicable law</H>
-      <p>For questions about refunds, the company behind the service or the law that applies, please contact <Mail />.</p>
       <H>Availability</H>
       <p>We try to keep the app running, but data feeds, the analysis engine and third-party services can be delayed or unavailable. Signals can arrive late or not at all.</p>
+      <p className="mt-8">For more information, contact <Mail />.</p>
     </>
   );
 }
@@ -125,7 +93,7 @@ function Risk() {
 }
 
 const PAGES: Record<TrustKind, [string, () => JSX.Element]> = {
-  about: ["About", About], contact: ["Contact", Contact], privacy: ["Privacy Policy", Privacy], terms: ["Terms of Use", Terms], risk: ["Risk Disclosure", Risk],
+  about: ["About", About], contact: ["Contact", Contact], terms: ["Terms of Use", Terms], risk: ["Risk Disclosure", Risk],
 };
 
 /** The page body (used inside the app shell). */
