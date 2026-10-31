@@ -30,8 +30,19 @@ def test_rules_template_renders_and_keeps_the_hardened_checks(tmp_path):
     assert "request.resource.data.params.uid == me()" in text                       # test_push only to yourself
     assert "request.resource.data.created_at is number" in text
     assert "resource.data.uid == me()" in text.split("match /push_tokens/{id}")[1]   # update needs existing owner
-    assert "hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment'])" in text
+    assert "hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment', 'provider'])" in text
     assert "shortText(request.resource.data, 'device')" in text
+    assert "request.auth.token.email_verified == true" in text                       # email accounts: verified only
+    # usernames: claimed once with the account, never changed or listed; the account may set `username` only once
+    users = text.split("match /usernames/{name}")[1].split("match /posts/{id}")[0]
+    assert "allow update: if false;" in users and "allow list: if false;" in users and "validUsername(name)" in users
+    assert "!('username' in resource.data)" in text and "affectedKeys().hasOnly(['username'])" in text
+    # community posts: author, username from the account, 1-500 characters, never edited, paced by post_meta
+    posts = text.split("match /posts/{id}")[1].split("match /post_meta/{uid}")[0]
+    assert "request.resource.data.author_uid == me()" in posts and "request.resource.data.username == myUsername()" in posts
+    assert "text.size() >= 1" in posts and "text.size() <= 500" in posts and "allow update: if false;" in posts
+    assert "resource.data.author_uid == me()" in posts
+    assert "request.resource.data.last >= resource.data.last + 30000" in text
 
 
 class _P:

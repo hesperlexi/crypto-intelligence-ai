@@ -142,14 +142,14 @@ function weekly() {
 function users() {
   const u: Record<string, any> = {};
   const add = (id: string, d: any) => { u[`users/${id}`] = { uid: id, photo: "", requested_at: NOW - 10 * D, ...d }; };
-  add("u_pend1", { email: "omar.h@example.com", name: "Omar Haddad", status: "pending", requested_at: NOW - 2 * H,
+  add("u_pend1", { email: "omar.h@example.com", name: "Omar Haddad", username: "omar_h", provider: "google", status: "pending", requested_at: NOW - 2 * H,
     payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610290041887", proof: proofImage(), status: "submitted", submitted_at: NOW - 90 * 60_000 } });
-  add("u_pend2", { email: "lina.m@example.com", name: "Lina Mansour", status: "pending", requested_at: NOW - 26 * H,
+  add("u_pend2", { email: "lina.m@example.com", name: "", username: "lina_trades", provider: "password", status: "pending", requested_at: NOW - 26 * H,
     payment: { method: "mexc", months: 1, amount: 15, currency: "USDT", txid: "MX88120934", proof: null, status: "submitted", submitted_at: NOW - 20 * H } });
-  add("u_new", { email: "new.person@example.com", name: "New Person", status: "pending", requested_at: NOW - 30 * 60_000 });
-  add("u_member", { email: "sara.k@example.com", name: "Sara Kim", status: "approved", expires_at: NOW + 74 * D, plan_months: 3, approved_at: NOW - 16 * D, free: false,
+  add("u_new", { email: "new.person@example.com", name: "New Person", username: "newperson", provider: "password", status: "pending", requested_at: NOW - 30 * 60_000 });
+  add("u_member", { email: "sara.k@example.com", name: "Sara Kim", username: "sara_k", provider: "google", status: "approved", expires_at: NOW + 74 * D, plan_months: 3, approved_at: NOW - 16 * D, free: false,
     history: [{ months: 3, amount: 40, free: false, granted_at: NOW - 16 * D }], payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610140032", proof: null, status: "accepted", submitted_at: NOW - 16 * D } });
-  add("u_end", { email: "daniel.r@example.com", name: "Daniel Reyes", status: "approved", expires_at: NOW + 4 * D, plan_months: 1, approved_at: NOW - 26 * D,
+  add("u_end", { email: "daniel.r@example.com", name: "Daniel Reyes", username: "dreyes", provider: "password", status: "approved", expires_at: NOW + 4 * D, plan_months: 1, approved_at: NOW - 26 * D,
     history: [{ months: 1, amount: 15, granted_at: NOW - 26 * D }] });
   add("u_free", { email: "tester@example.com", name: "Test Account", status: "approved", expires_at: NOW + 180 * D, plan_months: 6, approved_at: NOW - 3 * D, free: true,
     history: [{ months: 6, amount: 0, free: true, granted_at: NOW - 3 * D }] });
@@ -236,6 +236,22 @@ function signalLog() {
   return { signals: rows, summary: { closed: 18, win_rate: 0.61, avg_return_pct: 0.62, avg_roi_pct: 4.96, by_status: { TP1: 8, TP2: 4, TP3: 4, STOPPED: 4, EXPIRED: 4 }, not_filled: 4, void: 4 } };
 }
 
+/** Community posts (posts/{id}) and the usernames they are signed with. */
+function community() {
+  const out: Record<string, any> = { "owner/profile": { username: "hesper_ai", uid: "owner" } };
+  for (const [n, uid] of [["hesper_ai", "owner"], ["sara_k", "u_member"], ["dreyes", "u_end"], ["omar_h", "u_pend1"], ["lina_trades", "u_pend2"], ["newperson", "u_new"]])
+    out[`usernames/${n}`] = { uid, created_at: NOW - 5 * D };
+  const posts: [string, string, string, number, boolean?][] = [
+    ["owner", "hesper_ai", "Welcome to Community! Share how you use the signals, ask questions and help each other. Please keep it friendly, and remember: nothing here is financial advice.", 26 * H, true],
+    ["u_end", "dreyes", "The 4H SOL long hit TP2 for me on the practice account. I moved my stop to break-even after TP1 like the bots do and it saved me on the ETH short yesterday.", 5 * H],
+    ["u_member", "sara_k", "Question: do you all use the suggested leverage or go lower? I've been using half of it while I learn. Also found a good explainer at https://example.com/risk-basics (copy it, links aren't clickable here).", 3 * H],
+    ["u_end", "dreyes", "@sara_k half is what I do too. The liquidation price in the position details panel makes it easy to see how much room you have.", 2 * H + 40 * 60_000],
+    ["u_member", "sara_k", "Thanks! 🙏", 25 * 60_000],
+  ];
+  posts.forEach(([uid, username, text, ago, admin], i) => { out[`posts/p${i}`] = { author_uid: uid, username, text, created_at: NOW - ago, ...(admin ? { admin: true } : {}) }; });
+  return out;
+}
+
 /** Practice futures + spot accounts of the preview member (and the owner), for the Trade page. */
 function practice(uid: string) {
   const px = (s: string) => PRICES[s].p;
@@ -289,6 +305,7 @@ export function seed(): Record<string, any> {
     "users/u_member_self": undefined,
     ...users(),
     ...presence(),
+    ...community(),
     ...practice("u_member"),
     ...practice("owner"),
   };

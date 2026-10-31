@@ -7,6 +7,7 @@ rules_version = '2';
 //   member  - approved by the admin and membership not ended (users/{uid}.expires_at): reads the predictions, and has
 //             their own paper accounts, alerts and notification devices
 //   pending - signed in and asked for access; can only see their own request
+// Sign-in: Google or email + password. Email accounts count as signed in only once the address is verified.
 service cloud.firestore {
   match /databases/{database}/documents {
     function signedIn() {
@@ -27,6 +28,13 @@ service cloud.firestore {
     }
     function allowed() { return isAdmin() || isMember(); }
     function me() { return request.auth.uid; }
+    // usernames: 3-20 of a-z 0-9 _, stored lower-case; names of staff / the brand are kept for the admin
+    function validUsername(n) {
+      return n is string && n.matches('^[a-z0-9_]{3,20}$')
+        && (isAdmin() || (!(n in ['admin', 'administrator', 'support', 'crypto', 'cryptointelai', 'cryptointel', 'hesper', 'moderator', 'mod',
+              'root', 'system', 'owner', 'staff', 'team', 'official', 'help', 'security', 'null', 'undefined', 'anonymous', 'everyone'])
+            && !n.matches('.*(admin|support|moderator|cryptointel).*')));
+    }
     // optional string field of at most 64 characters (null allowed)
     function shortText(d, k) {
       return !(k in d) || d[k] == null || (d[k] is string && d[k].size() <= 64);
@@ -42,7 +50,8 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && me() == uid);
       // only the fields the website writes (frontend/src/lib/session.tsx and membership.ts); proof size capped
       allow create: if signedIn() && me() == uid
-        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment'])
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment', 'provider'])
+        && (!('provider' in request.resource.data) || request.resource.data.provider in ['google', 'password'])
         && request.resource.data.status == 'pending'
         && request.resource.data.email == request.auth.token.email
         && (!('uid' in request.resource.data) || request.resource.data.uid == me())
@@ -51,12 +60,76 @@ service cloud.firestore {
         && (!('payment' in request.resource.data) || (request.resource.data.payment.status == 'submitted'
             && (!('proof' in request.resource.data.payment) || request.resource.data.payment.proof == null
                 || request.resource.data.payment.proof.size() < 900000)));
-      // the person may only send (or replace) a payment proof; status, end date and history stay with the admin
+      // the person may only send (or replace) a payment proof, and choose a username once (together with its
+      // usernames/{name} claim, see below); status, end date and history stay with the admin
       allow update: if isAdmin() || (signedIn() && me() == uid
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['payment'])
         && request.resource.data.payment.status == 'submitted'
-        && (request.resource.data.payment.proof == null || request.resource.data.payment.proof.size() < 900000));
+        && (request.resource.data.payment.proof == null || request.resource.data.payment.proof.size() < 900000))
+        || (signedIn() && me() == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username'])
+        && !('username' in resource.data)
+        && validUsername(request.resource.data.username)
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == me());
       allow delete: if isAdmin();
+    }
+
+    // the username a person posts under: users/{uid}.username, or for the owner (no users record) owner/profile.username
+    function myUsername() {
+      return isAdmin() && exists(/databases/$(database)/documents/owner/profile)
+        ? get(/databases/$(database)/documents/owner/profile).data.get('username', null)
+        : (exists(/databases/$(database)/documents/users/$(me()))
+          ? get(/databases/$(database)/documents/users/$(me())).data.get('username', null) : null);
+    }
+    // one document per username (lower-case): who owns it. Created together with users/{uid}.username (or the owner's
+    // owner/profile), never changed; anyone signed in may look up one name (to say "taken"), nobody may list them
+    match /usernames/{name} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && validUsername(name)
+        && request.resource.data.keys().hasOnly(['uid', 'created_at'])
+        && request.resource.data.uid == me()
+        && request.resource.data.created_at is number
+        && ((isAdmin() && getAfter(/databases/$(database)/documents/owner/profile).data.get('username', null) == name)
+          || getAfter(/databases/$(database)/documents/users/$(me())).data.get('username', null) == name);
+      allow update: if false;
+      allow delete: if isAdmin();
+    }
+
+    // Community: members' posts. Text only (1-500 characters), signed with the author's username, never edited;
+    // the author or the admin may delete. At most one post per 30 seconds per person: each post also moves
+    // post_meta/{uid}.last to the post's time, and that document only moves forward in steps of 30 s or more.
+    function nowMs() { return request.time.toMillis(); }
+    match /posts/{id} {
+      allow read: if allowed();
+      allow create: if allowed()
+        && request.resource.data.keys().hasOnly(['author_uid', 'username', 'text', 'created_at', 'admin'])
+        && request.resource.data.keys().hasAll(['author_uid', 'username', 'text', 'created_at'])
+        && request.resource.data.author_uid == me()
+        && request.resource.data.username is string
+        && request.resource.data.username == myUsername()
+        && request.resource.data.text is string
+        && request.resource.data.text.size() >= 1 && request.resource.data.text.size() <= 500
+        && request.resource.data.text.matches('(?s).*[^\\s].*')
+        && request.resource.data.created_at is number
+        && request.resource.data.created_at > nowMs() - 120000 && request.resource.data.created_at < nowMs() + 120000
+        && (!('admin' in request.resource.data) || request.resource.data.admin == isAdmin())
+        && getAfter(/databases/$(database)/documents/post_meta/$(me())).data.last == request.resource.data.created_at;
+      allow update: if false;
+      allow delete: if isAdmin() || (signedIn() && resource.data.author_uid == me());
+    }
+    match /post_meta/{uid} {
+      allow read: if signedIn() && me() == uid;
+      allow create: if allowed() && me() == uid
+        && request.resource.data.keys().hasOnly(['last'])
+        && request.resource.data.last is number
+        && request.resource.data.last > nowMs() - 120000 && request.resource.data.last < nowMs() + 120000;
+      allow update: if allowed() && me() == uid
+        && request.resource.data.keys().hasOnly(['last'])
+        && request.resource.data.last is number
+        && request.resource.data.last > nowMs() - 120000 && request.resource.data.last < nowMs() + 120000
+        && request.resource.data.last >= resource.data.last + 30000;
+      allow delete: if false;
     }
 
     // engine output; per-member alert views are private to that member
