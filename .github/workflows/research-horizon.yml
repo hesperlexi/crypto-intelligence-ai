@@ -1,0 +1,90 @@
+name: Research - trade time limit (read-only)
+
+# How the trade time limit (30 candles today, then EXPIRED) changes results: the models' out-of-sample calls replayed
+# with the current live rules under horizons 30 / 60 / 90 candles and no limit. Read-only on production state:
+#   * restores the engine state cache only (never saves it), no Firebase key or any other secret, never runs the engine;
+#   * results are committed to the `research-results` branch as results/horizon-<stamp>.json and horizon-latest.json.
+on:
+  push:
+    branches: [research-horizon]
+    paths:
+      - "backend/**"
+      - ".github/workflows/research-horizon.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: research-horizon        # own group: never cancels the `research` workflow
+  cancel-in-progress: true
+
+jobs:
+  horizon:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements-worker.txt
+            backend/requirements-torch.txt
+      - run: pip install -r requirements-worker.txt
+      - name: Install PyTorch (CPU) so saved models with LSTM / GRU / Transformer members load
+        run: pip install -r requirements-torch.txt || echo "::warning::torch not installed"
+      - name: Restore the engine state (read-only copy; never saved back)
+        id: state
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-none
+          restore-keys: engine-state-
+      - name: Run the time-limit research
+        env:
+          DATABASE_URL: sqlite:///./data/crypto_ai.db
+        run: |
+          mkdir -p ../out
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
+            printf '{"ok": false, "command": "horizon", "reason": "engine state cache not restored", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/horizon-latest.json
+          else
+            python -m app.research horizon --budget 13500 --out ../out/horizon-latest.json > /dev/null \
+              || printf '{"ok": false, "command": "horizon", "reason": "the horizon research failed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/horizon-latest.json
+          fi
+          python - <<'EOF'
+          import json
+          d = json.load(open("../out/horizon-latest.json"))
+          d["commit"] = "${{ github.sha }}"
+          d["cache_key"] = "${{ steps.state.outputs.cache-matched-key }}"
+          json.dump(d, open("../out/horizon-latest.json", "w"), indent=1)
+          EOF
+          cp ../out/horizon-latest.json ../out/horizon-$stamp.json
+      - name: Commit the results to the research-results branch
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5; do
+            rm -rf ../rr; git worktree prune
+            if git ls-remote --exit-code --heads origin research-results >/dev/null 2>&1; then
+              git fetch --depth 1 origin research-results
+              git worktree add ../rr FETCH_HEAD
+              git -C ../rr checkout -B research-results
+            else
+              git worktree add --detach ../rr
+              git -C ../rr checkout --orphan research-results
+              git -C ../rr rm -rf --quiet . || true
+            fi
+            mkdir -p ../rr/results
+            cp out/horizon-*.json ../rr/results/
+            ( cd ../rr && git add results/horizon-*.json && \
+              { git commit -m "Horizon research results for ${GITHUB_SHA::7}" || { echo "nothing new"; exit 0; }; } && \
+              git push origin HEAD:research-results ) && exit 0
+            echo "push failed (another run committed meanwhile), retrying"; sleep $((attempt * 10))
+          done
+          exit 1
