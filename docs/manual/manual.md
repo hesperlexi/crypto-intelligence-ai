@@ -2,9 +2,20 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 ## 1. Getting started
 
-**The menu:** Home · Signals · Trade · News · Radar · Results · Alerts · Settings. **Results** holds the track record, the demo bots, the accuracy report, the signal log and the tools (Backtest, Replay, Scanner). On phones the bottom bar has Home, Signals, Trade and Results; the rest is under **More**.
+**The menu:** Home · Signals · Trade · News · Radar · Results · Community · Alerts · Settings. **Results** holds the track record, the demo bots, the accuracy report, the signal log and the tools (Backtest, Replay, Scanner). On phones the bottom bar has Home, Signals, Trade and Results; the rest is under **More**.
 
-**Open the app.** Go to **www.cryptointelai.com** and press **Sign in with Google**.
+**Open the app.** Go to **www.cryptointelai.com** and press **Continue with Google**, or **Sign up with email** to use any email address.
+
+**Signing up with email:**
+
+1. Press **Sign up with email** (or **Sign in → Create account**), enter your email and a password of **at least 8 characters**, twice.
+2. You'll see **Check your inbox**. Open the email we sent and tap the confirmation link (check the spam folder if it isn't there after a minute).
+3. Come back to the app and press **I've confirmed my email**. Didn't get the email? Press **Resend email** (you can resend once a minute).
+4. Next time, press **Sign in** and enter the same email and password. Forgot it? Press **Forgot password?**, enter your email, and follow the link we send you to choose a new one.
+
+Your password goes only to the sign-in service (Google Firebase); the app never sees or stores it.
+
+**Choose a username.** The first time you sign in (with Google or email, once your email is confirmed) you pick a **username**: 3 to 20 characters, using letters a-z, numbers and _. It must be unique, some names are reserved (such as admin or support), and it **can't be changed later**. Other members see it next to your posts in Community; your email stays private.
 
 **Install it** so it opens like a normal app and can send notifications:
 
@@ -12,7 +23,7 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 2. **Android or desktop, from Chrome:** open the site, then menu → **Install app** (or **Add to Home screen**).
 3. **iPhone or iPad:** open the site in **Safari**, tap **Share → Add to Home Screen**, and always open it from that icon. On iOS, notifications only work this way.
 
-**Access.** After signing in, new accounts see the membership screen: choose a plan, pay, and send the proof (section 2). The app opens by itself as soon as the owner approves your payment.
+**Access.** After signing in (and choosing a username), new accounts see the membership screen: choose a plan, pay, and send the proof (section 2). The app opens by itself as soon as the owner approves your payment.
 
 **What you get.** Every prediction and trade signal (spot and futures), Accuracy and the demo bots, backtests and replays, your own practice accounts, alerts and phone notifications, and up to 5 coins of your own.
 
@@ -61,7 +72,7 @@ Do these once and the app works for you in the background.
 - ☐ **Choose a look:** **Settings → Appearance**. Gold is the default; there are other themes and layouts, and a compact density for small screens.
 - ☐ **Set up your practice account:** open **Trade → Assets**, type a **Starting balance** close to what you would really trade (e.g. 1,000 USDT) and press **Reset account**.
 - ☐ **Create one alert** for your favourite coin (section 7), so the app tells you when a setup appears.
-- ☐ **Open Accuracy** and note today's hit rates. This is your baseline for deciding how much to trust the models (section 11).
+- ☐ **Open Accuracy** and note today's hit rates. This is your baseline for deciding how much to trust the models (section 12).
 
 ## 4. Trade signals: long, short, buy or wait
 
@@ -168,7 +179,11 @@ Open **Trade** (bottom bar on phones). It works like Binance or MEXC, with virtu
 
 **Spot:** choose **Buy** or **Sell**, enter the total (USDT) or the amount of coins, and press the button.
 
-**Below the chart:** **Positions** (live profit, ROE, liquidation; edit **TP / SL**, **Close 50%**, **Close all**), **Open orders** (cancel any time, the funds come back), **Order history**, and **Assets** (equity, return, fees, win rate, and **Reset account** with your own starting balance).
+**Below the chart:** **Positions** (live profit, ROE, liquidation; edit **TP / SL**, **Close 50%**, **Close all**), **Open orders** (cancel any time, the funds come back), **Order history**, and **Assets** (equity, return, fees, win rate, and **Reset account** with your own starting balance). The newest position is always at the top, and the list stays in place while prices move.
+
+**Position details:** tap a position (or a spot holding) to open its details: pair, side, leverage, margin mode, size in coins and in USDT, entry and live price, unrealised profit in USDT and as ROI on margin, margin, liquidation price, take-profit and stop-loss, fees and funding paid, when it opened and how long it has been open, and where it came from (your own order, or **Auto-trade** from a signal, with links to that signal and to the Signal log). **Edit TP / SL**, **Close 50%** and **Close all** work there too. On a computer it opens at the side; on a phone it slides up from the bottom.
+
+**Switch the chart from a list:** tap a **pair name** in Positions, Open orders or Order history and the chart switches to that coin, keeping the timeframe you chose. On a phone the page scrolls back up to the chart.
 
 Stop-loss, take-profit, liquidation and limit orders are checked on every 15-minute candle, also while the app is closed. Fees: spot 0.1%, futures 0.05% market and 0.02% limit, plus funding every 8 hours.
 
@@ -176,7 +191,17 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 **Auto-trade signals (Futures tab).** Press **Turn on** and the app places its futures signals in your practice account by itself, also while the app is closed. In **Settings** choose the **margin per trade** (USDT), the leverage (the signal's suggested leverage is the safest; any higher choice is capped so liquidation stays beyond the stop), the timeframes, grade A only or A+B, which target to take profit at, the maximum number of open trades, the maximum in the same direction (default 3), whether stronger signals get a bigger size, and all coins or only your own. Inside the entry zone the trade opens at market; otherwise a limit order waits at the ideal entry and is cancelled after 6 candles if it never fills. Auto-trades are marked **AUTO** and you get a notification for each. It is the easiest way to see what following every signal would really do to an account.
 
-## 10. Demo bots: proof of whether the predictions work
+## 10. Community: talk with other members
+
+Open **Community** (on phones under **More**). It is a shared wall where members post short messages, newest first.
+
+- **Write a post:** type in the box at the top and press **Post**. Text only, up to **500 characters**; no pictures. Web addresses are shown as plain text (not clickable), so copy them if you want to open one. You can post once every **30 seconds**.
+- **Your name:** posts show your **username** and how long ago they were posted. Posts by the app owner have an **ADMIN** badge.
+- **Delete:** you can delete your own posts with **Delete** (posts cannot be edited). The owner can remove any post that breaks the rules.
+- **Older posts:** the newest 20 are shown; press **Show older posts** for more.
+- **Be kind:** no spam, no promotions and no sharing of personal details. Nothing posted in Community is financial advice, and other members can be wrong.
+
+## 11. Demo bots: proof of whether the predictions work
 
 **Results → Demo bots** runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
@@ -195,7 +220,9 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 3. Look at the **win rate after costs**, **profit factor** (above 1.2 is good) and **max drawdown** (could you live with that drop on real money?).
 4. Compare spot vs futures and confident-only vs all calls; follow the style that wins over months, not days.
 
-## 11. When to trust the models: the Accuracy page
+## 12. When to trust the models: the Accuracy page
+
+**Results → Signal log** lists every signal the engine logged. Use the filters above the table to find what you need: **coin** search, **timeframe**, **side** (long or short), **grade** (A or B), **status** (Open, TP1, TP2, TP3 / Won, Stopped, Break-even, Expired, Not filled, Void, Not traded), **date** (24h, 7 days, 30 days, All, or your own dates) and **sort** (newest, oldest, best or worst result). The count shows how many signals match (for example "12 of 300 signals"); **Clear all** resets everything. The filters are kept in the page address, so you can copy the link and share exactly that view. On a phone, tap **Filters** to open them.
 
 **Results → Track record** lists every trade signal since launch with its real result (target hit, stopped or expired), the win rate and the running total, plus how each coin's AI scored on past data it never saw. Nothing is removed. The start page shows visitors the **Wins of the day**: real winning signals from the last 24 hours.
 
@@ -215,13 +242,13 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 
 > **Practical rule:** trade a coin and timeframe only when its out-of-sample accuracy is above 52%, its confident calls are better still, and live predictions agree.
 
-## 12. Backtest and Replay: test ideas on the past
+## 13. Backtest and Replay: test ideas on the past
 
 **Backtest** (Results → Tools) runs a strategy over past data with fees and slippage. Choose the coin, timeframe, period and strategy under **Inputs** and run it. Read the verdict (*Beats buy & hold* or not), net return, win rate, profit factor, Sharpe and max drawdown. A strategy that only wins before costs does not win.
 
 **Replay** (Results → Tools) is the best way to build trust. Under **Choose a moment**, pick a coin and a past date and time. The app shows exactly what it knew and forecast then, without future data (the **Look-ahead audit** proves it). Decide what you would have done, then press **Reveal what happened next**. Do 10–20 replays across calm, rising and falling markets.
 
-## 13. Rules for getting the most out of it
+## 14. Rules for getting the most out of it
 
 1. **Let the app find setups; you make the decision.** A second opinion, not an autopilot.
 2. **Prefer confident calls with timeframe agreement.** Fewer trades, better trades.
@@ -234,7 +261,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 9. **Be extra careful around big news:** models trained on normal markets can be wrong in sudden shocks.
 10. **Expect losing streaks.** At 55% accuracy, five losses in a row will happen regularly.
 
-## 14. Troubleshooting
+## 15. Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
@@ -249,6 +276,10 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 | No notifications when the app is closed | Allow notifications for the app in phone settings and make sure battery saver is not blocking it. On iPhone, open the app from the Home Screen icon. |
 | Alerts arrive late | The engine runs every 5 minutes; a short delay is expected. |
 | Futures order refused: "opposite position" | Switch to **Hedge** mode, or close the other side first. |
+| The confirmation or password email didn't arrive | Wait a minute and check spam / promotions. Then use **Resend email** (once a minute) or **Forgot password?** again, and make sure the address is spelled right. |
+| "Wrong email or password" | Check the address, or press **Forgot password?**. If you first signed up with Google, use **Continue with Google** instead. |
+| "That username is taken" | Usernames are unique; add numbers or an underscore and try again. |
+| My Community post won't send | Posts can be up to 500 characters, one every 30 seconds. Wait for the timer on the **Post** button, then try again. |
 | Anything else | Use **Contact support** in Settings, the More menu or the footer, and describe what you see. |
 
 > **Important:** the app is for analysis and practice. It is not financial advice, all trading in it uses virtual money, and past accuracy does not guarantee future results.
