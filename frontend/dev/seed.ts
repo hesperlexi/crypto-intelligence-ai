@@ -215,6 +215,27 @@ function marketContext() {
   };
 }
 
+/** Signal log rows shaped like tracking.signal_history + views.contract_fields (every real status appears). */
+function signalLog() {
+  const rows: any[] = [];
+  const st: [string, string | null][] = [["OPEN", null], ["TP1", "trail"], ["TP2", "trail"], ["TP3", "tp3"], ["STOPPED", "stop"], ["TP1", "break_even"], ["EXPIRED", "expired"], ["NOT_FILLED", null], ["VOID", null], ["INFO", null]];
+  const tfs = ["1h", "4h", "12h", "1d", "1h", "4h", "15m", "3d"];
+  for (let i = 0; i < 42; i++) {
+    const [symbol, price] = COINS[(i * 7) % COINS.length];
+    const [status, exit] = st[i % st.length];
+    const side = status === "INFO" ? 0 : i % 3 === 1 ? -1 : 1;
+    const ret = status === "TP3" ? 3.1 : status === "TP2" ? 1.9 : status === "TP1" ? (exit === "break_even" ? 0.45 : 0.9) : status === "STOPPED" ? -1.7 : status === "EXPIRED" ? 0.2 : null;
+    const lev = side ? 8 : null;
+    rows.push({ id: `s${i}`, created_at: NOW - i * 11 * H - (i % 4) * 1_700_000, symbol, timeframe: tfs[i % tfs.length], signal: side > 0 ? "BUY" : side < 0 ? "SELL" : "HOLD",
+      decision: side > 0 ? "BUY" : side < 0 ? "SELL" : "NO TRADE", price, confidence: 0.55 + (i % 5) * 0.03, side, stop: side ? price * (1 - side * 0.018) : null,
+      status, tp1_hit: ["TP1", "TP2", "TP3"].includes(status) ? 1 : 0, tp2_hit: ["TP2", "TP3"].includes(status) ? 1 : 0, tp3_hit: status === "TP3" ? 1 : 0,
+      stop_hit: status === "STOPPED" || exit === "break_even" ? 1 : 0, return_pct: ret, leverage: lev, roi_pct: ret != null && lev ? ret * lev : null,
+      exit_reason: exit, fill_status: status === "NOT_FILLED" ? "NOT_FILLED" : side ? (status === "OPEN" && i % 20 === 10 ? "PENDING" : "FILLED") : null,
+      payload: { grade: side ? (i % 4 === 3 ? "B" : "A") : null, decision_reason: side ? null : "the AI and the trend disagree" } });
+  }
+  return { signals: rows, summary: { closed: 18, win_rate: 0.61, avg_return_pct: 0.62, avg_roi_pct: 4.96, by_status: { TP1: 8, TP2: 4, TP3: 4, STOPPED: 4, EXPIRED: 4 }, not_filled: 4, void: 4 } };
+}
+
 /** Practice futures + spot accounts of the preview member (and the owner), for the Trade page. */
 function practice(uid: string) {
   const px = (s: string) => PRICES[s].p;
@@ -263,7 +284,7 @@ export function seed(): Record<string, any> {
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
     "views/health": v({ status: "OK", engine: { last_tick_finished: NOW - 3 * 60_000, schedule_minutes: 5, ticks: 412 }, market_data: {}, exchange: {}, database: {}, config: {} }),
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
-    "views/signals": v({ signals: [], summary: { closed: 0, note: "No closed signals yet." } }),
+    "views/signals": v(signalLog()),
     "views/weekly_report": v(weekly()),
     "users/u_member_self": undefined,
     ...users(),
