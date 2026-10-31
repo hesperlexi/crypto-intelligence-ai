@@ -6,6 +6,7 @@ import {
 import { doc, getDoc, onSnapshot, writeBatch } from "firebase/firestore";
 import { useEffect, useState } from "react";
 import { auth, db } from "./firebase";
+import { ownerProfile, usernameClaim, usernameOnUser } from "./writeShapes";
 
 export const MIN_PASSWORD = 8;
 export const RESEND_WAIT_S = 60;
@@ -111,9 +112,9 @@ export async function claimUsername(user: User, raw: string, opts: { admin: bool
   if (bad) throw new Error(bad);
   if (await usernameTaken(n)) throw new Error("That username is taken. Please choose another.");
   const b = writeBatch(db);
-  b.set(doc(db, "usernames", n), { uid: user.uid, created_at: Date.now() });
-  if (opts.admin) b.set(doc(db, "owner", "profile"), { username: n, uid: user.uid }, { merge: true });
-  else b.update(doc(db, "users", user.uid), { username: n });
+  b.set(doc(db, "usernames", n), usernameClaim(user.uid, Date.now()));
+  if (opts.admin) b.set(doc(db, "owner", "profile"), ownerProfile(user.uid, n), { merge: true });
+  else b.update(doc(db, "users", user.uid), usernameOnUser(n));
   try { await b.commit(); } catch (e: any) {
     throw new Error(/permission|denied/i.test(String(e?.code ?? e?.message)) ? "That username was just taken or is not allowed. Please choose another." : "Could not save the username. Please try again.");
   }

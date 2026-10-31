@@ -6,6 +6,7 @@ import { doc, getDoc, onSnapshot, setDoc } from "firebase/firestore";
 import { createContext, useContext } from "react";
 import { db } from "./firebase";
 import { markNewAccount, providerOf } from "./account";
+import { newUserRecord } from "./writeShapes";
 
 export type Role = "loading" | "admin" | "member" | "pending" | "expired" | "blocked";
 export interface Session { uid: string; email: string; name: string; role: Role; username?: string }
@@ -45,8 +46,7 @@ export function watchRole(user: User, cb: (role: Role) => void): () => void {
       const d = s.data();
       if (!d) {
         markNewAccount(user.uid);
-        setDoc(ref, { uid: user.uid, email: user.email, name: user.displayName ?? "", photo: user.photoURL ?? "",
-          provider: providerOf(user), status: "pending", requested_at: Date.now() }).catch(() => cb("blocked"));
+        setDoc(ref, newUserRecord(user, providerOf(user), Date.now())).catch(() => cb("blocked"));
         cb("pending");
         return;
       }
