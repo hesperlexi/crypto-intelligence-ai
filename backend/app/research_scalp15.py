@@ -11,11 +11,13 @@ Variants (each on the 15m series, grade A only):
   TP1 at 0.3R / 0.5R / 0.75R / 1.0R (current)  x  exits (i) `ladder`: 50 % at TP1, stop -> break-even, 25 % at TP2 1.75R,
   25 % at TP3 2.5R, stop -> TP1 after TP2 (the current ladder) or (ii) `all_tp1`: 100 % closed at TP1
   x  horizon 30 or 250 candles (then EXPIRED at the last close).
-Baselines: the current rules (grades A + B, TP1 1R ladder) at 30 and 250 candles.
+Baselines: the current rules (grades A + B, TP1 1R ladder) at 30 and 250 candles. The same TP1 / exit grid is also run
+on grades A + B (`AB_tp...`), because grade A alone is rare.
 Costs: RESEARCH_COST_PCT (0.15 %) round trip headline, also 0.10 % and 0.20 %; every R and % is after costs.
 Leverage: liquidation distance from engine/futures.liquidation_price (1/lev - 0.5 % maintenance margin): 4.5 % at 20x,
-3.5 % at 25x. A trade is `liquidated` when its adverse excursion from the entry, up to its exit (or up to TP1, after
-which the stop is at break-even or better), reaches that distance; stop first inside a candle (conservative). ROI on margin
+3.5 % at 25x. A trade is `liquidated` when its stop lies beyond the liquidation price and its adverse excursion from
+the entry, up to its exit (or up to TP1, after which the stop is at break-even or better), reaches that distance; a stop
+nearer than the liquidation price fills first (no gaps modelled); stop first inside a candle (conservative). ROI on margin
 = net price return x leverage, a liquidated trade = -100 % of margin. Also reported: the share of trades whose stop lies
 beyond the liquidation price (they can be liquidated before the stop).
 Headline: the untouched last 30 % of each series (same split as research_engine); all-data numbers too. Confidence:
@@ -189,7 +191,7 @@ def stats_x(trades: list[dict[str, Any]], cost: float, weeks: float) -> dict[str
                "exits": {x: int(sum(t["exit"] == x for t in sc)) for x in ("stop", "tp1", "break_even", "trail", "tp3", "expired")}})
     for lev in LEVERAGES:
         ld = liq_dist_pct(lev)
-        liq = mae >= ld
+        liq = (risk >= ld) & (mae >= ld)     # a stop nearer than the liquidation price fills first (no gaps)
         roi = np.where(liq, -100.0, net_pct * lev)
         st[f"stop_beyond_liq_{lev}x"] = float(np.mean(risk >= ld))
         st[f"liquidated_{lev}x"] = float(np.mean(liq))
@@ -226,10 +228,13 @@ def bootstrap_x(res: dict[str, dict[str, list]], cost: float, base: str, n_boot:
 
 def variants() -> dict[str, dict[str, Any]]:
     out = {f"AB_current_h{h}": {"grades": ("A", "B"), "tp1": 1.0, "exit": "ladder", "horizon": h} for h in HORIZONS}
-    for h in HORIZONS:
-        for ex in EXITS:
-            for x in TP1_OPTIONS:
-                out[f"A_tp{x}_{ex}_h{h}"] = {"grades": ("A",), "tp1": x, "exit": ex, "horizon": h}
+    for g, gs in (("A", ("A",)), ("AB", ("A", "B"))):     # A only = the proposal; A + B = same exits on a larger sample
+        for h in HORIZONS:
+            for ex in EXITS:
+                for x in TP1_OPTIONS:
+                    if g == "AB" and x == 1.0 and ex == "ladder":
+                        continue                              # = AB_current_h{h}
+                    out[f"{g}_tp{x}_{ex}_h{h}"] = {"grades": gs, "tp1": x, "exit": ex, "horizon": h}
     return out
 
 

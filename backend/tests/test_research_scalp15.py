@@ -83,6 +83,8 @@ def test_nearer_tp1_raises_tp1_hits_and_liquidation_numbers():
     for k in ("liquidated_20x", "liquidated_25x", "stop_beyond_liq_20x"):
         assert 0.0 <= rows[0.3][k] <= 1.0
     assert rows[0.3]["liquidated_25x"] >= rows[0.3]["liquidated_20x"]
+    for lev in (20, 25):
+        assert rows[0.3][f"liquidated_{lev}x"] <= rows[0.3][f"stop_beyond_liq_{lev}x"]
     assert abs(X.liq_dist_pct(20) - 4.5) < 1e-9 and abs(X.liq_dist_pct(25) - 3.5) < 1e-9
 
 
@@ -90,3 +92,16 @@ def test_variant_grid():
     v = X.variants()
     assert list(v)[0] == "AB_current_h30" and "AB_current_h250" in v
     assert sum(1 for k in v if k.startswith("A_")) == 4 * 2 * 2
+    assert sum(1 for k in v if k.startswith("AB_tp")) == 4 * 2 * 2 - 2
+
+
+def test_a_stop_nearer_than_liquidation_is_never_liquidated():
+    # stop 2 % away, one candle runs 6 % through it: stopped at the stop, not liquidated at 20x (4.5 %) or 25x (3.5 %)
+    t = {"ts": 1, "grade": "A", "status": "STOPPED", "exit": "stop", "return_pct": -2.0, "risk_pct": 2.0, "mae_pct": 6.0,
+         "closed_ts": 900_000, "filled_ts": 0}
+    st = X.stats_x([t], 0.15, 1.0)
+    assert st["liquidated_20x"] == 0.0 and st["liquidated_25x"] == 0.0
+    assert abs(st["roi_margin_avg_20x"] - (-2.15 * 20)) < 1e-9
+    t2 = dict(t, risk_pct=4.0, return_pct=-4.0)
+    st2 = X.stats_x([t2], 0.15, 1.0)
+    assert st2["liquidated_20x"] == 0.0 and st2["liquidated_25x"] == 1.0 and st2["roi_margin_avg_25x"] == -100.0
