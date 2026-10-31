@@ -226,17 +226,14 @@ def _choose_entry(series: dict, tfs: list[str]) -> dict[str, dict]:
     return out
 
 
-def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: float, cost: float,
-             variants: dict[str, Any] | None = None) -> dict[str, Any]:
-    variants = variants or PLANS["uniform"]
-    names = list(variants)
-    base_name = names[0]
+def prepare(rt, symbols: list[str], tfs: list[str], deadline1: float) -> dict[str, Any]:
+    """Phase 1 (shared with research_scalp15): build every series, decide on its tuning part, choose the entry rule per
+    timeframe and train the pooled filter per timeframe on tuning trades - all with the 30-candle horizon, as live."""
     news = _news_fn(rt.db)
     frames_cache: dict = {}
     series: dict[str, dict] = {}
     skipped: list[str] = []
     pool: dict[str, dict[str, list]] = {}
-    deadline1 = t_start + 0.55 * budget_s          # phase 1 (build + tuning); the rest is for the horizon runs
     for tf in [t for t in TF_ORDER if t in tfs]:
         for s in symbols:
             if time.time() > deadline1:
@@ -281,6 +278,27 @@ def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: f
     filters = {}
     for tf, P in pool.items():
         filters[tf] = TF2.train(np.array(P["F"]) if P["F"] else np.zeros((0, len(TF2.FEATURES))), np.array(P["R"]), np.array(P["ts"]))
+    return {"series": series, "skipped": skipped, "entry_choice": entry_choice, "filters": filters, "news": news}
+
+
+def entry_and_keep(prep: dict[str, Any], v: dict[str, Any]) -> tuple[str, float, Callable[[dict], bool] | None]:
+    """The live entry rule and trade filter of a series' timeframe (as chosen / trained in `prepare`)."""
+    ctx, d = v["ctx"], v["d"]
+    mode, k = (prep["entry_choice"][ctx.tf]["chosen"].split(":") if settings.entry_rules else ("old", "0"))
+    f = prep["filters"].get(ctx.tf) if settings.trade_filter2 else None
+    keep = None
+    if f and f.get("enabled"):
+        keep = lambda c, f=f, ctx=ctx, d=d: TF2.score(f, TF2.features(ctx, d, c["j"])) >= f["threshold"]  # noqa: E731
+    return mode, float(k), keep
+
+
+def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: float, cost: float,
+             variants: dict[str, Any] | None = None) -> dict[str, Any]:
+    variants = variants or PLANS["uniform"]
+    names = list(variants)
+    base_name = names[0]
+    prep = prepare(rt, symbols, tfs, t_start + 0.55 * budget_s)   # phase 1; the rest of the budget: horizon runs
+    series, skipped, entry_choice, filters, news = (prep[k] for k in ("series", "skipped", "entry_choice", "filters", "news"))
     # ---- horizon runs ---------------------------------------------------------------------------------------------------
     scopes = {"test": {}, "all": {}}
     for sc in scopes:
@@ -295,11 +313,7 @@ def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: f
         t0 = time.time()
         ctx, paths, d = v["ctx"], v["paths"], v["d"]
         tf = ctx.tf
-        mode, k = (entry_choice[tf]["chosen"].split(":") if settings.entry_rules else ("old", "0"))
-        f = filters.get(tf) if settings.trade_filter2 else None
-        keep = None
-        if f and f.get("enabled"):
-            keep = lambda c, f=f, ctx=ctx, d=d: TF2.score(f, TF2.features(ctx, d, c["j"])) >= f["threshold"]  # noqa: E731
+        mode, k, keep = entry_and_keep(prep, v)
         allrows = np.ones(ctx.n, bool)
         hs = {vn: horizon_of(variants[vn], tf) for vn in names}
         by_val = {h: candidates_h(ctx, paths, allrows, d, mode, float(k), cost, news, h) for h in set(hs.values())}

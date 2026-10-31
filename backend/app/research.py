@@ -5,6 +5,8 @@
   python -m app.research engine   [--db ...] [--out results/engine.json] [--budget 14400]  (v2.6, see research_engine.py)
   python -m app.research horizon  [--db ...] [--out results/horizon.json] [--budget 14400] (time limit 30/60/90/none,
                                   see research_horizon.py)
+  python -m app.research scalp15  [--db ...] [--out results/scalp15.json] [--budget 14400] (15m grade-A near-TP1 restart
+                                  proposal with leverage / liquidation, see research_scalp15.py)
 
 giveback  every closed call ever recorded (and separately those since record_since), replayed from publication on the
           stored 15m candles with the CURRENT rules: how many reached +0.5R / +0.8R / TP1 (1R) and still ended stopped
@@ -220,7 +222,7 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "horizon"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "horizon", "scalp15"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
@@ -257,6 +259,10 @@ def main(argv: list[str] | None = None) -> int:
             body = research_horizon.run(a.db, a.budget, a.cost_pct,
                                         [x for x in (a.symbols or "").split(",") if x] or None,
                                         [x for x in (a.timeframes or "").split(",") if x] or None, a.plan)
+            out = {"ok": True, "command": a.command, **body}
+        elif a.command == "scalp15":
+            from . import research_scalp15
+            body = research_scalp15.run(a.db, a.budget, a.cost_pct, [x for x in (a.symbols or "").split(",") if x] or None)
             out = {"ok": True, "command": a.command, **body}
         else:
             db = Database(a.db)

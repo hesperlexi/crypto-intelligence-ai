@@ -15,6 +15,9 @@ on:
       plan:
         description: "uniform (30/60/90/no limit everywhere) or proposal (owner's per-timeframe limits vs 30)"
         default: proposal
+      scalp15:
+        description: "also run the 15m grade-A near-TP1 restart study (scalp15): yes / no"
+        default: "yes"
 
 concurrency:
   group: research-horizon        # own group: never cancels the `research` workflow
@@ -70,6 +73,26 @@ jobs:
           EOF
           cp ../out/horizon-latest.json ../out/horizon-$plan-$stamp.json
           cp ../out/horizon-latest.json ../out/horizon-$plan-latest.json
+      - name: Run the 15m restart research (grade A, near TP1, leverage)
+        if: ${{ github.event.inputs.scalp15 != 'no' }}
+        env:
+          DATABASE_URL: sqlite:///./data/crypto_ai.db
+        run: |
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
+            printf '{"ok": false, "command": "scalp15", "reason": "engine state cache not restored"}\n' > ../out/scalp15-latest.json
+          else
+            python -m app.research scalp15 --budget 7200 --out ../out/scalp15-latest.json > /dev/null 2> ../out/scalp15.err \
+              || python -c "import json; e=open('../out/scalp15.err').read()[-4000:]; json.dump({'ok': False, 'command': 'scalp15', 'reason': 'the scalp15 research failed', 'stderr_tail': e}, open('../out/scalp15-latest.json', 'w'))"
+          fi
+          python - <<'EOF'
+          import json
+          d = json.load(open("../out/scalp15-latest.json"))
+          d["commit"] = "${{ github.sha }}"
+          d["cache_key"] = "${{ steps.state.outputs.cache-matched-key }}"
+          json.dump(d, open("../out/scalp15-latest.json", "w"), indent=1)
+          EOF
+          cp ../out/scalp15-latest.json ../out/scalp15-$stamp.json
       - name: Commit the results to the research-results branch
         working-directory: .
         run: |
@@ -88,8 +111,9 @@ jobs:
             fi
             mkdir -p ../rr/results
             cp out/horizon-*.json ../rr/results/
-            ( cd ../rr && git add results/horizon-*.json && \
-              { git commit -m "Horizon research results for ${GITHUB_SHA::7}" || { echo "nothing new"; exit 0; }; } && \
+            cp out/scalp15-*.json ../rr/results/ 2>/dev/null || true
+            ( cd ../rr && git add results/horizon-*.json && { git add results/scalp15-*.json 2>/dev/null || true; } && \
+              { git commit -m "Horizon / scalp15 research results for ${GITHUB_SHA::7}" || { echo "nothing new"; exit 0; }; } && \
               git push origin HEAD:research-results ) && exit 0
             echo "push failed (another run committed meanwhile), retrying"; sleep $((attempt * 10))
           done
