@@ -35,7 +35,9 @@ jobs:
       - name: Render firestore.rules (test admin)
         env:
           ADMIN_EMAILS: admin@example.com
-        run: python scripts/make_rules.py
+        run: |
+          python scripts/make_rules.py
+          cp firestore.rules tests/rules/firestore.rules     # firebase-tools only reads rules inside its project folder
       - name: Install test tools
         working-directory: tests/rules
         run: npm ci --no-audit --no-fund

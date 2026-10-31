@@ -1,6 +1,6 @@
 // Firestore security rules tests, run inside the Firestore emulator by .github/workflows/rules-test.yml:
 //   firebase emulators:exec --only firestore --project demo-test "npm test"
-// The rules file is ../../firestore.rules (rendered from firestore.rules.template with ADMIN_EMAILS=admin@example.com).
+// The rules file is ./firestore.rules (copied by the workflow from ../../firestore.rules, rendered from firestore.rules.template with ADMIN_EMAILS=admin@example.com).
 // Account / username / Community / payment documents are built with the website's own builders
 // (frontend/src/lib/writeShapes.ts), so these tests check the exact shapes the app sends.
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
@@ -58,7 +58,7 @@ function post(db: Firestore, uid: string, username: string, text: string, opts: 
 }
 
 async function main() {
-  env = await initializeTestEnvironment({ projectId: "demo-test", firestore: { rules: readFileSync(new URL("../../firestore.rules", import.meta.url), "utf8"), host: "127.0.0.1", port: 8080 } });
+  env = await initializeTestEnvironment({ projectId: "demo-test", firestore: { rules: readFileSync(new URL("./firestore.rules", import.meta.url), "utf8"), host: "127.0.0.1", port: 8080 } });
 
   // ---------------------------------------------------------------- usernames
   await test("existing approved Google member sets a username (users.username + usernames/{name} batch)", async () => {
