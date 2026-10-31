@@ -33,4 +33,13 @@ out["model_age_h"] = {tf: {"n": len(v), "fresh_12h": sum(1 for a in v if a is no
                       for tf, v in ages.items()}
 out["last_train"] = (hj.get("engine") or {}).get("last_train")
 out["safety"] = hj.get("safety")
+# v2.1 fresh start check: release marker, record views, practice data counts (no personal data)
+out["release"] = fs.document("config/release").get().to_dict()
+tr = fs.document("views/track_record").get().to_dict()
+trj = json.loads(tr["json"]) if tr and tr.get("json") else {}
+out["track_record"] = {"record_since": trj.get("record_since"), "live_signals": len((trj.get("live") or {}).get("signals") or trj.get("signals") or []),
+                       "updated": (tr or {}).get("updated_at")}
+out["counts"] = {c: sum(1 for _ in fs.collection(c).select([]).stream()) for c in ("paper", "paper_trades", "paper_futures_trades", "auto_paper_state", "jobs")}
+bots = fs.document("config/bots").get().to_dict() or {}
+out["bots"] = [{"id": b.get("id"), "reset_token": b.get("reset_token")} for b in bots.get("bots", [])]
 print(json.dumps(out, indent=1, default=str))
