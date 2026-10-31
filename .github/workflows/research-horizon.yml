@@ -11,6 +11,10 @@ on:
       - "backend/**"
       - ".github/workflows/research-horizon.yml"
   workflow_dispatch:
+    inputs:
+      plan:
+        description: "uniform (30/60/90/no limit everywhere) or proposal (owner's per-timeframe limits vs 30)"
+        default: proposal
 
 concurrency:
   group: research-horizon        # own group: never cancels the `research` workflow
@@ -50,10 +54,11 @@ jobs:
         run: |
           mkdir -p ../out
           stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          plan="${{ github.event.inputs.plan || 'proposal' }}"
           if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
             printf '{"ok": false, "command": "horizon", "reason": "engine state cache not restored", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/horizon-latest.json
           else
-            python -m app.research horizon --budget 13500 --out ../out/horizon-latest.json > /dev/null \
+            python -m app.research horizon --plan "$plan" --budget 13500 --out ../out/horizon-latest.json > /dev/null \
               || printf '{"ok": false, "command": "horizon", "reason": "the horizon research failed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/horizon-latest.json
           fi
           python - <<'EOF'
@@ -63,7 +68,8 @@ jobs:
           d["cache_key"] = "${{ steps.state.outputs.cache-matched-key }}"
           json.dump(d, open("../out/horizon-latest.json", "w"), indent=1)
           EOF
-          cp ../out/horizon-latest.json ../out/horizon-$stamp.json
+          cp ../out/horizon-latest.json ../out/horizon-$plan-$stamp.json
+          cp ../out/horizon-latest.json ../out/horizon-$plan-latest.json
       - name: Commit the results to the research-results branch
         working-directory: .
         run: |

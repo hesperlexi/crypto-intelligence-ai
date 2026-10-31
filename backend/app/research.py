@@ -227,6 +227,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--budget", type=float, default=14400, help="engine: seconds before remaining series are skipped")
     ap.add_argument("--symbols", default=None, help="engine: comma-separated symbols (default: all with an active model)")
     ap.add_argument("--timeframes", default=None, help="engine: comma-separated timeframes")
+    ap.add_argument("--plan", default="uniform", help="horizon: uniform (30/60/90/none) or proposal (per timeframe)")
     a = ap.parse_args(argv)
     path = a.db.replace("sqlite:///", "")
     if a.db.startswith("sqlite:///") and not Path(path).exists():
@@ -255,7 +256,7 @@ def main(argv: list[str] | None = None) -> int:
             from . import research_horizon
             body = research_horizon.run(a.db, a.budget, a.cost_pct,
                                         [x for x in (a.symbols or "").split(",") if x] or None,
-                                        [x for x in (a.timeframes or "").split(",") if x] or None)
+                                        [x for x in (a.timeframes or "").split(",") if x] or None, a.plan)
             out = {"ok": True, "command": a.command, **body}
         else:
             db = Database(a.db)

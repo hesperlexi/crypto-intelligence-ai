@@ -7,7 +7,9 @@ entry rule per timeframe chosen on the tuning part as the nightly job does; TRAD
 timeframe trained on tuning trades, used only where its own exam passes; SERIES_GATE / SERIES_CONF / STRUCT_STOPS off;
 15m paused, so it is left out unless asked for) - simulated with the record's exit rules and RESEARCH_COST_PCT
 round-trip costs, one call at a time per series with the re-entry cooldown, under several horizons: 30, 60, 90 candles
-and no limit (followed to the end of the stored candles).
+and no limit (followed to the end of the stored candles) - `--plan uniform` (default) - or per-timeframe limits
+(`--plan proposal`: the owner's 15m 250 / 1h 200 / 4h 100 / 12h 100 / 3d 30 candles with 1d at 30, 60 or 100, against
+30 everywhere; 15m included and reported although its calls are paused live).
 
 Each call keeps the candle source the 30-candle run uses (15m when they cover the first 30 candles, else the
 timeframe's own candles), so a longer horizon only adds candles after the old limit: every difference comes from the
@@ -44,6 +46,21 @@ OPEN = 2 ** 62                              # closed_ts of a call still open at 
 
 def hname(h: int) -> str:
     return f"h{h}" if h else "no_limit"
+
+
+# variant name -> horizon in candles (one number for every timeframe, or per timeframe; 0 = no limit).
+# The FIRST variant is the base the others are compared with.
+_OWNER = {"15m": 250, "1h": 200, "4h": 100, "12h": 100, "3d": 30}
+PLANS: dict[str, dict[str, Any]] = {
+    "uniform": {hname(h): h for h in HORIZONS},
+    # owner proposal (31 Oct 2026): per-timeframe limits; 1d unspecified -> tested at 30, 60 and 100
+    "proposal": {"current": 30, **{f"proposal_1d{x}": {**_OWNER, "1d": x} for x in (30, 60, 100)}},
+}
+PLAN_TFS = {"uniform": DEFAULT_TFS, "proposal": ["15m"] + DEFAULT_TFS}
+
+
+def horizon_of(spec: Any, tf: str) -> int:
+    return int(spec.get(tf, SP.HORIZON_BARS) if isinstance(spec, dict) else spec)
 
 
 # ---- simulation with a horizon ------------------------------------------------------------------------------------------
@@ -210,7 +227,10 @@ def _choose_entry(series: dict, tfs: list[str]) -> dict[str, dict]:
 
 
 def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: float, cost: float,
-             horizons: tuple[int, ...] = HORIZONS) -> dict[str, Any]:
+             variants: dict[str, Any] | None = None) -> dict[str, Any]:
+    variants = variants or PLANS["uniform"]
+    names = list(variants)
+    base_name = names[0]
     news = _news_fn(rt.db)
     frames_cache: dict = {}
     series: dict[str, dict] = {}
@@ -264,7 +284,7 @@ def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: f
     # ---- horizon runs ---------------------------------------------------------------------------------------------------
     scopes = {"test": {}, "all": {}}
     for sc in scopes:
-        scopes[sc] = {"sequential": {hname(h): {} for h in horizons}, "identical_entries": {hname(h): {} for h in horizons}}
+        scopes[sc] = {"sequential": {v: {} for v in names}, "identical_entries": {v: {} for v in names}}
     weeks = {"test": {}, "all": {}}
     deadline2 = t_start + budget_s
     done = []
@@ -281,17 +301,23 @@ def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: f
         if f and f.get("enabled"):
             keep = lambda c, f=f, ctx=ctx, d=d: TF2.score(f, TF2.features(ctx, d, c["j"])) >= f["threshold"]  # noqa: E731
         allrows = np.ones(ctx.n, bool)
-        by_h = {h: candidates_h(ctx, paths, allrows, d, mode, float(k), cost, news, h) for h in horizons}
+        hs = {vn: horizon_of(variants[vn], tf) for vn in names}
+        by_val = {h: candidates_h(ctx, paths, allrows, d, mode, float(k), cost, news, h) for h in set(hs.values())}
+        by_h = {vn: by_val[hs[vn]] for vn in names}
+        sq_val: dict[str, dict[int, list]] = {}
         for sc, mask in (("test", v["test"]), ("all", allrows)):
             ts_m = ctx.ts[mask]
             weeks[sc][key_] = max((int(ts_m[-1]) - int(ts_m[0])) / (7 * 86_400_000), 1e-9) if len(ts_m) > 1 else 1e-9
-            seq = {h: taken_h(ctx, [c for c in by_h[h] if mask[c["j"]]], keep) for h in horizons}
-            for h in horizons:
-                scopes[sc]["sequential"][hname(h)][key_] = seq[h]
-            base_js = [t["j"] for t in seq[SP.HORIZON_BARS]] if SP.HORIZON_BARS in seq else []
-            for h in horizons:
-                idx = {c["j"]: c for c in by_h[h]}
-                scopes[sc]["identical_entries"][hname(h)][key_] = [idx[j] for j in base_js if j in idx and idx[j]["filled"]]
+            sv = sq_val.setdefault(sc, {})
+            for h in set(hs.values()):
+                sv[h] = taken_h(ctx, [c for c in by_val[h] if mask[c["j"]]], keep)
+            seq = {vn: sv[hs[vn]] for vn in names}
+            for vn in names:
+                scopes[sc]["sequential"][vn][key_] = seq[vn]
+            base_js = [t["j"] for t in seq[base_name]]
+            for vn in names:
+                idx = {c["j"]: c for c in by_h[vn]}
+                scopes[sc]["identical_entries"][vn][key_] = [idx[j] for j in base_js if j in idx and idx[j]["filled"]]
         v["secs_h"] = round(time.time() - t0, 1)
         done.append(key_)
     for sc in scopes:
@@ -299,17 +325,16 @@ def evaluate(rt, symbols: list[str], tfs: list[str], t_start: float, budget_s: f
             for h in list(scopes[sc][view]):
                 scopes[sc][view][h] = {k: x for k, x in scopes[sc][view][h].items() if k in done}
     out: dict[str, Any] = {}
-    b30 = hname(SP.HORIZON_BARS)
     for sc in scopes:
         out[sc] = {}
         for view, res in scopes[sc].items():
             tfs_present = sorted({k.split(" ")[1] for k in done}, key=lambda t: TF_ORDER[::-1].index(t))
             out[sc][view] = {
                 "variants": {h: table(r, weeks[sc]) for h, r in res.items()},
-                "bootstrap_vs_h30": {"overall": bootstrap_vs(res, b30),
-                                     "by_timeframe": {tf: bootstrap_vs(res, b30, tf=tf) for tf in tfs_present}},
+                "bootstrap_vs_base": {"base": base_name, "overall": bootstrap_vs(res, base_name),
+                                      "by_timeframe": {tf: bootstrap_vs(res, base_name, tf=tf) for tf in tfs_present}},
             }
-    return {"results": out,
+    return {"results": out, "variants": variants, "base": base_name,
             "series": {k: {"oos_bars": int(v["ctx"].n), "tune_bars": int(v["tune"].sum()), "test_bars": int(v["test"].sum()),
                            "cut": v["cut"], "seconds_tune": v["secs"], "seconds_horizons": v.get("secs_h")}
                        for k, v in series.items()},
@@ -329,12 +354,13 @@ def headline(body: dict[str, Any]) -> dict[str, Any]:
         for h, t in r["variants"].items():
             rows[h] = {"overall": {k: t["overall"].get(k) for k in keys},
                        **{tf: {k: b.get(k) for k in keys} for tf, b in t["by_timeframe"].items()}}
-        out[view] = {"table": rows, "share_better_expectancy_vs_h30":
-                     {h: x.get("share_better_expectancy") for h, x in r["bootstrap_vs_h30"]["overall"].items()}}
+        out[view] = {"table": rows, "share_better_expectancy_vs_base":
+                     {h: x.get("share_better_expectancy") for h, x in r["bootstrap_vs_base"]["overall"].items()}}
     return out
 
 
-def run(db_url: str, budget_s: float, cost: float, symbols: list[str] | None = None, tfs: list[str] | None = None) -> dict[str, Any]:
+def run(db_url: str, budget_s: float, cost: float, symbols: list[str] | None = None, tfs: list[str] | None = None,
+        plan: str = "uniform") -> dict[str, Any]:
     from .db import Database
     from .services.runtime import Runtime
 
@@ -348,10 +374,11 @@ def run(db_url: str, budget_s: float, cost: float, symbols: list[str] | None = N
         _Prov.name = ex["exchange"]
     syms = symbols or [r["symbol"] for r in db.query("SELECT DISTINCT symbol FROM model_versions WHERE active = 1 ORDER BY symbol")]
     t0 = time.time()
-    body = evaluate(rt, syms, tfs or DEFAULT_TFS, t0, budget_s, cost)
+    tfs = tfs or PLAN_TFS[plan]
+    body = evaluate(rt, syms, tfs, t0, budget_s, cost, PLANS[plan])
     body["headline_test"] = headline(body)
     body.update({"engine_version": ENGINE_VERSION, "cost_pct_round_trip": cost, "tune_share": TUNE_SHARE,
-                 "horizons": [hname(h) for h in HORIZONS], "symbols": syms, "timeframes": tfs or DEFAULT_TFS,
+                 "plan": plan, "symbols": syms, "timeframes": tfs,
                  "settings": {"entry_rules": settings.entry_rules, "trade_filter2": settings.trade_filter2,
                               "series_gate": False, "series_conf": False, "struct_stops": False,
                               "fill_window_bars": settings.fill_window_bars,

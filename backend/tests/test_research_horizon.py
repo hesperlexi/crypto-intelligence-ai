@@ -65,3 +65,11 @@ def test_stats_block():
           {"ts": 3, "open": True}]
     s = H.block_stats(tr, lambda t: 3_600_000, 1.0)
     assert s["n"] == 2 and s["open_at_data_end"] == 1 and s["expired_share"] == 0.5 and s["hold_candles_median"] == 3.5
+
+
+def test_per_timeframe_plan():
+    p = H.PLANS["proposal"]
+    assert list(p)[0] == "current" and H.horizon_of(p["current"], "1h") == 30
+    assert H.horizon_of(p["proposal_1d60"], "15m") == 250 and H.horizon_of(p["proposal_1d60"], "1d") == 60
+    assert H.horizon_of(p["proposal_1d100"], "3d") == 30 and H.horizon_of(p["proposal_1d30"], "4h") == 100
+    assert list(H.PLANS["uniform"]) == ["h30", "h60", "h90", "no_limit"]
