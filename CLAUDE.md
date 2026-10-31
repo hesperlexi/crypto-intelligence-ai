@@ -147,12 +147,25 @@ record / weekly report / achievements / wins_today `views.py` + `pages/Results.t
 `config/membership`) · Manual `docs/manual/manual.md` → `python scripts/build_manual.py` (members only, no admin
 instructions) · Promo video `frontend/public/demo.mp4` (70 s, original soundtrack).
 
-Member menu: Home · Signals · Trade · News · Radar · Results · Alerts · Settings. Owner extras: Weekly report,
+Member menu: Home · Signals · Trade · News · Radar · Results · Community · Alerts · Settings. Owner extras: Weekly report,
 Achievements, Health, Users.
+
+## 31 Oct 2026 features (branch `features-oct31`)
+- Sign-in: Google or email + password (`lib/account.ts`, `components/AuthPanel.tsx`: sign in / create / forgot, "Check your
+  inbox" with 60 s client resend limit). Unverified email accounts never reach Firestore (rules need `email_verified`).
+  Needs the **Email/Password provider enabled in the Firebase console**. `users/{uid}.provider` = google | password.
+- Usernames: chosen once after sign-in (`UsernameScreen`), `usernames/{name}` = {uid, created_at} + `users/{uid}.username`
+  in one batch (owner: `owner/profile.username`); reserved list kept in step between `account.ts` and the rules.
+- Community `pages/Community.tsx`: `posts/{id}` {author_uid, username, text 1-500, created_at, admin?}, 20 per page; rules pace
+  posts with `post_meta/{uid}.last` (≥30 s). Trade page: stable newest-first order (`format.byNewest`), memoized rows,
+  `PositionDrawer`, pair names switch the chart; auto-trades carry `signal` (`autopaper.origin_of`). Signal log filters
+  `components/LogFilters.tsx` (URL query). Privacy page removed (text in `docs/legal/privacy-policy.md`); app-shell footer
+  has no links (`SiteFooter links={false}`).
 
 ## Testing
 `cd backend && python -m pytest -q` in CI. In this sandbox pytest may be missing (PyPI blocked); run test functions
-directly. Frontend type-check: `npx tsc --noEmit` (CI) — the sandbox has no node_modules.
+directly. Frontend type-check: `npx tsc --noEmit` (CI). UI preview without Firebase: `cd frontend && npx vite --config
+dev/vite.preview.config.ts --port 5193`, `/?preview=admin|member|pending|signedout|unverified|nousername` (mocks in `dev/mocks`, data `dev/seed.ts`).
 
 ## Ideas not done yet
 Arabic (RTL) · referral programme · smarter exits per coin · parallel training matrix · Binance daily metrics
