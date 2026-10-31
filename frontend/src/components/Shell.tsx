@@ -74,8 +74,13 @@ export function AdminOnly({ children }: { children: ReactNode }) {
 /** Keeps keyboard focus inside a sheet, closes it on Escape, and returns focus where it was. */
 export function useFocusTrap(open: boolean, onClose: () => void) {
   const ref = useRef<HTMLDivElement>(null);
+  // the latest onClose without re-running the effect: a parent that re-renders (live prices every second) used to pass
+  // a new function each time, which re-ran the effect and moved focus back to the first button - nobody could type
+  const closeRef = useRef(onClose);
+  closeRef.current = onClose;
   useEffect(() => {
     if (!open) return;
+    const onClose = () => closeRef.current();
     const prev = document.activeElement as HTMLElement | null;
     const el = ref.current;
     const items = () => Array.from(el?.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])') ?? []);
@@ -91,7 +96,7 @@ export function useFocusTrap(open: boolean, onClose: () => void) {
     };
     document.addEventListener("keydown", onKey);
     return () => { document.removeEventListener("keydown", onKey); prev?.focus?.(); };
-  }, [open, onClose]);
+  }, [open]);
   return ref;
 }
 
