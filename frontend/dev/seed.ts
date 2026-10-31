@@ -173,6 +173,38 @@ function users() {
     history: [{ months: 1, amount: 15, granted_at: NOW - 35 * D }] });
   add("u_old", { email: "early.member@example.com", name: "Early Member", status: "approved", approved_at: NOW - 120 * D });
   add("u_block", { email: "spam@example.com", name: "", status: "blocked" });
+  // more varied people so the Users page shows paging, sorting and every state
+  const paid = (m: number, amt: number, ago: number) => ({ months: m, amount: amt, free: false, granted_at: NOW - ago * D });
+  const price: Record<number, number> = { 1: 15, 3: 40, 6: 70, 12: 130 };
+  const people: [string, string, string][] = [
+    ["Ahmed Al Mansoori", "ahmed.m", "google"], ["Priya Nair", "priya_n", "password"], ["Lucas Martin", "lucasm", "google"],
+    ["Fatima Zahra", "", "google"], ["Yusuf Demir", "ydemir", "password"], ["Hannah Schmidt", "hannah_s", "google"],
+    ["Carlos Mendes", "cmendes", "google"], ["Aisha Rahman", "aisha.r", "password"], ["Kenji Watanabe", "kenji_w", "google"],
+    ["Olivia Brown", "", "password"], ["Mohammed Al Farsi", "mfarsi", "google"], ["Elena Petrova", "elena_p", "google"],
+    ["Ravi Kumar", "ravik", "password"], ["Sophie Laurent", "sophie_l", "google"], ["Noah Williams", "", "google"],
+    ["Zainab Hussein", "zainab_h", "password"], ["Marco Rossi", "mrossi", "google"], ["Layla Haddad", "layla", "google"],
+    ["Alexander Konstantinopoulos-Smith", "alex_ks", "password"], ["Tariq Aziz", "tariq_a", "google"], ["Grace Lee", "gracelee", "google"],
+  ];
+  people.forEach(([name, username, provider], i) => {
+    const id = `u_x${i}`;
+    const email = `${name.toLowerCase().split(" ")[0]}.${(name.split(" ")[1] ?? "x").toLowerCase()}@example.com`;
+    const base = { email, name, ...(username ? { username } : {}), provider, requested_at: NOW - (i * 3 + 1) * D };
+    const m = [1, 3, 6, 12][i % 4];
+    switch (i % 7) {
+      case 0: add(id, { ...base, status: "approved", expires_at: NOW + (20 + i * 4) * D, plan_months: m, approved_at: NOW - 10 * D, free: false, history: [paid(m, price[m], 10)],
+        payment: { method: i % 2 ? "mexc" : "binance", months: m, amount: price[m], currency: "USDT", txid: `B26100${i}991`, proof: null, status: "accepted", submitted_at: NOW - 10 * D } }); break;
+      case 1: add(id, { ...base, status: "approved", expires_at: NOW + (2 + i) * D, plan_months: 1, approved_at: NOW - 25 * D, free: false, history: [paid(1, 15, 25)] }); break;
+      case 2: add(id, { ...base, status: "approved", expires_at: NOW + (40 + i * 6) * D, plan_months: m, approved_at: NOW - 4 * D, free: true, history: [{ months: m, amount: 0, free: true, granted_at: NOW - 4 * D }] }); break;
+      case 3: add(id, { ...base, status: "pending", requested_at: NOW - (i + 2) * H,
+        payment: { method: i % 2 ? "mexc" : "binance", months: m, amount: price[m], currency: "USDT", txid: `MX7712${i}0`, proof: i % 2 ? null : proofImage(), status: "submitted", submitted_at: NOW - (i + 1) * H } }); break;
+      case 4: add(id, { ...base, status: "approved", expires_at: NOW - (3 + i) * D, plan_months: 1, approved_at: NOW - 40 * D, free: false, history: [paid(1, 15, 40)] }); break;
+      case 5: add(id, { ...base, status: i > 10 ? "blocked" : "pending",
+        payment: { method: "binance", months: 1, amount: 10, currency: "USDT", txid: "B000123", proof: null, status: "rejected", reason: "Payment not found in my Binance history", submitted_at: NOW - 3 * D } }); break;
+      default: add(id, { ...base, status: "approved", expires_at: NOW + (3 + (i % 4)) * D, plan_months: 1, approved_at: NOW - 27 * D, free: i % 2 === 0, history: [i % 2 === 0 ? { months: 1, amount: 0, free: true, granted_at: NOW - 27 * D } : paid(1, 15, 27)] });
+    }
+  });
+  add("u_freeold", { email: "friend.tester@example.com", name: "Friend Tester", status: "approved", expires_at: NOW - 2 * D, plan_months: 1, approved_at: NOW - 32 * D, free: true,
+    history: [{ months: 1, amount: 0, free: true, granted_at: NOW - 32 * D }] });
   return u;
 }
 
@@ -184,6 +216,11 @@ function presence() {
     "presence/u_free": { last_seen: NOW - 2 * D, country: "DE", device: "Android browser" },
     "presence/u_exp": { last_seen: NOW - 9 * D, country: "SG", device: "Desktop app" },
     "presence/u_old": { last_seen: NOW - 30 * 60_000, country: "AE", device: "Android app (Chrome)" },
+    ...Object.fromEntries(Array.from({ length: 21 }, (_, i) => i).filter((i) => i % 5 !== 4).map((i) => [`presence/u_x${i}`, {
+      last_seen: NOW - [2, 45, 300, 1500, 4000, 9000, 20000][i % 7] * 60_000,
+      country: ["AE", "IN", "FR", "MA", "TR", "DE", "BR", "PK", "JP", "US", "OM", "RU", "IN", "FR", "GB", "NG", "IT", "LB", "GR", "EG", "KR"][i],
+      device: ["iPhone app", "Android app", "Desktop browser", "Android browser", "Desktop app", "iPad browser"][i % 6],
+    }])),
     "user_state/u_member": { push_ok_at: NOW - 15 * D },
     "user_state/u_end": { push_error: { app: "web", stage: "token", code: "messaging/permission-blocked", message: "Notifications blocked in the browser", at: NOW - 2 * D } },
   };
