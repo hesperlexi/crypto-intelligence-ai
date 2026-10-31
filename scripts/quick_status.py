@@ -39,6 +39,10 @@ tr = fs.document("views/track_record").get().to_dict()
 trj = json.loads(tr["json"]) if tr and tr.get("json") else {}
 out["track_record"] = {"record_since": trj.get("record_since"), "live_signals": len((trj.get("live") or {}).get("signals") or trj.get("signals") or []),
                        "updated": (tr or {}).get("updated_at")}
+sigs = (trj.get("live") or {}).get("signals") or trj.get("signals") or []
+out["record_live"] = {"summary": (trj.get("live") or {}).get("summary") or trj.get("summary"),
+                      "by_timeframe": (trj.get("live") or {}).get("by_timeframe") or trj.get("by_timeframe"),
+                      "signals": [{k: x.get(k) for k in ("symbol", "timeframe", "side", "grade", "status", "fill_status", "return_pct", "roi_pct", "peak_r", "exit_reason", "created_at", "closed_at")} for x in sigs][:60]}
 out["counts"] = {c: sum(1 for _ in fs.collection(c).select([]).stream()) for c in ("paper", "paper_trades", "paper_futures_trades", "auto_paper_state", "jobs")}
 bots = fs.document("config/bots").get().to_dict() or {}
 out["bots"] = [{"id": b.get("id"), "reset_token": b.get("reset_token")} for b in bots.get("bots", [])]
