@@ -1,0 +1,24 @@
+checked: 2026-10-31T12:20:12Z
+== MX cryptointelai.com
+10 mx1.improvmx.com.
+20 mx2.improvmx.com.
+== TXT cryptointelai.com
+"v=spf1 +a +mx +ip4:139.162.173.118 include:spf.antispamcloud.com ~all"
+"v=spf1 include:spf.improvmx.com ~all"
+"hosting-site=crypapp-6a9b9"
+== TXT _dmarc.cryptointelai.com
+"v=DMARC1; p=none; rua=mailto:support@cryptointelai.com"
+== TXT dkimprovmx1._domainkey.cryptointelai.com
+== TXT dkimprovmx2._domainkey.cryptointelai.com
+== CNAME dkimprovmx1._domainkey.cryptointelai.com
+== CNAME dkimprovmx2._domainkey.cryptointelai.com
+== TXT firebase1._domainkey.cryptointelai.com
+== CNAME firebase1._domainkey.cryptointelai.com
+== CNAME firebase2._domainkey.cryptointelai.com
+== A cryptointelai.com
+199.36.158.100
+== CNAME www.cryptointelai.com
+crypapp-6a9b9.web.app.
+== NS cryptointelai.com
+ns4.tasjeel.ae.
+ns3.tasjeel.ae.
