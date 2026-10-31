@@ -13,7 +13,7 @@ jobs:
           {
             echo "checked: $(date -u +%FT%TZ)"
             for q in "MX $D" "TXT $D" "TXT _dmarc.$D" "TXT dkimprovmx1._domainkey.$D" "TXT dkimprovmx2._domainkey.$D" \
-                     "CNAME dkimprovmx1._domainkey.$D" "CNAME dkimprovmx2._domainkey.$D" "TXT firebase1._domainkey.$D" \
+                     "CNAME dkimprovmx1._domainkey.$D" "CNAME dkimprovmx2._domainkey.$D" "TXT firebase1._domainkey.$D" "TXT zmail._domainkey.$D" \
                      "CNAME firebase1._domainkey.$D" "CNAME firebase2._domainkey.$D" "A $D" "CNAME www.$D" "NS $D"; do
               echo "== $q"; dig +short @1.1.1.1 $q
             done
