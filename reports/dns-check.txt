@@ -1,12 +1,13 @@
-checked: 2026-10-31T12:52:33Z
+checked: 2026-11-01T06:20:50Z
 == MX cryptointelai.com
+10 mx.zoho.com.
 50 mx3.zoho.com.
 20 mx2.zoho.com.
-10 mx.zoho.com.
 == TXT cryptointelai.com
-"v=spf1 include:zohomail.com ~all"
+"v=spf1 include:zohomail.com include:_spf.firebasemail.com ~all"
 "zoho-verification=zb31211893.zmverify.zoho.com"
 "hosting-site=crypapp-6a9b9"
+"firebase=crypapp-6a9b9"
 == TXT _dmarc.cryptointelai.com
 "v=DMARC1; p=none; rua=mailto:support@cryptointelai.com"
 == TXT dkimprovmx1._domainkey.cryptointelai.com
@@ -14,10 +15,14 @@ checked: 2026-10-31T12:52:33Z
 == CNAME dkimprovmx1._domainkey.cryptointelai.com
 == CNAME dkimprovmx2._domainkey.cryptointelai.com
 == TXT firebase1._domainkey.cryptointelai.com
+mail-cryptointelai-com.dkim1._domainkey.firebasemail.com.
+"v=DKIM1; k=rsa; p=MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvBmSAxvwK8wwY3ZTVvsUUPs27Y5rg6jlu9H4ZHQH0WYG4O9KGlY7exo1kGXtXjwyOPRbYUvHhdIpOb/MBxRk60AWA1TO0PanCqWl6h8UPgbKv3EGxpbuA3oWcF8y5uwBMbuOSbLd1/Dd0aPuTAvu3XzS8tq3hUscd2fEIG5JIkMMDBZD+H+fc7VRJ9Em+QbZD" "5K475ze7g4xeYYJPLgCwvDooZyTBnSv9Zqn/xA2VSny+dyiBcgkF/IGRs4gIv4/d1DoHujDpDFJrCXMKhpDldUQladbf897U6SiCyIzdb89ESdEaTUteoZXb/m3JwbGG2Eik7X7+5v9Ztzi0Q0tJwIDAQAB"
 == TXT zmail._domainkey.cryptointelai.com
 "v=DKIM1; k=rsa; p=MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQCCDtp0OwJQeTlnsgmKScjM5YEMA/Vwn9WyAjzPH6M75og3uieKh9nzRkUPunAXykY6po6eEofb088NuNAJjSSzXiEBUr08v9TuYHRQeJStydMtO5w3YurUDLIBMROW5zFtalEnOneKk8XQpEHpYCxG59+FFegLuvR7uiEXNO1NeQIDAQAB"
 == CNAME firebase1._domainkey.cryptointelai.com
+mail-cryptointelai-com.dkim1._domainkey.firebasemail.com.
 == CNAME firebase2._domainkey.cryptointelai.com
+mail-cryptointelai-com.dkim2._domainkey.firebasemail.com.
 == A cryptointelai.com
 199.36.158.100
 == CNAME www.cryptointelai.com
