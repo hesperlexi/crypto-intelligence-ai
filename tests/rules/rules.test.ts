@@ -6,7 +6,7 @@
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { addDoc, collection, deleteDoc, doc, Firestore, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { readFileSync, writeFileSync } from "node:fs";
-import { newUserRecord, ownerProfile, paymentProof, postDoc, postId, postMeta, proofImageDoc, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
+import { newUserRecord, ownerProfile, paymentProof, paymentWithoutProof, postDoc, postId, postMeta, proofImageDoc, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
 
 const ADMIN = { uid: "owner", email: "admin@example.com" };
 const NOW = () => Date.now();
@@ -195,6 +195,41 @@ async function main() {
     await assertSucceeds(getDoc(doc(admin(), "payment_proofs", "p1")));
     await assertFails(getDoc(doc(as("m2", "m2@example.com"), "payment_proofs", "p1")));
     await assertFails(getDocs(collection(as("m2", "m2@example.com"), "payment_proofs")));
+  });
+  // admin screenshot clean-up (lib/membership.ts: deleteProof, deleteCheckedProofs, accept / reject in one batch)
+  await test("admin deletes a screenshot: payment_proofs/{uid} delete + users payment cleared in one batch", async () => {
+    const pay = { ...paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: "B123456", proof: IMG }, NOW()), status: "accepted" };
+    await seed({ "users/p1": approved("p1", "p1@example.com", { payment: pay }), "payment_proofs/p1": proofImageDoc("p1", IMG, NOW()) });
+    const db = admin();
+    const b = writeBatch(db);
+    b.delete(doc(db, "payment_proofs", "p1"));
+    b.update(doc(db, "users", "p1"), { payment: paymentWithoutProof(pay, NOW()) });
+    await assertSucceeds(b.commit());
+  });
+  await test("admin clears a legacy inline screenshot (payment.proof -> null, has_proof false)", async () => {
+    const pay = { ...paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: null, proof: null }, NOW()), proof: IMG, status: "rejected" };
+    await seed({ "users/p1": pending("p1", "p1@example.com", { payment: pay }) });
+    await assertSucceeds(updateDoc(doc(admin(), "users", "p1"), { payment: paymentWithoutProof(pay, NOW()) }));
+  });
+  await test("admin accepts a payment and deletes its screenshot in the same batch", async () => {
+    const pay = paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: null, proof: IMG }, NOW());
+    await seed({ "users/p1": pending("p1", "p1@example.com", { payment: pay }), "payment_proofs/p1": proofImageDoc("p1", IMG, NOW()) });
+    const db = admin();
+    const b = writeBatch(db);
+    b.update(doc(db, "users", "p1"), { status: "approved", expires_at: NOW() + 30 * DAY, payment: { ...paymentWithoutProof(pay, NOW()), status: "accepted", decided_at: NOW() } });
+    b.delete(doc(db, "payment_proofs", "p1"));
+    await assertSucceeds(b.commit());
+  });
+  await test("members cannot delete screenshots (their own or anyone else's)", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com"), "users/m2": approved("m2", "m2@example.com"),
+      "payment_proofs/p1": proofImageDoc("p1", IMG, NOW()) });
+    await assertFails(deleteDoc(doc(as("p1", "p1@example.com"), "payment_proofs", "p1")));
+    await assertFails(deleteDoc(doc(as("m2", "m2@example.com"), "payment_proofs", "p1")));
+  });
+  await test("a member cannot mark their own decided payment's screenshot as deleted (only 'submitted' updates)", async () => {
+    const pay = { ...paymentProof({ method: "binance", months: 1, amount: 15, currency: "USDT", txid: "B123456", proof: null }, NOW()), status: "accepted" };
+    await seed({ "users/p1": approved("p1", "p1@example.com", { payment: pay }) });
+    await assertFails(updateDoc(doc(as("p1", "p1@example.com"), "users", "p1"), { payment: paymentWithoutProof(pay, NOW()) }));
   });
   await test("admin badge queries (status == pending, payment.status == submitted) are allowed for the admin only", async () => {
     await seed({ "users/p1": pending("p1", "p1@example.com"), "users/m1": approved("m1", "m1@example.com") });

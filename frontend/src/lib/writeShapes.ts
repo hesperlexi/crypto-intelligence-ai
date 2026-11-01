@@ -30,6 +30,8 @@ export const paymentProof = (p: { method: string; months: number; amount: number
   ({ method: p.method, months: p.months, amount: p.amount, currency: p.currency, txid: p.txid, proof: null, has_proof: !!p.proof, status: "submitted", submitted_at: now });
 /** payment_proofs/{uid}: the payment screenshot (an image data URL), written together with paymentProof. */
 export const proofImageDoc = (uid: string, proof: string, now: number) => ({ uid, proof, submitted_at: now });
+/** Admin: the payment with its screenshot removed (legacy inline image cleared; has_proof false; when it was removed). */
+export const paymentWithoutProof = (payment: any, now: number) => ({ ...payment, proof: null, has_proof: false, proof_deleted_at: now });
 
 /** A payment screenshot the app may show: only an image data URL (PNG, JPEG or WebP). Same pattern as the rules. */
 export const PROOF_IMAGE_RE = /^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/;

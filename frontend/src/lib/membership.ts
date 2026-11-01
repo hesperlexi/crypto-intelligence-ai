@@ -2,7 +2,7 @@ import { BRAND } from "./brand";
 // Paid memberships: a member pays with Binance Pay, uploads the proof, and the owner approves it for a number
 // of months. Prices live in config/membership (editable on the Users page); these are the defaults.
 import { arrayUnion, doc, getDoc, onSnapshot, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { isProofImage, paymentProof, proofImageDoc } from "./writeShapes";
+import { isProofImage, paymentProof, paymentWithoutProof, proofImageDoc } from "./writeShapes";
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { getSession } from "./session";
@@ -111,12 +111,17 @@ export async function grantMembership(uid: string, u: any, months: number, price
   const p = u?.payment;
   const entry = { months, amount: free ? 0 : price, free, txid: free ? null : p?.txid ?? null, paid_submitted_at: p?.submitted_at ?? null, granted_at: now,
     granted_by: getSession()?.email ?? null, from: base, to: expires_at };
-  await updateDoc(doc(db, "users", uid), {
+  // a decided payment no longer needs its screenshot (free plan storage): it is deleted in the same batch
+  const decided = !!p && p.status === "submitted" && !free;
+  const b = writeBatch(db);
+  b.update(doc(db, "users", uid), {
     status: "approved", expires_at, plan_months: months, approved_at: u?.approved_at ?? now, approved_by: getSession()?.email ?? null,
     free,
-    ...(p && p.status === "submitted" && !free ? { payment: { ...p, status: "accepted", decided_at: now } } : {}),
+    ...(decided ? { payment: { ...(hasScreenshot(p) ? paymentWithoutProof(p, now) : p), status: "accepted", decided_at: now } } : {}),
     history: arrayUnion(entry),
   });
+  if (decided && p.has_proof) b.delete(doc(db, "payment_proofs", uid));
+  await b.commit();
   return expires_at;
 }
 
@@ -128,7 +133,43 @@ export async function markFree(uid: string, u: any) {
 }
 
 export async function rejectPayment(uid: string, u: any, reason: string) {
-  await updateDoc(doc(db, "users", uid), { payment: { ...u.payment, status: "rejected", reason: reason || null, decided_at: Date.now() } });
+  const now = Date.now();
+  const p = u.payment;
+  const b = writeBatch(db);
+  b.update(doc(db, "users", uid), { payment: { ...(hasScreenshot(p) ? paymentWithoutProof(p, now) : p), status: "rejected", reason: reason || null, decided_at: now } });
+  if (p?.has_proof) b.delete(doc(db, "payment_proofs", uid));
+  await b.commit();
+}
+
+/** Whether a payment still has a screenshot: inline (older records) or in payment_proofs/{uid}. */
+export const hasScreenshot = (p: any) => !!p && (p.proof != null || !!p.has_proof);
+
+/** Admin: delete one person's payment screenshot (payment_proofs/{uid} and an older inline image). The payment
+ *  details (amount, transaction ID, status) stay. */
+export async function deleteProof(uid: string, u: any) {
+  const p = u?.payment;
+  const b = writeBatch(db);
+  b.delete(doc(db, "payment_proofs", uid));
+  if (p) b.update(doc(db, "users", uid), { payment: paymentWithoutProof(p, Date.now()) });
+  await b.commit();
+}
+
+/** Screenshots that may be deleted in bulk: payments already accepted or rejected (never one still to check). */
+export const deletableProof = (u: any) => hasScreenshot(u?.payment) && (u.payment.status === "accepted" || u.payment.status === "rejected");
+
+/** Admin: delete the screenshots of every decided payment in `users`. Returns how many were deleted. */
+export async function deleteCheckedProofs(users: any[]): Promise<number> {
+  const todo = users.filter(deletableProof);
+  for (let i = 0; i < todo.length; i += 200) {          // 2 writes each, a batch holds 500
+    const b = writeBatch(db);
+    const now = Date.now();
+    for (const u of todo.slice(i, i + 200)) {
+      b.delete(doc(db, "payment_proofs", u.id));
+      b.update(doc(db, "users", u.id), { payment: paymentWithoutProof(u.payment, now) });
+    }
+    await b.commit();
+  }
+  return todo.length;
 }
 
 /** mailto: link to the app owner, with the person's account and the page they were on. */

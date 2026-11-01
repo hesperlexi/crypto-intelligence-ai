@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, updateDoc, writeBatch } from "firebase/firestore";
 import { countryName, flagUrl, ONLINE_MS } from "../lib/presence";
 import { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -6,7 +6,7 @@ import { Badge, Card, Empty, ErrorBox, Note } from "../components/ui";
 import { useFocusTrap } from "../components/Shell";
 import { db } from "../lib/firebase";
 import { fmtTime } from "../lib/format";
-import { daysLeft, fmtDate, grantMembership, markFree, MembershipConfig, planLabel, rejectPayment, saveMembershipConfig, useMembershipConfig } from "../lib/membership";
+import { daysLeft, deletableProof, deleteCheckedProofs, deleteProof, fmtDate, grantMembership, markFree, MembershipConfig, planLabel, rejectPayment, saveMembershipConfig, useMembershipConfig } from "../lib/membership";
 import { roleOf, useIsAdmin } from "../lib/session";
 import { Limits, saveLimits, useLimits } from "../lib/limits";
 import { isProofImage } from "../lib/writeShapes";
@@ -68,6 +68,7 @@ export default function Users() {
   const [q, setQ] = useState("");
   const [limit, setLimit] = useState(PAGE);
   const [proofOf, setProofOf] = useState<string | null>(null);
+  const [ask, setAsk] = useState<AskState | null>(null);
   useEffect(() => (admin ? onSnapshot(collection(db, "users"), (q) => setRows(q.docs.map((d) => ({ id: d.id, ...d.data() }))), (e) => setErr(e.message)) : undefined), [admin]);
   const [states, setStates] = useState<Record<string, any>>({});
   useEffect(() => (admin ? onSnapshot(collection(db, "user_state"), (q) => setStates(Object.fromEntries(q.docs.map((d) => [d.id, d.data()]))), () => {}) : undefined), [admin]);
@@ -106,6 +107,13 @@ export default function Users() {
   const income = all.flatMap((u) => u.history ?? []).reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0);
   const proofUser = proofOf ? all.find((u) => u.id === proofOf) : null;
   const shown = list.slice(0, limit);
+  const checkedProofs = all.filter(deletableProof).length;
+  const bulkDelete = () => setAsk({
+    title: `Delete ${checkedProofs} checked screenshot${checkedProofs === 1 ? "" : "s"}?`,
+    body: "Deletes the payment screenshots of every payment you already accepted or rejected. Payments still to check are never touched. The payment details (amount, order ID, status, history) stay. This cannot be undone.",
+    confirm: "Delete screenshots",
+    run: () => act(() => deleteCheckedProofs(all), (n: number) => `${n} screenshot${n === 1 ? "" : "s"} deleted.`),
+  });
   const filterName = FILTERS.find(([k]) => k === filter)?.[1] ?? "";
 
   return (
@@ -214,8 +222,14 @@ export default function Users() {
       )}
 
       <div className="grid items-start gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
+      <section className="panel flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Payment screenshots">
+        <div className="text-sm"><span className="font-semibold">Payment screenshots</span>
+          <span className="block text-xs text-mute">A screenshot is deleted when you accept or reject its payment. <span className="num">{checkedProofs}</span> older checked screenshot{checkedProofs === 1 ? "" : "s"} still stored.</span></div>
+        <button type="button" className="btn btn-sm btn-danger shrink-0" disabled={!checkedProofs} onClick={bulkDelete}>Delete all checked screenshots</button>
+      </section>
       <Note>Members pay with your Binance QR or by MEXC transfer to your UID, then upload a screenshot and/or the order ID. Check the payment arrived (Binance → Pay → History, or MEXC → Wallets → History) before approving. Approving adds the months after the current end date, so early renewals never lose days. When a membership ends, that person is locked out automatically until they renew; their paper accounts and alerts are kept. People approved before memberships existed have no end date until you give them a plan.</Note>
-      {proofUser && <ProofViewer u={proofUser} cfg={cfg} act={act} onClose={() => setProofOf(null)} />}
+      {proofUser && <ProofViewer u={proofUser} cfg={cfg} act={act} onClose={() => setProofOf(null)} onAsk={setAsk} />}
+      {ask && <ConfirmSheet {...ask} onClose={() => setAsk(null)} />}
     </div>
   );
 }
@@ -365,7 +379,7 @@ function useUserActions(u: any, cfg: MembershipConfig, act: Act) {
   };
   const block = () => { if (window.confirm(`Block ${u.email}? They lose access straight away.`)) act(() => updateDoc(doc(db, "users", u.id), { status: "blocked", changed_at: Date.now() }), `${u.email} blocked.`); };
   const unblock = () => act(() => updateDoc(doc(db, "users", u.id), { status: "pending", changed_at: Date.now() }), `${u.email} unblocked (waiting).`);
-  const remove = () => { if (window.confirm(`Delete ${u.email}? They can request access again later.`)) act(() => deleteDoc(doc(db, "users", u.id)), `${u.email} deleted.`); };
+  const remove = () => { if (window.confirm(`Delete ${u.email}? They can request access again later.`)) act(async () => { const b = writeBatch(db); b.delete(doc(db, "users", u.id)); b.delete(doc(db, "payment_proofs", u.id)); await b.commit(); }, `${u.email} deleted.`); };
   const picker = (cls = "") => (
     <select className={`input input-sm ${cls || "w-auto"}`} value={months} onChange={(e) => setMonths(Number(e.target.value))} aria-label={`Plan length for ${u.email}`}>
       {cfg.plans.map((x) => <option key={x.months} value={x.months}>{freeView ? x.label : `${x.label} · $${x.price}`}</option>)}
@@ -647,7 +661,7 @@ const Dt = ({ children }: { children: ReactNode }) => <dt className="text-mute">
 const Dd = ({ children, className = "" }: { children: ReactNode; className?: string }) => <dd className={`min-w-0 truncate text-right ${className}`}>{children}</dd>;
 
 /** Full-size payment proof with its details and the same accept / extend / reject actions. */
-function ProofViewer({ u, cfg, act, onClose }: { u: any; cfg: MembershipConfig; act: Act; onClose: () => void }) {
+function ProofViewer({ u, cfg, act, onClose, onAsk }: { u: any; cfg: MembershipConfig; act: Act; onClose: () => void; onAsk: (a: AskState) => void }) {
   const a = useUserActions(u, cfg, act);
   const p = a.p ?? {};
   const ref = useFocusTrap(true, onClose);
@@ -666,6 +680,7 @@ function ProofViewer({ u, cfg, act, onClose }: { u: any; cfg: MembershipConfig; 
               : img.state === "loading" ? <p className="text-sm text-mute">Loading the screenshot…</p>
               : img.state === "invalid" ? <p className="text-sm"><InvalidImage /> <span className="text-mute">· the uploaded file is not a PNG, JPEG or WebP image, so it is not shown. Check the order ID instead.</span></p>
               : img.state === "error" ? <p className="text-sm text-bear">Could not load the screenshot. Close and open again.</p>
+              : p.proof_deleted_at ? <p className="text-sm text-mute">Screenshot deleted {fmtTime(p.proof_deleted_at)}. The payment details are kept.</p>
               : <p className="text-sm text-mute">No screenshot was uploaded. Check the order ID in your exchange history.</p>}
           </div>
           <div className="space-y-4">
@@ -687,7 +702,18 @@ function ProofViewer({ u, cfg, act, onClose }: { u: any; cfg: MembershipConfig; 
                 {p.status === "submitted" ? <button type="button" className="btn btn-sm btn-danger" onClick={a.reject}>Reject proof…</button> : <span />}
               </div>
               {a.mismatch && <p className="text-xs text-warn">The proof is for {p.amount} {p.currency}; the current price of this plan is ${a.price}.</p>}
+              {p.status === "submitted" && (p.proof != null || p.has_proof) && <p className="text-[11px] text-mute">The screenshot is deleted after you accept or reject (the payment details stay).</p>}
             </div>
+            {(p.proof != null || p.has_proof) && (
+              <div className="border-t border-glass/[0.08] pt-3">
+                <button type="button" className="btn btn-sm btn-danger w-full" onClick={() => onAsk({
+                  title: "Delete this screenshot?",
+                  body: `Deletes the payment screenshot from ${u.email}. ${p.status === "submitted" ? "This payment is still to check: check the order ID in your exchange history before deciding. " : ""}The payment details (amount, order ID, status) stay. This cannot be undone.`,
+                  confirm: "Delete screenshot",
+                  run: () => act(() => deleteProof(u.id, u), `Screenshot from ${u.email} deleted.`),
+                })}>Delete screenshot</button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -755,5 +781,26 @@ function LimitsCard({ act, total }: { act: Act; total: number }) {
         <button type="button" className="btn btn-primary" disabled={!draft} onClick={() => act(async () => { await saveLimits(l); setDraft(null); }, "Limits saved. The engine uses them on its next run.")}>Save limits</button>
       </div>
     </Card>
+  );
+}
+
+type AskState = { title: string; body: string; confirm: string; run: () => void };
+
+/** In-app confirm dialog for destructive admin actions (above the proof viewer). */
+function ConfirmSheet({ title, body, confirm, run, onClose }: AskState & { onClose: () => void }) {
+  const ref = useFocusTrap(true, onClose);
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={onClose}>
+      <div ref={ref} role="alertdialog" aria-modal="true" aria-label={title} onClick={(e) => e.stopPropagation()}
+        className="panel popover animate-in w-full max-w-md rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
+        <h2 className="text-base font-semibold">{title}</h2>
+        <p className="mt-2 text-sm text-mute">{body}</p>
+        <div className="mt-4 flex justify-end gap-2">
+          <button type="button" className="btn btn-sm" onClick={onClose}>Cancel</button>
+          <button type="button" className="btn btn-sm btn-danger" onClick={() => { onClose(); run(); }}>{confirm}</button>
+        </div>
+      </div>
+    </div>,
+    document.body,
   );
 }
