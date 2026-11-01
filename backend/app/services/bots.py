@@ -68,6 +68,19 @@ DEMO_15M = {"id": "futures-demo-a-15m", "name": "Futures demo bot 15M · grade A
             "tp1_only": True, "leverage": 20.0, **_FUT}
 
 
+# v2.10 (owner decision 1 Nov 2026): 1d and 3d run in demo bots only, like 15m - never public, never in the record.
+# Standard exits (50/25/25, break-even after TP1), grades A+B to collect enough trades, 30 candles.
+def _demo_bot(tf: str) -> dict[str, Any]:
+    return {"id": f"futures-demo-ab-{tf}", "name": f"Futures demo bot {tf.upper()} · grades A+B", "enabled": True,
+            "mode": "decision", "timeframe": tf, "symbols": "all", "starting_balance": 10_000.0,
+            "risk_per_trade_pct": 1.0, "max_position_pct": 20.0, "max_open_positions": 6, "allow_short": True,
+            "pending_bars": 6, "max_hold_bars": 30, "reset_token": "v210", "grades": "AB", "demo_only": True,
+            "leverage": 20.0, **_FUT}
+
+
+DEMO_BOTS = [DEMO_15M, _demo_bot("1d"), _demo_bot("3d")]
+
+
 def _sig_bot(tf: str, futures: bool) -> dict[str, Any]:
     base = {"id": f"{'futures-' if futures else ''}signal-ab-{tf}",
             "name": f"{'Futures' if futures else 'Spot'} signal bot {tf.upper()} · grades A+B", "enabled": True,

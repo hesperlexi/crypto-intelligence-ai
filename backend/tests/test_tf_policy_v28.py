@@ -6,7 +6,7 @@ from app.services.bots import DEMO_15M, demo_view
 
 
 def test_defaults():
-    assert analysis.PAUSED_TFS == ("1d", "3d") and analysis.A_ONLY_TFS == ("1h",) and analysis.DEMO_ONLY_TFS == ("15m",)
+    assert analysis.PAUSED_TFS == () and analysis.A_ONLY_TFS == ("1h",) and analysis.DEMO_ONLY_TFS == ("15m", "1d", "3d")
     assert (T.horizon_for("1h"), T.horizon_for("4h"), T.horizon_for("12h"), T.horizon_for("15m")) == (200, 100, 30, 250)
 
 
@@ -44,7 +44,7 @@ def test_migration_runs_once(tmp_path):
     sink.set("config/bots", {"bots": bots, "defaults_added": [b["id"] for b in bots] + [d["id"] for d in worker.DEFAULT_BOTS]})
     notes = worker.sync_config(rt, sink)
     out = {b["id"]: b for b in sink.get("config/bots")["bots"]}
-    assert set(out) == {"futures-signal-ab-1h", "futures-signal-ab-4h", DEMO_15M["id"]}
+    assert set(out) == {"futures-signal-ab-1h", "futures-signal-ab-4h", DEMO_15M["id"], "futures-demo-ab-1d", "futures-demo-ab-3d"}
     assert out["futures-signal-ab-1h"]["grades"] == "A" and out["futures-signal-ab-1h"]["max_hold_bars"] == 200
     assert out["futures-signal-ab-1h"]["name"].endswith("grade A")
     assert out["futures-signal-ab-4h"]["grades"] == "AB" and out["futures-signal-ab-4h"]["max_hold_bars"] == 100

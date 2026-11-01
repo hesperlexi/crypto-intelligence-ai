@@ -40,10 +40,10 @@ def _tfs(name: str, default: str) -> tuple[str, ...]:
     return tuple(t.strip() for t in os.environ.get(name, default).split(",") if t.strip())
 
 
-PAUSED_TFS = _tfs("PAUSED_TFS", "1d,3d")
+PAUSED_TFS = _tfs("PAUSED_TFS", "")      # v2.10 (1 Nov 2026): 1d / 3d moved to demo-only
 A_ONLY_TFS = _tfs("A_ONLY_TFS", "1h")
 # demo-only timeframes: the public decision is NO TRADE ("DEMO BOTS ONLY"); the call the demo bots may take is in `demo`
-DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "15m")
+DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "15m,1d,3d")
 
 # fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
 PRIVATE_FIELDS = ("demo",)

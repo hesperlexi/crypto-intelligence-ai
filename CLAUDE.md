@@ -196,6 +196,11 @@ public page `/verify` (Trust kind "verify"). No extra Firestore documents.
 - Website job wait (`api.queueJob`) gives up after 15 min (`JOB_TIMEOUT_MS`) with a clear message. `*.mp4` cached a year
   (immutable; the app links them with `?v=<hash>`). `scripts/build_manual.py` default version = `frontend/package.json`.
 
+## v2.10 demo-only 1d / 3d (owner decision 1 Nov 2026)
+`analysis.PAUSED_TFS` "" and `DEMO_ONLY_TFS` "15m,1d,3d": 1d / 3d calls are never public or recorded; they go to demo bots
+`futures-demo-ab-1d` / `-3d` (`bots.DEMO_BOTS`, grades A+B, standard 50/25/25 exits, 20x safe leverage, 30 candles), added
+once (flag `demo_1d3d_v210`). Calls published before stay in the record until they close. Signals tabs say "demo only".
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

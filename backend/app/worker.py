@@ -186,10 +186,9 @@ def policy_default_bots() -> list[dict[str, Any]]:
     """The default bot line-up under the current timeframe policy: no bots on paused / demo-only timeframes (except
     the 15m demo bot), 1h grade A + 200 candles, 4h 100 candles (used when config/bots is missing)."""
     from .services.analysis import DEMO_ONLY_TFS
-    from .services.bots import DEMO_15M
+    from .services.bots import DEMO_BOTS
     out = [_policy_bot(dict(b)) for b in DEFAULT_BOTS if not _off_bot(b)]
-    if "15m" in DEMO_ONLY_TFS and not _off_bot(DEMO_15M):
-        out.append(dict(DEMO_15M))
+    out += [dict(b) for b in DEMO_BOTS if b["timeframe"] in DEMO_ONLY_TFS and not _off_bot(b)]
     return out
 
 
@@ -449,6 +448,19 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             sink.set("config/bots", {**doc, "bots": out, "defaults_added": seen, "updated_at": now_ms()})
             notes["tf_policy_v28"] = {"removed": len(doc["bots"]) - (len(out) - len(added)), "added": added}
         rt.db.set_setting("tf_policy_v28", True)
+    # v2.10 (owner decision, 1 Nov 2026): 1d / 3d demo-only -> their demo bots are added once (removing one later sticks)
+    if not rt.db.get_setting("demo_1d3d_v210", False):
+        from .services.analysis import DEMO_ONLY_TFS
+        from .services.bots import DEMO_BOTS
+        doc = sink.get("config/bots") or {}
+        if isinstance(doc.get("bots"), list):
+            have = {b.get("id") for b in doc["bots"]}
+            add = [dict(b) for b in DEMO_BOTS if b["timeframe"] in ("1d", "3d") and b["timeframe"] in DEMO_ONLY_TFS
+                   and b["id"] not in have]
+            seen = sorted(set(doc.get("defaults_added") or []) | {b["id"] for b in DEMO_BOTS})
+            sink.set("config/bots", {**doc, "bots": doc["bots"] + add, "defaults_added": seen, "updated_at": now_ms()})
+            notes["demo_1d3d_v210"] = [b["id"] for b in add]
+        rt.db.set_setting("demo_1d3d_v210", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())
@@ -459,10 +471,10 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     doc = sink.get("config/bots")
     if doc is None or not isinstance(doc.get("bots"), list):
         # no line-up stored (e.g. the document was deleted): the defaults under the current timeframe policy
-        from .services.bots import DEMO_15M
+        from .services.bots import DEMO_BOTS
         bots_cfg = policy_default_bots()
         sink.set("config/bots", {"bots": bots_cfg, "updated_at": now_ms(),
-                                 "defaults_added": sorted({b["id"] for b in DEFAULT_BOTS} | {DEMO_15M["id"]})})
+                                 "defaults_added": sorted({b["id"] for b in DEFAULT_BOTS} | {b["id"] for b in DEMO_BOTS})})
     else:
         bots_cfg = doc["bots"]
         # one-time additions: default bots introduced in a later version are added once (deleting them later sticks)

@@ -198,11 +198,11 @@ def test_testing_mode_v24_keeps_ten_coins_futures_bots_and_restarts_practice(tmp
     sink.set("paper_futures_trades/t1", {"uid": "u1"})
     notes = worker.sync_config(rt, sink)
     assert sorted(rt.symbols()) == sorted(worker.TEST_COINS)
-    assert all(b["market"] == "futures" for b in sink.get("config/bots")["bots"]) and len(sink.get("config/bots")["bots"]) == 4      # v2.6: the 15m bot is removed (15m paused)
+    assert all(b["market"] == "futures" for b in sink.get("config/bots")["bots"]) and len(sink.get("config/bots")["bots"]) == 6      # v2.10: 1h 4h 12h + demo 15m, 1d, 3d
     assert sink.get("paper/u1_futures") is None and sink.get("paper_futures_trades/t1") is None
     assert notes["testing_v24"]["coins"] == worker.TEST_COINS
     assert "testing_v24" not in worker.sync_config(rt, sink)       # done once
-    assert len(sink.get("config/bots")["bots"]) == 4                # spot bots (and the paused 15m bot) are not added back
+    assert len(sink.get("config/bots")["bots"]) == 6                # spot bots (and the paused 15m bot) are not added back
 
 
 def test_testing_gold_swaps_xaut_for_paxg_once(tmp_path):
@@ -246,4 +246,4 @@ def test_paused_15m_removes_its_bots_once(tmp_path):
                              "defaults_added": ["a", "b"] + [d["id"] for d in worker.DEFAULT_BOTS]})
     notes = worker.sync_config(rt, sink)
     assert notes.get("pause_15m_bots_removed") == 1
-    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["b", "futures-demo-a-15m"]      # v2.8: the 15m demo-only bot
+    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["b", "futures-demo-a-15m", "futures-demo-ab-1d", "futures-demo-ab-3d"]      # v2.8: the 15m demo-only bot
