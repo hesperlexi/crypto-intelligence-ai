@@ -49,7 +49,12 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   const tested: any[] = d.tested ?? [];
   const edge = tested.filter((t) => t.edge);
   const avgTested = edge.length ? edge.reduce((a, t) => a + (t.selective_hit_rate ?? 0), 0) / edge.length : null;
-  const sigs: any[] = d.live?.signals ?? [];
+  // open calls first (newest first), then closed ones (most recently closed first)
+  const sigs: any[] = [...(d.live?.signals ?? [])].sort((a, b) => {
+    const ao = a.status === "OPEN" ? 0 : 1, bo = b.status === "OPEN" ? 0 : 1;
+    if (ao !== bo) return ao - bo;
+    return ao === 0 ? (b.created_at ?? 0) - (a.created_at ?? 0) : (b.closed_at ?? b.created_at ?? 0) - (a.closed_at ?? a.created_at ?? 0);
+  });
   const keyOf = (x: any) => `${x.symbol}|${x.timeframe}|${x.created_at}`;
   const shown = detail ? sigs.find((x) => keyOf(x) === detail) : null;
   const rowProps = (x: any) => ({
