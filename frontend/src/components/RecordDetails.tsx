@@ -13,6 +13,7 @@ import { AiNote, fillLabel, LevChip, livePnl, managedLabel, Pill, RoiFigure } fr
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
 import { SealPill } from "./SealProof";
 import { useFocusTrap } from "./Shell";
+import { closeEstimate } from "./SignalAdjust";
 
 const TF_MS: Record<string, number> = { "15m": 9e5, "1h": 36e5, "4h": 144e5, "12h": 432e5, "1d": 864e5, "3d": 2592e5, "1w": 6048e5 };
 export const STATUS_LABEL: Record<string, [string, string]> = {
@@ -52,7 +53,9 @@ const tp1Now = (x: any): number => {
 
 /** Live status numbers of an open, filled call at price `px`. */
 export function liveOf(x: any, px: number | undefined) {
-  const move = livePnl(x.side, x.entry, px);
+  // after target 1 / 2 the closed parts are banked at their targets: the live result blends them with the rest at `px`
+  // (50/25/25 as the record; runner calls close as one piece)
+  const move = (x.tp1_hit || x.tp2_hit) && !x.runner?.on ? closeEstimate(x, px) : livePnl(x.side, x.entry, px);
   const lev = isNum(x.leverage) && x.leverage >= 1 ? x.leverage : null;
   const st = stopNow(x);
   const s = x.side === "SHORT" ? -1 : 1;
