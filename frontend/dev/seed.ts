@@ -103,7 +103,7 @@ function trackRecord() {
   ].map(([symbol, timeframe, side, grade, status, ret], i) => {
     const px = PRICES[symbol as string].p, s = side === "LONG" ? 1 : -1;
     const leverage = Math.min(10, Math.floor(1 / (1.5 * 0.018 + 0.005)));   // engine/futures.signal_leverage for a 1.8% stop (cap 10x)
-    return { symbol, timeframe, side, grade, status, return_pct: ret, leverage, roi_pct: ret == null ? null : (ret as number) * leverage, created_at: NOW - (i + 1) * 7 * H, closed_at: status === "OPEN" ? null : NOW - (i + 1) * 5 * H,
+    return { id: `seed-${i}`, symbol, timeframe, side, grade, status, return_pct: ret, leverage, roi_pct: ret == null ? null : (ret as number) * leverage, created_at: NOW - (i + 1) * 7 * H, closed_at: status === "OPEN" ? null : NOW - (i + 1) * 5 * H,
       entry: px, stop: px * (1 - s * 0.018), tp1: px * (1 + s * 0.018), tp2: px * (1 + s * 0.029), tp3: px * (1 + s * 0.043),
       fill_status: "FILLED", peak_pct: status === "STOPPED" ? 0.4 : null, managed: 0 } as any;
   });
@@ -127,7 +127,7 @@ function trackRecord() {
   const mk = (symbol: string, timeframe: string, side: "LONG" | "SHORT", grade: string, ageH: number, entryOff: number, extra: any = {}) => {
     const px = PRICES[symbol].p, s = side === "LONG" ? 1 : -1, entry = px * (1 - s * entryOff);
     const hb = HB[timeframe] ?? 30;
-    return { symbol, timeframe, side, grade, status: "OPEN", return_pct: null, roi_pct: null, leverage: lev, created_at: NOW - ageH * H, closed_at: null,
+    return { id: `seed-${symbol}-${timeframe}`, symbol, timeframe, side, grade, status: "OPEN", return_pct: null, roi_pct: null, leverage: lev, created_at: NOW - ageH * H, closed_at: null,
       entry, stop: entry * (1 - s * 0.018), tp1: entry * (1 + s * 0.018), tp2: entry * (1 + s * 0.029), tp3: entry * (1 + s * 0.043),
       fill_status: "FILLED", filled_at: NOW - ageH * H + 15 * 60_000, peak_pct: null, managed: 0, tp1_hit: 0, tp2_hit: 0, tp3_hit: 0, stop_hit: 0,
       horizon_bars: hb, expires_at: NOW - ageH * H + hb * tfMs[timeframe],

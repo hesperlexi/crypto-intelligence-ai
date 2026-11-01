@@ -25,6 +25,7 @@ import { fmtDate, useMyRecord } from "./lib/membership";
 import { startPresence } from "./lib/presence";
 import { answeredUsername, needsVerification, shouldAskUsername, useMyUsername } from "./lib/account";
 import { UsernameScreen, VerifyEmailScreen } from "./components/AuthPanel";
+import { dismiss as dismissNotice, useNotices } from "./lib/notice";
 
 // pages load on first visit (smaller first download); the busiest ones are fetched in the background after start.
 // After an update an old page may ask for a file that no longer exists: reload once to get the new version.
@@ -138,9 +139,16 @@ function StatusPill({ user }: { user: User }) {
 
 function Toasts() {
   const { alerts, dismissAlert } = useLive();
-  if (!alerts.length) return null;
+  const { notices } = useNotices();
+  if (!alerts.length && !notices.length) return null;
   return (
     <div className="fixed bottom-20 right-4 z-50 flex md:bottom-4 w-80 max-w-[calc(100vw-2rem)] flex-col gap-2" aria-live="polite">
+      {notices.map((n) => (
+        <div key={`n${n.id}`} role="status" className={`panel popover sheet-in flex items-start justify-between gap-3 p-3 text-sm ${n.tone === "ok" ? "border-bull/40 text-bull" : n.tone === "bad" ? "border-bear/40 text-bear" : ""}`}>
+          <span>{n.text}</span>
+          <button className="text-mute hover:text-text" onClick={() => dismissNotice(n.id)} aria-label="Dismiss">✕</button>
+        </div>
+      ))}
       {alerts.map((a) => (
         <div key={a.id} className="panel popover sheet-in flex items-start justify-between gap-3 p-3 text-sm">
           <span>{a.message}</span>

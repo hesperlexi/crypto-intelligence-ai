@@ -8,6 +8,7 @@ import { base, fmtPrice, isNum, pricePrecision } from "../lib/format";
 import { useLive } from "../lib/live";
 import { useIsAdmin } from "../lib/session";
 import { Pill } from "./SignalExtras";
+import { track, useNotices } from "../lib/notice";
 
 export type Adjustment = { at: number; field: "stop" | "tp1" | "close"; old: number; new: number; note: string };
 /** The plan with the admin's levels for the fields that were adjusted on the same-side open call (else the plan as is). */
@@ -88,7 +89,10 @@ export function AdjustButton({ call, symbol, timeframe }: { call: any; symbol: s
   const admin = useIsAdmin();
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  const { pending } = useNotices();
   if (!admin || !call || call.status !== "OPEN" || !call.id) return null;
+  const busy = pending.get(call.id);
+  if (busy) return <Pill tone="warn" title="Saved; the engine applies it on its next run">{busy === "close" ? "Closing…" : "Updating…"}</Pill>;
   const canClose = call.fill_status !== "PENDING" && !(call.adjustments ?? []).some((a: Adjustment) => a.field === "close");
   return (
     <>
@@ -129,19 +133,19 @@ export function CloseModal({ call, symbol, timeframe, onClose }: { call: any; sy
   const sign = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
   const send = async () => {
     setStep("sending");
-    setMsg("Queued: the engine closes it on its next run (within about 5 minutes), at its price at that moment.");
+    setMsg("Saving…");
     try {
       const j = await queueJob("adjust_signal", { signal_id: call.id, action: "close", note: n });
-      const r: any = await j.done;
+      track(call.id, "close", j.done, (r: any) => `${base(symbol)} ${tf}: ${r?.message ?? "closed."}${isNum(r?.push?.sent) ? ` Sent to ${r.push.sent} device${r.push.sent === 1 ? "" : "s"}.` : ""}`);
       setStep("done");
-      setMsg(`${r?.message ?? "Closed."}${isNum(r?.push?.sent) ? ` Notification sent to ${r.push.sent} device${r.push.sent === 1 ? "" : "s"}.` : ""}`);
+      setMsg("Saved. The engine closes it on its next run (within about 5 minutes) at its price then. You can close this and keep working; you'll get a notice with the result.");
     } catch (e: any) {
       setStep("failed");
-      setMsg(e?.message ?? "The close was refused.");
+      setMsg(e?.message ?? "The close could not be saved.");
     }
   };
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => step !== "sending" && onClose()} role="dialog" aria-modal="true" aria-label="Close signal">
+    <div className="fixed inset-0 z-[75] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => step !== "sending" && onClose()} role="dialog" aria-modal="true" aria-label="Close signal">
       <div className="panel max-h-[92vh] w-full max-w-md overflow-y-auto rounded-b-none sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
           <h2 className="label">Close {base(symbol)} {tf} {call.side === "SHORT" ? "short" : "long"} now</h2>
@@ -216,21 +220,22 @@ export function AdjustModal({ call, symbol, timeframe, onClose }: { call: any; s
   const tf = String(timeframe ?? "").toUpperCase();
   const send = async () => {
     setStep("sending");
-    setMsg("Queued: the engine applies it on its next run (within about 5 minutes).");
+    setMsg("Saving…");
     try {
       const params: Record<string, any> = { signal_id: call.id, note: note.trim() };
       for (const [f, , n] of changes) params[f] = n;
       const j = await queueJob("adjust_signal", params);
-      const r: any = await j.done;
+      // saved: the engine applies it on its next run; the answer arrives as a notice, so the admin can keep working
+      track(call.id, "adjust", j.done, (r: any) => `${base(symbol)} ${tf}: ${r?.message ?? "change applied."}${isNum(r?.push?.sent) ? ` Sent to ${r.push.sent} device${r.push.sent === 1 ? "" : "s"}.` : ""}`);
       setStep("done");
-      setMsg(`${r?.message ?? "Saved."}${isNum(r?.push?.sent) ? ` Notification sent to ${r.push.sent} device${r.push.sent === 1 ? "" : "s"}.` : ""}`);
+      setMsg("Saved. The engine applies it on its next run (within about 5 minutes). You can close this and keep working; you'll get a notice when it's done.");
     } catch (e: any) {
       setStep("failed");
-      setMsg(e?.message ?? "The change was refused.");
+      setMsg(e?.message ?? "The change could not be saved.");
     }
   };
   return createPortal(
-    <div className="fixed inset-0 z-[60] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => step !== "sending" && onClose()} role="dialog" aria-modal="true" aria-label="Adjust signal">
+    <div className="fixed inset-0 z-[75] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => step !== "sending" && onClose()} role="dialog" aria-modal="true" aria-label="Adjust signal">
       <div className="panel max-h-[92vh] w-full max-w-md overflow-y-auto rounded-b-none sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
           <h2 className="label">Adjust {base(symbol)} {tf} {call.side === "SHORT" ? "short" : "long"}</h2>

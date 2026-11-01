@@ -270,7 +270,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
     sigs = []
     for r in rows:
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
-        sigs.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+        sigs.append({"id": r["id"], "symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
                      "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
                      "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
                      "closed_at": r["closed_at"], "return_pct": r["return_pct"], **tracking.margin_fields(r, p),

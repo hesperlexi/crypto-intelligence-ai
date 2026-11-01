@@ -14,6 +14,7 @@ import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
 import { SealPill } from "./SealProof";
 import { useFocusTrap } from "./Shell";
 import { closeEstimate } from "./SignalAdjust";
+import { AdjustButton } from "./SignalAdjust";
 
 const TF_MS: Record<string, number> = { "15m": 9e5, "1h": 36e5, "4h": 144e5, "12h": 432e5, "1d": 864e5, "3d": 2592e5, "1w": 6048e5 };
 export const STATUS_LABEL: Record<string, [string, string]> = {
@@ -44,6 +45,12 @@ export function stopNow(x: any): { price: number; why: string | null } {
   if (x.tp1_hit) tighter(x.entry, "break-even after target 1");
   if (x.tp2_hit) tighter(x.tp1, "target 1 after target 2");
   return { price, why };
+}
+
+/** A record row as the admin Adjust / Close dialogs expect a call: the levels now in force (latest admin values). */
+function adminCall(x: any) {
+  const last = (f: string) => { const a = (x.adjustments ?? []).filter((y: any) => y.field === f); return a.length ? a[a.length - 1].new : null; };
+  return { ...x, stop: last("stop") ?? x.stop, tp1: last("tp1") ?? x.tp1 };
 }
 
 const tp1Now = (x: any): number => {
@@ -237,6 +244,7 @@ export function RecordSheet({ x, onClose }: { x: any; onClose: () => void }) {
             <div className="flex flex-wrap gap-2 pt-1">
               <Link className="btn btn-primary px-3 py-1.5 text-xs" to={`/asset/${slug(x.symbol)}?tf=${encodeURIComponent(x.timeframe ?? "4h")}`}>Open chart</Link>
               {open && !pending && <Link className="btn px-3 py-1.5 text-xs" to={`/paper?${paperQ}`}>Practise this trade</Link>}
+              {open && x.id && <AdjustButton call={adminCall(x)} symbol={x.symbol} timeframe={x.timeframe} />}
             </div>
             <p className="text-[11px] text-mute">Analysis only, not financial advice. Every published signal stays in the record, win or loss.</p>
           </div>
