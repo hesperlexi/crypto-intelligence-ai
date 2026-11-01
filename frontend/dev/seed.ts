@@ -109,6 +109,36 @@ function trackRecord() {
   });
   // v2.7 sample: a closed call stopped at the level the admin moved
   Object.assign(sigs[2], { exit_reason: "admin_stop", adjustments: [{ at: sigs[2].created_at + 3 * H, field: "stop", old: sigs[2].stop, new: sigs[2].entry * 1.0162, note: "Cutting risk: the trend turned against the short" }] });
+  // closed rows: hit flags, time limits (pre-v2.8 calls keep 30), exit reasons, a sealed proof
+  const HB: Record<string, number> = { "15m": 250, "1h": 200, "4h": 100 };
+  const tfMs: Record<string, number> = { "15m": H / 4, "1h": H, "4h": 4 * H, "12h": 12 * H, "1d": D };
+  const hits: Record<string, number[]> = { TP1: [1, 0, 0], TP2: [1, 1, 0], TP3: [1, 1, 1] };
+  const reason: Record<string, string> = { TP1: "break_even", TP2: "trail", TP3: "tp3", STOPPED: "stop", EXPIRED: "expired" };
+  sigs.forEach((x: any, i: number) => {
+    const [a, b, c] = hits[x.status] ?? [0, 0, 0];
+    const hb = i < 5 ? HB[x.timeframe] ?? 30 : 30;
+    Object.assign(x, { tp1_hit: a, tp2_hit: b, tp3_hit: c, stop_hit: x.status === "STOPPED" || x.status === "TP1" || x.status === "TP2" ? 1 : 0,
+      horizon_bars: hb, expires_at: x.created_at + hb * (tfMs[x.timeframe] ?? H), exit_reason: x.exit_reason ?? (x.status === "OPEN" ? null : reason[x.status]),
+      proof: { hash: "9f2c4e81d0b7a3f65e1c22d4a8b90e7f3c6d5a1b2e4f8091a7c3d6e5f4b2a190".slice(i) + "0".repeat(i), sealed_at: x.created_at + 5 * 60_000 } });
+  });
+  Object.assign(sigs[0].proof, { text: "CIA-SEAL-1|sample|SOL/USDT|4h|LONG|levels|published|salt" });
+  // open samples: running after TP1 (stop at break-even, admin moved TP1), waiting for a pullback entry, fresh 15m demo-style call
+  const lev = sigs[0].leverage;
+  const mk = (symbol: string, timeframe: string, side: "LONG" | "SHORT", grade: string, ageH: number, entryOff: number, extra: any = {}) => {
+    const px = PRICES[symbol].p, s = side === "LONG" ? 1 : -1, entry = px * (1 - s * entryOff);
+    const hb = HB[timeframe] ?? 30;
+    return { symbol, timeframe, side, grade, status: "OPEN", return_pct: null, roi_pct: null, leverage: lev, created_at: NOW - ageH * H, closed_at: null,
+      entry, stop: entry * (1 - s * 0.018), tp1: entry * (1 + s * 0.018), tp2: entry * (1 + s * 0.029), tp3: entry * (1 + s * 0.043),
+      fill_status: "FILLED", filled_at: NOW - ageH * H + 15 * 60_000, peak_pct: null, managed: 0, tp1_hit: 0, tp2_hit: 0, tp3_hit: 0, stop_hit: 0,
+      horizon_bars: hb, expires_at: NOW - ageH * H + hb * tfMs[timeframe],
+      proof: { hash: "4b1d8e2f6a9c3075d1e4b8a2c6f09e3d7b5a1c8e2f4d6b9a0c3e5f7a1b2d4c6e", sealed_at: NOW - ageH * H + 4 * 60_000 }, ...extra };
+  };
+  const tp1Row = mk("BTC/USDT", "4h", "LONG", "A", 9, 0.021, { tp1_hit: 1, peak_pct: 2.6 });
+  tp1Row.adjustments = [{ at: NOW - 6 * H, field: "tp1", old: tp1Row.tp1 * 1.004, new: tp1Row.tp1, note: "Nearer target 1 before the US data" }];
+  const pendRow = mk("ETH/USDT", "1h", "SHORT", "A", 1.5, -0.006, { fill_status: "PENDING", filled_at: undefined });
+  const runRow = mk("SOL/USDT", "1h", "LONG", "A", 3, 0.008, { peak_pct: 1.1,
+    ai: { rationale: "Sample advisor note for the preview: momentum is rising with the 4h trend; the main risk is the resistance just above target 2.", regime: "trending up" } });
+  sigs.unshift(tp1Row, pendRow, runRow);
   const closed = sigs.filter((x) => x.status !== "OPEN").map((x) => x.return_pct as number);
   let acc = 0;
   let accRoi = 0;
@@ -118,13 +148,13 @@ function trackRecord() {
     record_since: NOW - 2 * D, testing_since: NOW - 2 * D,
     live: { summary: { closed: closed.length, win_rate: closed.filter((r) => r > 0).length / closed.length, avg_return_pct: closed.reduce((a, b) => a + b, 0) / closed.length, total_return_pct: acc,
       avg_roi_pct: accRoi / rois.length, total_roi_pct: accRoi, best_roi_pct: Math.max(...rois), worst_roi_pct: Math.min(...rois) },
-      open: 1, curve, signals: sigs },
+      open: sigs.filter((x) => x.status === "OPEN").length, curve, signals: sigs },
     tested: [{ symbol: "BTC/USDT", timeframe: "4h", edge: true, selective_hit_rate: 0.61, selective_ci95: [0.55, 0.67], calls_per_day: 0.8, tested_days: 410 },
       { symbol: "SOL/USDT", timeframe: "1h", edge: true, selective_hit_rate: 0.58, selective_ci95: [0.53, 0.63], calls_per_day: 2.1, tested_days: 380 },
       { symbol: "LTC/USDT", timeframe: "1d", edge: false, selective_hit_rate: 0.5, selective_ci95: [0.41, 0.59], calls_per_day: 0.2, tested_days: 600 }],
     bots: [{ scorecard: true, name: "Futures signals A+B · 4H", trades: 6, win_rate: 0.67, return_pct: 3.4, benchmark_return_pct: 1.2, max_drawdown_pct: 1.9, started_at: NOW - 2 * D },
       { scorecard: true, name: "Futures signals A+B · 1H", trades: 11, win_rate: 0.55, return_pct: 1.1, benchmark_return_pct: 1.2, max_drawdown_pct: 2.6, started_at: NOW - 2 * D }],
-    method: { live: "Every trade signal the engine published, followed candle by candle.", tested: "Walk-forward test on data the models never saw." },
+    method: { live: "Every trade signal the engine published, followed candle by candle: half the position exits at take-profit 1 (1:1), a quarter at take-profit 2 and a quarter at take-profit 3; after take-profit 1 the stop moves to break-even, after take-profit 2 to take-profit 1. The rest exits at the stop or when the call's time limit runs out (250 candles on 15M, 200 on 1H, 100 on 4H, 30 on the others; calls published before 31 Oct 2026 keep 30). Fees not included.", tested: "Walk-forward test on data the models never saw." },
     achievements: [
       { id: "signals_10", title: "10 signals delivered", unlocked: true, value: "10", detail: "10 trade signals published and followed to the end", achieved_at: NOW - 1 * D },
       { id: "best_trade", title: "Best signal", unlocked: true, value: "+31.2% ROI", detail: "XRP long · 10x margin · price +3.12%", achieved_at: NOW - 2 * H, roi_pct: 31.2, leverage: 10, return_pct: 3.12 },
@@ -171,7 +201,8 @@ function users() {
     payment: { method: "binance", months: 1, amount: 15, currency: "USDT", txid: "B2610319999", proof: "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", status: "submitted", submitted_at: NOW - 4 * H } });
   add("u_new", { email: "new.person@example.com", name: "New Person", username: "newperson", provider: "password", status: "pending", requested_at: NOW - 30 * 60_000 });
   add("u_member", { email: "sara.k@example.com", name: "Sara Kim", username: "sara_k", provider: "google", status: "approved", expires_at: NOW + 74 * D, plan_months: 3, approved_at: NOW - 16 * D, free: false,
-    history: [{ months: 3, amount: 40, free: false, granted_at: NOW - 16 * D }], payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610140032", proof: null, status: "accepted", submitted_at: NOW - 16 * D } });
+    history: [{ months: 3, amount: 40, free: false, granted_at: NOW - 16 * D }], payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610140032", proof: null, has_proof: true, status: "accepted", submitted_at: NOW - 16 * D, decided_at: NOW - 16 * D } });
+  u["payment_proofs/u_member"] = { uid: "u_member", proof: proofImage(), submitted_at: NOW - 16 * D };   // decided before screenshots were auto-deleted
   add("u_end", { email: "daniel.r@example.com", name: "Daniel Reyes", username: "dreyes", provider: "password", status: "approved", expires_at: NOW + 4 * D, plan_months: 1, approved_at: NOW - 26 * D,
     history: [{ months: 1, amount: 15, granted_at: NOW - 26 * D }] });
   add("u_free", { email: "tester@example.com", name: "Test Account", status: "approved", expires_at: NOW + 180 * D, plan_months: 6, approved_at: NOW - 3 * D, free: true,
@@ -199,14 +230,15 @@ function users() {
     const m = [1, 3, 6, 12][i % 4];
     switch (i % 7) {
       case 0: add(id, { ...base, status: "approved", expires_at: NOW + (20 + i * 4) * D, plan_months: m, approved_at: NOW - 10 * D, free: false, history: [paid(m, price[m], 10)],
-        payment: { method: i % 2 ? "mexc" : "binance", months: m, amount: price[m], currency: "USDT", txid: `B26100${i}991`, proof: null, status: "accepted", submitted_at: NOW - 10 * D } }); break;
+        payment: { method: i % 2 ? "mexc" : "binance", months: m, amount: price[m], currency: "USDT", txid: `B26100${i}991`, proof: null, ...(i < 10 ? { has_proof: true } : {}), status: "accepted", submitted_at: NOW - 10 * D } });
+        if (i < 10) u[`payment_proofs/${id}`] = { uid: id, proof: proofImage(), submitted_at: NOW - 10 * D }; break;
       case 1: add(id, { ...base, status: "approved", expires_at: NOW + (2 + i) * D, plan_months: 1, approved_at: NOW - 25 * D, free: false, history: [paid(1, 15, 25)] }); break;
       case 2: add(id, { ...base, status: "approved", expires_at: NOW + (40 + i * 6) * D, plan_months: m, approved_at: NOW - 4 * D, free: true, history: [{ months: m, amount: 0, free: true, granted_at: NOW - 4 * D }] }); break;
       case 3: add(id, { ...base, status: "pending", requested_at: NOW - (i + 2) * H,
         payment: { method: i % 2 ? "mexc" : "binance", months: m, amount: price[m], currency: "USDT", txid: `MX7712${i}0`, proof: i % 2 ? null : proofImage(), status: "submitted", submitted_at: NOW - (i + 1) * H } }); break;
       case 4: add(id, { ...base, status: "approved", expires_at: NOW - (3 + i) * D, plan_months: 1, approved_at: NOW - 40 * D, free: false, history: [paid(1, 15, 40)] }); break;
       case 5: add(id, { ...base, status: i > 10 ? "blocked" : "pending",
-        payment: { method: "binance", months: 1, amount: 10, currency: "USDT", txid: "B000123", proof: null, status: "rejected", reason: "Payment not found in my Binance history", submitted_at: NOW - 3 * D } }); break;
+        payment: { method: "binance", months: 1, amount: 10, currency: "USDT", txid: "B000123", proof: null, has_proof: true, status: "rejected", reason: "Payment not found in my Binance history", submitted_at: NOW - 3 * D } }); break;
       default: add(id, { ...base, status: "approved", expires_at: NOW + (3 + (i % 4)) * D, plan_months: 1, approved_at: NOW - 27 * D, free: i % 2 === 0, history: [i % 2 === 0 ? { months: 1, amount: 0, free: true, granted_at: NOW - 27 * D } : paid(1, 15, 27)] });
     }
   });
@@ -387,7 +419,7 @@ function health() {
     status: "LIVE", generated_at: NOW, uptime_s: 18_000,
     engine: { last_tick_started: NOW - 4 * 60_000, last_tick_finished: NOW - 3 * 60_000, last_tick_seconds: 61.4, schedule_minutes: 5, ticks: 412,
       data_host: "https://data-api.binance.vision", failed_steps: [], last_train: { finished_at: NOW - 9 * H },
-      firestore_writes_today: 8_430, firestore_write_budget: 15_000, firestore_lean: false, firestore_members_active: 23,
+      firestore_writes_today: 8_430, firestore_write_budget: 15_000, firestore_reads_today: 6_120, firestore_read_limit: 50_000, firestore_lean: false, firestore_members_active: 23,
       firestore_member_reserve: 1_380, firestore_engine_budget: 13_620, firestore_free_limit: 20_000 },
     market_data: { status: "LIVE", transport: "REST", last_update_ms: NOW - 3 * 60_000, age_s: 180, reconnects: 0, last_error: null, quality_pct: 99.97, stale_series: 0 },
     exchange: { errors: 0, clock_skew_ms: 42, last_error: null },

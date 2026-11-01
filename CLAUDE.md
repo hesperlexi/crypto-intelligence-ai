@@ -170,6 +170,32 @@ public page `/verify` (Trust kind "verify"). No extra Firestore documents.
 - Live prices: `useLive()` context ≤2 updates/s; `useFastTickers()` (trade terminal, futures practice) and `useTicker(sym)` full speed.
 - Videos: `?v=` = content hash (`lib/media.ts`, `__MEDIA_VERSIONS__`), not the build id.
 
+## 1 Nov 2026 (branch `live-status`)
+- Owner decision 1 Nov 2026: the 15m demo bot (`bots.DEMO_15M`) and its trades are **intentionally visible to members**
+  (Demo bots / Results); only the public signal stays NO TRADE "DEMO BOTS ONLY".
+- Track record live status (`components/RecordDetails.tsx`): OPEN rows show a "Live" price, move %, ROI on margin at the
+  card's leverage (signal-card formula, never stored), targets hit, stop in force (admin stop tightened by break-even /
+  TP1 rules) and distances; pending pullbacks "waiting for entry". Rows are clickable / keyboard (Enter) → `RecordSheet`
+  (portal; bottom sheet on phones): levels with hits, time limit + time left, adjustments, seal, AI note, "Open chart"
+  (`/asset/<slug>?tf=` - Asset reads `?tf`), "Practise this trade" (open filled calls → `/paper?...`). Row extras from
+  `views.live_fields`: tp1-3_hit, stop_hit, filled_at, `horizon_bars` (payload, default 30), `expires_at`.
+  Method text built from `tracking.HORIZON_BARS` (`views.horizon_text`). Results never change.
+- Payment screenshots (free plan storage): accepting / rejecting deletes `payment_proofs/{uid}` and clears an inline
+  proof in the same batch (`membership.grantMembership/rejectPayment`, shape `writeShapes.paymentWithoutProof`:
+  proof null, has_proof false, proof_deleted_at). Users page: "Delete screenshot" in the proof viewer, "Delete all
+  checked screenshots" (accepted/rejected only, never `submitted`) with an in-app confirm (`ConfirmSheet`). Deleting a
+  user also deletes their proof. Rules already allowed it (admin); rules tests added. `rules-test.yml` also runs on push
+  to main and on pull requests (results committed only on pushes).
+- Firestore reads (free plan 50,000/day): `BaseSink` counts reads per quota day (`fs_reads`, `reads_today()`, Health
+  "Engine reads today"; an empty query counts 1). `sink.query(col, field, op, value)` (==, <, >=). Users fully re-read
+  every `worker.USERS_EVERY_S` (1800) into settings `users_cache` (no images); in between only `payment.status ==
+  submitted` (proof push stays prompt). Jobs: queued by query; clean-up hourly by `created_at < 3 days`. Auto-trade
+  reads only `auto_paper` with `enabled == true`; a member missing from the cache is checked with one `users/{uid}` read.
+  Presence estimate reads only `last_seen >= 24 h`. `user_coins` not read while `member_coins_max` is 0.
+  Approvals / blocks reach alerts and auto-trade within 30 min. `views/health` stays member-readable (header engine chip).
+- Website job wait (`api.queueJob`) gives up after 15 min (`JOB_TIMEOUT_MS`) with a clear message. `*.mp4` cached a year
+  (immutable; the app links them with `?v=<hash>`). `scripts/build_manual.py` default version = `frontend/package.json`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
