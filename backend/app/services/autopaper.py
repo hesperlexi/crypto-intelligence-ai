@@ -167,14 +167,25 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
         **res, "action": "limit order", "price": entry, "margin": margin, "leverage": lev, "stop": stop, "take": take}
 
 
-def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = None) -> dict[str, Any]:
+def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = None,
+        users: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+    """`users`: the members' records (worker.load_users, re-read every 30 min); read here when not given.
+    Only the auto-trade settings that are switched on are read (a query on `enabled`, not every member's settings)."""
     now = now or now_ms()
     sigs = candidates(rows_by_tf)
-    users = dict(sink.list("users"))
+    if users is None:
+        users = dict(sink.list("users"))
     out = {"members": 0, "opened": 0, "orders": 0, "skipped": 0, "push": []}
-    for uid, raw in sink.list("auto_paper"):
+    for uid, raw in sink.query("auto_paper", "enabled", "==", True):
         s = settings_of(raw)
-        if not s["enabled"] or not membership.is_active(users.get(uid), now):
+        if not s["enabled"]:
+            continue
+        # no record = an admin (membership.is_active); a member missing from a cached list (e.g. joined since the
+        # last full read) is checked with one read instead of being taken for an admin
+        u = users.get(uid)
+        if u is None and uid not in users:
+            u = sink.get(f"users/{uid}")
+        if not membership.is_active(u, now):
             continue
         out["members"] += 1
         state = sink.get(f"auto_paper_state/{uid}") or {}

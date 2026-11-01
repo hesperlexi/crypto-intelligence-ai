@@ -6,6 +6,7 @@ import { useLive } from "../lib/live";
 const toneOf = (s: string) => (["LIVE", "OK", "active", "done"].includes(s) ? "bull" : ["DOWN", "failed"].includes(s) ? "bear" : ["POLLING", "running", "queued"].includes(s) ? "accent" : "warn") as "bull" | "bear" | "accent" | "warn";
 
 const FREE_LIMIT = 20_000;      // Firebase free (Spark) plan: document writes per day (day = midnight US Pacific)
+const READ_LIMIT = 50_000;      // free plan: document reads per day (same day)
 const DEFAULT_BUDGET = 15_000;  // backend sinks.FIRESTORE_DAILY_BUDGET default: the engine goes lean above it
 const arr = (x: any): any[] => (Array.isArray(x) ? x : []);
 
@@ -19,7 +20,7 @@ function WritesCard({ e }: { e: any }) {
   const pct = n != null ? Math.min(100, (n / limit) * 100) : 0;
   const tone = n == null ? "" : n >= limit * 0.95 ? "text-bear" : n >= engineBudget || e?.firestore_lean ? "text-warn" : "text-bull";
   return (
-    <Card title="Database writes today (Firebase free plan)" right={e?.firestore_lean ? <Badge tone="warn">lean mode</Badge> : n != null ? <Badge tone="bull">normal</Badge> : undefined}>
+    <Card title="Database use today (Firebase free plan)" right={e?.firestore_lean ? <Badge tone="warn">lean mode</Badge> : n != null ? <Badge tone="bull">normal</Badge> : undefined}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <Stat label="Engine writes today" value={<span className={tone}>{n != null ? fmtNum(n, 0) : DASH}</span>}
           sub={`budget ${fmtNum(budget, 0)} · free limit ${fmtNum(limit, 0)} a day (resets at midnight US Pacific)`} />
@@ -32,8 +33,26 @@ function WritesCard({ e }: { e: any }) {
         <div className={`h-full rounded-full ${n != null && n >= engineBudget ? "bg-warn" : "bg-accent"}`} style={{ width: `${pct}%` }} />
         <div className="absolute inset-y-0 w-px bg-text/60" style={{ left: `${Math.min(100, (engineBudget / limit) * 100)}%` }} title="lean from here" />
       </div>
-      <Note>Counts only the engine's own writes; members' writes (presence, practice trades, alerts) also use the {fmtNum(limit, 0)} limit, so the engine keeps room for them. Above its budget it publishes only the essentials, every 30 min.</Note>
+      <ReadsRow e={e} />
+      <Note>Counts only the engine's own writes and reads; members' writes (presence, practice trades, alerts) also use the {fmtNum(limit, 0)} limit, so the engine keeps room for them. Above its budget it publishes only the essentials, every 30 min.</Note>
     </Card>
+  );
+}
+
+/** Engine reads today against the free plan's 50,000 (counted only; the engine reads little by design). */
+function ReadsRow({ e }: { e: any }) {
+  const n = isNum(e?.firestore_reads_today) ? e.firestore_reads_today : null;
+  const limit = isNum(e?.firestore_read_limit) ? e.firestore_read_limit : READ_LIMIT;
+  const pct = n != null ? Math.min(100, (n / limit) * 100) : 0;
+  const tone = n == null ? "" : n >= limit * 0.8 ? "text-bear" : n >= limit * 0.5 ? "text-warn" : "text-bull";
+  return (
+    <div className="mt-4 border-t border-glass/[0.06] pt-3">
+      <Stat label="Engine reads today" value={<span className={tone}>{n != null ? fmtNum(n, 0) : DASH}</span>}
+        sub={n != null ? `free limit ${fmtNum(limit, 0)} a day · ${pct.toFixed(1)}% used` : "shown after the next engine update"} />
+      <div className="mt-2 h-2 overflow-hidden rounded-full bg-glass/[0.08]" role="img" aria-label={n != null ? `${fmtNum(n, 0)} of ${fmtNum(limit, 0)} reads used` : "no data"}>
+        <div className={`h-full rounded-full ${n != null && n >= limit * 0.5 ? "bg-warn" : "bg-accent"}`} style={{ width: `${pct}%` }} />
+      </div>
+    </div>
   );
 }
 

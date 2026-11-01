@@ -73,6 +73,30 @@ class BaseSink:
         except Exception:
             pass
 
+    # -- daily read count (free plan: 50,000 document reads a day, same quota day) --------------------------------
+    # Only counted, never limited: the engine's reads are kept low by design (narrow queries, users re-read every
+    # USERS_EVERY_S). Firestore bills a query that returns nothing as one read. Shown on Health next to the writes.
+    READ_LIMIT = 50_000
+
+    def reads_today(self) -> int:
+        if self.db is None:
+            return 0
+        b = self.db.get_setting("fs_reads", None) or {}
+        return int(b.get("n", 0)) if b.get("day") == self.quota_day()[0] else 0
+
+    def _count_reads(self, n: int) -> None:
+        if self.db is None:
+            return
+        try:
+            day = self.quota_day()[0]
+            b = self.db.get_setting("fs_reads", None) or {}
+            if b.get("day") != day:
+                b = {"day": day, "n": 0}
+            b["n"] = int(b.get("n", 0)) + max(1, int(n))     # an empty result still costs one read
+            self.db.set_setting("fs_reads", b)
+        except Exception:
+            pass
+
     def blocked(self) -> bool:
         """True while Firestore has refused writes for quota today (until the quota day ends)."""
         if self.db is None:
@@ -105,7 +129,7 @@ class BaseSink:
     # settings), and the engine cannot count those writes. So it keeps an estimate for them and goes lean earlier:
     # people seen in the last 24 h (presence/{uid}.last_seen) x MEMBER_WRITES_PER_DAY (60 ~ 3 h open + a few trades),
     # capped at MEMBER_RESERVE_MAX; the engine's own budget never drops below MIN_ENGINE_BUDGET. Refreshed at most
-    # hourly (one read per presence document). Shown on Health (firestore_member_reserve, firestore_engine_budget).
+    # hourly (one read per person seen in 24 h). Shown on Health (firestore_member_reserve, firestore_engine_budget).
     MEMBER_WRITES_PER_DAY = int(os.environ.get("FIRESTORE_MEMBER_WRITES_PER_DAY", "60"))
     MEMBER_RESERVE_MAX = int(os.environ.get("FIRESTORE_MEMBER_RESERVE_MAX", "8000"))
     MIN_ENGINE_BUDGET = 3000
@@ -133,11 +157,8 @@ class BaseSink:
             return est
         try:
             since = _now() - 86_400_000
-            active = 0
-            for _, d in self.list("presence"):
-                seen = d.get("last_seen") or d.get("at") or 0
-                if isinstance(seen, (int, float)) and seen >= since:
-                    active += 1
+            # only the people seen in the last 24 h are read (reads = active people, not every presence document)
+            active = len(self.query("presence", "last_seen", ">=", since))
             est = {"active": active, "reserve": min(self.MEMBER_RESERVE_MAX, active * self.MEMBER_WRITES_PER_DAY), "at": _now()}
             self.db.set_setting("fs_member_est", est)
         except Exception:
@@ -230,9 +251,27 @@ class BaseSink:
     def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
         raise NotImplementedError
 
+    def query(self, collection: str, field: str, op: str, value: Any) -> list[tuple[str, dict[str, Any]]]:
+        """Documents whose `field` (dotted path allowed) compares to `value` with op '==', '<' or '>='. Firestore runs it
+        on the server (reads = matches, at least 1); other sinks filter a full listing."""
+        def get(d: dict[str, Any]) -> Any:
+            for k in field.split("."):
+                d = d.get(k) if isinstance(d, dict) else None
+            return d
+
+        def ok(v: Any) -> bool:
+            if op == "==":
+                return v == value
+            num = v is not None and type(v) is not bool and isinstance(v, (int, float))
+            if op == "<":
+                return num and v < value
+            if op == ">=":
+                return num and v >= value
+            raise ValueError(op)
+        return [(i, d) for i, d in self.list(collection) if ok(get(d))]
+
     def queued_jobs(self) -> list[tuple[str, dict[str, Any]]]:
-        jobs = [(i, d) for i, d in self.list("jobs") if d.get("status") == "queued"]
-        return sorted(jobs, key=lambda j: j[1].get("created_at") or 0)
+        return sorted(self.query("jobs", "status", "==", "queued"), key=lambda j: j[1].get("created_at") or 0)
 
     def delete(self, path: str) -> None:
         raise NotImplementedError
@@ -292,6 +331,7 @@ class LocalSink(BaseSink):
 
     def get(self, path: str) -> dict[str, Any] | None:
         p = self._path(path)
+        self._count_reads(1)
         return json.loads(p.read_text()) if p.exists() else None
 
     def set(self, path: str, data: dict[str, Any], merge: bool = False) -> None:
@@ -304,8 +344,11 @@ class LocalSink(BaseSink):
     def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
         d = self.root / collection
         if not d.is_dir():
+            self._count_reads(1)
             return []
-        return [(p.stem, json.loads(p.read_text())) for p in sorted(d.glob("*.json"))]
+        out = [(p.stem, json.loads(p.read_text())) for p in sorted(d.glob("*.json"))]
+        self._count_reads(len(out))
+        return out
 
     def delete(self, path: str) -> None:
         self._path(path).unlink(missing_ok=True)
@@ -352,6 +395,7 @@ class FirestoreSink(BaseSink):
 
     def get(self, path: str) -> dict[str, Any] | None:
         snap = self.fs.document(path).get()
+        self._count_reads(1)
         return snap.to_dict() if snap.exists else None
 
     def _guard(self, fn):
@@ -391,17 +435,22 @@ class FirestoreSink(BaseSink):
         self._count(1)
 
     def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
-        return [(s.id, s.to_dict() or {}) for s in self.fs.collection(collection).stream()]
+        out = [(s.id, s.to_dict() or {}) for s in self.fs.collection(collection).stream()]
+        self._count_reads(len(out))
+        return out
 
-    def queued_jobs(self) -> list[tuple[str, dict[str, Any]]]:
+    def query(self, collection: str, field: str, op: str, value: Any) -> list[tuple[str, dict[str, Any]]]:
+        if op not in ("==", "<", ">="):
+            raise ValueError(op)
         try:
             from google.cloud.firestore_v1.base_query import FieldFilter
 
-            q = self.fs.collection("jobs").where(filter=FieldFilter("status", "==", "queued"))
+            q = self.fs.collection(collection).where(filter=FieldFilter(field, op, value))
         except ImportError:
-            q = self.fs.collection("jobs").where("status", "==", "queued")
-        jobs = [(s.id, s.to_dict() or {}) for s in q.stream()]
-        return sorted(jobs, key=lambda j: j[1].get("created_at") or 0)
+            q = self.fs.collection(collection).where(field, op, value)
+        out = [(s.id, s.to_dict() or {}) for s in q.stream()]
+        self._count_reads(len(out))
+        return out
 
     def delete(self, path: str) -> None:
         self._guard(lambda: self.fs.document(path).delete())
@@ -414,6 +463,7 @@ class FirestoreSink(BaseSink):
         @gfs.transactional
         def run(tx):
             snap = ref.get(transaction=tx)
+            self._count_reads(1)
             new, result = fn(snap.to_dict() if snap.exists else None)
             if new is not None:
                 tx.set(ref, json.loads(dumps(new)))

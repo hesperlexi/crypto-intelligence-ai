@@ -221,16 +221,25 @@ function first<T>(sub: Sub): Promise<T> {
 
 // ---- jobs -------------------------------------------------------------------------------------------------
 export interface JobHandle<T = any> { id: string; done: Promise<T> }
+/** How long the website waits for a queued job before giving up (the job itself stays queued for the engine). */
+export const JOB_TIMEOUT_MS = 15 * 60_000;
 
 /** Queue work for the engine. Resolves with the result once a later engine cycle has run it. */
 export async function queueJob<T = any>(type: string, params: Record<string, any>): Promise<JobHandle<T>> {
   const ref = await addDoc(collection(db, "jobs"), { type, params, status: "queued", created_at: Date.now(), by: auth.currentUser?.email ?? null });
   const done = new Promise<T>((res, rej) => {
-    const un = onSnapshot(ref, (s) => {
+    let over = false;
+    let timer = 0;
+    let un: () => void = () => {};
+    const finish = (fn: () => void) => { if (over) return; over = true; window.clearTimeout(timer); un(); fn(); };
+    un = onSnapshot(ref, (s) => {
       const d = s.data();
-      if (d?.status === "done") { un(); try { res(JSON.parse(d.json)); } catch (e) { rej(e); } }
-      else if (d?.status === "failed") { un(); rej(new Error(d.error ?? "job failed")); }
-    }, (e) => rej(e));
+      if (d?.status === "done") finish(() => { try { res(JSON.parse(d.json)); } catch (e) { rej(e); } });
+      else if (d?.status === "failed") finish(() => rej(new Error(d.error ?? "job failed")));
+    }, (e) => finish(() => rej(e)));
+    // the engine normally answers within one or two 5-minute cycles; stop listening after JOB_TIMEOUT_MS
+    timer = window.setTimeout(() => finish(() => rej(new Error(
+      "No answer from the engine after 15 minutes. It may be busy or restarting; please try again later."))), JOB_TIMEOUT_MS);
   });
   return { id: ref.id, done };
 }

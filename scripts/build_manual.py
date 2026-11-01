@@ -1,6 +1,6 @@
 """Builds frontend/public/manual.pdf from docs/manual/manual.md in the app's gold / black theme.
 
-    python scripts/build_manual.py [version]
+    python scripts/build_manual.py [version]     (default: the version in frontend/package.json)
 
 Needs: pip install markdown playwright (Chromium) and the Inter font for the best look.
 """
@@ -18,7 +18,18 @@ ROOT = pathlib.Path(__file__).resolve().parents[1]
 SRC = ROOT / "docs" / "manual" / "manual.md"
 OUT = ROOT / "frontend" / "public" / "manual.pdf"
 LOGO = ROOT / "frontend" / "public" / "icons" / "icon-512.png"
-VERSION = sys.argv[1] if len(sys.argv) > 1 else "2.0.0"
+
+
+def app_version() -> str:
+    """The app's one version source: frontend/package.json (same as the website, the APK and brand.py)."""
+    import json
+    try:
+        return str(json.loads((ROOT / "frontend" / "package.json").read_text(encoding="utf-8"))["version"])
+    except Exception:
+        return "0.0.0"
+
+
+VERSION = sys.argv[1] if len(sys.argv) > 1 else app_version()
 import os
 HEAD_MM = float(os.environ.get("HEAD_MM", "22"))
 

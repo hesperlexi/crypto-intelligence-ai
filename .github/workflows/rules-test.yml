@@ -5,7 +5,8 @@
 name: rules-test
 on:
   push:
-    branches: [features-oct31, audit-fixes]
+    branches: [main, features-oct31, audit-fixes]
+  pull_request:
   workflow_dispatch:
 
 concurrency:
@@ -56,7 +57,7 @@ jobs:
           fi
           echo "code=$code" >> "$GITHUB_OUTPUT"
       - name: Commit the results to the research-results branch
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"

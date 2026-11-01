@@ -204,12 +204,40 @@ def drop_inline_proofs(sink: BaseSink, users: dict[str, dict[str, Any]], now: in
     return n
 
 
+# Free plan: 50,000 Firestore reads a day. Listing every users document each 5-minute tick cost ~300 reads per member
+# a day, so the full list is read at most every USERS_EVERY_S and kept (without screenshots) in the engine's settings;
+# in between only the payments waiting to be checked are read (a narrow query, so a new proof still notifies the
+# admin within minutes). Approvals / blocks reach alerts and auto-trade within USERS_EVERY_S.
+USERS_EVERY_S = int(os.environ.get("USERS_EVERY_S", "1800"))
+
+
+def _slim_user(u: dict[str, Any]) -> dict[str, Any]:
+    p = u.get("payment")
+    return {**u, "payment": {k: v for k, v in p.items() if k != "proof"} | {"proof": None if p.get("proof") is None else "inline"}} \
+        if isinstance(p, dict) else dict(u)
+
+
+def load_users(rt: Runtime, sink: BaseSink, force: bool = False) -> tuple[dict[str, dict[str, Any]], bool]:
+    """(users by uid, fully re-read now?). See USERS_EVERY_S."""
+    now = now_ms()
+    cache = rt.db.get_setting("users_cache", None) or {}
+    if force or not cache.get("users") or now - int(cache.get("at") or 0) >= USERS_EVERY_S * 1000:
+        users = dict(sink.list("users"))
+        rt.db.set_setting("users_cache", {"at": now, "users": {k: _slim_user(v) for k, v in users.items()}})
+        return users, True
+    users = dict(cache["users"])
+    for uid, d in sink.query("users", "payment.status", "==", "submitted"):
+        users[uid] = _slim_user(d)
+    return users, False
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
     _b = getattr(rt, "beat", None) or (lambda *_: None)
     _b("config: members")
-    users = dict(sink.list("users"))
+    # the one-time inline-screenshot clean-up below needs the real documents: a full read until it has run
+    users, _full = load_users(rt, sink, force=not rt.db.get_setting("drop_inline_proofs_v1", False))
     now = now_ms()
     inactive = membership.inactive_uids(users, now)
     msgs, seen = membership.notifications(users, rt.db.get_setting("membership_notified", {}), now)
@@ -227,7 +255,7 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     # coins members added for themselves (active members only, a few each, capped overall)
     member_coins: list[str] = []
     per_member, all_members = member_limits(sink)
-    for uid, d in sink.list("user_coins"):
+    for uid, d in (sink.list("user_coins") if per_member > 0 else []):     # testing mode: 0 extra coins, no read
         if uid in users and uid not in inactive:
             for x in (d.get("symbols") or [])[:per_member]:
                 sym = norm_symbol(x)
@@ -619,10 +647,13 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             sink.set(f"jobs/{jid}", {"status": "failed", "error": (str(exc) if plain else f"{type(exc).__name__}: {exc}")[:300],
                                      "finished_at": now_ms()}, merge=True)
         n += 1
-    cutoff = now_ms() - 3 * 86_400_000
-    for jid, job in sink.list("jobs"):
-        if (job.get("finished_at") or job.get("created_at") or now_ms()) < cutoff:
-            sink.delete(f"jobs/{jid}")
+    # clean-up of jobs older than 3 days: at most hourly, reading only the old ones (was: every job, every tick)
+    if now_ms() - int(rt.db.get_setting("jobs_cleanup_at", 0) or 0) >= 3_600_000:
+        cutoff = now_ms() - 3 * 86_400_000
+        for jid, job in sink.query("jobs", "created_at", "<", cutoff):
+            if (job.get("finished_at") or job.get("created_at") or now_ms()) < cutoff:
+                sink.delete(f"jobs/{jid}")
+        rt.db.set_setting("jobs_cleanup_at", now_ms())
     return n
 
 
@@ -901,6 +932,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
     engine["firestore_writes_today"] = sink.writes_today()     # Firebase free plan: 20,000 a day (engine writes only)
     engine["firestore_write_budget"] = sink.DAILY_BUDGET
+    engine["firestore_reads_today"] = sink.reads_today()       # free plan: 50,000 reads a day (engine reads only)
+    engine["firestore_read_limit"] = sink.READ_LIMIT
     est = step("member_writes", lambda: sink.refresh_member_estimate()) or {}
     engine["firestore_members_active"] = est.get("active", 0)          # people seen in the last 24 h
     engine["firestore_member_reserve"] = sink.member_reserve()         # writes kept for them (estimate)
@@ -955,7 +988,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
 def _auto_paper(rt: Runtime, sink: BaseSink, analyses: dict[tuple[str, str], dict]) -> dict[str, Any]:
     """New futures signals into the paper accounts of members who switched auto-trading on."""
     rows = {tf: views.futures(rt, tf, analyses)["rows"] for tf in views.FUTURES_TIMEFRAMES if any(k[1] == tf for k in analyses)}
-    r = autopaper.run(sink, rows)
+    r = autopaper.run(sink, rows, users=load_users(rt, sink)[0])
     msgs = r.pop("push")
     if msgs:
         r["push"] = sink.send_push(msgs)
