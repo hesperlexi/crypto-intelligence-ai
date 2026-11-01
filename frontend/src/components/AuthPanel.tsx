@@ -167,6 +167,7 @@ export function VerifyEmailScreen({ user, onVerified }: { user: User; onVerified
     <CenterCard>
       <h1 className="text-xl font-semibold tracking-tight">Check your inbox</h1>
       <p className="mt-2 text-sm text-mute">We sent a confirmation link to <span className="text-text [overflow-wrap:anywhere]">{user.email}</span>. Open it to confirm your email address, then come back here.</p>
+      <p className="mt-2 rounded-lg border border-warn/30 bg-warn/[0.06] px-3 py-2 text-xs text-warn">Not there after a minute? Check your <b>Spam / Junk</b> folder for an email from noreply@cryptointelai.com and mark it "Not spam".</p>
       <button className="btn btn-primary mt-5 w-full py-2.5" onClick={check} disabled={busy}>{busy ? "Checking…" : "I've confirmed my email"}</button>
       <button className="btn mt-2 w-full" onClick={resend} disabled={wait > 0}>{wait > 0 ? `Resend email in ${wait} s` : "Resend email"}</button>
       {msg && <p role={msg.ok ? "status" : "alert"} className={`mt-3 text-sm ${msg.ok ? "text-bull" : "text-warn"}`}>{msg.text}</p>}
