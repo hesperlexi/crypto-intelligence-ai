@@ -1,8 +1,8 @@
 {
-  "at": "2026-10-31T12:11:21.900Z",
-  "sha": "21b2130699ce9399050d2a12859e813607b5f80e",
-  "total": 89,
-  "passed": 89,
+  "at": "2026-11-01T15:07:57.697Z",
+  "sha": "150a79fa62350585eaad882b36224ba0d432bd7d",
+  "total": 94,
+  "passed": 94,
   "failed": 0,
   "results": [
     {
@@ -175,6 +175,26 @@
     },
     {
       "name": "payment_proofs: own and admin reads allowed, other members denied",
+      "ok": true
+    },
+    {
+      "name": "admin deletes a screenshot: payment_proofs/{uid} delete + users payment cleared in one batch",
+      "ok": true
+    },
+    {
+      "name": "admin clears a legacy inline screenshot (payment.proof -> null, has_proof false)",
+      "ok": true
+    },
+    {
+      "name": "admin accepts a payment and deletes its screenshot in the same batch",
+      "ok": true
+    },
+    {
+      "name": "members cannot delete screenshots (their own or anyone else's)",
+      "ok": true
+    },
+    {
+      "name": "a member cannot mark their own decided payment's screenshot as deleted (only 'submitted' updates)",
       "ok": true
     },
     {
