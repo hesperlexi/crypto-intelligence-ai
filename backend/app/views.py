@@ -10,6 +10,7 @@ import numpy as np
 
 from .backtest.strategies import STRATEGIES
 from .config import HORIZONS, MODEL_TIMEFRAMES, MTF_TIMEFRAMES, TIMEFRAMES, settings
+from .data.base import tf_ms
 from .db import loads, now_ms
 from .ml import trainer
 from .ml.drift import drift_report
@@ -135,6 +136,29 @@ def contract_fields(r: dict[str, Any], payload: dict[str, Any] | None = None) ->
     return out
 
 
+def live_fields(r: dict[str, Any], payload: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Small extras for a record row's live status / details sheet: which levels were hit, when a pullback filled,
+    and the call's own time limit (v2.8 `horizon_bars` in the payload; older calls keep 30) with its wall-clock end."""
+    p = payload if isinstance(payload, dict) else {}
+    hb = int(p.get("horizon_bars") or tracking.DEFAULT_HORIZON)
+    out: dict[str, Any] = {k: int(r.get(k) or 0) for k in ("tp1_hit", "tp2_hit", "tp3_hit", "stop_hit")}
+    out["horizon_bars"] = hb
+    try:
+        out["expires_at"] = int(r["created_at"]) + tf_ms(r["timeframe"]) * hb
+    except Exception:
+        out["expires_at"] = None
+    if r.get("filled_at"):
+        out["filled_at"] = r["filled_at"]
+    return out
+
+
+def horizon_text() -> str:
+    """'250 candles on 15M, 200 on 1H, 100 on 4H, 30 on the others; calls published before 31 Oct 2026 keep 30'."""
+    parts = [f"{n} {'candles ' if i == 0 else ''}on {tf.upper()}" for i, (tf, n) in enumerate(tracking.HORIZON_BARS.items())]
+    return (", ".join(parts) + f", {tracking.DEFAULT_HORIZON} on the others; calls published before "
+            f"31 Oct 2026 keep {tracking.DEFAULT_HORIZON}")
+
+
 def signals(rt: Runtime) -> dict[str, Any]:
     rows = tracking.signal_history(rt.db, None, 300)
     for r in rows:
@@ -250,7 +274,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
                      "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
                      "closed_at": r["closed_at"], "return_pct": r["return_pct"], **tracking.margin_fields(r, p),
-                     **contract_fields(r, p), **({"adjustments": adj[r["id"]]} if r["id"] in adj else {}),
+                     **contract_fields(r, p), **live_fields(r, p), **({"adjustments": adj[r["id"]]} if r["id"] in adj else {}),
                      **({"proof": proofs[r["id"]]} if r["id"] in proofs else {})})
     # never-filled pullback entries and void calls (no market data) have no result: listed, never counted
     closed = [x for x in sigs if x["status"] in tracking.CLOSED_STATUSES and x["return_pct"] is not None]
@@ -315,7 +339,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
             "method": {"live": "Every trade signal the engine published, followed candle by candle: half the position exits "
                                "at take-profit 1 (1:1), a quarter at take-profit 2 and a quarter at take-profit 3; after "
                                "take-profit 1 the stop moves to break-even, after take-profit 2 to take-profit 1. The rest "
-                               "exits at the stop or after 30 candles. Fees not included.",
+                               f"exits at the stop or when the call's time limit runs out ({horizon_text()}). Fees not included.",
                        "tested": "Walk-forward test: the models are trained only on data before each test period and then "
                                  "scored on the following period, which they never saw. A simulation, not live results."}}
     out["achievements"] = achievements(rt, out, bot_report)

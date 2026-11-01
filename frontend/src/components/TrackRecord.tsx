@@ -8,14 +8,13 @@ import { CoinAvatar } from "./Polish";
 import { Explain, useIsPro } from "../lib/mode";
 import { managedLabel, fillLabel, Pill, RoiFigure } from "./SignalExtras";
 import { SealPill } from "./SealProof";
+import { isOpen, LiveResult, LiveRoi, RecordSheet, statusOf } from "./RecordDetails";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 const rate = (v: unknown) => (isNum(v) ? `${Math.round(v * 100)}%` : "—");
 const tone = (v: unknown) => (isNum(v) ? (v > 0 ? "text-bull" : v < 0 ? "text-bear" : "") : "text-mute");
-const STATUS: Record<string, [string, string]> = {
-  TP3: ["Target 3", "text-bull"], TP2: ["Target 2", "text-bull"], TP1: ["Target 1", "text-bull"],
-  STOPPED: ["Stopped", "text-bear"], EXPIRED: ["Expired", "text-mute"], OPEN: ["Open", "text-accent"],
-};
+// a row opens its details sheet; clicks on the row's own buttons / links (seal pill) stay with them
+const fromControl = (e: React.SyntheticEvent) => (e.target as HTMLElement).closest("button, a") !== null;
 
 function Curve({ pts, roi }: { pts: { ts: number; cum_return_pct: number; cum_roi_pct?: number }[]; roi: boolean }) {
   if (pts.length < 2) return null;
@@ -41,6 +40,7 @@ function Kpi({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?
 export default function TrackRecord({ compact = false }: { compact?: boolean }) {
   const v = useApi<any>("/track-record");
   const [tab, setTab] = useState<"live" | "tested" | "bots">("live");
+  const [detail, setDetail] = useState<string | null>(null);   // row key; the row is looked up again when the view refreshes
   const pro = useIsPro();
   const d = v.data;
   if (!d && v.error) return <p className="panel p-4 text-center text-sm text-mute">The track record is being prepared and appears after the next engine run.</p>;
@@ -50,6 +50,14 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   const edge = tested.filter((t) => t.edge);
   const avgTested = edge.length ? edge.reduce((a, t) => a + (t.selective_hit_rate ?? 0), 0) / edge.length : null;
   const sigs: any[] = d.live?.signals ?? [];
+  const keyOf = (x: any) => `${x.symbol}|${x.timeframe}|${x.created_at}`;
+  const shown = detail ? sigs.find((x) => keyOf(x) === detail) : null;
+  const rowProps = (x: any) => ({
+    "data-record-row": "", tabIndex: 0, "aria-haspopup": "dialog" as const,
+    "aria-label": `${x.symbol} ${x.side} ${String(x.timeframe).toUpperCase()}: details`,
+    onClick: (e: React.MouseEvent) => { if (!fromControl(e)) setDetail(keyOf(x)); },
+    onKeyDown: (e: React.KeyboardEvent) => { if ((e.key === "Enter" || e.key === " ") && e.target === e.currentTarget) { e.preventDefault(); setDetail(keyOf(x)); } },
+  });
 
   const fresh = !(s.closed > 0);
   const roi = isNum(s.avg_roi_pct);          // ROI on margin available (v2.6 record); else the price move, labelled   // nothing closed yet (e.g. right after a fresh start of the record)
@@ -96,9 +104,9 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                 {/* phones: one card per signal, the result on margin up front */}
                 <ul className="divide-y divide-glass/[0.06] sm:hidden">
                   {sigs.map((x, i) => {
-                    const [lab, cls] = x.exit_reason === "admin_close" && x.status === "EXPIRED" ? ["Closed", "text-mute"] : STATUS[x.status] ?? [x.status, ""];
+                    const [lab, cls] = statusOf(x);
                     return (
-                      <li key={i} className="px-4 py-3">
+                      <li key={i} {...rowProps(x)} className="cursor-pointer px-4 py-3 outline-none transition-colors hover:bg-glass/[0.03] focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex min-w-0 items-center gap-2.5">
                             <CoinAvatar symbol={x.symbol} size={30} />
@@ -107,13 +115,14 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                               <div className={`mt-0.5 whitespace-nowrap text-[11px] font-semibold ${cls}`}>{lab} <span className="num font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
                             </div>
                           </div>
-                          {x.status === "OPEN" ? <span className="text-sm text-accent">open</span> : <RoiFigure x={x} size="md" />}
+                          {isOpen(x) ? <LiveRoi x={x} size="md" /> : <RoiFigure x={x} size="md" />}
                         </div>
                         <dl className="num mt-2 grid grid-cols-3 gap-2 text-[11px]">
                           <div><dt className="text-mute">Entry</dt><dd className="font-medium">{fmtPrice(x.entry)}</dd></div>
                           <div className="text-center"><dt className="text-mute">Stop</dt><dd className="font-medium text-bear">{fmtPrice(x.stop)}</dd></div>
                           <div className="text-right"><dt className="text-mute">Target 1</dt><dd className="font-medium text-bull">{fmtPrice(x.tp1)}</dd></div>
                         </dl>
+                        {isOpen(x) && <div className="mt-1.5"><LiveResult x={x} /></div>}
                         <RecordExtras x={x} />
                       </li>
                     );
@@ -123,22 +132,24 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                   <thead><tr><th>Signal</th><th className="text-center">Grade</th><th className="text-right">Entry</th><th className="text-right">Stop</th><th className="text-right">Target 1</th><th>Result</th><th className="text-right">ROI on margin</th></tr></thead>
                   <tbody>
                     {sigs.map((x, i) => {
-                      const [lab, cls] = x.exit_reason === "admin_close" && x.status === "EXPIRED" ? ["Closed", "text-mute"] : STATUS[x.status] ?? [x.status, ""];
+                      const [lab, cls] = statusOf(x);
                       return (
-                        <tr key={i}>
+                        <tr key={i} {...rowProps(x)} className="cursor-pointer outline-none focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
                           <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span></div><div className="num mt-0.5 pl-[30px] text-[11px] text-mute">{fmtTime(x.created_at)}</div></td>
                           <td className="text-center">{x.grade ? <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-[11px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span> : <span className="text-mute">—</span>}</td>
                           <td className="num text-right">{fmtPrice(x.entry)}</td><td className="num text-right text-bear">{fmtPrice(x.stop)}</td><td className="num text-right text-bull">{fmtPrice(x.tp1)}</td>
-                          <td className={`text-xs font-semibold ${cls}`}>{lab}<RecordExtras x={x} /></td>
-                          <td className="text-right align-middle">{x.status === "OPEN" ? <span className="text-accent">…</span> : <RoiFigure x={x} size="sm" />}</td>
+                          <td className={`text-xs font-semibold ${cls}`}>{lab}{isOpen(x) && <LiveResult x={x} />}<RecordExtras x={x} /></td>
+                          <td className="text-right align-middle">{isOpen(x) ? <LiveRoi x={x} /> : <RoiFigure x={x} size="sm" />}</td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
               </>)}
+              <p className="px-4 py-2 text-[11px] text-mute">Tap a signal for its details. <span className="font-semibold text-accent">Live</span> figures follow the current price and are not a result until the call closes.</p>
             </div>
           )}
+          {shown && <RecordSheet x={shown} onClose={() => setDetail(null)} />}
           {tab === "tested" && pro && (
             <div className="overflow-x-auto">
               <p className="px-4 pt-3 text-xs text-mute">{d.method?.tested} A coin/timeframe without a proven edge gets no AI-led signals.</p>

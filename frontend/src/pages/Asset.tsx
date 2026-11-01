@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useIsAdmin } from "../lib/session";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useSearchParams } from "react-router-dom";
 import TVChart from "../components/TVChart";
 import { useMarketStream } from "../lib/stream";
 import CandleChart, { Marker, OVERLAY_COLORS, PriceLine } from "../components/CandleChart";
@@ -24,7 +24,9 @@ export default function Asset() {
   const params = useParams();
   const symbol = (params.symbol ?? "BTC-USDT").replace("-", "/").toUpperCase();
   const s = slug(symbol);
-  const [tf, setTf] = useState("4h");
+  const [qs] = useSearchParams();
+  // ?tf= opens the chart at that timeframe (links from the track record)
+  const [tf, setTf] = useState(() => { const q = qs.get("tf"); return q && (ASSET_TFS as readonly string[]).includes(q) ? q : "4h"; });
   const [groups, setGroups] = useState<string[]>(["EMA", "VWAP"]);
   const [showLevels, setShowLevels] = useState(true);
   const [showPlan, setShowPlan] = useState(true);
