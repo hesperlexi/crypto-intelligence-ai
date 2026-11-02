@@ -140,8 +140,8 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
       {s.note && <Note>{s.note}</Note>}
       {bot.equity_curve.length > 1 && <div className="mt-4"><LineChart series={series} height={220} /></div>}
 
-      <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <div>
+      <div className="mt-4 grid gap-6 2xl:grid-cols-2 2xl:[&_.table-wrap]:mx-0">
+        <div className="min-w-0">
           <div className="label mb-1">Open positions{bot.pending.length ? ` · ${bot.pending.length} pending limit order(s)` : ""}</div>
           {live.length || bot.pending.length ? (
             <div className="table-wrap"><table className="grid-table">
@@ -162,7 +162,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
             </table></div>
           ) : <Empty>{isPred ? "No open predictions right now." : "No open positions. Quiet stretches are normal."}</Empty>}
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="label mb-1">Accuracy by {s.confidence_key === "p_max" ? "model probability" : "signal confidence"}</div>
           {s.by_confidence?.length ? (
             <div className="table-wrap"><table className="grid-table">
