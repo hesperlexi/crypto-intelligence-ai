@@ -56,7 +56,8 @@ async def sync_all(rt: Runtime, timeframes: list[str] | None = None) -> None:
     # the signals are followed to their real end (28 Oct 2026: LINK / SUI calls stayed "open" after testing mode)
     try:
         rows = rt.db.query("SELECT DISTINCT symbol, timeframe FROM signals WHERE status = 'OPEN' "
-                           "UNION SELECT DISTINCT symbol, timeframe FROM shadow_signals WHERE status = 'OPEN'")
+                           "UNION SELECT DISTINCT symbol, timeframe FROM shadow_signals WHERE status = 'OPEN' "
+                           "UNION SELECT DISTINCT symbol, timeframe FROM scalp_signals WHERE status = 'OPEN'")
     except Exception:
         rows = []
     orphans: dict[str, list[str]] = {}

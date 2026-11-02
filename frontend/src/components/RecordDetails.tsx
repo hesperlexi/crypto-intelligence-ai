@@ -134,7 +134,9 @@ export function LiveRoi({ x, size = "sm" }: { x: any; size?: "sm" | "md" }) {
 }
 
 /** Details sheet of one record row (portal; bottom sheet on phones, side panel from sm up). */
-export function RecordSheet({ x, onClose }: { x: any; onClose: () => void }) {
+/** `scalp`: a row of the admin scalping log (scalp_signals): not a published signal, so no admin Adjust / Close
+ *  (those act on the public record) and its own wording. */
+export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: () => void; scalp?: boolean }) {
   const ref = useFocusTrap(true, onClose);
   const open = isOpen(x), pending = isPending(x);
   const px = useTicker(open ? x.symbol : undefined)?.last ?? undefined;
@@ -174,7 +176,7 @@ export function RecordSheet({ x, onClose }: { x: any; onClose: () => void }) {
                   {base(x.symbol)} <span className={x.side === "LONG" ? "text-bull" : "text-bear"}>{x.side}</span> <span className="text-sm font-medium text-mute">{tf}</span>
                   {x.grade && <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-[11px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}
                 </h2>
-                <p className="text-[11px] text-mute">Published {fmtTime(x.created_at)} · futures signal</p>
+                <p className="text-[11px] text-mute">{scalp ? "Logged" : "Published"} {fmtTime(x.created_at)} · {scalp ? "15m scalping demo call (not public)" : "futures signal"}</p>
               </div>
             </div>
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close details" onClick={onClose}>✕</button>
@@ -193,7 +195,7 @@ export function RecordSheet({ x, onClose }: { x: any; onClose: () => void }) {
                 </div>
                 <p className="mt-2 text-[11px] text-mute">{pending
                   ? "A pullback entry: the call starts only when the price trades through the entry. If it never does, it is listed as “Entry missed” and not counted."
-                  : "Follows the live price; not a result yet. The record is written by the engine when the call closes (before fees)."}</p>
+                  : `Follows the live price; not a result yet. The ${scalp ? "scalping log" : "record"} is written by the engine when the call closes (before fees).`}</p>
               </div>
             ) : (
               <div className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${isNum(x.return_pct) ? (x.return_pct > 0 ? "border-bull/35 bg-bull/[0.07]" : "border-bear/35 bg-bear/[0.07]") : "border-glass/[0.1]"}`}>
@@ -244,9 +246,9 @@ export function RecordSheet({ x, onClose }: { x: any; onClose: () => void }) {
             <div className="flex flex-wrap gap-2 pt-1">
               <Link className="btn btn-primary px-3 py-1.5 text-xs" to={`/asset/${slug(x.symbol)}?tf=${encodeURIComponent(x.timeframe ?? "4h")}`}>Open chart</Link>
               {open && !pending && <Link className="btn px-3 py-1.5 text-xs" to={`/paper?${paperQ}`}>Practise this trade</Link>}
-              {open && x.id && <AdjustButton call={adminCall(x)} symbol={x.symbol} timeframe={x.timeframe} />}
+              {open && x.id && !scalp && <AdjustButton call={adminCall(x)} symbol={x.symbol} timeframe={x.timeframe} />}
             </div>
-            <p className="text-[11px] text-mute">Analysis only, not financial advice. Every published signal stays in the record, win or loss.</p>
+            <p className="text-[11px] text-mute">{scalp ? "Demo results, before fees. Every logged scalping call stays in this log, win or loss; it is never part of the public record." : "Analysis only, not financial advice. Every published signal stays in the record, win or loss."}</p>
           </div>
         </div>
       </div>

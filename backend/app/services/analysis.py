@@ -505,6 +505,12 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             out["record_status"] = "not_logged"
         if shadow and not stale:
             tracking.log_shadow(rt.db, out, shadow[0], shadow[1])
+        if demo and timeframe in tracking.SCALP_TFS:
+            # admin scalping log: its own table, never the record; `out` is not changed (views stay byte-identical)
+            try:
+                tracking.log_scalp(rt.db, out)
+            except Exception as exc:              # the log never blocks an analysis
+                rt.record_error(f"scalp log {symbol}", exc)
         out["call"] = tracking.current_call(rt.db, symbol, timeframe)
         ai = tracking.latest_ai(rt.db, symbol, timeframe)
         if ai:

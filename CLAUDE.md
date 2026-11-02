@@ -201,6 +201,29 @@ public page `/verify` (Trust kind "verify"). No extra Firestore documents.
 `futures-demo-ab-1d` / `-3d` (`bots.DEMO_BOTS`, grades A+B, standard 50/25/25 exits, 20x safe leverage, 30 candles), added
 once (flag `demo_1d3d_v210`). Calls published before stay in the record until they close. Signals tabs say "demo only".
 
+## Scalping scorecard (admin, 2 Nov 2026, branch `scalping`)
+- 15m is demo-only, so 15m calls never reach `signals`. Every live 15m **grade-A** demo call (analysis `demo`) is logged
+  in its own table **`scalp_signals`** (same columns as `signals`) by `tracking.log_scalp` (called in `analysis.analyze`
+  after the record's logging; never changes the analysis): record's entry / stop / targets / fill rules (`_plan`), time
+  limit `tracking.horizon_for('15m')` (250), one OPEN/PENDING call per coin and the re-entry cooldown/cap (`entry_gate`
+  on `scalp_signals`). Followed by `tracking.update_signal_outcomes(rt, table="scalp_signals")` (worker step
+  `scalp_outcomes`). It never writes `signals`, `shadow_signals`, `decisions` or `signal_proofs`, and nothing that builds
+  the record, safety switch, achievements, weekly report, wins_today, Telegram, proofs, training or bots reads it
+  (`market.sync_all` only keeps candles coming for open scalp calls of removed coins). Test
+  `tests/test_scalping.py` proves track_record / wins_today / weekly_reports / achievements stay byte-identical.
+- Settings: **`scalping_since`** (set once by `worker.sync_config`, flag `scalping_v1`; counting starts there).
+  **`scalping_visibility`** lives in Firestore `config/scalping.visibility` ('admin' default when missing | 'members'),
+  written by the admin (rules: only fields visibility/updated_at/by). Rule: `views/scalping` readable by the admin, or by
+  active members only when that field is 'members'; never signed-out/pending/expired. Rules tests in `tests/rules`.
+- View `views/scalping` (`views.scalping`, one document, hash-dedup, `min_interval_s` 900 with `core` = calls
+  logged/filled/hit/closed): since, summary (`views.scalping_stats`: win rate, avg/total return and ROI on margin, profit
+  factor, best/worst, avg hold, TP1-3 hit rates, streak, max drawdown of the cumulative curve), open calls with
+  live_fields, last 60 closed/missed calls, curve, 15m demo bot block (`futures-demo-a-15m` from the bots report).
+  Before fees. Skipped in lean mode.
+- UI: Results tab "Scalping" (`components/Scalping.tsx`, admin or members when opened), Health summary, admin
+  visibility toggle with confirm, share PNG drawn in the browser (`lib/scalpCard.ts`, cardCanvas style, "Demo results -
+  15m scalping - since <date>"; nothing posted). Record rows open `RecordSheet` with `scalp` (no Adjust/Close).
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

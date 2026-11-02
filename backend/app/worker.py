@@ -461,6 +461,12 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             sink.set("config/bots", {**doc, "bots": doc["bots"] + add, "defaults_added": seen, "updated_at": now_ms()})
             notes["demo_1d3d_v210"] = [b["id"] for b in add]
         rt.db.set_setting("demo_1d3d_v210", True)
+    # admin scalping log (Nov 2026): 15m grade-A demo calls are counted from this moment (set once, never moved)
+    if not rt.db.get_setting("scalping_v1", False):
+        if not rt.db.get_setting("scalping_since", None):
+            rt.db.set_setting("scalping_since", now_ms())
+        rt.db.set_setting("scalping_v1", True)
+        notes["scalping_since"] = rt.db.get_setting("scalping_since", None)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())
@@ -769,6 +775,13 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("wins_today", views.wins_today(rt))
     # one document with the last 100 trade-management decisions; written only when it changed (hash-deduplicated)
     sink.view("decisions_recent", views.decisions_recent(rt), min_interval_s=300)
+    # admin scalping scorecard (one document, hash-deduplicated; the demo bot's equity moves every cycle, so changes
+    # wait up to 15 min unless a trade opened / filled / closed - `core`). Never blocks the rest of the publish.
+    try:
+        sc = views.scalping(rt, bot_report)
+        sink.view("scalping", sc, min_interval_s=900, core=views.scalping_core(sc))
+    except Exception as exc:
+        rt.record_error("scalping view", exc)
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))
@@ -902,6 +915,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         rt.db.set_setting("tracking_be_v23b", True)
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
                                   tracking.update_signal_outcomes(rt, table="shadow_signals")))
+    # admin scalping log: its own step, so a problem there never stops the record's outcomes above
+    step("scalp_outcomes", lambda: tracking.update_signal_outcomes(rt, table=tracking.SCALP_TABLE))
     missing = [(s, tf) for s in rt.symbols() for tf in MODEL_TIMEFRAMES
                if trainer.active_version(s, tf, rt.db) is None and rt.store.is_current(rt.exchange, s, tf)]
     detail["bootstrap"] = step("bootstrap", lambda: train_until(rt, missing, True, t0 + budget_s * 0.5))

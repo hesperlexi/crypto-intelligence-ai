@@ -16,7 +16,7 @@ const tone = (v: unknown) => (isNum(v) ? (v > 0 ? "text-bull" : v < 0 ? "text-be
 // a row opens its details sheet; clicks on the row's own buttons / links (seal pill) stay with them
 const fromControl = (e: React.SyntheticEvent) => (e.target as HTMLElement).closest("button, a") !== null;
 
-function Curve({ pts, roi }: { pts: { ts: number; cum_return_pct: number; cum_roi_pct?: number }[]; roi: boolean }) {
+export function Curve({ pts, roi, id = "tr-fill", label = "Cumulative result of all closed signals" }: { pts: { ts: number; cum_return_pct: number; cum_roi_pct?: number }[]; roi: boolean; id?: string; label?: string }) {
   if (pts.length < 2) return null;
   const val = (p: { cum_return_pct: number; cum_roi_pct?: number }) => (roi && isNum(p.cum_roi_pct) ? p.cum_roi_pct : p.cum_return_pct);
   const w = 600, h = 120, ys = pts.map(val), lo = Math.min(0, ...ys), hi = Math.max(0, ...ys);
@@ -24,10 +24,10 @@ function Curve({ pts, roi }: { pts: { ts: number; cum_return_pct: number; cum_ro
   const d = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(val(p)).toFixed(1)}`).join("");
   const up = ys[ys.length - 1] >= 0;
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} className="h-28 w-full" preserveAspectRatio="none" role="img" aria-label="Cumulative result of all closed signals">
-      <defs><linearGradient id="tr-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0.22" /><stop offset="1" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0" /></linearGradient></defs>
+    <svg viewBox={`0 0 ${w} ${h}`} className="h-28 w-full" preserveAspectRatio="none" role="img" aria-label={label}>
+      <defs><linearGradient id={id} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0.22" /><stop offset="1" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0" /></linearGradient></defs>
       <line x1="0" x2={w} y1={y(0)} y2={y(0)} stroke="currentColor" className="text-glass/20" strokeDasharray="4 4" />
-      <path d={`${d}L${w},${y(0).toFixed(1)}L0,${y(0).toFixed(1)}Z`} fill="url(#tr-fill)" />
+      <path d={`${d}L${w},${y(0).toFixed(1)}L0,${y(0).toFixed(1)}Z`} fill={`url(#${id})`} />
       <path d={d} fill="none" stroke={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} strokeWidth="2" vectorEffect="non-scaling-stroke" />
     </svg>
   );

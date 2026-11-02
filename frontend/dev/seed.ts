@@ -396,6 +396,7 @@ export function seed(): Record<string, any> {
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
     "views/signals": v(signalLog()),
     "views/weekly_report": v(weekly()),
+    "views/scalping": v(scalping()),
     "users/u_member_self": undefined,
     ...users(),
     ...presence(),
@@ -430,5 +431,59 @@ function health() {
     recent_errors: [{ ts: NOW - 2 * H, where: "engine news_publish", error: "TimeoutError: calendar feed did not answer" }],
     safety: [],
     config: { exchange: "binance", background_jobs: false, websocket_feed: false, deep_models: false, forecast_refresh_s: 300, retrain_interval_h: 24, mode: "ANALYSIS ONLY - no real orders are ever placed" },
+  };
+}
+
+/** views/scalping: the shape backend/app/views.scalping publishes (15m grade-A demo calls, admin scorecard). */
+function scalping() {
+  const M15 = 900_000;
+  const since = NOW - 9 * D;
+  const coins = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "BNB/USDT", "DOGE/USDT", "AVAX/USDT", "LTC/USDT"];
+  // [status, return %, tp1, tp2, tp3, hold minutes]
+  const outcomes: [string, number, number, number, number, number][] = [
+    ["TP1", 0.31, 1, 0, 0, 95], ["STOPPED", -0.62, 0, 0, 0, 40], ["TP3", 1.18, 1, 1, 1, 210], ["TP2", 0.74, 1, 1, 0, 160],
+    ["STOPPED", -0.55, 0, 0, 0, 25], ["TP1", 0.28, 1, 0, 0, 130], ["EXPIRED", -0.12, 0, 0, 0, 3750], ["TP2", 0.69, 1, 1, 0, 185],
+    ["STOPPED", -0.58, 0, 0, 0, 55], ["TP1", 0.33, 1, 0, 0, 70], ["TP3", 1.06, 1, 1, 1, 240], ["STOPPED", -0.6, 0, 0, 0, 35],
+    ["TP1", 0.3, 1, 0, 0, 120], ["TP2", 0.71, 1, 1, 0, 175],
+  ];
+  const lev = 20;
+  const closed = outcomes.map(([status, ret, t1, t2, t3, hold], i) => {
+    const symbol = coins[i % coins.length], px = PRICES[symbol].p, side = i % 3 === 1 ? "SHORT" : "LONG", k = side === "LONG" ? 1 : -1;
+    const created = since + (i + 1) * 14 * H, entry = px * (1 - 0.01 * Math.sin(i)), risk = entry * 0.006;
+    return { id: `sc${i}`, symbol, timeframe: "15m", side, decision: side === "LONG" ? "BUY" : "SELL", grade: "A", created_at: created, entry, stop: entry - k * risk,
+      tp1: entry + k * risk, tp2: entry + k * risk * 1.5, tp3: entry + k * risk * 2, status, closed_at: created + hold * 60_000, return_pct: ret, leverage: lev, roi_pct: ret * lev,
+      fill_status: "FILLED", peak_r: null, peak_pct: null, exit_reason: status === "STOPPED" ? "stop" : status === "EXPIRED" ? "expired" : status === "TP3" ? "tp3" : "break_even",
+      managed: 0, tp1_hit: t1, tp2_hit: t2, tp3_hit: t3, stop_hit: status === "STOPPED" ? 1 : 0, horizon_bars: 250, expires_at: created + 250 * M15, filled_at: created, hold_min: hold };
+  });
+  const missed = { ...closed[0], id: "scm", symbol: "BTC/USDT", status: "NOT_FILLED", fill_status: "NOT_FILLED", return_pct: null, roi_pct: null, created_at: NOW - 30 * H, closed_at: NOW - 28 * H, tp1_hit: 0, tp2_hit: 0, tp3_hit: 0, stop_hit: 0, exit_reason: null, hold_min: undefined };
+  const openRow = (id: string, symbol: string, side: "LONG" | "SHORT", ago: number, tp1: number, pending = false) => {
+    const px = PRICES[symbol].p, k = side === "LONG" ? 1 : -1, entry = px * (1 - k * 0.0015), risk = entry * 0.005, created = NOW - ago;
+    return { id, symbol, timeframe: "15m", side, decision: pending ? "BUY ON PULLBACK" : side === "LONG" ? "BUY" : "SELL", grade: "A", created_at: created, entry, stop: entry - k * risk,
+      tp1: entry + k * risk, tp2: entry + k * risk * 1.5, tp3: entry + k * risk * 2, status: "OPEN", closed_at: null, return_pct: null, leverage: lev, roi_pct: null,
+      fill_status: pending ? "PENDING" : "FILLED", peak_r: 0.6, peak_pct: 0.3, exit_reason: null, managed: 0, tp1_hit: tp1, tp2_hit: 0, tp3_hit: 0, stop_hit: 0,
+      horizon_bars: 250, expires_at: created + 250 * M15, ...(pending ? {} : { filled_at: created }) };
+  };
+  const open = [openRow("so1", "SOL/USDT", "LONG", 50 * 60_000, 1), openRow("so2", "ETH/USDT", "SHORT", 20 * 60_000, 0), openRow("so3", "AVAX/USDT", "LONG", 10 * 60_000, 0, true)];
+  const rets = closed.map((x) => x.return_pct);
+  let acc = 0, accR = 0, peak = 0, dd = 0, peakR = 0, ddR = 0;
+  const curve = closed.map((x) => { acc += x.return_pct; accR += x.roi_pct; peak = Math.max(peak, acc); dd = Math.max(dd, peak - acc); peakR = Math.max(peakR, accR); ddR = Math.max(ddR, peakR - accR); return { ts: x.closed_at, cum_return_pct: acc, cum_roi_pct: accR }; });
+  const wins = rets.filter((r) => r > 0), losses = rets.filter((r) => r <= 0);
+  const best = closed.reduce((a, b) => (b.return_pct > a.return_pct ? b : a)), worst = closed.reduce((a, b) => (b.return_pct < a.return_pct ? b : a));
+  const pick = (x: any) => ({ id: x.id, symbol: x.symbol, side: x.side, status: x.status, return_pct: x.return_pct, roi_pct: x.roi_pct, leverage: x.leverage, closed_at: x.closed_at });
+  const mean = (a: number[]) => a.reduce((p, q) => p + q, 0) / a.length;
+  return {
+    generated_at: NOW, since, timeframe: "15m", grades: ["A"], started: true, logged: closed.length + open.length + 1,
+    label: "Demo results · 15m scalping · not public · before fees",
+    method: "Every live 15m grade-A call the engine issues to the demo bots, logged the moment it is issued (it is never a public signal) and followed candle by candle with the track record's rules: entry at the card's entry, half closes at target 1 (stop to break-even), a quarter at target 2 (stop to target 1), a quarter at target 3, or the stop; time limit 250 candles. One call per coin at a time. Before fees. ROI on margin = price return x the card's leverage.",
+    summary: { closed: closed.length, wins: wins.length, losses: losses.length, win_rate: wins.length / closed.length, avg_return_pct: mean(rets), total_return_pct: acc,
+      profit_factor: wins.reduce((a, b) => a + b, 0) / -losses.reduce((a, b) => a + b, 0), best: pick(best), worst: pick(worst), avg_hold_min: mean(closed.map((x) => x.hold_min)),
+      hit_rates: { tp1: mean(closed.map((x) => x.tp1_hit)), tp2: mean(closed.map((x) => x.tp2_hit)), tp3: mean(closed.map((x) => x.tp3_hit)) },
+      stop_rate: mean(closed.map((x) => (x.status === "STOPPED" ? 1 : 0))), streak: { kind: "win", n: 2, best_win: 2, best_loss: 1 },
+      max_drawdown_pct: dd, max_drawdown_roi_pct: ddR, avg_roi_pct: mean(rets) * lev, total_roi_pct: accR, best_roi_pct: best.roi_pct, worst_roi_pct: worst.roi_pct },
+    open, recent: [missed, ...closed].sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0)), curve, not_filled: 1, void: 0,
+    bot: { id: "futures-demo-a-15m", name: "Futures demo bot 15M · grade A · TP1", enabled: true, starting_balance: 10000, equity: 10412.6, cash: 9310.2, return_pct: 4.13,
+      trades: 19, win_rate: 0.63, profit_factor: 1.42, max_drawdown_pct: -2.4, open_positions: 2, fees_paid: 61.3, started_at: NOW - 12 * D,
+      recent: closed.slice(-6).reverse().map((x) => ({ symbol: x.symbol, side: x.side, opened_at: x.created_at, closed_at: x.closed_at, entry: x.entry, exit: x.tp1, pnl: x.return_pct * 20,
+        return_pct: x.return_pct, roe_pct: x.return_pct > 0 ? 6.2 : -12.1, leverage: 20, exit_reason: x.return_pct > 0 ? "take profit 1" : "stop loss" })) },
   };
 }

@@ -473,6 +473,50 @@ async function main() {
     await assertFails(addDoc(collection(as("p1", "p1@example.com"), "alerts"), { owner_uid: "p1", type: "x" }));
   });
 
+  // ---------------------------------------------------------------- views/scalping (admin scorecard) + config/scalping
+  const scalpView = { "views/scalping": { json: "{}", updated_at: NOW() }, "views/track_record": { json: "{}", updated_at: NOW() } };
+  const readScalp = async (db: Firestore) => { const { getDoc } = await import("firebase/firestore"); return getDoc(doc(db, "views", "scalping")); };
+  await test("scalping: admin reads views/scalping (default visibility, no config doc)", async () => {
+    await seed(scalpView);
+    await assertSucceeds(readScalp(admin()));
+  });
+  await test("scalping: member denied while visibility is admin (no config doc, and visibility 'admin')", async () => {
+    await seed({ ...member, ...scalpView });
+    await assertFails(readScalp(as("m1", "m1@example.com")));
+    await seed({ ...member, ...scalpView, "config/scalping": { visibility: "admin", updated_at: NOW(), by: ADMIN.email } });
+    await assertFails(readScalp(as("m1", "m1@example.com")));
+    const { getDoc } = await import("firebase/firestore");
+    await assertSucceeds(getDoc(doc(as("m1", "m1@example.com"), "views", "track_record")));     // other views unchanged
+  });
+  await test("scalping: active member allowed when visibility is 'members'", async () => {
+    await seed({ ...member, ...scalpView, "config/scalping": { visibility: "members", updated_at: NOW(), by: ADMIN.email } });
+    await assertSucceeds(readScalp(as("m1", "m1@example.com")));
+  });
+  await test("scalping: pending / expired accounts denied even when visibility is 'members'", async () => {
+    await seed({ ...scalpView, "config/scalping": { visibility: "members", updated_at: NOW(), by: ADMIN.email },
+      "users/p1": pending("p1", "p1@example.com"), "users/x1": approved("x1", "x1@example.com", { expires_at: NOW() - DAY }) });
+    await assertFails(readScalp(as("p1", "p1@example.com")));
+    await assertFails(readScalp(as("x1", "x1@example.com")));
+  });
+  await test("scalping: signed-out always denied (admin or members visibility)", async () => {
+    await seed(scalpView);
+    const anon = env.unauthenticatedContext().firestore() as unknown as Firestore;
+    await assertFails(readScalp(anon));
+    await seed({ ...scalpView, "config/scalping": { visibility: "members", updated_at: NOW(), by: ADMIN.email } });
+    await assertFails(readScalp(anon));
+  });
+  await test("scalping: nobody writes views/scalping from the website", async () => {
+    await assertFails(setDoc(doc(admin(), "views", "scalping"), { json: "{}" }));
+  });
+  await test("config/scalping: admin sets visibility; members and bad values denied", async () => {
+    await seed(member);
+    await assertSucceeds(setDoc(doc(admin(), "config", "scalping"), { visibility: "members", updated_at: NOW(), by: ADMIN.email }));
+    await assertSucceeds(setDoc(doc(admin(), "config", "scalping"), { visibility: "admin", updated_at: NOW(), by: ADMIN.email }));
+    await assertFails(setDoc(doc(admin(), "config", "scalping"), { visibility: "public", updated_at: NOW(), by: ADMIN.email }));
+    await assertFails(setDoc(doc(admin(), "config", "scalping"), { visibility: "members", extra: true }));
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "config", "scalping"), { visibility: "members", updated_at: NOW(), by: "m1@example.com" }));
+  });
+
   await env.cleanup();
   const failed = results.filter((r) => !r.ok);
   const summary = { at: new Date().toISOString(), sha: process.env.GITHUB_SHA ?? null, total: results.length, passed: results.length - failed.length, failed: failed.length, results };

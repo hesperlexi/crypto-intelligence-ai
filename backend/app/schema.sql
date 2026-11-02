@@ -305,6 +305,49 @@ CREATE TABLE IF NOT EXISTS shadow_signals (
   UNIQUE (symbol, timeframe, bar_ts)
 );
 
+-- Scalping log (admin, Nov 2026): every live 15m grade-A demo call (analysis `demo`), logged when issued and followed
+-- with the record's exit engine (tracking.evaluate_signal). Separate from `signals` / `shadow_signals`: it never feeds
+-- the public record, the safety switch, achievements, reports, Telegram, proofs, training or the bots.
+CREATE TABLE IF NOT EXISTS scalp_signals (
+  id TEXT PRIMARY KEY,
+  created_at BIGINT NOT NULL,
+  symbol TEXT NOT NULL,
+  timeframe TEXT NOT NULL,
+  bar_ts BIGINT NOT NULL,
+  signal TEXT NOT NULL,
+  decision TEXT NOT NULL,
+  score DOUBLE PRECISION,
+  confidence DOUBLE PRECISION,
+  regime TEXT,
+  price DOUBLE PRECISION NOT NULL,
+  side INTEGER NOT NULL DEFAULT 0,
+  entry DOUBLE PRECISION,
+  stop DOUBLE PRECISION,
+  tp1 DOUBLE PRECISION,
+  tp2 DOUBLE PRECISION,
+  tp3 DOUBLE PRECISION,
+  rr DOUBLE PRECISION,
+  status TEXT NOT NULL DEFAULT 'OPEN',
+  tp1_hit INTEGER NOT NULL DEFAULT 0,
+  tp2_hit INTEGER NOT NULL DEFAULT 0,
+  tp3_hit INTEGER NOT NULL DEFAULT 0,
+  stop_hit INTEGER NOT NULL DEFAULT 0,
+  closed_at BIGINT,
+  return_pct DOUBLE PRECISION,
+  model_version_id TEXT,
+  payload TEXT,
+  fill_status TEXT,
+  filled_at BIGINT,
+  peak_r DOUBLE PRECISION,
+  peak_pct DOUBLE PRECISION,
+  exit_reason TEXT,
+  managed INTEGER,
+  atr DOUBLE PRECISION,
+  app_version TEXT,
+  engine_version TEXT,
+  UNIQUE (symbol, timeframe, bar_ts)
+);
+
 -- v2.5 (audit v1): every trade-management decision (logged / skipped / cooldown / re-entry cap / stale / fill /
 -- not filled / each exit), with the inputs it was made on
 CREATE TABLE IF NOT EXISTS decisions (

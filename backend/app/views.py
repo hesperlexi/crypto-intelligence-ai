@@ -542,3 +542,137 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
                     (*tracking.CLOSED_STATUSES, now - hours * 3_600_000, *rp))
     return {"generated_at": now, "period": label if wins else None, "wins": wins,
             "window_hours": hours, "closed": int(tot["n"] or 0), "losses": int(tot["losses"] or 0)}
+
+
+# ---- admin scalping scorecard (15m grade-A demo calls; never part of the record) -------------------------------
+
+SCALP_BOT_ID = "futures-demo-a-15m"
+SCALP_RECENT = 60          # recent trades listed in the view (the document stays far below Firestore's 1 MB)
+SCALP_CURVE = 500
+
+
+def _max_drawdown(values: list[float]) -> float:
+    """Largest fall (percentage points) of a cumulative-return curve from its running peak; the curve starts at 0."""
+    peak = dd = acc = 0.0
+    for v in values:
+        acc += v
+        peak = max(peak, acc)
+        dd = max(dd, peak - acc)
+    return float(dd)
+
+
+def _streak(rets: list[float]) -> dict[str, Any]:
+    """Current streak (wins = return > 0, losses = return <= 0, as the record counts them) and the longest of each."""
+    cur_kind, cur = None, 0
+    best = {"win": 0, "loss": 0}
+    for r in rets:
+        kind = "win" if r > 0 else "loss"
+        cur = cur + 1 if kind == cur_kind else 1
+        cur_kind = kind
+        best[kind] = max(best[kind], cur)
+    return {"kind": cur_kind, "n": cur, "best_win": best["win"], "best_loss": best["loss"]}
+
+
+def scalping_stats(closed: list[dict[str, Any]]) -> dict[str, Any]:
+    """Scorecard numbers of closed scalp calls (sorted by close time, oldest first). Before fees, like the record."""
+    if not closed:
+        return {"closed": 0}
+    rets = [float(x["return_pct"]) for x in closed]
+    r = np.array(rets, float)
+    wins, losses = r[r > 0], r[r <= 0]
+    holds = [(x["closed_at"] - (x.get("filled_at") or x["created_at"])) / 60_000 for x in closed
+             if x.get("closed_at") and (x.get("filled_at") or x.get("created_at"))]
+    best = max(closed, key=lambda x: x["return_pct"])
+    worst = min(closed, key=lambda x: x["return_pct"])
+    pick = lambda x: {k: x.get(k) for k in ("id", "symbol", "side", "status", "return_pct", "roi_pct", "leverage",  # noqa: E731
+                                           "closed_at")}
+    rois = [x["roi_pct"] for x in closed if x.get("roi_pct") is not None]
+    n = len(closed)
+    out = {"closed": n, "wins": int(len(wins)), "losses": int(len(losses)), "win_rate": float(len(wins) / n),
+           "avg_return_pct": float(r.mean()), "total_return_pct": float(r.sum()),
+           "profit_factor": float(wins.sum() / -losses.sum()) if len(losses) and losses.sum() < 0 else None,
+           "best": pick(best), "worst": pick(worst),
+           "avg_hold_min": float(np.mean(holds)) if holds else None,
+           "hit_rates": {k: float(np.mean([1.0 if x.get(f"{k}_hit") else 0.0 for x in closed])) for k in ("tp1", "tp2", "tp3")},
+           "stop_rate": float(np.mean([1.0 if x["status"] == "STOPPED" else 0.0 for x in closed])),
+           "streak": _streak(rets), "max_drawdown_pct": _max_drawdown(rets),
+           "by_status": {s: sum(x["status"] == s for x in closed) for s in tracking.CLOSED_STATUSES}}
+    out.update(roi_summary(closed))
+    if rois:
+        out["max_drawdown_roi_pct"] = _max_drawdown([x["roi_pct"] if x.get("roi_pct") is not None else 0.0 for x in closed])
+    return out
+
+
+def _scalp_bot(rt: Runtime, bot_report: dict[str, Any] | None) -> dict[str, Any] | None:
+    """The 15m demo bot's book from the bots report (virtual money; its fills include fees and funding)."""
+    for bt in (bot_report or {}).get("bots", []):
+        cfg = bt.get("config") or {}
+        if cfg.get("id") != SCALP_BOT_ID:
+            continue
+        st, state = bt.get("stats") or {}, bt.get("state") or {}
+        trades = []
+        for t in (bt.get("trades") or [])[:20]:
+            info = t.get("info") if isinstance(t.get("info"), dict) else loads(t.get("info"), {}) or {}
+            trades.append({"symbol": t.get("symbol"), "side": "LONG" if (t.get("side") or 0) > 0 else "SHORT",
+                           "opened_at": t.get("opened_at"), "closed_at": t.get("closed_at"), "entry": t.get("entry"),
+                           "exit": t.get("exit"), "pnl": t.get("pnl"), "return_pct": t.get("return_pct"),
+                           "roe_pct": info.get("roe_pct"), "leverage": info.get("leverage"), "exit_reason": t.get("exit_reason")})
+        return {"id": cfg["id"], "name": cfg.get("name"), "enabled": bool(cfg.get("enabled", True)),
+                "starting_balance": cfg.get("starting_balance"), "equity": st.get("equity", state.get("equity")),
+                "cash": state.get("cash"), "return_pct": st.get("return_pct"), "trades": st.get("trades", 0),
+                "win_rate": st.get("win_rate"), "profit_factor": st.get("profit_factor"),
+                "max_drawdown_pct": st.get("max_drawdown_pct"), "open_positions": st.get("open_positions", 0),
+                "fees_paid": st.get("fees_paid"), "started_at": state.get("started_at"), "recent": trades}
+    return None
+
+
+def scalping(rt: Runtime, bot_report: dict[str, Any] | None = None) -> dict[str, Any]:
+    """views/scalping (admin; members only when the admin opens it): every 15m grade-A demo call logged since
+    `scalping_since` in `scalp_signals`, with its real outcome - wins and losses alike, nothing filtered. Reads only
+    `scalp_signals`, settings and the bots report."""
+    since = tracking.scalp_since(rt.db)
+    base = {"generated_at": now_ms(), "since": since, "timeframe": "15m", "grades": list(tracking.SCALP_GRADES),
+            "label": "Demo results · 15m scalping · not public · before fees",
+            "method": "Every live 15m grade-A call the engine issues to the demo bots, logged the moment it is issued "
+                      "(it is never a public signal) and followed candle by candle with the track record's rules: entry "
+                      "at the card's entry, half closes at target 1 (stop to break-even), a quarter at target 2 (stop to "
+                      f"target 1), a quarter at target 3, or the stop; time limit {tracking.horizon_for('15m')} candles. "
+                      "One call per coin at a time. Before fees. ROI on margin = price return x the card's leverage.",
+            "bot": _scalp_bot(rt, bot_report)}
+    if since is None:
+        return {**base, "started": False, "summary": {"closed": 0}, "open": [], "recent": [], "curve": [],
+                "not_filled": 0, "void": 0}
+    rows = rt.db.query(f"SELECT * FROM {tracking.SCALP_TABLE} WHERE created_at >= ? AND side != 0 ORDER BY created_at DESC",
+                       (since,))
+    items = []
+    for r in rows:
+        p = loads(r.get("payload"), {}) or {}
+        x = {"id": r["id"], "symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+             "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
+             "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
+             "closed_at": r["closed_at"], "return_pct": r["return_pct"], **tracking.margin_fields(r, p),
+             **{k: v for k, v in contract_fields(r, p).items() if k not in ("ai", "app_version", "engine_version")},
+             **live_fields(r, p)}
+        if r["closed_at"] and r["status"] != "OPEN":
+            x["hold_min"] = (r["closed_at"] - (r.get("filled_at") or r["created_at"])) / 60_000
+        items.append(x)
+    closed = sorted([x for x in items if x["status"] in tracking.CLOSED_STATUSES and x["return_pct"] is not None],
+                    key=lambda x: (x["closed_at"] or x["created_at"], x["created_at"]))
+    curve, acc, acc_roi = [], 0.0, 0.0
+    for x in closed:
+        acc += x["return_pct"]
+        acc_roi += x["roi_pct"] if x.get("roi_pct") is not None else 0.0
+        curve.append({"ts": x["closed_at"] or x["created_at"], "cum_return_pct": acc, "cum_roi_pct": acc_roi})
+    done = [x for x in items if x["status"] != "OPEN"]
+    done.sort(key=lambda x: (x["closed_at"] or x["created_at"]), reverse=True)
+    return {**base, "started": True, "summary": scalping_stats(closed),
+            "open": [x for x in items if x["status"] == "OPEN"], "recent": done[:SCALP_RECENT],
+            "curve": curve[-SCALP_CURVE:], "not_filled": sum(x["status"] == "NOT_FILLED" for x in items),
+            "void": sum(x["status"] == "VOID" for x in items), "logged": len(items)}
+
+
+def scalping_core(v: dict[str, Any]) -> Any:
+    """What must reach the admin at once: a call logged, filled, hitting a target or closing (not the bot's equity)."""
+    return [v.get("since"), v.get("logged"), (v.get("summary") or {}).get("closed"),
+            [(x["id"], x["status"], x.get("fill_status"), x.get("tp1_hit"), x.get("tp2_hit")) for x in v.get("open") or []],
+            ((v.get("bot") or {}).get("trades"), (v.get("bot") or {}).get("open_positions"))]

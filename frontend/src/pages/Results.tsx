@@ -5,8 +5,10 @@ import Accuracy from "./Accuracy";
 import Bots from "./Bots";
 import History from "./History";
 import { VerifyBox } from "../components/SealProof";
+import Scalping, { useScalpingVisibility } from "../components/Scalping";
+import { useIsAdmin } from "../lib/session";
 
-const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["tools", "Tools"]] as const;
+const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["scalping", "Scalping"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["tools", "Tools"]] as const;
 type Tab = (typeof TABS)[number][0];
 
 const TOOLS = [
@@ -17,7 +19,11 @@ const TOOLS = [
 
 export default function Results() {
   const [params, setParams] = useSearchParams();
-  const tab = (TABS.some(([k]) => k === params.get("tab")) ? params.get("tab") : "track") as Tab;
+  // Scalping (15m demo scorecard): the admin, and members only while the admin has opened it to them (rules enforce it)
+  const admin = useIsAdmin();
+  const scalpVis = useScalpingVisibility();
+  const tabs = TABS.filter(([k]) => k !== "scalping" || admin || scalpVis === "members");
+  const tab = (tabs.some(([k]) => k === params.get("tab")) ? params.get("tab") : "track") as Tab;
   const go = (k: Tab) => { const p = new URLSearchParams(params); p.set("tab", k); setParams(p, { replace: true }); };
   return (
     <div className="space-y-4">
@@ -26,13 +32,14 @@ export default function Results() {
         <p className="page-sub">Does it work? Every signal's outcome, the demo bots that trade them, and how accurate the AI is on data it never saw.</p>
       </div>
       <div className="-mx-3 flex gap-1 overflow-x-auto border-b border-glass/[0.08] px-3 sm:mx-0 sm:px-0" role="tablist">
-        {TABS.map(([k, l]) => (
+        {tabs.map(([k, l]) => (
           <button key={k} role="tab" aria-selected={tab === k} onClick={() => go(k)}
             className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm transition-colors ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
         ))}
       </div>
       {tab === "track" && <><TrackRecord /><VerifyBox /></>}
       {tab === "bots" && <Bots />}
+      {tab === "scalping" && <Scalping />}
       {tab === "accuracy" && <Accuracy />}
       {tab === "log" && <History />}
       {tab === "tools" && (

@@ -508,6 +508,69 @@ def log_shadow(db: Database, a: dict[str, Any], decision: str, setup: dict[str, 
     return n > 0
 
 
+# ---- scalping log (admin, Nov 2026) ----------------------------------------------------------------------------
+# 15m calls are demo-only (analysis.DEMO_ONLY_TFS): the public decision is NO TRADE and nothing reaches `signals`. The
+# 15m grade-A call the demo bots may take (analysis `demo`) is logged here instead, at the moment it is issued, with
+# the record's own entry / stop / target / fill rules, the call's own time limit and the one-open-call and re-entry
+# rules, and followed by update_signal_outcomes(table="scalp_signals"). Nothing here writes to `signals`,
+# `shadow_signals`, `decisions` or `signal_proofs`, so the record, safety switch, reports, Telegram and bots never see it.
+SCALP_TABLE = "scalp_signals"
+SCALP_TFS = ("15m",)
+SCALP_GRADES = ("A",)
+
+
+def scalp_since(db: Database) -> int | None:
+    """Start of the scalping log (setting `scalping_since`, set once by worker.sync_config); None = not started."""
+    v = db.get_setting("scalping_since", None)
+    return int(v) if v else None
+
+
+def log_scalp(db: Database, a: dict[str, Any], now: int | None = None) -> dict[str, Any]:
+    """Log a live 15m grade-A demo call in `scalp_signals`. Never changes `a`. Returns {'status', 'reason', 'id'}:
+    status 'logged' | 'already_open' | 'not_logged' | None (not a scalp call)."""
+    res: dict[str, Any] = {"status": None, "reason": None, "id": None}
+    demo = a.get("demo") if isinstance(a.get("demo"), dict) else None
+    setup = a.get("setup") or {}
+    if (not demo or a.get("timeframe") not in SCALP_TFS or demo.get("grade") not in SCALP_GRADES
+            or demo.get("decision") not in TRADE_DECISIONS or not setup.get("valid") or a.get("stale")
+            or a.get("bar_ts") is None or a.get("price") is None):
+        return res
+    if scalp_since(db) is None:
+        return {**res, "status": "not_logged", "reason": "the scalping log has not started"}
+    now = now or now_ms()
+    b = {**a, "decision": demo["decision"], "grade": demo["grade"]}
+    gate, why, inputs = entry_gate(db, b, table=SCALP_TABLE, now=now)
+    if gate != "ok":
+        return {"status": "already_open" if gate == "already_open" else "not_logged", "reason": why,
+                "id": inputs.get("open_id")}
+    pl = _plan(b, db)
+    if pl["entry"] is None or pl["stop"] is None:
+        return {**res, "status": "not_logged", "reason": "no entry / stop"}
+    from ..engine.futures import signal_leverage
+    sig = a.get("signal") or {}
+    fc = a.get("forecast") or {}
+    app_v, eng_v = versions()
+    payload = {"scalp": True, "grade": demo["grade"], "decision_reason": a.get("decision_reason"),
+               "decision_basis": a.get("decision_basis"), "runner": setup.get("runner"), "entry_rule": pl.get("entry_rule"),
+               "manage": manage_params(db), "live_price": a.get("price"), "horizon_bars": horizon_for(a["timeframe"]),
+               "leverage": signal_leverage(pl["entry"], pl["stop"]), "risk_pct": setup.get("risk_pct"),
+               "targets_r": [t.get("rr") for t in setup.get("targets", [])]}
+    sid = new_id()
+    n = db.execute(
+        f"INSERT INTO {SCALP_TABLE} (id, created_at, symbol, timeframe, bar_ts, signal, decision, score, confidence, regime, "
+        "price, side, entry, stop, tp1, tp2, tp3, rr, status, model_version_id, payload, fill_status, filled_at, peak_r, "
+        "peak_pct, managed, atr, app_version, engine_version) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'OPEN', ?, ?, ?, ?, 0, 0, 0, ?, ?, ?) "
+        "ON CONFLICT (symbol, timeframe, bar_ts) DO NOTHING",
+        (sid, now, a["symbol"], a["timeframe"], a["bar_ts"], sig.get("signal") or "", demo["decision"], sig.get("score"),
+         a.get("confidence"), (a.get("regime") or {}).get("regime"), a["price"], pl["side"], pl["entry"], pl["stop"],
+         *pl["tps"], pl["rr"], fc.get("model_version"), dumps(payload), pl["fill_status"],
+         now if pl["fill_status"] == "FILLED" else None, pl["atr"], app_v, eng_v))
+    if n == 0:
+        return {**res, "status": "not_logged", "reason": "a call was already logged on this candle"}
+    return {"status": "logged", "reason": None, "id": sid}
+
+
 def _bar_ms(tf: str) -> int:
     try:
         return tf_ms(tf)
@@ -632,8 +695,9 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
     """Follow OPEN signals (v2.5: engine/manage.py) on 15-minute candles that opened after publication. Standard
     rules: 50% / 25% / 25% at the targets, stop first within a candle, break-even after TP1, TP1 after TP2, expiry at
     the last close; managed exits only when MANAGED_EXITS is on. Pullback entries wait for their fill."""
-    if table not in ("signals", "shadow_signals"):
+    if table not in ("signals", "shadow_signals", SCALP_TABLE):
         raise ValueError(table)
+    # admin adjustments and `decisions` rows belong to the record only (table == "signals" below)
     db = rt.db
     now = now or now_ms()
     params = manage_params(db)

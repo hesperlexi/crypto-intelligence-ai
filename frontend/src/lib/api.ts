@@ -140,6 +140,8 @@ function resolve(path: string, refreshMs: number): Sub {
     case "market-context": return view("market_context");
     case "news": return view("news");
     case "track-record": return view("track_record");
+    // admin scalping scorecard (views/scalping; the rules let members read it only when config/scalping says so)
+    case "scalping": return p[1] === "config" ? rawDoc(["config", "scalping"]) : view("scalping");
     case "radar": return view("radar");
     case "wins-today": return view("wins_today");
     case "weekly-report": return view("weekly_report");
@@ -341,3 +343,10 @@ export async function api<T = any>(path: string, init?: { method?: string; body?
 export const post = <T = any>(path: string, body?: unknown) => api<T>(path, { method: "POST", body: JSON.stringify(body ?? {}) });
 export const put = <T = any>(path: string, body?: unknown) => api<T>(path, { method: "PUT", body: JSON.stringify(body ?? {}) });
 export const del = <T = any>(path: string) => api<T>(path, { method: "DELETE" });
+
+// ---- admin scalping scorecard visibility (setting `scalping_visibility` = config/scalping.visibility) ---------------
+export type ScalpingVisibility = "admin" | "members";
+/** Admin only (rules): who may read views/scalping. Members never see it unless this is "members". */
+export async function setScalpingVisibility(visibility: ScalpingVisibility): Promise<void> {
+  await setDoc(doc(db, "config", "scalping"), { visibility, updated_at: Date.now(), by: auth.currentUser?.email ?? null });
+}

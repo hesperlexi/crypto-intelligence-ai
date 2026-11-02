@@ -154,15 +154,29 @@ service cloud.firestore {
       allow delete: if false;
     }
 
+    // the admin's scalping scorecard (views/scalping): admin only, unless the admin set config/scalping.visibility
+    // (setting `scalping_visibility`) to 'members' - then active members too. Never public or signed-out.
+    function scalpingForMembers() {
+      return exists(/databases/$(database)/documents/config/scalping)
+        && get(/databases/$(database)/documents/config/scalping).data.get('visibility', 'admin') == 'members';
+    }
     // engine output; per-member alert views are private to that member
-    // wins_today is public (the sign-in page shows it); everything else is for members
+    // wins_today is public (the sign-in page shows it); scalping as above; everything else is for members
     match /views/{id} {
-      allow read: if id == 'wins_today' || (allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
+      allow read: if id == 'wins_today'
+        || (id == 'scalping' && (isAdmin() || (isMember() && scalpingForMembers())))
+        || (id != 'scalping' && allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
       allow write: if false;
     }
     // coins, bots, settings: everyone signed in may read, only the admin may change
     // membership: prices, payment note and support email are public (the landing page shows them)
-    match /config/{id}       { allow read: if allowed() || id == 'membership'; allow write: if isAdmin(); }
+    // scalping: {visibility: 'admin' | 'members', updated_at, by} - only these fields, written by the admin
+    match /config/{id} {
+      allow read: if allowed() || id == 'membership';
+      allow write: if isAdmin() && (id != 'scalping' || (
+        request.resource.data.keys().hasOnly(['visibility', 'updated_at', 'by'])
+        && request.resource.data.visibility in ['admin', 'members']));
+    }
     // coins a member follows for themselves (the engine tracks them while the membership is active)
     // how many coins one member may add: config/limits.member_coin_limit (set by the admin; default 5)
     function coinLimit() {
