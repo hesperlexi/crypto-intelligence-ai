@@ -6,11 +6,10 @@ import { Link } from "react-router-dom";
 import { BRAND } from "../lib/brand";
 import { AnimatedLogo } from "../components/Logo";
 import SiteFooter, { TRUST_LINKS } from "../components/SiteFooter";
-import { VerifyBox } from "../components/SealProof";
 
 export const LAST_UPDATED = "31 Oct 2026";
-export type TrustKind = "about" | "contact" | "terms" | "risk" | "verify";
-export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/verify": "verify" };
+export type TrustKind = "about" | "contact" | "terms" | "risk";
+export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk" };
 
 const Mail = () => <a className="text-accent hover:underline" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>;
 
@@ -93,18 +92,9 @@ function Risk() {
   );
 }
 
-function Verify() {
-  return (
-    <>
-      <p>Paste a sealed signal below to check it was not changed after its result.</p>
-      <div className="mt-5 text-text"><VerifyBox /></div>
-    </>
-  );
-}
 
 const PAGES: Record<TrustKind, [string, () => JSX.Element]> = {
   about: ["About", About], contact: ["Contact", Contact], terms: ["Terms of Use", Terms], risk: ["Risk Disclosure", Risk],
-  verify: ["Verify our signals", Verify],
 };
 
 /** The page body (used inside the app shell). */

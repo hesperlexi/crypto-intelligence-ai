@@ -268,7 +268,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
     rows = rt.db.query(f"SELECT * FROM signals WHERE status != 'INFO' AND {rc} ORDER BY created_at DESC", rp)
     adj = tracking.adjustments_for(rt.db, [r["id"] for r in rows[:limit]])
     from .services import proof
-    proofs = proof.for_ids(rt.db, [r["id"] for r in rows[:limit]],
+    proofs = {} if not tracking.SEALED_PROOFS else proof.for_ids(rt.db, [r["id"] for r in rows[:limit]],
                            {r["id"] for r in rows[:limit] if r["status"] not in ("OPEN", "INFO")})
     sigs = []
     for r in rows:

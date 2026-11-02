@@ -12,7 +12,6 @@ export const TRUST_LINKS: [string, string][] = [
   ["/about", "About"],
   ["/contact", "Contact"],
   ["/terms", "Terms"],
-  ["/verify", "Verify"],
   ["/risk", "Risk disclosure"],
 ];
 

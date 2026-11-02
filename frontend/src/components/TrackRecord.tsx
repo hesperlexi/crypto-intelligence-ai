@@ -8,7 +8,6 @@ import { CoinAvatar } from "./Polish";
 import { Info } from "./ui";
 import { Explain, useIsPro } from "../lib/mode";
 import { managedLabel, fillLabel, Pill, RoiFigure } from "./SignalExtras";
-import { SealPill } from "./SealProof";
 import { isOpen, LiveResult, LiveRoi, RecordSheet, statusOf } from "./RecordDetails";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
@@ -215,7 +214,6 @@ function RecordExtras({ x }: { x: any }) {
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
       {isNum(x.peak_pct) && <span className="num text-[11px] text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</span>}
-      <SealPill proof={x.proof} />
     </div>
     {adj && <AdjustHistory adj={adj} compact />}
     </div>

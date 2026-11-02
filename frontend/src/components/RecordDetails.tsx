@@ -11,7 +11,6 @@ import { useTicker, useTickerThrottled } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 import { AiNote, fillLabel, LevChip, livePnl, managedLabel, Pill, RoiFigure } from "./SignalExtras";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
-import { SealPill } from "./SealProof";
 import { useFocusTrap } from "./Shell";
 import { closeEstimate } from "./SignalAdjust";
 import { AdjustButton } from "./SignalAdjust";
@@ -263,7 +262,6 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
             </dl>
 
             {x.adjustments?.length > 0 && <AdjustHistory adj={x.adjustments} />}
-            {x.proof?.hash && <div><div className="label mb-1">Sealed proof</div><div className="flex flex-wrap items-center gap-1"><SealPill proof={x.proof} /></div></div>}
             {x.ai?.rationale && <AiNote ai={x.ai} />}
 
             <div className="flex flex-wrap gap-2 pt-1">

@@ -2,12 +2,19 @@
 import hashlib
 
 import pandas as pd
+import pytest
 
 from app.data.base import tf_ms
 from app.db import Database
 from app.services import proof, telegram as TG, tracking as T
 
 H1 = tf_ms("1h")
+
+
+@pytest.fixture(autouse=True)
+def _sealing_on(monkeypatch):
+    """Sealed proofs are off by default since 2 Nov 2026; these tests cover the switch-on path."""
+    monkeypatch.setattr(T, "SEALED_PROOFS", True)
 BAR = 1_700_000_000_000 - (1_700_000_000_000 % tf_ms("4h"))
 
 
@@ -68,3 +75,11 @@ def test_telegram_seals_fresh_calls_once_skips_stale_and_reveals_after_close():
     T.log_signal(db, a2, now=created)
     assert TG.proofs(RT(db), cfg, created + 2 * H1, sess) == []
     assert db.one("SELECT sealed_post_at FROM signal_proofs WHERE text LIKE '%ETH%'")["sealed_post_at"] == -1
+
+
+
+def test_sealing_is_off_by_default(monkeypatch):
+    monkeypatch.undo()
+    import importlib
+    from app.services import tracking
+    assert tracking.SEALED_PROOFS is False or __import__("os").environ.get("SEALED_PROOFS") == "1"

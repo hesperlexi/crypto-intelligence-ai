@@ -37,7 +37,7 @@ MAX_WIN_POSTS = 5
 MAX_DRAFTS = 6                     # each card is ~70 KB; a Firestore document holds 1 MB
 DRAFTS = "owner/telegram_drafts"
 DEFAULTS = {"enabled": False, "channel": brand.TELEGRAM_CHANNEL, "post_wins": True, "post_weekly": True, "post_teaser": True,
-            "post_each_win": True, "approve_first": True, "post_proofs": True}
+            "post_each_win": True, "approve_first": True, "post_proofs": False}
 
 
 def config(sink) -> dict[str, Any]:
@@ -280,7 +280,8 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
                 post("win", win_text(w), "tg_win_last", int(r["closed_at"]), ("win_card", w))
                 if len(out["sent"]) == n:      # failed: keep the marker, try again next run
                     break
-    if cfg["post_proofs"]:
+    from .tracking import SEALED_PROOFS
+    if cfg["post_proofs"] and SEALED_PROOFS:
         try:
             out["sent"] += proofs(rt, cfg, now, session)
         except Exception as exc:

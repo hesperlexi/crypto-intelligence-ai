@@ -478,8 +478,8 @@ def log_signal(db: Database, a: dict[str, Any], now: int | None = None) -> bool:
     a["record_status"] = res["status"]
     if res["reason"]:
         a["record_reason"] = res["reason"]
-    if res.get("written"):
-        try:                                   # v2.9 sealed-signal proof of the published levels
+    if res.get("written") and SEALED_PROOFS:
+        try:                                   # v2.9 sealed-signal proof of the published levels (off since 2 Nov 2026)
             from . import proof
             row = db.one("SELECT * FROM signals WHERE symbol = ? AND timeframe = ? AND bar_ts = ?",
                          (a["symbol"], a["timeframe"], a["bar_ts"]))
@@ -533,6 +533,9 @@ def scalp_since(db: Database) -> int | None:
 # owner, 2 Nov 2026: 15m grade A is public and in the main record, so the separate scalping log, its 1-2 Nov rebuild and
 # views/scalping are switched off (table and history kept; env SCALPING=1 turns them back on)
 SCALPING_ON = os.environ.get("SCALPING", "0") == "1"
+# owner, 2 Nov 2026: sealed-signal proofs removed (no fingerprints, no Telegram seal posts, no /verify page); the
+# table and old proofs are kept. Env SEALED_PROOFS=1 restores the sealing.
+SEALED_PROOFS = os.environ.get("SEALED_PROOFS", "0") == "1"
 
 
 def log_scalp(db: Database, a: dict[str, Any], now: int | None = None, extra: dict[str, Any] | None = None,

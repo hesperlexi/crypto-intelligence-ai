@@ -253,6 +253,11 @@ same 15m grade-A calls (`tracking.log_scalp` accepts a public call); the scalpin
 tab and Health summary are removed and the engine no longer logs / follows / rebuilds scalp calls or publishes
 `views/scalping` (`tracking.SCALPING_ON`, env `SCALPING=1` restores it). `scalp_signals` and its history are kept.
 
+**Sealed proofs removed (owner, 2 Nov 2026):** no fingerprints at publication (`tracking.SEALED_PROOFS`, env
+`SEALED_PROOFS=1` restores), Telegram `post_proofs` default off, no `proof` on record rows, `/verify` page, footer link,
+Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proofs` table and old rows kept.
+**Less text (owner, 2 Nov 2026):** page subtitles ≤ 1 short line, card notes ≤ 1 sentence; longer details behind "ⓘ".
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
