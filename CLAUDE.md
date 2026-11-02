@@ -273,6 +273,21 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
 
 **Less text (owner, 2 Nov 2026):** page subtitles ≤ 1 short line, card notes ≤ 1 sentence; longer details behind "ⓘ".
 
+## Road to Rich (Hesper) (admin, owner decisions 2 Nov 2026, branch `hesper-rich`)
+- `services/hesper.py` (`Hesper(BotEngine)`): all-in demo bot, virtual money. Runs start at $100 (`START_BALANCE`); takes only
+  fresh public grade-A calls from `signals` (status OPEN, payload grade A, published ≤ `FRESH_MS` 30 min ago, not demo-only /
+  paused TFs; best = confidence, tie → newer; a call is never taken twice), one trade at a time (a pullback limit counts).
+  Margin = whole balance × `ALL_IN` 0.995, leverage ≤ 25 lowered by `futures.safe_leverage` (liquidation 1.5x the stop distance
+  beyond entry), futures fees/slippage/funding. Exits = the bots' `_manage_decision` (50/25/25, BE after TP1, TP1 after TP2,
+  runner, call's `horizon_bars` from opening, admin stop/TP1 changes and "Close now" via `adjust._hesper`, reversal except 15m).
+  Run ends only by itself when flat: liquidated or balance < $1 ("busted") → FAIL, realised ≥ $1,000 → SUCCESS; next run at
+  $100 at once. Tables `hesper_runs`, `hesper_trades` (never deleted; a finished run never changes); state setting
+  `hesper_state`, start flag `hesper_v1` + `hesper_since` (set by the first `run`). Worker step `hesper` after `bots`.
+- Not a `bots` row → never in the bots report / Results "Demo bots" / record / auto-trade / Telegram / training. View
+  `views/hesper` (`hesper.view`, last 100 trades, ≤500 runs, curves of the last 20 runs, `core`, min 900 s, skipped in lean
+  mode); rules: admin only. Page `/rich` (`pages/Rich.tsx`, Admin menu "Road to Rich"), share PNG `lib/hesperCard.ts`.
+  Tests `tests/test_hesper.py`; preview data `dev/seed.ts` `hesper()`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
@@ -283,7 +298,7 @@ record / weekly report / achievements / wins_today `views.py` + `pages/Results.t
 instructions) · Promo video `frontend/public/demo.mp4` (70 s, original soundtrack).
 
 Member menu: Home · Signals · Trade · News · Radar · Results · Community · Alerts · Settings. Owner extras: Weekly report,
-Achievements, Health, Users.
+Achievements, Health, Road to Rich, Users.
 
 ## 31 Oct 2026 features (branch `features-oct31`)
 - Sign-in: Google or email + password (`lib/account.ts`, `components/AuthPanel.tsx`: sign in / create / forgot, "Check your

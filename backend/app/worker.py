@@ -29,7 +29,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
-from .services import scalp_backfill
+from .services import hesper, scalp_backfill
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -823,6 +823,12 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
             sink.view("scalping", sc, min_interval_s=900, core=views.scalping_core(sc))
         except Exception as exc:
             rt.record_error("scalping view", exc)
+    # Road to Rich (admin only, one document; skipped in lean mode). Never blocks the rest of the publish.
+    try:
+        hv = hesper.view(rt)
+        sink.view("hesper", hv, min_interval_s=900, core=hesper.core(hv))
+    except Exception as exc:
+        rt.record_error("hesper view", exc)
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))
@@ -990,6 +996,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
     detail["sentiment"] = step("news_sentiment", lambda: sentiment.collect(rt.db, getattr(rt, "headlines", None)))
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
+    # Road to Rich (admin, 2 Nov 2026): Hesper's all-in demo runs - its own step and tables, after the bots
+    detail["hesper"] = len(step("hesper", lambda: hesper.Hesper(rt).run(started)) or [])
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
     detail["written_early"] = step("publish_early", sink.flush) or 0

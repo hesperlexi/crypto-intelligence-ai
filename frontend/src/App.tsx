@@ -55,6 +55,7 @@ const Scanner = page(() => import("./pages/Scanner"));
 const Settings = page(() => import("./pages/Settings"));
 const Signals = page(() => import("./pages/Signals"));
 const Users = page(() => import("./pages/Users"));
+const Rich = page(() => import("./pages/Rich"));
 const Community = page(() => import("./pages/Community"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
@@ -76,11 +77,11 @@ const NAV = [
   ["/settings", "Settings"],
 ] as const;
 // owner-only tools: marketing material and system health
-const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"]] as const;
+const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Road to Rich"]] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu)
 const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
 
-/** Owner tools in one compact menu (Weekly report, Achievements, Health, Users). */
+/** Owner tools in one compact menu (Weekly report, Achievements, Health, Road to Rich, Users). */
 function AdminMenu({ items, pending }: { items: (readonly [string, string])[]; pending: number }) {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
@@ -343,6 +344,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/trade" element={<Navigate to="/paper" replace />} />
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/health" element={<AdminOnly><Health /></AdminOnly>} />
+            <Route path="/rich" element={<AdminOnly><Rich /></AdminOnly>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<Users />} />
             <Route path="/community" element={<Community />} />

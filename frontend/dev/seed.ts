@@ -399,6 +399,7 @@ export function seed(): Record<string, any> {
     "views/signals": v(signalLog()),
     "views/weekly_report": v(weekly()),
     "views/scalping": v(scalping()),
+    "views/hesper": v(hesper()),
     "users/u_member_self": undefined,
     ...users(),
     ...presence(),
@@ -493,5 +494,70 @@ function scalping() {
       trades: 19, win_rate: 0.63, profit_factor: 1.42, max_drawdown_pct: -2.4, open_positions: 2, fees_paid: 61.3, started_at: NOW - 12 * D,
       recent: closed.slice(-6).reverse().map((x) => ({ symbol: x.symbol, side: x.side, opened_at: x.created_at, closed_at: x.closed_at, entry: x.entry, exit: x.tp1, pnl: x.return_pct * 20,
         return_pct: x.return_pct > 0 ? 0.31 : -0.6, exit_reason: x.return_pct > 0 ? "take profit 1" : "stop loss" })) },
+  };
+}
+
+/** views/hesper: the shape backend/app/services/hesper.view publishes (Road to Rich, admin only). Sample runs. */
+function hesper() {
+  const coins = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "BNB/USDT", "DOGE/USDT", "AVAX/USDT", "LTC/USDT", "AAVE/USDT", "PAXG/USDT"];
+  const tfs = ["15m", "1h", "4h", "12h", "1h", "4h", "1d", "1h"];
+  const reasons: Record<string, string> = { w1: "TP1", w2: "TP2", w3: "TP3", be: "breakeven stop", tr: "trailing stop", l: "stop", t: "time exit", liq: "liquidated" };
+  // per run: [result, reason, [roi %, exit key][]]
+  const plan: [string, string | null, [number, string][]][] = [
+    ["FAIL", "busted", [[38, "w2"], [-61, "l"], [24, "w1"], [-58, "l"], [-63, "l"], [12, "be"], [-60, "l"], [-62, "l"], [-64, "l"]]],
+    ["FAIL", "liquidated", [[44, "w3"], [-100, "liq"]]],
+    ["SUCCESS", "goal", [[52, "w3"], [21, "be"], [-55, "l"], [64, "w3"], [33, "tr"], [-49, "l"], [71, "w3"], [26, "w1"], [58, "w3"], [41, "w2"], [47, "w3"]]],
+    ["FAIL", "busted", [[-57, "l"], [29, "w1"], [-62, "l"], [-60, "l"], [8, "t"], [-59, "l"], [-61, "l"], [-63, "l"]]],
+    ["SUCCESS", "goal", [[66, "w3"], [48, "w3"], [-52, "l"], [73, "w3"], [39, "w2"], [55, "w3"], [62, "w3"]]],
+    ["FAIL", "liquidated", [[31, "w2"], [-54, "l"], [-100, "liq"]]],
+    ["RUNNING", null, [[46, "w3"], [-51, "l"], [58, "w3"], [27, "be"], [36, "w2"]]],
+  ];
+  const runs: any[] = [], trades: any[] = [], curves: Record<string, number[][]> = {};
+  let t = NOW - 21 * D, k = 0;
+  plan.forEach(([result, reason, seq], ri) => {
+    const run = ri + 1, start = t;
+    let bal = 100, peak = 100, wins = 0, best: any = null;
+    const pts: number[][] = [[start, 100]];
+    for (const [roi, ex] of seq) {
+      const symbol = coins[k % coins.length], tf = tfs[k % tfs.length], px = PRICES[symbol].p, side = k % 3 === 1 ? -1 : 1;
+      const lev = [25, 22, 18, 25, 14, 20, 25, 11][k % 8], margin = bal * 0.995, pnl = margin * roi / 100;
+      const opened = t + 1 * H, closed = opened + (2 + (k % 5) * 2) * H, move = roi / lev / 100;
+      const tr = { id: `h${k}`, run, symbol, timeframe: tf, side, leverage: lev, opened_at: opened, closed_at: closed, entry: px * (1 - 0.01 * Math.sin(k)),
+        exit: px * (1 - 0.01 * Math.sin(k)) * (1 + side * move), margin, pnl, roi_pct: roi, exit_reason: reasons[ex], tp_hit: ex.startsWith("w") ? Number(ex[1]) : ex === "be" ? 1 : ex === "tr" ? 2 : 0,
+        balance_before: bal, balance_after: bal + pnl, fees: margin * lev * 0.001, funding: margin * lev * 0.0001 };
+      bal += pnl; peak = Math.max(peak, bal); if (pnl > 0) wins += 1;
+      if (!best || pnl > best.pnl) best = { id: tr.id, symbol, timeframe: tf, pnl, roi_pct: roi };
+      trades.push(tr); pts.push([closed, bal]); t = closed; k += 1;
+    }
+    if (result === "SUCCESS" && bal < 1000) {             // the winning trade that crossed $1,000
+      const symbol = coins[k % coins.length], px = PRICES[symbol].p, margin = bal * 0.995, pnl = 1000 * 1.04 - bal, roi = (pnl / margin) * 100;
+      const opened = t + H, closed = opened + 6 * H;
+      trades.push({ id: `h${k}`, run, symbol, timeframe: "4h", side: 1, leverage: 25, opened_at: opened, closed_at: closed, entry: px, exit: px * (1 + roi / 2500),
+        margin, pnl, roi_pct: roi, exit_reason: "TP3", tp_hit: 3, balance_before: bal, balance_after: bal + pnl, fees: margin * 0.025, funding: margin * 0.002 });
+      bal += pnl; peak = Math.max(peak, bal); wins += 1; if (pnl > best.pnl) best = { id: `h${k}`, symbol, timeframe: "4h", pnl, roi_pct: roi };
+      pts.push([closed, bal]); t = closed; k += 1;
+    }
+    t += 3 * H;
+    runs.push({ run, started_at: start, ended_at: result === "RUNNING" ? null : t - 3 * H, result, reason, start_balance: 100, end_balance: result === "RUNNING" ? null : bal,
+      peak, trades: pts.length - 1, wins, best_trade: best });
+    curves[String(run)] = pts;
+  });
+  const done = runs.filter((r) => r.result !== "RUNNING"), succ = done.filter((r) => r.result === "SUCCESS"), fails = done.filter((r) => r.result === "FAIL");
+  const cur = runs[runs.length - 1];
+  const fastest = succ.reduce((a, b) => (b.ended_at - b.started_at < a.ended_at - a.started_at ? b : a));
+  const bestRun = runs.reduce((a, b) => (b.peak > a.peak ? b : a));
+  const cash = cur.peak > 0 ? trades[trades.length - 1].balance_after : 100;
+  const sol = PRICES["SOL/USDT"].p, entry = sol * 0.996, margin = cash * 0.995, lev = 22, qty = margin * lev / entry;
+  return {
+    name: "Hesper", since: runs[0].started_at, start: 100, goal: 1000, max_leverage: 25, min_balance: 1, started: true, generated_at: NOW,
+    current: { run: cur.run, started_at: cur.started_at, cash: cash - margin / 2 + margin * 0.5 * 0.025 * lev, balance: cash * 1.06, peak: cur.peak, trades: cur.trades, wins: cur.wins, updated_at: NOW - 4 * 60_000,
+      open: { id: "hopen", symbol: "SOL/USDT", timeframe: "4h", side: 1, entry, stop: entry, stop0: entry * 0.975, targets: [entry * 1.025, entry * 1.044, entry * 1.06], tp_hit: 1,
+        leverage: lev, qty, qty_open: qty / 2, margin, coll: entry / lev, liq: entry * (1 - 1 / lev + 0.005), realized: margin * 0.5 * 0.025 * lev, opened_at: NOW - 7 * H,
+        signal_id: "s-sol", confidence: 0.64, horizon_bars: 100, run_target: null, balance_before: cash }, pending: null },
+    score: { successes: succ.length, failures: fails.length, liquidations: fails.filter((r) => r.reason === "liquidated").length, busted: fails.filter((r) => r.reason === "busted").length,
+      runs: runs.length, finished: done.length, best_peak: { run: bestRun.run, peak: bestRun.peak }, all_time_peak: bestRun.peak,
+      avg_trades_per_run: done.reduce((a, r) => a + r.trades, 0) / done.length, fastest_success: { run: fastest.run, ms: fastest.ended_at - fastest.started_at, trades: fastest.trades },
+      fewest_trades_success: { run: fastest.run, trades: fastest.trades }, trades: trades.length, wins: trades.filter((x) => x.pnl > 0).length, streak: { kind: "win", n: 3 } },
+    runs: [...runs].reverse(), trades: [...trades].reverse(), curves, label: "Demo · virtual money · not financial advice",
   };
 }

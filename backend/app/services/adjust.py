@@ -147,6 +147,7 @@ def apply(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
         bots = BotEngine(rt).apply_adjustment(sig, [(f, n) for f, _, n in ch], at)
     except Exception as exc:                     # the record change stands; bots are best effort
         bots = f"not applied: {type(exc).__name__}"
+    _hesper(rt, "apply_adjustment", sig, [(f, n) for f, _, n in ch], at)
     out: dict[str, Any] = {"ok": True, "signal_id": sid, "at": at, "price_at_change": price, "bots_updated": bots,
                            "changes": [{"field": f, "old": o, "new": n} for f, o, n in ch],
                            "message": "Saved. The change applies from the next 15-minute candle and members are notified."}
@@ -243,6 +244,7 @@ def close(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
         bots = BotEngine(rt).apply_close(sig, price, at)
     except Exception as exc:                     # the record close stands; bots are best effort
         bots = f"not applied: {type(exc).__name__}"
+    _hesper(rt, "apply_close", sig, price, at)
     word = "" if ret is None else (" at break-even" if abs(ret) < 1e-9 else " as a win" if ret > 0 else " as a loss")
     out: dict[str, Any] = {"ok": True, "signal_id": sid, "at": at, "price": price, "return_pct": ret, "roi_pct": roi,
                            "bots_closed": bots,
@@ -253,3 +255,12 @@ def close(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
     if isinstance(adjusted, set):
         adjusted.add(sid)
     return out
+
+
+def _hesper(rt: Any, method: str, *args: Any) -> int:
+    """Road to Rich: Hesper holds the call too -> same change (best effort; the record change stands)."""
+    try:
+        from .hesper import Hesper
+        return getattr(Hesper(rt), method)(*args)
+    except Exception:
+        return 0

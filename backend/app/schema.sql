@@ -405,3 +405,45 @@ CREATE TABLE IF NOT EXISTS signal_proofs (
   sealed_post_at BIGINT,
   revealed_post_at BIGINT
 );
+
+-- Road to Rich (admin, 2 Nov 2026, services/hesper.py): Hesper, an all-in demo bot (virtual money). Each run starts at
+-- $100 and ends at $1,000 (SUCCESS) or by liquidation / a balance too small to trade (FAIL). Rows are never deleted;
+-- a finished run is never changed again.
+CREATE TABLE IF NOT EXISTS hesper_runs (
+  run INTEGER PRIMARY KEY,
+  started_at BIGINT NOT NULL,
+  ended_at BIGINT,
+  result TEXT NOT NULL DEFAULT 'RUNNING',   -- RUNNING | SUCCESS | FAIL
+  reason TEXT,                              -- goal | liquidated | busted
+  start_balance DOUBLE PRECISION NOT NULL,
+  end_balance DOUBLE PRECISION,
+  peak DOUBLE PRECISION NOT NULL,
+  trades INTEGER NOT NULL DEFAULT 0,
+  wins INTEGER NOT NULL DEFAULT 0,
+  best_trade TEXT
+);
+CREATE TABLE IF NOT EXISTS hesper_trades (
+  id TEXT PRIMARY KEY,
+  run INTEGER NOT NULL,
+  signal_id TEXT,
+  symbol TEXT NOT NULL,
+  timeframe TEXT NOT NULL,
+  side INTEGER NOT NULL,
+  leverage DOUBLE PRECISION NOT NULL,
+  opened_at BIGINT NOT NULL,
+  closed_at BIGINT NOT NULL,
+  entry DOUBLE PRECISION NOT NULL,
+  exit DOUBLE PRECISION NOT NULL,
+  qty DOUBLE PRECISION NOT NULL,
+  margin DOUBLE PRECISION NOT NULL,
+  pnl DOUBLE PRECISION NOT NULL,
+  fees DOUBLE PRECISION NOT NULL,
+  funding DOUBLE PRECISION NOT NULL,
+  roi_pct DOUBLE PRECISION,
+  exit_reason TEXT NOT NULL,
+  tp_hit INTEGER NOT NULL DEFAULT 0,
+  balance_before DOUBLE PRECISION NOT NULL,
+  balance_after DOUBLE PRECISION NOT NULL,
+  info TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_hesper_trades_run ON hesper_trades (run, closed_at);

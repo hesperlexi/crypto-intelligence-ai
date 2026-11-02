@@ -142,6 +142,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "track-record": return view("track_record");
     // admin scalping scorecard (views/scalping; the rules let members read it only when config/scalping says so)
     case "scalping": return p[1] === "config" ? rawDoc(["config", "scalping"]) : view("scalping");
+    case "hesper": return view("hesper");             // Road to Rich (admin only; rules: views/hesper)
     case "radar": return view("radar");
     case "wins-today": return view("wins_today");
     case "weekly-report": return view("weekly_report");

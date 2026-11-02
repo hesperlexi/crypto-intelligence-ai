@@ -161,11 +161,13 @@ service cloud.firestore {
         && get(/databases/$(database)/documents/config/scalping).data.get('visibility', 'admin') == 'members';
     }
     // engine output; per-member alert views are private to that member
-    // wins_today is public (the sign-in page shows it); scalping as above; everything else is for members
+    // wins_today is public (the sign-in page shows it); scalping as above; hesper (Road to Rich) admin only;
+    // everything else is for members
     match /views/{id} {
       allow read: if id == 'wins_today'
         || (id == 'scalping' && (isAdmin() || (isMember() && scalpingForMembers())))
-        || (id != 'scalping' && allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
+        || (id == 'hesper' && isAdmin())
+        || (id != 'scalping' && id != 'hesper' && allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
       allow write: if false;
     }
     // coins, bots, settings: everyone signed in may read, only the admin may change

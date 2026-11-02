@@ -517,6 +517,29 @@ async function main() {
     await assertFails(setDoc(doc(as("m1", "m1@example.com"), "config", "scalping"), { visibility: "members", updated_at: NOW(), by: "m1@example.com" }));
   });
 
+  // ---------------------------------------------------------------- views/hesper (Road to Rich, admin only)
+  const hesperView = { "views/hesper": { json: "{}", updated_at: NOW() }, "views/bots": { json: "{}", updated_at: NOW() } };
+  const readHesper = async (db: Firestore) => { const { getDoc } = await import("firebase/firestore"); return getDoc(doc(db, "views", "hesper")); };
+  await test("hesper: admin reads views/hesper", async () => {
+    await seed(hesperView);
+    await assertSucceeds(readHesper(admin()));
+  });
+  await test("hesper: active member denied (other views still readable)", async () => {
+    await seed({ ...member, ...hesperView });
+    await assertFails(readHesper(as("m1", "m1@example.com")));
+    const { getDoc } = await import("firebase/firestore");
+    await assertSucceeds(getDoc(doc(as("m1", "m1@example.com"), "views", "bots")));
+  });
+  await test("hesper: pending, expired and signed-out denied", async () => {
+    await seed({ ...hesperView, "users/p1": pending("p1", "p1@example.com"), "users/x1": approved("x1", "x1@example.com", { expires_at: NOW() - DAY }) });
+    await assertFails(readHesper(as("p1", "p1@example.com")));
+    await assertFails(readHesper(as("x1", "x1@example.com")));
+    await assertFails(readHesper(env.unauthenticatedContext().firestore() as unknown as Firestore));
+  });
+  await test("hesper: nobody writes views/hesper from the website", async () => {
+    await assertFails(setDoc(doc(admin(), "views", "hesper"), { json: "{}" }));
+  });
+
   await env.cleanup();
   const failed = results.filter((r) => !r.ok);
   const summary = { at: new Date().toISOString(), sha: process.env.GITHUB_SHA ?? null, total: results.length, passed: results.length - failed.length, failed: failed.length, results };
