@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-02T19:21:59.118Z",
-  "sha": "1b62d7b370ca5e07b0d3b1382f33ff4e53a8a7df",
-  "total": 105,
-  "passed": 105,
+  "at": "2026-11-02T19:45:23.212Z",
+  "sha": "fd68a54f9b60a9c8b6145022c48d7ae03ffad7f0",
+  "total": 108,
+  "passed": 108,
   "failed": 0,
   "results": [
     {
@@ -419,6 +419,18 @@
     },
     {
       "name": "hesper: pending, expired and signed-out denied",
+      "ok": true
+    },
+    {
+      "name": "hesper: active member allowed when config/hesper.visibility is 'members' (view only)",
+      "ok": true
+    },
+    {
+      "name": "hesper: pending, expired and signed-out denied even when visibility is 'members'",
+      "ok": true
+    },
+    {
+      "name": "config/hesper: admin sets visibility; members and bad values denied",
       "ok": true
     },
     {
