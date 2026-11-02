@@ -142,7 +142,8 @@ function resolve(path: string, refreshMs: number): Sub {
     case "track-record": return view("track_record");
     // admin scalping scorecard (views/scalping; the rules let members read it only when config/scalping says so)
     case "scalping": return p[1] === "config" ? rawDoc(["config", "scalping"]) : view("scalping");
-    case "hesper": return view("hesper");             // Road to Rich (admin only; rules: views/hesper)
+    // Hesper challenge / Road to Rich (views/hesper; members read it only when config/hesper.visibility is "members")
+    case "hesper": return p[1] === "config" ? rawDoc(["config", "hesper"]) : view("hesper");
     case "radar": return view("radar");
     case "wins-today": return view("wins_today");
     case "weekly-report": return view("weekly_report");
@@ -346,6 +347,15 @@ export const put = <T = any>(path: string, body?: unknown) => api<T>(path, { met
 export const del = <T = any>(path: string) => api<T>(path, { method: "DELETE" });
 
 // ---- admin scalping scorecard visibility (setting `scalping_visibility` = config/scalping.visibility) ---------------
+/** Admin only (rules): who may read views/hesper (the Hesper challenge). "admin" when the document is missing. */
+export async function setHesperVisibility(visibility: "admin" | "members"): Promise<void> {
+  await setDoc(doc(db, "config", "hesper"), { visibility, updated_at: Date.now(), by: auth.currentUser?.email ?? null });
+}
+export function useHesperVisibility(): "admin" | "members" {
+  const c = useApi<any>("/hesper/config");
+  return c.data?.visibility === "members" ? "members" : "admin";
+}
+
 export type ScalpingVisibility = "admin" | "members";
 /** Admin only (rules): who may read views/scalping. Members never see it unless this is "members". */
 export async function setScalpingVisibility(visibility: ScalpingVisibility): Promise<void> {

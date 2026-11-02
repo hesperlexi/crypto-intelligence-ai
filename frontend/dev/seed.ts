@@ -400,6 +400,7 @@ export function seed(): Record<string, any> {
     "views/weekly_report": v(weekly()),
     "views/scalping": v(scalping()),
     "views/hesper": v(hesper()),
+    "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
     "users/u_member_self": undefined,
     ...users(),
     ...presence(),

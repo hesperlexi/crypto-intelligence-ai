@@ -7,11 +7,12 @@ import { Link } from "react-router-dom";
 import { CoinAvatar } from "../components/Polish";
 import { useFocusTrap } from "../components/Shell";
 import { ErrorBox } from "../components/ui";
-import { useApi } from "../lib/api";
+import { setHesperVisibility, useApi, useHesperVisibility } from "../lib/api";
 import { download } from "../lib/cardCanvas";
 import { base, fmtDate, fmtPrice, isNum, slug } from "../lib/format";
 import { drawHesperCard, progressOf, usd } from "../lib/hesperCard";
 import { useTickerThrottled } from "../lib/live";
+import { useIsAdmin } from "../lib/session";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 const money = (v: unknown) => usd(v, isNum(v) && Math.abs(v) < 10 ? 2 : 0);
@@ -182,7 +183,49 @@ function Share({ v, balance }: { v: any; balance: number | null }) {
   );
 }
 
-export default function Rich() {
+/** Admin switch: the challenge for the admin only, or view-only for active members too (never public). Asks first. */
+function Visibility() {
+  const vis = useHesperVisibility();
+  const [ask, setAsk] = useState<"admin" | "members" | null>(null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const ref = useFocusTrap(!!ask, () => setAsk(null));
+  const save = async (to: "admin" | "members") => {
+    setMsg(null);
+    try { await setHesperVisibility(to); setMsg(to === "members" ? "Members can see it now." : "Only you can see it now."); }
+    catch (e: any) { setMsg(`Not saved: ${e?.message ?? e}`); }
+  };
+  return (
+    <div className="flex flex-wrap items-center gap-2" data-hesper-visibility={vis}>
+      <span className="text-xs text-mute">Who can see it</span>
+      <span className="inline-flex rounded-xl border border-glass/10 p-1" role="radiogroup" aria-label="Who can see the Hesper challenge">
+        {(["admin", "members"] as const).map((k) => (
+          <button key={k} type="button" role="radio" aria-checked={vis === k} onClick={() => vis !== k && setAsk(k)}
+            className={`rounded-lg px-3 py-1 text-sm ${vis === k ? "bg-accent font-semibold text-ink" : "text-mute hover:text-text"}`}>{k === "admin" ? "Admin only" : "Members too"}</button>
+        ))}
+      </span>
+      {msg && <span className="text-xs text-mute" role="status">{msg}</span>}
+      {ask && createPortal(
+        <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setAsk(null)}>
+          <div ref={ref} role="alertdialog" aria-modal="true" aria-label="Who can see it" onClick={(e) => e.stopPropagation()}
+            className="panel popover animate-in w-full max-w-md rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
+            <h2 className="text-base font-semibold">{ask === "members" ? "Show the Hesper challenge to members?" : "Hide it from members?"}</h2>
+            <p className="mt-2 text-sm text-mute">{ask === "members"
+              ? "Active members see it view-only on Results as “Hesper Challenge”. No share button, no admin controls."
+              : "Only you will see it. Members lose access at once."}</p>
+            <div className="mt-4 flex justify-end gap-2">
+              <button type="button" className="btn btn-sm" onClick={() => setAsk(null)}>Cancel</button>
+              <button type="button" className="btn btn-sm btn-primary" onClick={() => { const to = ask; setAsk(null); void save(to); }}>{ask === "members" ? "Show to members" : "Admin only"}</button>
+            </div>
+          </div>
+        </div>, document.body)}
+    </div>
+  );
+}
+
+/** Admin: "Road to Rich" page with the visibility switch and Share. Members (Results tab, when the admin allows it):
+ *  the same figures view-only as "Hesper Challenge". */
+export default function Rich({ embedded = false }: { embedded?: boolean }) {
+  const admin = useIsAdmin();
   const q = useApi<any>("/hesper");
   const v = q.data;
   const live = useLiveRun(v?.current);
@@ -196,13 +239,20 @@ export default function Rich() {
   const trades: any[] = v?.trades ?? [];
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="page-title"><span className="text-accent">Road to Rich</span></h1>
-          <p className="text-sm text-mute">Hesper · {usd(v?.start ?? 100, 0)} → {usd(v?.goal ?? 1000, 0)} · all-in · virtual money</p>
+      {admin && !embedded ? (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="page-title"><span className="text-accent">Road to Rich</span></h1>
+            <p className="text-sm text-mute">Hesper · {usd(v?.start ?? 100, 0)} → {usd(v?.goal ?? 1000, 0)} · all-in · virtual money</p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3"><Visibility />{v?.current && <Share v={v} balance={live.balance} />}</div>
         </div>
-        {v?.current && <Share v={v} balance={live.balance} />}
-      </div>
+      ) : (
+        <div>
+          <h2 className="text-lg font-semibold"><span className="text-accent">Hesper Challenge</span> · {usd(v?.start ?? 100, 0)} → {usd(v?.goal ?? 1000, 0)}</h2>
+          <p className="text-sm text-mute">Demo challenge with virtual money. Not a trading plan.</p>
+        </div>
+      )}
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}
       {!v && !q.error && <div className="skeleton h-64 rounded-xl" />}
       {v && !v.current && <p className="panel p-4 text-center text-sm text-mute">Hesper starts with the next engine cycle.</p>}

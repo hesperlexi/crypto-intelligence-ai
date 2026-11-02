@@ -536,6 +536,28 @@ async function main() {
     await assertFails(readHesper(as("x1", "x1@example.com")));
     await assertFails(readHesper(env.unauthenticatedContext().firestore() as unknown as Firestore));
   });
+  await test("hesper: active member allowed when config/hesper.visibility is 'members' (view only)", async () => {
+    await seed({ ...member, ...hesperView, "config/hesper": { visibility: "admin", updated_at: NOW(), by: ADMIN.email } });
+    await assertFails(readHesper(as("m1", "m1@example.com")));
+    await seed({ ...member, ...hesperView, "config/hesper": { visibility: "members", updated_at: NOW(), by: ADMIN.email } });
+    await assertSucceeds(readHesper(as("m1", "m1@example.com")));
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "views", "hesper"), { json: "{}" }));
+  });
+  await test("hesper: pending, expired and signed-out denied even when visibility is 'members'", async () => {
+    await seed({ ...hesperView, "config/hesper": { visibility: "members", updated_at: NOW(), by: ADMIN.email },
+      "users/p1": pending("p1", "p1@example.com"), "users/x1": approved("x1", "x1@example.com", { expires_at: NOW() - DAY }) });
+    await assertFails(readHesper(as("p1", "p1@example.com")));
+    await assertFails(readHesper(as("x1", "x1@example.com")));
+    await assertFails(readHesper(env.unauthenticatedContext().firestore() as unknown as Firestore));
+  });
+  await test("config/hesper: admin sets visibility; members and bad values denied", async () => {
+    await seed(member);
+    await assertSucceeds(setDoc(doc(admin(), "config", "hesper"), { visibility: "members", updated_at: NOW(), by: ADMIN.email }));
+    await assertSucceeds(setDoc(doc(admin(), "config", "hesper"), { visibility: "admin", updated_at: NOW(), by: ADMIN.email }));
+    await assertFails(setDoc(doc(admin(), "config", "hesper"), { visibility: "public", updated_at: NOW(), by: ADMIN.email }));
+    await assertFails(setDoc(doc(admin(), "config", "hesper"), { visibility: "members", extra: true }));
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "config", "hesper"), { visibility: "members", updated_at: NOW(), by: "m1@example.com" }));
+  });
   await test("hesper: nobody writes views/hesper from the website", async () => {
     await assertFails(setDoc(doc(admin(), "views", "hesper"), { json: "{}" }));
   });

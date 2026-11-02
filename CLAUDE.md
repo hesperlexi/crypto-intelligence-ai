@@ -288,6 +288,12 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   mode); rules: admin only. Page `/rich` (`pages/Rich.tsx`, Admin menu "Road to Rich"), share PNG `lib/hesperCard.ts`.
   Tests `tests/test_hesper.py`; preview data `dev/seed.ts` `hesper()`.
 
+- **Members view (owner, 2 Nov 2026):** admin switch "Who can see it" on `/rich` writes `config/hesper.visibility`
+  ('admin' default when missing | 'members'; rules like `config/scalping`). When 'members', active members (approved,
+  not expired; never pending/expired/signed-out) read `views/hesper` and get a Results tab "Hesper Challenge"
+  (`Rich embedded`, view only: no Share, no switch, line "Demo challenge with virtual money. Not a trading plan.").
+  The name "Road to Rich" is admin-only. Rules tests in `tests/rules`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

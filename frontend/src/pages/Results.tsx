@@ -1,12 +1,17 @@
 // Results: one place for "does it work?" - track record, demo bots, model accuracy, signal log, and the tools.
+import { lazy, Suspense } from "react";
 import { Link, useSearchParams } from "react-router-dom";
+import { useHesperVisibility } from "../lib/api";
 import TrackRecord from "../components/TrackRecord";
 import Accuracy from "./Accuracy";
 import Bots from "./Bots";
 import History from "./History";
 
+const Rich = lazy(() => import("./Rich"));
 const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["tools", "Tools"]] as const;
-type Tab = (typeof TABS)[number][0];
+// the Hesper challenge tab appears only when the admin shows it to members (config/hesper.visibility)
+const CHALLENGE = ["challenge", "Hesper Challenge"] as const;
+type Tab = (typeof TABS)[number][0] | (typeof CHALLENGE)[0];
 
 const TOOLS = [
   ["/backtest", "Backtest", "Test a strategy on past data vs buy & hold."],
@@ -16,7 +21,8 @@ const TOOLS = [
 
 export default function Results() {
   const [params, setParams] = useSearchParams();
-  const tabs = TABS;
+  const hesper = useHesperVisibility();
+  const tabs: readonly (readonly [Tab, string])[] = hesper === "members" ? [...TABS, CHALLENGE] : TABS;
   const tab = (tabs.some(([k]) => k === params.get("tab")) ? params.get("tab") : "track") as Tab;
   const go = (k: Tab) => { const p = new URLSearchParams(params); p.set("tab", k); setParams(p, { replace: true }); };
   return (
@@ -35,6 +41,7 @@ export default function Results() {
       {tab === "bots" && <Bots />}
       {tab === "accuracy" && <Accuracy />}
       {tab === "log" && <History />}
+      {tab === "challenge" && <Suspense fallback={<div className="skeleton h-64 rounded-xl" />}><Rich embedded /></Suspense>}
       {tab === "tools" && (
         <ul className="grid gap-3 sm:grid-cols-3">
           {TOOLS.map(([to, title, text]) => (

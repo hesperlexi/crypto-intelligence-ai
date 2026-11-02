@@ -160,22 +160,28 @@ service cloud.firestore {
       return exists(/databases/$(database)/documents/config/scalping)
         && get(/databases/$(database)/documents/config/scalping).data.get('visibility', 'admin') == 'members';
     }
+    // Hesper challenge (views/hesper, Road to Rich): admin only, unless the admin set config/hesper.visibility to
+    // 'members' - then active members too (view only). Never public or signed-out.
+    function hesperForMembers() {
+      return exists(/databases/$(database)/documents/config/hesper)
+        && get(/databases/$(database)/documents/config/hesper).data.get('visibility', 'admin') == 'members';
+    }
     // engine output; per-member alert views are private to that member
-    // wins_today is public (the sign-in page shows it); scalping as above; hesper (Road to Rich) admin only;
+    // wins_today is public (the sign-in page shows it); scalping as above; hesper as above;
     // everything else is for members
     match /views/{id} {
       allow read: if id == 'wins_today'
         || (id == 'scalping' && (isAdmin() || (isMember() && scalpingForMembers())))
-        || (id == 'hesper' && isAdmin())
+        || (id == 'hesper' && (isAdmin() || (isMember() && hesperForMembers())))
         || (id != 'scalping' && id != 'hesper' && allowed() && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
       allow write: if false;
     }
     // coins, bots, settings: everyone signed in may read, only the admin may change
     // membership: prices, payment note and support email are public (the landing page shows them)
-    // scalping: {visibility: 'admin' | 'members', updated_at, by} - only these fields, written by the admin
+    // scalping, hesper: {visibility: 'admin' | 'members', updated_at, by} - only these fields, written by the admin
     match /config/{id} {
       allow read: if allowed() || id == 'membership';
-      allow write: if isAdmin() && (id != 'scalping' || (
+      allow write: if isAdmin() && ((id != 'scalping' && id != 'hesper') || (
         request.resource.data.keys().hasOnly(['visibility', 'updated_at', 'by'])
         && request.resource.data.visibility in ['admin', 'members']));
     }
