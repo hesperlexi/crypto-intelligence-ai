@@ -199,7 +199,7 @@ public page `/verify` (Trust kind "verify"). No extra Firestore documents.
 ## v2.10 demo-only 1d / 3d (owner decision 1 Nov 2026)
 `analysis.PAUSED_TFS` "" and `DEMO_ONLY_TFS` "15m,1d,3d": 1d / 3d calls are never public or recorded; they go to demo bots
 `futures-demo-ab-1d` / `-3d` (`bots.DEMO_BOTS`, grades A+B, standard 50/25/25 exits, 20x safe leverage, 30 candles), added
-once (flag `demo_1d3d_v210`). Calls published before stay in the record until they close. Signals tabs say "demo only".
+once (flag `demo_1d3d_v210`). Calls published before stay in the record until they close. Signals tabs said "demo only". **Superseded by v2.12.**
 
 ## Scalping scorecard (admin, 2 Nov 2026, branch `scalping`)
 - 15m is demo-only, so 15m calls never reach `signals`. Every live 15m **grade-A** demo call (analysis `demo`) is logged
@@ -256,6 +256,21 @@ tab and Health summary are removed and the engine no longer logs / follows / reb
 **Sealed proofs removed (owner, 2 Nov 2026):** no fingerprints at publication (`tracking.SEALED_PROOFS`, env
 `SEALED_PROOFS=1` restores), Telegram `post_proofs` default off, no `proof` on record rows, `/verify` page, footer link,
 Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proofs` table and old rows kept.
+## v2.12 public 1d / 3d grade A + Signals "All" (owner decision 2 Nov 2026, branch `signals-sort`)
+- `analysis.A_ONLY_TFS` "15m,1h,1d,3d", `DEMO_ONLY_TFS` "" (`PAUSED_TFS` ""): 1d / 3d grade-A calls are public and counted
+  in the record (30 candles, `tracking.HORIZON_BARS` default). One-time flag `public_1d3d_v212` (`worker.sync_config`):
+  demo bots `futures-demo-ab-1d/-3d` removed; `futures-signal-ab-1d` / `-3d` added (grade A, standard exits, 30 candles,
+  reset_token v212) unless a non-demo bot is already on that timeframe; `record_since_tf['1d'/'3d']` = now (calls made
+  before stay in the Signal log and keep being followed, but are no longer counted). The 3d bot is `bots.FUTURES_3D`
+  (not in `BOT_TFS`/`DEFAULT_BOTS`, so no spot 3d bot is ever auto-added); `policy_default_bots()` includes it.
+  Frontend `Signals.tsx` TF_NOTES: 15m/1h/1d/3d "grade A". Tests `test_tf_policy_v28.py` (`test_public_1d3d_*`).
+- Signals page: timeframe "All" (`components/SignalsAll.tsx` `AllList`) = every coin × timeframe with a trade call from the
+  six `/futures?timeframe=` boards (loaded only while "All" is open); "Show waits" adds the waits. Row: coin, TF chip,
+  grade, call, entry now ("Ready" = live price inside `plan.entry_zone`, else "Wait for entry"), confidence, entry /
+  stop / TP1, status + live ROI. Click → that coin on its timeframe. `SortMenu` (both modes): Ready first (default:
+  calls, grade A, in zone, confidence) · Strongest · Newest (`call.created_at`/`bar_ts`) · Coin A–Z · Timeframe (All only).
+  URL query: `timeframe` (incl. `all`), `sort`, `waits=1`, `symbol`.
+
 **Less text (owner, 2 Nov 2026):** page subtitles ≤ 1 short line, card notes ≤ 1 sentence; longer details behind "ⓘ".
 
 ## Other features (where to look)

@@ -49,26 +49,28 @@ function plan(price: number, side: 1 | -1, valid = true, runner = false) {
 }
 
 function futuresRows(tf: string) {
+  // vary the sample calls by timeframe so the Signals "All" list looks like a real mix
+  const k = Math.max(0, ["4h", "15m", "1h", "12h", "1d", "3d"].indexOf(tf));
   return COINS.map(([symbol, price], i) => {
-    const d = DEC[i];
+    const d = DEC[(i + 3 * k) % DEC.length];
     const side = d === "SELL" ? -1 : d.startsWith("BUY") ? 1 : 0;
     const p_up = side > 0 ? 0.58 : side < 0 ? 0.24 : 0.41, p_down = side < 0 ? 0.55 : side > 0 ? 0.21 : 0.37;
     const row: any = {
       symbol, status: "OK", timeframe: tf, price, action: d === "BUY ON PULLBACK" ? "LONG ON PULLBACK" : side > 0 ? "LONG" : side < 0 ? "SHORT" : "NO TRADE",
       side, decision: d, decision_reason: side ? null : "the AI and the trend disagree", lean: p_up > p_down + 0.03 ? "LONG" : p_down > p_up + 0.03 ? "SHORT" : "NEUTRAL",
-      p_up, p_down, p_neutral: 1 - p_up - p_down, confidence: side ? 0.64 - i * 0.01 : 0.52, grade: side ? (i % 3 === 1 ? "B" : "A") : null,
+      p_up, p_down, p_neutral: 1 - p_up - p_down, confidence: side ? 0.66 - ((i + 2 * k) % 9) * 0.012 : 0.52, grade: side ? (i % 3 === 1 && (tf === "4h" || tf === "12h") ? "B" : "A") : null,
       decision_basis: side ? "4H trend and the AI ensemble agree; 1D trend supports it" : null,
       filter_score: side ? 0.61 : null, filter_threshold: 0.55, regime: REG[i], signal: SIG[i], funding_rate: 0.0001,
       record_status: side ? "logged" : "not_logged", stale: false,
       ai: side ? { rationale: "Price is holding above the rising 4H trend after a shallow pullback; momentum is recovering and the stop sits under the last swing low.", regime: "trend", model: "advisor", at: NOW - 20 * 60_000 } : undefined,
-      call: side ? { id: `c${i}`, status: "OPEN", fill_status: d === "BUY ON PULLBACK" ? "PENDING" : "FILLED", side: side > 0 ? "LONG" : "SHORT", entry: price * (1 - side * 0.004), stop: price * (1 - side * 0.02), peak_r: 0.42, peak_pct: 0.76, exit_reason: null, managed: 0, created_at: NOW - 3 * H, leverage: 8 }
+      call: side ? { id: `c${i}`, status: "OPEN", fill_status: d === "BUY ON PULLBACK" ? "PENDING" : "FILLED", side: side > 0 ? "LONG" : "SHORT", entry: price * (1 - side * 0.004), stop: price * (1 - side * 0.02), peak_r: 0.42, peak_pct: 0.76, exit_reason: null, managed: 0, created_at: NOW - (1 + ((i * 5 + k * 3) % 11)) * H, leverage: 8 }
         : i === 6 ? { id: `c${i}`, status: "TP2", fill_status: "FILLED", side: "LONG", entry: price * 0.98, stop: price * 0.962, peak_r: 2.1, peak_pct: 3.4, exit_reason: null, managed: 0, created_at: NOW - 9 * H, closed_at: NOW - 2 * H, return_pct: 2.3, leverage: 10, roi_pct: 23 }
         : i === 9 ? { id: `c${i}`, status: "STOPPED", fill_status: "FILLED", side: "SHORT", entry: price * 0.99, stop: price * 1.008, peak_r: 0.3, peak_pct: 0.4, exit_reason: "stop", managed: 0, created_at: NOW - 9 * H, closed_at: NOW - 3 * H, return_pct: -1.8, leverage: 8, roi_pct: -14.4 } : null,
     };
     if (side) row.plan = plan(price, side as 1 | -1, true, i === 4);
     else row.plan = plan(price, 1, false);
     if (row.call) Object.assign(row.call, { tp1: row.call.entry + (row.call.side === "LONG" ? 1 : -1) * Math.abs(row.call.entry - row.call.stop), tp1_hit: 0 });
-    if (i === 0) {
+    if (i === 0 && row.call) {
       // v2.7 sample: the admin moved this open call's stop-loss (public, forward-only)
       Object.assign(row.call, { entry: row.plan.entry, stop: row.plan.stop, tp1: row.plan.targets[0].price });
       const old = row.call.stop, nu = Math.round(price * 0.9905);

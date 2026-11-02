@@ -308,7 +308,8 @@ def test_fresh_start_v23_runs_once(tmp_path):
     sink.set("config/bots", {"bots": [{"id": "old-bot", "mode": "decision", "timeframe": "4h"}]})
     notes = worker.sync_config(rt, sink)
     ids = [b["id"] for b in sink.get("config/bots")["bots"]]
-    assert "old-bot" not in ids and len(ids) == 10 and sum(i.startswith("futures-") for i in ids) == 6      # v2.11: 15m public (A), 1d/3d demo bots
+    assert "old-bot" not in ids and len(ids) == 11 and sum(i.startswith("futures-") for i in ids) == 6      # v2.12: 5 spot + 6 futures (3d futures only)
+    assert not any("demo" in i for i in ids)
     assert notes["fresh_start_v23"]["bots"] == 10 and rt.db.get_setting("record_since", 0) > 0
     first = rt.db.get_setting("record_since", 0)
     worker.sync_config(rt, sink)

@@ -10,14 +10,17 @@ import { base, fmtPctRaw, fmtPrice, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
 import { CALL_STATUS, fillLabel, livePnl, managedLabel, riskLevel, RoiFigure } from "../components/SignalExtras";
 import { AdjustHistory, adjustedPlan } from "../components/SignalAdjust";
+import { AllList, isSort, SIG_TFS, SortKey, SortMenu, SORTS, sortRows } from "../components/SignalsAll";
 
-const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
-// Timeframe policy (v2.10): mirrors backend/app/services/analysis.py DEMO_ONLY_TFS ("1d,3d"); 15m grade A only and PAUSED_TFS ("").
-// The engine does not publish these lists, so they are kept here; change both together.
+const TFS = SIG_TFS;
+const TF_OPTIONS = [...SIG_TFS, "all"] as const;
+// Timeframe policy (v2.12): mirrors backend/app/services/analysis.py A_ONLY_TFS ("15m,1h,1d,3d"), DEMO_ONLY_TFS ("")
+// and PAUSED_TFS (""). The engine does not publish these lists, so they are kept here; change both together.
 const TF_NOTES: Partial<Record<string, readonly [string, string]>> = {
-  "15m": ["grade A", "15m: grade A calls only"],
-  "1d": ["demo only", "1D calls go to the demo bots only while they are tested; no public 1D trades"],
-  "3d": ["demo only", "3D calls go to the demo bots only while they are tested; no public 3D trades"],
+  "15m": ["grade A", "15M: grade A calls only"],
+  "1h": ["grade A", "1H: grade A calls only"],
+  "1d": ["grade A", "1D: grade A calls only"],
+  "3d": ["grade A", "3D: grade A calls only"],
 };
 const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;
 const TXT = { bull: "text-bull", bear: "text-bear", wait: "text-mute" } as const;
@@ -50,23 +53,46 @@ function Seg<T extends string>({ label, value, options, onChange }: { label: str
 /** Pick a coin, pick spot or futures: one clear call with entry, stop and targets. */
 export default function Signals() {
   const [params, setParams] = useSearchParams();
-  const [tf, setTf] = useState<string>(params.get("timeframe") ?? "4h");
+  const tfParam = params.get("timeframe");
+  const tf: string = tfParam && (TF_OPTIONS as readonly string[]).includes(tfParam) ? tfParam : "4h";
+  const all = tf === "all";
+  const sortParam = params.get("sort");
+  const sort: SortKey = isSort(sortParam) && (all || sortParam !== "tf") ? sortParam : "ready";
+  const waits = params.get("waits") === "1";
+  /** Change URL query values (timeframe, sort, waits, symbol); null removes one. */
+  const setQuery = (kv: Record<string, string | null>) => {
+    const p = new URLSearchParams(params);
+    for (const [k, val] of Object.entries(kv)) { if (val == null) p.delete(k); else p.set(k, val); }
+    setParams(p, { replace: true });
+  };
+  const setTf = (t: string) => setQuery({ timeframe: t, symbol: null, ...(t !== "all" && sort === "tf" ? { sort: null } : {}) });
   const [market, setMarket] = useState<Market>((params.get("market") as Market) ?? "futures");
-  const v = useApi<any>(`/futures?timeframe=${tf}`);
+  const v = useApi<any>(all ? null : `/futures?timeframe=${tf}`);
+  // "All": the six boards, loaded only while "All" is open
+  const b15 = useApi<any>(all ? "/futures?timeframe=15m" : null);
+  const b1h = useApi<any>(all ? "/futures?timeframe=1h" : null);
+  const b4h = useApi<any>(all ? "/futures?timeframe=4h" : null);
+  const b12 = useApi<any>(all ? "/futures?timeframe=12h" : null);
+  const b1d = useApi<any>(all ? "/futures?timeframe=1d" : null);
+  const b3d = useApi<any>(all ? "/futures?timeframe=3d" : null);
+  const boards = [b15, b1h, b4h, b12, b1d, b3d];
   const symbols = useSymbols();
-  const mkt = useApi<any>(market === "futures" && symbols.length ? `/futures/market?symbols=${symbols.join(",")}` : null, 60_000);
+  const mkt = useApi<any>(!all && market === "futures" && symbols.length ? `/futures/market?symbols=${symbols.join(",")}` : null, 60_000);
   const { tickers } = useLive();
+  const px = (s: string): number | undefined => tickers[s]?.last ?? undefined;
   const [dir, setDir] = useState<Dir>("all");
   const [grade, setGrade] = useState<Grade>("all");
   const [st, setSt] = useState<St>("all");
   const [q, setQ] = useState("");
+  const boardData = boards.map((b) => b.data);
   const allRows: any[] = useMemo(() => {
-    const r = [...(v.data?.rows ?? [])];
-    const rank = (x: any) => (verdictOf(x, market).tone === "wait" ? 2 : x.grade === "A" ? 0 : 1);
-    return r.sort((a, b) => rank(a) - rank(b) || (b.confidence ?? 0) - (a.confidence ?? 0));
-  }, [v.data, market]);
+    if (!all) return [...(v.data?.rows ?? [])].map((r: any) => ({ ...r, timeframe: r.timeframe ?? tf }));
+    const out: any[] = [];
+    boardData.forEach((d, i) => { for (const r of d?.rows ?? []) out.push({ ...r, timeframe: r.timeframe ?? TFS[i] }); });
+    return waits ? out : out.filter((r) => verdictOf(r, market).tone !== "wait");
+  }, [all, v.data, tf, waits, market, ...boardData]);
   const hasCalls = allRows.some((r) => r.call);
-  const rows: any[] = useMemo(() => {
+  const filteredRows: any[] = useMemo(() => {
     const needle = q.trim().toUpperCase();
     return allRows.filter((r) => {
       if (needle && !base(r.symbol).toUpperCase().includes(needle) && !String(r.symbol).toUpperCase().includes(needle)) return false;
@@ -76,10 +102,16 @@ export default function Signals() {
       return true;
     });
   }, [allRows, q, dir, grade, st, market]);
+  // sorted with live prices ("in the entry zone now" moves with the price)
+  const rows: any[] = sortRows(filteredRows, sort, market, px);
+  const boardsLoading = all && boards.some((b) => b.loading && !b.data);
+  const boardsErr = all ? boards.find((b) => b.error) : undefined;
+  const boardsEmpty = all && !boardsLoading && boards.every((b) => !b.data);
+  const openOne = (r: any) => setQuery({ timeframe: r.timeframe, symbol: r.symbol, ...(sort === "tf" ? { sort: null } : {}) });
   const filtered = rows.length !== allRows.length;
   const sel = params.get("symbol") ?? rows[0]?.symbol;
   const row = rows.find((r) => r.symbol === sel) ?? rows[0];
-  const pick = (s: string) => { const p = new URLSearchParams(params); p.set("symbol", s); setParams(p, { replace: true }); };
+  const pick = (s: string) => setQuery({ symbol: s });
   const active = rows.filter((r) => verdictOf(r, market).tone !== "wait").length;
 
   return (
@@ -88,7 +120,7 @@ export default function Signals() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="page-title">Trade signals</h1>
-          <p className="page-sub">{rows.length ? `${active} of ${rows.length} coins with a call · ${tf.toUpperCase()}` : "One call per coin."}</p>
+          <p className="page-sub">{all ? `${active} calls · all timeframes` : rows.length ? `${active} of ${rows.length} coins with a call · ${tf.toUpperCase()}` : "One call per coin."}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="seg" role="group" aria-label="Market">
@@ -99,12 +131,12 @@ export default function Signals() {
               </button>
             ))}
           </div>
-          <TfTabs value={tf} onChange={setTf} options={TFS} notes={TF_NOTES} />
+          <TfTabs value={tf} onChange={setTf} options={TF_OPTIONS} notes={TF_NOTES} />
         </div>
       </div>
 
-      {allRows.length > 0 && (
-        <div className="flex flex-wrap items-center gap-2" aria-label="Filters">
+      {(allRows.length > 0 || (all && !boardsLoading && !boardsEmpty)) && (
+        <div className="relative z-30 flex flex-wrap items-center gap-2" aria-label="Filters">
           <label className="w-full sm:w-auto">
             <span className="sr-only">Search coin</span>
             <input className="input input-sm w-full sm:w-44" type="search" placeholder="Search coin" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -112,16 +144,29 @@ export default function Signals() {
           <Seg label="Direction" value={dir} onChange={setDir} options={[["all", "All"], ["long", market === "futures" ? "Long" : "Buy"], ["short", market === "futures" ? "Short" : "Sell"]] as const} />
           <Seg label="Grade" value={grade} onChange={setGrade} options={[["all", "Any grade"], ["A", "A"], ["B", "B"]] as const} />
           {hasCalls && <Seg label="Status" value={st} onChange={setSt} options={[["all", "Any status"], ["open", "Open"], ["closed", "Closed"]] as const} />}
+          {all && (
+            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-mute">
+              <input type="checkbox" className="accent-[rgb(var(--accent))]" checked={waits} onChange={(e) => setQuery({ waits: e.target.checked ? "1" : null })} />
+              Show waits
+            </label>
+          )}
           {filtered && <button type="button" className="btn btn-ghost btn-sm text-accent" onClick={() => { setDir("all"); setGrade("all"); setSt("all"); setQ(""); }}>Clear filters</button>}
+          <div className="ml-auto"><SortMenu value={sort} onChange={(k) => setQuery({ sort: k === "ready" ? null : k })} options={all ? SORTS : SORTS.filter(([k]) => k !== "tf")} /></div>
         </div>
       )}
       {allRows.length > 0 && rows.length === 0 && <Empty>No coin matches these filters.</Empty>}
 
-      {v.error && <ErrorBox error={v.error} retry={v.reload} />}
-      {!v.data && v.loading && <Loading what="Loading signals" />}
-      {v.data === null && !v.loading && <Empty>Signals appear after the next engine run (within about 5 minutes).</Empty>}
+      {!all && v.error && <ErrorBox error={v.error} retry={v.reload} />}
+      {!all && !v.data && v.loading && <Loading what="Loading signals" />}
+      {!all && v.data === null && !v.loading && <Empty>Signals appear after the next engine run (within about 5 minutes).</Empty>}
+      {boardsErr && <ErrorBox error={boardsErr.error ?? ""} retry={boardsErr.reload} />}
+      {boardsLoading && <Loading what="Loading all timeframes" />}
+      {boardsEmpty && !boardsErr && <Empty>Signals appear after the next engine run (within about 5 minutes).</Empty>}
+      {all && !boardsLoading && !boardsEmpty && allRows.length === 0 && <Empty>No trade calls right now.{waits ? "" : " Tick “Show waits” to see every coin."}</Empty>}
 
-      {rows.length > 0 && (
+      {all && rows.length > 0 && <AllList rows={rows} market={market} px={px} onOpen={openOne} />}
+
+      {!all && rows.length > 0 && (
         <>
           {/* coin picker */}
           <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="Coins">

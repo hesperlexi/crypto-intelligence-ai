@@ -50,7 +50,7 @@ MAX_EQUITY_POINTS = 3000
 _FUT = {"market": "futures", "safe_leverage": True}
 # v2.3 fresh start: 5 spot + 5 futures bots, each trading exactly what the Signals page shows (grades A and B) on one
 # timeframe. The futures 1H / 4H bots keep the scorecard ids. reset_token "v23" restarts every bot with a clean book.
-_HOLD = {"15m": 250, "1h": 200, "4h": 100, "12h": 30, "1d": 30}     # v2.11: 15m 250 (as the record)     # v2.8: 1h 200, 4h 100 (as the record)
+_HOLD = {"15m": 250, "1h": 200, "4h": 100, "12h": 30, "1d": 30, "3d": 30}     # v2.11: 15m 250 (as the record)     # v2.8: 1h 200, 4h 100 (as the record)
 
 
 def demo_view(a: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
@@ -92,6 +92,9 @@ def _sig_bot(tf: str, futures: bool) -> dict[str, Any]:
 
 BOT_TFS = ("15m", "1h", "4h", "12h", "1d")
 DEFAULT_BOTS: list[dict[str, Any]] = [_sig_bot(tf, False) for tf in BOT_TFS] + [_sig_bot(tf, True) for tf in BOT_TFS]
+# v2.12 (owner decision 2 Nov 2026): 3d is public (grade A) -> one futures signal bot. Kept out of DEFAULT_BOTS so the
+# one-time "new default bot" rule never adds a spot 3d bot to existing line-ups; added by the `public_1d3d_v212` migration.
+FUTURES_3D: dict[str, Any] = _sig_bot("3d", True)
 def size_multiplier(grade: str | None, filter_score: float | None = None, filter_threshold: float | None = None) -> float:
     """Bigger on stronger calls, smaller on weaker ones (0.5x - 1.5x of the normal risk): grade A 1.2x, grade B 0.8x,
     plus up to +30 % when the trade filter scores the setup well above its bar."""

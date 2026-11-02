@@ -198,7 +198,7 @@ def test_testing_mode_v24_keeps_ten_coins_futures_bots_and_restarts_practice(tmp
     sink.set("paper_futures_trades/t1", {"uid": "u1"})
     notes = worker.sync_config(rt, sink)
     assert sorted(rt.symbols()) == sorted(worker.TEST_COINS)
-    assert all(b["market"] == "futures" for b in sink.get("config/bots")["bots"]) and len(sink.get("config/bots")["bots"]) == 6      # v2.10: 1h 4h 12h + demo 15m, 1d, 3d
+    assert all(b["market"] == "futures" for b in sink.get("config/bots")["bots"]) and len(sink.get("config/bots")["bots"]) == 6      # v2.12: 15m 1h 4h 12h 1d 3d (public, no demo bots)
     assert sink.get("paper/u1_futures") is None and sink.get("paper_futures_trades/t1") is None
     assert notes["testing_v24"]["coins"] == worker.TEST_COINS
     assert "testing_v24" not in worker.sync_config(rt, sink)       # done once
@@ -246,4 +246,4 @@ def test_paused_15m_removes_its_bots_once(tmp_path):
                              "defaults_added": ["a", "b"] + [d["id"] for d in worker.DEFAULT_BOTS]})
     notes = worker.sync_config(rt, sink)
     assert not notes.get("pause_15m_bots_removed")          # v2.11: 15m is public again (grade A), its bot stays
-    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["a", "b", "futures-demo-ab-1d", "futures-demo-ab-3d"]
+    assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["a", "b", "futures-signal-ab-1d", "futures-signal-ab-3d"]

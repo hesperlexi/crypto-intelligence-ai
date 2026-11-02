@@ -185,10 +185,10 @@ def _policy_bot(b: dict[str, Any]) -> dict[str, Any]:
 
 def policy_default_bots() -> list[dict[str, Any]]:
     """The default bot line-up under the current timeframe policy: no bots on paused / demo-only timeframes (except
-    the 15m demo bot), 1h grade A + 200 candles, 4h 100 candles (used when config/bots is missing)."""
+    demo bots on demo-only timeframes), grade A on A-only timeframes, 1h 200 candles, 4h 100 candles (used when config/bots is missing)."""
     from .services.analysis import DEMO_ONLY_TFS
-    from .services.bots import DEMO_BOTS
-    out = [_policy_bot(dict(b)) for b in DEFAULT_BOTS if not _off_bot(b)]
+    from .services.bots import DEMO_BOTS, FUTURES_3D
+    out = [_policy_bot(dict(b)) for b in DEFAULT_BOTS + [FUTURES_3D] if not _off_bot(b)]
     out += [dict(b) for b in DEMO_BOTS if b["timeframe"] in DEMO_ONLY_TFS and not _off_bot(b)]
     return out
 
@@ -484,6 +484,31 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 notes["public_15m_v211"] = [b["id"] for b in keep if b.get("timeframe") == "15m"]
             rt.db.set_setting("record_since_tf", {**(rt.db.get_setting("record_since_tf", {}) or {}), "15m": now_ms()})
         rt.db.set_setting("public_15m_v211", True)
+    # v2.12 (owner decision, 2 Nov 2026): 1d / 3d go public, grade A only, counted in the record (30 candles). Their demo
+    # bots are removed; a normal futures signal bot per timeframe is added (grade A, standard exits, 30 candles, fresh
+    # book) unless a public bot is already there; the record counts 1d / 3d from now (record_since_tf). Calls already
+    # open keep running; old 1d calls from before the v2.8 pause are judged by their own start as before.
+    if not rt.db.get_setting("public_1d3d_v212", False):
+        from .services.analysis import DEMO_ONLY_TFS
+        from .services.bots import DEMO_BOTS, FUTURES_3D, _sig_bot
+        tfs = [tf for tf in ("1d", "3d") if tf not in DEMO_ONLY_TFS]
+        if tfs:
+            doc = sink.get("config/bots") or {}
+            if isinstance(doc.get("bots"), list):
+                demo_ids = {b["id"] for b in DEMO_BOTS if b["timeframe"] in tfs}
+                keep = [b for b in doc["bots"] if b.get("id") not in demo_ids]
+                added = []
+                for tf in tfs:
+                    if not any(b.get("timeframe") == tf and not b.get("demo_only") for b in keep):
+                        nb = {**_policy_bot(dict(FUTURES_3D) if tf == "3d" else _sig_bot(tf, True)), "reset_token": "v212"}
+                        keep.append(nb)
+                        added.append(nb["id"])
+                seen = sorted(set(doc.get("defaults_added") or []) | {FUTURES_3D["id"]})
+                sink.set("config/bots", {**doc, "bots": keep, "defaults_added": seen, "updated_at": now_ms()})
+                notes["public_1d3d_v212"] = {"removed": sorted(demo_ids & {b.get("id") for b in doc["bots"]}), "added": added}
+            t = now_ms()
+            rt.db.set_setting("record_since_tf", {**(rt.db.get_setting("record_since_tf", {}) or {}), **{tf: t for tf in tfs}})
+        rt.db.set_setting("public_1d3d_v212", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())

@@ -583,3 +583,18 @@ a.hero-metric:hover { background: rgb(var(--glass) / 0.035); }
 .tab-link::before { display: none; }
 .grade-mini { display: inline-flex; height: 16px; min-width: 16px; flex-shrink: 0; align-items: center; justify-content: center; border-radius: 4px; padding: 0 4px; font-size: 10px; font-weight: 700; line-height: 1; color: rgb(var(--text) / 0.8); background: rgb(var(--glass) / 0.08); box-shadow: 0 0 0 1px var(--hair-strong) inset; }
 .grade-mini.is-a { color: rgb(var(--accent)); background: rgb(var(--accent) / 0.12); box-shadow: 0 0 0 1px rgb(var(--accent) / 0.4) inset; }
+
+/* Signals "All" list (v2.12): every coin x timeframe in one list; phone = 2 columns + detail lines, desktop = 8 columns */
+.all-row { position: relative; display: grid; width: 100%; align-items: center; column-gap: 0.75rem; row-gap: 0.15rem; padding: 0.55rem 1rem 0.55rem 1.1rem; text-align: left; transition: background-color .12s; grid-template-columns: minmax(0, 1fr) auto; }
+.all-row:hover { background: rgb(var(--glass) / 0.035); }
+.all-row:focus-visible { outline: none; box-shadow: var(--ring); }
+.all-row::before { content: ""; position: absolute; left: 0; top: 8px; bottom: 8px; width: 3px; border-radius: 0 3px 3px 0; background: var(--side, transparent); }
+.all-head { display: none; }
+.all-call { text-align: right; line-height: 1.2; }
+@media (min-width: 1024px) {
+  .all-row { grid-template-columns: minmax(0, 1.4fr) 9rem 6.5rem 3.2rem repeat(3, minmax(0, 1fr)) 7.5rem; }
+  .all-head { display: grid; padding-top: 0.5rem; padding-bottom: 0.5rem; }
+  .all-head:hover { background: none; }
+  .all-call { text-align: left; }
+}
+.tf-chip { display: inline-flex; height: 16px; flex-shrink: 0; align-items: center; border-radius: 4px; padding: 0 4px; font-size: 10px; font-weight: 700; line-height: 1; color: rgb(var(--mute)); background: rgb(var(--glass) / 0.06); box-shadow: 0 0 0 1px var(--hair) inset; }
