@@ -574,7 +574,9 @@ def _streak(rets: list[float]) -> dict[str, Any]:
 
 
 def scalping_stats(closed: list[dict[str, Any]]) -> dict[str, Any]:
-    """Scorecard numbers of closed scalp calls (sorted by close time, oldest first). Before fees, like the record."""
+    """Scorecard numbers of closed scalp calls (sorted by close time, oldest first). Before fees, like the record.
+    Owner request 2 Nov 2026: return = the trade's plain price return % (50/25/25 blended exits, no leverage); no ROI on
+    margin anywhere on the scalping board."""
     if not closed:
         return {"closed": 0}
     rets = [float(x["return_pct"]) for x in closed]
@@ -584,9 +586,7 @@ def scalping_stats(closed: list[dict[str, Any]]) -> dict[str, Any]:
              if x.get("closed_at") and (x.get("filled_at") or x.get("created_at"))]
     best = max(closed, key=lambda x: x["return_pct"])
     worst = min(closed, key=lambda x: x["return_pct"])
-    pick = lambda x: {k: x.get(k) for k in ("id", "symbol", "side", "status", "return_pct", "roi_pct", "leverage",  # noqa: E731
-                                           "closed_at")}
-    rois = [x["roi_pct"] for x in closed if x.get("roi_pct") is not None]
+    pick = lambda x: {k: x.get(k) for k in ("id", "symbol", "side", "status", "return_pct", "closed_at", "rebuilt")}  # noqa: E731
     n = len(closed)
     out = {"closed": n, "wins": int(len(wins)), "losses": int(len(losses)), "win_rate": float(len(wins) / n),
            "avg_return_pct": float(r.mean()), "total_return_pct": float(r.sum()),
@@ -597,9 +597,6 @@ def scalping_stats(closed: list[dict[str, Any]]) -> dict[str, Any]:
            "stop_rate": float(np.mean([1.0 if x["status"] == "STOPPED" else 0.0 for x in closed])),
            "streak": _streak(rets), "max_drawdown_pct": _max_drawdown(rets),
            "by_status": {s: sum(x["status"] == s for x in closed) for s in tracking.CLOSED_STATUSES}}
-    out.update(roi_summary(closed))
-    if rois:
-        out["max_drawdown_roi_pct"] = _max_drawdown([x["roi_pct"] if x.get("roi_pct") is not None else 0.0 for x in closed])
     return out
 
 
@@ -615,8 +612,9 @@ def _scalp_bot(rt: Runtime, bot_report: dict[str, Any] | None) -> dict[str, Any]
             info = t.get("info") if isinstance(t.get("info"), dict) else loads(t.get("info"), {}) or {}
             trades.append({"symbol": t.get("symbol"), "side": "LONG" if (t.get("side") or 0) > 0 else "SHORT",
                            "opened_at": t.get("opened_at"), "closed_at": t.get("closed_at"), "entry": t.get("entry"),
-                           "exit": t.get("exit"), "pnl": t.get("pnl"), "return_pct": t.get("return_pct"),
-                           "roe_pct": info.get("roe_pct"), "leverage": info.get("leverage"), "exit_reason": t.get("exit_reason")})
+                           "exit": t.get("exit"), "pnl": t.get("pnl"),
+                           "return_pct": t.get("return_pct"),      # P/L / position size (no leverage multiplication)
+                           "exit_reason": t.get("exit_reason")})
         return {"id": cfg["id"], "name": cfg.get("name"), "enabled": bool(cfg.get("enabled", True)),
                 "starting_balance": cfg.get("starting_balance"), "equity": st.get("equity", state.get("equity")),
                 "cash": state.get("cash"), "return_pct": st.get("return_pct"), "trades": st.get("trades", 0),
@@ -637,8 +635,12 @@ def scalping(rt: Runtime, bot_report: dict[str, Any] | None = None) -> dict[str,
                       "(it is never a public signal) and followed candle by candle with the track record's rules: entry "
                       "at the card's entry, half closes at target 1 (stop to break-even), a quarter at target 2 (stop to "
                       f"target 1), a quarter at target 3, or the stop; time limit {tracking.horizon_for('15m')} candles. "
-                      "One call per coin at a time. Before fees. ROI on margin = price return x the card's leverage.",
+                      "One call per coin at a time. Return = the trade's price return (no leverage), before fees.",
             "bot": _scalp_bot(rt, bot_report)}
+    from .services import scalp_backfill
+    bf = scalp_backfill.status(rt.db)
+    if bf:
+        base["backfill"] = bf
     if since is None:
         return {**base, "started": False, "summary": {"closed": 0}, "open": [], "recent": [], "curve": [],
                 "not_filled": 0, "void": 0}
@@ -650,7 +652,9 @@ def scalping(rt: Runtime, bot_report: dict[str, Any] | None = None) -> dict[str,
         x = {"id": r["id"], "symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
              "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
              "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
-             "closed_at": r["closed_at"], "return_pct": r["return_pct"], **tracking.margin_fields(r, p),
+             "closed_at": r["closed_at"], "return_pct": r["return_pct"],
+             "leverage": tracking.margin_fields(r, p)["leverage"],      # the card's leverage: info only, no ROI figures
+             "rebuilt": bool(p.get("backfilled")),
              **{k: v for k, v in contract_fields(r, p).items() if k not in ("ai", "app_version", "engine_version")},
              **live_fields(r, p)}
         if r["closed_at"] and r["status"] != "OPEN":
@@ -658,21 +662,25 @@ def scalping(rt: Runtime, bot_report: dict[str, Any] | None = None) -> dict[str,
         items.append(x)
     closed = sorted([x for x in items if x["status"] in tracking.CLOSED_STATUSES and x["return_pct"] is not None],
                     key=lambda x: (x["closed_at"] or x["created_at"], x["created_at"]))
-    curve, acc, acc_roi = [], 0.0, 0.0
+    curve, acc = [], 0.0
     for x in closed:
         acc += x["return_pct"]
-        acc_roi += x["roi_pct"] if x.get("roi_pct") is not None else 0.0
-        curve.append({"ts": x["closed_at"] or x["created_at"], "cum_return_pct": acc, "cum_roi_pct": acc_roi})
+        curve.append({"ts": x["closed_at"] or x["created_at"], "cum_return_pct": acc, "rebuilt": x["rebuilt"]})
     done = [x for x in items if x["status"] != "OPEN"]
     done.sort(key=lambda x: (x["closed_at"] or x["created_at"]), reverse=True)
     return {**base, "started": True, "summary": scalping_stats(closed),
             "open": [x for x in items if x["status"] == "OPEN"], "recent": done[:SCALP_RECENT],
             "curve": curve[-SCALP_CURVE:], "not_filled": sum(x["status"] == "NOT_FILLED" for x in items),
-            "void": sum(x["status"] == "VOID" for x in items), "logged": len(items)}
+            "void": sum(x["status"] == "VOID" for x in items), "logged": len(items),
+            # rebuilt (1-2 Nov replay) vs logged live: both counted in `summary`, shown apart here
+            "split": {"rebuilt": scalping_stats([x for x in closed if x["rebuilt"]]),
+                      "live": scalping_stats([x for x in closed if not x["rebuilt"]])},
+            "counts": {"rebuilt": sum(x["rebuilt"] for x in items), "live": sum(not x["rebuilt"] for x in items)}}
 
 
 def scalping_core(v: dict[str, Any]) -> Any:
     """What must reach the admin at once: a call logged, filled, hitting a target or closing (not the bot's equity)."""
     return [v.get("since"), v.get("logged"), (v.get("summary") or {}).get("closed"),
+            ((v.get("backfill") or {}).get("state"), (v.get("backfill") or {}).get("rebuilt")),
             [(x["id"], x["status"], x.get("fill_status"), x.get("tp1_hit"), x.get("tp2_hit")) for x in v.get("open") or []],
             ((v.get("bot") or {}).get("trades"), (v.get("bot") or {}).get("open_positions"))]

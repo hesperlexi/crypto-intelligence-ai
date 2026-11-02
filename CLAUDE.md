@@ -216,13 +216,32 @@ once (flag `demo_1d3d_v210`). Calls published before stay in the record until th
   written by the admin (rules: only fields visibility/updated_at/by). Rule: `views/scalping` readable by the admin, or by
   active members only when that field is 'members'; never signed-out/pending/expired. Rules tests in `tests/rules`.
 - View `views/scalping` (`views.scalping`, one document, hash-dedup, `min_interval_s` 900 with `core` = calls
-  logged/filled/hit/closed): since, summary (`views.scalping_stats`: win rate, avg/total return and ROI on margin, profit
+  logged/filled/hit/closed): since, summary (`views.scalping_stats`: win rate, avg/total return, profit
   factor, best/worst, avg hold, TP1-3 hit rates, streak, max drawdown of the cumulative curve), open calls with
   live_fields, last 60 closed/missed calls, curve, 15m demo bot block (`futures-demo-a-15m` from the bots report).
   Before fees. Skipped in lean mode.
 - UI: Results tab "Scalping" (`components/Scalping.tsx`, admin or members when opened), Health summary, admin
   visibility toggle with confirm, share PNG drawn in the browser (`lib/scalpCard.ts`, cardCanvas style, "Demo results -
   15m scalping - since <date>"; nothing posted). Record rows open `RecordSheet` with `scalp` (no Adjust/Close).
+- **Return only (owner, 2 Nov 2026):** every scalping figure (view, tiles, curve, tables, best/worst, live figures,
+  share image, Health summary) is the trade's plain price return % (50/25/25 blended, no leverage), before fees; no
+  ROI on margin (`scalping_stats` has no roi fields; rows keep `leverage` as info only; `LiveRoi plain`, `ReturnFigure`
+  in `RecordDetails.tsx`). Demo-bot block: equity change % and each trade's P/L ÷ position size ("of position").
+- **1-2 Nov rebuild** (`services/scalp_backfill.py`, branch `scalping-2`): one-time migration (flag
+  `scalping_since_nov1`) sets `scalping_since` = 1 Nov 00:00 Dubai (2026-10-31T20:00Z), the old value kept in
+  `scalping_live_since`. Each closed 15m candle from then to the live start is replayed: call time = `predictions.created_at`
+  of the live forecast for that candle (none = engine did not analyse it = skipped), model = that forecast's
+  `model_version_id` (file must exist; trained after the candle -> skipped), `analysis.analyze(as_of=close,
+  bundle, multipliers=live_multipliers(until=t))`; live-only gates replayed as of t (AI lean threshold from the live
+  probabilities, news, safety read-only, filter2 only if trained before t, record one-call read-only), then
+  `log_scalp(extra=..., gate=gate_as_of)` (open / cooldown / re-entry judged on closes known by t) and followed at once
+  (`update_signal_outcomes(ids=...)`). Rows: payload `backfilled`, `rebuilt_at`, `replay` {as_of, model, live vs replay
+  probabilities}, `overlaps_live` (rebuilt call still running when a live call on the coin was logged; both kept).
+  Cursor/state `scalp_backfill_state`, done flag `scalp_backfill_v1`; worker step `scalp_backfill` (≤120 s /
+  `SCALP_BACKFILL_BUDGET_S`, ≤150 replays / `SCALP_BACKFILL_MAX` per tick); CLI `python -m app.worker scalp-backfill`.
+  `prune_keep_versions` stops `trainer.prune_files` deleting the needed model files until done. View: `backfill`
+  (state, progress, note), `split` {rebuilt, live}, `counts`; UI "rebuilt" tags + note. Entry rule = the current nightly
+  `entry_policy1|15m` (only the latest is stored). Tests `tests/test_scalp_backfill.py`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track

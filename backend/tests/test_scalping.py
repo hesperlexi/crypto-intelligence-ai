@@ -194,13 +194,13 @@ def test_scalping_stats_numbers():
     assert s["total_return_pct"] == pytest.approx(1.0) and s["avg_return_pct"] == pytest.approx(1 / 7)
     # cumulative: 1, .5, 2.5, 1.5, .5, .5, 1 -> peak 2.5, trough .5 -> drawdown 2.0
     assert s["max_drawdown_pct"] == pytest.approx(2.0)
-    assert s["max_drawdown_roi_pct"] == pytest.approx(20.0)
     assert s["streak"] == {"kind": "win", "n": 1, "best_win": 1, "best_loss": 3}
     assert s["hit_rates"]["tp1"] == pytest.approx(4 / 7) and s["hit_rates"]["tp2"] == pytest.approx(2 / 7)
     assert s["hit_rates"]["tp3"] == pytest.approx(1 / 7)
     assert s["best"]["id"] == "c2" and s["worst"]["return_pct"] == -1.0
     assert s["avg_hold_min"] == pytest.approx(30.0)
-    assert s["total_roi_pct"] == pytest.approx(10.0)
+    # return only (owner request 2 Nov 2026): no ROI-on-margin figure anywhere in the scalping stats
+    assert not any("roi" in k for k in s) and not any("roi" in k or "leverage" in k for k in s["best"])
     assert views.scalping_stats([_closed(0, 1.0, "TP1", 1)])["profit_factor"] is None     # no loss yet
     assert views.scalping_stats([])["closed"] == 0
 
@@ -242,7 +242,8 @@ def test_scalping_view_shape_and_size(frozen):
     assert len(v["recent"]) == views.SCALP_RECENT and v["recent"][0]["id"] == "s299"
     assert {x["status"] for x in v["recent"]} == {"TP2", "STOPPED"}                     # wins and losses, unfiltered
     assert v["curve"][-1]["cum_return_pct"] == pytest.approx(v["summary"]["total_return_pct"])
-    assert v["bot"]["id"] == "futures-demo-a-15m" and v["bot"]["return_pct"] == 2.5 and v["bot"]["recent"][0]["roe_pct"] == 20.0
+    assert v["bot"]["id"] == "futures-demo-a-15m" and v["bot"]["return_pct"] == 2.5 and v["bot"]["recent"][0]["return_pct"] == 1.0
+    assert "roi" not in dumps(v).lower() and "roe" not in dumps(v).lower() and "on margin" not in dumps(v).lower()
     assert "before fees" in v["label"] and "not public" in v["label"]
     assert len(dumps(v).encode()) < 300_000                                               # one small document
     core = views.scalping_core(v)

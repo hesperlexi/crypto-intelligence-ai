@@ -66,7 +66,8 @@ def beats_costs(entry: float, stop: float, futures: bool = True, mult: float = C
 
 
 def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None = None,
-                   bundle: dict[str, Any] | None = None, explain: bool = False) -> dict[str, Any]:
+                   bundle: dict[str, Any] | None = None, explain: bool = False,
+                   multipliers: dict[str, float] | None = None) -> dict[str, Any]:
     """Forecast for the next bar of `timeframe` from that timeframe's own model."""
     if timeframe not in MODEL_TIMEFRAMES:
         return {"available": False, "status": "NOT MODELLED",
@@ -84,7 +85,8 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
                 "reason": reason}
     try:
         ds = rt.dataset(symbol, timeframe, bundle["uses_btc"], as_of, htf_tf=bundle.get("uses_htf"))
-        mult = tracking.live_multipliers(rt.db, bundle) if as_of is None else {}
+        # replays: none, unless the caller supplies the weights as they stood then (scalping rebuild)
+        mult = tracking.live_multipliers(rt.db, bundle) if as_of is None else dict(multipliers or {})
         fc = trainer.predict(bundle, ds, multipliers=mult)
     except InsufficientData as exc:
         return {"available": False, "status": "INSUFFICIENT DATA", "reason": str(exc)}
@@ -185,7 +187,8 @@ def _snapshot(last: Any) -> dict[str, Any]:
 
 
 def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None = None,
-            bundle: dict[str, Any] | None = None, detail: bool = True, use_cache: bool = True) -> dict[str, Any]:
+            bundle: dict[str, Any] | None = None, detail: bool = True, use_cache: bool = True,
+            multipliers: dict[str, float] | None = None) -> dict[str, Any]:
     key = (symbol, timeframe, detail)
     if as_of is None and bundle is None and use_cache:
         hit = ttl_get(rt.analysis_cache, key, min(rt.refresh_seconds(), 60))
@@ -215,7 +218,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     htf = mtf_engine.higher_tf_score(matrix, timeframe)
     vol_state = vol_state_name(last["vol_state"])
 
-    fc = model_forecast(rt, symbol, timeframe, as_of, bundle, explain=detail)
+    fc = model_forecast(rt, symbol, timeframe, as_of, bundle, explain=detail, multipliers=multipliers)
     flags: list[str] = []
     ml_score = None
     if fc["available"]:

@@ -29,6 +29,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
+from .services import scalp_backfill
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -917,6 +918,11 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                                   tracking.update_signal_outcomes(rt, table="shadow_signals")))
     # admin scalping log: its own step, so a problem there never stops the record's outcomes above
     step("scalp_outcomes", lambda: tracking.update_signal_outcomes(rt, table=tracking.SCALP_TABLE))
+    # 1-2 Nov scalping rebuild (owner request 2 Nov 2026): a slice per tick until done (flag scalp_backfill_v1)
+    if not rt.db.get_setting(scalp_backfill.DONE_FLAG, False):
+        detail["scalp_backfill"] = step("scalp_backfill", lambda: scalp_backfill.run(
+            rt, budget_s=min(float(os.environ.get("SCALP_BACKFILL_BUDGET_S", 120)), max(0.0, deadline - time.time() - 300)),
+            max_analyses=int(os.environ.get("SCALP_BACKFILL_MAX", 150))))
     missing = [(s, tf) for s in rt.symbols() for tf in MODEL_TIMEFRAMES
                if trainer.active_version(s, tf, rt.db) is None and rt.store.is_current(rt.exchange, s, tf)]
     detail["bootstrap"] = step("bootstrap", lambda: train_until(rt, missing, True, t0 + budget_s * 0.5))
@@ -1141,10 +1147,25 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
     return detail
 
 
+def scalp_backfill_cli(rt: Runtime, budget: float | None = None) -> dict[str, Any]:
+    """`python -m app.worker scalp-backfill`: runs the rebuild slice after slice (no Firestore writes; the engine
+    publishes views/scalping on its next tick)."""
+    t0, out = time.time(), {}
+    while True:
+        left = None if budget is None else budget - (time.time() - t0)
+        if left is not None and left <= 0:
+            break
+        out = scalp_backfill.run(rt, budget_s=min(300.0, left) if left is not None else 300.0, max_analyses=10_000)
+        log.info("scalp backfill: %s", dumps(out)[:500])
+        if out.get("done"):
+            break
+    return {**out, "status": scalp_backfill.status(rt.db)}
+
+
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
     ap = argparse.ArgumentParser(prog="python -m app.worker")
-    ap.add_argument("command", choices=["tick", "train", "train-shard", "train-merge"])
+    ap.add_argument("command", choices=["tick", "train", "train-shard", "train-merge", "scalp-backfill"])
     ap.add_argument("--shard", type=int, default=0)
     ap.add_argument("--of", type=int, default=1)
     ap.add_argument("--out", default="shard-out", help="train-shard: folder for the trained models")
@@ -1162,6 +1183,8 @@ def main() -> None:
         out = train_shard(rt, a.shard, a.of, a.budget or 3000, a.out)
     elif a.command == "train-merge":
         out = train_merge(rt, sink, a.inp)
+    elif a.command == "scalp-backfill":           # manual run of the 1-2 Nov scalping rebuild (until done or --budget)
+        out = scalp_backfill_cli(rt, a.budget)
     else:
         out = train(rt, sink, a.budget or 2700)
     if a.command == "tick":                       # read by scripts/engine_loop.py (the summary below is cut at 2000 chars)

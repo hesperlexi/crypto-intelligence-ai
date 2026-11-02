@@ -417,7 +417,11 @@ def prune_files(db: Database, keep_days: float = 7) -> int:
     stay for the history pages). Keeps the engine state - and its backup - from growing without end."""
     cutoff = int(time.time() * 1000 - keep_days * 86_400_000)
     n = 0
+    # versions another job still needs (the 1-2 Nov scalping rebuild replays the 15m model live at each call's time)
+    keep = set(db.get_setting("prune_keep_versions", []) or [])
     for r in db.query("SELECT id, path FROM model_versions WHERE active = 0 AND created_at < ? AND path IS NOT NULL", (cutoff,)):
+        if r["id"] in keep:
+            continue
         try:
             p = Path(r["path"])
             if p.exists():

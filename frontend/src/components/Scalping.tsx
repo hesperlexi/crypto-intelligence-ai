@@ -1,6 +1,8 @@
 // Admin "Scalping" scorecard: every live 15m grade-A demo call (never a public signal) logged when issued and followed
 // with the track record's rules - backend views.scalping, table scalp_signals. Admin only, unless the admin opens it to
 // members (config/scalping.visibility; the Firestore rules enforce it). Wins and losses alike, before fees.
+// Owner request 2 Nov 2026: every figure is the trade's plain price return (no leverage, no ROI on margin); 1-2 Nov calls
+// were rebuilt by replay (backend services/scalp_backfill.py) and carry a "rebuilt" tag.
 import { useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
@@ -10,8 +12,8 @@ import { useIsAdmin } from "../lib/session";
 import { download } from "../lib/cardCanvas";
 import { drawScalpCard, holdText, scalpDate } from "../lib/scalpCard";
 import { CoinAvatar } from "./Polish";
-import { fillLabel, Pill, RoiFigure } from "./SignalExtras";
-import { isOpen, LiveResult, LiveRoi, RecordSheet, statusOf } from "./RecordDetails";
+import { fillLabel, Pill } from "./SignalExtras";
+import { isOpen, LiveResult, LiveRoi, RecordSheet, ReturnFigure, statusOf } from "./RecordDetails";
 import { Curve } from "./TrackRecord";
 import { useFocusTrap } from "./Shell";
 
@@ -115,6 +117,34 @@ function ShareImage({ v }: { v: any }) {
   );
 }
 
+/** Tag of a call rebuilt by replaying the engine's decisions (1-2 Nov, before the live log started). */
+function Rebuilt({ x }: { x: any }) {
+  return x.rebuilt ? <span className="rounded border border-glass/20 px-1 py-px text-[10px] font-semibold uppercase tracking-wide text-mute" title="Rebuilt by replaying the engine's decision on the candles of the time (1-2 Nov, before the live log started)">rebuilt</span> : null;
+}
+
+/** Where the numbers come from: 1-2 Nov rebuilt by replay, then logged live; both counted, shown apart. */
+function Sources({ d }: { d: any }) {
+  const bf = d.backfill;
+  if (!bf) return null;
+  const sp = d.split ?? {};
+  const part = (k: string, t: any, n: unknown) => (
+    <div className="min-w-0 rounded-xl border border-glass/[0.08] px-3 py-2">
+      <div className="label">{k}</div>
+      <div className="num mt-1 text-sm">{t?.closed ? <><span className="font-semibold">{t.closed}</span> closed · {rate(t.win_rate)} wins · <span className={`font-semibold ${tone(t.total_return_pct)}`}>{pct(t.total_return_pct, 2)}</span></> : <span className="text-mute">no closed call yet</span>}</div>
+      <div className="text-[11px] text-mute">{isNum(n) ? `${n} calls listed` : ""}</div>
+    </div>
+  );
+  return (
+    <section className="panel space-y-2.5 p-4" aria-label="Rebuilt and live calls" data-scalp-sources>
+      <p className="text-xs text-mute"><Pill tone={bf.state === "done" ? "accent" : "warn"}>{bf.state === "done" ? "rebuilt" : `rebuilding · ${Math.round((bf.progress ?? 0) * 100)}%`}</Pill> <span className="ml-1">{bf.note}</span>{bf.state !== "done" && " The rebuild runs a little with every engine cycle; figures grow as it finishes."}</p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {part(`Rebuilt · ${fmtDate(bf.window_start)} → ${fmtTime(bf.live_since)}`, sp.rebuilt, d.counts?.rebuilt)}
+        {part(`Logged live · since ${fmtTime(bf.live_since)}`, sp.live, d.counts?.live)}
+      </div>
+    </section>
+  );
+}
+
 function Trades({ rows, empty, onOpen }: { rows: any[]; empty: string; onOpen: (x: any) => void }) {
   if (!rows.length) return <p className="p-4 text-sm text-mute">{empty}</p>;
   const props = (x: any) => ({
@@ -134,12 +164,12 @@ function Trades({ rows, empty, onOpen }: { rows: any[]; empty: string; onOpen: (
                 <div className="flex min-w-0 items-center gap-2.5">
                   <CoinAvatar symbol={x.symbol} size={28} />
                   <div className="min-w-0">
-                    <div className="flex items-center gap-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-[11px] font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span>{fill && isOpen(x) && <Pill tone={fill[1]}>{fill[0]}</Pill>}</div>
+                    <div className="flex items-center gap-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-[11px] font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><Rebuilt x={x} />{fill && isOpen(x) && <Pill tone={fill[1]}>{fill[0]}</Pill>}</div>
                     <div className={`mt-0.5 whitespace-nowrap text-[11px] font-semibold ${cls}`}>{lab}{isNum(x.hold_min) && <span className="num font-normal text-mute"> · held {holdText(x.hold_min)}</span>}</div>
                     <div className="num whitespace-nowrap text-[11px] text-mute">{fmtTime(x.created_at)}</div>
                   </div>
                 </div>
-                {isOpen(x) ? <LiveRoi x={x} size="md" /> : isNum(x.return_pct) ? <RoiFigure x={x} size="md" /> : <span className="text-[11px] text-mute">not counted</span>}
+                {isOpen(x) ? <LiveRoi x={x} size="md" plain /> : isNum(x.return_pct) ? <ReturnFigure x={x} size="md" /> : <span className="text-[11px] text-mute">not counted</span>}
               </div>
               {isOpen(x) && <div className="mt-1.5"><LiveResult x={x} /></div>}
             </li>
@@ -147,17 +177,17 @@ function Trades({ rows, empty, onOpen }: { rows: any[]; empty: string; onOpen: (
         })}
       </ul>
       <table className="grid-table hidden min-w-[680px] sm:table">
-        <thead><tr><th>Call</th><th className="text-right">Entry</th><th className="text-right">Stop</th><th className="text-right">Target 1</th><th>Result</th><th className="text-right">ROI on margin</th></tr></thead>
+        <thead><tr><th>Call</th><th className="text-right">Entry</th><th className="text-right">Stop</th><th className="text-right">Target 1</th><th>Result</th><th className="text-right">Return</th></tr></thead>
         <tbody>
           {rows.map((x) => {
             const [lab, cls] = statusOf(x);
             const fill = fillLabel(x.fill_status);
             return (
               <tr key={x.id} {...props(x)} className="cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
-                <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span></div><div className="num mt-0.5 pl-[30px] text-[11px] text-mute">{fmtTime(x.created_at)}{isNum(x.hold_min) ? ` · held ${holdText(x.hold_min)}` : ""}</div></td>
+                <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><Rebuilt x={x} /></div><div className="num mt-0.5 pl-[30px] text-[11px] text-mute">{fmtTime(x.created_at)}{isNum(x.hold_min) ? ` · held ${holdText(x.hold_min)}` : ""}</div></td>
                 <td className="num text-right">{fmtPrice(x.entry)}</td><td className="num text-right text-bear">{fmtPrice(x.stop)}</td><td className="num text-right text-bull">{fmtPrice(x.tp1)}</td>
                 <td className={`text-xs font-semibold ${cls}`}>{lab}{fill && isOpen(x) && <span className="ml-1"><Pill tone={fill[1]}>{fill[0]}</Pill></span>}{isOpen(x) && <LiveResult x={x} />}</td>
-                <td className="text-right align-middle">{isOpen(x) ? <LiveRoi x={x} /> : isNum(x.return_pct) ? <RoiFigure x={x} size="sm" /> : <span className="text-[11px] text-mute">not counted</span>}</td>
+                <td className="text-right align-middle">{isOpen(x) ? <LiveRoi x={x} plain /> : isNum(x.return_pct) ? <ReturnFigure x={x} size="sm" /> : <span className="text-[11px] text-mute">not counted</span>}</td>
               </tr>
             );
           })}
@@ -172,11 +202,11 @@ function BotBlock({ b }: { b: any }) {
   return (
     <section className="panel p-0" aria-label="15m demo bot">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-3">
-        <div><h3 className="font-semibold">{b.name ?? "15m demo bot"}</h3><p className="text-[11px] text-mute">Virtual money{b.started_at ? ` · since ${fmtDate(b.started_at)}` : ""} · fees and funding included · its own exits (whole position at target 1)</p></div>
+        <div><h3 className="font-semibold">{b.name ?? "15m demo bot"}</h3><p className="text-[11px] text-mute">Virtual money{b.started_at ? ` · since ${fmtDate(b.started_at)}` : ""} · fees and funding included · its own exits (whole position at target 1) · Return = change of the bot's equity; each trade = profit ÷ position size</p></div>
         {!b.enabled && <Pill tone="warn">paused</Pill>}
       </div>
       <dl className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-5">
-        {([["Equity", isNum(b.equity) ? `${b.equity.toFixed(0)} USDT` : "—", ""], ["Return", pct(b.return_pct), tone(b.return_pct)], ["Trades", String(b.trades ?? 0), ""],
+        {([["Equity", isNum(b.equity) ? `${b.equity.toFixed(0)} USDT` : "—", ""], ["Equity change", pct(b.return_pct), tone(b.return_pct)], ["Trades", String(b.trades ?? 0), ""],
           ["Win rate", rate(b.win_rate), ""], ["Max drop", isNum(b.max_drawdown_pct) ? `${b.max_drawdown_pct.toFixed(1)}%` : "—", "text-bear"]] as const).map(([k, v, c]) => (
           <div key={k}><dt className="label">{k}</dt><dd className={`num mt-1 text-lg font-semibold ${c}`}>{v}</dd></div>
         ))}
@@ -186,7 +216,7 @@ function BotBlock({ b }: { b: any }) {
           {b.recent.slice(0, 8).map((t: any, i: number) => (
             <li key={i} className="flex items-center justify-between gap-3 px-4 py-2 text-sm">
               <span className="flex min-w-0 items-center gap-1.5"><span className="font-semibold">{base(t.symbol)}</span><span className={`text-[11px] font-bold ${t.side === "LONG" ? "text-bull" : "text-bear"}`}>{t.side}</span><span className="num truncate text-[11px] text-mute">{fmtTime(t.closed_at)} · {t.exit_reason}</span></span>
-              <span className={`num font-semibold ${tone(t.roe_pct ?? t.return_pct)}`}>{pct(t.roe_pct ?? t.return_pct, 2)}{isNum(t.roe_pct) && <span className="ml-1 text-[10px] font-normal text-mute">on margin</span>}</span>
+              <span className={`num font-semibold ${tone(t.return_pct)}`}>{pct(t.return_pct, 2)}<span className="ml-1 text-[10px] font-normal text-mute">of position</span></span>
             </li>
           ))}
         </ul>
@@ -203,7 +233,6 @@ export default function Scalping() {
   if (!d && v.error) return <p className="panel p-4 text-center text-sm text-mute">{/permission/i.test(v.error) || /owner/i.test(v.error) ? "The scalping scorecard is for the admin only." : "The scalping scorecard appears after the next engine run."}</p>;
   if (!d) return <div className="skeleton h-40 rounded-xl" />;
   const s = d.summary ?? {};
-  const roi = isNum(s.avg_roi_pct);
   const open: any[] = d.open ?? [];
   const recent: any[] = d.recent ?? [];
   const all = [...open, ...recent];
@@ -222,6 +251,8 @@ export default function Scalping() {
         {admin && <div className="flex flex-wrap items-center gap-2"><VisibilityToggle /><ShareImage v={d} /></div>}
       </div>
 
+      <Sources d={d} />
+
       {!(s.closed > 0) ? (
         <p className="panel p-5 text-center text-sm text-mute">No 15m grade-A call has closed yet{d.since ? ` since ${fmtDate(d.since)}` : ""}. Every result, win or loss, appears here as soon as one closes.</p>
       ) : (
@@ -229,19 +260,17 @@ export default function Scalping() {
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
             <Kpi k="Closed calls" v={String(s.closed)} sub={`${s.wins} wins · ${s.losses} losses`} />
             <Kpi k="Win rate" v={rate(s.win_rate)} sub="return above 0 counts as a win" />
-            {roi ? <Kpi k="Avg ROI per call" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin · price ${pct(s.avg_return_pct, 2)}`} />
-              : <Kpi k="Avg price move" v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub="per call" />}
-            {roi ? <Kpi k="Total ROI on margin" v={pct(s.total_roi_pct)} cls={tone(s.total_roi_pct)} sub={`price ${pct(s.total_return_pct)}`} />
-              : <Kpi k="Total price move" v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub="equal size" />}
-            <Kpi k="Profit factor" v={isNum(s.profit_factor) ? s.profit_factor.toFixed(2) : "—"} sub={isNum(s.profit_factor) ? "gains ÷ losses (price)" : "no loss yet"} />
-            <Kpi k="Max drawdown" v={isNum(roi ? s.max_drawdown_roi_pct : s.max_drawdown_pct) ? `-${(roi ? s.max_drawdown_roi_pct : s.max_drawdown_pct).toFixed(1)}%` : "—"} cls="text-bear" sub={roi ? `of the ROI curve · price -${(s.max_drawdown_pct ?? 0).toFixed(1)}%` : "of the cumulative curve"} />
+            <Kpi k="Avg return per call" v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub="price return of the trade · before fees" />
+            <Kpi k="Total return" v={pct(s.total_return_pct, 2)} cls={tone(s.total_return_pct)} sub="sum of all closed calls · equal size" />
+            <Kpi k="Profit factor" v={isNum(s.profit_factor) ? s.profit_factor.toFixed(2) : "—"} sub={isNum(s.profit_factor) ? "gains ÷ losses" : "no loss yet"} />
+            <Kpi k="Max drawdown" v={isNum(s.max_drawdown_pct) ? `-${s.max_drawdown_pct.toFixed(2)}%` : "—"} cls="text-bear" sub="of the cumulative return" />
             <Kpi k="Current streak" v={st.n ? `${st.n} ${st.kind === "win" ? (st.n === 1 ? "win" : "wins") : (st.n === 1 ? "loss" : "losses")}` : "—"} cls={st.kind === "win" ? "text-bull" : st.kind === "loss" ? "text-bear" : ""} sub={`best ${st.best_win ?? 0} wins · worst ${st.best_loss ?? 0} losses`} />
             <Kpi k="Avg hold" v={holdText(s.avg_hold_min)} sub="from entry to close" />
           </div>
           {(d.curve?.length ?? 0) > 1 && (
             <div className="panel px-4 pt-3">
-              <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? "Cumulative ROI on margin (equal margin per call)" : "Cumulative price move (equal size)"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>
-              <Curve pts={d.curve} roi={roi} id="scalp-fill" label="Cumulative result of all closed scalping calls" />
+              <div className="flex items-center justify-between text-xs text-mute"><span>Cumulative return (equal size per call, before fees)</span><span className={`num font-semibold ${tone(s.total_return_pct)}`}>{pct(s.total_return_pct, 2)}</span></div>
+              <Curve pts={d.curve} roi={false} id="scalp-fill" label="Cumulative return of all closed scalping calls" />
             </div>
           )}
           <div className="grid gap-3 md:grid-cols-2">
@@ -253,7 +282,7 @@ export default function Scalping() {
             <section className="panel grid grid-cols-2 gap-3 p-4" aria-label="Best and worst call">
               {([["Best call", s.best], ["Worst call", s.worst]] as const).map(([k, t]) => (
                 <div key={k} className="min-w-0"><div className="label">{k}</div>
-                  {t ? <><div className="mt-1 flex items-center gap-1.5 text-sm"><span className="font-semibold">{base(t.symbol)}</span><span className={`text-[11px] font-bold ${t.side === "LONG" ? "text-bull" : "text-bear"}`}>{t.side}</span></div><div className="mt-1"><RoiFigure x={t} size="sm" align="left" /></div><div className="num text-[11px] text-mute">{fmtTime(t.closed_at)}</div></> : <div className="text-mute">—</div>}
+                  {t ? <><div className="mt-1 flex items-center gap-1.5 text-sm"><span className="font-semibold">{base(t.symbol)}</span><span className={`text-[11px] font-bold ${t.side === "LONG" ? "text-bull" : "text-bear"}`}>{t.side}</span><Rebuilt x={t} /></div><div className="mt-1"><ReturnFigure x={t} size="sm" align="left" /></div><div className="num text-[11px] text-mute">{fmtTime(t.closed_at)}</div></> : <div className="text-mute">—</div>}
                 </div>
               ))}
             </section>
@@ -270,7 +299,7 @@ export default function Scalping() {
         <div className="overflow-x-auto"><Trades rows={recent} empty="No call has closed yet." onOpen={(x) => setDetail(x.id)} /></div>
       </section>
       <BotBlock b={d.bot} />
-      <p className="px-1 text-[11px] text-mute">{d.method} Live figures follow the current price and are not a result until the call closes. Never part of the public track record.</p>
+      <p className="px-1 text-[11px] text-mute">{d.method}{d.backfill ? ` ${d.backfill.note}` : ""} Live figures follow the current price and are not a result until the call closes. Never part of the public track record.</p>
       {shown && <RecordSheet x={shown} scalp onClose={() => setDetail(null)} />}
     </div>
   );
@@ -282,7 +311,6 @@ export function ScalpingSummary() {
   const d = v.data;
   if (!d) return null;
   const s = d.summary ?? {};
-  const roi = isNum(s.total_roi_pct);
   return (
     <section className="panel p-4" aria-label="Scalping summary" data-scalping-summary>
       <div className="flex flex-wrap items-center justify-between gap-2">
@@ -290,8 +318,8 @@ export function ScalpingSummary() {
         <span className="rounded-md border border-warn/45 bg-warn/10 px-1.5 py-0.5 text-[11px] font-bold text-warn">{SCALP_LABEL}</span>
       </div>
       <dl className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-5">
-        {([["Closed", String(s.closed ?? 0), ""], ["Win rate", rate(s.win_rate), ""], [roi ? "Total ROI" : "Total move", pct(roi ? s.total_roi_pct : s.total_return_pct), tone(roi ? s.total_roi_pct : s.total_return_pct)],
-          ["Open", String((d.open ?? []).length), ""], ["Demo bot", pct(d.bot?.return_pct), tone(d.bot?.return_pct)]] as const).map(([k, val, c]) => (
+        {([["Closed", String(s.closed ?? 0), ""], ["Win rate", rate(s.win_rate), ""], ["Total return", pct(s.total_return_pct, 2), tone(s.total_return_pct)],
+          ["Open", String((d.open ?? []).length), ""], ["Demo bot equity", pct(d.bot?.return_pct), tone(d.bot?.return_pct)]] as const).map(([k, val, c]) => (
           <div key={k}><dt className="label">{k}</dt><dd className={`num mt-1 text-lg font-semibold ${c}`}>{val}</dd></div>
         ))}
       </dl>

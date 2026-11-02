@@ -58,7 +58,7 @@ def resolve_outcomes(rt: Any) -> int:
 
 
 def _resolved(db: Database, symbol: str | None, timeframe: str | None, since: int = 0, version: str | None = None,
-              limit: int = 5000) -> list[dict[str, Any]]:
+              limit: int = 5000, until: int | None = None) -> list[dict[str, Any]]:
     sql = ("SELECT p.id, p.created_at, p.symbol, p.timeframe, p.bar_ts, p.price, p.p_down, p.p_neutral, p.p_up, "
            "p.predicted_class, p.expected_return, p.confidence, p.model_version_id, p.detail, "
            "o.actual_return, o.actual_class, o.correct FROM predictions p "
@@ -68,6 +68,9 @@ def _resolved(db: Database, symbol: str | None, timeframe: str | None, since: in
         if val:
             sql += f" AND {col} = ?"
             args.append(val)
+    if until is not None:            # as known at `until` (scalping backfill): outcomes resolved by then
+        sql += " AND o.resolved_at <= ?"
+        args.append(until)
     return db.query(sql + " ORDER BY p.bar_ts DESC LIMIT ?", args + [limit])
 
 
@@ -115,10 +118,10 @@ def live_stats(db: Database, symbol: str | None = None, timeframe: str | None = 
     return out
 
 
-def live_multipliers(db: Database, bundle: dict[str, Any], min_n: int = 50) -> dict[str, float]:
+def live_multipliers(db: Database, bundle: dict[str, Any], min_n: int = 50, until: int | None = None) -> dict[str, float]:
     """Halve the ensemble weight of any model whose LIVE Brier score is worse than the class-prior forecast
-    (needs >= `min_n` scored live predictions for this model version)."""
-    rows = _resolved(db, bundle["symbol"], bundle["timeframe"], version=bundle["version"], limit=300)
+    (needs >= `min_n` scored live predictions for this model version). `until`: as they stood at that time."""
+    rows = _resolved(db, bundle["symbol"], bundle["timeframe"], version=bundle["version"], limit=300, until=until)
     if len(rows) < min_n:
         return {}
     y = np.array([r["actual_class"] for r in rows], int)
@@ -525,9 +528,12 @@ def scalp_since(db: Database) -> int | None:
     return int(v) if v else None
 
 
-def log_scalp(db: Database, a: dict[str, Any], now: int | None = None) -> dict[str, Any]:
+def log_scalp(db: Database, a: dict[str, Any], now: int | None = None, extra: dict[str, Any] | None = None,
+              gate: Any = None) -> dict[str, Any]:
     """Log a live 15m grade-A demo call in `scalp_signals`. Never changes `a`. Returns {'status', 'reason', 'id'}:
-    status 'logged' | 'already_open' | 'not_logged' | None (not a scalp call)."""
+    status 'logged' | 'already_open' | 'not_logged' | None (not a scalp call). `extra` is merged into the payload and
+    `gate(db, call, now)` replaces the one-open-call / re-entry check (both used only by the 1-2 Nov rebuild,
+    services/scalp_backfill.py, which judges them as they stood at the call's time)."""
     res: dict[str, Any] = {"status": None, "reason": None, "id": None}
     demo = a.get("demo") if isinstance(a.get("demo"), dict) else None
     setup = a.get("setup") or {}
@@ -539,10 +545,10 @@ def log_scalp(db: Database, a: dict[str, Any], now: int | None = None) -> dict[s
         return {**res, "status": "not_logged", "reason": "the scalping log has not started"}
     now = now or now_ms()
     b = {**a, "decision": demo["decision"], "grade": demo["grade"]}
-    gate, why, inputs = entry_gate(db, b, table=SCALP_TABLE, now=now)
-    if gate != "ok":
-        return {"status": "already_open" if gate == "already_open" else "not_logged", "reason": why,
-                "id": inputs.get("open_id")}
+    g, why, inputs = (gate or (lambda d, c, t: entry_gate(d, c, table=SCALP_TABLE, now=t)))(db, b, now)
+    if g != "ok":
+        return {"status": "already_open" if g == "already_open" else "not_logged", "reason": why,
+                "id": inputs.get("open_id"), "gate": g}
     pl = _plan(b, db)
     if pl["entry"] is None or pl["stop"] is None:
         return {**res, "status": "not_logged", "reason": "no entry / stop"}
@@ -554,7 +560,7 @@ def log_scalp(db: Database, a: dict[str, Any], now: int | None = None) -> dict[s
                "decision_basis": a.get("decision_basis"), "runner": setup.get("runner"), "entry_rule": pl.get("entry_rule"),
                "manage": manage_params(db), "live_price": a.get("price"), "horizon_bars": horizon_for(a["timeframe"]),
                "leverage": signal_leverage(pl["entry"], pl["stop"]), "risk_pct": setup.get("risk_pct"),
-               "targets_r": [t.get("rr") for t in setup.get("targets", [])]}
+               "targets_r": [t.get("rr") for t in setup.get("targets", [])], **(extra or {})}
     sid = new_id()
     n = db.execute(
         f"INSERT INTO {SCALP_TABLE} (id, created_at, symbol, timeframe, bar_ts, signal, decision, score, confidence, regime, "
@@ -691,7 +697,8 @@ TRACKED = ("status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "closed_at", "
            "entry", "tp1", "tp2", "tp3")       # v2.6: set once, at a confirmation fill (the actual entry)
 
 
-def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signals", now: int | None = None) -> int:
+def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signals", now: int | None = None,
+                           ids: list[str] | None = None) -> int:
     """Follow OPEN signals (v2.5: engine/manage.py) on 15-minute candles that opened after publication. Standard
     rules: 50% / 25% / 25% at the targets, stop first within a candle, break-even after TP1, TP1 after TP2, expiry at
     the last close; managed exits only when MANAGED_EXITS is on. Pullback entries wait for their fill."""
@@ -703,7 +710,12 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
     params = manage_params(db)
     changed = 0
     paths: dict[str, Any] = {}
-    for s in db.query(f"SELECT * FROM {table} WHERE status = 'OPEN' AND side != 0"):
+    sql, args = f"SELECT * FROM {table} WHERE status = 'OPEN' AND side != 0", ()
+    if ids is not None:                  # only these rows (the scalping rebuild follows each call as it is made)
+        if not ids:
+            return 0
+        sql, args = sql + f" AND id IN ({','.join('?' * len(ids))})", tuple(ids)
+    for s in db.query(sql, args):
         if s["symbol"] not in paths:
             try:
                 paths[s["symbol"]] = rt.candles(s["symbol"], PATH_TF)

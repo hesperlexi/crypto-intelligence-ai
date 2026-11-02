@@ -114,11 +114,34 @@ export function LiveResult({ x, compact = false }: { x: any; compact?: boolean }
   );
 }
 
-/** ROI-column figure of an OPEN row: live ROI on margin (price move as small text), labelled Live. */
-export function LiveRoi({ x, size = "sm" }: { x: any; size?: "sm" | "md" }) {
+/** Closed-trade figure of the scalping board (owner request 2 Nov 2026): the trade's plain price return, no leverage. */
+export function ReturnFigure({ x, size = "md", align = "right" }: { x: any; size?: "sm" | "md"; align?: "left" | "right" }) {
+  if (!isNum(x.return_pct)) return <span className="num text-mute">—</span>;
+  const cls = x.return_pct > 0 ? "text-bull" : x.return_pct < 0 ? "text-bear" : "text-mute";
+  return (
+    <span className={`inline-flex flex-col gap-0.5 ${align === "right" ? "items-end text-right" : "items-start text-left"}`}>
+      <span className={`num font-extrabold leading-none tracking-tight ${size === "md" ? "text-xl" : "text-sm"} ${cls}`}>{fmtPctRaw(x.return_pct, 2)}</span>
+      <span className="whitespace-nowrap text-[10px] leading-none text-mute">return · before fees</span>
+    </span>
+  );
+}
+
+/** ROI-column figure of an OPEN row: live ROI on margin (price move as small text), labelled Live. `plain`: the trade's
+ * price return only (scalping board), no leverage. */
+export function LiveRoi({ x, size = "sm", plain = false }: { x: any; size?: "sm" | "md"; plain?: boolean }) {
   const px = useTicker(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
   if (isPending(x)) return <span className="text-[11px] text-mute">waiting for entry</span>;
   const l = liveOf(x, px);
+  if (plain) {
+    if (l.move == null) return <span className="text-[11px] text-mute">Live · …</span>;
+    const c = l.move > 0 ? "text-bull" : l.move < 0 ? "text-bear" : "text-mute";
+    return (
+      <span className="inline-flex flex-col items-end gap-0.5 text-right" title="Live return of the trade, from the current price vs the entry (no leverage). Before fees; not a result until the call closes.">
+        <span className={`num font-bold leading-none ${size === "md" ? "text-lg" : "text-sm"} ${c}`}>{fmtPctRaw(l.move, 2)}</span>
+        <span className="num whitespace-nowrap text-[10px] leading-none text-mute"><span className="font-semibold text-accent">Live</span> · return</span>
+      </span>
+    );
+  }
   const v = l.roi ?? l.move;
   if (v == null) return <span className="text-[11px] text-mute">Live · …</span>;
   const cls = v > 0 ? "text-bull" : v < 0 ? "text-bear" : "text-mute";
@@ -176,7 +199,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                   {base(x.symbol)} <span className={x.side === "LONG" ? "text-bull" : "text-bear"}>{x.side}</span> <span className="text-sm font-medium text-mute">{tf}</span>
                   {x.grade && <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-[11px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}
                 </h2>
-                <p className="text-[11px] text-mute">{scalp ? "Logged" : "Published"} {fmtTime(x.created_at)} · {scalp ? "15m scalping demo call (not public)" : "futures signal"}</p>
+                <p className="text-[11px] text-mute">{scalp ? (x.rebuilt ? "Rebuilt" : "Logged") : "Published"} {fmtTime(x.created_at)} · {scalp ? (x.rebuilt ? "15m scalping demo call, rebuilt by replay (not public)" : "15m scalping demo call (not public)") : "futures signal"}</p>
               </div>
             </div>
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close details" onClick={onClose}>✕</button>
@@ -191,7 +214,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                     <div className="num mt-1 text-xs text-mute">{isNum(px) ? <>Price now <span className="font-semibold text-text">{fmtPrice(px)}</span></> : "Waiting for the live price…"}</div>
                     <div className="mt-1 flex flex-wrap gap-1"><HitTags x={x} /></div>
                   </div>
-                  {!pending && <LiveRoi x={x} size="md" />}
+                  {!pending && <LiveRoi x={x} size="md" plain={scalp} />}
                 </div>
                 <p className="mt-2 text-[11px] text-mute">{pending
                   ? "A pullback entry: the call starts only when the price trades through the entry. If it never does, it is listed as “Entry missed” and not counted."
@@ -205,14 +228,14 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                   {x.exit_reason && <div className="text-[11px] text-mute">{EXIT[x.exit_reason] ?? x.exit_reason}</div>}
                   {x.closed_at && <div className="num text-[11px] text-mute">Closed {fmtTime(x.closed_at)}</div>}
                 </div>
-                {isNum(x.return_pct) ? <RoiFigure x={x} size="md" /> : <span className="text-xs text-mute">no result (not counted)</span>}
+                {isNum(x.return_pct) ? (scalp ? <ReturnFigure x={x} /> : <RoiFigure x={x} size="md" />) : <span className="text-xs text-mute">no result (not counted)</span>}
               </div>
             )}
             <div className="flex flex-wrap items-center gap-1.5">
               <UpdatedBadge adj={x.adjustments} />
               {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
               {managed && <Pill tone="accent">{managed}</Pill>}
-              {isNum(x.peak_pct) && <span className="num text-[11px] text-mute">Best open profit: price {fmtPctRaw(x.peak_pct, 2)}{isNum(x.leverage) ? ` · ${fmtPctRaw(x.peak_pct * x.leverage, 1)} on margin` : ""}</span>}
+              {isNum(x.peak_pct) && <span className="num text-[11px] text-mute">Best open profit: price {fmtPctRaw(x.peak_pct, 2)}{isNum(x.leverage) && !scalp ? ` · ${fmtPctRaw(x.peak_pct * x.leverage, 1)} on margin` : ""}</span>}
             </div>
 
             <dl className="divide-y divide-glass/[0.06] text-sm">
@@ -229,7 +252,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                 <div className="flex items-start justify-between gap-4 py-2"><dt className="text-mute">Distance</dt>
                   <dd className="num text-right text-xs">{isNum(l.toStop) && <span className="block">to stop {fmtPctRaw(Math.abs(l.toStop), 2, false)}</span>}{l.next && isNum(l.toNext) && <span className="block">to {l.next[0].toLowerCase()} {fmtPctRaw(Math.abs(l.toNext), 2, false)}</span>}</dd></div>
               )}
-              {isNum(x.leverage) && <div className="flex items-start justify-between gap-4 py-2"><dt className="text-mute">Suggested leverage</dt><dd className="num font-medium">{x.leverage}x</dd></div>}
+              {isNum(x.leverage) && <div className="flex items-start justify-between gap-4 py-2"><dt className="text-mute">{scalp ? "Card's leverage (info)" : "Suggested leverage"}</dt><dd className="num font-medium">{x.leverage}x{scalp && <span className="block text-[11px] font-normal text-mute">returns here are not multiplied by it</span>}</dd></div>}
               <div className="flex items-start justify-between gap-4 py-2">
                 <dt className="text-mute">Time limit</dt>
                 <dd className="num text-right font-medium">{isNum(x.horizon_bars) ? x.horizon_bars : 30} candles of {tf}
