@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-01T20:21:21.137Z",
-  "sha": "7f725819d710b1fe6a659d8ed75841b61f691e0e",
-  "total": 94,
-  "passed": 94,
+  "at": "2026-11-02T10:38:09.389Z",
+  "sha": "06c32482c525bcb058c5d8637f73d61c9b774ff8",
+  "total": 101,
+  "passed": 101,
   "failed": 0,
   "results": [
     {
@@ -379,6 +379,34 @@
     },
     {
       "name": "pending user cannot write paper or alerts",
+      "ok": true
+    },
+    {
+      "name": "scalping: admin reads views/scalping (default visibility, no config doc)",
+      "ok": true
+    },
+    {
+      "name": "scalping: member denied while visibility is admin (no config doc, and visibility 'admin')",
+      "ok": true
+    },
+    {
+      "name": "scalping: active member allowed when visibility is 'members'",
+      "ok": true
+    },
+    {
+      "name": "scalping: pending / expired accounts denied even when visibility is 'members'",
+      "ok": true
+    },
+    {
+      "name": "scalping: signed-out always denied (admin or members visibility)",
+      "ok": true
+    },
+    {
+      "name": "scalping: nobody writes views/scalping from the website",
+      "ok": true
+    },
+    {
+      "name": "config/scalping: admin sets visibility; members and bad values denied",
       "ok": true
     }
   ]
