@@ -260,8 +260,8 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
 - `analysis.A_ONLY_TFS` "15m,1h,1d,3d", `DEMO_ONLY_TFS` "" (`PAUSED_TFS` ""): 1d / 3d grade-A calls are public and counted
   in the record (30 candles, `tracking.HORIZON_BARS` default). One-time flag `public_1d3d_v212` (`worker.sync_config`):
   demo bots `futures-demo-ab-1d/-3d` removed; `futures-signal-ab-1d` / `-3d` added (grade A, standard exits, 30 candles,
-  reset_token v212) unless a non-demo bot is already on that timeframe; `record_since_tf['1d'/'3d']` = now (calls made
-  before stay in the Signal log and keep being followed, but are no longer counted). The 3d bot is `bots.FUTURES_3D`
+  reset_token v212) unless a non-demo bot is already on that timeframe; the record is NOT restarted for 1d / 3d
+  (earlier calls keep counting - ground rule). The 3d bot is `bots.FUTURES_3D`
   (not in `BOT_TFS`/`DEFAULT_BOTS`, so no spot 3d bot is ever auto-added); `policy_default_bots()` includes it.
   Frontend `Signals.tsx` TF_NOTES: 15m/1h/1d/3d "grade A". Tests `test_tf_policy_v28.py` (`test_public_1d3d_*`).
 - Signals page: timeframe "All" (`components/SignalsAll.tsx` `AllList`) = every coin × timeframe with a trade call from the

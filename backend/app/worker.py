@@ -506,8 +506,6 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 seen = sorted(set(doc.get("defaults_added") or []) | {FUTURES_3D["id"]})
                 sink.set("config/bots", {**doc, "bots": keep, "defaults_added": seen, "updated_at": now_ms()})
                 notes["public_1d3d_v212"] = {"removed": sorted(demo_ids & {b.get("id") for b in doc["bots"]}), "added": added}
-            t = now_ms()
-            rt.db.set_setting("record_since_tf", {**(rt.db.get_setting("record_since_tf", {}) or {}), **{tf: t for tf in tfs}})
         rt.db.set_setting("public_1d3d_v212", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1

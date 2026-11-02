@@ -77,7 +77,7 @@ def test_drop_inline_proofs_keeps_pending_ones(tmp_path):
 
 
 def test_public_1d3d_v212_migration(tmp_path):
-    """v2.12: demo 1d / 3d bots replaced by public grade-A futures bots once; record restarts for 1d / 3d only."""
+    """v2.12: demo 1d / 3d bots replaced by public grade-A futures bots once; the record is not restarted (earlier 1d / 3d calls keep counting)."""
     from app.services.bots import DEMO_BOTS
     from app.services.runtime import Runtime
     from app.sinks import LocalSink
@@ -104,12 +104,12 @@ def test_public_1d3d_v212_migration(tmp_path):
         assert b["market"] == "futures" and not b.get("demo_only") and not b.get("tp1_only") and "grade A" in b["name"]
     assert notes["public_1d3d_v212"]["added"] == ["futures-signal-ab-1d", "futures-signal-ab-3d"]
     rs = rt.db.get_setting("record_since_tf", {})
-    assert rs["15m"] == 123 and rs["1d"] > 0 and rs["1d"] == rs["3d"]
-    # once only: removing a bot sticks, the record start is not moved again
+    assert rs == {"15m": 123}
+    # once only: removing a bot sticks
     sink.set("config/bots", {**sink.get("config/bots"), "bots": [out["futures-signal-ab-4h"]]})
     assert "public_1d3d_v212" not in worker.sync_config(rt, sink)
     assert [b["id"] for b in sink.get("config/bots")["bots"]] == ["futures-signal-ab-4h"]
-    assert rt.db.get_setting("record_since_tf", {})["1d"] == rs["1d"]
+    assert rt.db.get_setting("record_since_tf", {}) == {"15m": 123}
 
 
 def test_public_1d3d_keeps_an_existing_public_bot(tmp_path):
