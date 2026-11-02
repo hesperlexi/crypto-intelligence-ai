@@ -3,10 +3,19 @@
  "command": "hesper",
  "record": {
   "grade_a_calls": 0,
-  "record_since": 1793386630880
+  "record_since": 1793386630880,
+  "signals_by_tf_decision_grade_status": {
+   "1d|SELL|B|EXPIRED": 1,
+   "4h|SELL|B|OPEN": 3,
+   "12h|SELL|B|EXPIRED": 2,
+   "1d|BUY ON PULLBACK|B|OPEN": 1,
+   "1d|SELL|B|OPEN": 1,
+   "4h|SELL|B|EXPIRED": 1,
+   "12h|SELL|B|OPEN": 1
+  }
  },
  "replay": {
-  "data_end": 1793649600000,
+  "data_end": 1793650500000,
   "universes": {
    "watchlist": [
     "AAVE/USDT",
@@ -181,6 +190,95 @@
         "ended_above_100_pct": 33.33333333333333
        },
        "win_rate_trades": 0.5568181818181818,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 20,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 26.359549700720144,
+         "mean_pct_of_balance": 17.62492425417429,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "breakeven stop": 7,
+          "trailing stop": 8,
+          "stop": 5
+         }
+        },
+        "1h": {
+         "n": 117,
+         "win_rate": 0.5213675213675214,
+         "median_pct_of_balance": 6.9317738881289515,
+         "mean_pct_of_balance": -6.877154653706415,
+         "median_hold_days": 0.7083333333333334,
+         "median_leverage": 19.0,
+         "exits": {
+          "stop": 52,
+          "TP3": 17,
+          "time_up": 7,
+          "breakeven stop": 27,
+          "trailing stop": 14
+         }
+        },
+        "4h": {
+         "n": 112,
+         "win_rate": 0.5803571428571429,
+         "median_pct_of_balance": 17.433239188643824,
+         "mean_pct_of_balance": 6.720095137048084,
+         "median_hold_days": 2.083333333333333,
+         "median_leverage": 12.5,
+         "exits": {
+          "TP3": 28,
+          "stop": 41,
+          "breakeven stop": 15,
+          "time_up": 11,
+          "trailing stop": 17
+         }
+        },
+        "12h": {
+         "n": 154,
+         "win_rate": 0.6233766233766234,
+         "median_pct_of_balance": 19.817912017013413,
+         "mean_pct_of_balance": 5.544771018652908,
+         "median_hold_days": 7.0,
+         "median_leverage": 6.0,
+         "exits": {
+          "time_up": 37,
+          "time exit": 28,
+          "stop": 38,
+          "trailing stop": 15,
+          "TP3": 9,
+          "breakeven stop": 27
+         }
+        },
+        "1d": {
+         "n": 88,
+         "win_rate": 0.4431818181818182,
+         "median_pct_of_balance": -14.506688699308615,
+         "mean_pct_of_balance": -12.817370818622935,
+         "median_hold_days": 7.0,
+         "median_leverage": 4.0,
+         "exits": {
+          "stop": 36,
+          "time_up": 37,
+          "TP3": 5,
+          "trailing stop": 4,
+          "breakeven stop": 5,
+          "time exit": 1
+         }
+        },
+        "3d": {
+         "n": 37,
+         "win_rate": 0.4864864864864865,
+         "median_pct_of_balance": -0.9393551156520514,
+         "mean_pct_of_balance": -2.915568445827323,
+         "median_hold_days": 12.0,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 33,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -2627,6 +2725,78 @@
         "ended_above_100_pct": 25.925925925925924
        },
        "win_rate_trades": 0.5705521472392638,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 38,
+         "win_rate": 0.6052631578947368,
+         "median_pct_of_balance": 21.489067983741776,
+         "mean_pct_of_balance": 6.303226919574785,
+         "median_hold_days": 0.33333333333333337,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 15,
+          "breakeven stop": 8,
+          "trailing stop": 14,
+          "TP3": 1
+         }
+        },
+        "1h": {
+         "n": 107,
+         "win_rate": 0.5514018691588785,
+         "median_pct_of_balance": 10.029065115784435,
+         "mean_pct_of_balance": -6.187424359389962,
+         "median_hold_days": 0.625,
+         "median_leverage": 21.0,
+         "exits": {
+          "stop": 48,
+          "TP3": 12,
+          "breakeven stop": 35,
+          "trailing stop": 12
+         }
+        },
+        "4h": {
+         "n": 66,
+         "win_rate": 0.5606060606060606,
+         "median_pct_of_balance": 17.433239188643824,
+         "mean_pct_of_balance": 2.194671251998459,
+         "median_hold_days": 2.083333333333333,
+         "median_leverage": 12.5,
+         "exits": {
+          "TP3": 17,
+          "stop": 29,
+          "breakeven stop": 8,
+          "trailing stop": 12
+         }
+        },
+        "12h": {
+         "n": 109,
+         "win_rate": 0.5963302752293578,
+         "median_pct_of_balance": 19.817912017013406,
+         "mean_pct_of_balance": 0.36547283167163397,
+         "median_hold_days": 7.5,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 30,
+          "stop": 37,
+          "trailing stop": 9,
+          "TP3": 11,
+          "breakeven stop": 22
+         }
+        },
+        "1d": {
+         "n": 6,
+         "win_rate": 0.3333333333333333,
+         "median_pct_of_balance": -48.500778692462106,
+         "mean_pct_of_balance": -30.414034219084822,
+         "median_hold_days": 20.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 4,
+          "breakeven stop": 1,
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -5073,6 +5243,95 @@
         "ended_above_100_pct": 40.74074074074074
        },
        "win_rate_trades": 0.5568181818181818,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 20,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 11.073532930952315,
+         "mean_pct_of_balance": 8.072130381174766,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "breakeven stop": 7,
+          "trailing stop": 8,
+          "stop": 5
+         }
+        },
+        "1h": {
+         "n": 117,
+         "win_rate": 0.5213675213675214,
+         "median_pct_of_balance": 4.809187127514625,
+         "mean_pct_of_balance": -3.456928336995829,
+         "median_hold_days": 0.7083333333333334,
+         "median_leverage": 19.0,
+         "exits": {
+          "stop": 52,
+          "TP3": 17,
+          "time_up": 7,
+          "breakeven stop": 27,
+          "trailing stop": 14
+         }
+        },
+        "4h": {
+         "n": 112,
+         "win_rate": 0.5803571428571429,
+         "median_pct_of_balance": 9.950715559732359,
+         "mean_pct_of_balance": 3.820441716505026,
+         "median_hold_days": 2.083333333333333,
+         "median_leverage": 12.5,
+         "exits": {
+          "TP3": 28,
+          "stop": 41,
+          "breakeven stop": 15,
+          "time_up": 11,
+          "trailing stop": 17
+         }
+        },
+        "12h": {
+         "n": 154,
+         "win_rate": 0.6233766233766234,
+         "median_pct_of_balance": 8.149760666629277,
+         "mean_pct_of_balance": 2.832090210381331,
+         "median_hold_days": 7.0,
+         "median_leverage": 6.0,
+         "exits": {
+          "time_up": 37,
+          "time exit": 28,
+          "stop": 38,
+          "trailing stop": 15,
+          "TP3": 9,
+          "breakeven stop": 27
+         }
+        },
+        "1d": {
+         "n": 88,
+         "win_rate": 0.4431818181818182,
+         "median_pct_of_balance": -7.42346592306996,
+         "mean_pct_of_balance": -5.225389436857091,
+         "median_hold_days": 7.0,
+         "median_leverage": 4.0,
+         "exits": {
+          "stop": 36,
+          "time_up": 37,
+          "TP3": 5,
+          "trailing stop": 4,
+          "breakeven stop": 5,
+          "time exit": 1
+         }
+        },
+        "3d": {
+         "n": 37,
+         "win_rate": 0.4864864864864865,
+         "median_pct_of_balance": -0.3860549666398081,
+         "mean_pct_of_balance": -1.3297185719149647,
+         "median_hold_days": 12.0,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 33,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -7519,6 +7778,78 @@
         "ended_above_100_pct": 31.48148148148148
        },
        "win_rate_trades": 0.5705521472392638,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 38,
+         "win_rate": 0.6052631578947368,
+         "median_pct_of_balance": 10.679129002820424,
+         "mean_pct_of_balance": 2.684821826611238,
+         "median_hold_days": 0.33333333333333337,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 15,
+          "breakeven stop": 8,
+          "trailing stop": 14,
+          "TP3": 1
+         }
+        },
+        "1h": {
+         "n": 107,
+         "win_rate": 0.5514018691588785,
+         "median_pct_of_balance": 6.398158983162835,
+         "mean_pct_of_balance": -3.840226840457008,
+         "median_hold_days": 0.625,
+         "median_leverage": 21.0,
+         "exits": {
+          "stop": 48,
+          "TP3": 12,
+          "breakeven stop": 35,
+          "trailing stop": 12
+         }
+        },
+        "4h": {
+         "n": 66,
+         "win_rate": 0.5606060606060606,
+         "median_pct_of_balance": 11.399261498077369,
+         "mean_pct_of_balance": 2.2093055579124457,
+         "median_hold_days": 2.083333333333333,
+         "median_leverage": 12.5,
+         "exits": {
+          "TP3": 17,
+          "stop": 29,
+          "breakeven stop": 8,
+          "trailing stop": 12
+         }
+        },
+        "12h": {
+         "n": 109,
+         "win_rate": 0.5963302752293578,
+         "median_pct_of_balance": 8.139934685306814,
+         "mean_pct_of_balance": 0.8852337621363487,
+         "median_hold_days": 7.5,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 30,
+          "stop": 37,
+          "trailing stop": 9,
+          "TP3": 11,
+          "breakeven stop": 22
+         }
+        },
+        "1d": {
+         "n": 6,
+         "win_rate": 0.3333333333333333,
+         "median_pct_of_balance": -24.274939385675154,
+         "mean_pct_of_balance": -14.419515480195917,
+         "median_hold_days": 20.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 4,
+          "breakeven stop": 1,
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -9965,6 +10296,95 @@
         "ended_above_100_pct": 38.88888888888889
        },
        "win_rate_trades": 0.5568181818181818,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 20,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 15.50294610333324,
+         "mean_pct_of_balance": 11.300982533644673,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "breakeven stop": 7,
+          "trailing stop": 8,
+          "stop": 5
+         }
+        },
+        "1h": {
+         "n": 117,
+         "win_rate": 0.5213675213675214,
+         "median_pct_of_balance": 6.732861978520476,
+         "mean_pct_of_balance": -4.85685629322095,
+         "median_hold_days": 0.7083333333333334,
+         "median_leverage": 19.0,
+         "exits": {
+          "stop": 52,
+          "TP3": 17,
+          "time_up": 7,
+          "breakeven stop": 27,
+          "trailing stop": 14
+         }
+        },
+        "4h": {
+         "n": 112,
+         "win_rate": 0.5803571428571429,
+         "median_pct_of_balance": 13.931001783625304,
+         "mean_pct_of_balance": 5.093403185329653,
+         "median_hold_days": 2.083333333333333,
+         "median_leverage": 12.5,
+         "exits": {
+          "TP3": 28,
+          "stop": 41,
+          "breakeven stop": 15,
+          "time_up": 11,
+          "trailing stop": 17
+         }
+        },
+        "12h": {
+         "n": 154,
+         "win_rate": 0.6233766233766234,
+         "median_pct_of_balance": 11.409664933280986,
+         "mean_pct_of_balance": 3.964926294533862,
+         "median_hold_days": 7.0,
+         "median_leverage": 6.0,
+         "exits": {
+          "time_up": 37,
+          "time exit": 28,
+          "stop": 38,
+          "trailing stop": 15,
+          "TP3": 9,
+          "breakeven stop": 27
+         }
+        },
+        "1d": {
+         "n": 88,
+         "win_rate": 0.4431818181818182,
+         "median_pct_of_balance": -10.39285229229794,
+         "mean_pct_of_balance": -7.315545211599925,
+         "median_hold_days": 7.0,
+         "median_leverage": 4.0,
+         "exits": {
+          "stop": 36,
+          "time_up": 37,
+          "TP3": 5,
+          "trailing stop": 4,
+          "breakeven stop": 5,
+          "time exit": 1
+         }
+        },
+        "3d": {
+         "n": 37,
+         "win_rate": 0.4864864864864865,
+         "median_pct_of_balance": -0.5404769532957312,
+         "mean_pct_of_balance": -1.838658042986596,
+         "median_hold_days": 12.0,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 33,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -12411,6 +12831,78 @@
         "ended_above_100_pct": 29.629629629629626
        },
        "win_rate_trades": 0.5705521472392638,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 38,
+         "win_rate": 0.6052631578947368,
+         "median_pct_of_balance": 14.950780603948594,
+         "mean_pct_of_balance": 3.9317460904787906,
+         "median_hold_days": 0.33333333333333337,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 15,
+          "breakeven stop": 8,
+          "trailing stop": 14,
+          "TP3": 1
+         }
+        },
+        "1h": {
+         "n": 107,
+         "win_rate": 0.5514018691588785,
+         "median_pct_of_balance": 8.95742257642797,
+         "mean_pct_of_balance": -5.070354862316314,
+         "median_hold_days": 0.625,
+         "median_leverage": 21.0,
+         "exits": {
+          "stop": 48,
+          "TP3": 12,
+          "breakeven stop": 35,
+          "trailing stop": 12
+         }
+        },
+        "4h": {
+         "n": 66,
+         "win_rate": 0.5606060606060606,
+         "median_pct_of_balance": 15.958966097308313,
+         "mean_pct_of_balance": 2.5495663125770758,
+         "median_hold_days": 2.083333333333333,
+         "median_leverage": 12.5,
+         "exits": {
+          "TP3": 17,
+          "stop": 29,
+          "breakeven stop": 8,
+          "trailing stop": 12
+         }
+        },
+        "12h": {
+         "n": 109,
+         "win_rate": 0.5963302752293578,
+         "median_pct_of_balance": 11.395908559429534,
+         "mean_pct_of_balance": 1.2393272669908875,
+         "median_hold_days": 7.5,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 30,
+          "stop": 37,
+          "trailing stop": 9,
+          "TP3": 11,
+          "breakeven stop": 22
+         }
+        },
+        "1d": {
+         "n": 6,
+         "win_rate": 0.3333333333333333,
+         "median_pct_of_balance": -33.98491513994521,
+         "mean_pct_of_balance": -20.187321672274276,
+         "median_hold_days": 20.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 4,
+          "breakeven stop": 1,
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -14864,6 +15356,92 @@
         "ended_above_100_pct": 42.857142857142854
        },
        "win_rate_trades": 0.6111111111111112,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 4,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 26.35954970072015,
+         "mean_pct_of_balance": 18.3091227477498,
+         "median_hold_days": 0.5416666666666666,
+         "median_leverage": 16.0,
+         "exits": {
+          "time_up": 1,
+          "breakeven stop": 3
+         }
+        },
+        "1h": {
+         "n": 29,
+         "win_rate": 0.7931034482758621,
+         "median_pct_of_balance": 19.442455867556422,
+         "mean_pct_of_balance": 6.343436056175402,
+         "median_hold_days": 0.5625,
+         "median_leverage": 25.0,
+         "exits": {
+          "trailing stop": 7,
+          "stop": 6,
+          "time_up": 1,
+          "breakeven stop": 9,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 21,
+         "win_rate": 0.38095238095238093,
+         "median_pct_of_balance": -53.03335237549617,
+         "mean_pct_of_balance": -17.77586924110528,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 16.0,
+         "exits": {
+          "time_up": 3,
+          "TP3": 2,
+          "trailing stop": 1,
+          "breakeven stop": 4,
+          "stop": 11
+         }
+        },
+        "12h": {
+         "n": 35,
+         "win_rate": 0.8,
+         "median_pct_of_balance": 21.11055434665095,
+         "mean_pct_of_balance": 19.16597450545965,
+         "median_hold_days": 4.5625,
+         "median_leverage": 7.0,
+         "exits": {
+          "time exit": 4,
+          "stop": 4,
+          "time_up": 6,
+          "breakeven stop": 10,
+          "trailing stop": 8,
+          "TP3": 3
+         }
+        },
+        "1d": {
+         "n": 25,
+         "win_rate": 0.36,
+         "median_pct_of_balance": -47.477669544273354,
+         "mean_pct_of_balance": -14.690792998254073,
+         "median_hold_days": 7.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 13,
+          "time_up": 8,
+          "TP3": 3,
+          "time exit": 1
+         }
+        },
+        "3d": {
+         "n": 12,
+         "win_rate": 0.5,
+         "median_pct_of_balance": -2.9761297851814166,
+         "mean_pct_of_balance": -16.36203969167264,
+         "median_hold_days": 5.5625,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 8,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1751673600000,
@@ -15501,6 +16079,78 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.627906976744186,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 7,
+         "win_rate": 0.8571428571428571,
+         "median_pct_of_balance": 26.35954970072015,
+         "mean_pct_of_balance": 27.794204178747975,
+         "median_hold_days": 0.5416666666666666,
+         "median_leverage": 16.0,
+         "exits": {
+          "breakeven stop": 4,
+          "TP3": 1,
+          "stop": 1,
+          "trailing stop": 1
+         }
+        },
+        "1h": {
+         "n": 38,
+         "win_rate": 0.6578947368421053,
+         "median_pct_of_balance": 12.640022881123693,
+         "mean_pct_of_balance": -1.347042072981583,
+         "median_hold_days": 0.5625,
+         "median_leverage": 25.0,
+         "exits": {
+          "trailing stop": 7,
+          "stop": 13,
+          "breakeven stop": 12,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 14,
+         "win_rate": 0.2857142857142857,
+         "median_pct_of_balance": -59.38512310856753,
+         "mean_pct_of_balance": -32.761182739436435,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 16.0,
+         "exits": {
+          "trailing stop": 2,
+          "breakeven stop": 2,
+          "stop": 10
+         }
+        },
+        "12h": {
+         "n": 24,
+         "win_rate": 0.7083333333333334,
+         "median_pct_of_balance": 20.46423318183217,
+         "mean_pct_of_balance": 11.385609978410221,
+         "median_hold_days": 6.604166666666667,
+         "median_leverage": 7.0,
+         "exits": {
+          "time exit": 5,
+          "stop": 4,
+          "breakeven stop": 7,
+          "time_up": 1,
+          "trailing stop": 5,
+          "TP3": 2
+         }
+        },
+        "1d": {
+         "n": 3,
+         "win_rate": 0.6666666666666666,
+         "median_pct_of_balance": 56.408124167374964,
+         "mean_pct_of_balance": 20.942934717880558,
+         "median_hold_days": 15.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 1,
+          "TP3": 1,
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1751673600000,
@@ -16138,6 +16788,92 @@
         "ended_above_100_pct": 42.857142857142854
        },
        "win_rate_trades": 0.6111111111111112,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 4,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 11.073532930952315,
+         "mean_pct_of_balance": 7.691583353509126,
+         "median_hold_days": 0.5416666666666666,
+         "median_leverage": 16.0,
+         "exits": {
+          "time_up": 1,
+          "breakeven stop": 3
+         }
+        },
+        "1h": {
+         "n": 29,
+         "win_rate": 0.7931034482758621,
+         "median_pct_of_balance": 10.621182952769711,
+         "mean_pct_of_balance": 6.198607961476847,
+         "median_hold_days": 0.5625,
+         "median_leverage": 25.0,
+         "exits": {
+          "trailing stop": 7,
+          "stop": 6,
+          "time_up": 1,
+          "breakeven stop": 9,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 21,
+         "win_rate": 0.38095238095238093,
+         "median_pct_of_balance": -24.678637993872538,
+         "mean_pct_of_balance": -6.844472443173391,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 16.0,
+         "exits": {
+          "time_up": 3,
+          "TP3": 2,
+          "trailing stop": 1,
+          "breakeven stop": 4,
+          "stop": 11
+         }
+        },
+        "12h": {
+         "n": 35,
+         "win_rate": 0.8,
+         "median_pct_of_balance": 8.559248707176234,
+         "mean_pct_of_balance": 8.65487548569754,
+         "median_hold_days": 4.5625,
+         "median_leverage": 7.0,
+         "exits": {
+          "time exit": 4,
+          "stop": 4,
+          "time_up": 6,
+          "breakeven stop": 10,
+          "trailing stop": 8,
+          "TP3": 3
+         }
+        },
+        "1d": {
+         "n": 25,
+         "win_rate": 0.36,
+         "median_pct_of_balance": -24.437399754462312,
+         "mean_pct_of_balance": -5.726260654325179,
+         "median_hold_days": 7.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 13,
+          "time_up": 8,
+          "TP3": 3,
+          "time exit": 1
+         }
+        },
+        "3d": {
+         "n": 12,
+         "win_rate": 0.5,
+         "median_pct_of_balance": -2.2493033154276034,
+         "mean_pct_of_balance": -6.716643389897087,
+         "median_hold_days": 5.5625,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 8,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1751673600000,
@@ -16775,6 +17511,78 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.627906976744186,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 7,
+         "win_rate": 0.8571428571428571,
+         "median_pct_of_balance": 11.073532930952315,
+         "mean_pct_of_balance": 11.792743104272981,
+         "median_hold_days": 0.5416666666666666,
+         "median_leverage": 16.0,
+         "exits": {
+          "breakeven stop": 4,
+          "TP3": 1,
+          "stop": 1,
+          "trailing stop": 1
+         }
+        },
+        "1h": {
+         "n": 38,
+         "win_rate": 0.6578947368421053,
+         "median_pct_of_balance": 9.282514612903327,
+         "mean_pct_of_balance": 0.09916586063748645,
+         "median_hold_days": 0.5625,
+         "median_leverage": 25.0,
+         "exits": {
+          "trailing stop": 7,
+          "stop": 13,
+          "breakeven stop": 12,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 14,
+         "win_rate": 0.2857142857142857,
+         "median_pct_of_balance": -24.97807572769343,
+         "mean_pct_of_balance": -14.018761011789165,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 16.0,
+         "exits": {
+          "trailing stop": 2,
+          "breakeven stop": 2,
+          "stop": 10
+         }
+        },
+        "12h": {
+         "n": 24,
+         "win_rate": 0.7083333333333334,
+         "median_pct_of_balance": 8.149760666629277,
+         "mean_pct_of_balance": 5.494022164306291,
+         "median_hold_days": 6.604166666666667,
+         "median_leverage": 7.0,
+         "exits": {
+          "time exit": 5,
+          "stop": 4,
+          "breakeven stop": 7,
+          "time_up": 1,
+          "trailing stop": 5,
+          "TP3": 2
+         }
+        },
+        "1d": {
+         "n": 3,
+         "win_rate": 0.6666666666666666,
+         "median_pct_of_balance": 22.028622933498525,
+         "mean_pct_of_balance": 11.697816238920913,
+         "median_hold_days": 15.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 1,
+          "TP3": 1,
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1751673600000,
@@ -17412,6 +18220,92 @@
         "ended_above_100_pct": 42.857142857142854
        },
        "win_rate_trades": 0.6111111111111112,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 4,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 15.50294610333324,
+         "mean_pct_of_balance": 10.768216694912775,
+         "median_hold_days": 0.5416666666666666,
+         "median_leverage": 16.0,
+         "exits": {
+          "time_up": 1,
+          "breakeven stop": 3
+         }
+        },
+        "1h": {
+         "n": 29,
+         "win_rate": 0.7931034482758621,
+         "median_pct_of_balance": 14.57103594709737,
+         "mean_pct_of_balance": 5.976742076778098,
+         "median_hold_days": 0.5625,
+         "median_leverage": 25.0,
+         "exits": {
+          "trailing stop": 7,
+          "stop": 6,
+          "time_up": 1,
+          "breakeven stop": 9,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 21,
+         "win_rate": 0.38095238095238093,
+         "median_pct_of_balance": -34.55009319142155,
+         "mean_pct_of_balance": -9.582261420442746,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 16.0,
+         "exits": {
+          "time_up": 3,
+          "TP3": 2,
+          "trailing stop": 1,
+          "breakeven stop": 4,
+          "stop": 11
+         }
+        },
+        "12h": {
+         "n": 35,
+         "win_rate": 0.8,
+         "median_pct_of_balance": 11.982948190046724,
+         "mean_pct_of_balance": 12.116825679976555,
+         "median_hold_days": 4.5625,
+         "median_leverage": 7.0,
+         "exits": {
+          "time exit": 4,
+          "stop": 4,
+          "time_up": 6,
+          "breakeven stop": 10,
+          "trailing stop": 8,
+          "TP3": 3
+         }
+        },
+        "1d": {
+         "n": 25,
+         "win_rate": 0.36,
+         "median_pct_of_balance": -34.21235965624723,
+         "mean_pct_of_balance": -8.016764916055246,
+         "median_hold_days": 7.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 13,
+          "time_up": 8,
+          "TP3": 3,
+          "time exit": 1
+         }
+        },
+        "3d": {
+         "n": 12,
+         "win_rate": 0.5,
+         "median_pct_of_balance": -2.9796115701308077,
+         "mean_pct_of_balance": -9.328428341527403,
+         "median_hold_days": 5.5625,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 8,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1751673600000,
@@ -18049,6 +18943,78 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.627906976744186,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 7,
+         "win_rate": 0.8571428571428571,
+         "median_pct_of_balance": 15.50294610333324,
+         "mean_pct_of_balance": 16.50984034598217,
+         "median_hold_days": 0.5416666666666666,
+         "median_leverage": 16.0,
+         "exits": {
+          "breakeven stop": 4,
+          "TP3": 1,
+          "stop": 1,
+          "trailing stop": 1
+         }
+        },
+        "1h": {
+         "n": 38,
+         "win_rate": 0.6578947368421053,
+         "median_pct_of_balance": 12.376395744015,
+         "mean_pct_of_balance": -0.8710138813004143,
+         "median_hold_days": 0.5625,
+         "median_leverage": 25.0,
+         "exits": {
+          "trailing stop": 7,
+          "stop": 13,
+          "breakeven stop": 12,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 14,
+         "win_rate": 0.2857142857142857,
+         "median_pct_of_balance": -34.969306018770794,
+         "mean_pct_of_balance": -19.626265416504825,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 16.0,
+         "exits": {
+          "trailing stop": 2,
+          "breakeven stop": 2,
+          "stop": 10
+         }
+        },
+        "12h": {
+         "n": 24,
+         "win_rate": 0.7083333333333334,
+         "median_pct_of_balance": 11.409664933280986,
+         "mean_pct_of_balance": 7.691631030028809,
+         "median_hold_days": 6.604166666666667,
+         "median_leverage": 7.0,
+         "exits": {
+          "time exit": 5,
+          "stop": 4,
+          "breakeven stop": 7,
+          "time_up": 1,
+          "trailing stop": 5,
+          "TP3": 2
+         }
+        },
+        "1d": {
+         "n": 3,
+         "win_rate": 0.6666666666666666,
+         "median_pct_of_balance": 30.840072106897946,
+         "mean_pct_of_balance": 16.37694273448929,
+         "median_hold_days": 15.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 1,
+          "TP3": 1,
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1751673600000,
@@ -18693,6 +19659,90 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.603448275862069,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 22,
+         "win_rate": 0.7727272727272727,
+         "median_pct_of_balance": 26.359549700720144,
+         "mean_pct_of_balance": 22.106794389367074,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "breakeven stop": 7,
+          "trailing stop": 10,
+          "stop": 4,
+          "time_up": 1
+         }
+        },
+        "1h": {
+         "n": 105,
+         "win_rate": 0.5523809523809524,
+         "median_pct_of_balance": 10.029065115784435,
+         "mean_pct_of_balance": -7.581689872101212,
+         "median_hold_days": 0.7083333333333334,
+         "median_leverage": 23.0,
+         "exits": {
+          "stop": 47,
+          "TP3": 14,
+          "breakeven stop": 28,
+          "time_up": 4,
+          "trailing stop": 12
+         }
+        },
+        "4h": {
+         "n": 11,
+         "win_rate": 0.0,
+         "median_pct_of_balance": -59.38512310856753,
+         "mean_pct_of_balance": -52.52372946343298,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 9.0,
+         "exits": {
+          "stop": 9,
+          "time_up": 2
+         }
+        },
+        "12h": {
+         "n": 16,
+         "win_rate": 0.9375,
+         "median_pct_of_balance": 21.199738914314025,
+         "mean_pct_of_balance": 28.801360390947742,
+         "median_hold_days": 4.5625,
+         "median_leverage": 16.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 4,
+          "TP3": 3,
+          "time_up": 2,
+          "time exit": 1
+         }
+        },
+        "1d": {
+         "n": 14,
+         "win_rate": 0.6428571428571429,
+         "median_pct_of_balance": 20.862467387325513,
+         "mean_pct_of_balance": 9.86757980395078,
+         "median_hold_days": 9.661458333333332,
+         "median_leverage": 3.0,
+         "exits": {
+          "TP3": 1,
+          "time_up": 7,
+          "time exit": 1,
+          "trailing stop": 1,
+          "stop": 4
+         }
+        },
+        "3d": {
+         "n": 6,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 6.022727492241362,
+         "mean_pct_of_balance": 8.354366211099416,
+         "median_hold_days": 10.0625,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 6
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -19033,6 +20083,73 @@
         "ended_above_100_pct": 42.857142857142854
        },
        "win_rate_trades": 0.5662650602409639,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 38,
+         "win_rate": 0.631578947368421,
+         "median_pct_of_balance": 21.642614599225837,
+         "mean_pct_of_balance": 9.149010680681572,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 14,
+          "breakeven stop": 7,
+          "trailing stop": 16,
+          "TP3": 1
+         }
+        },
+        "1h": {
+         "n": 106,
+         "win_rate": 0.5566037735849056,
+         "median_pct_of_balance": 10.029065115784435,
+         "mean_pct_of_balance": -6.318834256108629,
+         "median_hold_days": 0.625,
+         "median_leverage": 24.0,
+         "exits": {
+          "stop": 47,
+          "TP3": 13,
+          "breakeven stop": 33,
+          "trailing stop": 13
+         }
+        },
+        "4h": {
+         "n": 8,
+         "win_rate": 0.0,
+         "median_pct_of_balance": -60.114580510549004,
+         "mean_pct_of_balance": -58.82199428306187,
+         "median_hold_days": 4.963541666666667,
+         "median_leverage": 12.5,
+         "exits": {
+          "stop": 8
+         }
+        },
+        "12h": {
+         "n": 13,
+         "win_rate": 0.7692307692307693,
+         "median_pct_of_balance": 19.817912017013406,
+         "mean_pct_of_balance": 12.78078576070524,
+         "median_hold_days": 4.5625,
+         "median_leverage": 7.0,
+         "exits": {
+          "breakeven stop": 5,
+          "trailing stop": 3,
+          "TP3": 2,
+          "time exit": 1,
+          "stop": 2
+         }
+        },
+        "1d": {
+         "n": 1,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 56.408124167374964,
+         "mean_pct_of_balance": 56.408124167374964,
+         "median_hold_days": 30.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -19373,6 +20490,90 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.603448275862069,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 22,
+         "win_rate": 0.7727272727272727,
+         "median_pct_of_balance": 11.073532930952315,
+         "mean_pct_of_balance": 10.537735104125302,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "breakeven stop": 7,
+          "trailing stop": 10,
+          "stop": 4,
+          "time_up": 1
+         }
+        },
+        "1h": {
+         "n": 105,
+         "win_rate": 0.5523809523809524,
+         "median_pct_of_balance": 6.398158983162837,
+         "mean_pct_of_balance": -3.3426195759620954,
+         "median_hold_days": 0.7083333333333334,
+         "median_leverage": 23.0,
+         "exits": {
+          "stop": 47,
+          "TP3": 14,
+          "breakeven stop": 28,
+          "time_up": 4,
+          "trailing stop": 12
+         }
+        },
+        "4h": {
+         "n": 11,
+         "win_rate": 0.0,
+         "median_pct_of_balance": -24.97807572769343,
+         "mean_pct_of_balance": -22.475547341804493,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 9.0,
+         "exits": {
+          "stop": 9,
+          "time_up": 2
+         }
+        },
+        "12h": {
+         "n": 16,
+         "win_rate": 0.9375,
+         "median_pct_of_balance": 11.395741992102272,
+         "mean_pct_of_balance": 13.383168236795969,
+         "median_hold_days": 4.5625,
+         "median_leverage": 16.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 4,
+          "TP3": 3,
+          "time_up": 2,
+          "time exit": 1
+         }
+        },
+        "1d": {
+         "n": 14,
+         "win_rate": 0.6428571428571429,
+         "median_pct_of_balance": 8.147255990540604,
+         "mean_pct_of_balance": 5.383423161844379,
+         "median_hold_days": 9.661458333333332,
+         "median_leverage": 3.0,
+         "exits": {
+          "TP3": 1,
+          "time_up": 7,
+          "time exit": 1,
+          "trailing stop": 1,
+          "stop": 4
+         }
+        },
+        "3d": {
+         "n": 6,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 4.284982258995499,
+         "mean_pct_of_balance": 5.866037431235046,
+         "median_hold_days": 10.0625,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 6
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -19713,6 +20914,73 @@
         "ended_above_100_pct": 57.14285714285714
        },
        "win_rate_trades": 0.5662650602409639,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 38,
+         "win_rate": 0.631578947368421,
+         "median_pct_of_balance": 11.073532930952311,
+         "mean_pct_of_balance": 4.323395595271427,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 14,
+          "breakeven stop": 7,
+          "trailing stop": 16,
+          "TP3": 1
+         }
+        },
+        "1h": {
+         "n": 106,
+         "win_rate": 0.5566037735849056,
+         "median_pct_of_balance": 6.398158983162836,
+         "mean_pct_of_balance": -3.566447032326374,
+         "median_hold_days": 0.625,
+         "median_leverage": 24.0,
+         "exits": {
+          "stop": 47,
+          "TP3": 13,
+          "breakeven stop": 33,
+          "trailing stop": 13
+         }
+        },
+        "4h": {
+         "n": 8,
+         "win_rate": 0.0,
+         "median_pct_of_balance": -25.21350486061028,
+         "mean_pct_of_balance": -25.55981434798597,
+         "median_hold_days": 4.963541666666667,
+         "median_leverage": 12.5,
+         "exits": {
+          "stop": 8
+         }
+        },
+        "12h": {
+         "n": 13,
+         "win_rate": 0.7692307692307693,
+         "median_pct_of_balance": 8.139934685306814,
+         "mean_pct_of_balance": 6.638625133449138,
+         "median_hold_days": 4.5625,
+         "median_leverage": 7.0,
+         "exits": {
+          "breakeven stop": 5,
+          "trailing stop": 3,
+          "TP3": 2,
+          "time exit": 1,
+          "stop": 2
+         }
+        },
+        "1d": {
+         "n": 1,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 22.028622933498525,
+         "mean_pct_of_balance": 22.028622933498525,
+         "median_hold_days": 30.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -20053,6 +21321,90 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.603448275862069,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 22,
+         "win_rate": 0.7727272727272727,
+         "median_pct_of_balance": 15.502946103333244,
+         "mean_pct_of_balance": 14.359327062153131,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "breakeven stop": 7,
+          "trailing stop": 10,
+          "stop": 4,
+          "time_up": 1
+         }
+        },
+        "1h": {
+         "n": 105,
+         "win_rate": 0.5523809523809524,
+         "median_pct_of_balance": 8.957422576427968,
+         "mean_pct_of_balance": -5.116242811203376,
+         "median_hold_days": 0.7083333333333334,
+         "median_leverage": 23.0,
+         "exits": {
+          "stop": 47,
+          "TP3": 14,
+          "breakeven stop": 28,
+          "time_up": 4,
+          "trailing stop": 12
+         }
+        },
+        "4h": {
+         "n": 11,
+         "win_rate": 0.0,
+         "median_pct_of_balance": -34.9693060187708,
+         "mean_pct_of_balance": -31.46576627852628,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 9.0,
+         "exits": {
+          "stop": 9,
+          "time_up": 2
+         }
+        },
+        "12h": {
+         "n": 16,
+         "win_rate": 0.9375,
+         "median_pct_of_balance": 15.95403878894318,
+         "mean_pct_of_balance": 18.736435531514353,
+         "median_hold_days": 4.5625,
+         "median_leverage": 16.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 4,
+          "TP3": 3,
+          "time_up": 2,
+          "time exit": 1
+         }
+        },
+        "1d": {
+         "n": 14,
+         "win_rate": 0.6428571428571429,
+         "median_pct_of_balance": 11.406158386756847,
+         "mean_pct_of_balance": 7.53679242658213,
+         "median_hold_days": 9.661458333333332,
+         "median_leverage": 3.0,
+         "exits": {
+          "TP3": 1,
+          "time_up": 7,
+          "time exit": 1,
+          "trailing stop": 1,
+          "stop": 4
+         }
+        },
+        "3d": {
+         "n": 6,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 5.9989751625936965,
+         "mean_pct_of_balance": 8.212452403729065,
+         "median_hold_days": 10.0625,
+         "median_leverage": 1.0,
+         "exits": {
+          "time_up": 6
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -20393,6 +21745,73 @@
         "ended_above_100_pct": 57.14285714285714
        },
        "win_rate_trades": 0.5662650602409639,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 38,
+         "win_rate": 0.631578947368421,
+         "median_pct_of_balance": 15.502946103333233,
+         "mean_pct_of_balance": 5.997932370821729,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 14,
+          "breakeven stop": 7,
+          "trailing stop": 16,
+          "TP3": 1
+         }
+        },
+        "1h": {
+         "n": 106,
+         "win_rate": 0.5566037735849056,
+         "median_pct_of_balance": 8.95742257642797,
+         "mean_pct_of_balance": -5.010777942958891,
+         "median_hold_days": 0.625,
+         "median_leverage": 24.0,
+         "exits": {
+          "stop": 47,
+          "TP3": 13,
+          "breakeven stop": 33,
+          "trailing stop": 13
+         }
+        },
+        "4h": {
+         "n": 8,
+         "win_rate": 0.0,
+         "median_pct_of_balance": -35.29890680485439,
+         "mean_pct_of_balance": -35.783740087180355,
+         "median_hold_days": 4.963541666666667,
+         "median_leverage": 12.5,
+         "exits": {
+          "stop": 8
+         }
+        },
+        "12h": {
+         "n": 13,
+         "win_rate": 0.7692307692307693,
+         "median_pct_of_balance": 11.395908559429532,
+         "mean_pct_of_balance": 9.29407518682879,
+         "median_hold_days": 4.5625,
+         "median_leverage": 7.0,
+         "exits": {
+          "breakeven stop": 5,
+          "trailing stop": 3,
+          "TP3": 2,
+          "time exit": 1,
+          "stop": 2
+         }
+        },
+        "1d": {
+         "n": 1,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 30.840072106897946,
+         "mean_pct_of_balance": 30.840072106897946,
+         "median_hold_days": 30.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "time exit": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -20808,6 +22227,98 @@
         "ended_above_100_pct": 40.74074074074074
        },
        "win_rate_trades": 0.5362776025236593,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 35,
+         "win_rate": 0.5428571428571428,
+         "median_pct_of_balance": 21.335521368257698,
+         "mean_pct_of_balance": 1.4373422664470348,
+         "median_hold_days": 0.1875,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 14,
+          "breakeven stop": 8,
+          "trailing stop": 10,
+          "TP3": 1,
+          "time exit": 2
+         }
+        },
+        "1h": {
+         "n": 138,
+         "win_rate": 0.4855072463768116,
+         "median_pct_of_balance": -26.889982793403394,
+         "mean_pct_of_balance": -10.379887589072244,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 13,
+          "stop": 71,
+          "breakeven stop": 34,
+          "trailing stop": 13,
+          "time_up": 4,
+          "time exit": 3
+         }
+        },
+        "4h": {
+         "n": 125,
+         "win_rate": 0.584,
+         "median_pct_of_balance": 28.062788566483732,
+         "mean_pct_of_balance": 8.071042683545269,
+         "median_hold_days": 1.8333333333333333,
+         "median_leverage": 10.0,
+         "exits": {
+          "TP3": 37,
+          "breakeven stop": 18,
+          "stop": 47,
+          "trailing stop": 15,
+          "time_up": 8
+         }
+        },
+        "12h": {
+         "n": 135,
+         "win_rate": 0.5259259259259259,
+         "median_pct_of_balance": 9.711396653552692,
+         "mean_pct_of_balance": -4.881732818297792,
+         "median_hold_days": 6.322916666666667,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 26,
+          "stop": 43,
+          "time_up": 28,
+          "breakeven stop": 30,
+          "trailing stop": 1,
+          "TP3": 7
+         }
+        },
+        "1d": {
+         "n": 166,
+         "win_rate": 0.5843373493975904,
+         "median_pct_of_balance": 9.846258070148203,
+         "mean_pct_of_balance": 5.969741563300912,
+         "median_hold_days": 9.0,
+         "median_leverage": 3.5,
+         "exits": {
+          "stop": 40,
+          "time_up": 82,
+          "TP3": 15,
+          "trailing stop": 11,
+          "breakeven stop": 15,
+          "time exit": 3
+         }
+        },
+        "3d": {
+         "n": 35,
+         "win_rate": 0.37142857142857144,
+         "median_pct_of_balance": -4.1225938030865334,
+         "mean_pct_of_balance": -11.873761985448425,
+         "median_hold_days": 11.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "time_up": 26,
+          "stop": 9
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -23254,6 +24765,83 @@
         "ended_above_100_pct": 29.629629629629626
        },
        "win_rate_trades": 0.5711206896551724,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 80,
+         "win_rate": 0.625,
+         "median_pct_of_balance": 25.6310727944319,
+         "mean_pct_of_balance": 13.904476469622088,
+         "median_hold_days": 0.296875,
+         "median_leverage": 23.5,
+         "exits": {
+          "breakeven stop": 16,
+          "trailing stop": 24,
+          "TP3": 10,
+          "stop": 27,
+          "time exit": 3
+         }
+        },
+        "1h": {
+         "n": 152,
+         "win_rate": 0.5263157894736842,
+         "median_pct_of_balance": 10.70900981515002,
+         "mean_pct_of_balance": -5.371245532714844,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 18,
+          "breakeven stop": 43,
+          "stop": 72,
+          "trailing stop": 16,
+          "time exit": 3
+         }
+        },
+        "4h": {
+         "n": 89,
+         "win_rate": 0.5168539325842697,
+         "median_pct_of_balance": 16.525637593991757,
+         "mean_pct_of_balance": -1.275059030358099,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 10.0,
+         "exits": {
+          "TP3": 25,
+          "breakeven stop": 13,
+          "stop": 42,
+          "trailing stop": 8,
+          "time exit": 1
+         }
+        },
+        "12h": {
+         "n": 126,
+         "win_rate": 0.6190476190476191,
+         "median_pct_of_balance": 20.13008438464876,
+         "mean_pct_of_balance": 0.38918821454452207,
+         "median_hold_days": 8.645833333333334,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 41,
+          "stop": 41,
+          "breakeven stop": 27,
+          "trailing stop": 6,
+          "TP3": 11
+         }
+        },
+        "1d": {
+         "n": 17,
+         "win_rate": 0.6470588235294118,
+         "median_pct_of_balance": 23.06701747200991,
+         "mean_pct_of_balance": 12.862149705191337,
+         "median_hold_days": 18.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "stop": 6,
+          "TP3": 3,
+          "breakeven stop": 2,
+          "trailing stop": 3,
+          "time exit": 3
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -25700,6 +27288,98 @@
         "ended_above_100_pct": 46.2962962962963
        },
        "win_rate_trades": 0.5344827586206896,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 35,
+         "win_rate": 0.5428571428571428,
+         "median_pct_of_balance": 10.353985930717615,
+         "mean_pct_of_balance": 0.3804272502101948,
+         "median_hold_days": 0.1875,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 14,
+          "breakeven stop": 8,
+          "trailing stop": 10,
+          "TP3": 1,
+          "time exit": 2
+         }
+        },
+        "1h": {
+         "n": 141,
+         "win_rate": 0.475177304964539,
+         "median_pct_of_balance": -24.818038832846216,
+         "mean_pct_of_balance": -5.878392395584713,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 13,
+          "stop": 73,
+          "breakeven stop": 34,
+          "trailing stop": 13,
+          "time_up": 5,
+          "time exit": 3
+         }
+        },
+        "4h": {
+         "n": 125,
+         "win_rate": 0.584,
+         "median_pct_of_balance": 11.399261498077369,
+         "mean_pct_of_balance": 3.8589480585149585,
+         "median_hold_days": 1.8333333333333333,
+         "median_leverage": 10.0,
+         "exits": {
+          "TP3": 37,
+          "breakeven stop": 18,
+          "stop": 47,
+          "trailing stop": 15,
+          "time_up": 8
+         }
+        },
+        "12h": {
+         "n": 135,
+         "win_rate": 0.5259259259259259,
+         "median_pct_of_balance": 3.7536192165348257,
+         "mean_pct_of_balance": -1.6651712601638908,
+         "median_hold_days": 6.322916666666667,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 26,
+          "stop": 43,
+          "time_up": 28,
+          "breakeven stop": 30,
+          "trailing stop": 1,
+          "TP3": 7
+         }
+        },
+        "1d": {
+         "n": 167,
+         "win_rate": 0.5868263473053892,
+         "median_pct_of_balance": 4.577912393008468,
+         "mean_pct_of_balance": 2.552772122477365,
+         "median_hold_days": 9.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 40,
+          "time_up": 83,
+          "TP3": 15,
+          "trailing stop": 11,
+          "breakeven stop": 15,
+          "time exit": 3
+         }
+        },
+        "3d": {
+         "n": 35,
+         "win_rate": 0.37142857142857144,
+         "median_pct_of_balance": -2.22697849611104,
+         "mean_pct_of_balance": -5.395716338112556,
+         "median_hold_days": 11.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "time_up": 26,
+          "stop": 9
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -28146,6 +29826,83 @@
         "ended_above_100_pct": 31.48148148148148
        },
        "win_rate_trades": 0.5735607675906184,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 83,
+         "win_rate": 0.6385542168674698,
+         "median_pct_of_balance": 11.073532930952316,
+         "mean_pct_of_balance": 6.38823643191206,
+         "median_hold_days": 0.3020833333333333,
+         "median_leverage": 23.0,
+         "exits": {
+          "breakeven stop": 17,
+          "trailing stop": 25,
+          "TP3": 11,
+          "stop": 27,
+          "time exit": 3
+         }
+        },
+        "1h": {
+         "n": 154,
+         "win_rate": 0.525974025974026,
+         "median_pct_of_balance": 6.628521947209799,
+         "mean_pct_of_balance": -3.7709799057226028,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 18,
+          "breakeven stop": 44,
+          "stop": 73,
+          "trailing stop": 16,
+          "time exit": 3
+         }
+        },
+        "4h": {
+         "n": 89,
+         "win_rate": 0.5168539325842697,
+         "median_pct_of_balance": 8.50216962138735,
+         "mean_pct_of_balance": 0.03354030737978497,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 10.0,
+         "exits": {
+          "TP3": 25,
+          "breakeven stop": 13,
+          "stop": 42,
+          "trailing stop": 8,
+          "time exit": 1
+         }
+        },
+        "12h": {
+         "n": 126,
+         "win_rate": 0.6190476190476191,
+         "median_pct_of_balance": 8.149760666629273,
+         "mean_pct_of_balance": 0.7996326036799906,
+         "median_hold_days": 8.645833333333334,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 41,
+          "stop": 41,
+          "breakeven stop": 27,
+          "trailing stop": 6,
+          "TP3": 11
+         }
+        },
+        "1d": {
+         "n": 17,
+         "win_rate": 0.6470588235294118,
+         "median_pct_of_balance": 12.095384187855508,
+         "mean_pct_of_balance": 5.071682484254309,
+         "median_hold_days": 18.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "stop": 6,
+          "TP3": 3,
+          "breakeven stop": 2,
+          "trailing stop": 3,
+          "time exit": 3
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -30592,6 +32349,98 @@
         "ended_above_100_pct": 44.44444444444444
        },
        "win_rate_trades": 0.5344827586206896,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 35,
+         "win_rate": 0.5428571428571428,
+         "median_pct_of_balance": 14.49558030300466,
+         "mean_pct_of_balance": 0.8892487375249658,
+         "median_hold_days": 0.1875,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 14,
+          "breakeven stop": 8,
+          "trailing stop": 10,
+          "TP3": 1,
+          "time exit": 2
+         }
+        },
+        "1h": {
+         "n": 141,
+         "win_rate": 0.475177304964539,
+         "median_pct_of_balance": -29.733619599724076,
+         "mean_pct_of_balance": -7.900505955078431,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 13,
+          "stop": 73,
+          "breakeven stop": 34,
+          "trailing stop": 13,
+          "time_up": 5,
+          "time exit": 3
+         }
+        },
+        "4h": {
+         "n": 125,
+         "win_rate": 0.584,
+         "median_pct_of_balance": 15.958966097308313,
+         "mean_pct_of_balance": 5.255728973214128,
+         "median_hold_days": 1.8333333333333333,
+         "median_leverage": 10.0,
+         "exits": {
+          "TP3": 37,
+          "breakeven stop": 18,
+          "stop": 47,
+          "trailing stop": 15,
+          "time_up": 8
+         }
+        },
+        "12h": {
+         "n": 135,
+         "win_rate": 0.5259259259259259,
+         "median_pct_of_balance": 5.255066903148754,
+         "mean_pct_of_balance": -2.3312397642294473,
+         "median_hold_days": 6.322916666666667,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 26,
+          "stop": 43,
+          "time_up": 28,
+          "breakeven stop": 30,
+          "trailing stop": 1,
+          "TP3": 7
+         }
+        },
+        "1d": {
+         "n": 167,
+         "win_rate": 0.5868263473053892,
+         "median_pct_of_balance": 6.409077350211854,
+         "mean_pct_of_balance": 3.5738809714683124,
+         "median_hold_days": 9.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "stop": 40,
+          "time_up": 83,
+          "TP3": 15,
+          "trailing stop": 11,
+          "breakeven stop": 15,
+          "time exit": 3
+         }
+        },
+        "3d": {
+         "n": 35,
+         "win_rate": 0.37142857142857144,
+         "median_pct_of_balance": -3.117769894555456,
+         "mean_pct_of_balance": -7.554002873357578,
+         "median_hold_days": 11.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "time_up": 26,
+          "stop": 9
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -33038,6 +34887,83 @@
         "ended_above_100_pct": 31.48148148148148
        },
        "win_rate_trades": 0.5735607675906184,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 83,
+         "win_rate": 0.6385542168674698,
+         "median_pct_of_balance": 15.50294610333324,
+         "mean_pct_of_balance": 9.049211497703903,
+         "median_hold_days": 0.3020833333333333,
+         "median_leverage": 23.0,
+         "exits": {
+          "breakeven stop": 17,
+          "trailing stop": 25,
+          "TP3": 11,
+          "stop": 27,
+          "time exit": 3
+         }
+        },
+        "1h": {
+         "n": 154,
+         "win_rate": 0.525974025974026,
+         "median_pct_of_balance": 9.279930726093717,
+         "mean_pct_of_balance": -4.906961403889464,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 18,
+          "breakeven stop": 44,
+          "stop": 73,
+          "trailing stop": 16,
+          "time exit": 3
+         }
+        },
+        "4h": {
+         "n": 89,
+         "win_rate": 0.5168539325842697,
+         "median_pct_of_balance": 11.903037469942296,
+         "mean_pct_of_balance": -0.15922096953741896,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 10.0,
+         "exits": {
+          "TP3": 25,
+          "breakeven stop": 13,
+          "stop": 42,
+          "trailing stop": 8,
+          "time exit": 1
+         }
+        },
+        "12h": {
+         "n": 126,
+         "win_rate": 0.6190476190476191,
+         "median_pct_of_balance": 11.409664933280986,
+         "mean_pct_of_balance": 1.1194856451519866,
+         "median_hold_days": 8.645833333333334,
+         "median_leverage": 6.0,
+         "exits": {
+          "time exit": 41,
+          "stop": 41,
+          "breakeven stop": 27,
+          "trailing stop": 6,
+          "TP3": 11
+         }
+        },
+        "1d": {
+         "n": 17,
+         "win_rate": 0.6470588235294118,
+         "median_pct_of_balance": 16.933537862997714,
+         "mean_pct_of_balance": 7.10035547795603,
+         "median_hold_days": 18.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "stop": 6,
+          "TP3": 3,
+          "breakeven stop": 2,
+          "trailing stop": 3,
+          "time exit": 3
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1629763200000,
@@ -35491,6 +37417,80 @@
         "ended_above_100_pct": 26.666666666666668
        },
        "win_rate_trades": 0.5743243243243243,
+       "trades_by_timeframe": {
+        "1h": {
+         "n": 24,
+         "win_rate": 0.6666666666666666,
+         "median_pct_of_balance": 17.006745907326895,
+         "mean_pct_of_balance": 2.190754950873269,
+         "median_hold_days": 0.625,
+         "median_leverage": 22.0,
+         "exits": {
+          "stop": 8,
+          "trailing stop": 10,
+          "breakeven stop": 3,
+          "TP3": 3
+         }
+        },
+        "4h": {
+         "n": 29,
+         "win_rate": 0.3793103448275862,
+         "median_pct_of_balance": -56.40466677743943,
+         "mean_pct_of_balance": -23.65236603929918,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 12.0,
+         "exits": {
+          "time_up": 4,
+          "stop": 16,
+          "trailing stop": 4,
+          "breakeven stop": 4,
+          "TP3": 1
+         }
+        },
+        "12h": {
+         "n": 41,
+         "win_rate": 0.7073170731707317,
+         "median_pct_of_balance": 21.11055434665094,
+         "mean_pct_of_balance": 15.66983529006853,
+         "median_hold_days": 6.322916666666667,
+         "median_leverage": 15.0,
+         "exits": {
+          "time exit": 9,
+          "stop": 4,
+          "time_up": 8,
+          "breakeven stop": 11,
+          "trailing stop": 6,
+          "TP3": 3
+         }
+        },
+        "1d": {
+         "n": 41,
+         "win_rate": 0.6585365853658537,
+         "median_pct_of_balance": 19.70298293052052,
+         "mean_pct_of_balance": 13.000149707367259,
+         "median_hold_days": 12.0,
+         "median_leverage": 4.0,
+         "exits": {
+          "time_up": 19,
+          "breakeven stop": 6,
+          "TP3": 5,
+          "trailing stop": 2,
+          "stop": 9
+         }
+        },
+        "3d": {
+         "n": 13,
+         "win_rate": 0.15384615384615385,
+         "median_pct_of_balance": -8.435684261007147,
+         "mean_pct_of_balance": -19.787209637708887,
+         "median_hold_days": 6.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "time_up": 9,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1746144000000,
@@ -36209,6 +38209,78 @@
         "ended_above_100_pct": 26.666666666666668
        },
        "win_rate_trades": 0.6101694915254238,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 14,
+         "win_rate": 0.7142857142857143,
+         "median_pct_of_balance": 26.359549700720144,
+         "mean_pct_of_balance": 9.97910790526777,
+         "median_hold_days": 0.46354166666666663,
+         "median_leverage": 20.0,
+         "exits": {
+          "stop": 4,
+          "breakeven stop": 6,
+          "TP3": 2,
+          "trailing stop": 2
+         }
+        },
+        "1h": {
+         "n": 44,
+         "win_rate": 0.6136363636363636,
+         "median_pct_of_balance": 14.571035947097371,
+         "mean_pct_of_balance": -3.2142393784179593,
+         "median_hold_days": 0.9479166666666666,
+         "median_leverage": 23.5,
+         "exits": {
+          "stop": 17,
+          "trailing stop": 9,
+          "breakeven stop": 12,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 25,
+         "win_rate": 0.32,
+         "median_pct_of_balance": -59.38512310856753,
+         "mean_pct_of_balance": -28.14835986880675,
+         "median_hold_days": 1.5625,
+         "median_leverage": 12.0,
+         "exits": {
+          "stop": 17,
+          "trailing stop": 2,
+          "breakeven stop": 4,
+          "TP3": 2
+         }
+        },
+        "12h": {
+         "n": 33,
+         "win_rate": 0.7575757575757576,
+         "median_pct_of_balance": 21.11055434665094,
+         "mean_pct_of_balance": 17.955058219609977,
+         "median_hold_days": 8.645833333333334,
+         "median_leverage": 15.0,
+         "exits": {
+          "time exit": 12,
+          "stop": 2,
+          "breakeven stop": 10,
+          "time_up": 1,
+          "trailing stop": 6,
+          "TP3": 2
+         }
+        },
+        "1d": {
+         "n": 2,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 53.56879921613181,
+         "mean_pct_of_balance": 53.56879921613181,
+         "median_hold_days": 15.0,
+         "median_leverage": 9.5,
+         "exits": {
+          "breakeven stop": 1,
+          "TP3": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1746144000000,
@@ -36927,6 +38999,80 @@
         "ended_above_100_pct": 33.33333333333333
        },
        "win_rate_trades": 0.5743243243243243,
+       "trades_by_timeframe": {
+        "1h": {
+         "n": 24,
+         "win_rate": 0.6666666666666666,
+         "median_pct_of_balance": 14.571035947097371,
+         "mean_pct_of_balance": 2.8419710599590218,
+         "median_hold_days": 0.625,
+         "median_leverage": 22.0,
+         "exits": {
+          "stop": 8,
+          "trailing stop": 10,
+          "breakeven stop": 3,
+          "TP3": 3
+         }
+        },
+        "4h": {
+         "n": 29,
+         "win_rate": 0.3793103448275862,
+         "median_pct_of_balance": -24.34950775382541,
+         "mean_pct_of_balance": -9.518561193520032,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 12.0,
+         "exits": {
+          "time_up": 4,
+          "stop": 16,
+          "trailing stop": 4,
+          "breakeven stop": 4,
+          "TP3": 1
+         }
+        },
+        "12h": {
+         "n": 41,
+         "win_rate": 0.7073170731707317,
+         "median_pct_of_balance": 8.51988378575361,
+         "mean_pct_of_balance": 6.879011564946843,
+         "median_hold_days": 6.322916666666667,
+         "median_leverage": 15.0,
+         "exits": {
+          "time exit": 9,
+          "stop": 4,
+          "time_up": 8,
+          "breakeven stop": 11,
+          "trailing stop": 6,
+          "TP3": 3
+         }
+        },
+        "1d": {
+         "n": 41,
+         "win_rate": 0.6585365853658537,
+         "median_pct_of_balance": 9.051969483295682,
+         "mean_pct_of_balance": 5.747316483501255,
+         "median_hold_days": 12.0,
+         "median_leverage": 4.0,
+         "exits": {
+          "time_up": 19,
+          "breakeven stop": 6,
+          "TP3": 5,
+          "trailing stop": 2,
+          "stop": 9
+         }
+        },
+        "3d": {
+         "n": 13,
+         "win_rate": 0.15384615384615385,
+         "median_pct_of_balance": -3.4315852154845525,
+         "mean_pct_of_balance": -8.918688229954638,
+         "median_hold_days": 6.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "time_up": 9,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1746144000000,
@@ -37645,6 +39791,78 @@
         "ended_above_100_pct": 26.666666666666668
        },
        "win_rate_trades": 0.6101694915254238,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 14,
+         "win_rate": 0.7142857142857143,
+         "median_pct_of_balance": 11.03890250293777,
+         "mean_pct_of_balance": 6.260056552118475,
+         "median_hold_days": 0.46354166666666663,
+         "median_leverage": 20.0,
+         "exits": {
+          "stop": 4,
+          "breakeven stop": 6,
+          "TP3": 2,
+          "trailing stop": 2
+         }
+        },
+        "1h": {
+         "n": 44,
+         "win_rate": 0.6136363636363636,
+         "median_pct_of_balance": 10.326227788127703,
+         "mean_pct_of_balance": -0.8017398989796883,
+         "median_hold_days": 0.9479166666666666,
+         "median_leverage": 23.5,
+         "exits": {
+          "stop": 17,
+          "trailing stop": 9,
+          "breakeven stop": 12,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 25,
+         "win_rate": 0.32,
+         "median_pct_of_balance": -24.97807572769342,
+         "mean_pct_of_balance": -11.607072331106089,
+         "median_hold_days": 1.5625,
+         "median_leverage": 12.0,
+         "exits": {
+          "stop": 17,
+          "trailing stop": 2,
+          "breakeven stop": 4,
+          "TP3": 2
+         }
+        },
+        "12h": {
+         "n": 33,
+         "win_rate": 0.7575757575757576,
+         "median_pct_of_balance": 8.51988378575361,
+         "mean_pct_of_balance": 8.134558708037924,
+         "median_hold_days": 8.645833333333334,
+         "median_leverage": 15.0,
+         "exits": {
+          "time exit": 12,
+          "stop": 2,
+          "breakeven stop": 10,
+          "time_up": 1,
+          "trailing stop": 6,
+          "TP3": 2
+         }
+        },
+        "1d": {
+         "n": 2,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 21.854958997213558,
+         "mean_pct_of_balance": 21.854958997213558,
+         "median_hold_days": 15.0,
+         "median_leverage": 9.5,
+         "exits": {
+          "breakeven stop": 1,
+          "TP3": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1746144000000,
@@ -38363,6 +40581,80 @@
         "ended_above_100_pct": 33.33333333333333
        },
        "win_rate_trades": 0.5743243243243243,
+       "trades_by_timeframe": {
+        "1h": {
+         "n": 24,
+         "win_rate": 0.6666666666666666,
+         "median_pct_of_balance": 14.720346040487483,
+         "mean_pct_of_balance": 2.1266307581932336,
+         "median_hold_days": 0.625,
+         "median_leverage": 22.0,
+         "exits": {
+          "stop": 8,
+          "trailing stop": 10,
+          "breakeven stop": 3,
+          "TP3": 3
+         }
+        },
+        "4h": {
+         "n": 29,
+         "win_rate": 0.3793103448275862,
+         "median_pct_of_balance": -34.08931085535557,
+         "mean_pct_of_balance": -13.325985670928048,
+         "median_hold_days": 1.6666666666666667,
+         "median_leverage": 12.0,
+         "exits": {
+          "time_up": 4,
+          "stop": 16,
+          "trailing stop": 4,
+          "breakeven stop": 4,
+          "TP3": 1
+         }
+        },
+        "12h": {
+         "n": 41,
+         "win_rate": 0.7073170731707317,
+         "median_pct_of_balance": 11.927837300055051,
+         "mean_pct_of_balance": 9.630616190925583,
+         "median_hold_days": 6.322916666666667,
+         "median_leverage": 15.0,
+         "exits": {
+          "time exit": 9,
+          "stop": 4,
+          "time_up": 8,
+          "breakeven stop": 11,
+          "trailing stop": 6,
+          "TP3": 3
+         }
+        },
+        "1d": {
+         "n": 41,
+         "win_rate": 0.6585365853658537,
+         "median_pct_of_balance": 12.672757276613961,
+         "mean_pct_of_balance": 8.04624307690176,
+         "median_hold_days": 12.0,
+         "median_leverage": 4.0,
+         "exits": {
+          "time_up": 19,
+          "breakeven stop": 6,
+          "TP3": 5,
+          "trailing stop": 2,
+          "stop": 9
+         }
+        },
+        "3d": {
+         "n": 13,
+         "win_rate": 0.15384615384615385,
+         "median_pct_of_balance": -4.804219301678373,
+         "mean_pct_of_balance": -12.428019310701988,
+         "median_hold_days": 6.0,
+         "median_leverage": 2.0,
+         "exits": {
+          "time_up": 9,
+          "stop": 4
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1746144000000,
@@ -39081,6 +41373,78 @@
         "ended_above_100_pct": 26.666666666666668
        },
        "win_rate_trades": 0.6101694915254238,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 14,
+         "win_rate": 0.7142857142857143,
+         "median_pct_of_balance": 15.45446350411288,
+         "mean_pct_of_balance": 8.296273044348034,
+         "median_hold_days": 0.46354166666666663,
+         "median_leverage": 20.0,
+         "exits": {
+          "stop": 4,
+          "breakeven stop": 6,
+          "TP3": 2,
+          "trailing stop": 2
+         }
+        },
+        "1h": {
+         "n": 44,
+         "win_rate": 0.6136363636363636,
+         "median_pct_of_balance": 14.307408809988676,
+         "mean_pct_of_balance": -2.1055396675375735,
+         "median_hold_days": 0.9479166666666666,
+         "median_leverage": 23.5,
+         "exits": {
+          "stop": 17,
+          "trailing stop": 9,
+          "breakeven stop": 12,
+          "TP3": 6
+         }
+        },
+        "4h": {
+         "n": 25,
+         "win_rate": 0.32,
+         "median_pct_of_balance": -34.969306018770794,
+         "mean_pct_of_balance": -16.249901263548526,
+         "median_hold_days": 1.5625,
+         "median_leverage": 12.0,
+         "exits": {
+          "stop": 17,
+          "trailing stop": 2,
+          "breakeven stop": 4,
+          "TP3": 2
+         }
+        },
+        "12h": {
+         "n": 33,
+         "win_rate": 0.7575757575757576,
+         "median_pct_of_balance": 11.927837300055051,
+         "mean_pct_of_balance": 11.388382191253092,
+         "median_hold_days": 8.645833333333334,
+         "median_leverage": 15.0,
+         "exits": {
+          "time exit": 12,
+          "stop": 2,
+          "breakeven stop": 10,
+          "time_up": 1,
+          "trailing stop": 6,
+          "TP3": 2
+         }
+        },
+        "1d": {
+         "n": 2,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 30.59694259609898,
+         "mean_pct_of_balance": 30.59694259609898,
+         "median_hold_days": 15.0,
+         "median_leverage": 9.5,
+         "exits": {
+          "breakeven stop": 1,
+          "TP3": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1746144000000,
@@ -39806,6 +42170,96 @@
         "ended_above_100_pct": 14.285714285714285
        },
        "win_rate_trades": 0.5,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 35,
+         "win_rate": 0.6,
+         "median_pct_of_balance": 21.335521368257705,
+         "mean_pct_of_balance": 6.125419526176388,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 12,
+          "breakeven stop": 8,
+          "trailing stop": 11,
+          "time_up": 1,
+          "TP3": 1,
+          "time exit": 2
+         }
+        },
+        "1h": {
+         "n": 115,
+         "win_rate": 0.4608695652173913,
+         "median_pct_of_balance": -32.000686863980945,
+         "mean_pct_of_balance": -12.383991387416732,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 9,
+          "breakeven stop": 26,
+          "stop": 61,
+          "trailing stop": 11,
+          "time_up": 4,
+          "time exit": 4
+         }
+        },
+        "4h": {
+         "n": 15,
+         "win_rate": 0.13333333333333333,
+         "median_pct_of_balance": -58.70629311343547,
+         "mean_pct_of_balance": -46.69671110052548,
+         "median_hold_days": 0.6354166666666666,
+         "median_leverage": 10.0,
+         "exits": {
+          "stop": 13,
+          "TP3": 1,
+          "breakeven stop": 1
+         }
+        },
+        "12h": {
+         "n": 12,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 16.54546064581143,
+         "mean_pct_of_balance": 10.882817118376073,
+         "median_hold_days": 5.661458333333334,
+         "median_leverage": 5.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 1,
+          "stop": 1,
+          "TP3": 1,
+          "time_up": 2,
+          "time exit": 1
+         }
+        },
+        "1d": {
+         "n": 21,
+         "win_rate": 0.6666666666666666,
+         "median_pct_of_balance": 20.224688649602054,
+         "mean_pct_of_balance": 12.782318772905231,
+         "median_hold_days": 15.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "time_up": 10,
+          "trailing stop": 2,
+          "stop": 5,
+          "TP3": 1,
+          "time exit": 1,
+          "breakeven stop": 2
+         }
+        },
+        "3d": {
+         "n": 6,
+         "win_rate": 0.5,
+         "median_pct_of_balance": 0.4846856024407503,
+         "mean_pct_of_balance": 1.8477393266462434,
+         "median_hold_days": 11.015625,
+         "median_leverage": 1.5,
+         "exits": {
+          "time_up": 6
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -40146,6 +42600,79 @@
         "ended_above_100_pct": 14.285714285714285
        },
        "win_rate_trades": 0.5303643724696356,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 76,
+         "win_rate": 0.631578947368421,
+         "median_pct_of_balance": 25.6310727944319,
+         "mean_pct_of_balance": 15.020010981408541,
+         "median_hold_days": 0.3125,
+         "median_leverage": 23.0,
+         "exits": {
+          "breakeven stop": 14,
+          "trailing stop": 25,
+          "TP3": 9,
+          "stop": 25,
+          "time exit": 3
+         }
+        },
+        "1h": {
+         "n": 137,
+         "win_rate": 0.5109489051094891,
+         "median_pct_of_balance": 1.1223317192880924,
+         "mean_pct_of_balance": -7.384877127446244,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 12,
+          "breakeven stop": 38,
+          "stop": 67,
+          "trailing stop": 16,
+          "time exit": 4
+         }
+        },
+        "4h": {
+         "n": 19,
+         "win_rate": 0.10526315789473684,
+         "median_pct_of_balance": -59.38512310856754,
+         "mean_pct_of_balance": -44.573997973737804,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 9.0,
+         "exits": {
+          "stop": 15,
+          "TP3": 1,
+          "breakeven stop": 1,
+          "time exit": 2
+         }
+        },
+        "12h": {
+         "n": 13,
+         "win_rate": 0.6923076923076923,
+         "median_pct_of_balance": 13.27300927460945,
+         "mean_pct_of_balance": 6.631119449808721,
+         "median_hold_days": 6.354166666666667,
+         "median_leverage": 5.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 1,
+          "stop": 3,
+          "time exit": 2,
+          "TP3": 1
+         }
+        },
+        "1d": {
+         "n": 2,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 38.05555354894774,
+         "mean_pct_of_balance": 38.05555354894774,
+         "median_hold_days": 27.963541666666664,
+         "median_leverage": 3.5,
+         "exits": {
+          "time exit": 1,
+          "breakeven stop": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -40486,6 +43013,96 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.5024154589371981,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 35,
+         "win_rate": 0.6,
+         "median_pct_of_balance": 10.353985930717615,
+         "mean_pct_of_balance": 2.63403570609251,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 12,
+          "breakeven stop": 8,
+          "trailing stop": 11,
+          "time_up": 1,
+          "TP3": 1,
+          "time exit": 2
+         }
+        },
+        "1h": {
+         "n": 116,
+         "win_rate": 0.45689655172413796,
+         "median_pct_of_balance": -24.818198540748625,
+         "mean_pct_of_balance": -6.69840104839491,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 9,
+          "breakeven stop": 26,
+          "stop": 62,
+          "trailing stop": 11,
+          "time_up": 4,
+          "time exit": 4
+         }
+        },
+        "4h": {
+         "n": 15,
+         "win_rate": 0.13333333333333333,
+         "median_pct_of_balance": -24.978075727693433,
+         "mean_pct_of_balance": -19.814771933195424,
+         "median_hold_days": 0.6354166666666666,
+         "median_leverage": 10.0,
+         "exits": {
+          "stop": 13,
+          "TP3": 1,
+          "breakeven stop": 1
+         }
+        },
+        "12h": {
+         "n": 12,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 7.047967911894328,
+         "mean_pct_of_balance": 4.679713071189617,
+         "median_hold_days": 5.661458333333334,
+         "median_leverage": 5.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 1,
+          "stop": 1,
+          "TP3": 1,
+          "time_up": 2,
+          "time exit": 1
+         }
+        },
+        "1d": {
+         "n": 23,
+         "win_rate": 0.6956521739130435,
+         "median_pct_of_balance": 8.396322725797132,
+         "mean_pct_of_balance": 6.438310872500382,
+         "median_hold_days": 15.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "time_up": 12,
+          "trailing stop": 2,
+          "stop": 5,
+          "TP3": 1,
+          "time exit": 1,
+          "breakeven stop": 2
+         }
+        },
+        "3d": {
+         "n": 6,
+         "win_rate": 0.5,
+         "median_pct_of_balance": 0.5197030467543431,
+         "mean_pct_of_balance": 2.517862188436858,
+         "median_hold_days": 11.015625,
+         "median_leverage": 1.5,
+         "exits": {
+          "time_up": 6
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -40826,6 +43443,79 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.5378486055776892,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 78,
+         "win_rate": 0.6410256410256411,
+         "median_pct_of_balance": 11.354344744339528,
+         "mean_pct_of_balance": 6.582652447679299,
+         "median_hold_days": 0.328125,
+         "median_leverage": 23.0,
+         "exits": {
+          "breakeven stop": 15,
+          "trailing stop": 26,
+          "TP3": 9,
+          "stop": 25,
+          "time exit": 3
+         }
+        },
+        "1h": {
+         "n": 139,
+         "win_rate": 0.5179856115107914,
+         "median_pct_of_balance": 1.1223317192880933,
+         "mean_pct_of_balance": -4.395967472678597,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 13,
+          "breakeven stop": 39,
+          "stop": 67,
+          "trailing stop": 16,
+          "time exit": 4
+         }
+        },
+        "4h": {
+         "n": 19,
+         "win_rate": 0.10526315789473684,
+         "median_pct_of_balance": -25.033130739077798,
+         "mean_pct_of_balance": -18.91645070234973,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 9.0,
+         "exits": {
+          "stop": 15,
+          "TP3": 1,
+          "breakeven stop": 1,
+          "time exit": 2
+         }
+        },
+        "12h": {
+         "n": 13,
+         "win_rate": 0.6923076923076923,
+         "median_pct_of_balance": 5.956001138481849,
+         "mean_pct_of_balance": 2.77959765463999,
+         "median_hold_days": 6.354166666666667,
+         "median_leverage": 5.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 1,
+          "stop": 3,
+          "time exit": 2,
+          "TP3": 1
+         }
+        },
+        "1d": {
+         "n": 2,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 15.540296208397104,
+         "mean_pct_of_balance": 15.540296208397104,
+         "median_hold_days": 27.963541666666664,
+         "median_leverage": 3.5,
+         "exits": {
+          "time exit": 1,
+          "breakeven stop": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -41166,6 +43856,96 @@
         "ended_above_100_pct": 14.285714285714285
        },
        "win_rate_trades": 0.5024154589371981,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 35,
+         "win_rate": 0.6,
+         "median_pct_of_balance": 14.495580303004662,
+         "mean_pct_of_balance": 3.740393757271667,
+         "median_hold_days": 0.4479166666666667,
+         "median_leverage": 25.0,
+         "exits": {
+          "stop": 12,
+          "breakeven stop": 8,
+          "trailing stop": 11,
+          "time_up": 1,
+          "TP3": 1,
+          "time exit": 2
+         }
+        },
+        "1h": {
+         "n": 116,
+         "win_rate": 0.45689655172413796,
+         "median_pct_of_balance": -32.000686863980945,
+         "mean_pct_of_balance": -9.05061452957899,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 9,
+          "breakeven stop": 26,
+          "stop": 62,
+          "trailing stop": 11,
+          "time_up": 4,
+          "time exit": 4
+         }
+        },
+        "4h": {
+         "n": 15,
+         "win_rate": 0.13333333333333333,
+         "median_pct_of_balance": -34.9693060187708,
+         "mean_pct_of_balance": -27.7406807064736,
+         "median_hold_days": 0.6354166666666666,
+         "median_leverage": 10.0,
+         "exits": {
+          "stop": 13,
+          "TP3": 1,
+          "breakeven stop": 1
+         }
+        },
+        "12h": {
+         "n": 12,
+         "win_rate": 0.75,
+         "median_pct_of_balance": 9.867155076652057,
+         "mean_pct_of_balance": 6.551598299665467,
+         "median_hold_days": 5.661458333333334,
+         "median_leverage": 5.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 1,
+          "stop": 1,
+          "TP3": 1,
+          "time_up": 2,
+          "time exit": 1
+         }
+        },
+        "1d": {
+         "n": 23,
+         "win_rate": 0.6956521739130435,
+         "median_pct_of_balance": 11.754851816115988,
+         "mean_pct_of_balance": 9.013635221500541,
+         "median_hold_days": 15.0,
+         "median_leverage": 3.0,
+         "exits": {
+          "time_up": 12,
+          "trailing stop": 2,
+          "stop": 5,
+          "TP3": 1,
+          "time exit": 1,
+          "breakeven stop": 2
+         }
+        },
+        "3d": {
+         "n": 6,
+         "win_rate": 0.5,
+         "median_pct_of_balance": 0.7275842654560802,
+         "mean_pct_of_balance": 3.5250070638116013,
+         "median_hold_days": 11.015625,
+         "median_leverage": 1.5,
+         "exits": {
+          "time_up": 6
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -41506,6 +44286,79 @@
         "ended_above_100_pct": 28.57142857142857
        },
        "win_rate_trades": 0.5378486055776892,
+       "trades_by_timeframe": {
+        "15m": {
+         "n": 78,
+         "win_rate": 0.6410256410256411,
+         "median_pct_of_balance": 15.89608264207534,
+         "mean_pct_of_balance": 9.286119373190685,
+         "median_hold_days": 0.328125,
+         "median_leverage": 23.0,
+         "exits": {
+          "breakeven stop": 15,
+          "trailing stop": 26,
+          "TP3": 9,
+          "stop": 25,
+          "time exit": 3
+         }
+        },
+        "1h": {
+         "n": 139,
+         "win_rate": 0.5179856115107914,
+         "median_pct_of_balance": 1.1223317192880933,
+         "mean_pct_of_balance": -5.751677070877469,
+         "median_hold_days": 0.7604166666666666,
+         "median_leverage": 19.0,
+         "exits": {
+          "TP3": 13,
+          "breakeven stop": 39,
+          "stop": 67,
+          "trailing stop": 16,
+          "time exit": 4
+         }
+        },
+        "4h": {
+         "n": 19,
+         "win_rate": 0.10526315789473684,
+         "median_pct_of_balance": -35.04638303470892,
+         "mean_pct_of_balance": -26.483030983289627,
+         "median_hold_days": 2.3854166666666665,
+         "median_leverage": 9.0,
+         "exits": {
+          "stop": 15,
+          "TP3": 1,
+          "breakeven stop": 1,
+          "time exit": 2
+         }
+        },
+        "12h": {
+         "n": 13,
+         "win_rate": 0.6923076923076923,
+         "median_pct_of_balance": 8.338401593874588,
+         "mean_pct_of_balance": 3.891436716495986,
+         "median_hold_days": 6.354166666666667,
+         "median_leverage": 5.0,
+         "exits": {
+          "breakeven stop": 6,
+          "trailing stop": 1,
+          "stop": 3,
+          "time exit": 2,
+          "TP3": 1
+         }
+        },
+        "1d": {
+         "n": 2,
+         "win_rate": 1.0,
+         "median_pct_of_balance": 21.756414691755953,
+         "mean_pct_of_balance": 21.756414691755953,
+         "median_hold_days": 27.963541666666664,
+         "median_leverage": 3.5,
+         "exits": {
+          "time exit": 1,
+          "breakeven stop": 1
+         }
+        }
+       },
        "windows_detail": [
         {
          "start": 1771632000000,
@@ -43328,7 +46181,7 @@
    "skip_horizon": true
   }
  },
- "seconds": 91.5,
+ "seconds": 90.7,
  "method": "Read-only research (3 Nov 2026, owner question). Two call sources:\n\n1. REPLAY - the models' walk-forward OUT-OF-SAMPLE calls of every coin / public timeframe (15m, 1h, 4h, 12h, 1d, 3d)\n   turned into calls by the live decision rules (series_policy.decide: live grading, bigger-trend, plan and cost rules;\n   reference for the directional policy / confidence = the first 70 % of the series), the live entry rule per timeframe\n   (chosen on the first 70 % as the nightly job does) and the pooled trade filter (trained on the first 70 %, used only\n   where its own exam passes), the news guard, then the RECORD's publication rules: the timeframe's public grades\n   (A only on 15m / 1h / 1d / 3d, A + B on 4h / 12h), one open call per coin / timeframe followed with the live time\n   limit (tracking.horizon_for) plus the re-entry cooldown. Hesper only sees the published grade-A calls.\n   Reported for all out-of-sample history (\"full\") and for calls of the untouched last 30 % of each series only (\"test\").\n2. RECORD - the real recorded grade-A calls in `signals` (public timeframes), with their own levels and time limits.\n\nEach 30-day window (one every 7 days) is one run starting at $100 that mirrors services/hesper.py: one trade at a time;\nwhen flat, the best call published in the last FRESH_MS (highest confidence, tie -> newer) that is still OPEN in the\nrecord and whose plan still makes sense at the current price; market entry at the next 15m candle (BUY ON PULLBACK above\nits entry: a limit at the call's entry for PENDING_BARS candles of its timeframe); isolated margin, leverage <= 25 lowered\nby futures.safe_leverage; the bots' futures fees, slippage, 8-hourly funding at the default rate and liquidation check\n(before the stop, unless the stop protects); exits = the bots' rules (50 / 25 / 25, break-even after TP1, TP1 after TP2,\nthe call's time limit from opening, reversal on an opposite grade-A call except 15m). A run ends SUCCESS when the realised\nbalance reaches $1,000, FAIL on a liquidation or a balance below $1, TIME UP at day 30 (an open trade is closed at market).\n\nVariants: A = all-in (Hesper today); B25 / B35 = position sized so a stop loses 25 % / 35 % of the balance (never more\nthan all-in; leverage the same safe leverage, so the margin is smaller); each with and without \"skip calls whose time\nlimit would run past day 30\".",
  "approximations": [
   "grading = series_policy.decide replay of the live logic (per-member model agreement treated as passed, no order book); directional confidence measured against the first 70 % of each series",
@@ -43341,6 +46194,6 @@
   "record source: no reversal exits (the past analyses are not stored), admin changes not replayed",
   "'full' is partly in-sample for the grading reference, entry rule and filter (chosen on the first 70 %); 'test' is only calls of the untouched last 30 % of each series"
  ],
- "commit": "c7672effadaff120cb314f8ced56bb32c875c08a",
+ "commit": "86ea424ab1a378ef7f651996c79c8598ff568365",
  "cache_key": "engine-state-41495205955-1-2"
 }
