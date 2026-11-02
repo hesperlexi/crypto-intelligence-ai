@@ -413,14 +413,34 @@ def simulate_scope(calls: list[dict[str, Any]], market: Market, flips, data_end:
     out: dict[str, Any] = {"windows": len(starts), "first_window": starts[0] if starts else None,
                            "last_window": starts[-1] if starts else None, "variants": {}}
     for name, v in variants.items():
-        runs = [run_window(calls, market, s, v, flips) for s in starts]
+        runs = [run_window(calls, market, s, v, flips, trade_log=True) for s in starts]
         no = runs[::5]
         trades = sum(r["trades"] for r in runs)
         out["variants"][name] = {"overlapping": summarize(runs), "non_overlapping": summarize(no),
                                  "win_rate_trades": (sum(r["wins"] for r in runs) / trades) if trades else None,
+                                 "trades_by_timeframe": trade_table([t for r in runs for t in r.pop("trade_list")]),
                                  "windows_detail": [{"start": r["start"], "result": r["result"], "reason": r["reason"],
                                                      "end": round(r["end_balance"], 2), "peak": round(r["peak"], 2),
                                                      "days": round(r["days"], 1), "trades": r["trades"]} for r in runs]}
+    return out
+
+
+def trade_table(trades: list[dict[str, Any]]) -> dict[str, Any]:
+    """Hesper's trades in all windows (a call can appear in several overlapping windows): per timeframe count, win
+    rate, median / mean result in % of the balance, median hold in days, exits."""
+    out = {}
+    for tf in TFS:
+        ts_ = [t for t in trades if t["tf"] == tf]
+        if not ts_:
+            continue
+        ret = np.array([100 * t["pnl"] / max(t["balance_after"] - t["pnl"], 1e-9) for t in ts_])
+        hold = np.array([(t["closed_at"] - t["opened_at"]) / DAY for t in ts_])
+        ex: dict[str, int] = {}
+        for t in ts_:
+            ex[t["reason"]] = ex.get(t["reason"], 0) + 1
+        out[tf] = {"n": len(ts_), "win_rate": float(np.mean(ret > 0)), "median_pct_of_balance": float(np.median(ret)),
+                   "mean_pct_of_balance": float(np.mean(ret)), "median_hold_days": float(np.median(hold)),
+                   "median_leverage": float(np.median([t["lev"] for t in ts_])), "exits": ex}
     return out
 
 
@@ -628,6 +648,16 @@ def record_source(rt, sims: bool = True) -> dict[str, Any]:
     calls = record_calls(db)
     since = db.get_setting("record_since", None)
     out: dict[str, Any] = {"grade_a_calls": len(calls), "record_since": since}
+    try:
+        from .db import loads
+        diag: dict[str, int] = {}
+        for r in db.query("SELECT timeframe, decision, payload, status FROM signals WHERE side != 0"):
+            p = loads(r.get("payload"), {}) or {}
+            k = f"{r['timeframe']}|{r['decision']}|{p.get('grade')}|{r['status']}"
+            diag[k] = diag.get(k, 0) + 1
+        out["signals_by_tf_decision_grade_status"] = diag
+    except Exception as exc:
+        out["signals_diag_error"] = f"{type(exc).__name__}: {exc}"[:200]
     if not calls:
         return out
     m = Market()
