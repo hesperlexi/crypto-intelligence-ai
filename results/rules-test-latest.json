@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-02T15:33:56.803Z",
-  "sha": "1ea0355f17a5a01add5fddbdab5cda8abd1f79f9",
-  "total": 101,
-  "passed": 101,
+  "at": "2026-11-02T19:21:59.118Z",
+  "sha": "1b62d7b370ca5e07b0d3b1382f33ff4e53a8a7df",
+  "total": 105,
+  "passed": 105,
   "failed": 0,
   "results": [
     {
@@ -407,6 +407,22 @@
     },
     {
       "name": "config/scalping: admin sets visibility; members and bad values denied",
+      "ok": true
+    },
+    {
+      "name": "hesper: admin reads views/hesper",
+      "ok": true
+    },
+    {
+      "name": "hesper: active member denied (other views still readable)",
+      "ok": true
+    },
+    {
+      "name": "hesper: pending, expired and signed-out denied",
+      "ok": true
+    },
+    {
+      "name": "hesper: nobody writes views/hesper from the website",
       "ok": true
     }
   ]
