@@ -164,6 +164,9 @@ def signals(rt: Runtime) -> dict[str, Any]:
     for r in rows:
         r.update({k: v for k, v in contract_fields(r, r.get("payload")).items() if k not in ("ai",)})
         r.pop("atr", None)
+        # the Signal log only shows the grade and the reason: the full payload made this document ~360 KB (slow on phones)
+        p = r.get("payload") if isinstance(r.get("payload"), dict) else {}
+        r["payload"] = {k: p[k] for k in ("grade", "decision_reason") if p.get(k) is not None}
     return {"signals": rows, "summary": tracking.signal_summary(rt.db)}
 
 

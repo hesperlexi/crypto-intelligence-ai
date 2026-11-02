@@ -1,6 +1,17 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { bsym, futures24h, listedPairs, tickers as restTickers, toTicker } from "./binance";
+
+/** Phones and slow devices: prices once a second per coin instead of every trade (saves CPU, battery and data).
+ *  Set localStorage "cia-live-full" = "1" to force full speed. */
+const LITE: boolean = (() => {
+  try {
+    if (localStorage.getItem("cia-live-full") === "1") return false;
+    const nav = navigator as any;
+    return !!(window.matchMedia?.("(max-width: 820px)").matches || (nav.hardwareConcurrency && nav.hardwareConcurrency <= 4)
+      || nav.connection?.saveData);
+  } catch { return false; }
+})();
 import { Race, raceSocket } from "./ws";
 import { db } from "./firebase";
 import { localNotify } from "./push";
@@ -131,7 +142,9 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       window.clearTimeout(timer);
       race?.close();
       // @ticker: 24h change / volume / bid-ask (once a second); @aggTrade: every trade, so prices move in real time
-      const streams = syms.flatMap((s) => [`${bsym(s).toLowerCase()}@ticker`, `${bsym(s).toLowerCase()}@aggTrade`]).join("/");
+      // phones / slow devices (LITE): no per-trade stream - with 20 coins it was hundreds of messages a second
+      const streams = syms.flatMap((s) => LITE ? [`${bsym(s).toLowerCase()}@ticker`]
+        : [`${bsym(s).toLowerCase()}@ticker`, `${bsym(s).toLowerCase()}@aggTrade`]).join("/");
       const bySym: Record<string, string> = Object.fromEntries(syms.map((s) => [bsym(s), s]));
       race = raceSocket(WS_HOSTS.map((h) => `${h}/stream?streams=${streams}`), (m) => {
         lastFrame = Date.now(); attempt = 0; setM("ws");
@@ -227,11 +240,13 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       race?.close();
       if (closed || !syms.length) return;
       const bySym: Record<string, string> = Object.fromEntries(syms.map((s) => [bsym(s), s]));
-      const streams = syms.map((s) => `${bsym(s).toLowerCase()}@aggTrade`).join("/");
+      // LITE: one price per coin per second (@miniTicker) instead of every trade
+      const streams = syms.map((s) => `${bsym(s).toLowerCase()}${LITE ? "@miniTicker" : "@aggTrade"}`).join("/");
       race = raceSocket([`${FUT_WS}/stream?streams=${streams}`], (m) => {
         lastFrame = Date.now(); attempt = 0;
         const d = m.data, sym = d && bySym[d.s];
         if (sym && d.e === "aggTrade" && opens[sym]) put(sym, +d.p, d.T);   // only once its 24h stats are known
+        else if (sym && d.e === "24hrMiniTicker" && opens[sym]) put(sym, +d.c, d.E);
       }, () => {
         if (closed) return;
         attempt++;
