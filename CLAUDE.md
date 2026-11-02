@@ -294,6 +294,13 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   (`Rich embedded`, view only: no Share, no switch, line "Demo challenge with virtual money. Not a trading plan.").
   Shown everywhere (admin menu, page, share image) as **"Hesper Challenge"** (owner, 2 Nov 2026); "Road to Rich" is only the
   internal name in code comments. Rules tests in `tests/rules`.
+- **30-day odds study (3 Nov 2026):** `python -m app.research hesper` (`research_hesper.py`, workflow `research-hesper.yml`
+  on push to `hesper-rich`, ~2 min, → `research-results/results/hesper-*.json`). Out-of-sample grade-A calls (live grading,
+  entry rule, filter2, publication rules, time limits) + recorded grade-A calls through 30-day windows (every 7 days) that
+  mirror `services/hesper.py`; variants all-in / 25 % / 35 % fixed risk, ± skip calls whose time limit passes day 30.
+  Run `hesper-20261102T201800Z.json`: 0 successes on the watchlist in every variant/scope (~19 grade-A calls/month,
+  most windows TIME UP; all-in median end ~$70 since Feb 2026); the live record had 0 grade-A calls. Tests
+  `tests/test_research_hesper.py`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
