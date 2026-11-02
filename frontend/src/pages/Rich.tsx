@@ -168,14 +168,14 @@ function Share({ v, balance }: { v: any; balance: number | null }) {
       <button type="button" className="btn btn-sm" onClick={() => void show()}>Share</button>
       {open && createPortal(
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setOpen(false)}>
-          <div ref={ref} role="dialog" aria-modal="true" aria-label="Road to Rich share image" onClick={(e) => e.stopPropagation()}
+          <div ref={ref} role="dialog" aria-modal="true" aria-label="Hesper Challenge share image" onClick={(e) => e.stopPropagation()}
             className="panel popover animate-in w-full max-w-lg rounded-b-none p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:rounded-2xl">
-            <canvas ref={cv} data-hesper-card className="aspect-square w-full rounded-xl border border-glass/10" aria-label="Road to Rich image" />
+            <canvas ref={cv} data-hesper-card className="aspect-square w-full rounded-xl border border-glass/10" aria-label="Hesper Challenge image" />
             <p className="mt-2 text-[11px] text-mute">Nothing is posted automatically.</p>
             <div className="mt-3 flex justify-end gap-2">
               <button type="button" className="btn btn-sm" onClick={() => setOpen(false)}>Close</button>
               <button type="button" className="btn btn-sm btn-primary" disabled={busy}
-                onClick={() => cv.current && download(cv.current, `road-to-rich-run-${v.current?.run ?? 0}.png`)}>Download PNG</button>
+                onClick={() => cv.current && download(cv.current, `hesper-challenge-run-${v.current?.run ?? 0}.png`)}>Download PNG</button>
             </div>
           </div>
         </div>, document.body)}
@@ -222,7 +222,7 @@ function Visibility() {
   );
 }
 
-/** Admin: "Road to Rich" page with the visibility switch and Share. Members (Results tab, when the admin allows it):
+/** Admin: "Hesper Challenge" page with the visibility switch and Share. Members (Results tab, when the admin allows it):
  *  the same figures view-only as "Hesper Challenge". */
 export default function Rich({ embedded = false }: { embedded?: boolean }) {
   const admin = useIsAdmin();
@@ -242,8 +242,8 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
       {admin && !embedded ? (
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="page-title"><span className="text-accent">Road to Rich</span></h1>
-            <p className="text-sm text-mute">Hesper · {usd(v?.start ?? 100, 0)} → {usd(v?.goal ?? 1000, 0)} · all-in · virtual money</p>
+            <h1 className="page-title"><span className="text-accent">Hesper Challenge</span></h1>
+            <p className="text-sm text-mute">{usd(v?.start ?? 100, 0)} → {usd(v?.goal ?? 1000, 0)} · all-in · virtual money</p>
           </div>
           <div className="flex flex-wrap items-center gap-3"><Visibility />{v?.current && <Share v={v} balance={live.balance} />}</div>
         </div>

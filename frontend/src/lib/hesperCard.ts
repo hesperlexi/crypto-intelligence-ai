@@ -18,7 +18,7 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
   const cur = v.current ?? {};
   const sc = v.score ?? {};
   const goal = v.goal ?? 1000, start = v.start ?? 100;
-  let y = await header(g, `Road to Rich · Hesper · run #${cur.run ?? "—"}`) + 40;
+  let y = await header(g, `Hesper Challenge · run #${cur.run ?? "—"}`) + 40;
 
   // hero: the run's balance and the way to $1,000
   const bal = isNum(balance) ? balance : cur.balance;

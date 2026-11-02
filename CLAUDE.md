@@ -292,7 +292,8 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   ('admin' default when missing | 'members'; rules like `config/scalping`). When 'members', active members (approved,
   not expired; never pending/expired/signed-out) read `views/hesper` and get a Results tab "Hesper Challenge"
   (`Rich embedded`, view only: no Share, no switch, line "Demo challenge with virtual money. Not a trading plan.").
-  The name "Road to Rich" is admin-only. Rules tests in `tests/rules`.
+  Shown everywhere (admin menu, page, share image) as **"Hesper Challenge"** (owner, 2 Nov 2026); "Road to Rich" is only the
+  internal name in code comments. Rules tests in `tests/rules`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track

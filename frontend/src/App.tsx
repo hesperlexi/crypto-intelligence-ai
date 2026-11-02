@@ -77,11 +77,11 @@ const NAV = [
   ["/settings", "Settings"],
 ] as const;
 // owner-only tools: marketing material and system health
-const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Road to Rich"]] as const;
+const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Hesper Challenge"]] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu)
 const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
 
-/** Owner tools in one compact menu (Weekly report, Achievements, Health, Road to Rich, Users). */
+/** Owner tools in one compact menu (Weekly report, Achievements, Health, Hesper Challenge, Users). */
 function AdminMenu({ items, pending }: { items: (readonly [string, string])[]; pending: number }) {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
