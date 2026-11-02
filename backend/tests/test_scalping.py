@@ -290,5 +290,5 @@ def test_analysis_hook_logs_demo_calls_without_changing_the_analysis(monkeypatch
     from app.services import analysis
     src = inspect.getsource(analysis.analyze)
     i_rec, i_scalp = src.index("tracking.log_signal(rt.db, out)"), src.index("tracking.log_scalp(rt.db, out)")
-    assert i_rec < i_scalp and "if demo and timeframe in tracking.SCALP_TFS" in src
+    assert i_rec < i_scalp and "if timeframe in tracking.SCALP_TFS and (demo or" in src
     assert "except Exception" in src[i_scalp:i_scalp + 300]

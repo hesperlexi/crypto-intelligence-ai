@@ -176,7 +176,7 @@ def _policy_bot(b: dict[str, Any]) -> dict[str, Any]:
     from .services.analysis import A_ONLY_TFS
     from .services.bots import _HOLD
     tf = b.get("timeframe")
-    if b.get("mode") == "decision" and tf in ("1h", "4h"):
+    if b.get("mode") == "decision" and tf in ("15m", "1h", "4h"):
         b = {**b, "max_hold_bars": _HOLD[tf]}
     if b.get("mode") == "decision" and tf in A_ONLY_TFS:
         b = {**b, "grades": "A", "name": str(b.get("name") or "").replace("grades A+B", "grade A")}
@@ -468,6 +468,22 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             rt.db.set_setting("scalping_since", now_ms())
         rt.db.set_setting("scalping_v1", True)
         notes["scalping_since"] = rt.db.get_setting("scalping_since", None)
+    # v2.11 (owner decision, 2 Nov 2026): 15m goes public, grade A only, counted in the record like 1h / 4h. The 15m demo
+    # bot becomes the normal 15m futures signal bot (grade A, standard 50/25/25 exits, 250 candles, fresh book); the
+    # record counts 15m from now (record_since_tf); the scalping log keeps logging the same 15m grade-A calls.
+    if not rt.db.get_setting("public_15m_v211", False):
+        from .services.analysis import DEMO_ONLY_TFS
+        from .services.bots import DEMO_15M, _sig_bot
+        if "15m" not in DEMO_ONLY_TFS:
+            doc = sink.get("config/bots") or {}
+            if isinstance(doc.get("bots"), list):
+                keep = [b for b in doc["bots"] if b.get("id") != DEMO_15M["id"]]
+                if not any(b.get("timeframe") == "15m" and not b.get("demo_only") for b in keep):
+                    keep.append({**_policy_bot(_sig_bot("15m", True)), "reset_token": "v211"})
+                sink.set("config/bots", {**doc, "bots": keep, "updated_at": now_ms()})
+                notes["public_15m_v211"] = [b["id"] for b in keep if b.get("timeframe") == "15m"]
+            rt.db.set_setting("record_since_tf", {**(rt.db.get_setting("record_since_tf", {}) or {}), "15m": now_ms()})
+        rt.db.set_setting("public_15m_v211", True)
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())

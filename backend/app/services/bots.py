@@ -50,7 +50,7 @@ MAX_EQUITY_POINTS = 3000
 _FUT = {"market": "futures", "safe_leverage": True}
 # v2.3 fresh start: 5 spot + 5 futures bots, each trading exactly what the Signals page shows (grades A and B) on one
 # timeframe. The futures 1H / 4H bots keep the scorecard ids. reset_token "v23" restarts every bot with a clean book.
-_HOLD = {"15m": 48, "1h": 200, "4h": 100, "12h": 30, "1d": 30}     # v2.8: 1h 200, 4h 100 (as the record)
+_HOLD = {"15m": 250, "1h": 200, "4h": 100, "12h": 30, "1d": 30}     # v2.11: 15m 250 (as the record)     # v2.8: 1h 200, 4h 100 (as the record)
 
 
 def demo_view(a: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:

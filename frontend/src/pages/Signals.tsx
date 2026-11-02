@@ -12,10 +12,10 @@ import { CALL_STATUS, fillLabel, livePnl, managedLabel, riskLevel, RoiFigure } f
 import { AdjustHistory, adjustedPlan } from "../components/SignalAdjust";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
-// Timeframe policy (v2.10): mirrors backend/app/services/analysis.py DEMO_ONLY_TFS ("15m,1d,3d") and PAUSED_TFS ("").
+// Timeframe policy (v2.10): mirrors backend/app/services/analysis.py DEMO_ONLY_TFS ("1d,3d"); 15m grade A only and PAUSED_TFS ("").
 // The engine does not publish these lists, so they are kept here; change both together.
 const TF_NOTES: Partial<Record<string, readonly [string, string]>> = {
-  "15m": ["demo only", "15m calls go to the demo bots only while they are tested; no public 15m trades"],
+  "15m": ["grade A", "15m: grade A calls only"],
   "1d": ["demo only", "1D calls go to the demo bots only while they are tested; no public 1D trades"],
   "3d": ["demo only", "3D calls go to the demo bots only while they are tested; no public 3D trades"],
 };

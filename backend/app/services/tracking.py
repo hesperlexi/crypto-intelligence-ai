@@ -536,6 +536,8 @@ def log_scalp(db: Database, a: dict[str, Any], now: int | None = None, extra: di
     services/scalp_backfill.py, which judges them as they stood at the call's time)."""
     res: dict[str, Any] = {"status": None, "reason": None, "id": None}
     demo = a.get("demo") if isinstance(a.get("demo"), dict) else None
+    if demo is None and a.get("decision") in TRADE_DECISIONS and a.get("grade"):
+        demo = {"decision": a["decision"], "grade": a["grade"]}    # v2.11: 15m is public (grade A) - same call
     setup = a.get("setup") or {}
     if (not demo or a.get("timeframe") not in SCALP_TFS or demo.get("grade") not in SCALP_GRADES
             or demo.get("decision") not in TRADE_DECISIONS or not setup.get("valid") or a.get("stale")

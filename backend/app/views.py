@@ -546,7 +546,7 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
 
 # ---- admin scalping scorecard (15m grade-A demo calls; never part of the record) -------------------------------
 
-SCALP_BOT_ID = "futures-demo-a-15m"
+SCALP_BOT_IDS = ("futures-signal-ab-15m", "futures-demo-a-15m")      # v2.11: the public 15m grade-A bot, else the old demo bot
 SCALP_RECENT = 60          # recent trades listed in the view (the document stays far below Firestore's 1 MB)
 SCALP_CURVE = 500
 
@@ -602,9 +602,11 @@ def scalping_stats(closed: list[dict[str, Any]]) -> dict[str, Any]:
 
 def _scalp_bot(rt: Runtime, bot_report: dict[str, Any] | None) -> dict[str, Any] | None:
     """The 15m demo bot's book from the bots report (virtual money; its fills include fees and funding)."""
-    for bt in (bot_report or {}).get("bots", []):
+    bots = sorted((bot_report or {}).get("bots", []),
+                  key=lambda b: SCALP_BOT_IDS.index((b.get("config") or {}).get("id")) if (b.get("config") or {}).get("id") in SCALP_BOT_IDS else 99)
+    for bt in bots:
         cfg = bt.get("config") or {}
-        if cfg.get("id") != SCALP_BOT_ID:
+        if cfg.get("id") not in SCALP_BOT_IDS:
             continue
         st, state = bt.get("stats") or {}, bt.get("state") or {}
         trades = []

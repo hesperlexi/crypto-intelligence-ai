@@ -243,6 +243,12 @@ once (flag `demo_1d3d_v210`). Calls published before stay in the record until th
   (state, progress, note), `split` {rebuilt, live}, `counts`; UI "rebuilt" tags + note. Entry rule = the current nightly
   `entry_policy1|15m` (only the latest is stored). Tests `tests/test_scalp_backfill.py`.
 
+## v2.11 public 15m, grade A (owner decision 2 Nov 2026)
+`analysis.A_ONLY_TFS` "15m,1h", `DEMO_ONLY_TFS` "1d,3d": 15m grade-A calls are public and counted in the record like 1h/4h
+(time limit 250, `record_since_tf['15m']` restarted). One-time flag `public_15m_v211`: the 15m demo bot is replaced by
+`futures-signal-ab-15m` (grade A, standard 50/25/25 exits, 250 candles, fresh book). The scalping log keeps logging the
+same 15m grade-A calls (`tracking.log_scalp` accepts a public call); the scalping bot block reads `views.SCALP_BOT_IDS`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

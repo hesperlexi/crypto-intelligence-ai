@@ -22,7 +22,9 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
     }
 h = fs.document("views/health").get().to_dict()
 hj = json.loads(h["json"]) if h else {}
-out["health"] = {"status": hj.get("status"), "engine": {k: (hj.get("engine") or {}).get(k) for k in ("failed_steps", "last_tick_seconds")},
+out["health"] = {"status": hj.get("status"), "engine": {k: v for k, v in (hj.get("engine") or {}).items()
+                                                         if not isinstance(v, (list, dict)) or k in ("failed_steps",)},
+                 "quota": {k: v for k, v in hj.items() if any(w in k for w in ("firestore", "reads", "writes", "lean", "budget"))},
                  "models_15m": [{"symbol": m["symbol"], "state": m["state"], "message": (m.get("message") or "")[:120]} for m in hj.get("models", []) if m["timeframe"] == "15m"][:30],
                  "series_15m": [{"symbol": s["symbol"], "candles": s["candles"], "status": s["status"]} for s in hj.get("series", []) if s["timeframe"] == "15m"]}
 ages = {}

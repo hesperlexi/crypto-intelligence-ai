@@ -6,7 +6,7 @@ from app.services.bots import DEMO_15M, demo_view
 
 
 def test_defaults():
-    assert analysis.PAUSED_TFS == () and analysis.A_ONLY_TFS == ("1h",) and analysis.DEMO_ONLY_TFS == ("15m", "1d", "3d")
+    assert analysis.PAUSED_TFS == () and analysis.A_ONLY_TFS == ("15m", "1h") and analysis.DEMO_ONLY_TFS == ("1d", "3d")
     assert (T.horizon_for("1h"), T.horizon_for("4h"), T.horizon_for("12h"), T.horizon_for("15m")) == (200, 100, 30, 250)
 
 
@@ -44,15 +44,19 @@ def test_migration_runs_once(tmp_path):
     sink.set("config/bots", {"bots": bots, "defaults_added": [b["id"] for b in bots] + [d["id"] for d in worker.DEFAULT_BOTS]})
     notes = worker.sync_config(rt, sink)
     out = {b["id"]: b for b in sink.get("config/bots")["bots"]}
-    assert set(out) == {"futures-signal-ab-1h", "futures-signal-ab-4h", DEMO_15M["id"], "futures-demo-ab-1d", "futures-demo-ab-3d"}
+    assert set(out) == {"futures-signal-ab-1h", "futures-signal-ab-4h", "futures-signal-ab-15m", "futures-demo-ab-1d", "futures-demo-ab-3d"}
     assert out["futures-signal-ab-1h"]["grades"] == "A" and out["futures-signal-ab-1h"]["max_hold_bars"] == 200
     assert out["futures-signal-ab-1h"]["name"].endswith("grade A")
     assert out["futures-signal-ab-4h"]["grades"] == "AB" and out["futures-signal-ab-4h"]["max_hold_bars"] == 100
-    assert notes["tf_policy_v28"]["added"] == [DEMO_15M["id"]]
-    del out[DEMO_15M["id"]]
+    # v2.11: 15m is public grade A; the public 15m futures bot is added once (grade A, 250 candles, standard exits)
+    b15 = out["futures-signal-ab-15m"]
+    assert b15["grades"] == "A" and b15["max_hold_bars"] == 250 and not b15.get("tp1_only") and not b15.get("demo_only")
+    assert DEMO_15M["id"] not in out and notes["public_15m_v211"] == ["futures-signal-ab-15m"]
+    assert rt.db.get_setting("record_since_tf", {}).get("15m")
+    del out["futures-signal-ab-15m"]
     sink.set("config/bots", {**sink.get("config/bots"), "bots": list(out.values())})
-    worker.sync_config(rt, sink)                                   # once only: removing the demo bot sticks
-    assert DEMO_15M["id"] not in {b["id"] for b in sink.get("config/bots")["bots"]}
+    worker.sync_config(rt, sink)                                   # once only: removing the bot sticks
+    assert "futures-signal-ab-15m" not in {b["id"] for b in sink.get("config/bots")["bots"]}
 
 
 def test_drop_inline_proofs_keeps_pending_ones(tmp_path):

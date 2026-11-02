@@ -41,9 +41,9 @@ def _tfs(name: str, default: str) -> tuple[str, ...]:
 
 
 PAUSED_TFS = _tfs("PAUSED_TFS", "")      # v2.10 (1 Nov 2026): 1d / 3d moved to demo-only
-A_ONLY_TFS = _tfs("A_ONLY_TFS", "1h")
+A_ONLY_TFS = _tfs("A_ONLY_TFS", "15m,1h")      # v2.11 (2 Nov 2026): 15m public, grade A only
 # demo-only timeframes: the public decision is NO TRADE ("DEMO BOTS ONLY"); the call the demo bots may take is in `demo`
-DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "15m,1d,3d")
+DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "1d,3d")
 
 # fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
 PRIVATE_FIELDS = ("demo",)
@@ -508,7 +508,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             out["record_status"] = "not_logged"
         if shadow and not stale:
             tracking.log_shadow(rt.db, out, shadow[0], shadow[1])
-        if demo and timeframe in tracking.SCALP_TFS:
+        if timeframe in tracking.SCALP_TFS and (demo or (decision in TRADE_DECISIONS and grade == "A")):
             # admin scalping log: its own table, never the record; `out` is not changed (views stay byte-identical)
             try:
                 tracking.log_scalp(rt.db, out)
