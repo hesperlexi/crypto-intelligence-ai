@@ -24,7 +24,7 @@
  "views": {
   "15m": {
    "rows": 20,
-   "updated": 1793621831278,
+   "updated": 1793622429299,
    "tradable": [
     {
      "symbol": "BTC/USDT",
@@ -116,7 +116,7 @@
   },
   "1h": {
    "rows": 20,
-   "updated": 1793621831280,
+   "updated": 1793622429300,
    "tradable": [
     {
      "symbol": "AVAX/USDT",
@@ -219,7 +219,7 @@
   },
   "4h": {
    "rows": 20,
-   "updated": 1793621831282,
+   "updated": 1793622429302,
    "tradable": [
     {
      "symbol": "NEAR/USDT",
@@ -634,9 +634,24 @@
  "health": {
   "status": "LIVE",
   "engine": {
+   "last_tick_started": 1793622304002,
+   "last_tick_finished": 1793622387979,
+   "last_tick_seconds": 84.0,
+   "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
-   "last_tick_seconds": 86.4
+   "schedule_minutes": 5,
+   "ticks": 1953,
+   "firestore_writes_today": 2890,
+   "firestore_write_budget": 15000,
+   "firestore_reads_today": 1388,
+   "firestore_read_limit": 50000,
+   "firestore_members_active": 5,
+   "firestore_member_reserve": 300,
+   "firestore_engine_budget": 14700,
+   "firestore_free_limit": 20000,
+   "firestore_lean": false
   },
+  "quota": {},
   "models_15m": [
    {
     "symbol": "BTC/USDT",
@@ -846,37 +861,37 @@
   "15m": {
    "n": 20,
    "fresh_12h": 1,
-   "max": 162.7,
+   "max": 162.9,
    "missing": 0
   },
   "1h": {
    "n": 20,
    "fresh_12h": 15,
-   "max": 129.1,
+   "max": 129.3,
    "missing": 0
   },
   "4h": {
    "n": 20,
    "fresh_12h": 15,
-   "max": 129.0,
+   "max": 129.1,
    "missing": 0
   },
   "12h": {
    "n": 20,
    "fresh_12h": 15,
-   "max": 129.0,
+   "max": 129.1,
    "missing": 1
   },
   "1d": {
    "n": 20,
    "fresh_12h": 14,
-   "max": 129.0,
+   "max": 129.1,
    "missing": 2
   },
   "3d": {
    "n": 20,
    "fresh_12h": 13,
-   "max": 128.9,
+   "max": 129.1,
    "missing": 3
   }
  },
@@ -992,14 +1007,14 @@
  },
  "safety": [],
  "release": {
-  "version": "2.1.0",
   "launched_at": 1793386630880,
+  "version": "2.1.0",
   "updated_at": 1793386630880
  },
  "track_record": {
   "record_since": 1793386630880,
   "live_signals": 9,
-  "updated": 1793621831270
+  "updated": 1793622429291
  },
  "record_live": {
   "summary": {
