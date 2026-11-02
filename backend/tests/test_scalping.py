@@ -290,5 +290,10 @@ def test_analysis_hook_logs_demo_calls_without_changing_the_analysis(monkeypatch
     from app.services import analysis
     src = inspect.getsource(analysis.analyze)
     i_rec, i_scalp = src.index("tracking.log_signal(rt.db, out)"), src.index("tracking.log_scalp(rt.db, out)")
-    assert i_rec < i_scalp and "if timeframe in tracking.SCALP_TFS and (demo or" in src
+    assert i_rec < i_scalp and "tracking.SCALPING_ON and timeframe in tracking.SCALP_TFS" in src
     assert "except Exception" in src[i_scalp:i_scalp + 300]
+
+
+def test_scalping_is_off_by_default():
+    """Owner, 2 Nov 2026: 15m grade A is in the main record; the scalping log / view / rebuild stay off unless SCALPING=1."""
+    assert T.SCALPING_ON is False

@@ -249,6 +249,10 @@ once (flag `demo_1d3d_v210`). Calls published before stay in the record until th
 `futures-signal-ab-15m` (grade A, standard 50/25/25 exits, 250 candles, fresh book). The scalping log keeps logging the
 same 15m grade-A calls (`tracking.log_scalp` accepts a public call); the scalping bot block reads `views.SCALP_BOT_IDS`.
 
+**Scalping switched off (owner, 2 Nov 2026, after v2.11):** 15m grade A is in the main record, so the Results "Scalping"
+tab and Health summary are removed and the engine no longer logs / follows / rebuilds scalp calls or publishes
+`views/scalping` (`tracking.SCALPING_ON`, env `SCALPING=1` restores it). `scalp_signals` and its history are kept.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

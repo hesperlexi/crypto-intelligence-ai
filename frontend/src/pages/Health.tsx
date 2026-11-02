@@ -2,7 +2,6 @@ import { Badge, Card, Empty, ErrorBox, Loading, Note, Row, Stat } from "../compo
 import { useApi } from "../lib/api";
 import { ago, DASH, fmtNum, fmtTime, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
-import { ScalpingSummary } from "../components/Scalping";
 
 const toneOf = (s: string) => (["LIVE", "OK", "active", "done"].includes(s) ? "bull" : ["DOWN", "failed"].includes(s) ? "bear" : ["POLLING", "running", "queued"].includes(s) ? "accent" : "warn") as "bull" | "bear" | "accent" | "warn";
 
@@ -78,7 +77,6 @@ export default function Health() {
       {d && (
         <>
           <WritesCard e={d.engine} />
-          <ScalpingSummary />
           <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
             <Card title="Prediction engine">
               <Stat label="Last cycle" value={d.engine?.last_tick_finished ? ago(d.engine.last_tick_finished) : "not run yet"}

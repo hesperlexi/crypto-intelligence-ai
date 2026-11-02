@@ -5,6 +5,8 @@ this installation, in real time, before the outcome existed.
 """
 from __future__ import annotations
 
+import os
+
 import time
 from typing import Any
 
@@ -526,6 +528,11 @@ def scalp_since(db: Database) -> int | None:
     """Start of the scalping log (setting `scalping_since`, set once by worker.sync_config); None = not started."""
     v = db.get_setting("scalping_since", None)
     return int(v) if v else None
+
+
+# owner, 2 Nov 2026: 15m grade A is public and in the main record, so the separate scalping log, its 1-2 Nov rebuild and
+# views/scalping are switched off (table and history kept; env SCALPING=1 turns them back on)
+SCALPING_ON = os.environ.get("SCALPING", "0") == "1"
 
 
 def log_scalp(db: Database, a: dict[str, Any], now: int | None = None, extra: dict[str, Any] | None = None,

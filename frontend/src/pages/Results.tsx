@@ -5,10 +5,8 @@ import Accuracy from "./Accuracy";
 import Bots from "./Bots";
 import History from "./History";
 import { VerifyBox } from "../components/SealProof";
-import Scalping, { useScalpingVisibility } from "../components/Scalping";
-import { useIsAdmin } from "../lib/session";
 
-const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["scalping", "Scalping"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["tools", "Tools"]] as const;
+const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["tools", "Tools"]] as const;
 type Tab = (typeof TABS)[number][0];
 
 const TOOLS = [
@@ -19,10 +17,7 @@ const TOOLS = [
 
 export default function Results() {
   const [params, setParams] = useSearchParams();
-  // Scalping (15m demo scorecard): the admin, and members only while the admin has opened it to them (rules enforce it)
-  const admin = useIsAdmin();
-  const scalpVis = useScalpingVisibility();
-  const tabs = TABS.filter(([k]) => k !== "scalping" || admin || scalpVis === "members");
+  const tabs = TABS;
   const tab = (tabs.some(([k]) => k === params.get("tab")) ? params.get("tab") : "track") as Tab;
   const go = (k: Tab) => { const p = new URLSearchParams(params); p.set("tab", k); setParams(p, { replace: true }); };
   return (
@@ -39,7 +34,6 @@ export default function Results() {
       </div>
       {tab === "track" && <><TrackRecord /><VerifyBox /></>}
       {tab === "bots" && <Bots />}
-      {tab === "scalping" && <Scalping />}
       {tab === "accuracy" && <Accuracy />}
       {tab === "log" && <History />}
       {tab === "tools" && (

@@ -508,7 +508,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             out["record_status"] = "not_logged"
         if shadow and not stale:
             tracking.log_shadow(rt.db, out, shadow[0], shadow[1])
-        if timeframe in tracking.SCALP_TFS and (demo or (decision in TRADE_DECISIONS and grade == "A")):
+        if tracking.SCALPING_ON and timeframe in tracking.SCALP_TFS and (demo or (decision in TRADE_DECISIONS and grade == "A")):
             # admin scalping log: its own table, never the record; `out` is not changed (views stay byte-identical)
             try:
                 tracking.log_scalp(rt.db, out)

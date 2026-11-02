@@ -794,11 +794,12 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("decisions_recent", views.decisions_recent(rt), min_interval_s=300)
     # admin scalping scorecard (one document, hash-deduplicated; the demo bot's equity moves every cycle, so changes
     # wait up to 15 min unless a trade opened / filled / closed - `core`). Never blocks the rest of the publish.
-    try:
-        sc = views.scalping(rt, bot_report)
-        sink.view("scalping", sc, min_interval_s=900, core=views.scalping_core(sc))
-    except Exception as exc:
-        rt.record_error("scalping view", exc)
+    if tracking.SCALPING_ON:                     # off since 2 Nov 2026 (15m is in the main record)
+        try:
+            sc = views.scalping(rt, bot_report)
+            sink.view("scalping", sc, min_interval_s=900, core=views.scalping_core(sc))
+        except Exception as exc:
+            rt.record_error("scalping view", exc)
     for tf in views.FUTURES_TIMEFRAMES:
         if all((s, tf) in analyses for s in rt.symbols()):
             sink.view(f"futures_{tf}", views.futures(rt, tf, analyses))
@@ -933,9 +934,10 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
                                   tracking.update_signal_outcomes(rt, table="shadow_signals")))
     # admin scalping log: its own step, so a problem there never stops the record's outcomes above
-    step("scalp_outcomes", lambda: tracking.update_signal_outcomes(rt, table=tracking.SCALP_TABLE))
+    if tracking.SCALPING_ON:
+        step("scalp_outcomes", lambda: tracking.update_signal_outcomes(rt, table=tracking.SCALP_TABLE))
     # 1-2 Nov scalping rebuild (owner request 2 Nov 2026): a slice per tick until done (flag scalp_backfill_v1)
-    if not rt.db.get_setting(scalp_backfill.DONE_FLAG, False):
+    if tracking.SCALPING_ON and not rt.db.get_setting(scalp_backfill.DONE_FLAG, False):
         detail["scalp_backfill"] = step("scalp_backfill", lambda: scalp_backfill.run(
             rt, budget_s=min(float(os.environ.get("SCALP_BACKFILL_BUDGET_S", 120)), max(0.0, deadline - time.time() - 300)),
             max_analyses=int(os.environ.get("SCALP_BACKFILL_MAX", 150))))

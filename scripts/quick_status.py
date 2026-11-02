@@ -20,6 +20,9 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
         "statuses": sorted({str(r.get("status")) for r in rows}),
         "gold": next(({k: r.get(k) for k in ("status", "reason", "decision", "grade")} for r in rows if str(r.get("symbol", "")).startswith("PAXG")), None),
     }
+# size of every published view (what the website downloads), largest first
+out["view_sizes_kb"] = sorted(((d.id, round(len((d.to_dict() or {}).get("json") or "") / 1024, 1)) for d in fs.collection("views").stream()),
+                              key=lambda x: -x[1])[:25]
 h = fs.document("views/health").get().to_dict()
 hj = json.loads(h["json"]) if h else {}
 out["health"] = {"status": hj.get("status"), "engine": {k: v for k, v in (hj.get("engine") or {}).items()
