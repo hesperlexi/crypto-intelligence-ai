@@ -29,7 +29,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
     setBusy(true);
     try {
       await submitPayment(plan, txid, proof, cfg.currency, method);
-      setMsg({ ok: true, text: "Proof sent. You will get access as soon as the owner checks the payment." });
+      setMsg({ ok: true, text: "Proof sent. Access opens once the payment is checked." });
       setAgain(false); setProof(null); setTxid("");
     } catch (e: any) { setMsg({ ok: false, text: e.message }); }
     setBusy(false);
@@ -48,7 +48,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
           {pay.txid && <><dt className="text-mute">Order / Tx ID</dt><dd className="num truncate text-right">{pay.txid}</dd></>}
           <dt className="text-mute">Sent</dt><dd className="text-right">{fmtDate(pay.submitted_at)}</dd>
         </dl>
-        <p className="mt-3 text-xs text-mute">This screen opens the app by itself once the owner approves. Usually within a few hours.</p>
+        <p className="mt-3 text-xs text-mute">The app opens by itself once approved, usually within hours.</p>
         <button className="btn mt-3 w-full text-xs" onClick={() => setAgain(true)}>Send a different proof</button>
         {msg && <p className={`mt-2 text-xs ${msg.ok ? "text-bull" : "text-bear"}`}>{msg.text}</p>}
       </div>
@@ -81,7 +81,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
       </div>
 
       <div className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-mute">2 · Choose how to pay</div>
-      <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">Pay in <b>USDT only</b>. Both accounts accept USDT; other coins (USDC, BTC…) cannot be credited.</p>
+      <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">Pay in <b>USDT only</b>. Other coins can't be credited.</p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {([["binance", "Binance", BinanceLogo, "Binance Pay · QR"], ["mexc", "MEXC", MexcLogo, "Transfer to UID"]] as const).map(([id, name, Logo, sub]) => {
           const on = method === id;

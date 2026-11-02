@@ -57,8 +57,8 @@ export default function Backtest() {
     <div className="space-y-4">
       <div>
         <h1 className="page-title">Backtesting</h1>
-        <p className="text-sm text-mute">Signals are decided on a bar's close and executed at the next bar's open, with fees, spread and slippage. Net results only.</p>
-        <p className="text-xs text-mute">Backtests run on the engine: the result appears here after its next cycle (usually within 5 minutes). You can leave this page; finished runs are listed under Previous runs.</p>
+        <p className="text-sm text-mute">Net of fees, spread and slippage.</p>
+        <p className="text-xs text-mute">Results arrive within about 5 minutes, under Previous runs.</p>
       </div>
       <Card title="Inputs">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -80,7 +80,7 @@ export default function Backtest() {
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={f.allow_short} onChange={(e) => up("allow_short", e.target.checked)} />Allow short positions</label>
           <button className="btn btn-primary self-end" disabled={busy} onClick={run}>{busy ? "Queued — waiting for the engine…" : "Run backtest"}</button>
         </div>
-        {f.strategy === "ai_ensemble" && <Note>The AI strategy is only evaluated on walk-forward out-of-sample bars: every prediction it trades was made by a model trained strictly on earlier data. The period is clipped to that range.</Note>}
+        {f.strategy === "ai_ensemble" && <Note>AI strategy: unseen data only; the period is clipped to it.</Note>}
       </Card>
       {err && <ErrorBox error={err} />}
 

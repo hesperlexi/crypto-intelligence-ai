@@ -74,7 +74,7 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
             <div className="mt-1 flex justify-between text-[10px] uppercase tracking-wide text-mute"><span>48 h ago</span><span>now</span></div>
           </>
         ) : (
-          <p className="mt-2 text-sm text-mute">The AI scores the headlines once an hour; the first reading appears after the next scoring.</p>
+          <p className="mt-2 text-sm text-mute">First reading within the hour.</p>
         )}
       </div>
       <div className="border-b border-glass/[0.06] p-4 xl:border-b-0 xl:border-r">
@@ -97,7 +97,7 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
         ) : (
           <>
             <div className="mt-1 flex items-center gap-2 font-display text-lg font-semibold text-bull"><span className="h-2 w-2 rounded-full bg-bull" />Running normally</div>
-            <p className="mt-1 text-xs text-mute">New entries pause 45 min before to 30 min after each high-impact US release.</p>
+            <p className="mt-1 text-xs text-mute">No new entries from 45 min before to 30 min after.</p>
           </>
         )}
       </div>
@@ -157,7 +157,7 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
           {coins.map(([c, n]) => <button key={c} className={chip(coin === c)} onClick={() => setCoin(c)}>{c} <span className="num opacity-70">{n}</span></button>)}
         </div>
       )}
-      {!heads.length && <p className="px-4 py-10 text-center text-sm text-mute">Headlines arrive with the next engine run (every 5 minutes).</p>}
+      {!heads.length && <p className="px-4 py-10 text-center text-sm text-mute">Headlines arrive within minutes.</p>}
       {heads.length > 0 && !list.length && <p className="px-4 py-8 text-center text-sm text-mute">No headlines match this filter.</p>}
       {lead && (
         <a href={lead.url} target="_blank" rel="noopener noreferrer" className="group block border-b border-glass/[0.06] px-4 py-4 hover:bg-glass/[0.03]">
@@ -187,7 +187,7 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
           </li>
         ))}
       </ul>
-      <p className="border-t border-glass/[0.06] px-4 py-2 text-[11px] text-mute">Headlines are for context; the AI's signals do not read them. Coin tags are matched from the title. Sources: {sources ?? "public RSS feeds"}.</p>
+      <p className="border-t border-glass/[0.06] px-4 py-2 text-[11px] text-mute">Context only. Sources: {sources ?? "public RSS feeds"}.</p>
     </section>
   );
 }
@@ -224,7 +224,7 @@ export default function News() {
     <div className="space-y-4">
       <div>
         <h1 className="page-title">News & economic calendar</h1>
-        <p className="text-sm text-mute">What is moving crypto now: the AI's read of the headlines, the US data releases that move prices within minutes, and the latest stories.</p>
+        <p className="text-sm text-mute">What is moving crypto now.</p>
       </div>
       <NewsBanner hours={24} />
       <Overview d={d} now={now} heads={heads} />
@@ -277,10 +277,10 @@ export default function News() {
               </ul>
             </details>
           )}
-          <p className="border-t border-glass/[0.06] px-4 py-2 text-[11px] text-mute">Source: {d.sources?.calendar ?? "economic calendar"}. Times shown in your local time.</p>
+          <p className="border-t border-glass/[0.06] px-4 py-2 text-[11px] text-mute">Source: {d.sources?.calendar ?? "economic calendar"}. Your local time.</p>
         </section>
       </div>
-      <p className="text-[11px] text-mute">The news mood is the AI advisor's reading of the headlines, scored hourly: context only, it does not change any signal. Analysis only, not financial advice.</p>
+      <p className="text-[11px] text-mute">News mood is context only; it never changes a signal. Not financial advice.</p>
     </div>
   );
 }

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { saveMine } from "../components/MyCoins";
 import { CoinAvatar } from "../components/Polish";
-import { ErrorBox, Loading } from "../components/ui";
+import { ErrorBox, Info, Loading } from "../components/ui";
 import { post, useApi } from "../lib/api";
 import { ago, base, fmtNum, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { useLimits } from "../lib/limits";
@@ -64,7 +64,7 @@ export default function Radar() {
     <div className="space-y-4">
       <div>
         <h1 className="page-title">Radar · coins to watch</h1>
-        <p className="text-sm text-mute">Every hour the engine screens all liquid Binance coins that are not in the app yet and ranks them by how strongly they are outperforming the market. A screen for ideas, not a trade signal: add a coin to get the AI's long/short calls on it.</p>
+        <p className="text-sm text-mute">Coins beating the market, updated hourly. Ideas, not trade signals.</p>
       </div>
       {msg && <div role="status" className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">{msg}</div>}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
@@ -97,7 +97,7 @@ export default function Radar() {
           </div>
         </section>
       )}
-      <p className="text-[11px] text-mute">{d.method} {h.note} Coins you add appear on the <Link to="/" className="text-accent hover:underline">dashboard</Link> and in Signals.</p>
+      <p className="text-[11px] text-mute">Added coins appear on the <Link to="/" className="text-accent hover:underline">dashboard</Link> and in Signals. {(d.method || h.note) && <Info label="How the radar works">{d.method} {h.note}</Info>}</p>
     </div>
   );
 }

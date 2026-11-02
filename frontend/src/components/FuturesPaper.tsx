@@ -120,7 +120,7 @@ export default function FuturesPaper() {
               Open virtual {side > 0 ? "LONG" : "SHORT"} {L}x
             </button>
             {msg && <p className={`text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
-            <Note>Fills at the live price plus slippage, 0.05% fee each way. Stop-loss, take-profit and liquidation are checked on every 15-minute candle — also for the time the app was closed — and on the live price while it is open. Funding is settled every 8 hours at Binance's current rate.</Note>
+            <Note>Virtual money. 0.05% fee each way; funding every 8 h.</Note>
             <div className="flex items-end gap-2 border-t border-glass/[0.06] pt-3">
               <label className="flex-1 text-xs text-mute">Starting balance<input className="input mt-1" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} /></label>
               <button className="btn" onClick={reset}>Reset account</button>

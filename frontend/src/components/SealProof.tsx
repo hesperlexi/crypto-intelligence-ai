@@ -3,6 +3,7 @@
 //   record row .proof = {hash, sealed_at?, text? (closed calls only)}
 import { useState } from "react";
 import { Pill } from "./SignalExtras";
+import { Info } from "./ui";
 
 async function sha256(text: string): Promise<string> {
   const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
@@ -55,13 +56,13 @@ export function VerifyBox() {
     <section id="verify" className="panel scroll-mt-24 p-0">
       <div className="card-head border-b border-glass/[0.06] px-4 py-2.5"><h2 className="label">🔒 Sealed signals · verify our record</h2></div>
       <div className="space-y-3 p-4 text-sm">
-        <p className="text-mute">The moment a signal is published, its fingerprint (a SHA-256 code of its coin, direction, entry, stop-loss, targets, time and a secret salt) is posted to our public Telegram channel, time-stamped by Telegram. When the signal closes, the full text is posted too. If the text's SHA-256 equals the fingerprint posted earlier, the signal was not changed or added after the result was known.</p>
+        <p className="text-mute">Each signal's fingerprint is posted on Telegram when published; a match proves it wasn't changed later. <Info label="How sealing works">The fingerprint is a SHA-256 code of the coin, direction, entry, stop-loss, targets, time and a secret salt, time-stamped by Telegram. When the signal closes, the full text is posted too. If the text's SHA-256 equals the earlier fingerprint, the signal was not changed or added after the result was known. The check runs in your browser; any SHA-256 tool gives the same result.</Info></p>
         <label className="block">
-          <span className="text-xs text-mute">Sealed text (from the "Signal revealed" post or a record row)</span>
+          <span className="text-xs text-mute">Sealed text ("Signal revealed" post or record row)</span>
           <textarea className="input mt-1 min-h-[64px] w-full py-2 font-mono text-xs" value={text} onChange={(e) => { setText(e.target.value); setOut(null); }} placeholder="CIA-SEAL-1|…" />
         </label>
         <label className="block">
-          <span className="text-xs text-mute">Fingerprint from the earlier "Sealed signal" post (optional)</span>
+          <span className="text-xs text-mute">Fingerprint from the "Sealed signal" post (optional)</span>
           <input className="input mt-1 w-full font-mono text-xs" value={hash} onChange={(e) => { setHash(e.target.value); setOut(null); }} placeholder="64 characters" />
         </label>
         <div className="flex flex-wrap items-center gap-3">
@@ -70,7 +71,7 @@ export function VerifyBox() {
           {out === "nomatch" && <span className="font-semibold text-bear">✗ Does not match.</span>}
           {out && out !== "match" && out !== "nomatch" && <span className="break-all font-mono text-xs">SHA-256: {out}</span>}
         </div>
-        <p className="text-[11px] text-mute">The check runs in your browser. Any SHA-256 tool gives the same result. Signals published before 31 Oct 2026 were not sealed.</p>
+        <p className="text-[11px] text-mute">Signals before 31 Oct 2026 were not sealed.</p>
       </div>
     </section>
   );

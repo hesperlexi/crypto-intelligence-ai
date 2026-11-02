@@ -72,8 +72,8 @@ export default function WinsToday() {
           {" · "}<Link to="/results" className="text-accent hover:underline">full record, losses included, on Results (members)</Link>
         </p>
       )}
-      <p className="mt-3 text-center text-[11px] text-mute">ROI on margin = price move × the leverage the signal card suggested; losses grow the same way. Selected winning signals; the full results, losses included, are available to members inside the app. Not financial advice.</p>
-      <p className="mt-1 text-center text-[11px] text-mute">Past results do not guarantee future results. Trading crypto can lose money. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
+      <p className="mt-3 text-center text-[11px] text-mute">Selected wins. ROI = price move × suggested leverage; leverage magnifies losses too. Not financial advice.</p>
+      <p className="mt-1 text-center text-[11px] text-mute">Past results do not guarantee future results. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
     </section>
   );
 }

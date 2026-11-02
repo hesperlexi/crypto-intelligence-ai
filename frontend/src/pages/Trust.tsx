@@ -96,9 +96,7 @@ function Risk() {
 function Verify() {
   return (
     <>
-      <p>Every signal is sealed when it is published: a SHA-256 fingerprint of its coin, direction, entry, stop-loss, targets,
-        publication time and a secret salt is posted to our public Telegram channel at once. When the signal closes, the full
-        sealed text is posted. Paste it below (with the earlier fingerprint) to check that nothing was changed or added later.</p>
+      <p>Paste a sealed signal below to check it was not changed after its result.</p>
       <div className="mt-5 text-text"><VerifyBox /></div>
     </>
   );

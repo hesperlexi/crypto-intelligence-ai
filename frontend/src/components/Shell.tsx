@@ -21,7 +21,7 @@ export class ErrorBoundary extends Component<{ children: ReactNode; resetKey?: s
         <div className="panel w-full max-w-md p-7 text-center">
           <HeroLogo size={72} className="mx-auto" />
           <h1 className="mt-4 text-xl font-semibold tracking-tight">Something went wrong</h1>
-          <p className="mt-2 text-sm text-mute">This page could not be shown. Reloading usually fixes it. If it keeps happening, tell us what you were doing.</p>
+          <p className="mt-2 text-sm text-mute">This page could not be shown. Try reloading.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <button type="button" className="btn btn-primary" onClick={() => location.reload()}>Reload</button>
             <a className="btn" href={`mailto:${BRAND.supportEmail}?subject=${encodeURIComponent("App error")}`}>Contact {BRAND.supportEmail}</a>
@@ -39,7 +39,7 @@ export function NotFound() {
         <HeroLogo size={72} className="mx-auto" />
         <p className="num mt-4 text-sm font-semibold text-accent">404</p>
         <h1 className="mt-1 text-xl font-semibold tracking-tight">Page not found</h1>
-        <p className="mt-2 text-sm text-mute">The link may be old or mistyped. Everything else is where you left it.</p>
+        <p className="mt-2 text-sm text-mute">The link may be old or mistyped.</p>
         <Link to="/" className="btn btn-primary mt-5">Go to Home</Link>
       </div>
     </div>

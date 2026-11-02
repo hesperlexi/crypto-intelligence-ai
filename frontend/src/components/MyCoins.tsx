@@ -66,9 +66,9 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
             </div>
           )}
           <p className="text-xs text-mute">
-            {admin ? "Coins you add here are tracked for everyone. ★ pins a coin to the front, ✕ stops tracking it."
-              : full ? `You follow ${MY_COIN_LIMIT} coins of your own (the maximum). Remove one with ✕ to add another.`
-              : `Add up to ${MY_COIN_LIMIT} coins of your own. Each gets live prices, signals, AI forecasts, alerts and paper trading. Only you see them in your list.`}
+            {admin ? "Tracked for everyone. ★ pins, ✕ removes."
+              : full ? `${MY_COIN_LIMIT} of ${MY_COIN_LIMIT} coins. Remove one with ✕ to add another.`
+              : `Add up to ${MY_COIN_LIMIT} coins of your own. Only you see them.`}
           </p>
         </div>
       )}

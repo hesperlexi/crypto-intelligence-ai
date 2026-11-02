@@ -33,7 +33,7 @@ export default function Futures() {
             <h1 className="page-title">Futures</h1>
             <Badge tone="warn">Predictions + demo only</Badge>
           </div>
-          <p className="text-sm text-mute">Long / short calls for USDT perpetuals on the {tf.toUpperCase()} timeframe, with leverage, liquidation and funding.</p>
+          <p className="text-sm text-mute">Long / short calls · {tf.toUpperCase()}</p>
         </div>
         <TfTabs value={tf} onChange={setTf} options={TFS} />
       </div>
@@ -63,7 +63,7 @@ export default function Futures() {
       {v.data && !rows.length && <Empty>No coin matches this filter right now.</Empty>}
 
       <LeverageCalculator />
-      <Note>Forecasts are probabilities, not certainties. Leverage multiplies both gains and losses; a liquidated position loses its whole margin. Suggested leverage keeps the liquidation price at least 1.5× the stop distance away and is capped at 10x. Everything here is analysis and virtual trading only — no real orders are placed.</Note>
+      <Note>Probabilities, not certainties. Leverage magnifies losses; liquidation loses the whole margin. Analysis only, no real orders.</Note>
     </div>
   );
 }
@@ -100,7 +100,7 @@ function LeverageCalculator() {
           <Stat label="Max safe leverage" value={`${Math.max(1, Math.floor(1 / (1.5 * dist + 0.005)))}x`} sub="liq. ≥ 1.5× stop distance" />
         </div>
       )}
-      <Note>The position size comes from the stop and your risk, not from the leverage: leverage only changes how much margin is locked. Maintenance margin 0.5% assumed; the exchange's exact tiers can differ slightly.</Note>
+      <Note>Size comes from the stop and your risk; leverage only changes the margin.</Note>
     </Card>
   );
 }

@@ -44,7 +44,7 @@ export default function Accuracy() {
   const train = async (scope: "one" | "all") => {
     try {
       const r = await post<any>("/models/train", scope === "one" ? { symbol, timeframe: tf } : {});
-      setMsg(`Queued ${r.queued.length} training job(s). Training runs in the background and does not block forecasts.`);
+      setMsg(`Queued ${r.queued.length} training job(s).`);
       status.reload();
     } catch (e: any) {
       setMsg(e.message);
@@ -58,7 +58,7 @@ export default function Accuracy() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="page-title">Forecast accuracy</h1>
-          <p className="text-sm text-mute">Is the AI actually working? Every figure here comes from walk-forward out-of-sample tests or from live predictions scored after the fact.</p>
+          <p className="text-sm text-mute">Scored on unseen data and live predictions.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SymbolSelect value={symbol} onChange={(v) => set("symbol", slug(v))} symbols={symbols.length ? symbols : [symbol]} />
@@ -137,7 +137,7 @@ export default function Accuracy() {
                   <Stat label="Higher-timeframe context" value={m.uses_htf ? `on (${String(m.uses_htf).toUpperCase()})` : m.htf_gate ? "tested · off" : "off"}
                     sub={m.uses_htf ? "it improved accuracy on unseen data" : m.htf_gate ? "it did not improve accuracy on unseen data; re-tested monthly" : "tested at the next nightly training"} />
                 </div>
-                <Note>Measured on walk-forward out-of-sample bars only: a call is right when the next bar moves in the called direction. The threshold is the one with the best lower 95% bound, so it is not picked for a lucky handful of calls. The Confident-call tracker bot and “confident calls only” alerts use it.</Note>
+                <Note>Right = the next bar moves the called way. Unseen data only.</Note>
               </>) : <Empty>{m.selective.reason ?? "Not enough out-of-sample calls to set a confident-call threshold."}</Empty>}
             </Card>
           )}
@@ -160,7 +160,7 @@ export default function Accuracy() {
                 </tbody>
               </table>
             </div>
-            <Note>{m.selection_note} {!m.has_skill && "No model beat the class prior on the latest validation window, so the ensemble uses equal weights."}</Note>
+            <Note>{m.selection_note} {!m.has_skill && "No model beat the baseline; equal weights used."}</Note>
             {Object.keys(m.failures ?? {}).length > 0 && <p className="mt-2 text-xs text-warn">Models that failed and were left out: {Object.entries(m.failures).map(([k, v]) => `${k} (${v})`).join("; ")}</p>}
             <p className="mt-2 text-xs text-mute">Not installed / disabled: {(m.libraries ?? []).filter((l: any) => !l.available).map((l: any) => `${l.label}: ${l.reason}`).join(" · ") || "none"}</p>
           </Card>
@@ -175,7 +175,7 @@ export default function Accuracy() {
                     <td className={`num text-right ${Math.abs(b.accuracy - b.mean_confidence) > 0.07 ? "text-warn" : "text-mute"}`}>{fmtPct(b.accuracy - b.mean_confidence, 1)}</td></tr>
                 ))}</tbody>
               </table></div>
-              <Note>A well-calibrated model is right about as often as it says it will be. Calibration (Platt or isotonic) is only applied where it improved held-out Brier score.</Note>
+              <Note>Well calibrated = right about as often as it says.</Note>
             </Card>
           </div>
 
@@ -184,7 +184,7 @@ export default function Accuracy() {
             <DriftCard perf={perf.data} error={perf.error} />
             <Card title="What the ensemble relies on">
               {m.importance?.length ? m.importance.slice(0, 10).map((f: any) => <Row key={f.feature} k={f.label} v={(f.importance * 1000).toFixed(2)} className={f.importance > 0 ? "" : "text-mute"} />) : <Empty>Not computed for this version</Empty>}
-              <Note>Permutation importance: increase in Brier score (×1000) when the feature is shuffled on the latest validation window. {m.features} features in total.</Note>
+              <Note>Brier increase (×1000) when shuffled · {m.features} features.</Note>
             </Card>
           </div>
         </>
@@ -239,7 +239,7 @@ function Timeline({ folds, live, sizes }: { folds: any[]; live: any; sizes: any 
         ))}
       </div>
       <div className="num mt-1 flex justify-between pl-[5.5rem] text-[11px] text-mute"><span>{fmtDate(t0)}</span><span>{fmtDate(t1)}</span></div>
-      <Note>{folds.length} folds. Each fold trains on the blue window, fits calibration and ensemble weights on the amber window, and is scored only on the green window that follows. A {sizes.gap}-bar gap separates the segments; data is never shuffled. The live model repeats the recipe on the most recent windows.</Note>
+      <Note>{folds.length} folds: train (blue), calibrate (amber), score (green). {sizes.gap}-bar gaps, never shuffled.</Note>
     </div>
   );
 }
@@ -256,7 +256,7 @@ function LiveCard({ perf }: { perf: any }) {
           </div>
           <div className="mt-3">{["7d", "30d", "90d"].map((k) => <Row key={k} k={`${k} accuracy`} v={`${fmtProb(l.rolling[k].accuracy, 1)}  (n=${l.rolling[k].n})`} />)}</div>
           {isNum(l.brier) ? (<><Row k="Live Brier" v={fmtNum(l.brier, 4)} /><Row k="Live calibration" v={`${l.calibration} (ECE ${fmtNum(l.ece, 3)})`} /><Row k="Directional (up/down calls)" v={`${fmtProb(l.directional?.accuracy, 1)} (n=${l.directional?.n})`} /></>) : <Note>{l.note}</Note>}
-          <Note>3-class accuracy of predictions this installation issued in real time. Nothing here is back-filled from history.</Note>
+          <Note>Live predictions only, never back-filled.</Note>
         </>
       )}
     </Card>

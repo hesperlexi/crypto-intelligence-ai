@@ -127,14 +127,13 @@ export function DashboardHero({ rows, status, tf, sentiment, market, basket }: {
         </div>
         <div className="rounded-xl border border-glass/[0.08] bg-ink/40 p-4">
           <div className="flex items-center justify-between gap-3">
-            <div className="label">Market mood</div>
+            <div className="label" title={status?.basis}>Market mood</div>
             <span className={`text-xs font-semibold ${moodCls}`}>{mood ?? "—"}</span>
           </div>
           <div className="mt-2.5 flex h-2 overflow-hidden rounded-full bg-glass/[0.06]" aria-hidden="true">
             {status && <><div className="bg-bull" style={{ flex: status.bull || 0 }} /><div className="bg-warn/70" style={{ flex: status.neutral || 0 }} /><div className="bg-bear" style={{ flex: status.bear || 0 }} /></>}
           </div>
           <div className="num mt-2 text-sm">{status ? <><span className="text-bull">{status.bull} bull</span> · <span className="text-mute">{status.neutral} neutral</span> · <span className="text-bear">{status.bear} bear</span></> : "—"}</div>
-          {status?.basis && <p className="mt-1.5 text-[11px] leading-snug text-mute">{status.basis}</p>}
         </div>
       </div>
       {/* the overview strip */}

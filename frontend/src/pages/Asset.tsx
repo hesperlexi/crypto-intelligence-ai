@@ -157,7 +157,7 @@ export default function Asset() {
                   </tbody>
                 </table>
               </div>
-              <Note>Each row is one bar ahead on that row's own timeframe model. Nothing is extrapolated from a shorter timeframe.</Note>
+              <Note>One bar ahead, per timeframe.</Note>
             </Card>
             <MtfCard mtf={a.mtf} />
           </div>
@@ -234,7 +234,7 @@ function ForecastCard({ fc, tf, price }: { fc: any; tf: string; price: number })
           <div><div className="label mb-1">Chance of downside</div>{fc.touch.downside.map((u: any) => <Row key={u.move} k={fmtPct(u.move, 0)} v={fmtProb(u.probability)} className="text-bear" />)}</div>
         </div>
       )}
-      <Note>Point forecast, range and confidence are three different things. The neutral band is ±{fmtPct(fc.neutral_band, 2, false)}. {fc.touch ? `Touch frequencies from ${fc.touch.n} ${fc.touch.basis}.` : ""}</Note>
+      <Note>Neutral band ±{fmtPct(fc.neutral_band, 2, false)}.</Note>
     </Card>
   );
 }
@@ -246,7 +246,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
     setBusy(true);
     try {
       await post("/models/train", { symbol, timeframe: tf });
-      setMsg("Training queued. It runs in the next engine cycle (within about 5 minutes); this panel updates by itself.");
+      setMsg("Training queued (about 5 minutes).");
     } catch (e: any) {
       setMsg(e.message);
     } finally {
@@ -285,7 +285,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
               </tbody>
             </table>
           </div>
-          <Note>Weights come from recent out-of-sample Brier skill versus the class prior{fc.regime_weights_used ? ", specific to the current regime" : ""}. Models that fail live are down-weighted{fc.live_downweighted?.length ? ` (now: ${fc.live_downweighted.join(", ")})` : ""}.</Note>
+          <Note>Weighted by recent skill on unseen data{fc.live_downweighted?.length ? ` · down-weighted: ${fc.live_downweighted.join(", ")}` : ""}.</Note>
         </>
       )}
     </Card>
@@ -310,7 +310,7 @@ function MtfCard({ mtf }: { mtf: any }) {
       </div>
       <div className="mt-3"><Meter value={mtf?.alignment} tone={mtf?.alignment < 0.5 ? "warn" : "accent"} /></div>
       {mtf?.conflict && <div className="mt-2"><Badge tone="warn">{mtf.conflict_note}</Badge></div>}
-      <Note>Alignment is the weighted share of timeframes pointing the dominant way ({mtf?.dominant_label ?? DASH}); neutral timeframes count half. Signals lose a level when timeframes disagree.</Note>
+      <Note>Share of timeframes pointing {mtf?.dominant_label ?? DASH}.</Note>
     </Card>
   );
 }
@@ -348,7 +348,7 @@ function SetupCard({ setup, decision }: { setup: any; decision: string }) {
               ))}
             </tbody>
           </table></div>
-          <Note>Target probabilities are historical base rates within {setup.horizon_bars} bars ({setup.targets[0]?.probability_basis ?? "history"}), with the stop assumed first if both are touched in one bar. They are not model promises.</Note>
+          <Note>Target odds are historical rates within {setup.horizon_bars} bars, not promises.</Note>
         </div>
       )}
     </Card>
@@ -378,7 +378,7 @@ function WhyCard({ sig, explanation }: { sig: any; explanation: any }) {
           <div><div className="label mb-1">Model: pushing down</div>{explanation.negative.slice(0, 6).map((f: any) => <Row key={f.feature} k={f.label} v={`${(f.contribution * 100).toFixed(1)} pp`} className="text-bear" />)}</div>
         </div>
       )}
-      {explanation && <Note>Model factors: {explanation.method}.{explanation.shap ? ` SHAP values for ${explanation.shap.model} are available via the API.` : ""}</Note>}
+      {explanation && <Note>Model factors: {explanation.method}.</Note>}
     </Card>
   );
 }
@@ -404,7 +404,7 @@ function RiskCard({ a, tf }: { a: any; tf: string }) {
   };
   return (
     <Card title="Risk analysis">
-      {!r ? <Empty>Position sizing needs an entry and a stop; there is no setup right now.</Empty> : (
+      {!r ? <Empty>No setup right now.</Empty> : (
         <>
           <div className="mb-3 grid grid-cols-[1fr_1fr_auto] items-end gap-2">
             <label className="text-xs text-mute">Portfolio ($)<input className="input mt-1" inputMode="decimal" placeholder={String(r.profile?.portfolio ?? "")} value={portfolio} onChange={(e) => setPortfolio(e.target.value)} /></label>
@@ -423,7 +423,7 @@ function RiskCard({ a, tf }: { a: any; tf: string }) {
             </>
           )}
           {(r.notes ?? []).map((n: string) => <Note key={n}>{n}</Note>)}
-          <Note>Sizing is independent of the forecast: it uses only the stop distance, volatility and your limits (edit defaults in Settings).</Note>
+          <Note>Based on the stop distance and your limits.</Note>
         </>
       )}
     </Card>

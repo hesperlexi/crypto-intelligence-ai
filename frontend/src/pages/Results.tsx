@@ -10,9 +10,9 @@ const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["accuracy", "Ac
 type Tab = (typeof TABS)[number][0];
 
 const TOOLS = [
-  ["/backtest", "Backtest", "Run a strategy over past data with fees and slippage, and compare it with buy & hold."],
-  ["/replay", "Replay", "Pick a past moment and see exactly what the app said then, with proof that nothing from the future was used."],
-  ["/scanner", "Scanner", "Every coin's signal, regime and volatility side by side, sortable."],
+  ["/backtest", "Backtest", "Test a strategy on past data vs buy & hold."],
+  ["/replay", "Replay", "See what the app said at a past moment."],
+  ["/scanner", "Scanner", "All coins side by side."],
 ] as const;
 
 export default function Results() {
@@ -24,7 +24,7 @@ export default function Results() {
     <div className="space-y-4">
       <div>
         <h1 className="page-title">Results</h1>
-        <p className="page-sub">Does it work? Every signal's outcome, the demo bots that trade them, and how accurate the AI is on data it never saw.</p>
+        <p className="page-sub">Every signal's outcome, wins and losses.</p>
       </div>
       <div className="-mx-3 flex gap-1 overflow-x-auto border-b border-glass/[0.08] px-3 sm:mx-0 sm:px-0" role="tablist">
         {tabs.map(([k, l]) => (

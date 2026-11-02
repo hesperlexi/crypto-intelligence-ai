@@ -36,7 +36,7 @@ export default function NotifyPrompt() {
   return (
     <div className="panel animate-in fixed inset-x-3 bottom-4 z-[60] mx-auto max-w-md p-3 text-sm sm:inset-x-auto sm:right-4" role="dialog" aria-label="Notifications">
       <p className="font-semibold">Turn on alerts?</p>
-      <p className="mt-1 text-mute">{msg ?? "Get a notification the moment a new signal or target hit arrives."}</p>
+      <p className="mt-1 text-mute">{msg ?? "Get notified of new signals and target hits."}</p>
       <div className="mt-2 flex gap-2">
         {!msg && <button className="btn btn-primary" disabled={busy} onClick={allow}>Allow</button>}
         <button className="btn" onClick={() => { markAsked(); setShow(false); }}>{msg ? "Close" : "Not now"}</button>

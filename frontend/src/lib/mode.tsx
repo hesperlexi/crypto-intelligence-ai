@@ -36,12 +36,12 @@ export function Explain({ children, className = "" }: { children: ReactNode; cla
 
 /** Plain-language glossary used next to trade-plan numbers in Beginner mode. */
 export const PLAIN = {
-  entry: "Entry: the price to buy at (long) or sell at (short).",
-  stop: "Stop-loss: the price where the idea is wrong and the trade is closed to limit the loss.",
-  targets: "Targets (TP1-TP3): prices where part of the trade is closed in profit.",
-  leverage: "Leverage multiplies both profits and losses. Lower is safer.",
-  rr: "Reward/risk: how much the targets could make for each 1 the stop could lose.",
-  grade: "Grade A: technicals and AI agree. Grade B: led by the AI model.",
+  entry: "Entry: where to open the trade.",
+  stop: "Stop-loss: where the trade closes to limit the loss.",
+  targets: "Targets (TP1-TP3): where profit is taken.",
+  leverage: "Leverage magnifies losses too. Lower is safer.",
+  rr: "Reward/risk: possible gain per 1 of risk.",
+  grade: "A: chart and AI agree. B: AI-led.",
 } as const;
 
 /** Compact header switch. */

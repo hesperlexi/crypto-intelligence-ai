@@ -19,7 +19,7 @@ const chipTone = (v: number | null | undefined) => (!isNum(v) || Math.abs(v) < 0
 const when = (ms: unknown) => (isNum(ms) ? new Date(ms).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
 
 function AsOf({ ms, source }: { ms: unknown; source?: string }) {
-  return <p className="mt-auto pt-3 text-[11px] text-mute" title={source}>As of {when(ms)}{isNum(ms) ? ` · ${ago(ms)}` : ""}{source ? ` · ${source}` : ""}</p>;
+  return <p className="mt-auto pt-3 text-[11px] text-mute" title={source}>As of {when(ms)}{isNum(ms) ? ` · ${ago(ms)}` : ""}{source ? ` · ${source.split(" (")[0].replace(/ market-cap ranking$/, "")}` : ""}</p>;
 }
 
 function Chip({ label, v }: { label: string; v: number | null | undefined }) {
@@ -125,7 +125,7 @@ function Dominance({ d }: { d: any }) {
           <div className="mt-3 flex flex-wrap gap-1.5"><Chip label="24h" v={d.btc_change_24h} /><Chip label="7d" v={d.btc_change_7d} /></div>
           {(d.series ?? []).length >= 2
             ? <DomChart series={d.series} />
-            : <p className="mt-3 rounded-lg bg-glass/[0.03] px-3 py-4 text-center text-xs text-mute">Our own chart starts after the second hourly reading. "Full chart" shows the complete history now.</p>}
+            : <p className="mt-3 rounded-lg bg-glass/[0.03] px-3 py-4 text-center text-xs text-mute">Chart starts after two hourly readings. See "Full chart".</p>}
           <p className="mt-3 text-sm text-text">{d.reading}</p>
           <AsOf ms={d.as_of} source="CoinGecko" />
         </>
@@ -164,10 +164,10 @@ function AltSeason({ a }: { a: any }) {
           {(a.best ?? []).length > 0 && (
             <p className="mt-1 text-xs text-mute">Strongest vs BTC: {a.best.map((b: any) => `${b.coin} ${b.vs_btc > 0 ? "+" : ""}${(b.vs_btc * 100).toFixed(0)}%`).join(" · ")}</p>
           )}
-          <p className="mt-2 text-xs text-mute">≤25 Bitcoin season, ≥75 Altcoin season. Stablecoins, wrapped, staked and leveraged tokens excluded.</p>
+          <p className="mt-2 text-xs text-mute" title="Stablecoins, wrapped, staked and leveraged tokens excluded.">≤25 Bitcoin season, ≥75 Altcoin season.</p>
           <AsOf ms={a.as_of} source={a.universe} />
         </>
-      ) : <p className="py-6 text-center text-sm text-mute">Collecting data — the first index is computed within six hours.</p>}
+      ) : <p className="py-6 text-center text-sm text-mute">Collecting data (ready within 6 h).</p>}
     </Card>
   );
 }
@@ -193,7 +193,7 @@ function Pulse({ p, f }: { p: any; f: any }) {
               </div>
             ))}
           </div>
-          {f && <p className="mt-3 text-xs text-mute">Funding averaged over {f.n} watchlist coins ({f.source}). ≥ +0.03% crowded long, ≤ −0.01% crowded short; the exchanges' default is +0.01%.</p>}
+          {f && <p className="mt-3 text-xs text-mute" title={`Average of ${f.n} watchlist coins (${f.source}). Default is +0.01%.`}>≥ +0.03% crowded long · ≤ −0.01% crowded short</p>}
           <AsOf ms={p?.as_of ?? f?.as_of} source={p?.source} />
         </>
       ) : <p className="py-6 text-center text-sm text-mute">{COLLECTING}</p>}

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import LineChart, { Series } from "../components/LineChart";
-import { Badge, Card, Empty, ErrorBox, Loading, Note, Row, Stat } from "../components/ui";
+import { Badge, Card, Empty, ErrorBox, Info, Loading, Note, Row, Stat } from "../components/ui";
 import { put, useApi } from "../lib/api";
 import { DASH, fmtNum, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
@@ -24,7 +24,7 @@ export default function Bots() {
   const save = async (list: any[], done: string) => {
     try {
       await put("/bots", { bots: list });
-      setMsg(`${done} Changes take effect on the next engine cycle (within about 5 minutes).`);
+      setMsg(`${done} Applies within about 5 minutes.`);
       setEditing(null);
     } catch (e: any) {
       setMsg(e.message);
@@ -67,12 +67,14 @@ export default function Bots() {
         ))}
       </div>
       <Card title="How the bots work">
-        <div className="grid gap-4 text-sm md:grid-cols-2">
-          <p><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. Half the position closes at TP1 (1:1), a quarter at TP2 (up to 1:2) and a quarter at TP3 (up to 1:3); the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></p>
-          {admin && <p><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></p>}
-          <p className="md:col-span-2"><span className="font-medium text-text">Futures bots</span> <span className="text-mute">trade the same calls as USDT perpetual futures with isolated margin: only the margin (position ÷ leverage) is set aside, futures fees (0.05%) apply, funding is paid or received every 8 hours, and a position is liquidated — losing its margin — if price reaches the liquidation price. With “safe leverage” on, a signal bot lowers its leverage so liquidation always sits well beyond the stop. Position size still comes from the stop, so leverage changes the margin used, not the risk per trade.</span></p>
-        </div>
-        <Note>The engine runs every 5 minutes. Entries fill at the price available when it runs, plus spread, slippage and fees. Stops and targets are checked against every 15-minute candle, and when one candle touches both, the stop counts first. Only trades taken after a bot started are counted.</Note>
+        <p className="text-sm text-mute">Virtual money. Bots trade the app's calls with their entry, stop and targets, fees included. <Info label="Bot rules">
+        <span className="block space-y-2">
+          <span className="block"><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. Half the position closes at TP1 (1:1), a quarter at TP2 (up to 1:2) and a quarter at TP3 (up to 1:3); the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></span>
+          {admin && <span className="block"><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></span>}
+          <span className="block"><span className="font-medium text-text">Futures bots</span> <span className="text-mute">trade the same calls as USDT perpetual futures with isolated margin: only the margin (position ÷ leverage) is set aside, futures fees (0.05%) apply, funding is paid or received every 8 hours, and a position is liquidated — losing its margin — if price reaches the liquidation price. With “safe leverage” on, a signal bot lowers its leverage so liquidation always sits well beyond the stop. Position size still comes from the stop, so leverage changes the margin used, not the risk per trade.</span></span>
+        </span>
+        <span className="mt-2 block">The engine runs every 5 minutes. Entries fill at the price available when it runs, plus spread, slippage and fees. Stops and targets are checked against every 15-minute candle, and when one candle touches both, the stop counts first. Only trades taken after a bot started are counted.</span>
+        </Info></p>
       </Card>
       {msg && <p className="text-sm text-accent">{msg}</p>}
       {b.error && <ErrorBox error={b.error} retry={b.reload} />}
@@ -84,9 +86,9 @@ export default function Bots() {
           onReset={() => reset(bot.config.id)} onDelete={() => remove(bot.config.id)} />
       ))}
       {cfgList.filter((c) => !(b.data?.bots ?? []).some((x: any) => x.config.id === c.id)).map((c) => (
-        <Card key={c.id} title={c.name}><Empty>Waiting for the next engine cycle to start this bot.</Empty></Card>
+        <Card key={c.id} title={c.name}><Empty>Starting soon.</Empty></Card>
       ))}
-      {b.data && !b.data.bots?.length && !cfgList.length && <Empty>No bots yet. The engine creates the default spot and futures bots on its next run.</Empty>}
+      {b.data && !b.data.bots?.length && !cfgList.length && <Empty>No bots yet.</Empty>}
     </div>
   );
 }
@@ -158,7 +160,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
                 ))}
               </tbody>
             </table></div>
-          ) : <Empty>{isPred ? "No open predictions right now." : "No open positions. Signal bots only trade when every check passes, so long quiet stretches are normal."}</Empty>}
+          ) : <Empty>{isPred ? "No open predictions right now." : "No open positions. Quiet stretches are normal."}</Empty>}
         </div>
         <div>
           <div className="label mb-1">Accuracy by {s.confidence_key === "p_max" ? "model probability" : "signal confidence"}</div>
@@ -181,7 +183,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
               <Row k="Exits" v={Object.entries(s.by_exit ?? {}).map(([k, v]) => `${k} ${v}`).join(" · ")} />
             </div>
           )}
-          {s.trades > 0 && s.trades < 30 && <Note>Fewer than 30 closed trades: these percentages can still move a lot. Read the confidence interval, not just the headline.</Note>}
+          {s.trades > 0 && s.trades < 30 && <Note>Under 30 trades: figures can still move a lot.</Note>}
         </div>
       </div>
 

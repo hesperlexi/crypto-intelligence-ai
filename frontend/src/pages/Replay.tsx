@@ -53,7 +53,7 @@ export default function Replay() {
     <div className="space-y-4">
       <div>
         <h1 className="page-title">Replay market</h1>
-        <p className="text-sm text-mute">Pick a past moment. The system rebuilds its view using only candles that had closed by then, trains a model on that truncated history, forecasts — and only then shows what happened.</p>
+        <p className="text-sm text-mute">Pick a past moment: see the forecast made with only data known then, then what happened.</p>
       </div>
       <Card title="Choose a moment">
         <div className="flex flex-wrap items-end gap-3">
@@ -66,7 +66,7 @@ export default function Replay() {
           <button className="btn btn-primary" disabled={busy || !when} onClick={run}>{busy ? "Queued — waiting for the engine…" : "Replay"}</button>
         </div>
         {range.data && !range.data.available && <p className="mt-2 text-sm text-warn">{range.data.reason}</p>}
-        {range.data?.available && <Note>Replayable range: {fmtTime(range.data.earliest)} to {fmtTime(range.data.latest)}. Replays run on the engine (a model is trained from scratch on the truncated data), so the result arrives with its next cycle, usually within 5 minutes.</Note>}
+        {range.data?.available && <Note>Replayable range: {fmtTime(range.data.earliest)} to {fmtTime(range.data.latest)}. Results arrive within about 5 minutes.</Note>}
       </Card>
       {err && <ErrorBox error={err} />}
 
@@ -116,7 +116,7 @@ export default function Replay() {
                       <Check ok={!res.reveal.setup_check.stop_hit}>Stop {res.reveal.setup_check.stop_hit ? "was hit" : "not hit"}</Check>
                     </div>
                   )}
-                  <Note>One replay is an anecdote, not evidence. Use the Accuracy page for statistics over hundreds of predictions.</Note>
+                  <Note>One replay is an anecdote, not evidence.</Note>
                 </>
               )}
             </Card>

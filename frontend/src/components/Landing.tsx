@@ -22,12 +22,12 @@ import { Link } from "react-router-dom";
 const COINS = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "BNB/USDT", "XRP/USDT", "DOGE/USDT"];
 
 const FEATURES: [string, string, string][] = [
-  ["M9 9h6v6H9zM4 4h16v16H4zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3", "4 AI models vote", "LSTM, GRU, Transformer and gradient boosting forecast every coin. A call counts only when they agree."],
-  ["M12 2v20M5 9h14M7 15h10", "Ready-made trade plans", "Entry zone, stop-loss and three take-profit targets on every signal, sized from real volatility."],
-  ["M3 17l6-6 4 4 8-8M15 7h6v6", "Spot & futures", "Long and short calls with safe leverage, liquidation price, funding and open interest built in."],
-  ["M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0", "Instant phone alerts", "Pick a coin and a condition. Get a notification the moment a setup appears, with the full plan."],
-  ["M2 6h20v13H2zM2 10h20M6 15h4", "Practise risk-free", "Paper trading for spot and futures with live prices, auto-trading of every signal, plus demo bots trading the signals 24/7."],
-  ["M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5", "Honest accuracy", "Every model is scored on data it never saw. You see the real hit rate before you trust a call."],
+  ["M9 9h6v6H9zM4 4h16v16H4zM9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3", "4 AI models vote", "A call counts only when the models agree."],
+  ["M12 2v20M5 9h14M7 15h10", "Ready-made trade plans", "Entry, stop-loss and three targets on every signal."],
+  ["M3 17l6-6 4 4 8-8M15 7h6v6", "Spot & futures", "Long and short calls with a safe leverage."],
+  ["M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 01-3.4 0", "Instant phone alerts", "Get notified the moment a setup appears."],
+  ["M2 6h20v13H2zM2 10h20M6 15h4", "Practise risk-free", "Paper trading with virtual money and live prices."],
+  ["M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM8.5 12l2.5 2.5 4.5-5", "Honest accuracy", "Real hit rates, scored on unseen data."],
 ];
 
 function Icon({ d }: { d: string }) {
@@ -123,7 +123,7 @@ export default function Landing({ error }: { error: string | null }) {
               Know the setup<br /><span className="text-gradient">before</span> you trade.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-mute">
-              AI forecasts, ready-made trade plans and instant phone alerts for every coin you follow. Then practise them with virtual money first, no real funds involved.
+              AI trade plans and phone alerts. Practise with virtual money first.
             </p>
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
@@ -134,7 +134,7 @@ export default function Landing({ error }: { error: string | null }) {
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
             <p className="mt-3 text-sm text-mute">Already have an account? <button className="text-accent hover:underline" onClick={() => setDialog("signin")}>Sign in</button> · <button className="text-accent hover:underline" onClick={() => setDialog("reset")}>Forgot password?</button></p>
-            <p className="mt-3 text-xs text-mute">No exchange keys needed · the app never places real orders · from {(plans[plans.length - 1].price / 12).toFixed(2)} USDT/month</p>
+            <p className="mt-3 text-xs text-mute">No exchange keys · never places real orders · from {(plans[plans.length - 1].price / 12).toFixed(2)} USDT/month</p>
           </div>
 
           {/* product preview */}
@@ -190,7 +190,7 @@ export default function Landing({ error }: { error: string | null }) {
         {/* features */}
         <section className="py-16">
           <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to trade with a plan</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-mute">One app for spotting setups, planning the trade and practising it, on Android, iPhone and the web.</p>
+          <p className="mx-auto mt-3 max-w-2xl text-center text-mute">Android, iPhone and the web.</p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {FEATURES.map(([d, t, p]) => (
               <div key={t} className="panel p-5 transition-transform hover:-translate-y-1">
@@ -209,9 +209,9 @@ export default function Landing({ error }: { error: string | null }) {
         <section id="how" className="scroll-mt-20 py-8">
           <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Start in three steps</h2>
           <ol className="mt-10 grid gap-4 md:grid-cols-3">
-            {[["Sign in", "Use your Google account or any email address. No exchange keys needed."],
-              ["Choose a plan", "Pay in seconds with Binance or MEXC and upload the receipt. Access opens as soon as it is checked."],
-              ["Get signals", "Follow your coins, add your own, set alerts and practise with paper trading."]].map(([t, p], i) => (
+            {[["Sign in", "Google or email."],
+              ["Choose a plan", "Pay with Binance or MEXC and upload the receipt."],
+              ["Get signals", "Follow coins, set alerts, practise."]].map(([t, p], i) => (
               <li key={t} className="panel relative p-5">
                 <span className="font-display text-5xl font-extrabold text-accent/25">0{i + 1}</span>
                 <h3 className="font-display mt-1 text-lg font-semibold">{t}</h3>
@@ -224,7 +224,7 @@ export default function Landing({ error }: { error: string | null }) {
         {/* pricing */}
         <section id="pricing" className="scroll-mt-20 py-16">
           <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Simple pricing</h2>
-          <p className="mt-3 text-center text-mute">Every plan includes every feature. The longer the plan, the less you pay per month.</p>
+          <p className="mt-3 text-center text-mute">Every plan includes every feature.</p>
           <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((p) => {
               const best = p.months === 12;
@@ -243,16 +243,16 @@ export default function Landing({ error }: { error: string | null }) {
               );
             })}
           </div>
-          <p className="mt-4 text-center text-xs text-mute">Prices in USDT. Pay in USDT only, with Binance or MEXC. Renew any time; early renewals add on top of your remaining days.</p>
+          <p className="mt-4 text-center text-xs text-mute">USDT only, via Binance or MEXC. Early renewals add to your remaining days.</p>
         </section>
 
         {/* questions */}
         <section className="mx-auto max-w-3xl pb-12">
           <h2 className="font-display text-center text-2xl font-bold">Good to know</h2>
           <div className="mt-6 space-y-3">
-            {[["Does it trade for me?", "No. It analyses the market and gives you plans and alerts. You decide and place trades on your own exchange. It never asks for exchange keys."],
-              ["How accurate is it?", "Crypto is hard to predict, and the app is open about it: the Accuracy page shows each model's real hit rate on data it never saw, so you can see when to trust a call."],
-              ["Which devices?", "Android (app download), iPhone (add to Home Screen) and any web browser. Your account works on all of them."]].map(([q, a]) => (
+            {[["Does it trade for me?", "No. It gives plans and alerts; you trade on your own exchange. No exchange keys."],
+              ["How accurate is it?", "Results shows every model's real hit rate on unseen data, losses included."],
+              ["Which devices?", "Android app, iPhone (add to Home Screen) and any browser."]].map(([q, a]) => (
               <details key={q} className="panel group p-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between font-medium">{q}<span className="text-accent transition-transform group-open:rotate-45">+</span></summary>
                 <p className="mt-2 text-sm leading-relaxed text-mute">{a}</p>
@@ -264,7 +264,7 @@ export default function Landing({ error }: { error: string | null }) {
         {/* final call */}
         <section className="hero mb-12 rounded-2xl p-8 text-center sm:p-12">
           <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>
-          <p className="mx-auto mt-3 max-w-xl text-mute">Join in a minute. Analysis and practice tool, not financial advice.</p>
+          <p className="mx-auto mt-3 max-w-xl text-mute">Analysis only, not financial advice.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">{cta(true)}{emailCta(true)}</div>
           <p className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-mute">
             {TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="hover:text-text hover:underline">{label}</Link>)}

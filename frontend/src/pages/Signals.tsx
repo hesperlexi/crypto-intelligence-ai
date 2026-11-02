@@ -88,7 +88,7 @@ export default function Signals() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="page-title">Trade signals</h1>
-          <p className="page-sub">{rows.length ? `${active} of ${rows.length} coins have a ${market === "futures" ? "long or short" : "buy or sell"} call on the ${tf.toUpperCase()} chart.` : "One clear call per coin: direction, entry, stop-loss and targets."}</p>
+          <p className="page-sub">{rows.length ? `${active} of ${rows.length} coins with a call · ${tf.toUpperCase()}` : "One call per coin."}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div className="seg" role="group" aria-label="Market">
@@ -185,7 +185,7 @@ export default function Signals() {
           </div>
         </>
       )}
-      <p className="text-xs text-mute">Signals are analysis, not financial advice. Spot calls are buy-only (sell means take profit or stay out); futures calls can be long or short. Practise any call with one tap in paper trading.</p>
+      <p className="text-xs text-mute">Analysis only, not financial advice. Spot calls are buy-only.</p>
     </div>
   );
 }

@@ -16,6 +16,7 @@ import { fillLabel, Pill } from "./SignalExtras";
 import { isOpen, LiveResult, LiveRoi, RecordSheet, ReturnFigure, statusOf } from "./RecordDetails";
 import { Curve } from "./TrackRecord";
 import { useFocusTrap } from "./Shell";
+import { Info } from "./ui";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 const rate = (v: unknown) => (isNum(v) ? `${Math.round(v * 100)}%` : "—");
@@ -198,11 +199,11 @@ function Trades({ rows, empty, onOpen }: { rows: any[]; empty: string; onOpen: (
 }
 
 function BotBlock({ b }: { b: any }) {
-  if (!b) return <p className="panel p-4 text-sm text-mute">The 15m demo bot is not running, so there is no bot book to show.</p>;
+  if (!b) return <p className="panel p-4 text-sm text-mute">The 15m demo bot is not running.</p>;
   return (
     <section className="panel p-0" aria-label="15m demo bot">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-3">
-        <div><h3 className="font-semibold">{b.name ?? "15m demo bot"}</h3><p className="text-[11px] text-mute">Virtual money{b.started_at ? ` · since ${fmtDate(b.started_at)}` : ""} · fees and funding included · its own exits (whole position at target 1) · Return = change of the bot's equity; each trade = profit ÷ position size</p></div>
+        <div><h3 className="font-semibold">{b.name ?? "15m demo bot"}</h3><p className="text-[11px] text-mute">Virtual money{b.started_at ? ` · since ${fmtDate(b.started_at)}` : ""} · fees included · return = equity change</p></div>
         {!b.enabled && <Pill tone="warn">paused</Pill>}
       </div>
       <dl className="grid grid-cols-2 gap-3 p-4 sm:grid-cols-5">
@@ -254,7 +255,7 @@ export default function Scalping() {
       <Sources d={d} />
 
       {!(s.closed > 0) ? (
-        <p className="panel p-5 text-center text-sm text-mute">No 15m grade-A call has closed yet{d.since ? ` since ${fmtDate(d.since)}` : ""}. Every result, win or loss, appears here as soon as one closes.</p>
+        <p className="panel p-5 text-center text-sm text-mute">No 15m grade-A call has closed yet{d.since ? ` since ${fmtDate(d.since)}` : ""}. Every result, win or loss, appears here.</p>
       ) : (
         <>
           <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -299,7 +300,7 @@ export default function Scalping() {
         <div className="overflow-x-auto"><Trades rows={recent} empty="No call has closed yet." onOpen={(x) => setDetail(x.id)} /></div>
       </section>
       <BotBlock b={d.bot} />
-      <p className="px-1 text-[11px] text-mute">{d.method}{d.backfill ? ` ${d.backfill.note}` : ""} Live figures follow the current price and are not a result until the call closes. Never part of the public track record.</p>
+      <p className="px-1 text-[11px] text-mute">Before fees. Wins and losses alike; not part of the public record. {(d.method || d.backfill) && <Info label="How it is counted">{d.method}{d.backfill ? ` ${d.backfill.note}` : ""}</Info>}</p>
       {shown && <RecordSheet x={shown} scalp onClose={() => setDetail(null)} />}
     </div>
   );

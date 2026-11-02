@@ -217,8 +217,8 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                   {!pending && <LiveRoi x={x} size="md" plain={scalp} />}
                 </div>
                 <p className="mt-2 text-[11px] text-mute">{pending
-                  ? "A pullback entry: the call starts only when the price trades through the entry. If it never does, it is listed as “Entry missed” and not counted."
-                  : `Follows the live price; not a result yet. The ${scalp ? "scalping log" : "record"} is written by the engine when the call closes (before fees).`}</p>
+                  ? "Pullback entry: counts only once price reaches the entry."
+                  : "Live price; not a result until it closes. Before fees."}</p>
               </div>
             ) : (
               <div className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${isNum(x.return_pct) ? (x.return_pct > 0 ? "border-bull/35 bg-bull/[0.07]" : "border-bear/35 bg-bear/[0.07]") : "border-glass/[0.1]"}`}>
@@ -271,7 +271,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
               {open && !pending && <Link className="btn px-3 py-1.5 text-xs" to={`/paper?${paperQ}`}>Practise this trade</Link>}
               {open && x.id && !scalp && <AdjustButton call={adminCall(x)} symbol={x.symbol} timeframe={x.timeframe} />}
             </div>
-            <p className="text-[11px] text-mute">{scalp ? "Demo results, before fees. Every logged scalping call stays in this log, win or loss; it is never part of the public record." : "Analysis only, not financial advice. Every published signal stays in the record, win or loss."}</p>
+            <p className="text-[11px] text-mute">{scalp ? "Demo results, before fees. Wins and losses alike; not part of the public record." : "Analysis only, not financial advice. Wins and losses alike, never edited."}</p>
           </div>
         </div>
       </div>

@@ -60,7 +60,7 @@ export default function History() {
             </tbody>
           </table>
         </div>
-        {h.data && !all.length && <Empty>No signals logged yet. A row is added whenever an asset's signal or decision changes.</Empty>}
+        {h.data && !all.length && <Empty>No signals logged yet.</Empty>}
         {h.data && all.length > 0 && !shown.length && <Empty>No signals match these filters. <button className="text-accent hover:underline" onClick={f.clear}>Clear all filters</button></Empty>}
       </Card>
     </div>

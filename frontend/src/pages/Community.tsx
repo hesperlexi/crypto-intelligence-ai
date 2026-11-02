@@ -133,12 +133,12 @@ export default function Community() {
     <div className="mx-auto max-w-2xl space-y-4">
       <div>
         <h1 className="page-title">Community</h1>
-        <p className="page-sub">Talk with other members. Be kind, no spam, no promotions. Nothing here is financial advice.</p>
+        <p className="page-sub">Be kind, no spam. Not financial advice.</p>
       </div>
       {s && s.username ? <Composer uid={s.uid} username={s.username} admin={admin} />
         : s && auth.currentUser ? (
           <div className="panel p-3 sm:p-4">
-            <p className="mb-3 text-sm"><span className="font-semibold">Choose a username to post.</span> <span className="text-mute">Other members see it next to your posts; it can't be changed later.</span></p>
+            <p className="mb-3 text-sm"><span className="font-semibold">Choose a username to post.</span> <span className="text-mute">It can't be changed later.</span></p>
             <UsernameForm user={auth.currentUser} admin={admin} compact />
           </div>
         ) : null}

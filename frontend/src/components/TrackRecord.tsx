@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useApi } from "../lib/api";
 import { base, fmtDate, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { CoinAvatar } from "./Polish";
+import { Info } from "./ui";
 import { Explain, useIsPro } from "../lib/mode";
 import { managedLabel, fillLabel, Pill, RoiFigure } from "./SignalExtras";
 import { SealPill } from "./SealProof";
@@ -43,7 +44,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   const [detail, setDetail] = useState<string | null>(null);   // row key; the row is looked up again when the view refreshes
   const pro = useIsPro();
   const d = v.data;
-  if (!d && v.error) return <p className="panel p-4 text-center text-sm text-mute">The track record is being prepared and appears after the next engine run.</p>;
+  if (!d && v.error) return <p className="panel p-4 text-center text-sm text-mute">The track record appears after the next update.</p>;
   if (!d) return <div className="skeleton h-40 rounded-xl" />;
   const s = d.live?.summary ?? {};
   const tested: any[] = d.tested ?? [];
@@ -73,25 +74,25 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent))" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
           <h2 className="mt-3 text-lg font-semibold">No trades yet</h2>
           <p className="mt-1 max-w-md text-sm text-mute">
-            {d.record_since ? `The record started on ${fmtDate(d.record_since)}. ` : ""}No signal has closed since then. Every result, win or loss, appears here as soon as a signal closes.
+            {d.record_since ? `Since ${fmtDate(d.record_since)}. ` : ""}Every result, win or loss, appears here when a signal closes.
             {sigs.length ? ` ${sigs.filter((x) => x.status === "OPEN").length} open now.` : ""}
           </p>
         </div>
       ) : (
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi k="Closed signals" v={String(s.closed ?? 0)} sub={d.record_since ? `${d.testing_since ? "testing period · " : ""}since ${fmtDate(d.record_since)}${d.record_since_tf?.["15m"] ? ` (15M since ${fmtDate(d.record_since_tf["15m"])}, rule updates)` : ""} · ${d.live?.open ?? 0} open` : d.since ? `since ${fmtDate(d.since)} · ${d.live?.open ?? 0} open` : undefined} />
+        <Kpi k="Closed signals" v={String(s.closed ?? 0)} sub={d.record_since ? `${d.testing_since ? "testing · " : ""}since ${fmtDate(d.record_since)}${d.record_since_tf?.["15m"] ? ` (15M ${fmtDate(d.record_since_tf["15m"])})` : ""} · ${d.live?.open ?? 0} open` : d.since ? `since ${fmtDate(d.since)} · ${d.live?.open ?? 0} open` : undefined} />
         <Kpi k="Win rate (live)" v={rate(s.win_rate)} sub={s.closed ? `${s.closed} closed signals` : "first results soon"} />
-        {roi ? <Kpi k="Avg ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin at each card's leverage · price ${pct(s.avg_return_pct, 2)} · before fees`} />
+        {roi ? <Kpi k="Avg ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin · price ${pct(s.avg_return_pct, 2)} · before fees`} />
           : <Kpi k="Avg price move per signal" v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub="before fees" />}
         {pro ? <Kpi k="Tested hit rate" v={rate(avgTested)} sub={`${edge.length} coin/timeframes with a proven edge`} />
           : roi ? <Kpi k="Total ROI on margin" v={pct(s.total_roi_pct)} cls={tone(s.total_roi_pct)} sub={`all closed signals · price ${pct(s.total_return_pct)}`} />
           : <Kpi k="Total price move" v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub="all closed signals, equal size" />}
       </div>
       )}
-      <Explain>Win rate: the share of closed signals that ended in profit. ROI on margin: the price move times the leverage the signal card suggested (a 2.5% move at 10x is +25% on the margin; losses grow the same way). Before fees.</Explain>
+      <Explain>ROI on margin = price move × suggested leverage. Leverage magnifies losses.</Explain>
       {(d.live?.curve?.length ?? 0) > 1 && (
         <div className="panel px-4 pt-3">
-          <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? "Cumulative ROI on margin of every closed signal (equal margin)" : "Cumulative price move of every closed signal (equal size)"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>
+          <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? "Cumulative ROI on margin" : "Cumulative price move"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>
           <Curve pts={d.live.curve} roi={roi} />
         </div>
       )}
@@ -105,7 +106,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           </div>
           {(tab === "live" || (!pro && tab === "tested")) && (
             <div className="overflow-x-auto">
-              {!sigs.length ? <p className="p-4 text-sm text-mute">No trade signals yet. Each one appears here the moment it is published, and its result is filled in as the price moves.</p> : (<>
+              {!sigs.length ? <p className="p-4 text-sm text-mute">No trade signals yet.</p> : (<>
                 {/* phones: one card per signal, the result on margin up front */}
                 <ul className="divide-y divide-glass/[0.06] sm:hidden">
                   {sigs.map((x, i) => {
@@ -151,13 +152,13 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                   </tbody>
                 </table>
               </>)}
-              <p className="px-4 py-2 text-[11px] text-mute">Tap a signal for its details. <span className="font-semibold text-accent">Live</span> figures follow the current price and are not a result until the call closes.</p>
+              <p className="px-4 py-2 text-[11px] text-mute">Tap a signal for details. <span className="font-semibold text-accent">Live</span> = not final until closed.</p>
             </div>
           )}
           {shown && <RecordSheet x={shown} onClose={() => setDetail(null)} />}
           {tab === "tested" && pro && (
             <div className="overflow-x-auto">
-              <p className="px-4 pt-3 text-xs text-mute">{d.method?.tested} A coin/timeframe without a proven edge gets no AI-led signals.</p>
+              <p className="px-4 pt-3 text-xs text-mute">Simulation on unseen data, not live results. {d.method?.tested && <Info>{d.method.tested}</Info>}</p>
               <table className="grid-table mt-2 min-w-[560px]">
                 <thead><tr><th>Coin</th><th>Edge</th><th className="text-right">Hit rate (selective)</th><th className="text-right">95% range</th><th className="text-right">Calls / day</th><th className="text-right">Tested over</th></tr></thead>
                 <tbody>
@@ -177,7 +178,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           )}
           {tab === "bots" && (
             <div className="overflow-x-auto">
-              <p className="px-4 pt-3 text-xs text-mute">Bots trade automatically with virtual money, around the clock, on every coin. The two <b className="text-accent">APP SCORECARD</b> bots take exactly the futures calls members see on the Signals page (grades A and B), with stop-loss, three targets and fees, so their result is the app's real performance.</p>
+              <p className="px-4 pt-3 text-xs text-mute">Virtual money. <b className="text-accent">APP SCORECARD</b> bots take exactly the Signals-page calls, fees included.</p>
               <table className="grid-table mt-2 min-w-[600px]">
                 <thead><tr><th>Bot (virtual money)</th><th className="text-right">Trades</th><th className="text-right">Win rate</th><th className="text-right">Return</th><th className="text-right">Buy &amp; hold</th><th className="text-right">Max drop</th></tr></thead>
                 <tbody>
@@ -192,7 +193,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
               </table>
             </div>
           )}
-          <p className="border-t border-glass/[0.06] px-4 py-2.5 text-[11px] text-mute">{d.method?.live} Nothing is removed or edited. Past results do not guarantee future results.</p>
+          <p className="border-t border-glass/[0.06] px-4 py-2.5 text-[11px] text-mute">Wins and losses alike, never edited. Before fees. Past results do not guarantee future results. {d.method?.live && <Info label="How results are counted">{d.method.live}</Info>}</p>
         </section>
       )}
     </div>

@@ -97,7 +97,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
     const run = plan.runner?.on ? plan.runner : null;
     const SPLIT = run ? ["stop → break-even", "stop → TP1", "stop → TP2"] : ["close 50%", "close 25%", "close 25%"];
     for (const [i, tg] of [...(plan.targets ?? [])].entries()) levels.push({ k: `Take-profit ${tg.name.replace("TP", "")} · 1:${isNum(tg.rr) ? (Math.round(tg.rr * 100) / 100).toString() : "?"}`, price: tg.price, cls: "text-bull",
-      note: [SPLIT[i], isNum(tg.probability) ? `${fmtProb(tg.probability)} reached before the stop` : null].filter(Boolean).join(" · ") });
+      note: [SPLIT[i], isNum(tg.probability) ? `${fmtProb(tg.probability)} hit before stop` : null].filter(Boolean).join(" · ") });
     if (run && isNum(run.target)) levels.push({ k: `Runner target · 1:${run.rr}`, price: run.target, cls: "text-bull", note: "AI: let it run · closes 100%" });
     levels.push({ k: "Entry (ideal)", price: plan.entry, cls: "text-accent", note: plan.entry_zone ? `zone ${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined });
     levels.push({ k: "Stop-loss", price: plan.stop, cls: "text-bear", note: isNum(plan.risk_pct) ? `risk ${fmtPctRaw(plan.risk_pct, 1, false)}` : undefined });
@@ -129,7 +129,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
     return (
       <section className="panel p-4">
         <div className="flex items-center gap-3"><CoinAvatar symbol={r.symbol} /><span className="font-semibold">{r.symbol}</span></div>
-        <p className="mt-3 text-sm text-mute">{r.reason ?? "Signals for this coin arrive after the next engine runs (about 15–30 minutes)."}</p>
+        <p className="mt-3 text-sm text-mute">{r.reason ?? "Signals arrive within about 30 minutes."}</p>
       </section>
     );
   }
@@ -138,10 +138,10 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   const lev = market === "futures" && isNum(plan?.suggested_leverage) ? plan.suggested_leverage : null;
   // context lines (quiet section): only what applies to this card
   const notes = [
-    r.record_status === "already_open" && <p key="open">Following the open call: this setup is already in the record, so it is not logged twice.</p>,
+    r.record_status === "already_open" && <p key="open">Already in the record (open call).</p>,
     v.tone !== "wait" && r.decision_basis && <p key="why"><span className="text-text/80">Why:</span> {r.decision_basis}</p>,
     pro && v.tone !== "wait" && isNum(r.filter_score) && <p key="filter" className="text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>,
-    isGoldSignal(r.symbol) && <p key="gold"><span className="font-semibold text-accent">Gold (XAU/USD).</span> Levels are in PAXG, which follows the gold price closely. On forex.com, use the same % distances from your entry (shown under each level).</p>,
+    isGoldSignal(r.symbol) && <p key="gold"><span className="font-semibold text-accent">Gold (XAU/USD).</span> Levels are in PAXG (tracks gold). On forex.com, use the same % distances.</p>,
     market === "spot" && v.tone === "bear" && <p key="spot">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>,
   ].filter(Boolean);
 
@@ -180,7 +180,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           )}
           {v.tone === "wait" && (
             <p className="mt-1.5 text-sm text-mute">
-              Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}. Set an alert and the app tells you when a setup appears.
+              Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}.
             </p>
           )}
           <div className="mt-2.5 empty:hidden"><CallStatusRow call={r.call} px={px} /></div>
@@ -209,7 +209,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
                 ? <Metric k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />
                 : <Metric k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="blended: 50% at TP1, 25% TP2, 25% TP3" />}
             </div>
-            {lev != null && lev > 1 && <p className="mt-1.5 text-[11px] text-warn">ROI is shown at {lev}x leverage. Leverage magnifies losses too.</p>}
+            {lev != null && lev > 1 && <p className="mt-1.5 text-[11px] text-warn">ROI at {lev}x. Leverage magnifies losses.</p>}
           </div>
         )}
         {active && plan && (
@@ -279,7 +279,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </Link>
           <button className="btn px-3" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
         </div>
-        {!compact && <p className="text-[11px] text-mute">Plan for the next {tfLabel} candles, refreshed every few minutes. A probability, not a promise: always use the stop-loss.</p>}
+        {!compact && <p className="text-[11px] text-mute">A probability, not a promise: always use the stop-loss.</p>}
       </div>
     </section>
   );

@@ -91,7 +91,7 @@ function SpotPaper() {
                 </div>
                 {held && <button className="btn w-full" onClick={() => order("SELL", held.qty)}>Close whole {symbol} position</button>}
                 {msg && <p className={`text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
-                <Note>Fills use the live price plus the configured slippage and half-spread, and pay the trading fee. Spot only: you cannot sell more than you hold.</Note>
+                <Note>Virtual money. Spot: you can't sell more than you hold.</Note>
                 <div className="flex items-end gap-2 border-t border-line pt-3">
                   <label className="flex-1 text-xs text-mute">Starting balance<input className="input mt-1" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} /></label>
                   <button className="btn" onClick={reset}>Reset account</button>

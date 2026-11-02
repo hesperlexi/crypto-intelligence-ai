@@ -152,7 +152,7 @@ function PageHead() {
   return (
     <div>
       <h1 className="page-title">Settings</h1>
-      <p className="page-sub">Appearance, notifications, the app and your membership. Saved on this device unless noted.</p>
+      <p className="page-sub">Saved on this device unless noted.</p>
     </div>
   );
 }
@@ -163,7 +163,7 @@ function ManualCard() {
     <Card title="User manual">
       <div className="flex items-center gap-3">
         <Logo size={48} />
-        <p className="text-sm text-mute">Signals, trading, alerts and bots, step by step.</p>
+        <p className="text-sm text-mute">The member guide (PDF).</p>
       </div>
       <div className="mt-3 flex flex-wrap gap-2">
         <a className="btn btn-primary" href={href} target="_blank" rel="noopener">Open manual</a>
@@ -211,7 +211,7 @@ function NotificationsCard() {
         <div className="mt-3 flex flex-wrap gap-2">
           {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy} onClick={() => act(push.enable)}>{perm === "denied" ? "Try again" : "Turn on notifications"}</button>
             : <button className="btn" disabled={busy} onClick={() => act(async () => { await push.disable(); return "Notifications turned off on this device."; })}>Turn off on this device</button>}
-          <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: the engine sends it on its next run (within about 5 minutes)."; })}>Send a test notification</button>
+          <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: arrives within about 5 minutes."; })}>Send a test notification</button>
         </div>
         {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
         {perm === "denied" && !msg && <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 p-2 text-sm text-warn">{push.blockedHelp()}</p>}
@@ -246,7 +246,7 @@ function AndroidCard() {
   return (
     <Card title="Install the app">
       <a className="btn btn-primary w-full justify-center py-3 text-base" href={info?.url ?? APK_URL}>⬇ Download the Android app (APK){info?.version ? ` v${info.version}` : ""}</a>
-      <p className="mt-1 text-xs text-mute">Asks for notification permission on first open. Needs Google Chrome on the phone.</p>
+      <p className="mt-1 text-xs text-mute">Needs Google Chrome on the phone.</p>
       <p className="mt-3 text-sm"><b>Android (Chrome):</b> open <span className="text-accent">{SITE_HOST}</span> → menu ⋮ → <b>Install app</b>.</p>
       <p className="mt-1 text-sm"><b>iPhone (Safari):</b> Share → <b>Add to Home Screen</b>.</p>
     </Card>
@@ -259,10 +259,10 @@ function ViewModeCard() {
     <Card title="View mode" right={<ModeSwitch />}>
       <p className="text-sm text-mute">
         {mode === "beginner"
-          ? "Beginner: a simpler view. Advanced numbers (scores, model statistics, confidence intervals, order book) are hidden and short explanations are shown next to the trade plan."
-          : "Pro: every number and statistic, as before. Switch to Beginner for a simpler view with short explanations."}
+          ? "Beginner: simpler view, advanced numbers hidden."
+          : "Pro: every number and statistic."}
       </p>
-      <p className="mt-1 text-xs text-mute">Saved on this device. Also in the header.</p>
+      <p className="mt-1 text-xs text-mute">Saved on this device.</p>
     </Card>
   );
 }

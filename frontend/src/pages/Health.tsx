@@ -23,7 +23,7 @@ function WritesCard({ e }: { e: any }) {
     <Card title="Database use today (Firebase free plan)" right={e?.firestore_lean ? <Badge tone="warn">lean mode</Badge> : n != null ? <Badge tone="bull">normal</Badge> : undefined}>
       <div className="flex flex-wrap items-end justify-between gap-3">
         <Stat label="Engine writes today" value={<span className={tone}>{n != null ? fmtNum(n, 0) : DASH}</span>}
-          sub={`budget ${fmtNum(budget, 0)} · free limit ${fmtNum(limit, 0)} a day (resets at midnight US Pacific)`} />
+          sub={`budget ${fmtNum(budget, 0)} · limit ${fmtNum(limit, 0)}/day`} />
         <div className="text-right text-xs text-mute">
           {reserve != null && <div>kept for members: <span className="num text-text">{fmtNum(reserve, 0)}</span>{isNum(e?.firestore_members_active) ? ` (${e.firestore_members_active} active in 24 h)` : ""}</div>}
           <div>engine goes lean at <span className="num text-text">{fmtNum(engineBudget, 0)}</span></div>
@@ -34,7 +34,7 @@ function WritesCard({ e }: { e: any }) {
         <div className="absolute inset-y-0 w-px bg-text/60" style={{ left: `${Math.min(100, (engineBudget / limit) * 100)}%` }} title="lean from here" />
       </div>
       <ReadsRow e={e} />
-      <Note>Counts only the engine's own writes and reads; members' writes (presence, practice trades, alerts) also use the {fmtNum(limit, 0)} limit, so the engine keeps room for them. Above its budget it publishes only the essentials, every 30 min.</Note>
+      <Note>Counts only the engine's own writes and reads.</Note>
     </Card>
   );
 }
@@ -48,7 +48,7 @@ function ReadsRow({ e }: { e: any }) {
   return (
     <div className="mt-4 border-t border-glass/[0.06] pt-3">
       <Stat label="Engine reads today" value={<span className={tone}>{n != null ? fmtNum(n, 0) : DASH}</span>}
-        sub={n != null ? `free limit ${fmtNum(limit, 0)} a day · ${pct.toFixed(1)}% used` : "shown after the next engine update"} />
+        sub={n != null ? `limit ${fmtNum(limit, 0)}/day · ${pct.toFixed(1)}% used` : "after the next update"} />
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-glass/[0.08]" role="img" aria-label={n != null ? `${fmtNum(n, 0)} of ${fmtNum(limit, 0)} reads used` : "no data"}>
         <div className={`h-full rounded-full ${n != null && n >= limit * 0.5 ? "bg-warn" : "bg-accent"}`} style={{ width: `${pct}%` }} />
       </div>
@@ -88,7 +88,7 @@ export default function Health() {
                 <Row k="Market data host" v={d.engine?.data_host?.replace("https://", "") ?? DASH} />
                 <Row k="Last training run" v={d.engine?.last_train?.finished_at ? ago(d.engine.last_train.finished_at) : "not yet"} />
               </div>
-              {d.engine?.last_tick_finished && Date.now() - d.engine.last_tick_finished > 45 * 60_000 && <Note>The engine is late. GitHub sometimes delays scheduled runs; if it stays late for hours, check the Actions tab of the repository.</Note>}
+              {d.engine?.last_tick_finished && Date.now() - d.engine.last_tick_finished > 45 * 60_000 && <Note>The engine is late. If it lasts hours, check GitHub Actions.</Note>}
             </Card>
             <Card title="Live prices (this browser)">
               <Stat label="Binance WebSocket" value={<Badge tone={connected ? "bull" : "bear"}>{connected ? "● LIVE" : "Disconnected"}</Badge>} sub="reconnects automatically" />
@@ -121,7 +121,7 @@ export default function Health() {
                 ))}
               </ul>
             ) : <p className="text-sm text-mute">No coin or timeframe is paused.</p>}
-            <Note>A coin/timeframe pauses when its last 25 live signals lost on average and fewer than 40% reached TP1. It resumes by itself once 8 hidden practice trades recover.</Note>
+            <Note>Pauses after a losing run; resumes by itself.</Note>
           </Card>
           <Card title="Candle series">
             <div className="max-h-96 overflow-auto"><table className="grid-table">

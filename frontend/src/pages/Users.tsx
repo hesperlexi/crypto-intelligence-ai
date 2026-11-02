@@ -2,7 +2,7 @@ import { collection, doc, getDoc, onSnapshot, updateDoc, writeBatch } from "fire
 import { countryName, flagUrl, ONLINE_MS } from "../lib/presence";
 import { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
-import { Badge, Card, Empty, ErrorBox, Note } from "../components/ui";
+import { Badge, Card, Empty, ErrorBox, Info, Note } from "../components/ui";
 import { useFocusTrap } from "../components/Shell";
 import { db } from "../lib/firebase";
 import { fmtTime } from "../lib/format";
@@ -121,7 +121,7 @@ export default function Users() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <h1 className="page-title">Users & memberships</h1>
-          <p className="page-sub">Check payment proofs, approve and extend memberships, and see who is using the app.</p>
+          <p className="page-sub">Payments, memberships and who is online.</p>
         </div>
         <div className="flex items-center gap-2 text-xs text-mute">
           <span className="num rounded-md border border-glass/10 px-2 py-1"><span className="font-semibold text-text">{all.length}</span> accounts</span>
@@ -224,10 +224,10 @@ export default function Users() {
       <div className="grid items-start gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
       <section className="panel flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Payment screenshots">
         <div className="text-sm"><span className="font-semibold">Payment screenshots</span>
-          <span className="block text-xs text-mute">A screenshot is deleted when you accept or reject its payment. <span className="num">{checkedProofs}</span> older checked screenshot{checkedProofs === 1 ? "" : "s"} still stored.</span></div>
+          <span className="block text-xs text-mute">Deleted when you accept or reject. <span className="num">{checkedProofs}</span> older checked screenshot{checkedProofs === 1 ? "" : "s"} still stored.</span></div>
         <button type="button" className="btn btn-sm btn-danger shrink-0" disabled={!checkedProofs} onClick={bulkDelete}>Delete all checked screenshots</button>
       </section>
-      <Note>Members pay with your Binance QR or by MEXC transfer to your UID, then upload a screenshot and/or the order ID. Check the payment arrived (Binance → Pay → History, or MEXC → Wallets → History) before approving. Approving adds the months after the current end date, so early renewals never lose days. When a membership ends, that person is locked out automatically until they renew; their paper accounts and alerts are kept. People approved before memberships existed have no end date until you give them a plan.</Note>
+      <Note>Check the payment arrived (Binance → Pay → History, or MEXC → Wallets → History) before approving. <Info label="Membership rules">Approving adds the months after the current end date, so early renewals never lose days. When a membership ends, that person is locked out until they renew; their paper accounts and alerts are kept. People approved before memberships existed have no end date until you give them a plan.</Info></Note>
       {proofUser && <ProofViewer u={proofUser} cfg={cfg} act={act} onClose={() => setProofOf(null)} onAsk={setAsk} />}
       {ask && <ConfirmSheet {...ask} onClose={() => setAsk(null)} />}
     </div>

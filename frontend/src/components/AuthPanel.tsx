@@ -51,10 +51,10 @@ export function AuthForms({ initial = "signin", onDone }: { initial?: AuthMode; 
     try {
       if (mode === "signup") { await signUp(email, pw); onDone?.(); }
       else if (mode === "signin") { await signInEmail(email, pw); onDone?.(); }
-      else { await resetPassword(email); setInfo(`If an account exists for ${email.trim()}, a reset link is on its way. Check your inbox (and spam).`); }
+      else { await resetPassword(email); setInfo(`If ${email.trim()} has an account, a reset link is on its way. Check spam too.`); }
     } catch (e2) {
       // a reset request never says whether the address has an account
-      if (mode === "reset" && /user-not-found/.test(String((e2 as any)?.code))) setInfo(`If an account exists for ${email.trim()}, a reset link is on its way. Check your inbox (and spam).`);
+      if (mode === "reset" && /user-not-found/.test(String((e2 as any)?.code))) setInfo(`If ${email.trim()} has an account, a reset link is on its way. Check spam too.`);
       else setErr(authMessage(e2));
     }
     setPw(""); setPw2("");          // never keep a typed password around after a try
@@ -77,7 +77,7 @@ export function AuthForms({ initial = "signin", onDone }: { initial?: AuthMode; 
       {mode === "reset" && (
         <div className="mb-4">
           <h3 className="font-display text-lg font-bold">Reset your password</h3>
-          <p className="mt-1 text-sm text-mute">Enter the email you signed up with. We'll send you a link to choose a new password.</p>
+          <p className="mt-1 text-sm text-mute">We'll email you a reset link.</p>
         </div>
       )}
       <form className="space-y-3" onSubmit={submit} noValidate>
@@ -100,7 +100,7 @@ export function AuthForms({ initial = "signin", onDone }: { initial?: AuthMode; 
       <div className="mt-3 flex justify-between text-xs">
         {mode === "signin" ? <button type="button" className="text-accent hover:underline" onClick={() => setMode("reset")}>Forgot password?</button>
           : mode === "reset" ? <button type="button" className="text-accent hover:underline" onClick={() => setMode("signin")}>← Back to sign in</button> : <span />}
-        {mode === "signup" && <span className="text-mute">We'll email you a link to confirm the address.</span>}
+        {mode === "signup" && <span className="text-mute">We'll email a confirmation link.</span>}
       </div>
     </div>
   );
@@ -119,7 +119,7 @@ export function AuthDialog({ mode, onClose }: { mode: AuthMode; onClose: () => v
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-xl font-bold">Welcome to Crypto Intelligence <span className="text-accent">AI</span></h2>
-              <p className="mt-1 text-sm text-mute">Sign in or create a free account, then choose a plan.</p>
+              <p className="mt-1 text-sm text-mute">Sign in or create a free account.</p>
             </div>
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close" onClick={close}>✕</button>
           </div>
@@ -152,22 +152,22 @@ export function VerifyEmailScreen({ user, onVerified }: { user: User; onVerified
   useEffect(() => { const t = window.setInterval(() => setWait(resendWait()), 1000); return () => window.clearInterval(t); }, []);
   const resend = async () => {
     setMsg(null);
-    try { await resendVerification(user); setWait(resendWait()); setMsg({ ok: true, text: "Sent again. It can take a minute to arrive; check the spam folder too." }); }
+    try { await resendVerification(user); setWait(resendWait()); setMsg({ ok: true, text: "Sent again. Check spam too." }); }
     catch (e) { setMsg({ ok: false, text: (e as any)?.code ? authMessage(e) : String((e as Error).message) }); }
   };
   const check = async () => {
     setBusy(true); setMsg(null);
     try {
       if (await refreshVerified(user)) onVerified();
-      else setMsg({ ok: false, text: "Not confirmed yet. Open the link in the email we sent, then tap this button again." });
+      else setMsg({ ok: false, text: "Not confirmed yet. Open the link in the email, then try again." });
     } catch (e) { setMsg({ ok: false, text: authMessage(e) }); }
     setBusy(false);
   };
   return (
     <CenterCard>
       <h1 className="text-xl font-semibold tracking-tight">Check your inbox</h1>
-      <p className="mt-2 text-sm text-mute">We sent a confirmation link to <span className="text-text [overflow-wrap:anywhere]">{user.email}</span>. Open it to confirm your email address, then come back here.</p>
-      <p className="mt-2 rounded-lg border border-warn/30 bg-warn/[0.06] px-3 py-2 text-xs text-warn">Not there after a minute? Check your <b>Spam / Junk</b> folder for an email from noreply@cryptointelai.com and mark it "Not spam".</p>
+      <p className="mt-2 text-sm text-mute">We sent a confirmation link to <span className="text-text [overflow-wrap:anywhere]">{user.email}</span>. Open it, then come back here.</p>
+      <p className="mt-2 rounded-lg border border-warn/30 bg-warn/[0.06] px-3 py-2 text-xs text-warn">Not there? Check <b>Spam / Junk</b> for noreply@cryptointelai.com.</p>
       <button className="btn btn-primary mt-5 w-full py-2.5" onClick={check} disabled={busy}>{busy ? "Checking…" : "I've confirmed my email"}</button>
       <button className="btn mt-2 w-full" onClick={resend} disabled={wait > 0}>{wait > 0 ? `Resend email in ${wait} s` : "Resend email"}</button>
       {msg && <p role={msg.ok ? "status" : "alert"} className={`mt-3 text-sm ${msg.ok ? "text-bull" : "text-warn"}`}>{msg.text}</p>}
@@ -224,7 +224,7 @@ export function UsernameScreen({ user, admin, onDone }: { user: User; admin: boo
   return (
     <CenterCard>
       <h1 className="text-xl font-semibold tracking-tight">Choose your username</h1>
-      <p className="mt-2 text-sm text-mute">Other members see it next to your posts in Community. It can't be changed later, and your email stays private. You can also do this later: it's only needed to post.</p>
+      <p className="mt-2 text-sm text-mute">Shown on your Community posts. It can't be changed later. Only needed to post.</p>
       <div className="mt-5"><UsernameForm user={user} admin={admin} onSaved={onDone} /></div>
       <button className="btn mt-2 w-full" onClick={onDone}>Later</button>
       <p className="mt-4 text-xs text-mute">Signed in as <span className="text-text [overflow-wrap:anywhere]">{user.email}</span> · <button className="text-accent hover:underline" onClick={() => signOut(auth)}>Sign out</button></p>

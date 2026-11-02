@@ -40,7 +40,7 @@ export function AdjustHistory({ adj, compact = false }: { adj?: Adjustment[] | n
   if (!adj?.length) return null;
   return (
     <div className={`border-l-2 border-warn/60 ${compact ? "mt-1 pl-2" : "pl-3"}`}>
-      {!compact && <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-warn">Changed by the admin · applies from the time shown</div>}
+      {!compact && <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-warn">Changed by the admin</div>}
       <ul className="space-y-0.5">
         {[...adj].reverse().map((a, i) => (
           <li key={i} className="text-[11px] leading-snug text-mute">

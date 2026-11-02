@@ -37,7 +37,7 @@ export default function Dashboard() {
     <div className="space-y-5">
       <NewsBanner />
       <DashboardHero rows={d?.rows} status={ms} tf={tf} sentiment={sentiment} market={market} basket={cross.data?.basket} />
-      <SectionHead title="Market overview" sub={`Signals and regimes on the ${tf.toUpperCase()} timeframe${refreshAt ? " · forecasts refreshed just now" : ""}`} right={<TfTabs value={tf} onChange={setTf} />} />
+      <SectionHead title="Market overview" sub={`${tf.toUpperCase()} timeframe${refreshAt ? " · refreshed just now" : ""}`} right={<TfTabs value={tf} onChange={setTf} />} />
       {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
       {!d && dash.loading && <Loading what="Loading market overview" />}
 
@@ -86,16 +86,15 @@ export default function Dashboard() {
           )}
           <ComingUp />
           <RadarMini />
-          <Note>Context only. Sentiment is never allowed to override price data.</Note>
         </Card>
       </div>
 
       {/* directly below the Fear & Greed row: dominance, altcoin season, market pulse, top headline */}
       <MarketInsights />
 
-      <SectionHead title="Models & forecasts" sub="Each horizon uses its own timeframe model. Context, not advice." />
+      <SectionHead title="Models & forecasts" sub="Context, not advice." />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-      <Card ai title="Forecast table — expected return per horizon" right={<span className="text-xs text-mute">each horizon uses its own timeframe model</span>}>
+      <Card ai title="Forecast table — expected return per horizon">
         <div className="table-wrap">
           <table className="grid-table">
             <thead><tr><th>Asset</th><th className="text-right">Current</th>{HORIZONS.map((h) => <th key={h} className="text-right">{h}</th>)}</tr></thead>
@@ -117,7 +116,7 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <Note>* The model for that horizon has no statistically confirmed out-of-sample edge after costs. Point forecasts are the centre of a wide range; open an asset for the intervals.</Note>
+        <Note>* No proven edge for that model.</Note>
       </Card>
 
       <Card title="Market heatmap — 24h change">
@@ -204,7 +203,7 @@ function WinsMini() {
             </li>
           ))}
         </ul>
-      ) : <p className="text-xs text-mute">No closed wins yet in this period. They appear here as soon as a signal reaches its target.</p>}
+      ) : <p className="text-xs text-mute">No wins yet in this period.</p>}
     </>
   );
 }

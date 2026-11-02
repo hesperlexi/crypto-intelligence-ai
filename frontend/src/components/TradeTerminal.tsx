@@ -140,7 +140,7 @@ export default function TradeTerminal() {
         </div>
       </section>
       {d && detail && <PositionDrawer market={market} d={d} id={detail} act={act} onPair={showPair} onClose={() => setDetail(null)} />}
-      <p className="text-xs text-mute">Practice account with virtual USDT. Market orders fill at the live price plus a small spread and slippage; limit orders fill when the price reaches them (checked on every 15-minute candle, also while the app is closed). Fees: spot 0.1%, futures 0.05% market / 0.02% limit.</p>
+      <p className="text-xs text-mute">Practice account, virtual USDT. Fees: spot 0.1%, futures 0.05% market / 0.02% limit.</p>
     </div>
     </StreamCtx.Provider>
   );
@@ -255,7 +255,7 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
           {CHART_TFS.map((t) => <button key={t} aria-pressed={tf === t} onClick={() => setTf(t)} className={`rounded-md px-2.5 py-1 text-xs ${tf === t ? "bg-accent/15 font-semibold text-accent" : "text-mute hover:text-text"}`}>{t}</button>)}
         </div>
         <span className="flex items-center gap-2">
-          <span className="hidden text-[11px] text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your entry, SL, TP, liquidation and limit orders are drawn on the chart"}</span>
+          <span className="hidden text-[11px] text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your levels are on the chart"}</span>
           <span className="inline-flex rounded-lg border border-glass/10 p-0.5">
             <button className={`rounded-md px-2 py-0.5 text-xs ${!pro ? "bg-accent font-semibold text-ink" : "text-mute"}`} aria-pressed={!pro} onClick={() => setPro(false)}>AI</button>
             <button className={`rounded-md px-2 py-0.5 text-xs ${pro ? "bg-accent font-semibold text-ink" : "text-mute"}`} aria-pressed={pro} onClick={() => setPro(true)}>Pro</button>
@@ -435,12 +435,12 @@ const openable = (open: () => void, label: string) => ({
 
 function FutPositions({ rows, act, hedges, onOpen, onPair }: { rows: any[]; act: Act; hedges?: any[]; onOpen: (key: string) => void; onPair: (s: string) => void }) {
   const [edit, setEdit] = useState<string | null>(null);
-  if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No open positions. Use the order form, or tap “Use this plan” on the AI call.</p>;
+  if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No open positions.</p>;
   return (
     <div className="space-y-2">
       {hedges?.map((h: any) => <div key={h.symbol} className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 text-xs">{h.symbol} hedged · combined P&L <span className={tone(h.pnl)}>${fmtNum(h.pnl)}</span> · net {h.net >= 0 ? "long" : "short"} ${fmtNum(Math.abs(h.net), 0)}</div>)}
       {rows.map((p) => <FutPositionRow key={p.key} p={p} act={act} editing={edit === p.key} setEdit={setEdit} onOpen={onOpen} onPair={onPair} />)}
-      <p className="text-[11px] text-mute">Tap a position for all its details. Tap the pair name to show it on the chart.</p>
+      <p className="text-[11px] text-mute">Tap a position for details.</p>
     </div>
   );
 }
@@ -507,7 +507,7 @@ const SpotHoldingRow = memo(function SpotHoldingRow({ p, act, onOpen, onPair }: 
 }, (a, b) => a.act === b.act && a.onOpen === b.onOpen && a.onPair === b.onPair && spotSig(a.p) === spotSig(b.p));
 
 function Orders({ rows, market, act, onPair }: { rows: any[]; market: Mkt; act: Act; onPair: (s: string) => void }) {
-  if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No open orders. Choose “Limit” in the order form to buy or sell at your price.</p>;
+  if (!rows.length) return <p className="py-6 text-center text-sm text-mute">No open orders.</p>;
   return (
     <div className="overflow-x-auto"><table className="grid-table">
       <thead><tr><th>Time</th><th>Pair</th><th>Type</th><th>Side</th><th className="text-right">Price</th><th className="text-right">{market === "futures" ? "Margin" : "Amount"}</th><th className="text-right">Action</th></tr></thead>

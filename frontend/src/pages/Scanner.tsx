@@ -118,7 +118,7 @@ export default function Scanner() {
           </table>
         </div>
         {scan.data && !rows.length && <Empty>No assets match this filter</Empty>}
-        <p className="mt-3 text-xs text-mute">* model has no statistically confirmed edge. “Breakout” is the historical frequency of a close above the 20-bar range within 5 bars from a similar position, not a model output. Hover a decision for its reason.</p>
+        <p className="mt-3 text-xs text-mute">* no proven edge. Hover a decision for its reason.</p>
       </Card>
     </div>
   );

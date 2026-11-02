@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { db } from "../lib/firebase";
 import { base, fmtPrice, fmtTime } from "../lib/format";
 import { myUid } from "../lib/session";
+import { Info } from "./ui";
 
 const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 3, coins: "all", notify: true, scale: true, max_same_side: 3 };
 type S = typeof DEF;
@@ -30,8 +31,8 @@ export default function AutoTrade() {
         <div>
           <div className="flex items-center gap-2 font-semibold">Auto-trade signals {saved.enabled && <span className="rounded bg-bull/15 px-1.5 py-0.5 text-[11px] font-bold text-bull">ON</span>}</div>
           <p className="text-xs text-mute">{saved.enabled
-            ? `Every new futures signal (${saved.timeframes.map((t) => t.toUpperCase()).join(" + ")}, grade ${saved.grades === "A" ? "A" : "A+B"}) opens with $${saved.margin} margin at ${saved.leverage === "signal" ? "the suggested" : `${saved.leverage}x`} leverage, also while the app is closed.`
-            : "Let the app place its futures signals in this practice account automatically, with the margin you choose."}</p>
+            ? `${saved.timeframes.map((t) => t.toUpperCase()).join(" + ")} · grade ${saved.grades === "A" ? "A" : "A+B"} · $${saved.margin} margin · ${saved.leverage === "signal" ? "suggested" : `${saved.leverage}x`} leverage · also while the app is closed`
+            : "Auto-place the app's futures signals here, with virtual money."}</p>
         </div>
         <div className="flex gap-2">
           <button className="btn px-3 py-1.5 text-xs" onClick={() => setOpen(!open)} aria-expanded={open}>{open ? "Close" : "Settings"}</button>
@@ -60,7 +61,7 @@ export default function AutoTrade() {
             <select className="input mt-1" value={s.take} onChange={(e) => setS({ ...s, take: e.target.value })}>
               <option value="tp1">Target 1 (quick, more wins)</option><option value="tp2">Target 2 (balanced)</option><option value="tp3">Target 3 (let it run)</option>
             </select></label>
-          <label className="block"><span className="text-xs text-mute">Max open trades (testing period: up to 3, max 6 new a day)</span>
+          <label className="block"><span className="text-xs text-mute">Max open trades (up to 3, 6 new a day)</span>
             <input className="input mt-1" type="number" min={1} max={3} value={s.max_open} onChange={(e) => setS({ ...s, max_open: Math.max(1, Math.min(3, Number(e.target.value) || 1)) })} /></label>
           <label className="block"><span className="text-xs text-mute">Coins</span>
             <select className="input mt-1" value={s.coins} onChange={(e) => setS({ ...s, coins: e.target.value })}>
@@ -71,7 +72,7 @@ export default function AutoTrade() {
           <label className="flex items-center gap-2 self-end pb-2 text-sm" title="Grade A trades use 1.2x your margin, grade B 0.8x, up to 1.5x when the trade filter rates the setup highly"><input type="checkbox" checked={s.scale} onChange={(e) => setS({ ...s, scale: e.target.checked })} />Bigger size on stronger signals</label>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={s.notify} onChange={(e) => setS({ ...s, notify: e.target.checked })} />Notify me on each auto-trade</label>
           <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] text-mute">Inside the signal's entry zone the trade opens at market; otherwise a limit order waits at the ideal entry (cancelled after 6 candles if it never fills). Stop-loss and take-profit come from the signal. One entry per signal; a coin with an open trade is skipped.</p>
+            <p className="text-[11px] text-mute">Stop-loss and targets come from the signal. <Info label="Entry rules">Inside the signal's entry zone the trade opens at market; otherwise a limit order waits at the ideal entry (cancelled after 6 candles if it never fills). One entry per signal; a coin with an open trade is skipped.</Info></p>
             <button className="btn btn-primary" disabled={!dirty || !s.timeframes.length} onClick={() => save(s, "Settings saved.")}>Save settings</button>
           </div>
         </div>

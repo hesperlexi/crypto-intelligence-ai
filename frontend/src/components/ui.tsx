@@ -1,4 +1,4 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { DASH, fmtProb, isNum } from "../lib/format";
 
 /** A card. `ai`: the content is model / AI-advisor output, so the card carries the shared AI marker
@@ -186,6 +186,18 @@ export function Tabs<T extends string>({ value, options, onChange, label, notes 
 
 export function Note({ children }: { children: ReactNode }) {
   return <p className="text-xs leading-relaxed text-mute">{children}</p>;
+}
+
+/** Small "ⓘ" toggle: longer detail stays hidden until tapped. Phrasing content only (spans), so it can sit inside a <p>. */
+export function Info({ children, label = "More info", className = "" }: { children: ReactNode; label?: string; className?: string }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className={`text-xs text-mute ${className}`}>
+      <button type="button" className="inline-flex h-5 w-5 items-center justify-center rounded-full align-middle text-[13px] leading-none text-mute hover:text-text"
+        aria-expanded={open} aria-label={label} title={label} onClick={() => setOpen((v) => !v)}>ⓘ</button>
+      {open && <span className="mt-1 block max-w-prose rounded-lg border border-glass/10 bg-ink/60 px-3 py-2 text-left leading-relaxed">{children}</span>}
+    </span>
+  );
 }
 
 export function Check({ ok, children }: { ok: boolean | null | undefined; children: ReactNode }) {

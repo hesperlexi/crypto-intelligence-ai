@@ -198,7 +198,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
         <div className="panel w-full max-w-sm p-7 text-center">
           {logo}
           <h1 className="text-xl font-semibold tracking-tight">No access</h1>
-          <p className="mt-2 text-sm text-mute">The account <span className="text-text">{user.email}</span> does not have access to this app. Ask the owner if you think this is a mistake.</p>
+          <p className="mt-2 text-sm text-mute">The account <span className="text-text">{user.email}</span> has no access. Contact support if this is a mistake.</p>
           <button className="btn mt-5 w-full" onClick={() => signOut(auth)}>Use another account</button>
           <SupportLink className="mt-3 block text-sm text-accent hover:underline" />
           <p className="mt-5 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
@@ -215,8 +215,8 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
           <h1 className="text-xl font-semibold tracking-tight">{expired ? "Your membership has ended" : <>Become a member of Crypto Intelligence <span className="text-accent">AI</span></>}</h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-mute">
             {expired
-              ? <>Membership for <span className="text-text">{user.email}</span> ended on {fmtDate(rec?.expires_at)}. Renew below to continue: your paper accounts, alerts and settings are kept.</>
-              : <>Signed in as <span className="text-text">{user.email}</span>. Choose a plan, pay with Binance or MEXC and send the proof. The app opens by itself as soon as the owner approves.</>}
+              ? <>Membership for <span className="text-text">{user.email}</span> ended on {fmtDate(rec?.expires_at)}. Renew below; your data is kept.</>
+              : <>Signed in as <span className="text-text">{user.email}</span>. Choose a plan, pay and send the proof.</>}
           </p>
         </div>
         <div className="mt-6">{rec === undefined ? <p className="text-center text-sm text-mute">Loading…</p> : <PaymentPanel record={rec} />}</div>
