@@ -14,33 +14,27 @@
   "ENA/USDT",
   "GALA/USDT",
   "NVDAB/USDT",
-  "ZEC/USDT"
+  "ZEC/USDT",
+  "U/USDT",
+  "TRX/USDT",
+  "UNI/USDT",
+  "NEAR/USDT",
+  "LINK/USDT"
  ],
  "views": {
   "15m": {
-   "rows": 15,
-   "updated": 1793542010977,
+   "rows": 20,
+   "updated": 1793621831278,
    "tradable": [
     {
-     "symbol": "AAVE/USDT",
-     "side": "LONG",
+     "symbol": "BTC/USDT",
+     "side": "SHORT",
      "grade": null,
-     "rr": 1.31,
+     "rr": 1.62,
      "targets_rr": [
       1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "GALA/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
+      2.0,
+      2.5
      ]
     },
     {
@@ -55,13 +49,24 @@
      ]
     },
     {
-     "symbol": "BNB/USDT",
-     "side": "LONG",
+     "symbol": "U/USDT",
+     "side": "SHORT",
      "grade": null,
-     "rr": 1.38,
+     "rr": 1.31,
      "targets_rr": [
       1.0,
-      1.5,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "AAVE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
       2.0
      ]
     },
@@ -69,15 +74,15 @@
      "symbol": "SOL/USDT",
      "side": "SHORT",
      "grade": null,
-     "rr": 1.31,
+     "rr": 1.69,
      "targets_rr": [
       1.0,
-      1.25,
-      2.0
+      2.0,
+      2.75
      ]
     },
     {
-     "symbol": "ENA/USDT",
+     "symbol": "BNB/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -88,18 +93,7 @@
      ]
     },
     {
-     "symbol": "PAXG/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.38,
-     "targets_rr": [
-      1.0,
-      1.5,
-      2.0
-     ]
-    },
-    {
-     "symbol": "XRP/USDT",
+     "symbol": "AVAX/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -116,22 +110,33 @@
    "gold": {
     "status": "OK",
     "reason": null,
-    "decision": "NO TRADE",
+    "decision": "HOLD",
     "grade": null
    }
   },
   "1h": {
-   "rows": 15,
-   "updated": 1793542010978,
+   "rows": 20,
+   "updated": 1793621831280,
    "tradable": [
     {
-     "symbol": "SOL/USDT",
+     "symbol": "AVAX/USDT",
      "side": "SHORT",
      "grade": null,
-     "rr": 1.38,
+     "rr": 1.31,
      "targets_rr": [
       1.0,
-      1.5,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "GALA/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
       2.0
      ]
     },
@@ -147,8 +152,19 @@
      ]
     },
     {
-     "symbol": "BNB/USDT",
-     "side": "LONG",
+     "symbol": "NEAR/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "LINK/USDT",
+     "side": "SHORT",
      "grade": null,
      "rr": 1.31,
      "targets_rr": [
@@ -169,18 +185,7 @@
      ]
     },
     {
-     "symbol": "XRP/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.38,
-     "targets_rr": [
-      1.0,
-      1.5,
-      2.0
-     ]
-    },
-    {
-     "symbol": "PAXG/USDT",
+     "symbol": "BNB/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -213,18 +218,40 @@
    }
   },
   "4h": {
-   "rows": 15,
-   "updated": 1793542010980,
+   "rows": 20,
+   "updated": 1793621831282,
    "tradable": [
     {
-     "symbol": "GALA/USDT",
+     "symbol": "NEAR/USDT",
      "side": "SHORT",
-     "grade": "B",
+     "grade": null,
      "rr": 1.31,
      "targets_rr": [
       1.0,
       1.25,
       2.0
+     ]
+    },
+    {
+     "symbol": "BNB/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "SOL/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.56,
+     "targets_rr": [
+      1.0,
+      2.0,
+      2.25
      ]
     },
     {
@@ -250,18 +277,7 @@
      ]
     },
     {
-     "symbol": "SOL/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.56,
-     "targets_rr": [
-      1.0,
-      1.75,
-      2.5
-     ]
-    },
-    {
-     "symbol": "BTC/USDT",
+     "symbol": "GALA/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -272,18 +288,7 @@
      ]
     },
     {
-     "symbol": "ETH/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.69,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.75
-     ]
-    },
-    {
-     "symbol": "XRP/USDT",
+     "symbol": "TRX/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -294,13 +299,13 @@
      ]
     },
     {
-     "symbol": "PAXG/USDT",
-     "side": "SHORT",
+     "symbol": "ZEC/USDT",
+     "side": "LONG",
      "grade": null,
-     "rr": 1.31,
+     "rr": 1.38,
      "targets_rr": [
       1.0,
-      1.25,
+      1.5,
       2.0
      ]
     }
@@ -316,11 +321,33 @@
    }
   },
   "12h": {
-   "rows": 15,
-   "updated": 1793542010981,
+   "rows": 20,
+   "updated": 1793621571714,
    "tradable": [
     {
-     "symbol": "GALA/USDT",
+     "symbol": "PEPE/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.69,
+     "targets_rr": [
+      1.0,
+      2.0,
+      2.75
+     ]
+    },
+    {
+     "symbol": "SOL/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "TRX/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -353,39 +380,6 @@
      ]
     },
     {
-     "symbol": "PEPE/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.69,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.75
-     ]
-    },
-    {
-     "symbol": "BTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.38,
-     "targets_rr": [
-      1.0,
-      1.5,
-      2.0
-     ]
-    },
-    {
-     "symbol": "DOGE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
      "symbol": "PAXG/USDT",
      "side": "SHORT",
      "grade": null,
@@ -397,7 +391,18 @@
      ]
     },
     {
-     "symbol": "SOL/USDT",
+     "symbol": "GALA/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "ETH/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -414,25 +419,14 @@
    "gold": {
     "status": "OK",
     "reason": null,
-    "decision": "NO TRADE",
+    "decision": "HOLD",
     "grade": null
    }
   },
   "1d": {
-   "rows": 15,
-   "updated": 1793542010983,
+   "rows": 20,
+   "updated": 1793621571716,
    "tradable": [
-    {
-     "symbol": "LTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
     {
      "symbol": "DOGE/USDT",
      "side": "SHORT",
@@ -445,8 +439,30 @@
      ]
     },
     {
+     "symbol": "AAVE/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
      "symbol": "PAXG/USDT",
      "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
+    {
+     "symbol": "UNI/USDT",
+     "side": "LONG",
      "grade": null,
      "rr": 1.31,
      "targets_rr": [
@@ -467,18 +483,7 @@
      ]
     },
     {
-     "symbol": "ZEC/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.69,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.75
-     ]
-    },
-    {
-     "symbol": "AAVE/USDT",
+     "symbol": "LTC/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -489,7 +494,7 @@
      ]
     },
     {
-     "symbol": "SOL/USDT",
+     "symbol": "ETH/USDT",
      "side": "SHORT",
      "grade": null,
      "rr": 1.31,
@@ -500,14 +505,14 @@
      ]
     },
     {
-     "symbol": "GALA/USDT",
+     "symbol": "TRX/USDT",
      "side": "SHORT",
      "grade": null,
-     "rr": 1.56,
+     "rr": 1.31,
      "targets_rr": [
       1.0,
-      2.0,
-      2.25
+      1.25,
+      2.0
      ]
     }
    ],
@@ -517,14 +522,25 @@
    "gold": {
     "status": "OK",
     "reason": null,
-    "decision": "NO TRADE",
+    "decision": "HOLD",
     "grade": null
    }
   },
   "3d": {
-   "rows": 15,
-   "updated": 1793542010984,
+   "rows": 20,
+   "updated": 1793621571717,
    "tradable": [
+    {
+     "symbol": "TRX/USDT",
+     "side": "SHORT",
+     "grade": null,
+     "rr": 1.31,
+     "targets_rr": [
+      1.0,
+      1.25,
+      2.0
+     ]
+    },
     {
      "symbol": "SOL/USDT",
      "side": "SHORT",
@@ -545,6 +561,17 @@
       1.0,
       2.0,
       2.25
+     ]
+    },
+    {
+     "symbol": "UNI/USDT",
+     "side": "LONG",
+     "grade": null,
+     "rr": 1.69,
+     "targets_rr": [
+      1.0,
+      2.0,
+      2.75
      ]
     },
     {
@@ -590,17 +617,6 @@
       1.25,
       2.0
      ]
-    },
-    {
-     "symbol": "GALA/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
     }
    ],
    "statuses": [
@@ -619,7 +635,7 @@
   "status": "LIVE",
   "engine": {
    "failed_steps": [],
-   "last_tick_seconds": 104.0
+   "last_tick_seconds": 86.4
   },
   "models_15m": [
    {
@@ -696,132 +712,182 @@
     "symbol": "ZEC/USDT",
     "state": "active",
     "message": ""
+   },
+   {
+    "symbol": "TRX/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "U/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "UNI/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "LINK/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "NEAR/USDT",
+    "state": "active",
+    "message": ""
    }
   ],
   "series_15m": [
    {
     "symbol": "BTC/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "LTC/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 30566,
+    "candles": 30655,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 30566,
+    "candles": 30655,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 30566,
+    "candles": 30655,
     "status": "OK"
    },
    {
     "symbol": "PAXG/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 30568,
+    "candles": 30657,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 30567,
+    "candles": 30656,
     "status": "OK"
    },
    {
     "symbol": "GALA/USDT",
-    "candles": 30173,
+    "candles": 30262,
     "status": "OK"
    },
    {
     "symbol": "NVDAB/USDT",
-    "candles": 13713,
+    "candles": 13802,
     "status": "OK"
    },
    {
     "symbol": "ZEC/USDT",
-    "candles": 30564,
+    "candles": 30653,
+    "status": "OK"
+   },
+   {
+    "symbol": "TRX/USDT",
+    "candles": 30654,
+    "status": "OK"
+   },
+   {
+    "symbol": "U/USDT",
+    "candles": 28146,
+    "status": "OK"
+   },
+   {
+    "symbol": "UNI/USDT",
+    "candles": 30655,
+    "status": "OK"
+   },
+   {
+    "symbol": "LINK/USDT",
+    "candles": 30655,
+    "status": "OK"
+   },
+   {
+    "symbol": "NEAR/USDT",
+    "candles": 30657,
     "status": "OK"
    }
   ]
  },
  "model_age_h": {
   "15m": {
-   "n": 15,
-   "fresh_12h": 0,
-   "max": 140.5,
+   "n": 20,
+   "fresh_12h": 1,
+   "max": 162.7,
    "missing": 0
   },
   "1h": {
-   "n": 15,
+   "n": 20,
    "fresh_12h": 15,
-   "max": 11.1,
+   "max": 129.1,
    "missing": 0
   },
   "4h": {
-   "n": 15,
+   "n": 20,
    "fresh_12h": 15,
-   "max": 11.1,
+   "max": 129.0,
    "missing": 0
   },
   "12h": {
-   "n": 15,
-   "fresh_12h": 14,
-   "max": 11.1,
+   "n": 20,
+   "fresh_12h": 15,
+   "max": 129.0,
    "missing": 1
   },
   "1d": {
-   "n": 15,
+   "n": 20,
    "fresh_12h": 14,
-   "max": 11.1,
-   "missing": 1
+   "max": 129.0,
+   "missing": 2
   },
   "3d": {
-   "n": 15,
+   "n": 20,
    "fresh_12h": 13,
-   "max": 11.0,
-   "missing": 2
+   "max": 128.9,
+   "missing": 3
   }
  },
  "last_train": {
-  "started_at": 1793502797040,
-  "finished_at": 1793502855689,
+  "started_at": 1793589664490,
+  "finished_at": 1793589722674,
   "detail": {
    "shards": 15,
-   "imported": 71,
+   "imported": 69,
    "skipped": 0,
-   "pruned_files": 53,
+   "pruned_files": 144,
    "failed": [],
    "derivs": {
     "funding": {
@@ -845,101 +911,166 @@
     "errors": [],
     "entry": {
      "3d": "old:0.0",
-     "1d": "pullback:0.25",
-     "12h": "confirm:0.25",
+     "1d": "old:0.0",
+     "12h": "old:0.0",
      "4h": "old:0.0",
      "1h": "old:0.0",
-     "15m": "old:0.0"
+     "15m": "market:0.0"
     },
     "filters": {
      "3d": {
       "enabled": false,
-      "reason": "only 119 trades to learn from",
-      "n": 119
+      "reason": "only 123 trades to learn from",
+      "n": 123
      },
      "1d": {
-      "enabled": true,
+      "enabled": false,
       "keep_fraction": 0.4,
-      "n": 638,
+      "n": 712,
       "exam": {
-       "n": 160,
-       "kept": 39,
-       "avg_r_all": 0.12029294708710067,
-       "avg_r_kept": 0.2544693551877605
+       "n": 178,
+       "kept": 41,
+       "avg_r_all": 0.21809892051269622,
+       "avg_r_kept": 0.15252191533073703
       },
-      "threshold": 0.5976283045628508,
-      "reason": "kept trades earned +0.25R vs +0.12R for all, on unseen trades"
+      "reason": "the filter did not improve results on unseen trades"
      },
      "12h": {
       "enabled": false,
       "keep_fraction": 0.4,
-      "n": 1788,
+      "n": 1576,
       "exam": {
-       "n": 447,
-       "kept": 196,
-       "avg_r_all": 0.08890854443441706,
-       "avg_r_kept": 0.06721849873293909
+       "n": 394,
+       "kept": 151,
+       "avg_r_all": 0.08105595949256292,
+       "avg_r_kept": -0.04951519162863637
       },
       "reason": "the filter did not improve results on unseen trades"
      },
      "4h": {
-      "enabled": false,
-      "keep_fraction": 0.8,
-      "n": 3588,
+      "enabled": true,
+      "keep_fraction": 0.4,
+      "n": 3701,
       "exam": {
-       "n": 897,
-       "kept": 711,
-       "avg_r_all": 0.04383200651850883,
-       "avg_r_kept": 0.05254630961822828
+       "n": 926,
+       "kept": 302,
+       "avg_r_all": 0.02734041297587508,
+       "avg_r_kept": 0.12373020039279181
       },
-      "reason": "the filter did not improve results on unseen trades"
+      "threshold": 0.5693575939744365,
+      "reason": "kept trades earned +0.12R vs +0.03R for all, on unseen trades"
      },
      "1h": {
       "enabled": false,
       "keep_fraction": 0.8,
-      "n": 2404,
+      "n": 2722,
       "exam": {
-       "n": 601,
-       "kept": 525,
-       "avg_r_all": -0.09276300296221245,
-       "avg_r_kept": -0.0804176834247889
+       "n": 681,
+       "kept": 572,
+       "avg_r_all": -0.05118094246998155,
+       "avg_r_kept": -0.02593679147996664
       },
       "reason": "the filter did not improve results on unseen trades"
      },
      "15m": {
-      "enabled": false,
+      "enabled": true,
       "keep_fraction": 0.8,
-      "n": 1360,
+      "n": 1371,
       "exam": {
-       "n": 340,
-       "kept": 273,
-       "avg_r_all": -0.04822499550287804,
-       "avg_r_kept": -0.01934883556487131
+       "n": 343,
+       "kept": 271,
+       "avg_r_all": -0.0365941429614064,
+       "avg_r_kept": 0.009474571589238038
       },
-      "reason": "the filter did not improve results on unseen trades"
+      "threshold": 0.3162659030633848,
+      "reason": "kept trades earned +0.01R vs -0.04R for all, on unseen trades"
      }
     },
-    "seconds": 49.6
+    "seconds": 49.0
    }
   }
  },
  "safety": [],
  "release": {
   "version": "2.1.0",
-  "updated_at": 1793386630880,
-  "launched_at": 1793386630880
+  "launched_at": 1793386630880,
+  "updated_at": 1793386630880
  },
  "track_record": {
   "record_since": 1793386630880,
-  "live_signals": 8,
-  "updated": 1793542010973
+  "live_signals": 9,
+  "updated": 1793621831270
  },
  "record_live": {
   "summary": {
-   "closed": 0
+   "closed": 4,
+   "win_rate": 1.0,
+   "avg_return_pct": 2.1324379558327085,
+   "total_return_pct": 8.529751823330834,
+   "best_pct": 3.144304423199218,
+   "worst_pct": 0.36638247724029016,
+   "profit_factor": null,
+   "avg_roi_pct": 12.187224347096375,
+   "total_roi_pct": 48.7488973883855,
+   "best_roi_pct": 18.865826539195307,
+   "worst_roi_pct": 3.6638247724029016
   },
-  "by_timeframe": null,
+  "by_timeframe": {
+   "12h": {
+    "closed": 2,
+    "win_rate": 1.0,
+    "avg_return_pct": 3.1078988079051073,
+    "total_return_pct": 6.215797615810215,
+    "best_pct": 3.144304423199218,
+    "worst_pct": 3.0714931926109967,
+    "profit_factor": null,
+    "avg_roi_pct": 18.647392847430645,
+    "total_roi_pct": 37.29478569486129,
+    "best_roi_pct": 18.865826539195307,
+    "worst_roi_pct": 18.42895915566598
+   },
+   "1d": {
+    "closed": 1,
+    "win_rate": 1.0,
+    "avg_return_pct": 1.9475717302803286,
+    "total_return_pct": 1.9475717302803286,
+    "best_pct": 1.9475717302803286,
+    "worst_pct": 1.9475717302803286,
+    "profit_factor": null,
+    "avg_roi_pct": 7.790286921121314,
+    "total_roi_pct": 7.790286921121314,
+    "best_roi_pct": 7.790286921121314,
+    "worst_roi_pct": 7.790286921121314
+   },
+   "4h": {
+    "closed": 1,
+    "win_rate": 1.0,
+    "avg_return_pct": 0.36638247724029016,
+    "total_return_pct": 0.36638247724029016,
+    "best_pct": 0.36638247724029016,
+    "worst_pct": 0.36638247724029016,
+    "profit_factor": null,
+    "avg_roi_pct": 3.6638247724029016,
+    "total_roi_pct": 3.6638247724029016,
+    "best_roi_pct": 3.6638247724029016,
+    "worst_roi_pct": 3.6638247724029016
+   }
+  },
   "signals": [
+   {
+    "symbol": "ETH/USDT",
+    "timeframe": "4h",
+    "side": "SHORT",
+    "grade": "B",
+    "status": "OPEN",
+    "fill_status": "FILLED",
+    "return_pct": 0.012272172609806287,
+    "roi_pct": 0.12272172609806287,
+    "peak_r": 0.3248295332611347,
+    "exit_reason": null,
+    "created_at": 1793577922544,
+    "closed_at": null
+   },
    {
     "symbol": "XRP/USDT",
     "timeframe": "4h",
@@ -947,9 +1078,9 @@
     "grade": "B",
     "status": "OPEN",
     "fill_status": "FILLED",
-    "return_pct": 0.7205379446438842,
-    "roi_pct": 7.205379446438842,
-    "peak_r": 0.3274846613561426,
+    "return_pct": 0.6571815553296889,
+    "roi_pct": 6.571815553296889,
+    "peak_r": 0.40004887847212556,
     "exit_reason": null,
     "created_at": 1793520019543,
     "closed_at": null
@@ -959,14 +1090,14 @@
     "timeframe": "4h",
     "side": "SHORT",
     "grade": "B",
-    "status": "OPEN",
+    "status": "EXPIRED",
     "fill_status": "FILLED",
-    "return_pct": 0.2834998483193796,
-    "roi_pct": 2.8349984831937958,
+    "return_pct": 0.36638247724029016,
+    "roi_pct": 3.6638247724029016,
     "peak_r": 0.2113634917622575,
-    "exit_reason": null,
+    "exit_reason": "admin_close",
     "created_at": 1793419219608,
-    "closed_at": null
+    "closed_at": 1793563453346
    },
    {
     "symbol": "ETH/USDT",
@@ -974,10 +1105,10 @@
     "side": "SHORT",
     "grade": "B",
     "status": "OPEN",
-    "fill_status": "PENDING",
-    "return_pct": null,
-    "roi_pct": null,
-    "peak_r": 0.0,
+    "fill_status": "FILLED",
+    "return_pct": -0.11857728726758499,
+    "roi_pct": -0.5928864363379249,
+    "peak_r": 0.046162997927169554,
     "exit_reason": null,
     "created_at": 1793417108487,
     "closed_at": null
@@ -987,14 +1118,14 @@
     "timeframe": "12h",
     "side": "SHORT",
     "grade": "B",
-    "status": "OPEN",
+    "status": "EXPIRED",
     "fill_status": "FILLED",
-    "return_pct": 2.0370374102482547,
-    "roi_pct": 12.222224461489528,
+    "return_pct": 3.0714931926109967,
+    "roi_pct": 18.42895915566598,
     "peak_r": 0.30562216288153876,
-    "exit_reason": null,
+    "exit_reason": "admin_close",
     "created_at": 1793405181623,
-    "closed_at": null
+    "closed_at": 1793564302179
    },
    {
     "symbol": "BNB/USDT",
@@ -1015,14 +1146,14 @@
     "timeframe": "12h",
     "side": "SHORT",
     "grade": "B",
-    "status": "OPEN",
+    "status": "EXPIRED",
     "fill_status": "FILLED",
-    "return_pct": 2.0568264938689573,
-    "roi_pct": 12.340958963213744,
+    "return_pct": 3.144304423199218,
+    "roi_pct": 18.865826539195307,
     "peak_r": 0.40844340725417855,
-    "exit_reason": null,
+    "exit_reason": "admin_close",
     "created_at": 1793404864691,
-    "closed_at": null
+    "closed_at": 1793563748906
    },
    {
     "symbol": "GALA/USDT",
@@ -1031,8 +1162,8 @@
     "grade": "B",
     "status": "OPEN",
     "fill_status": "FILLED",
-    "return_pct": -2.544828172551372,
-    "roi_pct": -15.268969035308233,
+    "return_pct": 0.8279676761707377,
+    "roi_pct": 4.9678060570244265,
     "peak_r": 0.20115823562972715,
     "exit_reason": null,
     "created_at": 1793386850485,
@@ -1043,23 +1174,23 @@
     "timeframe": "1d",
     "side": "SHORT",
     "grade": "B",
-    "status": "OPEN",
+    "status": "EXPIRED",
     "fill_status": "FILLED",
-    "return_pct": 1.740644583989892,
-    "roi_pct": 6.962578335959568,
+    "return_pct": 1.9475717302803286,
+    "roi_pct": 7.790286921121314,
     "peak_r": 0.1905575226410861,
-    "exit_reason": null,
+    "exit_reason": "admin_close",
     "created_at": 1793386794361,
-    "closed_at": null
+    "closed_at": 1793552442712
    }
   ]
  },
  "counts": {
-  "paper": 3,
+  "paper": 4,
   "paper_trades": 0,
-  "paper_futures_trades": 9,
+  "paper_futures_trades": 15,
   "auto_paper_state": 4,
-  "jobs": 2
+  "jobs": 23
  },
  "bots": [
   {
@@ -1081,6 +1212,14 @@
   {
    "id": "futures-demo-a-15m",
    "reset_token": "v28"
+  },
+  {
+   "id": "futures-demo-ab-1d",
+   "reset_token": "v210"
+  },
+  {
+   "id": "futures-demo-ab-3d",
+   "reset_token": "v210"
   }
  ]
 }
