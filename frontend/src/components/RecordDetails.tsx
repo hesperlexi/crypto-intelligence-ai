@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { base, fmtPctRaw, fmtPrice, fmtTime, isNum, slug } from "../lib/format";
-import { useTicker } from "../lib/live";
+import { useTicker, useTickerThrottled } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 import { AiNote, fillLabel, LevChip, livePnl, managedLabel, Pill, RoiFigure } from "./SignalExtras";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
@@ -92,7 +92,7 @@ function HitTags({ x }: { x: any }) {
 
 /** Result-column content of an OPEN row: "Live" pill, targets hit, stop in force, distances. */
 export function LiveResult({ x, compact = false }: { x: any; compact?: boolean }) {
-  const px = useTicker(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
+  const px = useTickerThrottled(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
   // pending: the "Waiting for entry" pill comes from the row's fill status; here only the price now
   if (isPending(x)) return !compact && isNum(px) ? <div className="num mt-0.5 text-[11px] font-normal text-mute">now <span className="text-text">{fmtPrice(px)}</span> · entry {fmtPrice(x.entry)}</div> : null;
   const l = liveOf(x, px);
@@ -129,7 +129,7 @@ export function ReturnFigure({ x, size = "md", align = "right" }: { x: any; size
 /** ROI-column figure of an OPEN row: live ROI on margin (price move as small text), labelled Live. `plain`: the trade's
  * price return only (scalping board), no leverage. */
 export function LiveRoi({ x, size = "sm", plain = false }: { x: any; size?: "sm" | "md"; plain?: boolean }) {
-  const px = useTicker(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
+  const px = useTickerThrottled(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
   if (isPending(x)) return <span className="text-[11px] text-mute">waiting for entry</span>;
   const l = liveOf(x, px);
   if (plain) {

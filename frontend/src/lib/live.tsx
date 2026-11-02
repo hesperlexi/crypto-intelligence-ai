@@ -320,3 +320,24 @@ export function useTicker(symbol: string | undefined, market: "futures" | "spot"
   const get = useCallback(() => (symbol ? (market === "spot" ? fastSnap.spotTickers : fastSnap.tickers)[symbol] : undefined), [symbol, market]);
   return useSyncExternalStore(subscribeFast, get, get);
 }
+
+/** One coin's live price, refreshed at most once every `ms` (default 1 s): for lists of many rows (track record,
+ *  scalping) where a full-speed price per row made the page sluggish. */
+export function useTickerThrottled(symbol: string | undefined, ms = 1000, market: "futures" | "spot" = "futures"): Ticker | undefined {
+  const pick = () => (symbol ? (market === "spot" ? fastSnap.spotTickers : fastSnap.tickers)[symbol] : undefined);
+  const [t, setT] = useState<Ticker | undefined>(pick);
+  useEffect(() => {
+    if (!symbol) { setT(undefined); return; }
+    let last = 0, timer = 0;
+    const update = () => { last = Date.now(); timer = 0; setT(pick()); };
+    update();
+    const un = subscribeFast(() => {
+      if (timer) return;
+      const wait = Math.max(0, ms - (Date.now() - last));
+      timer = window.setTimeout(update, wait);
+    });
+    return () => { un(); if (timer) window.clearTimeout(timer); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [symbol, ms, market]);
+  return t;
+}
