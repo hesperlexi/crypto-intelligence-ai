@@ -39,7 +39,7 @@ export default function WinsToday() {
               <CoinAvatar symbol={w.symbol} size={36} />
               <div className="min-w-0 flex-1">
                 <div className="font-display truncate text-lg font-bold leading-tight">{base(w.symbol)}</div>
-                <div className="mt-1 flex items-center gap-1.5 text-[11px]">
+                <div className="mt-1 flex items-center gap-1.5 text-xs">
                   <span className={`rounded-md px-1.5 py-0.5 font-extrabold leading-none text-ink ${w.side === "LONG" ? "bg-bull" : "bg-bear"}`}>{w.side}</span>
                   <span className="rounded-md border border-accent/45 px-1.5 py-0.5 font-bold leading-none text-accent">{String(w.timeframe).toUpperCase()}</span>
                   <span className="truncate text-mute">{when(w.closed_at)}</span>
@@ -54,13 +54,13 @@ export default function WinsToday() {
               {r?.leverage && (
                 <div className="text-right">
                   <LevChip lev={r.leverage} />
-                  <div className="num mt-1 text-[11px] leading-none text-mute">price {signedPct(r.price)}</div>
+                  <div className="num mt-1 text-xs leading-none text-mute">price {signedPct(r.price)}</div>
                 </div>
               )}
             </div>
             <dl className="num relative mt-4 grid grid-cols-2 border-t border-glass/[0.07] text-xs">
-              <div className="px-4 py-2.5"><dt className="text-[10px] uppercase tracking-wide text-mute">Entry</dt><dd className="mt-0.5 font-semibold text-text">{fmtPrice(w.entry)}</dd></div>
-              <div className="border-l border-glass/[0.07] px-4 py-2.5 text-right"><dt className="text-[10px] uppercase tracking-wide text-mute">{TARGET[w.status] ?? "Closed in profit"}</dt><dd className="mt-0.5 font-semibold text-bull">{isNum(w.target) ? fmtPrice(w.target) : "—"}</dd></div>
+              <div className="px-4 py-2.5"><dt className="text-xs uppercase tracking-wide text-mute">Entry</dt><dd className="mt-0.5 font-semibold text-text">{fmtPrice(w.entry)}</dd></div>
+              <div className="border-l border-glass/[0.07] px-4 py-2.5 text-right"><dt className="text-xs uppercase tracking-wide text-mute">{TARGET[w.status] ?? "Closed in profit"}</dt><dd className="mt-0.5 font-semibold text-bull">{isNum(w.target) ? fmtPrice(w.target) : "—"}</dd></div>
             </dl>
           </li>
           );
@@ -72,8 +72,8 @@ export default function WinsToday() {
           {" · "}<Link to="/results" className="text-accent hover:underline">full record, losses included, on Results (members)</Link>
         </p>
       )}
-      <p className="mt-3 text-center text-[11px] text-mute">Selected wins, after fees. ROI = result × suggested leverage; leverage magnifies losses too. Not financial advice.</p>
-      <p className="mt-1 text-center text-[11px] text-mute">Past results do not guarantee future results. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
+      <p className="mt-3 text-center text-xs text-mute">Selected wins, after fees. ROI = result × suggested leverage; leverage magnifies losses too. Not financial advice.</p>
+      <p className="mt-1 text-center text-xs text-mute">Past results do not guarantee future results. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
     </section>
   );
 }

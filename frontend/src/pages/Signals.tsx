@@ -4,7 +4,7 @@ import { TfTabs, useSymbols } from "../components/Pickers";
 import { CoinAvatar } from "../components/Polish";
 import NewsBanner from "../components/NewsBanner";
 import TradeCall, { Market, verdictOf } from "../components/TradeCall";
-import { Empty, ErrorBox, Loading } from "../components/ui";
+import { Empty, ErrorBox, Loading, Segmented } from "../components/ui";
 import { useApi } from "../lib/api";
 import { base, fmtPctRaw, fmtPrice, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
@@ -40,15 +40,6 @@ function callState(r: any): "open" | "closed" | null {
   return st === "OPEN" ? "open" : "closed";
 }
 
-function Seg<T extends string>({ label, value, options, onChange }: { label: string; value: T; options: readonly (readonly [T, string])[]; onChange: (v: T) => void }) {
-  return (
-    <div className="seg" role="group" aria-label={label}>
-      {options.map(([k, l]) => (
-        <button key={k} type="button" aria-pressed={value === k} onClick={() => onChange(k)}>{l}</button>
-      ))}
-    </div>
-  );
-}
 
 /** Pick a coin, pick spot or futures: one clear call with entry, stop and targets. */
 export default function Signals() {
@@ -123,14 +114,8 @@ export default function Signals() {
           <p className="page-sub">{all ? `${active} calls · all timeframes` : rows.length ? `${active} of ${rows.length} coins with a call · ${tf.toUpperCase()}` : "One call per coin."}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <div className="seg" role="group" aria-label="Market">
-            {(["futures", "spot"] as const).map((k) => (
-              <button key={k} type="button" aria-pressed={market === k} onClick={() => setMarket(k)}
-                className="seg-strong !px-4 !text-sm">
-                {k === "futures" ? "Futures" : "Spot"}
-              </button>
-            ))}
-          </div>
+          <Segmented label="Market" value={market} onChange={setMarket} strong className="[&>button]:!px-4 [&>button]:!text-sm"
+            options={[["futures", "Futures"], ["spot", "Spot"]] as const} />
           <TfTabs value={tf} onChange={setTf} options={TF_OPTIONS} notes={TF_NOTES} />
         </div>
       </div>
@@ -141,11 +126,11 @@ export default function Signals() {
             <span className="sr-only">Search coin</span>
             <input className="input input-sm w-full sm:w-44" type="search" placeholder="Search coin" value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
-          <Seg label="Direction" value={dir} onChange={setDir} options={[["all", "All"], ["long", market === "futures" ? "Long" : "Buy"], ["short", market === "futures" ? "Short" : "Sell"]] as const} />
-          <Seg label="Grade" value={grade} onChange={setGrade} options={[["all", "Any grade"], ["A", "A"], ["B", "B"]] as const} />
-          {hasCalls && <Seg label="Status" value={st} onChange={setSt} options={[["all", "Any status"], ["open", "Open"], ["closed", "Closed"]] as const} />}
+          <Segmented label="Direction" value={dir} onChange={setDir} options={[["all", "All"], ["long", market === "futures" ? "Long" : "Buy"], ["short", market === "futures" ? "Short" : "Sell"]] as const} />
+          <Segmented label="Grade" value={grade} onChange={setGrade} options={[["all", "Any grade"], ["A", "A"], ["B", "B"]] as const} />
+          {hasCalls && <Segmented label="Status" value={st} onChange={setSt} options={[["all", "Any status"], ["open", "Open"], ["closed", "Closed"]] as const} />}
           {all && (
-            <label className="flex cursor-pointer items-center gap-1.5 text-xs text-mute">
+            <label className="tap-h flex cursor-pointer items-center gap-1.5 text-xs text-mute">
               <input type="checkbox" className="accent-[rgb(var(--accent))]" checked={waits} onChange={(e) => setQuery({ waits: e.target.checked ? "1" : null })} />
               Show waits
             </label>
@@ -179,7 +164,7 @@ export default function Signals() {
                   <CoinAvatar symbol={r.symbol} size={20} />
                   <span className="font-semibold">{base(r.symbol)}</span>
                   <span className={`h-2 w-2 rounded-full ${DOT[vv.tone]}`} aria-hidden="true" />
-                  <span className={`text-[11px] font-bold ${TXT[vv.tone]}`}>{vv.label}</span>
+                  <span className={`text-xs font-bold ${TXT[vv.tone]}`}>{vv.label}</span>
                 </button>
               );
             })}
@@ -190,7 +175,7 @@ export default function Signals() {
 
             {/* all coins at a glance: table-like rows, side rule on the left */}
             <section className="panel self-start overflow-hidden p-0">
-              <div className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">All coins · {market}</h2><span className="text-[11px] text-mute">{active} active</span></div>
+              <div className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">All coins · {market}</h2><span className="text-xs text-mute">{active} active</span></div>
               <div className="sig-row sig-head label border-b border-glass/[0.06]" aria-hidden="true">
                 <span>Coin</span><span className="text-right">Entry</span><span className="text-right">Stop</span><span className="text-right">TP1</span><span className="text-right">Call</span>
               </div>
@@ -208,7 +193,7 @@ export default function Signals() {
                           <CoinAvatar symbol={r.symbol} size={26} />
                           <div className="min-w-0">
                             <div className="flex min-w-0 items-center gap-1.5"><span className="truncate font-semibold">{base(r.symbol)}</span>{vv.tone !== "wait" && (r.grade === "A" || r.grade === "B") && <span className={`grade-mini ${r.grade === "A" ? "is-a" : ""}`} title={r.grade === "A" ? "Grade A · strong: trend, AI models and their track record all agree" : "Grade B · moderate: AI-led call where the model's out-of-sample record shows an edge"}>{r.grade}</span>}</div>
-                            <div className="num truncate text-[11px] text-mute">{fmtPrice(px)}</div>
+                            <div className="num truncate text-xs text-mute">{fmtPrice(px)}</div>
                           </div>
                         </div>
                         {/* desktop: aligned price columns */}
@@ -219,7 +204,7 @@ export default function Signals() {
                         </>) : <span className="hidden truncate text-right text-xs text-mute sm:col-span-3 sm:block">{r.stale === true ? "Data delayed — no trade" : `leans ${r.lean ?? "—"} · no setup`}</span>}
                         <span className={`sig-side ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
                         {/* phone: the levels as one line; both: status line */}
-                        <div className="num col-span-full min-w-0 truncate pl-[2.1rem] text-[11px] text-mute sm:hidden">{r.stale === true ? "Data delayed — no trade" : show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
+                        <div className="num col-span-full min-w-0 truncate pl-[2.1rem] text-xs text-mute sm:hidden">{r.stale === true ? "Data delayed — no trade" : show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
                         <div className="col-span-full min-w-0 pl-[2.1rem] empty:hidden"><RowExtras r={r} show={!!show} market={market} px={px} /></div>
                       </button>
                     </li>
@@ -260,7 +245,7 @@ function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Mar
   if (risk) items.push(<span key="k" className={risk.level === "Low" ? "text-bull" : risk.level === "Medium" ? "text-warn" : "text-bear"} title={`If the stop is hit: about ${risk.lossAtStop.toFixed(1)}% of the position's margin`}>{risk.level} risk</span>);
   return (
     <>
-    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px]">
+    <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
       {items.map((it, i) => <span key={i} className="inline-flex items-center gap-1.5">{i > 0 && <span className="text-mute/50" aria-hidden="true">·</span>}{it}</span>)}
     </div>
     {c?.adjustments?.length > 0 && <AdjustHistory adj={c.adjustments.slice(-1)} compact />}

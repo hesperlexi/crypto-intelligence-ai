@@ -153,13 +153,13 @@ export default function Achievements() {
             <div className="mt-1 text-xs text-mute">{a.detail}</div>
             {a.unlocked ? (
               <>
-                {a.achieved_at && <div className="mt-1 text-[11px] text-mute">{fmtDate(a.achieved_at)}</div>}
+                {a.achieved_at && <div className="mt-1 text-xs text-mute">{fmtDate(a.achieved_at)}</div>}
                 <button className="btn mt-3 px-3 py-1.5 text-xs" disabled={busy === a.id} onClick={() => dl(a)}>{busy === a.id ? "Preparing…" : "Download image"}</button>
               </>
             ) : (
               <div className="mt-3 w-full">
                 <div className="h-1.5 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-accent" style={{ width: `${Math.round((a.progress ?? 0) * 100)}%` }} /></div>
-                <div className="mt-1 text-[11px] text-mute">locked · {Math.round((a.progress ?? 0) * 100)}%</div>
+                <div className="mt-1 text-xs text-mute">locked · {Math.round((a.progress ?? 0) * 100)}%</div>
               </div>
             )}
           </li>

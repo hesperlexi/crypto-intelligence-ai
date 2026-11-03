@@ -1,6 +1,6 @@
 import { ColorType, createChart } from "lightweight-charts";
 import { useEffect, useRef } from "react";
-import { chartColors, useAppearance } from "../lib/appearance";
+import { chartColors, themeColor, useAppearance } from "../lib/appearance";
 
 export interface Series {
   name: string;
@@ -31,7 +31,7 @@ export default function LineChart({ series, height = 260, percent = false }: { s
         .filter((p) => Number.isFinite(p.value) && !seen.has(p.time) && seen.add(p.time));
       if (!data.length) continue;
       const line = chart.addLineSeries({
-        color: s.color, lineWidth: 2, lineStyle: s.dashed ? 2 : 0, priceLineVisible: false, title: s.name,
+        color: themeColor(s.color), lineWidth: 2, lineStyle: s.dashed ? 2 : 0, priceLineVisible: false, title: s.name,
         priceFormat: percent ? { type: "percent" } : { type: "price", precision: 2, minMove: 0.01 },
       });
       line.setData(data);
@@ -45,7 +45,7 @@ export default function LineChart({ series, height = 260, percent = false }: { s
       <div className="mb-2 flex flex-wrap gap-x-4 gap-y-1 text-xs">
         {series.map((s) => (
           <span key={s.name} className="inline-flex items-center gap-1.5 text-mute">
-            <span className="inline-block h-0.5 w-4" style={{ background: s.color }} />
+            <span className="inline-block h-0.5 w-4" style={{ background: s.color.startsWith("--") ? `rgb(var(${s.color}))` : s.color }} />
             {s.name}
           </span>
         ))}

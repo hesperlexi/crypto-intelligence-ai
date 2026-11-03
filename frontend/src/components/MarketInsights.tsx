@@ -19,7 +19,7 @@ const chipTone = (v: number | null | undefined) => (!isNum(v) || Math.abs(v) < 0
 const when = (ms: unknown) => (isNum(ms) ? new Date(ms).toLocaleString(undefined, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—");
 
 function AsOf({ ms, source }: { ms: unknown; source?: string }) {
-  return <p className="mt-auto pt-3 text-[11px] text-mute" title={source}>As of {when(ms)}{isNum(ms) ? ` · ${ago(ms)}` : ""}{source ? ` · ${source.split(" (")[0].replace(/ market-cap ranking$/, "")}` : ""}</p>;
+  return <p className="mt-auto pt-3 text-xs text-mute" title={source}>As of {when(ms)}{isNum(ms) ? ` · ${ago(ms)}` : ""}{source ? ` · ${source.split(" (")[0].replace(/ market-cap ranking$/, "")}` : ""}</p>;
 }
 
 function Chip({ label, v }: { label: string; v: number | null | undefined }) {
@@ -54,7 +54,7 @@ function DomChart({ series }: { series: [number, number, number | null][] }) {
   const last = series[series.length - 1];
   return (
     <div className="relative mt-3">
-      <div className="mb-1 flex justify-between text-[11px] text-mute">
+      <div className="mb-1 flex justify-between text-xs text-mute">
         <span>{when(t0)}</span>
         <span className="num">{h ? `${when(h[0])} · ${h[1].toFixed(2)}%` : `range ${lo.toFixed(2)}–${hi.toFixed(2)}%`}</span>
       </div>
@@ -137,9 +137,9 @@ function Dominance({ d }: { d: any }) {
 
 function AltSeason({ a }: { a: any }) {
   const v = isNum(a?.value) ? Math.max(0, Math.min(100, a.value)) : null;
-  const color = v == null ? "rgb(var(--mute))" : v <= 25 ? "#f7931a" : v >= 75 ? "#8b7cf6" : "rgb(var(--accent))";
+  const color = v == null ? "rgb(var(--mute))" : v <= 25 ? "rgb(var(--warn))" : v >= 75 ? "rgb(var(--ai))" : "rgb(var(--accent))";
   return (
-    <Card title="Altcoin season index" right={<span className="text-[11px] text-mute">0–100</span>} className={STRETCH}>
+    <Card title="Altcoin season index" right={<span className="text-xs text-mute">0–100</span>} className={STRETCH}>
       {a && v != null ? (
         <>
           <div className="flex items-end justify-between gap-3">
@@ -148,14 +148,14 @@ function AltSeason({ a }: { a: any }) {
           </div>
           <div className="relative mt-4">
             <div className="flex h-3 overflow-hidden rounded-full" aria-hidden="true">
-              <div className="h-full bg-[#f7931a]/70" style={{ width: "25%" }} />
+              <div className="h-full bg-warn/70" style={{ width: "25%" }} />
               <div className="h-full bg-glass/[0.10]" style={{ width: "50%", marginLeft: 2, marginRight: 2 }} />
-              <div className="h-full bg-[#8b7cf6]/70" style={{ width: "25%" }} />
+              <div className="h-full bg-ai/70" style={{ width: "25%" }} />
             </div>
             <span className="absolute top-1/2 h-5 w-5 -translate-x-1/2 -translate-y-1/2 rounded-full border-[3px] bg-ink shadow" style={{ left: `${v}%`, borderColor: color }}
               role="img" aria-label={`Index ${v} of 100`} />
           </div>
-          <div className="mt-1.5 grid grid-cols-[1fr_2fr_1fr] text-[11px] text-mute">
+          <div className="mt-1.5 grid grid-cols-[1fr_2fr_1fr] text-xs text-mute">
             <span className="text-left">Bitcoin season</span>
             <span className="num text-center">25 · neither · 75</span>
             <span className="text-right">Altcoin season</span>

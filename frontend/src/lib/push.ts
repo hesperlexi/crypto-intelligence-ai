@@ -17,10 +17,31 @@ export function inAndroidApp(): boolean {
   try { return localStorage.getItem("cia-android-app") === "1"; } catch { return false; }
 }
 
+/** The Android app (APK) shows the site through the phone's browser. Older builds could open in Samsung Internet,
+ *  Firefox … which cannot deliver notifications; the newest APK needs Google Chrome. True = this app cannot get
+ *  notifications as it is: install Chrome / the newest app. */
+export function appWithoutChrome(): boolean {
+  if (!inAndroidApp()) return false;
+  try { return /SamsungBrowser|Firefox|EdgA|OPR|YaBrowser|UCBrowser|MiuiBrowser|HuaweiBrowser/i.test(navigator.userAgent) || !pushSupported(); } catch { return false; }
+}
+/** @deprecated name kept for older call sites */
+export const oldApk = appWithoutChrome;
+
+export const APK_URL = "https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk";
+
+/** Step-by-step fix for the Android app when notifications are blocked (shown collapsible). */
+export const ANDROID_STEPS: readonly string[] = [
+  "Make sure Google Chrome is installed and turned on (Play Store → Chrome).",
+  "Install the newest app: More → Download Android app.",
+  "Phone Settings → Apps → Crypto AI → Notifications → Allow.",
+  "Also allow notifications for Chrome, and turn battery saver off for the app.",
+  "In the app: Settings → Notifications → Turn on, then Send a test notification.",
+];
+
 /** What to do when notifications are blocked, for the device the person is on. */
 export function blockedHelp(): string {
   const ua = navigator.userAgent;
-  if (inAndroidApp()) return "Notifications are switched off for the Crypto AI app. Open your phone's Settings → Apps → Crypto AI → Notifications and turn them on (or long-press the app icon → App info → Notifications), then come back and tap Turn on again.";
+  if (inAndroidApp()) return "Notifications are switched off for the Crypto AI app. Allow them in your phone's Settings → Apps → Crypto AI → Notifications, then tap Turn on again.";
   if (/android/i.test(ua)) return `Notifications are blocked for this site in Chrome. Tap the lock icon next to the address (or Chrome menu → Settings → Site settings → Notifications), allow ${location.hostname || SITE_HOST}, then tap Turn on again. Also check phone Settings → Apps → Chrome → Notifications.`;
   if (/iphone|ipad|ipod/i.test(ua)) return "On iPhone: open the app from the Home Screen icon (not Safari), then Settings → Notifications → Crypto Intelligence AI → Allow Notifications.";
   return "Notifications are blocked. Lock icon in the address bar → Site settings → Notifications → Allow, then reload.";
@@ -36,9 +57,14 @@ async function report(stage: string, e: any) {
   } catch { /* ignore */ }
 }
 
+/** Shown when the permission question was closed without an answer (permission still "default"). */
+export const DISMISSED_TEXT = "You closed the question. Tap Allow to try again.";
+
 function friendly(e: any): string {
   const m = String(e?.code ?? "") + " " + String(e?.message ?? e);
-  if (/permission-blocked|permission-default|NotAllowedError|denied/i.test(m)) return blockedHelp();
+  if (/permission-default/i.test(m)) return DISMISSED_TEXT;
+  // only the browser's own "notifications blocked" answers; a server's PERMISSION_DENIED is handled below
+  if (/messaging\/permission-blocked|NotAllowedError|permission (was |has been )?(denied|blocked)/i.test(m) && !/PERMISSION_DENIED/.test(m)) return blockedHelp();
   if (/token-subscribe-failed|token-update-failed|Requested entity was not found|API has not been used|PERMISSION_DENIED/i.test(m))
     return "The notification service refused this device. The app owner has been told; please try again later.";
   if (/applicationServerKey|InvalidStateError|push service error|AbortError/i.test(m))
@@ -78,7 +104,11 @@ export async function enable(): Promise<string> {
   }
   let perm: NotificationPermission;
   try { perm = await Notification.requestPermission(); } catch (e) { await report("permission", e); throw new Error(friendly(e)); }
-  if (perm !== "granted") { await report("permission", { code: perm, message: `permission ${perm}` }); throw new Error(blockedHelp()); }
+  if (perm !== "granted") {
+    await report("permission", { code: perm, message: `permission ${perm}` });
+    // "default" = the question was closed (or not shown): ask again later, it is not blocked
+    throw new Error(perm === "default" ? DISMISSED_TEXT : blockedHelp());
+  }
   const key = await vapidKey();
   if (!key) return "Notifications are on while the app is open. To get them when the app is closed, the app owner still has to add the Web Push key.";
   const reg = await navigator.serviceWorker.ready;
@@ -99,7 +129,13 @@ export async function enable(): Promise<string> {
     }
   }
   if (!token) { await report("token", { message: "empty token" }); throw new Error("Could not register this device for notifications. Please try again."); }
-  await setDoc(doc(db, "push_tokens", token), { token, uid: myUid(), email: getSession()?.email ?? null, created_at: Date.now(), ua: navigator.userAgent.slice(0, 160), app: inAndroidApp() ? "android-app" : "browser" });
+  try {
+    await setDoc(doc(db, "push_tokens", token), { token, uid: myUid(), email: getSession()?.email ?? null, created_at: Date.now(), ua: navigator.userAgent.slice(0, 160), app: inAndroidApp() ? "android-app" : "browser" });
+  } catch (e) {
+    // the phone said yes, but the device could not be saved to the account (membership not active, or offline)
+    await report("save", e);
+    throw new Error("Notifications are allowed, but this device could not be saved to your account. Check that your membership is active and you are online, then tap Turn on again.");
+  }
   try { localStorage.setItem(LS_TOKEN, token); } catch { /* ignore */ }
   try { await setDoc(doc(db, "user_state", myUid()), { push_error: null, push_ok_at: Date.now() }, { merge: true }); } catch { /* ignore */ }
   return "Done: this device will get alert notifications, also when the app is closed.";

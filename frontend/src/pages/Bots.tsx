@@ -100,8 +100,8 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
   const isPred = bot.config.mode === "prediction";
   const fut = bot.config.market === "futures";
   const series = useMemo<Series[]>(() => [
-    { name: "Bot equity", color: "#f0b90b", points: bot.equity_curve.map((p: any) => ({ ts: p.ts, value: p.equity })) },
-    { name: "Buy & hold (same coins)", color: "#6f7e91", dashed: true, points: bot.equity_curve.filter((p: any) => isNum(p.benchmark)).map((p: any) => ({ ts: p.ts, value: p.benchmark })) },
+    { name: "Bot equity", color: "--accent", points: bot.equity_curve.map((p: any) => ({ ts: p.ts, value: p.equity })) },
+    { name: "Buy & hold (same coins)", color: "--mute", dashed: true, points: bot.equity_curve.filter((p: any) => isNum(p.benchmark)).map((p: any) => ({ ts: p.ts, value: p.benchmark })) },
   ], [bot.equity_curve]);
   const live = bot.positions.map((p: any) => {
     const px = tickers[p.symbol]?.last ?? null;

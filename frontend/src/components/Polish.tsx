@@ -46,7 +46,7 @@ export function TickerTape() {
     const t = tickers[s];
     const c = t.change_pct ?? 0;
     return (
-      <Link key={k + s} to={`/asset/${slug(s)}`} className="flex shrink-0 items-center gap-1.5 px-3.5 text-[11px] text-mute transition-colors hover:text-text" tabIndex={k === "b" ? -1 : 0} aria-hidden={k === "b" ? true : undefined}>
+      <Link key={k + s} to={`/asset/${slug(s)}`} className="flex shrink-0 items-center gap-1.5 px-3.5 text-xs text-mute transition-colors hover:text-text" tabIndex={k === "b" ? -1 : 0} aria-hidden={k === "b" ? true : undefined}>
         <span className="font-semibold text-text/80">{base(s)}</span>
         <span className="num text-text/70">{fmtPrice(t.last)}</span>
         <span className={`num ${c >= 0 ? "text-bull/85" : "text-bear/85"}`}>{fmtPctRaw(c)}</span>
@@ -75,9 +75,9 @@ function greeting() {
 function HeroMetric({ k, v, sub, to, children }: { k: string; v: React.ReactNode; sub?: React.ReactNode; to?: string; children?: React.ReactNode }) {
   const body = (
     <>
-      <div className="flex items-center gap-1.5 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-mute">{children}{k}</div>
-      <div className="num mt-1.5 truncate text-[22px] font-semibold leading-none tracking-tight sm:text-2xl">{v}</div>
-      {sub != null && <div className="num mt-1.5 truncate text-[11px] text-mute">{sub}</div>}
+      <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-mute">{children}{k}</div>
+      <div className="num mt-1.5 truncate text-xl font-semibold leading-none tracking-tight lg:text-2xl">{v}</div>
+      {sub != null && <div className="num mt-1.5 text-xs leading-snug text-mute">{sub}</div>}
     </>
   );
   return to ? <Link to={to} className="hero-metric">{body}</Link> : <div className="hero-metric">{body}</div>;
@@ -113,7 +113,7 @@ export function DashboardHero({ rows, status, tf, sentiment, market, basket }: {
       <div className="relative grid gap-5 p-5 sm:p-7 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:items-end">
         <div>
           <p className="text-sm text-mute">{greeting()}{first ? `, ${first}` : ""} · {tf.toUpperCase()} chart</p>
-          <h1 className="font-display mt-1.5 text-[26px] font-bold leading-[1.12] tracking-tight sm:text-[38px]">
+          <h1 className="font-display mt-1.5 text-2xl font-bold leading-[1.12] tracking-tight sm:text-[38px]">
             The market is <span className={moodCls}>{moodText}</span>.
           </h1>
           <p className="mt-2.5 text-sm text-mute">

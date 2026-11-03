@@ -40,10 +40,10 @@ export function AdjustHistory({ adj, compact = false }: { adj?: Adjustment[] | n
   if (!adj?.length) return null;
   return (
     <div className={`border-l-2 border-warn/60 ${compact ? "mt-1 pl-2" : "pl-3"}`}>
-      {!compact && <div className="mb-1 text-[10.5px] font-semibold uppercase tracking-[0.08em] text-warn">Changed by the admin</div>}
+      {!compact && <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-warn">Changed by the admin</div>}
       <ul className="space-y-0.5">
         {[...adj].reverse().map((a, i) => (
-          <li key={i} className="text-[11px] leading-snug text-mute">
+          <li key={i} className="text-xs leading-snug text-mute">
             <span className="num">{hhmm(a.at)}</span> · <span className="font-semibold text-text">{LABEL[a.field] ?? a.field}</span>{" "}
             {a.field === "close"
               ? <span className="num text-warn">{fmtPrice(a.new)}</span>
@@ -157,7 +157,7 @@ export function CloseModal({ call, symbol, timeframe, onClose }: { call: any; sy
             <div><div className="text-mute">Price now</div><div className="font-semibold">{fmtPrice(px)}</div></div>
             <div><div className="text-mute">Result now</div>
               <div className={`font-semibold ${est == null ? "" : est > 0 ? "text-bull" : "text-bear"}`}>
-                {est == null ? "—" : sign(est)}{est != null && lev ? <span className="block text-[11px] font-normal text-mute">{sign(est * lev)} ROI · {lev}x</span> : null}
+                {est == null ? "—" : sign(est)}{est != null && lev ? <span className="block text-xs font-normal text-mute">{sign(est * lev)} ROI · {lev}x</span> : null}
               </div>
             </div>
           </div>
@@ -169,7 +169,7 @@ export function CloseModal({ call, symbol, timeframe, onClose }: { call: any; sy
               <label className="block">
                 <span className="text-xs text-mute">Note for members (required, 3–200 characters)</span>
                 <textarea className="input mt-1 min-h-[72px] w-full py-2" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Taking profit before the weekend; the move has stalled" />
-                <span className="num block text-right text-[11px] text-mute">{n.length}/200</span>
+                <span className="num block text-right text-xs text-mute">{n.length}/200</span>
               </label>
               {problem && <p className="rounded-lg border border-warn/40 bg-warn/[0.08] px-2.5 py-1.5 text-xs text-warn" role="status">{problem}</p>}
               <div className="flex justify-end gap-2">
@@ -260,10 +260,10 @@ export function AdjustModal({ call, symbol, timeframe, onClose }: { call: any; s
               <label className="block">
                 <span className="text-xs text-mute">Note for members (required, 3–200 characters)</span>
                 <textarea className="input mt-1 min-h-[72px] w-full py-2" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Locking in profit before the CPI release" />
-                <span className="num block text-right text-[11px] text-mute">{note.trim().length}/200</span>
+                <span className="num block text-right text-xs text-mute">{note.trim().length}/200</span>
               </label>
               {problem && <p className="rounded-lg border border-warn/40 bg-warn/[0.08] px-2.5 py-1.5 text-xs text-warn" role="status">{problem}</p>}
-              <p className="text-[11px] text-mute">Forward-only: the record keeps the original levels for everything before the change; the new level counts from the next 15-minute candle. The demo bots holding this call follow it too.</p>
+              <p className="text-xs text-mute">Forward-only: the record keeps the original levels for everything before the change; the new level counts from the next 15-minute candle. The demo bots holding this call follow it too.</p>
               <div className="flex justify-end gap-2">
                 <button className="btn" onClick={onClose}>Cancel</button>
                 <button className="btn btn-primary" disabled={!!problem} onClick={() => setStep("confirm")}>Review</button>

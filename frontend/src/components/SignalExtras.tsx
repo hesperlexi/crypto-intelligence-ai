@@ -6,19 +6,14 @@
 import { useState } from "react";
 import { fmtPctRaw, isNum } from "../lib/format";
 import { roiLabel, roiOf, roiTone, signedPct } from "../lib/roi";
+import { Badge } from "./kit";
 import { AiTag } from "./ui";
 
 type Tone = "bull" | "bear" | "warn" | "accent" | "mute";
-const PILL: Record<Tone, string> = {
-  bull: "border-bull/30 bg-bull/[0.08] text-bull",
-  bear: "border-bear/30 bg-bear/[0.08] text-bear",
-  warn: "border-warn/30 bg-warn/[0.08] text-warn",
-  accent: "border-accent/30 bg-accent/[0.08] text-accent",
-  mute: "border-glass/[0.12] bg-glass/[0.04] text-mute",
-};
 
+/** Sentence-case status label (kept name; the shared component is kit.Badge). */
 export function Pill({ tone = "mute", children, title }: { tone?: Tone; children: React.ReactNode; title?: string }) {
-  return <span title={title} className={`inline-flex items-center whitespace-nowrap rounded-[5px] border px-1.5 py-[3px] text-[11px] font-semibold leading-none ${PILL[tone]}`}>{children}</span>;
+  return <Badge tone={tone} title={title}>{children}</Badge>;
 }
 
 /** Call status as shown on cards (same words as the track record). */
@@ -141,7 +136,7 @@ export function AiNote({ ai }: { ai?: any }) {
 
 /** Gold leverage chip ("10x"). */
 export function LevChip({ lev, className = "" }: { lev: number; className?: string }) {
-  return <span title="Leverage the signal card suggested" className={`num inline-flex h-[18px] items-center rounded-md border border-accent/45 bg-accent/10 px-1.5 text-[10px] font-bold leading-none text-accent ${className}`}>{lev}x</span>;
+  return <span title="Leverage the signal card suggested" className={`num inline-flex h-[18px] items-center rounded-md border border-accent/45 bg-accent/10 px-1.5 text-xs font-bold leading-none text-accent ${className}`}>{lev}x</span>;
 }
 
 /** The headline result of a closed call: ROI on margin with its leverage chip, the price move as small text.
@@ -158,7 +153,7 @@ export function RoiFigure({ x, size = "md", align = "right", label = true }: { x
         {r.leverage && <LevChip lev={r.leverage} />}
       </span>
       {label && (
-        <span className="num whitespace-nowrap text-[10px] leading-none text-mute">
+        <span className="num whitespace-nowrap text-xs leading-none text-mute">
           {roiLabel(r)}
         </span>
       )}

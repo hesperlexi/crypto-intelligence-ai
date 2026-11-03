@@ -200,7 +200,7 @@ function Visibility() {
       <span className="inline-flex rounded-xl border border-glass/10 p-1" role="radiogroup" aria-label="Who can see the Hesper challenge">
         {(["admin", "members"] as const).map((k) => (
           <button key={k} type="button" role="radio" aria-checked={vis === k} onClick={() => vis !== k && setAsk(k)}
-            className={`rounded-lg px-3 py-1 text-sm ${vis === k ? "bg-accent font-semibold text-ink" : "text-mute hover:text-text"}`}>{k === "admin" ? "Admin only" : "Members too"}</button>
+            className={`tap-h rounded-lg px-3 py-1 text-sm ${vis === k ? "bg-accent font-semibold text-ink" : "text-mute hover:text-text"}`}>{k === "admin" ? "Admin only" : "Members too"}</button>
         ))}
       </span>
       {msg && <span className="text-xs text-mute" role="status">{msg}</span>}
@@ -355,7 +355,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
             </div>
             {trades.length > 25 && (
               <div className="border-t border-glass/[0.06] px-4 py-2 text-center">
-                <button type="button" className="text-sm text-accent hover:underline" onClick={() => setAll((x) => !x)}>{all ? "Show fewer" : `Show all ${trades.length}`}</button>
+                <button type="button" className="tap-h px-2 text-sm text-accent hover:underline" onClick={() => setAll((x) => !x)}>{all ? "Show fewer" : `Show all ${trades.length}`}</button>
               </div>
             )}
           </section>

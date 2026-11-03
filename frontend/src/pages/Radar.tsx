@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { saveMine } from "../components/MyCoins";
 import { CoinAvatar } from "../components/Polish";
-import { ErrorBox, Info, Loading } from "../components/ui";
+import { Empty, ErrorBox, Info, Loading, Tile } from "../components/ui";
 import { post, useApi } from "../lib/api";
 import { ago, base, fmtNum, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { useLimits } from "../lib/limits";
@@ -11,6 +11,9 @@ import { useIsAdmin } from "../lib/session";
 
 const pct = (v: unknown, d = 0) => (isNum(v) ? `${v > 0 ? "+" : ""}${(v * 100).toFixed(d)}%` : "—");
 const tone = (v: unknown) => (isNum(v) ? (v > 0 ? "text-bull" : v < 0 ? "text-bear" : "") : "text-mute");
+
+/** A radar figure that has no value yet: a calm word instead of a bare dash. */
+const Waiting = () => <span className="text-base font-normal text-mute">Not yet</span>;
 
 export default function Radar() {
   const v = useApi<any>("/radar");
@@ -32,7 +35,7 @@ export default function Radar() {
     } catch (e: any) { setMsg(e.message); }
   };
   if (v.loading && !v.data) return <Loading />;
-  if (v.error) return <ErrorBox error={v.error.includes("not published") ? "The radar runs once an hour; the first scan appears after the next engine run." : v.error} retry={v.reload} />;
+  if (v.error) return /not published/i.test(v.error) ? <Empty>The radar runs once an hour; the first scan appears after the next engine run.</Empty> : <ErrorBox error={v.error} retry={v.reload} />;
   const d = v.data ?? {};
   const h = d.historical ?? {}, live = d.live ?? {};
 
@@ -56,7 +59,7 @@ export default function Radar() {
         <div><div className="text-mute">vs BTC 30d</div><div className={`text-sm font-semibold ${tone(p.rs_30d)}`}>{pct(p.rs_30d)}</div></div>
         <div><div className="text-mute">Volume</div><div className="text-sm font-semibold">{isNum(p.vol_surge) ? `${p.vol_surge.toFixed(1)}x` : "—"}</div></div>
       </div>
-      {p.reasons?.length > 0 && <ul className="mt-2 flex flex-wrap gap-1.5">{p.reasons.map((r: string) => <li key={r} className={`rounded-md px-2 py-0.5 text-[11px] ${r.includes("extended") ? "bg-warn/15 text-warn" : "bg-glass/[0.06] text-text/80"}`}>{r}</li>)}</ul>}
+      {p.reasons?.length > 0 && <ul className="mt-2 flex flex-wrap gap-1.5">{p.reasons.map((r: string) => <li key={r} className={`rounded-md px-2 py-0.5 text-xs ${r.includes("extended") ? "bg-warn/15 text-warn" : "bg-glass/[0.06] text-text/80"}`}>{r}</li>)}</ul>}
     </li>
   );
 
@@ -68,10 +71,11 @@ export default function Radar() {
       </div>
       {msg && <div role="status" className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">{msg}</div>}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div className="panel p-3"><div className="text-[11px] uppercase tracking-wide text-mute">Coins screened</div><div className="num mt-1 text-xl font-semibold">{d.screened ?? "—"}</div><div className="text-[11px] text-mute">{d.generated_at ? `updated ${ago(d.generated_at)}` : ""}</div></div>
-        <div className="panel p-3"><div className="text-[11px] uppercase tracking-wide text-mute">Past check: top 5 vs BTC</div><div className={`num mt-1 text-xl font-semibold ${tone(h.avg_excess_vs_btc_pct)}`}>{isNum(h.avg_excess_vs_btc_pct) ? `${h.avg_excess_vs_btc_pct > 0 ? "+" : ""}${h.avg_excess_vs_btc_pct.toFixed(1)}%` : "—"}</div><div className="text-[11px] text-mute">avg over the next 7 days · {h.days ?? 0} test days</div></div>
-        <div className="panel p-3"><div className="text-[11px] uppercase tracking-wide text-mute">Past check: beat BTC</div><div className="num mt-1 text-xl font-semibold">{isNum(h.beat_btc_rate) ? `${Math.round(h.beat_btc_rate * 100)}%` : "—"}</div><div className="text-[11px] text-mute">of test days</div></div>
-        <div className="panel p-3"><div className="text-[11px] uppercase tracking-wide text-mute">Live record</div><div className="num mt-1 text-xl font-semibold">{isNum(live.beat_btc_rate) ? `${Math.round(live.beat_btc_rate * 100)}%` : "—"}</div><div className="text-[11px] text-mute">{live.evaluated ? `${live.evaluated} picks scored after 7 days` : `${live.picks ?? 0} picks logged · first scores in 7 days`}</div></div>
+        {/* UI v2.15: shared Tile; a figure that does not exist yet says so in words instead of a bare dash */}
+        <Tile variant="box" className="panel" label="Coins screened" value={d.screened ?? <Waiting />} sub={d.generated_at ? `updated ${ago(d.generated_at)}` : "first scan after the next engine run"} />
+        <Tile variant="box" className="panel" label="Past check: top 5 vs BTC" valueClass={tone(h.avg_excess_vs_btc_pct)} value={isNum(h.avg_excess_vs_btc_pct) ? `${h.avg_excess_vs_btc_pct > 0 ? "+" : ""}${h.avg_excess_vs_btc_pct.toFixed(1)}%` : <Waiting />} sub={`avg over the next 7 days · ${h.days ?? 0} test days`} />
+        <Tile variant="box" className="panel" label="Past check: beat BTC" value={isNum(h.beat_btc_rate) ? `${Math.round(h.beat_btc_rate * 100)}%` : <Waiting />} sub="of test days" />
+        <Tile variant="box" className="panel" label="Live record" value={isNum(live.beat_btc_rate) ? `${Math.round(live.beat_btc_rate * 100)}%` : <Waiting />} sub={live.evaluated ? `${live.evaluated} picks scored after 7 days` : `${live.picks ?? 0} picks logged · first scores in 7 days`} />
       </div>
       <ul className="grid gap-3 md:grid-cols-2">{(d.picks ?? []).map((p: any) => <Card key={p.symbol} p={p} />)}</ul>
       {(d.extended ?? []).length > 0 && (
@@ -85,7 +89,7 @@ export default function Radar() {
           <div className="card-head border-b border-glass/[0.06] px-4 py-2.5"><h2 className="label">Radar picks and how they did after 7 days</h2></div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[480px] text-sm">
-              <thead><tr className="text-left text-[11px] uppercase tracking-wide text-mute"><th className="px-4 py-2">Coin</th><th>Picked</th><th>Price then</th><th>7 days later</th><th className="pr-4 text-right">vs BTC</th></tr></thead>
+              <thead><tr className="text-left text-xs uppercase tracking-wide text-mute"><th className="px-4 py-2">Coin</th><th>Picked</th><th>Price then</th><th>7 days later</th><th className="pr-4 text-right">vs BTC</th></tr></thead>
               <tbody className="divide-y divide-glass/[0.06]">
                 {live.recent.map((r: any, i: number) => {
                   const ex = isNum(r.ret_7d) && isNum(r.btc_ret_7d) ? r.ret_7d - r.btc_ret_7d : null;
@@ -97,7 +101,7 @@ export default function Radar() {
           </div>
         </section>
       )}
-      <p className="text-[11px] text-mute">Added coins appear on the <Link to="/" className="text-accent hover:underline">dashboard</Link> and in Signals. {(d.method || h.note) && <Info label="How the radar works">{d.method} {h.note}</Info>}</p>
+      <p className="text-xs text-mute">Added coins appear on the <Link to="/" className="text-accent hover:underline">dashboard</Link> and in Signals. {(d.method || h.note) && <Info label="How the radar works">{d.method} {h.note}</Info>}</p>
     </div>
   );
 }

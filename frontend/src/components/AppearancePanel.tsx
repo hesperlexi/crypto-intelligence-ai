@@ -92,8 +92,8 @@ function ThemePicker() {
               <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg>
             </span>
             <span className="min-w-0 pl-1 pr-6">
-              <span className={`block truncate text-[13px] font-semibold ${on ? "text-accent" : "text-text"}`}>{t.name}</span>
-              <span className="block text-[11px] leading-snug text-mute">{t.sub}</span>
+              <span className={`block truncate text-sm font-semibold ${on ? "text-accent" : "text-text"}`}>{t.name}</span>
+              <span className="block text-xs leading-snug text-mute">{t.sub}</span>
             </span>
           </button>
         );
@@ -116,7 +116,7 @@ export function AppearancePanel() {
         <Choice label="Page width" k="width" options={[["contained", "Centered"], ["wide", "Full width"]]} />
         <Choice label="Glass effect" k="glass" options={[[true, "On"], [false, "Off (faster)"]]} />
       </div>
-      <p className="text-[11px] text-mute">Saved on this device.</p>
+      <p className="text-xs text-mute">Saved on this device.</p>
     </div>
   );
 }
@@ -135,10 +135,10 @@ export default function AppearanceButton() {
   }, [open]);
   return (
     <div className="relative" ref={ref}>
-      {/* icon-only, same height and corners as the header's status badge */}
+      {/* icon-only; 44 px touch area on phones (.tap) */}
       <button onClick={() => setOpen((v) => !v)} aria-expanded={open} title="Theme and layout" aria-label="Theme and layout"
-        className={`inline-flex h-[22px] w-[26px] items-center justify-center rounded border transition-colors ${open ? "border-accent/60 bg-accent/10 text-accent" : "border-glass/15 bg-glass/[0.04] text-accent/90 hover:border-accent/50 hover:text-accent"}`}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden>
+        className={`tap inline-flex h-8 w-9 items-center justify-center rounded-lg border transition-colors ${open ? "border-accent/60 bg-accent/10 text-accent" : "border-glass/15 bg-glass/[0.04] text-accent/90 hover:border-accent/50 hover:text-accent"}`}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden>
           {/* half-moon disc (light / dark) with a small spark: "appearance" */}
           <circle cx="11" cy="13" r="8" stroke="currentColor" strokeWidth="2" />
           <path d="M11 5a8 8 0 0 1 0 16z" fill="currentColor" />

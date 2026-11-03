@@ -44,18 +44,17 @@ export const PLAIN = {
   grade: "A: chart and AI agree. B: AI-led.",
 } as const;
 
-/** Compact header switch. */
+/** Beginner / Pro switch (header, More sheet, Settings): the shared segmented control, 44 px on touch screens. */
 export function ModeSwitch({ className = "" }: { className?: string }) {
   const { mode, setMode } = useMode();
   return (
-    <div role="group" aria-label="View mode" className={`inline-flex rounded-lg border border-glass/10 p-0.5 text-[11px] ${className}`}>
+    <div className={className}><div role="group" aria-label="View mode" className="seg">
       {(["beginner", "pro"] as const).map((m) => (
         <button key={m} type="button" aria-pressed={mode === m} onClick={() => setMode(m)}
-          className={`rounded-md px-2 py-0.5 font-medium transition-colors ${mode === m ? "bg-accent/15 text-accent" : "text-mute hover:text-text"}`}
           title={m === "beginner" ? "Simpler view with short explanations" : "Every number and statistic"}>
           {m === "beginner" ? "Beginner" : "Pro"}
         </button>
       ))}
-    </div>
+    </div></div>
   );
 }

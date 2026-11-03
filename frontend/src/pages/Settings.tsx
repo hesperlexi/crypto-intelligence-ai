@@ -14,6 +14,7 @@ import { ContactCard, MembershipCard } from "../components/Membership";
 import TelegramCard from "../components/TelegramCard";
 import { post, put, queueJob, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
+import { apkVersion, BlockedHelp, ChromeWarning, useApkInfo } from "../components/NotifyHelp";
 
 const RISK_FIELDS: [string, string][] = [
   ["portfolio", "Portfolio size ($)"], ["risk_per_trade_pct", "Maximum risk per trade (%)"], ["max_daily_loss_pct", "Maximum daily loss (%)"],
@@ -176,10 +177,12 @@ function ManualCard() {
 
 function AboutCard() {
   const [msg, setMsg] = useState<string | null>(null);
+  const apk = useApkInfo();
   return (
     <Card title="About">
       <Row k="App" v="Crypto Intelligence AI" />
-      <Row k="Version" v={`v${APP_VERSION}`} />
+      <Row k="Version" v={`v${APP_VERSION} · build ${BUILD_ID}`} />
+      {push.inAndroidApp() && <Row k="Android app" v={apk?.version ? `newest${apkVersion(apk)}` : "…"} />}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button className="btn" onClick={async () => { setMsg("Checking…"); setMsg((await checkForUpdate(true)) ? "Updating…" : "You have the latest version."); }}>Check for updates</button>
         {msg && <span className="text-sm text-mute">{msg}</span>}
@@ -214,13 +217,8 @@ function NotificationsCard() {
           <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: arrives within about 5 minutes."; })}>Send a test notification</button>
         </div>
         {msg && <p className={`mt-2 text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
-        {perm === "denied" && !msg && <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 p-2 text-sm text-warn">{push.blockedHelp()}</p>}
-        {oldApk() && (
-          <div className="mt-3 rounded-lg border border-warn/40 bg-warn/10 p-3 text-sm">
-            <p className="text-warn">Update the app to get notifications (Google Chrome must be installed).</p>
-            <a className="btn btn-primary mt-2" href={APK_URL}>Download the new app</a>
-          </div>
-        )}
+        {perm === "denied" && <BlockedHelp className="mt-2" />}
+        <ChromeWarning className="mt-3" />
         {!hasKey && admin && (
           <div className="mt-4 border-t border-glass/[0.06] pt-3">
             <p className="text-xs text-mute">Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair, then paste it here.</p>
@@ -236,16 +234,11 @@ function NotificationsCard() {
   );
 }
 
-// The APK runs inside the phone's browser; older builds could open in Samsung Internet etc., which cannot deliver notifications.
-const oldApk = () => push.inAndroidApp() && /SamsungBrowser|Firefox|EdgA|OPR|YaBrowser|UCBrowser|MiuiBrowser|HuaweiBrowser/i.test(navigator.userAgent);
-const APK_URL = "https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk";
-
 function AndroidCard() {
-  const [info, setInfo] = useState<any>(undefined);
-  useEffect(() => { fetch(`/download/android.json?t=${Date.now()}`, { cache: "no-store" }).then((r) => (r.ok ? r.json() : null)).then(setInfo).catch(() => setInfo(null)); }, []);
+  const info = useApkInfo();
   return (
     <Card title="Install the app">
-      <a className="btn btn-primary w-full justify-center py-3 text-base" href={info?.url ?? APK_URL}>⬇ Download the Android app (APK){info?.version ? ` v${info.version}` : ""}</a>
+      <a className="btn btn-primary w-full justify-center py-3 text-base" href={info?.url ?? push.APK_URL}>⬇ Download the Android app (APK){apkVersion(info)}</a>
       <p className="mt-1 text-xs text-mute">Needs Google Chrome on the phone.</p>
       <p className="mt-3 text-sm"><b>Android (Chrome):</b> open <span className="text-accent">{SITE_HOST}</span> → menu ⋮ → <b>Install app</b>.</p>
       <p className="mt-1 text-sm"><b>iPhone (Safari):</b> Share → <b>Add to Home Screen</b>.</p>

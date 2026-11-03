@@ -71,7 +71,7 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
             <div className="num text-xs text-mute">score {m.score > 0 ? "+" : ""}{m.score.toFixed(2)} · {m.source === "calendar" ? "from the calendar only" : `${m.headlines ?? "recent"} headlines`} · {ago(m.ts)}</div>
             <MoodBar v={m.score} />
             <Spark pts={s.series ?? []} />
-            <div className="mt-1 flex justify-between text-[10px] uppercase tracking-wide text-mute"><span>48 h ago</span><span>now</span></div>
+            <div className="mt-1 flex justify-between text-xs uppercase tracking-wide text-mute"><span>48 h ago</span><span>now</span></div>
           </>
         ) : (
           <p className="mt-2 text-sm text-mute">First reading within the hour.</p>
@@ -138,32 +138,32 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
   }, [heads]);
   const list = heads.filter((h) => (src === "all" || h.source === src) && (coin === "all" || (h.coins ?? []).includes(coin)));
   const [lead, ...rest] = list;
-  const chip = (on: boolean) => `rounded-full border px-2.5 py-1 text-xs transition-colors ${on ? "border-accent/50 bg-accent/10 text-accent" : "border-glass/[0.12] text-mute hover:text-text"}`;
+  const chip = (on: boolean) => `chip ${on ? "is-on" : ""}`;
   return (
     <section className="panel self-start p-0">
       <div className="card-head flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
         <h2 className="label">Crypto headlines</h2>
         {srcs.length > 1 && (
           <div className="flex flex-wrap gap-1.5" role="group" aria-label="Source">
-            <button className={chip(src === "all")} onClick={() => setSrc("all")}>All sources</button>
-            {srcs.map((s) => <button key={s} className={chip(src === s)} onClick={() => setSrc(s)}>{s}</button>)}
+            <button type="button" aria-pressed={src === "all"} className={chip(src === "all")} onClick={() => setSrc("all")}>All sources</button>
+            {srcs.map((s) => <button key={s} type="button" aria-pressed={src === s} className={chip(src === s)} onClick={() => setSrc(s)}>{s}</button>)}
           </div>
         )}
       </div>
       {coins.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 border-b border-glass/[0.06] px-4 py-2" role="group" aria-label="Coins in the news">
-          <span className="mr-1 text-[11px] uppercase tracking-wide text-mute">Coins in the news</span>
-          <button className={chip(coin === "all")} onClick={() => setCoin("all")}>All</button>
-          {coins.map(([c, n]) => <button key={c} className={chip(coin === c)} onClick={() => setCoin(c)}>{c} <span className="num opacity-70">{n}</span></button>)}
+          <span className="mr-1 text-xs uppercase tracking-wide text-mute">Coins in the news</span>
+          <button type="button" aria-pressed={coin === "all"} className={chip(coin === "all")} onClick={() => setCoin("all")}>All</button>
+          {coins.map(([c, n]) => <button key={c} type="button" aria-pressed={coin === c} className={chip(coin === c)} onClick={() => setCoin(c)}>{c} <span className="num opacity-70">{n}</span></button>)}
         </div>
       )}
       {!heads.length && <p className="px-4 py-10 text-center text-sm text-mute">Headlines arrive within minutes.</p>}
       {heads.length > 0 && !list.length && <p className="px-4 py-8 text-center text-sm text-mute">No headlines match this filter.</p>}
       {lead && (
         <a href={lead.url} target="_blank" rel="noopener noreferrer" className="group block border-b border-glass/[0.06] px-4 py-4 hover:bg-glass/[0.03]">
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-wide text-mute">
+          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-mute">
             <span className={`h-1.5 w-1.5 rounded-full ${SRC_DOT[lead.source] ?? "bg-mute"}`} />{lead.source}{lead.ts ? ` · ${ago(lead.ts)}` : ""}
-            <span className="ml-auto rounded border border-accent/30 px-1.5 text-[10px] font-bold text-accent">LATEST</span>
+            <span className="ml-auto rounded border border-accent/30 px-1.5 text-xs font-bold text-accent">LATEST</span>
           </div>
           <div className="mt-1.5 font-display text-lg font-semibold leading-snug group-hover:text-accent">{lead.title}</div>
           {lead.summary && <p className="mt-1 line-clamp-3 text-sm text-mute">{lead.summary}</p>}
@@ -177,17 +177,17 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
               <div className="min-w-0">
                 <div className="text-sm font-medium leading-snug group-hover:text-accent">{h.title}</div>
                 {h.summary && <p className="mt-0.5 line-clamp-1 text-xs text-mute">{h.summary}</p>}
-                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-[11px] text-mute">
+                <div className="mt-1 flex flex-wrap items-center gap-1.5 text-xs text-mute">
                   <span className={`h-1.5 w-1.5 rounded-full ${SRC_DOT[h.source] ?? "bg-mute"}`} />{h.source}
                   <Tags coins={h.coins} inline />
                 </div>
               </div>
-              <span className="num whitespace-nowrap pt-0.5 text-[11px] text-mute">{h.ts ? ago(h.ts) : ""}</span>
+              <span className="num whitespace-nowrap pt-0.5 text-xs text-mute">{h.ts ? ago(h.ts) : ""}</span>
             </a>
           </li>
         ))}
       </ul>
-      <p className="border-t border-glass/[0.06] px-4 py-2 text-[11px] text-mute">Context only. Sources: {sources ?? "public RSS feeds"}.</p>
+      <p className="border-t border-glass/[0.06] px-4 py-2 text-xs text-mute">Context only. Sources: {sources ?? "public RSS feeds"}.</p>
     </section>
   );
 }
@@ -196,7 +196,7 @@ function Tags({ coins, inline = false }: { coins?: string[]; inline?: boolean })
   if (!coins?.length) return null;
   return (
     <span className={`${inline ? "" : "mt-2 "}flex flex-wrap gap-1`}>
-      {coins.map((c) => <span key={c} className="rounded border border-glass/[0.12] bg-glass/[0.04] px-1.5 text-[10px] font-semibold text-text">{c}</span>)}
+      {coins.map((c) => <span key={c} className="rounded border border-glass/[0.12] bg-glass/[0.04] px-1.5 text-xs font-semibold text-text">{c}</span>)}
     </span>
   );
 }
@@ -249,9 +249,9 @@ export default function News() {
                       <span className="num pt-0.5 text-sm">{hhmm(e.ts)}</span>
                       <div className="min-w-0">
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded border border-glass/15 px-1.5 text-[11px] font-bold text-mute">{e.country}</span>
+                          <span className="rounded border border-glass/15 px-1.5 text-xs font-bold text-mute">{e.country}</span>
                           <span className="font-medium">{e.title}</span>
-                          <span className={`rounded border px-1.5 text-[11px] font-bold ${IMPACT[e.impact] ?? ""}`}>{e.impact}</span>
+                          <span className={`rounded border px-1.5 text-xs font-bold ${IMPACT[e.impact] ?? ""}`}>{e.impact}</span>
                         </div>
                         {e.explain && <p className="mt-0.5 text-xs text-mute">{e.explain}</p>}
                         {(e.forecast || e.previous || e.actual) && (
@@ -277,10 +277,10 @@ export default function News() {
               </ul>
             </details>
           )}
-          <p className="border-t border-glass/[0.06] px-4 py-2 text-[11px] text-mute">Source: {d.sources?.calendar ?? "economic calendar"}. Your local time.</p>
+          <p className="border-t border-glass/[0.06] px-4 py-2 text-xs text-mute">Source: {d.sources?.calendar ?? "economic calendar"}. Your local time.</p>
         </section>
       </div>
-      <p className="text-[11px] text-mute">News mood is context only; it never changes a signal. Not financial advice.</p>
+      <p className="text-xs text-mute">News mood is context only; it never changes a signal. Not financial advice.</p>
     </div>
   );
 }

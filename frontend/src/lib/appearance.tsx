@@ -102,5 +102,14 @@ export function chartColors() {
   return {
     text: v("--mute"), grid: v("--line", 0.45), border: v("--line"), bg: v("--ink"),
     bull: v("--bull"), bear: v("--bear"), bullSoft: (a: number) => v("--bull", a), bearSoft: (a: number) => v("--bear", a),
+    accent: v("--accent"), warn: v("--warn"), ai: v("--ai"), mute: v("--mute"),
   };
+}
+
+/** A colour for canvas / chart libraries: a theme token ("--bear", "--accent", …) becomes the current theme's rgba;
+ *  anything else (a hex) passes through. Read at draw time, so charts redrawn after a theme change follow it. */
+export function themeColor(c: string, alpha = 1): string {
+  if (!c.startsWith("--") || typeof document === "undefined") return c;
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(c).trim();
+  return raw ? `rgba(${raw.split(/\s+/).join(",")},${alpha})` : c;
 }

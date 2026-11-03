@@ -34,7 +34,7 @@ export function Curve({ pts, roi, id = "tr-fill", label = "Cumulative result of 
 }
 
 function Kpi({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
-  return <div className="panel p-4"><div className="label">{k}</div><div className={`num mt-1.5 text-2xl font-semibold leading-none ${cls}`}>{v}</div>{sub && <div className="mt-1.5 text-[11px] leading-snug text-mute">{sub}</div>}</div>;
+  return <div className="panel p-4"><div className="label">{k}</div><div className={`num mt-1.5 text-2xl font-semibold leading-none ${cls}`}>{v}</div>{sub && <div className="mt-1.5 text-xs leading-snug text-mute">{sub}</div>}</div>;
 }
 
 export default function TrackRecord({ compact = false }: { compact?: boolean }) {
@@ -101,7 +101,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           <div className="flex gap-1 overflow-x-auto border-b border-glass/[0.06] px-2 pt-2" role="tablist">
             {([["live", `Live signals (${sigs.length})`], ...(pro ? [["tested", "Tested on unseen data"]] as const : []), ["bots", "Demo bots"]] as const).map(([k, l]) => (
               <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-                className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
+                className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
             ))}
           </div>
           {(tab === "live" || (!pro && tab === "tested")) && (
@@ -117,13 +117,13 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                           <div className="flex min-w-0 items-center gap-2.5">
                             <CoinAvatar symbol={x.symbol} size={30} />
                             <div className="min-w-0">
-                              <div className="flex items-center gap-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-[11px] font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-[11px] text-mute">{String(x.timeframe).toUpperCase()}</span>{x.grade && <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded border px-1 text-[10px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}</div>
-                              <div className={`mt-0.5 whitespace-nowrap text-[11px] font-semibold ${cls}`}>{lab} <span className="num font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
+                              <div className="flex items-center gap-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span>{x.grade && <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded border px-1 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}</div>
+                              <div className={`mt-0.5 whitespace-nowrap text-xs font-semibold ${cls}`}>{lab} <span className="num font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
                             </div>
                           </div>
                           {isOpen(x) ? <LiveRoi x={x} size="md" /> : <RoiFigure x={x} size="md" />}
                         </div>
-                        <dl className="num mt-2 grid grid-cols-3 gap-2 text-[11px]">
+                        <dl className="num mt-2 grid grid-cols-3 gap-2 text-xs">
                           <div><dt className="text-mute">Entry</dt><dd className="font-medium">{fmtPrice(x.entry)}</dd></div>
                           <div className="text-center"><dt className="text-mute">Stop</dt><dd className="font-medium text-bear">{fmtPrice(x.stop)}</dd></div>
                           <div className="text-right"><dt className="text-mute">Target 1</dt><dd className="font-medium text-bull">{fmtPrice(x.tp1)}</dd></div>
@@ -141,8 +141,8 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                       const [lab, cls] = statusOf(x);
                       return (
                         <tr key={i} {...rowProps(x)} className="cursor-pointer outline-none focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
-                          <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span></div><div className="num mt-0.5 pl-[30px] text-[11px] text-mute">{fmtTime(x.created_at)}</div></td>
-                          <td className="text-center">{x.grade ? <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-[11px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span> : <span className="text-mute">—</span>}</td>
+                          <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span></div><div className="num mt-0.5 pl-[30px] text-xs text-mute">{fmtTime(x.created_at)}</div></td>
+                          <td className="text-center">{x.grade ? <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span> : <span className="text-mute">—</span>}</td>
                           <td className="num text-right">{fmtPrice(x.entry)}</td><td className="num text-right text-bear">{fmtPrice(x.stop)}</td><td className="num text-right text-bull">{fmtPrice(x.tp1)}</td>
                           <td className={`text-xs font-semibold ${cls}`}>{lab}{isOpen(x) && <LiveResult x={x} />}<RecordExtras x={x} /></td>
                           <td className="text-right align-middle">{isOpen(x) ? <LiveRoi x={x} /> : <RoiFigure x={x} size="sm" />}</td>
@@ -152,7 +152,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                   </tbody>
                 </table>
               </>)}
-              <p className="px-4 py-2 text-[11px] text-mute">Tap a signal for details. <span className="font-semibold text-accent">Live</span> = not final until closed.</p>
+              <p className="px-4 py-2 text-xs text-mute">Tap a signal for details. <span className="font-semibold text-accent">Live</span> = not final until closed.</p>
             </div>
           )}
           {shown && <RecordSheet x={shown} onClose={() => setDetail(null)} />}
@@ -183,7 +183,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                 <thead><tr><th>Bot (virtual money)</th><th className="text-right">Trades</th><th className="text-right">Win rate</th><th className="text-right">Return</th><th className="text-right">Buy &amp; hold</th><th className="text-right">Max drop</th></tr></thead>
                 <tbody>
                   {(d.bots ?? []).map((b: any, i: number) => (
-                    <tr key={i} className={b.scorecard ? "bg-accent/[0.05]" : ""}><td>{b.name}{b.scorecard && <span className="ml-2 rounded-md border border-accent/40 bg-accent/15 px-1.5 py-0.5 text-[11px] font-bold leading-none text-accent">APP SCORECARD</span>}<div className="text-[11px] text-mute">{b.started_at ? `since ${fmtDate(b.started_at)}` : ""}</div></td>
+                    <tr key={i} className={b.scorecard ? "bg-accent/[0.05]" : ""}><td>{b.name}{b.scorecard && <span className="ml-2 rounded-md border border-accent/40 bg-accent/15 px-1.5 py-0.5 text-xs font-bold leading-none text-accent">APP SCORECARD</span>}<div className="text-xs text-mute">{b.started_at ? `since ${fmtDate(b.started_at)}` : ""}</div></td>
                       <td className="num text-right">{b.trades ?? 0}</td><td className="num text-right">{rate(b.win_rate)}</td>
                       <td className={`num text-right font-semibold ${tone(b.return_pct)}`}>{pct(b.return_pct)}</td>
                       <td className={`num text-right ${tone(b.benchmark_return_pct)}`}>{pct(b.benchmark_return_pct)}</td>
@@ -193,7 +193,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
               </table>
             </div>
           )}
-          <p className="border-t border-glass/[0.06] px-4 py-2.5 text-[11px] text-mute">Wins and losses alike, never edited. {d.results_net ? "Signals: after fees." : "Before fees."} Past results do not guarantee future results. {d.method?.live && <Info label="How results are counted">{d.method.live}</Info>}</p>
+          <p className="border-t border-glass/[0.06] px-4 py-2.5 text-xs text-mute">Wins and losses alike, never edited. {d.results_net ? "Signals: after fees." : "Before fees."} Past results do not guarantee future results. {d.method?.live && <Info label="How results are counted">{d.method.live}</Info>}</p>
         </section>
       )}
     </div>
@@ -214,7 +214,7 @@ function RecordExtras({ x }: { x: any }) {
       {x.exit_reason === "admin_close" && <Pill tone="warn" title="Closed by the admin at the market price (public, shown below); the result is what that price gave">Closed by admin</Pill>}
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
-      {isNum(x.peak_pct) && <span className="num text-[11px] text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</span>}
+      {isNum(x.peak_pct) && <span className="num text-xs text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</span>}
     </div>
     {adj && <AdjustHistory adj={adj} compact />}
     </div>

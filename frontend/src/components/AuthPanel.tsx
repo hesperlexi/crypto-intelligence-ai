@@ -17,7 +17,7 @@ export function GoogleIcon() {
 }
 
 function Field({ label, children, hint }: { label: string; children: ReactNode; hint?: ReactNode }) {
-  return <label className="block text-left text-xs text-mute">{label}<div className="mt-1">{children}</div>{hint && <div className="mt-1 text-[11px]">{hint}</div>}</label>;
+  return <label className="block text-left text-xs text-mute">{label}<div className="mt-1">{children}</div>{hint && <div className="mt-1 text-xs">{hint}</div>}</label>;
 }
 
 /** Google + email forms. Used in the sign-in dialog on the landing page. */
@@ -70,7 +70,7 @@ export function AuthForms({ initial = "signin", onDone }: { initial?: AuthMode; 
       {mode !== "reset" && (
         <>
           <button type="button" className="btn btn-primary w-full py-2.5" onClick={google} disabled={!!busy}><GoogleIcon />{busy === "google" ? "Opening Google…" : "Continue with Google"}</button>
-          <div className="my-4 flex items-center gap-3 text-[11px] uppercase tracking-wider text-mute"><span className="h-px flex-1 bg-glass/10" />or with email<span className="h-px flex-1 bg-glass/10" /></div>
+          <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wider text-mute"><span className="h-px flex-1 bg-glass/10" />or with email<span className="h-px flex-1 bg-glass/10" /></div>
           <div className="mb-4 flex gap-4 border-b border-glass/[0.08]" role="tablist">{tab("signin", "Sign in")}{tab("signup", "Create account")}</div>
         </>
       )}
@@ -124,7 +124,7 @@ export function AuthDialog({ mode, onClose }: { mode: AuthMode; onClose: () => v
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close" onClick={close}>✕</button>
           </div>
           <AuthForms initial={mode} onDone={close} />
-          <p className="mt-4 text-center text-[11px] text-mute">By continuing you agree to the <a className="text-accent hover:underline" href="/terms">Terms of Use</a> and the <a className="text-accent hover:underline" href="/risk">Risk disclosure</a>.</p>
+          <p className="mt-4 text-center text-xs text-mute">By continuing you agree to the <a className="text-accent hover:underline" href="/terms">Terms of Use</a> and the <a className="text-accent hover:underline" href="/risk">Risk disclosure</a>.</p>
         </div>
       </div>
     </div>,
@@ -138,7 +138,7 @@ function CenterCard({ children }: { children: ReactNode }) {
       <div className="panel w-full max-w-md p-6 text-center sm:p-7">
         <HeroLogo size={88} title="Crypto Intelligence AI logo" className="mx-auto mb-4" />
         {children}
-        <p className="mt-6 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION} · <a className="hover:text-text" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a></p>
+        <p className="mt-6 text-xs text-mute">{COPYRIGHT} · v{APP_VERSION} · <a className="hover:text-text" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a></p>
       </div>
     </div>
   );

@@ -31,7 +31,7 @@ export default function NewsBanner({ hours = 6 }: { hours?: number }) {
   const live = !!risk || (next && Math.abs(next.ts - now) <= 45 * 60_000);
   return (
     <Link to="/news" className={`panel flex flex-wrap items-center gap-x-3 gap-y-1 border px-4 py-2.5 text-sm transition hover:border-accent/60 ${live ? "border-bear/50 bg-bear/[0.07]" : "border-warn/45 bg-warn/[0.06]"}`}>
-      <span className={`rounded-md px-2 py-0.5 text-[11px] font-extrabold tracking-wide ${live ? "bg-bear text-white" : "bg-warn text-ink"}`}>{live ? "NEWS NOW" : "HIGH-IMPACT NEWS"}</span>
+      <span className={`rounded-md px-2 py-0.5 text-xs font-extrabold tracking-wide ${live ? "bg-bear text-white" : "bg-warn text-ink"}`}>{live ? "NEWS NOW" : "HIGH-IMPACT NEWS"}</span>
       <span className="font-semibold">US {ev.title}</span>
       <span className="num text-mute">{countdown(ev.ts, now)}</span>
       <span className="text-mute">{live ? "· new signals are paused until 30 min after the release" : "· expect volatility; signals pause 45 min before"}</span>

@@ -44,7 +44,7 @@ export default function Dashboard() {
       <MyCoins rows={d?.rows} />
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <Card title="Market regime" right={<span className="text-[11px] text-mute">{(d?.regimes ?? []).length} coins</span>}>
+        <Card title="Market regime" right={<span className="text-xs text-mute">{(d?.regimes ?? []).length} coins</span>}>
           <div className="-mr-2 max-h-[34rem] space-y-3 overflow-y-auto pr-2">
             {(d?.regimes ?? []).map((r: any) => (
               <div key={r.symbol} className="grid grid-cols-[3.5rem_minmax(0,1fr)_3rem] items-center gap-3 text-sm">
@@ -59,18 +59,18 @@ export default function Dashboard() {
         <Card title="Top signals">
           <div className="space-y-2">
             {(d?.top_signals ?? []).map((s: any) => (
-              <Link key={s.symbol} to={`/asset/${slug(s.symbol)}`} className={`grid items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] ${pro ? "grid-cols-[3.5rem_minmax(0,1fr)_3.5rem_minmax(0,1fr)]" : "grid-cols-[3.5rem_minmax(0,1fr)_minmax(0,1fr)]"}`}>
+              <Link key={s.symbol} to={`/asset/${slug(s.symbol)}`} className={`grid min-h-[44px] items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] ${pro ? "grid-cols-[3.5rem_minmax(0,1fr)_3.5rem]" : "grid-cols-[3.5rem_minmax(0,1fr)]"}`}>
                 <span className="font-medium">{base(s.symbol)}</span>
-                <span><SignalBadge signal={s.signal} /></span>
+                {/* call and decision as two chips that wrap instead of one clipped line */}
+                <span className="flex min-w-0 flex-wrap items-center gap-1.5"><SignalBadge signal={s.signal} />{s.decision && <Badge tone="mute">→ {s.decision}</Badge>}</span>
                 {pro && <span className="num text-right text-mute" title="Signal score">{isNum(s.score) ? `${s.score.toFixed(0)}/100` : DASH}</span>}
-                <span className="truncate text-right text-xs text-mute">→ {s.decision}</span>
               </Link>
             ))}
             {!d?.top_signals?.length && <Empty>No signals yet</Empty>}
           </div>
           <WinsMini />
         </Card>
-        <Card title="Sentiment & context" right={<span className="text-[11px] text-mute">Fear &amp; Greed index</span>}>
+        <Card title="Sentiment & context" right={<span className="text-xs text-mute">Fear &amp; Greed index</span>}>
           {sentiment ? (
             <div className="space-y-2">
               <FearGreed value={sentiment.value} label={sentiment.label} change7d={isNum(sentiment.change_7d) ? sentiment.change_7d : null} history={sentiment.history ?? []} />
@@ -126,7 +126,10 @@ export default function Dashboard() {
             return (
               <Link key={h.symbol} to={`/asset/${slug(h.symbol)}`} className="rounded-xl border border-glass/10 p-3 transition-colors hover:border-accent/50" style={{ background: heatColor(ch) }}>
                 <div className="flex items-center justify-between"><span className="font-semibold">{base(h.symbol)}</span><span className="num text-sm font-semibold">{fmtPctRaw(ch)}</span></div>
-                <div className="mt-1 truncate text-[11px] uppercase tracking-wide text-text/75">{h.signal} · {h.regime}</div>
+                <div className="mt-1.5 flex flex-wrap gap-1 text-xs uppercase tracking-wide text-text/80">
+                  {h.signal && <span className="rounded-full bg-ink/40 px-2 py-0.5">{h.signal}</span>}
+                  {h.regime && <span className="rounded-full bg-ink/40 px-2 py-0.5">{h.regime}</span>}
+                </div>
               </Link>
             );
           })}
@@ -137,9 +140,9 @@ export default function Dashboard() {
       <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Top opportunities">
           {d?.opportunities?.length ? d.opportunities.map((o: any) => (
-            <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="grid grid-cols-[minmax(0,1fr)_auto_4.5rem_4.5rem] items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05]">
+            <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="grid min-h-[44px] grid-cols-[minmax(3rem,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] sm:grid-cols-[minmax(0,1fr)_auto_4.5rem_4.5rem]">
               <span className="truncate font-medium">{base(o.symbol)}</span><SignalBadge signal={o.decision} />
-              <span className="num text-right text-mute">{fmtProb(o.confidence)}<span className="text-[11px]"> conf.</span></span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-[11px]"> R:R</span></span>
+              <span className="num text-mute sm:text-right">{fmtProb(o.confidence)}<span className="text-xs"> conf.</span></span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-xs"> R:R</span></span>
             </Link>
           )) : <Empty>No setup currently passes every check (confidence, model agreement, risk/reward). That is a valid outcome.</Empty>}
         </Card>
@@ -173,8 +176,8 @@ function SectionHead({ title, sub, right }: { title: string; sub?: string; right
 function MiniHead({ title, to }: { title: string; to: string }) {
   return (
     <div className="mb-2 mt-4 flex items-center justify-between border-t border-glass/[0.06] pt-3">
-      <span className="text-[11px] font-semibold uppercase tracking-wide text-mute">{title}</span>
-      <Link to={to} className="text-[11px] text-accent hover:underline">See all →</Link>
+      <span className="text-xs font-semibold uppercase tracking-wide text-mute">{title}</span>
+      <Link to={to} className="text-xs text-accent hover:underline">See all →</Link>
     </div>
   );
 }
@@ -193,11 +196,11 @@ function WinsMini() {
             <li key={i} className="flex items-center justify-between gap-2 rounded-md bg-bull/[0.06] px-2 py-1.5 text-sm">
               <span className="flex min-w-0 items-center gap-2">
                 <span className="font-medium">{base(w.symbol)}</span>
-                <span className={`text-[11px] font-bold ${w.side === "LONG" ? "text-bull" : "text-bear"}`}>{w.side}</span>
-                <span className="text-[11px] uppercase text-mute">{w.timeframe}</span>
+                <span className={`text-xs font-bold ${w.side === "LONG" ? "text-bull" : "text-bear"}`}>{w.side}</span>
+                <span className="text-xs uppercase text-mute">{w.timeframe}</span>
               </span>
               <span className="flex items-center gap-2">
-                <span className="rounded bg-bull/15 px-1.5 text-[11px] font-bold text-bull">{label[w.status] ?? "WIN"}</span>
+                <span className="rounded bg-bull/15 px-1.5 text-xs font-bold text-bull">{label[w.status] ?? "WIN"}</span>
                 <RoiFigure x={w} size="sm" label={false} align="left" />
               </span>
             </li>
@@ -241,7 +244,7 @@ function RadarMini() {
       <ul className="space-y-1.5">
         {picks.map((p) => (
           <li key={p.symbol} className="flex items-center justify-between gap-2 text-sm">
-            <span className="flex items-center gap-2"><span className="w-4 text-center text-[11px] text-accent/80">{p.rank}</span><span className="font-medium">{base(p.symbol)}</span></span>
+            <span className="flex items-center gap-2"><span className="w-4 text-center text-xs text-accent/80">{p.rank}</span><span className="font-medium">{base(p.symbol)}</span></span>
             <span className="num text-xs"><span className="text-mute">vs BTC 7d </span><span className={tone(p.rs_7d)}>{isNum(p.rs_7d) ? `${p.rs_7d > 0 ? "+" : ""}${(p.rs_7d * 100).toFixed(1)}%` : "—"}</span></span>
           </li>
         ))}

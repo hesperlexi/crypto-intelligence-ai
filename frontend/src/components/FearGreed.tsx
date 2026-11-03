@@ -4,12 +4,14 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 type Point = { ts: number; value: number };
+// colours are theme tokens (rgb(var(--bear)) …), so the gauge follows the five themes; "Greed" is a softer bull
+const tok = (name: string, k = 1) => (a = 1) => `rgb(var(--${name}) / ${+(a * k).toFixed(3)})`;
 const ZONES = [
-  { to: 25, color: "#f6465d", name: "Extreme fear", note: "Panic selling. Prices are often stretched to the downside." },
-  { to: 45, color: "#f7931a", name: "Fear", note: "Traders are nervous; rallies are being sold." },
-  { to: 55, color: "#f0b90b", name: "Neutral", note: "No strong crowd emotion either way." },
-  { to: 75, color: "#8bd450", name: "Greed", note: "Buyers are confident; pullbacks get bought." },
-  { to: 100, color: "#0ecb81", name: "Extreme greed", note: "Euphoria. The market can be overheated." },
+  { to: 25, c: tok("bear"), name: "Extreme fear", note: "Panic selling. Prices are often stretched to the downside." },
+  { to: 45, c: tok("warn"), name: "Fear", note: "Traders are nervous; rallies are being sold." },
+  { to: 55, c: tok("accent"), name: "Neutral", note: "No strong crowd emotion either way." },
+  { to: 75, c: tok("bull", 0.72), name: "Greed", note: "Buyers are confident; pullbacks get bought." },
+  { to: 100, c: tok("bull"), name: "Extreme greed", note: "Euphoria. The market can be overheated." },
 ];
 const zoneOf = (v: number) => ZONES.find((z) => v <= z.to) ?? ZONES[ZONES.length - 1];
 
@@ -73,8 +75,7 @@ export default function FearGreed({ value, label, change7d, history = [] }: { va
         <svg viewBox="0 0 260 150" className="w-full overflow-visible" role="img" aria-label={`Fear and Greed index ${value}, ${label}`}>
           <defs>
             <linearGradient id={`fg-grad-${id}`} x1="30" y1="0" x2="230" y2="0" gradientUnits="userSpaceOnUse">
-              <stop offset="0" stopColor="#f6465d" /><stop offset="0.3" stopColor="#f7931a" /><stop offset="0.5" stopColor="#f0b90b" />
-              <stop offset="0.72" stopColor="#8bd450" /><stop offset="1" stopColor="#0ecb81" />
+              {([[0, 0], [0.3, 1], [0.5, 2], [0.72, 3], [1, 4]] as const).map(([o, i]) => <stop key={o} offset={o} style={{ stopColor: ZONES[i].c() }} />)}
             </linearGradient>
             <filter id={`fg-glow-${id}`} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" /></filter>
           </defs>
@@ -89,7 +90,7 @@ export default function FearGreed({ value, label, change7d, history = [] }: { va
             const [x1, y1] = pt(t, R - 13), [x2, y2] = pt(t, R - (major ? 21 : 17));
             return <line key={t} x1={x1} y1={y1} x2={x2} y2={y2} stroke="rgb(var(--mute))" strokeWidth={major ? 1.6 : 1} opacity={major ? 0.8 : 0.4} strokeLinecap="round" />;
           })}
-          {[0, 25, 50, 75, 100].map((t) => { const [x, y] = pt(t, R + 17); return <text key={t} x={x} y={y + 3.5} textAnchor="middle" fontSize="10" fill="rgb(var(--mute))" className="tabular-nums">{t}</text>; })}
+          {[0, 25, 50, 75, 100].map((t) => { const [x, y] = pt(t, R + 17); return <text key={t} x={x} y={y + 3.5} textAnchor="middle" fontSize="12" fill="rgb(var(--mute))" className="tabular-nums">{t}</text>; })}
           {yday != null && (() => { const [x, y] = pt(yday, R); return <circle cx={x} cy={y} r="3.4" fill="rgb(var(--ink))" stroke="rgb(var(--text))" strokeWidth="1.5"><title>Yesterday: {yday}</title></circle>; })()}
           {/* needle */}
           <g className={done ? "fg-breathe" : undefined} style={{ transformOrigin: `${CX}px ${CY}px` }}>
@@ -97,17 +98,17 @@ export default function FearGreed({ value, label, change7d, history = [] }: { va
             <circle cx={tip[0]} cy={tip[1]} r="3.2" fill="rgb(var(--text))" />
           </g>
           <circle cx={CX} cy={CY} r="9" fill="rgb(var(--raised))" stroke="rgb(var(--text))" strokeWidth="2.5" />
-          <circle cx={CX} cy={CY} r="3" fill={z.color} />
+          <circle cx={CX} cy={CY} r="3" fill={z.c()} />
           {/* marker riding on the arc */}
-          <circle cx={marker[0]} cy={marker[1]} r="12" fill={z.color} className={done ? "fg-pulse" : undefined} style={{ transformOrigin: `${marker[0]}px ${marker[1]}px` }} opacity="0.35" />
-          <circle cx={marker[0]} cy={marker[1]} r="7.5" fill="rgb(var(--ink))" stroke={z.color} strokeWidth="3" />
+          <circle cx={marker[0]} cy={marker[1]} r="12" fill={z.c()} className={done ? "fg-pulse" : undefined} style={{ transformOrigin: `${marker[0]}px ${marker[1]}px` }} opacity="0.35" />
+          <circle cx={marker[0]} cy={marker[1]} r="7.5" fill="rgb(var(--ink))" stroke={z.c()} strokeWidth="3" />
           {/* value */}
-          <text x={CX} y={CY - 34} textAnchor="middle" fontSize="38" fontWeight="700" fill={z.color} className="tabular-nums" style={{ letterSpacing: "-0.02em" }}>{Math.round(cur)}</text>
+          <text x={CX} y={CY - 34} textAnchor="middle" fontSize="38" fontWeight="700" fill={z.c()} className="tabular-nums" style={{ letterSpacing: "-0.02em" }}>{Math.round(cur)}</text>
         </svg>
       </div>
 
       <div className="-mt-1 flex flex-col items-center gap-1 text-center">
-        <span className="rounded-full px-3 py-0.5 text-sm font-semibold" style={{ color: z.color, background: `${z.color}1f`, boxShadow: `inset 0 0 0 1px ${z.color}55` }}>{label}</span>
+        <span className="rounded-full px-3 py-0.5 text-sm font-semibold" style={{ color: z.c(), background: z.c(0.12), boxShadow: `inset 0 0 0 1px ${z.c(0.33)}` }}>{label}</span>
         <p className="max-w-[300px] text-xs text-mute">{z.note}</p>
         {change7d != null && <p className="text-xs text-mute"><span className={`tabular-nums font-medium ${change7d > 0 ? "text-bull" : change7d < 0 ? "text-bear" : ""}`}>{change7d > 0 ? "▲ +" : change7d < 0 ? "▼ " : ""}{change7d}</span> over 7 days</p>}
       </div>
@@ -115,29 +116,29 @@ export default function FearGreed({ value, label, change7d, history = [] }: { va
       <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-xs">
         {([["Now", value], ["Yesterday", yday], ["Last week", week], ["30d range", lo != null && hi != null ? `${lo}–${hi}` : null]] as const).map(([k, x]) => (
           <div key={k} className="rounded-lg bg-glass/[0.04] px-1 py-1.5">
-            <div className="text-[11px] text-mute">{k}</div>
-            <div className="num font-semibold" style={typeof x === "number" ? { color: zoneOf(x).color } : undefined}>{x ?? "—"}</div>
+            <div className="text-xs text-mute">{k}</div>
+            <div className="num font-semibold" style={typeof x === "number" ? { color: zoneOf(x).c() } : undefined}>{x ?? "—"}</div>
           </div>
         ))}
       </div>
 
       {hist.length > 2 && (
         <div className="mt-3">
-          <div className="mb-1 flex justify-between text-[11px] text-mute"><span>30 days ago</span><span>today</span></div>
+          <div className="mb-1 flex justify-between text-xs text-mute"><span>30 days ago</span><span>today</span></div>
           <svg viewBox={`0 0 ${W} ${H}`} className="h-16 w-full overflow-visible" preserveAspectRatio="none" aria-hidden="true">
             <defs>
               <linearGradient id={`fg-area-${id}`} x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0" stopColor={z.color} stopOpacity="0.35" /><stop offset="1" stopColor={z.color} stopOpacity="0" />
+                <stop offset="0" style={{ stopColor: z.c(), stopOpacity: 0.35 }} /><stop offset="1" style={{ stopColor: z.c(), stopOpacity: 0 }} />
               </linearGradient>
             </defs>
             {/* fear / greed bands */}
-            <rect x="0" y={H - 4 - 0.25 * (H - 8)} width={W} height={0.25 * (H - 8)} fill="#f6465d" opacity="0.05" />
-            <rect x="0" y={4} width={W} height={0.25 * (H - 8)} fill="#0ecb81" opacity="0.05" />
+            <rect x="0" y={H - 4 - 0.25 * (H - 8)} width={W} height={0.25 * (H - 8)} fill="rgb(var(--bear))" opacity="0.05" />
+            <rect x="0" y={4} width={W} height={0.25 * (H - 8)} fill="rgb(var(--bull))" opacity="0.05" />
             <line x1="0" x2={W} y1={H - 4 - 0.5 * (H - 8)} y2={H - 4 - 0.5 * (H - 8)} stroke="rgb(var(--glass) / 0.12)" strokeDasharray="3 4" vectorEffect="non-scaling-stroke" />
             <path d={area} fill={`url(#fg-area-${id})`} style={{ opacity: drawn ? 1 : 0, transition: "opacity 1.2s ease-out 0.4s" }} />
-            <polyline points={line} fill="none" stroke={z.color} strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
+            <polyline points={line} fill="none" stroke={z.c()} strokeWidth="2" strokeLinejoin="round" vectorEffect="non-scaling-stroke"
               pathLength={1} strokeDasharray={settled ? undefined : "1"} strokeDashoffset={settled ? undefined : drawn ? 0 : 1} style={{ transition: "stroke-dashoffset 1.6s ease-out" }} />
-            {last && <circle cx={last[0]} cy={last[1]} r="3" fill={z.color} vectorEffect="non-scaling-stroke" />}
+            {last && <circle cx={last[0]} cy={last[1]} r="3" fill={z.c()} vectorEffect="non-scaling-stroke" />}
           </svg>
         </div>
       )}

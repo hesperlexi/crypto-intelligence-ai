@@ -283,7 +283,7 @@ export default function Landing({ error }: { error: string | null }) {
         </div>
       )}
       {dialog && <AuthDialog mode={dialog} onClose={() => setDialog(null)} />}
-      <SiteFooter />
+      <SiteFooter apk />
     </div>
   );
 }

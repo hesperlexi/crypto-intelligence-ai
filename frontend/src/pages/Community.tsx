@@ -95,7 +95,7 @@ function Composer({ uid, username, admin }: { uid: string; username: string; adm
   );
 }
 
-const AdminBadge = () => <span className="ml-1.5 rounded border border-accent/60 bg-accent/15 px-1.5 py-0.5 align-middle text-[10px] font-bold uppercase tracking-wide text-accent" title="App owner">Admin</span>;
+const AdminBadge = () => <span className="ml-1.5 rounded border border-accent/60 bg-accent/15 px-1.5 py-0.5 align-middle text-xs font-bold uppercase tracking-wide text-accent" title="App owner">Admin</span>;
 
 const PostItem = memo(function PostItem({ p, canDelete, onDeleted }: { p: Post; canDelete: boolean; onDeleted: (id: string) => void }) {
   const [busy, setBusy] = useState(false);
@@ -112,7 +112,7 @@ const PostItem = memo(function PostItem({ p, canDelete, onDeleted }: { p: Post; 
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent" aria-hidden="true">{(p.username || "?")[0].toUpperCase()}</span>
           <div className="min-w-0 leading-tight">
             <div className="truncate text-sm font-semibold">@{p.username}{p.admin && <AdminBadge />}</div>
-            <time className="text-[11px] text-mute" dateTime={new Date(p.created_at).toISOString()} title={fmtTime(p.created_at)}>{Date.now() - p.created_at < 60_000 ? "just now" : ago(p.created_at)}</time>
+            <time className="text-xs text-mute" dateTime={new Date(p.created_at).toISOString()} title={fmtTime(p.created_at)}>{Date.now() - p.created_at < 60_000 ? "just now" : ago(p.created_at)}</time>
           </div>
         </div>
         {canDelete && <button className="btn shrink-0 px-2.5 py-1 text-xs text-mute hover:text-bear" onClick={del} disabled={busy} aria-label={`Delete post by ${p.username}`}>{busy ? "…" : "Delete"}</button>}

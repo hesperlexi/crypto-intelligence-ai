@@ -93,17 +93,17 @@ function HitTags({ x }: { x: any }) {
 export function LiveResult({ x, compact = false }: { x: any; compact?: boolean }) {
   const px = useTickerThrottled(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
   // pending: the "Waiting for entry" pill comes from the row's fill status; here only the price now
-  if (isPending(x)) return !compact && isNum(px) ? <div className="num mt-0.5 text-[11px] font-normal text-mute">now <span className="text-text">{fmtPrice(px)}</span> · entry {fmtPrice(x.entry)}</div> : null;
+  if (isPending(x)) return !compact && isNum(px) ? <div className="num mt-0.5 text-xs font-normal text-mute">now <span className="text-text">{fmtPrice(px)}</span> · entry {fmtPrice(x.entry)}</div> : null;
   const l = liveOf(x, px);
   return (
     <div className="font-normal">
       <div className="flex flex-wrap items-center gap-1">
         <Pill tone="accent" title="Still running. The figures follow the live price and are not a result yet">● Live</Pill>
         <HitTags x={x} />
-        {l.stop.why && x.tp1_hit ? <span className="text-[11px] text-mute">stop at {x.tp2_hit ? "TP1" : "break-even"}</span> : null}
+        {l.stop.why && x.tp1_hit ? <span className="text-xs text-mute">stop at {x.tp2_hit ? "TP1" : "break-even"}</span> : null}
       </div>
       {!compact && (
-        <div className="num mt-0.5 text-[11px] text-mute">
+        <div className="num mt-0.5 text-xs text-mute">
           {isNum(px) ? <>now <span className="text-text">{fmtPrice(px)}</span></> : "waiting for the live price"}
           {isNum(l.toStop) && <> · stop {fmtPctRaw(Math.abs(l.toStop), 2, false)} away</>}
           {l.next && isNum(l.toNext) && <> · {l.next[0] === "Target 1" ? "TP1" : l.next[0] === "Target 2" ? "TP2" : "TP3"} {fmtPctRaw(Math.abs(l.toNext), 2, false)} away</>}
@@ -120,7 +120,7 @@ export function ReturnFigure({ x, size = "md", align = "right" }: { x: any; size
   return (
     <span className={`inline-flex flex-col gap-0.5 ${align === "right" ? "items-end text-right" : "items-start text-left"}`}>
       <span className={`num font-extrabold leading-none tracking-tight ${size === "md" ? "text-xl" : "text-sm"} ${cls}`}>{fmtPctRaw(x.return_pct, 2)}</span>
-      <span className="whitespace-nowrap text-[10px] leading-none text-mute">return · before fees</span>
+      <span className="whitespace-nowrap text-xs leading-none text-mute">return · before fees</span>
     </span>
   );
 }
@@ -129,20 +129,20 @@ export function ReturnFigure({ x, size = "md", align = "right" }: { x: any; size
  * price return only (scalping board), no leverage. */
 export function LiveRoi({ x, size = "sm", plain = false }: { x: any; size?: "sm" | "md"; plain?: boolean }) {
   const px = useTickerThrottled(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
-  if (isPending(x)) return <span className="text-[11px] text-mute">waiting for entry</span>;
+  if (isPending(x)) return <span className="text-xs text-mute">waiting for entry</span>;
   const l = liveOf(x, px);
   if (plain) {
-    if (l.move == null) return <span className="text-[11px] text-mute">Live · …</span>;
+    if (l.move == null) return <span className="text-xs text-mute">Live · …</span>;
     const c = l.move > 0 ? "text-bull" : l.move < 0 ? "text-bear" : "text-mute";
     return (
       <span className="inline-flex flex-col items-end gap-0.5 text-right" title="Live return of the trade, from the current price vs the entry (no leverage). Before fees; not a result until the call closes.">
         <span className={`num font-bold leading-none ${size === "md" ? "text-lg" : "text-sm"} ${c}`}>{fmtPctRaw(l.move, 2)}</span>
-        <span className="num whitespace-nowrap text-[10px] leading-none text-mute"><span className="font-semibold text-accent">Live</span> · return</span>
+        <span className="num whitespace-nowrap text-xs leading-none text-mute"><span className="font-semibold text-accent">Live</span> · return</span>
       </span>
     );
   }
   const v = l.roi ?? l.move;
-  if (v == null) return <span className="text-[11px] text-mute">Live · …</span>;
+  if (v == null) return <span className="text-xs text-mute">Live · …</span>;
   const cls = v > 0 ? "text-bull" : v < 0 ? "text-bear" : "text-mute";
   return (
     <span className="inline-flex flex-col items-end gap-0.5 text-right" title="Live, from the current price vs the entry, on margin at the card's leverage. Before fees; not a result until the call closes.">
@@ -150,7 +150,7 @@ export function LiveRoi({ x, size = "sm", plain = false }: { x: any; size?: "sm"
         <span className={`num font-bold leading-none ${size === "md" ? "text-lg" : "text-sm"} ${cls}`}>{fmtPctRaw(v, 2)}</span>
         {l.roi != null && l.lev && <LevChip lev={l.lev} />}
       </span>
-      <span className="num whitespace-nowrap text-[10px] leading-none text-mute"><span className="font-semibold text-accent">Live</span> · {l.roi != null ? <>ROI on margin · price {fmtPctRaw(l.move, 2)}</> : "price move"}</span>
+      <span className="num whitespace-nowrap text-xs leading-none text-mute"><span className="font-semibold text-accent">Live</span> · {l.roi != null ? <>ROI on margin · price {fmtPctRaw(l.move, 2)}</> : "price move"}</span>
     </span>
   );
 }
@@ -176,7 +176,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
       <dt className="shrink-0 text-mute">{k}</dt>
       <dd className="num min-w-0 text-right font-medium"><span className={tone}>{fmtPrice(price)}</span>
         {hit && <span className="ml-1.5 align-middle"><Pill tone={k === "Stop-loss" ? "bear" : "bull"}>hit</Pill></span>}
-        {note && <span className="block text-[11px] font-normal text-mute">{note}</span>}</dd>
+        {note && <span className="block text-xs font-normal text-mute">{note}</span>}</dd>
     </div>
   );
   const paperQ = new URLSearchParams({ market: "futures", symbol: x.symbol, side: x.side,
@@ -196,9 +196,9 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
               <div className="min-w-0">
                 <h2 className="flex items-center gap-1.5 truncate font-display text-base font-bold">
                   {base(x.symbol)} <span className={x.side === "LONG" ? "text-bull" : "text-bear"}>{x.side}</span> <span className="text-sm font-medium text-mute">{tf}</span>
-                  {x.grade && <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-[11px] font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}
+                  {x.grade && <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}
                 </h2>
-                <p className="text-[11px] text-mute">{scalp ? (x.rebuilt ? "Rebuilt" : "Logged") : "Published"} {fmtTime(x.created_at)} · {scalp ? (x.rebuilt ? "15m scalping demo call, rebuilt by replay (not public)" : "15m scalping demo call (not public)") : "futures signal"}</p>
+                <p className="text-xs text-mute">{scalp ? (x.rebuilt ? "Rebuilt" : "Logged") : "Published"} {fmtTime(x.created_at)} · {scalp ? (x.rebuilt ? "15m scalping demo call, rebuilt by replay (not public)" : "15m scalping demo call (not public)") : "futures signal"}</p>
               </div>
             </div>
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close details" onClick={onClose}>✕</button>
@@ -215,7 +215,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                   </div>
                   {!pending && <LiveRoi x={x} size="md" plain={scalp} />}
                 </div>
-                <p className="mt-2 text-[11px] text-mute">{pending
+                <p className="mt-2 text-xs text-mute">{pending
                   ? "Pullback entry: counts only once price reaches the entry."
                   : "Live price; not a result until it closes. Before fees."}</p>
               </div>
@@ -224,8 +224,8 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                 <div className="min-w-0">
                   <div className="label">Final result</div>
                   <div className={`mt-1 text-sm font-semibold ${cls}`}>{lab}</div>
-                  {x.exit_reason && <div className="text-[11px] text-mute">{EXIT[x.exit_reason] ?? x.exit_reason}</div>}
-                  {x.closed_at && <div className="num text-[11px] text-mute">Closed {fmtTime(x.closed_at)}</div>}
+                  {x.exit_reason && <div className="text-xs text-mute">{EXIT[x.exit_reason] ?? x.exit_reason}</div>}
+                  {x.closed_at && <div className="num text-xs text-mute">Closed {fmtTime(x.closed_at)}</div>}
                 </div>
                 {isNum(x.return_pct) ? (scalp ? <ReturnFigure x={x} /> : <RoiFigure x={x} size="md" />) : <span className="text-xs text-mute">no result (not counted)</span>}
               </div>
@@ -234,7 +234,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
               <UpdatedBadge adj={x.adjustments} />
               {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
               {managed && <Pill tone="accent">{managed}</Pill>}
-              {isNum(x.peak_pct) && <span className="num text-[11px] text-mute">Best open profit: price {fmtPctRaw(x.peak_pct, 2)}{isNum(x.leverage) && !scalp ? ` · ${fmtPctRaw(x.peak_pct * x.leverage, 1)} on margin` : ""}</span>}
+              {isNum(x.peak_pct) && <span className="num text-xs text-mute">Best open profit: price {fmtPctRaw(x.peak_pct, 2)}{isNum(x.leverage) && !scalp ? ` · ${fmtPctRaw(x.peak_pct * x.leverage, 1)} on margin` : ""}</span>}
             </div>
 
             <dl className="divide-y divide-glass/[0.06] text-sm">
@@ -251,12 +251,12 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                 <div className="flex items-start justify-between gap-4 py-2"><dt className="text-mute">Distance</dt>
                   <dd className="num text-right text-xs">{isNum(l.toStop) && <span className="block">to stop {fmtPctRaw(Math.abs(l.toStop), 2, false)}</span>}{l.next && isNum(l.toNext) && <span className="block">to {l.next[0].toLowerCase()} {fmtPctRaw(Math.abs(l.toNext), 2, false)}</span>}</dd></div>
               )}
-              {isNum(x.leverage) && <div className="flex items-start justify-between gap-4 py-2"><dt className="text-mute">{scalp ? "Card's leverage (info)" : "Suggested leverage"}</dt><dd className="num font-medium">{x.leverage}x{scalp && <span className="block text-[11px] font-normal text-mute">returns here are not multiplied by it</span>}</dd></div>}
+              {isNum(x.leverage) && <div className="flex items-start justify-between gap-4 py-2"><dt className="text-mute">{scalp ? "Card's leverage (info)" : "Suggested leverage"}</dt><dd className="num font-medium">{x.leverage}x{scalp && <span className="block text-xs font-normal text-mute">returns here are not multiplied by it</span>}</dd></div>}
               <div className="flex items-start justify-between gap-4 py-2">
                 <dt className="text-mute">Time limit</dt>
                 <dd className="num text-right font-medium">{isNum(x.horizon_bars) ? x.horizon_bars : 30} candles of {tf}
-                  {end && open && <span className="block text-[11px] font-normal text-mute">{end > Date.now() ? `ends ${fmtTime(end)} · ${left(end - Date.now())} left` : "time is up; closes at the next update"}</span>}
-                  {!open && x.exit_reason === "expired" && <span className="block text-[11px] font-normal text-mute">reached: the rest closed at the market price</span>}
+                  {end && open && <span className="block text-xs font-normal text-mute">{end > Date.now() ? `ends ${fmtTime(end)} · ${left(end - Date.now())} left` : "time is up; closes at the next update"}</span>}
+                  {!open && x.exit_reason === "expired" && <span className="block text-xs font-normal text-mute">reached: the rest closed at the market price</span>}
                 </dd>
               </div>
             </dl>
@@ -269,7 +269,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
               {open && !pending && <Link className="btn px-3 py-1.5 text-xs" to={`/paper?${paperQ}`}>Practise this trade</Link>}
               {open && x.id && !scalp && <AdjustButton call={adminCall(x)} symbol={x.symbol} timeframe={x.timeframe} />}
             </div>
-            <p className="text-[11px] text-mute">{scalp ? "Demo results, before fees. Wins and losses alike; not part of the public record." : "Analysis only, not financial advice. Wins and losses alike, never edited."}</p>
+            <p className="text-xs text-mute">{scalp ? "Demo results, before fees. Wins and losses alike; not part of the public record." : "Analysis only, not financial advice. Wins and losses alike, never edited."}</p>
           </div>
         </div>
       </div>

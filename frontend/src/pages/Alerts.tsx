@@ -5,6 +5,7 @@ import { Badge, Card, Empty, ErrorBox, Loading, Note } from "../components/ui";
 import { del, post, put, useApi } from "../lib/api";
 import { fmtTime } from "../lib/format";
 import * as push from "../lib/push";
+import { BlockedHelp, ChromeWarning } from "../components/NotifyHelp";
 
 const NEEDS: Record<string, { key: string; label: string; placeholder: string }> = {
   CONFIDENCE_ABOVE: { key: "threshold", label: "Confidence threshold (0–1)", placeholder: "0.6" },
@@ -70,7 +71,7 @@ export default function Alerts() {
         <span>
           <span className="font-medium">Phone notifications: </span>
           {perm === "granted" ? (push.savedToken() ? <span className="text-bull">on, also when the app is closed</span> : <span className="text-warn">on while the app is open</span>)
-            : perm === "denied" ? <span className="text-bear">blocked in your browser settings</span>
+            : perm === "denied" ? <span className="text-bear">blocked in {push.inAndroidApp() ? "phone" : "browser"} settings</span>
             : perm === "unsupported" ? <span className="text-mute">not supported here{/iphone|ipad/i.test(navigator.userAgent) ? " — add the app to your Home Screen first" : ""}</span>
             : <span className="text-mute">off</span>}
         </span>
@@ -78,6 +79,8 @@ export default function Alerts() {
           {perm !== "granted" && perm !== "unsupported" && <button className="btn btn-primary px-3 py-1 text-xs" onClick={turnOn}>{perm === "denied" ? "Try again" : "Turn on"}</button>}
           <Link className="btn px-3 py-1 text-xs" to="/settings#notifications">Notification settings</Link>
         </span>
+        {perm === "denied" && <BlockedHelp className="w-full" />}
+        <ChromeWarning className="w-full" />
       </div>
 
       <Card title="New alert">

@@ -6,6 +6,7 @@ import { useLive } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 import { AiNote, CallStatusRow, RiskBadge } from "./SignalExtras";
 import { AiTag } from "./ui";
+import { Badge, Tile } from "./kit";
 import { AdjustButton, AdjustHistory, adjustedPlan, UpdatedBadge } from "./SignalAdjust";
 import { Explain, PLAIN, useIsPro } from "../lib/mode";
 
@@ -19,10 +20,10 @@ export function GradeBadge({ grade, small = false }: { grade?: string | null; sm
   if (grade !== "A" && grade !== "B") return null;
   const a = grade === "A";
   return (
-    <span title={a ? "Strong signal: trend, AI models and their track record all agree" : "Moderate signal: AI-led call where the model's out-of-sample record shows an edge"}
-      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-[5px] border font-semibold leading-none ${small ? "px-1.5 py-[3px] text-[11px]" : "px-2 py-1 text-xs"} ${a ? "border-accent/45 bg-accent/[0.12] text-accent" : "border-glass/20 bg-glass/[0.05] text-text/85"}`}>
+    <Badge tone={a ? "accent" : "text"} className={small ? "" : "px-2.5"}
+      title={a ? "Strong signal: trend, AI models and their track record all agree" : "Moderate signal: AI-led call where the model's out-of-sample record shows an edge"}>
       {a ? "A · strong" : "B · moderate"}
-    </span>
+    </Badge>
   );
 }
 
@@ -291,11 +292,5 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
 
 /** One cell of the key-numbers strip: small label, big tabular value, quiet sub line. */
 function Metric({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
-  return (
-    <div className="metric">
-      <div className="metric-k" title={k}>{k}</div>
-      <div className={`metric-v num ${cls}`}>{v}</div>
-      {sub && <div className="metric-sub num">{sub}</div>}
-    </div>
-  );
+  return <Tile variant="strip" label={k} value={v} valueClass={cls} sub={sub || undefined} />;
 }

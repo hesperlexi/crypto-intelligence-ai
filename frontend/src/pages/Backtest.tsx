@@ -47,9 +47,9 @@ export default function Backtest() {
     const cap = res.config.initial_capital;
     const pct = (curve: any[]) => curve.map((p: any) => ({ ts: p.ts, value: (p.equity / cap - 1) * 100 }));
     return [
-      { name: res.strategy_label, color: "#f0b90b", points: pct(res.equity_curve) },
-      { name: "Buy & Hold", color: "#6f7e91", points: pct(res.benchmarks.buy_hold.equity_curve), dashed: true },
-      { name: "SMA crossover", color: "#c084fc", points: pct(res.benchmarks.sma_cross.equity_curve), dashed: true },
+      { name: res.strategy_label, color: "--accent", points: pct(res.equity_curve) },
+      { name: "Buy & Hold", color: "--mute", points: pct(res.benchmarks.buy_hold.equity_curve), dashed: true },
+      { name: "SMA crossover", color: "--ai", points: pct(res.benchmarks.sma_cross.equity_curve), dashed: true },
     ];
   }, [res]);
 

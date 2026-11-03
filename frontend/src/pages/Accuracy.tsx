@@ -238,7 +238,7 @@ function Timeline({ folds, live, sizes }: { folds: any[]; live: any; sizes: any 
           </div>
         ))}
       </div>
-      <div className="num mt-1 flex justify-between pl-[5.5rem] text-[11px] text-mute"><span>{fmtDate(t0)}</span><span>{fmtDate(t1)}</span></div>
+      <div className="num mt-1 flex justify-between pl-[5.5rem] text-xs text-mute"><span>{fmtDate(t0)}</span><span>{fmtDate(t1)}</span></div>
       <Note>{folds.length} folds: train (blue), calibrate (amber), score (green). {sizes.gap}-bar gaps, never shuffled.</Note>
     </div>
   );

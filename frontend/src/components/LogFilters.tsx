@@ -70,7 +70,7 @@ export function useLogFilters() {
 }
 export type LogFilterState = ReturnType<typeof useLogFilters>;
 
-const chip = (on: boolean) => `min-h-[32px] rounded-lg border px-2.5 text-xs transition-colors ${on ? "border-accent/60 bg-accent/15 font-semibold text-accent" : "border-glass/10 text-mute hover:border-glass/25 hover:text-text"}`;
+const chip = (on: boolean) => `chip ${on ? "is-on" : ""}`;   // UI v2.15: the shared .chip (index.css)
 
 function Seg({ label, value, opts, onChange }: { label: string; value: string; opts: [string, string][]; onChange: (v: string) => void }) {
   return (
@@ -81,7 +81,7 @@ function Seg({ label, value, opts, onChange }: { label: string; value: string; o
 }
 
 function Controls({ f, stacked }: { f: LogFilterState; stacked: boolean }) {
-  const lab = "mb-1 block text-[11px] uppercase tracking-wide text-mute";
+  const lab = "mb-1 block text-xs uppercase tracking-wide text-mute";
   const box = stacked ? "space-y-4" : "grid gap-x-5 gap-y-3 md:grid-cols-[minmax(0,14rem)_auto_auto_auto] xl:grid-cols-[minmax(0,14rem)_auto_auto_auto_auto]";
   return (
     <div className={box}>
@@ -126,7 +126,7 @@ export function LogFilters({ f, total, shown }: { f: LogFilterState; total: numb
       {/* phone: one row with the button, the count and clear-all */}
       <div className="flex items-center gap-3 md:hidden">
         <button type="button" className="btn px-3 py-1.5 text-sm" onClick={() => setOpen(true)} aria-expanded={open} aria-controls="log-filter-sheet">
-          Filters{f.active ? <span className="ml-1.5 rounded-full bg-accent px-1.5 text-[11px] font-bold text-ink">{f.active}</span> : null}
+          Filters{f.active ? <span className="ml-1.5 rounded-full bg-accent px-1.5 text-xs font-bold text-ink">{f.active}</span> : null}
         </button>
         <span className="num text-xs text-mute" aria-live="polite">{shown} of {total} signals</span>
         <span className="ml-auto">{clearBtn}</span>

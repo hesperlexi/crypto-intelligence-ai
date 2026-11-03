@@ -148,7 +148,7 @@ export default function Users() {
           <div className="-mx-4 flex min-w-0 flex-1 gap-1.5 overflow-x-auto border-t border-glass/[0.06] px-4 pt-3 lg:mx-0 lg:flex-wrap lg:justify-end lg:overflow-visible lg:border-0 lg:px-0 lg:pt-0"
             title="Country from each device's time zone. People appear after they open the app once with this version.">
             {byCountry.map(([c, n]) => (
-              <span key={c} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-glass/10 px-1.5 py-0.5 text-[11px]">
+              <span key={c} className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-glass/10 px-1.5 py-0.5 text-xs">
                 <Flag cc={c} />{countryName(c)}<span className="num text-mute">{n}</span>
               </span>
             ))}
@@ -269,8 +269,8 @@ function SummaryTile({ label, value, sub, tone, onClick, active }: { label: stri
         <span className="label truncate">{label}</span>
         <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${dot}`} aria-hidden="true" />
       </div>
-      <div className={`num mt-2 text-[26px] font-semibold leading-none sm:text-3xl ${cls}`}>{value}</div>
-      <div className="mt-1.5 truncate text-[11px] text-mute">{sub}</div>
+      <div className={`num mt-2 text-2xl font-semibold leading-none ${cls}`}>{value}</div>
+      <div className="mt-1.5 text-xs leading-snug text-mute">{sub}</div>
     </button>
   );
 }
@@ -279,7 +279,7 @@ function ActivityNum({ n, label, dot = false }: { n: number; label: string; dot?
   return (
     <div className="lg:flex lg:items-baseline lg:gap-1.5">
       <div className="num flex items-center justify-center gap-1.5 text-xl font-semibold lg:justify-start">{dot && <span className="h-2 w-2 rounded-full bg-bull shadow-[0_0_8px_rgb(var(--bull))]" aria-hidden="true" />}{n}</div>
-      <div className="text-[11px] text-mute">{label}</div>
+      <div className="text-xs text-mute">{label}</div>
     </div>
   );
 }
@@ -287,7 +287,7 @@ function ActivityNum({ n, label, dot = false }: { n: number; label: string; dot?
 function Flag({ cc }: { cc?: string | null }) {
   const [bad, setBad] = useState(false);
   const url = flagUrl(cc);
-  if (!url || bad) return <span className="inline-flex h-3.5 w-5 shrink-0 items-center justify-center rounded-sm bg-glass/10 text-[8px] text-mute" aria-hidden="true">{cc ?? "?"}</span>;
+  if (!url || bad) return <span className="inline-flex h-4 min-w-[20px] shrink-0 items-center justify-center rounded-sm bg-glass/10 px-0.5 text-xs font-semibold leading-none text-mute" aria-hidden="true">{cc ?? "?"}</span>;
   return <img src={url} alt="" width={20} height={14} className="h-3.5 w-5 shrink-0 rounded-sm object-cover ring-1 ring-glass/15" onError={() => setBad(true)} />;
 }
 
@@ -322,7 +322,7 @@ function Seen({ pr }: { pr?: any }) {
 function Where({ pr }: { pr?: any }) {
   if (!pr?.country && !pr?.device) return null;
   return (
-    <span className="flex min-w-0 items-center gap-1.5 text-[11px] text-mute">
+    <span className="flex min-w-0 items-center gap-1.5 text-xs text-mute">
       {pr?.country && <Flag cc={pr.country} />}
       <span className="truncate">{[pr?.country && countryName(pr.country), pr?.device].filter(Boolean).join(" · ")}</span>
     </span>
@@ -354,7 +354,7 @@ function Term({ u, wide = false, lead }: { u: any; wide?: boolean; lead?: string
         <span className={`num shrink-0 font-semibold ${txt}`}>{left <= 0 ? `${-left}d ago` : `${left}d left`}</span>
       </div>
       <div className="mt-1 h-1 overflow-hidden rounded-full bg-glass/10" role="presentation"><div className={`h-full rounded-full ${tone}`} style={{ width: `${pct}%` }} /></div>
-      {u.plan_months ? <div className="mt-1 text-[11px] text-mute">{u.free && !lead ? "free · " : ""}{planLabel(u.plan_months)}</div> : null}
+      {u.plan_months ? <div className="mt-1 text-xs text-mute">{u.free && !lead ? "free · " : ""}{planLabel(u.plan_months)}</div> : null}
     </div>
   );
 }
@@ -481,7 +481,7 @@ function ActionPopover({ id, anchor, items, onPick, onClose }: { id: string; anc
         <button key={it.label} role="menuitem" type="button" tabIndex={-1} onClick={() => onPick(it)}
           className={`block w-full rounded-md px-3 py-2 text-left text-sm outline-none hover:bg-glass/[0.06] focus-visible:bg-glass/[0.08] focus-visible:shadow-none ${it.danger ? "text-bear" : ""}`}>
           {it.label}
-          {it.hint && <span className="block text-[11px] text-mute">{it.hint}</span>}
+          {it.hint && <span className="block text-xs text-mute">{it.hint}</span>}
         </button>
       ))}
     </div>
@@ -513,7 +513,7 @@ function ActionSheet({ id, u, items, onPick, onClose }: { id: string; u: any; it
             {items.map((it) => (
               <button key={it.label} role="menuitem" type="button" onClick={() => onPick(it)}
                 className={`flex min-h-[52px] w-full flex-col justify-center rounded-lg px-3 py-2 text-left active:bg-glass/[0.08] ${it.danger ? "text-bear" : "text-text"}`}>
-                <span className="text-[15px] font-medium">{it.label}</span>
+                <span className="text-base font-medium">{it.label}</span>
                 {it.hint && <span className="text-xs text-mute">{it.hint}</span>}
               </button>
             ))}
@@ -547,7 +547,7 @@ function PaymentCell({ u, onProof }: { u: any; onProof: () => void }) {
 function Ident({ u }: { u: any }) {
   const how = u.provider === "password" ? "Email & password" : "Google";
   return (
-    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-[11px] text-mute">
+    <div className="mt-0.5 flex min-w-0 items-center gap-1.5 text-xs text-mute">
       {u.username ? <span className="truncate font-medium text-text/85">@{u.username}</span> : <span className="truncate italic">no username</span>}
       <span className="shrink-0 rounded border border-glass/15 px-1 leading-4" title={`Signs in with ${how}`}>{u.provider === "password" ? "Email" : "Google"}</span>
     </div>
@@ -566,7 +566,7 @@ function UserRow({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any;
             <div className="truncate font-medium">{displayName(u)}</div>
             <div className="truncate text-xs text-mute">{u.email}</div>
             <Ident u={u} />
-            {st?.push_error && <div className="truncate text-[11px] text-bear" title={st.push_error.message}>notifications failing</div>}
+            {st?.push_error && <div className="truncate text-xs text-bear" title={st.push_error.message}>notifications failing</div>}
           </div>
         </div>
       </td>
@@ -583,7 +583,7 @@ function UserRow({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any;
           {a.primary("min-w-[6.5rem]")}
           <ActionMenu items={a.menu} u={u} />
         </div>
-        {a.mismatch && <div className="mt-1 text-right text-[11px] text-warn">Proof is {a.p.amount} {a.p.currency}; plan price is ${a.price}.</div>}
+        {a.mismatch && <div className="mt-1 text-right text-xs text-warn">Proof is {a.p.amount} {a.p.currency}; plan price is ${a.price}.</div>}
       </td>
     </tr>
   );
@@ -609,14 +609,14 @@ function UserCard({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any
 
       <div className="mt-3 space-y-2 rounded-lg border border-glass/[0.06] bg-glass/[0.02] px-3 py-2.5">
         <Term u={u} wide lead={a.freeView && roleOf(u) === "member" ? "Free member" : undefined} />
-        <div className="flex min-w-0 items-center justify-between gap-3 text-[11px]">
+        <div className="flex min-w-0 items-center justify-between gap-3 text-xs">
           <Seen pr={pr} />
           <Where pr={pr} />
         </div>
       </div>
 
       {st?.push_error && (
-        <p className="mt-2 rounded-lg border border-bear/30 bg-bear/10 px-2 py-1.5 text-[11px] text-bear">
+        <p className="mt-2 rounded-lg border border-bear/30 bg-bear/10 px-2 py-1.5 text-xs text-bear">
           Notifications failing ({st.push_error.app}, {st.push_error.stage}): {st.push_error.code ? `${st.push_error.code} · ` : ""}{st.push_error.message}
         </p>
       )}
@@ -624,11 +624,11 @@ function UserCard({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any
         <button type="button" onClick={onProof} className={`mt-2 flex w-full items-center gap-3 rounded-lg border p-2 text-left ${check ? "border-accent/40 bg-accent/[0.06]" : "border-glass/10 bg-glass/[0.02]"}`}
           aria-label={`${check ? "Check payment proof" : "Last payment"} from ${u.email}`}>
           {p.proof != null && isProofImage(p.proof) ? <img src={p.proof} alt="" className="h-11 w-8 shrink-0 rounded object-cover ring-1 ring-glass/20" />
-            : <span className={`flex h-11 w-8 shrink-0 items-center justify-center rounded bg-glass/[0.05] text-center text-[9px] leading-tight ${p.proof != null ? "text-bear" : "text-mute"}`}>
+            : <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded bg-glass/[0.05] text-center text-xs leading-tight ${p.proof != null ? "text-bear" : "text-mute"}`}>
                 {p.proof != null ? <>invalid<br />image</> : p.has_proof ? <svg aria-label="screenshot" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="4" width="18" height="16" rx="2" /><circle cx="9" cy="10" r="2" /><path d="M21 17l-5-5-9 8" /></svg> : <>no<br />image</>}
               </span>}
           <span className="min-w-0 flex-1">
-            <span className="block text-[13px] font-semibold">{check ? "Payment proof to check" : p.status === "accepted" ? "Last payment · accepted" : "Last payment · rejected"}</span>
+            <span className="block text-sm font-semibold">{check ? "Payment proof to check" : p.status === "accepted" ? "Last payment · accepted" : "Last payment · rejected"}</span>
             <span className="num block truncate text-xs text-mute"><span className={check ? "text-accent" : ""}>{p.amount} {p.currency}</span> · {planLabel(p.months)} · {p.method === "mexc" ? "MEXC" : "Binance"}</span>
           </span>
           <svg aria-hidden="true" className="shrink-0 text-mute" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2"><path d="M9 6l6 6-6 6" /></svg>
@@ -702,7 +702,7 @@ function ProofViewer({ u, cfg, act, onClose, onAsk }: { u: any; cfg: MembershipC
                 {p.status === "submitted" ? <button type="button" className="btn btn-sm btn-danger" onClick={a.reject}>Reject proof…</button> : <span />}
               </div>
               {a.mismatch && <p className="text-xs text-warn">The proof is for {p.amount} {p.currency}; the current price of this plan is ${a.price}.</p>}
-              {p.status === "submitted" && (p.proof != null || p.has_proof) && <p className="text-[11px] text-mute">The screenshot is deleted after you accept or reject (the payment details stay).</p>}
+              {p.status === "submitted" && (p.proof != null || p.has_proof) && <p className="text-xs text-mute">The screenshot is deleted after you accept or reject (the payment details stay).</p>}
             </div>
             {(p.proof != null || p.has_proof) && (
               <div className="border-t border-glass/[0.08] pt-3">
@@ -760,7 +760,7 @@ function LimitsCard({ act, total }: { act: Act; total: number }) {
   const step = (k: keyof Limits, d: number, max: number) => setDraft({ ...l, [k]: Math.max(0, Math.min(max, Number(l[k]) + d)) });
   const field = (k: keyof Limits, label: string, help: string, max: number) => (
     <div className="rounded-xl border border-glass/[0.08] bg-glass/[0.02] p-3">
-      <div className="flex items-baseline justify-between gap-2"><span className="text-sm font-medium">{label}</span><span className="num text-[11px] text-mute">0–{max}</span></div>
+      <div className="flex items-baseline justify-between gap-2"><span className="text-sm font-medium">{label}</span><span className="num text-xs text-mute">0–{max}</span></div>
       <div className="mt-2 flex items-center gap-2">
         <button type="button" className="btn w-10 px-0 text-lg" aria-label={`Decrease ${label}`} onClick={() => step(k, -1, max)}>−</button>
         <input className="input num w-20 text-center" inputMode="numeric" aria-label={label} value={l[k]} onChange={(e) => setDraft({ ...l, [k]: Number(e.target.value.replace(/\D/g, "")) || 0 })} />

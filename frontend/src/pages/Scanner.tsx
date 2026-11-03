@@ -93,11 +93,11 @@ export default function Scanner() {
                 const tk = tickers[r.symbol];
                 if (r.status !== "OK") return (
                   <tr key={r.symbol}><td /><td className="font-medium">{r.symbol}</td><td colSpan={13}><Badge tone="warn">Insufficient data</Badge> <span className="text-xs text-mute">{r.reason}</span></td>
-                    <td>{admin && <button className="text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button>}</td></tr>
+                    <td>{admin && <button className="tap-h px-1 text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button>}</td></tr>
                 );
                 return (
                   <tr key={r.symbol}>
-                    <td><button title={r.pinned ? "Unpin" : "Pin to top"} aria-pressed={r.pinned} disabled={!admin} className={r.pinned ? "text-warn" : "text-mute hover:text-warn"} onClick={() => act(() => put(`/watchlist/${slug(r.symbol)}/pin`, { pinned: !r.pinned }), r.pinned ? "Unpinned" : "Pinned")}>{r.pinned ? "★" : "☆"}</button></td>
+                    <td><button title={r.pinned ? "Unpin" : "Pin to top"} aria-pressed={r.pinned} disabled={!admin} className={`tap inline-flex h-8 w-8 items-center justify-center rounded-lg ${r.pinned ? "text-warn" : "text-mute hover:text-warn"}`} onClick={() => act(() => put(`/watchlist/${slug(r.symbol)}/pin`, { pinned: !r.pinned }), r.pinned ? "Unpinned" : "Pinned")}>{r.pinned ? "★" : "☆"}</button></td>
                     <td><Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{r.symbol}</Link></td>
                     <td className="num text-right">{fmtPrice(tk?.last ?? r.price)}</td>
                     <td className={`num text-right ${tone(tk?.change_pct ?? r.change_24h_pct)}`}>{fmtPctRaw(tk?.change_pct ?? r.change_24h_pct)}</td>
@@ -110,7 +110,7 @@ export default function Scanner() {
                     <td className="num text-right">{fmtProb(r.confidence)}</td>
                     <td className="num text-right">{isNum(r.risk_reward) ? `1:${r.risk_reward.toFixed(1)}` : DASH}</td>
                     <td className="num text-right" title={`historical base rate, n=${r.breakout_n}`}>{fmtProb(r.breakout_base_rate)}</td>
-                    <td>{admin && <button className="text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button>}</td>
+                    <td>{admin && <button className="tap-h px-1 text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button>}</td>
                   </tr>
                 );
               })}

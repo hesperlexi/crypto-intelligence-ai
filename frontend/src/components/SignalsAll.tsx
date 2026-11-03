@@ -129,20 +129,20 @@ export function AllList({ rows, market, px, onOpen }: { rows: any[]; market: Mar
                   <span className="tf-chip num">{String(r.timeframe).toUpperCase()}</span>
                   {vv.tone !== "wait" && (r.grade === "A" || r.grade === "B") && <span className={`grade-mini ${r.grade === "A" ? "is-a" : ""}`}>{r.grade}</span>}
                 </div>
-                <span className={`all-call text-[11px] font-extrabold tracking-wide ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
+                <span className={`all-call text-xs font-extrabold tracking-wide ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
                 {/* phone: ready · conf · status, then the levels */}
-                <div className="col-span-full flex min-w-0 flex-wrap items-center gap-x-1.5 text-[11px] lg:hidden">
+                <div className="col-span-full flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs lg:hidden">
                   {ready}<span className="text-mute/50" aria-hidden="true">·</span><span className="num text-mute">{conf}</span>
                   {hasStatus && <><span className="text-mute/50" aria-hidden="true">·</span>{status}</>}
                 </div>
-                {show && <div className="num col-span-full min-w-0 truncate text-[11px] text-mute lg:hidden">entry {fmtPrice(p.entry)} · stop {fmtPrice(p.stop)} · TP1 {fmtPrice(p.targets?.[0]?.price)}</div>}
+                {show && <div className="num col-span-full min-w-0 truncate text-xs text-mute lg:hidden">entry {fmtPrice(p.entry)} · stop {fmtPrice(p.stop)} · TP1 {fmtPrice(p.targets?.[0]?.price)}</div>}
                 {/* desktop columns */}
                 <span className="hidden text-xs lg:block">{ready}</span>
                 <span className="num hidden text-right text-xs text-mute lg:block">{conf}</span>
                 <span className="num hidden text-right text-sm text-accent lg:block">{show ? fmtPrice(p.entry) : "—"}</span>
                 <span className="num hidden text-right text-sm text-bear lg:block">{show ? fmtPrice(p.stop) : "—"}</span>
                 <span className="num hidden text-right text-sm text-bull lg:block">{show ? fmtPrice(p.targets?.[0]?.price) : "—"}</span>
-                <span className="hidden truncate text-right text-[11px] lg:block">{hasStatus ? status : <span className="text-mute">—</span>}</span>
+                <span className="hidden truncate text-right text-xs lg:block">{hasStatus ? status : <span className="text-mute">—</span>}</span>
               </button>
             </li>
           );

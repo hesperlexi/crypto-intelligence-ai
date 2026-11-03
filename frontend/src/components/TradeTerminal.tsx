@@ -20,6 +20,7 @@ import { useFocusTrap } from "./Shell";
 import * as SP from "../lib/paper";
 import * as PF from "../lib/paperFutures";
 import { maxTopUp, PAPER_MAX_DEPOSITED, PAPER_START } from "../lib/writeShapes";
+import { Segmented } from "./kit";
 
 type Mkt = "spot" | "futures";
 const CHART_TFS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
@@ -162,7 +163,7 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
         <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-glass/[0.05]">
           <CoinAvatar symbol={symbol} size={30} />
           <span className="text-left"><span className="font-display block text-lg font-bold leading-none">{base(symbol)}<span className="text-mute">/USDT</span></span>
-            <span className="text-[11px] text-mute">{isGold(symbol) ? "Gold · Perpetual · USDT-M" : market === "futures" ? "Perpetual · USDT-M" : "Spot"}</span></span>
+            <span className="text-xs text-mute">{isGold(symbol) ? "Gold · Perpetual · USDT-M" : market === "futures" ? "Perpetual · USDT-M" : "Spot"}</span></span>
           <span className="text-mute" aria-hidden="true">▾</span>
         </button>
         {open && (
@@ -171,7 +172,7 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
               const x = tickers[s];
               return (
                 <button key={s} onClick={() => { onSymbol(s); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-glass/[0.06] ${s === symbol ? "bg-accent/10" : ""}`}>
-                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-[11px] font-bold text-accent">GOLD</span>}</span>
+                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-xs font-bold text-accent">GOLD</span>}</span>
                   <span className="num text-right text-xs"><span className="block">{fmtPrice(x?.last)}</span><span className={tone(x?.change_pct)}>{fmtPctRaw(x?.change_pct)}</span></span>
                 </button>
               );
@@ -180,14 +181,14 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
         )}
       </div>
       <div><div className={`num text-xl font-semibold ${tone(t?.change_pct)}`}>{fmtPrice(last)}</div>
-        <div className="flex items-center gap-1 text-[11px] text-mute">
+        <div className="flex items-center gap-1 text-xs text-mute">
           <span className={`h-1.5 w-1.5 rounded-full ${st?.status === "live" ? "bg-bull" : st?.status === "polling" ? "bg-warn" : "bg-glass/30"}`} aria-hidden="true" />
           {st?.status === "live" ? "live" : st?.status === "polling" ? "reconnecting" : "last price"}{market === "futures" ? (st?.source === "spot" ? " · spot price (futures unreachable)" : " · futures price") : " · spot price"}
           {st?.status === "live" && st.delay != null && <span className={st.delay < 1500 ? "text-bull" : st.delay < 4000 ? "text-warn" : "text-bear"} title="How old the latest price is when it reaches this device (on Binance's clock)"> · {(Math.max(0, st.delay) / 1000).toFixed(1)} s</span>}
         </div></div>
-      <div><div className={`num text-sm ${tone(t?.change_pct)}`}>{fmtPctRaw(t?.change_pct)}</div><div className="text-[11px] text-mute">24h change</div></div>
-      <div className="hidden sm:block"><div className="num text-sm">{t?.quote_volume != null ? `${fmtNum(t.quote_volume / 1e6, 1)}M` : "—"}</div><div className="text-[11px] text-mute">24h volume (USDT)</div></div>
-      {market === "spot" && <div className="hidden md:block"><div className="num text-sm">{fmtPrice(t?.bid)} / {fmtPrice(t?.ask)}</div><div className="text-[11px] text-mute">bid / ask</div></div>}
+      <div><div className={`num text-sm ${tone(t?.change_pct)}`}>{fmtPctRaw(t?.change_pct)}</div><div className="text-xs text-mute">24h change</div></div>
+      <div className="hidden sm:block"><div className="num text-sm">{t?.quote_volume != null ? `${fmtNum(t.quote_volume / 1e6, 1)}M` : "—"}</div><div className="text-xs text-mute">24h volume (USDT)</div></div>
+      {market === "spot" && <div className="hidden md:block"><div className="num text-sm">{fmtPrice(t?.bid)} / {fmtPrice(t?.ask)}</div><div className="text-xs text-mute">bid / ask</div></div>}
       <div className="ml-auto inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Market">
         {(["futures", "spot"] as const).map((k) => (
           <button key={k} aria-pressed={market === k} onClick={() => onMarket(k)}
@@ -237,30 +238,25 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
     for (const p of positions.filter((x) => x.symbol === symbol)) {
       if (market === "futures") {
         const s = p.side > 0 ? "Long" : "Short";
-        out.push({ price: p.entry, title: `${s} entry`, color: "#f0b90b" });
-        if (p.stop) out.push({ price: p.stop, title: "SL", color: "#f6465d", dashed: true });
-        if (p.take) out.push({ price: p.take, title: "TP", color: "#0ecb81", dashed: true });
-        out.push({ price: p.liq, title: "Liq.", color: "#f97316", dashed: true });
-      } else out.push({ price: p.avg_price, title: "Avg buy", color: "#f0b90b" });
+        out.push({ price: p.entry, title: `${s} entry`, color: "--accent" });
+        if (p.stop) out.push({ price: p.stop, title: "SL", color: "--bear", dashed: true });
+        if (p.take) out.push({ price: p.take, title: "TP", color: "--bull", dashed: true });
+        out.push({ price: p.liq, title: "Liq.", color: "--warn", dashed: true });
+      } else out.push({ price: p.avg_price, title: "Avg buy", color: "--accent" });
     }
     for (const o of orders.filter((x) => x.symbol === symbol)) {
       const buy = o.side === "BUY" || o.side > 0;
-      out.push({ price: o.price, title: `Limit ${market === "futures" ? (buy ? "long" : "short") : buy ? "buy" : "sell"}`, color: buy ? "#0ecb81" : "#f6465d", dashed: true });
+      out.push({ price: o.price, title: `Limit ${market === "futures" ? (buy ? "long" : "short") : buy ? "buy" : "sell"}`, color: buy ? "--bull" : "--bear", dashed: true });
     }
     return out;
   }, [positions, orders, symbol, market]);
   return (
     <section className="panel min-h-[360px] p-0">
-      <div className="flex items-center justify-between gap-2 border-b border-glass/[0.06] px-2 py-1.5">
-        <div className="flex gap-0.5" role="group" aria-label="Chart timeframe">
-          {CHART_TFS.map((t) => <button key={t} aria-pressed={tf === t} onClick={() => setTf(t)} className={`rounded-md px-2.5 py-1 text-xs ${tf === t ? "bg-accent/15 font-semibold text-accent" : "text-mute hover:text-text"}`}>{t}</button>)}
-        </div>
-        <span className="flex items-center gap-2">
-          <span className="hidden text-[11px] text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your levels are on the chart"}</span>
-          <span className="inline-flex rounded-lg border border-glass/10 p-0.5">
-            <button className={`rounded-md px-2 py-0.5 text-xs ${!pro ? "bg-accent font-semibold text-ink" : "text-mute"}`} aria-pressed={!pro} onClick={() => setPro(false)}>AI</button>
-            <button className={`rounded-md px-2 py-0.5 text-xs ${pro ? "bg-accent font-semibold text-ink" : "text-mute"}`} aria-pressed={pro} onClick={() => setPro(true)}>Pro</button>
-          </span>
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-2 py-1.5">
+        <Segmented label="Chart timeframe" value={tf} onChange={setTf} options={CHART_TFS} className="!flex-nowrap" />
+        <span className="ml-auto flex items-center gap-2">
+          <span className="hidden text-xs text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your levels are on the chart"}</span>
+          <Segmented label="Chart type" strong className="!flex-nowrap" value={pro ? "pro" : "ai"} onChange={(v) => setPro(v === "pro")} options={[["ai", "AI"], ["pro", "Pro"]] as const} />
         </span>
       </div>
       {pro ? <div className="p-1"><TVChart symbol={symbol} market={market} tf={tf} height={380} /></div>
@@ -280,7 +276,7 @@ function OrderBook({ symbol, market }: { symbol: string; market: Mkt }) {
   const bids: [number, number][] = (ob?.bids ?? []).slice(0, 9);
   const max = Math.max(1, ...[...asks, ...bids].map((x) => x[0] * x[1]));
   const row = (x: [number, number], side: "a" | "b") => (
-    <div key={`${side}${x[0]}`} className="relative grid grid-cols-2 px-2 py-[3px] text-[11px]">
+    <div key={`${side}${x[0]}`} className="relative grid grid-cols-2 px-2 py-[3px] text-xs">
       <div className={`absolute inset-y-0 right-0 ${side === "a" ? "bg-bear/10" : "bg-bull/10"}`} style={{ width: `${(x[0] * x[1] / max) * 100}%` }} />
       <span className={`num relative ${side === "a" ? "text-bear" : "text-bull"}`}>{fmtPrice(x[0])}</span>
       <span className="num relative text-right text-text/80">{fmtNum(x[1], x[1] < 10 ? 4 : 1)}</span>
@@ -288,7 +284,7 @@ function OrderBook({ symbol, market }: { symbol: string; market: Mkt }) {
   );
   return (
     <section className="panel hidden p-0 lg:block">
-      <div className="grid grid-cols-2 border-b border-glass/[0.06] px-2 py-2 text-[11px] uppercase tracking-wide text-mute"><span>Price</span><span className="text-right">Amount</span></div>
+      <div className="grid grid-cols-2 border-b border-glass/[0.06] px-2 py-2 text-xs uppercase tracking-wide text-mute"><span>Price</span><span className="text-right">Amount</span></div>
       {!ob ? <div className="skeleton m-2 h-80 rounded" /> : (
         <>
           {asks.map((x) => row(x, "a"))}
@@ -378,13 +374,13 @@ function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d:
           <span className="ml-2 text-xs text-mute">{market === "spot" && spotSide === "SELL" ? base(symbol) : "USDT"}</span></label>
         <div>
           <input type="range" min={0} max={100} step={1} value={pctNow} onChange={(e) => setPct(Number(e.target.value) / 100)} className="w-full accent-[rgb(var(--accent))]" aria-label="Size as % of available" />
-          <div className="mt-1 grid grid-cols-4 gap-1">{[0.25, 0.5, 0.75, 1].map((f) => <button key={f} onClick={() => setPct(f)} className="rounded-md border border-glass/10 py-1 text-[11px] text-mute hover:border-accent/50 hover:text-text">{f * 100}%</button>)}</div>
+          <div className="mt-1 grid grid-cols-4 gap-1">{[0.25, 0.5, 0.75, 1].map((f) => <button key={f} onClick={() => setPct(f)} className="rounded-md border border-glass/10 py-1 text-xs text-mute hover:border-accent/50 hover:text-text">{f * 100}%</button>)}</div>
         </div>
         {market === "futures" && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={tpsl} onChange={(e) => setTpsl(e.target.checked)} />TP / SL</label>}
         {market === "futures" && tpsl && (
           <div className="grid grid-cols-2 gap-2">
-            <label className="text-[11px] text-mute">Take-profit<input className="input num mt-0.5 h-9" inputMode="decimal" value={tp} onChange={(e) => setTp(e.target.value)} placeholder="price" /></label>
-            <label className="text-[11px] text-mute">Stop-loss<input className="input num mt-0.5 h-9" inputMode="decimal" value={sl} onChange={(e) => setSl(e.target.value)} placeholder="price" /></label>
+            <label className="text-xs text-mute">Take-profit<input className="input num mt-0.5 h-9" inputMode="decimal" value={tp} onChange={(e) => setTp(e.target.value)} placeholder="price" /></label>
+            <label className="text-xs text-mute">Stop-loss<input className="input num mt-0.5 h-9" inputMode="decimal" value={sl} onChange={(e) => setSl(e.target.value)} placeholder="price" /></label>
           </div>
         )}
         <div className="space-y-1 rounded-lg bg-ink/30 px-3 py-2 text-xs">
@@ -441,7 +437,7 @@ function FutPositions({ rows, act, hedges, onOpen, onPair }: { rows: any[]; act:
     <div className="space-y-2">
       {hedges?.map((h: any) => <div key={h.symbol} className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 text-xs">{h.symbol} hedged · combined P&L <span className={tone(h.pnl)}>${fmtNum(h.pnl)}</span> · net {h.net >= 0 ? "long" : "short"} ${fmtNum(Math.abs(h.net), 0)}</div>)}
       {rows.map((p) => <FutPositionRow key={p.key} p={p} act={act} editing={edit === p.key} setEdit={setEdit} onOpen={onOpen} onPair={onPair} />)}
-      <p className="text-[11px] text-mute">Tap a position for details.</p>
+      <p className="text-xs text-mute">Tap a position for details.</p>
     </div>
   );
 }
@@ -458,15 +454,15 @@ const FutPositionRow = memo(function FutPositionRow({ p, act, editing, setEdit, 
         <div className="flex items-center gap-2">
           <span className={`h-8 w-1 rounded-full ${p.side > 0 ? "bg-bull" : "bg-bear"}`} />
           <PairButton symbol={p.symbol} onPair={onPair} />
-          <span className={`rounded px-1.5 py-0.5 text-[11px] font-bold ${p.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{sideName(p.side)} {fmtNum(p.leverage, 1)}x</span>
-          {p.auto && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-[11px] font-bold text-accent" title="Opened automatically from an app signal">AUTO</span>}
+          <span className={`rounded px-1.5 py-0.5 text-xs font-bold ${p.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{sideName(p.side)} {fmtNum(p.leverage, 1)}x</span>
+          {p.auto && <span className="rounded bg-accent/15 px-1.5 py-0.5 text-xs font-bold text-accent" title="Opened automatically from an app signal">AUTO</span>}
         </div>
         <div className="text-right"><div className={`num font-semibold ${tone(p.upnl)}`}>{p.upnl != null ? `${signed(p.upnl)} USDT` : "—"}</div><div className={`num text-xs ${tone(p.upnl)}`}>{fmtPctRaw(p.roe_pct, 1)} ROE</div></div>
       </div>
       <dl className="mt-2.5 grid grid-cols-2 gap-x-4 gap-y-2 text-xs sm:grid-cols-4 xl:grid-cols-8">
         {([["Size", `${fmtNum(p.notional, 0)} USDT`], ["Entry", fmtPrice(p.entry)], ["Mark", fmtPrice(p.mark)], ["Liq. price", fmtPrice(p.liq)], ["Margin", `${fmtNum(p.margin)} USDT`],
           ["TP", p.take ? fmtPrice(p.take) : "—"], ["SL", p.stop ? fmtPrice(p.stop) : "—"], ["Funding", `${fmtNum(-(p.funding ?? 0), 3)} USDT`]] as const).map(([k, v]) => (
-          <div key={k} className="min-w-0"><dt className="text-[11px] text-mute">{k}</dt><dd className={`num mt-0.5 truncate text-[13px] font-medium ${k === "Liq. price" ? "text-warn" : k === "TP" ? "text-bull" : k === "SL" ? "text-bear" : ""}`}>{v}</dd></div>
+          <div key={k} className="min-w-0"><dt className="text-xs text-mute">{k}</dt><dd className={`num mt-0.5 truncate text-[13px] font-medium ${k === "Liq. price" ? "text-warn" : k === "TP" ? "text-bull" : k === "SL" ? "text-bear" : ""}`}>{v}</dd></div>
         ))}
       </dl>
       {editing && (
@@ -490,7 +486,7 @@ function SpotHoldings({ rows, act, onOpen, onPair }: { rows: any[]; act: Act; on
   return (
     <div className="space-y-2">
       {rows.map((p) => <SpotHoldingRow key={p.symbol} p={p} act={act} onOpen={onOpen} onPair={onPair} />)}
-      <p className="text-[11px] text-mute">Tap a coin for its details. Tap the pair name to show it on the chart.</p>
+      <p className="text-xs text-mute">Tap a coin for its details. Tap the pair name to show it on the chart.</p>
     </div>
   );
 }
@@ -515,7 +511,7 @@ function Orders({ rows, market, act, onPair }: { rows: any[]; market: Mkt; act: 
       <tbody>{rows.map((o) => {
         const buy = o.side === "BUY" || o.side > 0;
         return (
-          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium"><PairButton symbol={o.symbol} onPair={onPair} className="font-medium" />{o.auto && <span className="ml-1 rounded bg-accent/15 px-1 text-[11px] font-bold text-accent">AUTO</span>}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
+          <tr key={o.id}><td className="text-mute">{fmtTime(o.created_at)}</td><td className="font-medium"><PairButton symbol={o.symbol} onPair={onPair} className="font-medium" />{o.auto && <span className="ml-1 rounded bg-accent/15 px-1 text-xs font-bold text-accent">AUTO</span>}</td><td>Limit{market === "futures" ? ` · ${o.leverage}x` : ""}</td>
             <td className={buy ? "text-bull" : "text-bear"}>{market === "futures" ? (buy ? "Long" : "Short") : buy ? "Buy" : "Sell"}</td>
             <td className="num text-right">{fmtPrice(o.price)}</td><td className="num text-right">{market === "futures" ? `${fmtNum(o.margin)} USDT` : fmtNum(o.qty, 6)}</td>
             <td className="text-right"><button className="btn px-2 py-0.5 text-xs" onClick={() => act(() => (market === "futures" ? PF.cancelOrder(o.id) : SP.cancelOrder(o.id)), "Order cancelled; the funds are back.")}>Cancel</button></td></tr>
@@ -559,7 +555,7 @@ function AddFunds({ d, market, act }: { d: any; market: Mkt; act: (fn: () => Pro
         <input className="input num w-28" inputMode="decimal" placeholder="Amount" aria-label="Custom amount (USDT)" value={custom} onChange={(e) => setCustom(e.target.value)} />
         <button className="btn" disabled={!(c > 0 && c <= room)} onClick={() => { add(c); setCustom(""); }}>Add</button>
       </div>
-      <p className="mt-1.5 text-[11px] text-mute">Virtual USDT. Counted as a deposit, so P&L stays honest · up to {usd(PAPER_MAX_DEPOSITED)} in total.</p>
+      <p className="mt-1.5 text-xs text-mute">Virtual USDT. Counted as a deposit, so P&L stays honest · up to {usd(PAPER_MAX_DEPOSITED)} in total.</p>
     </div>
   );
 }
@@ -581,7 +577,7 @@ function Assets({ d, market, act }: { d: any; market: Mkt; act: (fn: () => Promi
   return (
     <div className="space-y-4">
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {items.map(([k, v, c]) => <div key={k} className="rounded-xl border border-glass/[0.08] bg-ink/30 px-3 py-2"><dt className="text-[11px] uppercase tracking-wide text-mute">{k}</dt><dd className={`num mt-0.5 font-semibold ${c ?? ""}`}>{v}</dd></div>)}
+        {items.map(([k, v, c]) => <div key={k} className="rounded-xl border border-glass/[0.08] bg-ink/30 px-3 py-2"><dt className="text-xs uppercase tracking-wide text-mute">{k}</dt><dd className={`num mt-0.5 font-semibold ${c ?? ""}`}>{v}</dd></div>)}
       </dl>
       <AddFunds d={d} market={market} act={act} />
       <div className="flex flex-wrap items-end gap-2">
@@ -617,20 +613,20 @@ function PositionDrawer({ market, d, id, act, onPair, onClose }: { market: Mkt; 
       ["Side", sideName(p.side), p.side > 0 ? "text-bull" : "text-bear"],
       ["Leverage", `${fmtNum(p.leverage, 1)}x`],
       ["Margin mode", `Isolated · ${d.mode === "hedge" ? "Hedge" : "One-way"} mode`],
-      ["Size", <>{fmtNum(p.qty, 6)} {base(p.symbol)}<span className="block text-[11px] text-mute">{fmtNum(p.notional, 2)} USDT notional</span></>],
+      ["Size", <>{fmtNum(p.qty, 6)} {base(p.symbol)}<span className="block text-xs text-mute">{fmtNum(p.notional, 2)} USDT notional</span></>],
       ["Entry price", fmtPrice(p.entry)],
-      ["Mark price", <>{fmtPrice(p.mark)}<span className="block text-[11px] text-mute">live futures price</span></>],
-      ["Unrealised P&L", <>{p.upnl != null ? `${signed(p.upnl)} USDT` : "—"}<span className="block text-[11px]">{fmtPctRaw(p.roe_pct, 2)} ROI on margin</span></>, tone(p.upnl)],
+      ["Mark price", <>{fmtPrice(p.mark)}<span className="block text-xs text-mute">live futures price</span></>],
+      ["Unrealised P&L", <>{p.upnl != null ? `${signed(p.upnl)} USDT` : "—"}<span className="block text-xs">{fmtPctRaw(p.roe_pct, 2)} ROI on margin</span></>, tone(p.upnl)],
       ["Margin", `${fmtNum(p.margin)} USDT`],
       ["Liquidation price", fmtPrice(p.liq), "text-warn"],
       ["Take-profit", p.take ? fmtPrice(p.take) : "not set", p.take ? "text-bull" : "text-mute"],
       ["Stop-loss", p.stop ? fmtPrice(p.stop) : "not set", p.stop ? "text-bear" : "text-mute"],
       ["Fees paid", `${fmtNum(p.fees ?? 0, 3)} USDT`],
       ["Funding", `${fmtNum(-(p.funding ?? 0), 3)} USDT`, tone(-(p.funding ?? 0))],
-      ["Opened", <>{fmtTime(p.opened_at)}<span className="block text-[11px] text-mute">open for {duration(Date.now() - p.opened_at)}</span></>],
+      ["Opened", <>{fmtTime(p.opened_at)}<span className="block text-xs text-mute">open for {duration(Date.now() - p.opened_at)}</span></>],
       ["Origin", p.auto
         ? <>Auto-trade{sig ? <> from the <b>{sig.timeframe?.toUpperCase()}</b> {sig.side === "SHORT" ? "short" : "long"} signal{sig.grade ? ` (grade ${sig.grade})` : ""}{sig.at ? `, ${fmtTime(sig.at)}` : ""}</> : " from an app signal"}
-            <span className="mt-0.5 flex flex-wrap justify-end gap-x-3 text-[11px]">
+            <span className="mt-0.5 flex flex-wrap justify-end gap-x-3 text-xs">
               <Link className="text-accent hover:underline" to={`/signals?market=futures&symbol=${encodeURIComponent(p.symbol)}${sig?.timeframe ? `&timeframe=${sig.timeframe}` : ""}`}>Open signal</Link>
               <Link className="text-accent hover:underline" to={`/results?tab=log&coin=${encodeURIComponent(base(p.symbol))}${sig?.timeframe ? `&tf=${sig.timeframe}` : ""}`}>Signal log</Link>
             </span></>
@@ -645,10 +641,10 @@ function PositionDrawer({ market, d, id, act, onPair, onClose }: { market: Mkt; 
       ["Average buy price", fmtPrice(p.avg_price)],
       ["Live price", fmtPrice(p.mark)],
       ["Value", `${fmtNum(p.market_value)} USDT`],
-      ["Unrealised P&L", <>{p.unrealized_pnl != null ? `${signed(p.unrealized_pnl)} USDT` : "—"}<span className="block text-[11px]">{fmtPctRaw(pct, 2)}</span></>, tone(p.unrealized_pnl)],
+      ["Unrealised P&L", <>{p.unrealized_pnl != null ? `${signed(p.unrealized_pnl)} USDT` : "—"}<span className="block text-xs">{fmtPctRaw(pct, 2)}</span></>, tone(p.unrealized_pnl)],
       ["Cost", `${fmtNum(p.qty * p.avg_price)} USDT`],
       ...(p.fees != null ? [["Buy fees paid", `${fmtNum(p.fees, 3)} USDT`] as [string, string]] : []),
-      ...(p.opened_at ? [["First bought", <>{fmtTime(p.opened_at)}<span className="block text-[11px] text-mute">held for {duration(Date.now() - p.opened_at)}</span></>] as [string, React.ReactNode]] : []),
+      ...(p.opened_at ? [["First bought", <>{fmtTime(p.opened_at)}<span className="block text-xs text-mute">held for {duration(Date.now() - p.opened_at)}</span></>] as [string, React.ReactNode]] : []),
       ["Origin", "Manual (your order)"],
     );
   }
@@ -664,7 +660,7 @@ function PositionDrawer({ market, d, id, act, onPair, onClose }: { market: Mkt; 
             <div className="flex min-w-0 items-center gap-2.5">
               {p && <CoinAvatar symbol={p.symbol} size={28} />}
               <div className="min-w-0"><h2 className="truncate font-display text-base font-bold">{title}</h2>
-                <p className="text-[11px] text-mute">{market === "futures" ? "Perpetual · USDT-M · practice account" : "Spot · practice account"}</p></div>
+                <p className="text-xs text-mute">{market === "futures" ? "Perpetual · USDT-M · practice account" : "Spot · practice account"}</p></div>
             </div>
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close details" onClick={onClose}>✕</button>
           </div>
@@ -694,7 +690,7 @@ function PositionDrawer({ market, d, id, act, onPair, onClose }: { market: Mkt; 
                     <button className="btn px-3 py-1.5 text-xs" onClick={() => act(() => SP.order(p.symbol, "SELL", p.qty, null), `Sold all ${base(p.symbol)}.`)}>Sell all</button>
                   )}
                 </div>
-                <p className="mt-3 text-[11px] text-mute">{market === "futures" ? "Virtual money only. P&L follows the live price; fees and funding are already taken from the margin and wallet." : "Virtual money only. P&L follows the live spot price; the selling fee is paid when you sell."}</p>
+                <p className="mt-3 text-xs text-mute">{market === "futures" ? "Virtual money only. P&L follows the live price; fees and funding are already taken from the margin and wallet." : "Virtual money only. P&L follows the live spot price; the selling fee is paid when you sell."}</p>
               </>
             )}
           </div>

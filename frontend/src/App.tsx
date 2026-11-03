@@ -6,6 +6,8 @@ import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
 import UpdateNotice from "./components/UpdateNotice";
 import NotifyPrompt from "./components/NotifyPrompt";
+import { AppChromeBanner, apkVersion, useApkInfo } from "./components/NotifyHelp";
+import { APK_URL } from "./lib/push";
 import { Badge } from "./components/ui";
 import { useApi } from "./lib/api";
 import { useAppearance } from "./lib/appearance";
@@ -78,11 +80,26 @@ const NAV = [
 ] as const;
 // owner-only tools: marketing material and system health
 const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Hesper Challenge"]] as const;
-// desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu)
+// research tools (also reachable from Results → Tools): one "Tools" menu on desktop, one group in the phone More sheet
+const TOOLS_NAV = [["/scanner", "Scanner"], ["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
+// desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);
+// the Tools menu sits after Radar in the second group
 const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
+// phone More sheet (v2.15): grouped instead of one flat grid
+const MORE_GROUPS: [string, (readonly [string, string])[]][] = [
+  ["Markets", [NAV[3], NAV[4]]],
+  ["Tools", [...TOOLS_NAV]],
+  ["Account", [NAV[7], NAV[6], NAV[8]]],
+];
 
-/** Owner tools in one compact menu (Weekly report, Achievements, Health, Hesper Challenge, Users). */
-function AdminMenu({ items, pending }: { items: (readonly [string, string])[]; pending: number }) {
+/** A small count next to a menu item (unread alerts, pending users). */
+function Count({ n, tone = "warn" }: { n: number; tone?: "warn" | "accent" }) {
+  if (!n) return null;
+  return <span className={`num ml-1.5 rounded-full px-1.5 text-xs font-bold leading-5 ${tone === "warn" ? "bg-warn/15 text-warn" : "bg-accent/15 text-accent"}`} aria-label={`${n} new`}>{n}</span>;
+}
+
+/** A compact dropdown in the desktop top bar (Tools; Admin: Weekly report, Achievements, Health, Hesper Challenge, Users). */
+function NavMenu({ label, items, pending = 0 }: { label: string; items: (readonly [string, string])[]; pending?: number }) {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -99,8 +116,8 @@ function AdminMenu({ items, pending }: { items: (readonly [string, string])[]; p
   return (
     <div className="relative" ref={ref}>
       <button type="button" className="nav-link gap-1.5" aria-haspopup="menu" aria-expanded={open} aria-current={activeHere ? "page" : undefined} onClick={() => setOpen((v) => !v)}>
-        Admin
-        {pending > 0 && <span className="num rounded-full bg-warn/15 px-1.5 text-[10px] font-bold leading-4 text-warn">{pending}</span>}
+        {label}
+        {pending > 0 && <span className="num rounded-full bg-warn/15 px-1.5 text-xs font-bold leading-4 text-warn">{pending}</span>}
         <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className={`transition-transform ${open ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
       </button>
       {open && (
@@ -202,7 +219,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
           <p className="mt-2 text-sm text-mute">The account <span className="text-text">{user.email}</span> has no access. Contact support if this is a mistake.</p>
           <button className="btn mt-5 w-full" onClick={() => signOut(auth)}>Use another account</button>
           <SupportLink className="mt-3 block text-sm text-accent hover:underline" />
-          <p className="mt-5 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
+          <p className="mt-5 text-xs text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
         </div>
       </div>
     );
@@ -225,8 +242,8 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
           <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="text-accent hover:underline">What you get: read the user manual (PDF)</a>
           <span className="flex items-center gap-4"><TelegramLink variant="link" /><SupportLink className="text-accent hover:underline" label="Problem? Contact support" /><button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button></span>
         </div>
-        <p className="mt-3 text-center text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION} · Analysis and demo trading only, not financial advice.</p>
-        <p className="mt-1 flex flex-wrap justify-center gap-x-3 text-[11px]">{TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="text-mute hover:text-text">{label}</Link>)}</p>
+        <p className="mt-3 text-center text-xs text-mute">{COPYRIGHT} · v{APP_VERSION} · Analysis and demo trading only, not financial advice.</p>
+        <p className="mt-1 flex flex-wrap justify-center gap-x-3 text-xs">{TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="text-mute hover:text-text">{label}</Link>)}</p>
       </div>
     </div>
   );
@@ -257,18 +274,22 @@ function Shell({ user }: { user: User }) {
   const sheet = useFocusTrap(more, closeMore);
   const admin = useIsAdmin();
   const pending = usePendingCount(admin);
-  const nav: (readonly [string, string])[] = [...NAV, ...(admin ? [...ADMIN_NAV, ["/users", pending ? `Users (${pending})` : "Users"] as const] : [])];
+  const apk = useApkInfo();
   const { a } = useAppearance();
   const side = a.nav === "side";
   const width = a.width === "wide" ? "max-w-none" : "max-w-[1600px]";
   // active state comes from NavLink's aria-current="page" (index.css .nav-link: gold rule under / beside the item)
   const navCls = "nav-link";
+  const unread = useLive().alerts.length;       // in-app alerts not dismissed yet
+  const navLabel = (to: string, label: string) => (to === "/alerts" ? <>{label}<Count n={unread} tone="accent" /></> : label);
   const adminItems: (readonly [string, string])[] = admin ? [...ADMIN_NAV, ["/users", pending ? `Users (${pending})` : "Users"] as const] : [];
   const brand = (wrap = false) => (
     <div className="flex min-w-0 items-center gap-2.5">
       <AnimatedLogo size={34} className="shrink-0" />
-      <NavLink to="/" className={`font-display text-[15px] font-semibold tracking-tight text-text ${wrap ? "leading-tight" : "truncate"}`}>
-        Crypto Intelligence <span className="text-accent">AI</span>
+      <NavLink to="/" aria-label="Crypto Intelligence AI, Home" className={`font-display text-base font-semibold tracking-tight text-text ${wrap ? "leading-tight" : "truncate"}`}>
+        {/* very small phones: the short wordmark (matches cryptointelai.com), so the brand is never cut off */}
+        <span className={wrap ? "" : "hidden min-[400px]:inline"}>Crypto Intelligence <span className="text-accent">AI</span></span>
+        {!wrap && <span className="min-[400px]:hidden">Crypto Intel <span className="text-accent">AI</span></span>}
       </NavLink>
     </div>
   );
@@ -279,10 +300,11 @@ function Shell({ user }: { user: User }) {
         <aside className="glass-bar sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r md:flex">
           <div className="px-4 py-3.5">{brand(true)}</div>
           <nav className="nav-side flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3" aria-label="Sections">
-            {[...NAV_GROUPS, ...(admin ? [adminItems] : [])].map((g, i) => (
+            {[...NAV_GROUPS, [...TOOLS_NAV], ...(admin ? [adminItems] : [])].map((g, i) => (
               <div key={i} className={`flex flex-col gap-0.5 ${i ? "mt-2 border-t border-glass/[0.07] pt-2" : ""}`}>
-                {i === NAV_GROUPS.length && <div className="label px-3 pb-1 pt-1">Admin</div>}
-                {g.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
+                {i === NAV_GROUPS.length && <div className="label px-3 pb-1 pt-1">Tools</div>}
+                {i === NAV_GROUPS.length + 1 && <div className="label px-3 pb-1 pt-1">Admin</div>}
+                {g.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{navLabel(to, label)}</NavLink>)}
               </div>
             ))}
           </nav>
@@ -311,13 +333,19 @@ function Shell({ user }: { user: User }) {
             <nav className={`nav-top mx-auto hidden ${width} items-center px-3 pb-1.5 sm:px-4 md:flex`} aria-label="Sections">
               {NAV_GROUPS.map((g, i) => (
                 <div key={i} className={`flex items-center gap-0.5 ${i ? "nav-group" : ""}`}>
-                  {g.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{label}</NavLink>)}
+                  {g.map(([to, label]) => (
+                    <span key={to} className="contents">
+                      <NavLink to={to} end={to === "/"} className={navCls}>{navLabel(to, label)}</NavLink>
+                      {to === "/radar" && <NavMenu label="Tools" items={[...TOOLS_NAV]} />}
+                    </span>
+                  ))}
                 </div>
               ))}
-              {admin && <div className="ml-auto"><AdminMenu items={adminItems} pending={pending} /></div>}
+              {admin && <div className="ml-auto"><NavMenu label="Admin" items={adminItems} pending={pending} /></div>}
             </nav>
           )}
         </header>
+        <AppChromeBanner />
         <TickerTape />
         {!admin && <RenewBanner />}
         <main className={`mx-auto w-full ${width} flex-1 px-3 py-4 sm:px-4`}>
@@ -346,7 +374,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/health" element={<AdminOnly><Health /></AdminOnly>} />
             <Route path="/rich" element={<AdminOnly><Rich /></AdminOnly>} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/users" element={<Users />} />
+            <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="/community" element={<Community />} />
             {Object.entries(TRUST).map(([path, kind]) => <Route key={path} path={path} element={<TrustContent kind={kind} />} />)}
             <Route path="*" element={<NotFound />} />
@@ -362,13 +390,13 @@ function Shell({ user }: { user: User }) {
         <div className="grid grid-cols-5">
           {PRIMARY.map(([to, label, icon]) => (
             <NavLink key={to} to={to} end={to === "/"} onClick={() => setMore(false)}
-              className="tab-link flex flex-col items-center gap-0.5 py-2 text-[11px]">
+              className="tab-link flex min-h-[56px] flex-col items-center justify-center gap-0.5 py-1.5 text-xs">
               <span className="tab-ico"><NavIcon name={icon} /></span>{label}
             </NavLink>
           ))}
           <button onClick={() => setMore((v) => !v)} aria-expanded={more} aria-controls="more-sheet"
-            className="tab-link flex flex-col items-center gap-0.5 py-2 text-[11px]">
-            <span className="tab-ico relative" aria-hidden><NavIcon name="more" />{pending > 0 && <span className="absolute -right-1 top-0 h-2 w-2 rounded-full bg-warn" />}</span>More
+            className="tab-link flex min-h-[56px] flex-col items-center justify-center gap-0.5 py-1.5 text-xs">
+            <span className="tab-ico relative" aria-hidden><NavIcon name="more" />{(pending > 0 || unread > 0) && <span className={`absolute -right-1 top-0 h-2 w-2 rounded-full ${pending > 0 ? "bg-warn" : "bg-accent"}`} />}</span>More
           </button>
         </div>
       </nav>
@@ -378,9 +406,18 @@ function Shell({ user }: { user: User }) {
           {/* positioned wrapper: .panel sets its own position, so the sheet's placement lives on this div */}
           <div ref={sheet} id="more-sheet" role="dialog" aria-modal="true" aria-label="More sections" className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-7rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
           <div className="panel popover sheet-in p-2">
-            <div className="nav-sheet grid grid-cols-2 gap-1">
-              {nav.filter(([to]) => !PRIMARY.some((p) => p[0] === to)).map(([to, label]) => (
-                <NavLink key={to} to={to} onClick={() => setMore(false)} className={navCls}>{label}</NavLink>
+            <div className="nav-sheet space-y-2">
+              {[...MORE_GROUPS, ...(admin ? [["Admin", adminItems] as [string, (readonly [string, string])[]]] : [])].map(([title, items], i) => (
+                <div key={title} className={i ? "border-t border-glass/[0.06] pt-2" : ""}>
+                  <div className="label px-3 pb-1">{title}</div>
+                  <div className="grid grid-cols-3 gap-1">
+                    {items.map(([to, label]) => (
+                      <NavLink key={to} to={to} onClick={() => setMore(false)} className={`${navCls} min-h-[44px]`}>
+                        {to === "/users" && pending ? <>Users<Count n={pending} /></> : navLabel(to, label)}
+                      </NavLink>
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
             <div className="mt-2 flex items-center justify-between gap-2 border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
@@ -388,12 +425,12 @@ function Shell({ user }: { user: User }) {
             </div>
             <div className="mt-2 flex items-center justify-between border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
               <span className="truncate">{user.email}</span>
-              <button className="text-text" onClick={() => signOut(auth)}>Sign out</button>
+              <button className="tap-h px-2 text-text" onClick={() => signOut(auth)}>Sign out</button>
             </div>
-            <SupportLink className="mx-2 mt-2 block rounded-lg border border-glass/10 px-3 py-2 text-center text-sm" label="✉ Contact support" />
-            <a className="mx-2 mt-2 block rounded-lg border border-glass/10 px-3 py-2 text-center text-sm text-accent" href="https://github.com/hesperlexi/crypto-intelligence-ai/releases/download/android/crypto-intelligence-ai.apk">⬇ Download Android app (APK)</a>
-            <p className="px-2 pt-2 text-[11px] text-mute">Research tool, not financial advice. No real orders are ever placed.</p>
-            <p className="px-2 pt-1 text-[11px] text-mute">{COPYRIGHT} · v{APP_VERSION}</p>
+            <SupportLink className="mx-2 mt-2 flex min-h-[44px] items-center justify-center rounded-lg border border-glass/10 px-3 py-2 text-center text-sm" label="✉ Contact support" />
+            <a className="mx-2 mt-2 flex min-h-[44px] items-center justify-center rounded-lg border border-glass/10 px-3 py-2 text-center text-sm text-accent" href={apk?.url ?? APK_URL}>⬇ Download Android app (APK){apkVersion(apk)}</a>
+            <p className="px-2 pt-2 text-xs text-mute">Research tool, not financial advice. No real orders are ever placed.</p>
+            <p className="px-2 pt-1 text-xs text-mute">{COPYRIGHT} · v{APP_VERSION} · build {BUILD_ID}</p>
           </div>
           </div>
         </div>

@@ -53,9 +53,9 @@ export default function Asset() {
       (a.levels?.supply_demand?.supply ?? []).slice(-1).forEach((z: any) => out.push({ price: z.low, title: "Supply", color: "rgba(246,70,93,0.45)" }));
     }
     if (showPlan && setup?.valid) {
-      out.push({ price: setup.ideal_entry, title: "Entry", color: "#5aa0ff" });
-      out.push({ price: setup.stop, title: "Stop", color: "#f6465d" });
-      setup.targets.forEach((t: any) => out.push({ price: t.price, title: t.name, color: "#0ecb81" }));
+      out.push({ price: setup.ideal_entry, title: "Entry", color: "--accent" });
+      out.push({ price: setup.stop, title: "Stop", color: "--bear" });
+      setup.targets.forEach((t: any) => out.push({ price: t.price, title: t.name, color: "--bull" }));
     }
     return out;
   }, [a, ok, showLevels, showPlan, setup]);
@@ -270,7 +270,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
               <tbody>
                 {fc.per_model.map((m: any) => (
                   <tr key={m.name} className={m.baseline ? "text-mute" : ""}>
-                    <td>{m.label}{m.baseline && <span className="ml-1 text-[11px] uppercase">benchmark</span>}</td>
+                    <td>{m.label}{m.baseline && <span className="ml-1 text-xs uppercase">benchmark</span>}</td>
                     {m.error ? <td colSpan={5} className="text-bear">{m.error}</td> : (
                       <>
                         <td><Badge tone={m.predicted === "UP" ? "bull" : m.predicted === "DOWN" ? "bear" : "mute"}>{m.predicted}</Badge></td>
@@ -302,7 +302,7 @@ function MtfCard({ mtf }: { mtf: any }) {
             {r.available ? (
               <>
                 <div className={`mt-1 text-sm font-semibold ${r.direction > 0 ? "text-bull" : r.direction < 0 ? "text-bear" : "text-mute"}`}>{r.direction > 0 ? "▲ " : r.direction < 0 ? "▼ " : ""}{r.direction_label}</div>
-                <div className="num mt-0.5 text-[11px] text-mute">{fmtNum(r.regime_score)}</div>
+                <div className="num mt-0.5 text-xs text-mute">{fmtNum(r.regime_score)}</div>
               </>
             ) : <div className="mt-1 text-xs text-mute">no data</div>}
           </div>

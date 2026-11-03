@@ -73,8 +73,8 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
               className={`relative rounded-xl border p-3 text-left transition ${on ? "border-accent bg-accent/[0.12] shadow-[0_0_0_1px_rgb(var(--accent)/0.6),0_8px_24px_rgb(var(--accent)/0.15)]" : "border-glass/10 bg-glass/[0.03] hover:border-accent/40"}`}>
               <div className="text-xs text-mute">{p.label}</div>
               <div className="num mt-0.5 text-xl font-semibold">{p.price} <span className="text-sm font-medium text-mute">USDT</span></div>
-              <div className="num text-[11px] text-mute">{(p.price / p.months).toFixed(2)} USDT / month</div>
-              {save > 0 && <span className="absolute right-2 top-2 rounded-full bg-bull/15 px-1.5 py-0.5 text-[11px] font-semibold text-bull">−{save}%</span>}
+              <div className="num text-xs text-mute">{(p.price / p.months).toFixed(2)} USDT / month</div>
+              {save > 0 && <span className="absolute right-2 top-2 rounded-full bg-bull/15 px-1.5 py-0.5 text-xs font-semibold text-bull">−{save}%</span>}
             </button>
           );
         })}
@@ -89,7 +89,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
             <button key={id} type="button" onClick={() => setMethod(id)} aria-pressed={on}
               className={`flex items-center gap-3 rounded-xl border p-3 text-left transition ${on ? "border-accent bg-accent/[0.12] shadow-[0_0_0_1px_rgb(var(--accent)/0.6)]" : "border-glass/10 bg-glass/[0.03] hover:border-accent/40"}`}>
               <Logo />
-              <span><span className="block font-semibold">{name}</span><span className="block text-[11px] text-mute">{sub}</span></span>
+              <span><span className="block font-semibold">{name}</span><span className="block text-xs text-mute">{sub}</span></span>
             </button>
           );
         })}

@@ -1,6 +1,6 @@
 import { ColorType, createChart, CrosshairMode, IChartApi, ISeriesApi, LineStyle } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
-import { chartColors, useAppearance } from "../lib/appearance";
+import { chartColors, themeColor, useAppearance } from "../lib/appearance";
 import { isNum, pricePrecision } from "../lib/format";
 
 export type Candle = [number, number, number, number, number, number]; // ts(ms), o, h, l, c, v
@@ -8,6 +8,7 @@ export type Candle = [number, number, number, number, number, number]; // ts(ms)
 export interface PriceLine {
   price: number;
   title: string;
+  /** a theme token ("--bull", "--bear", "--accent", "--warn", "--ai") or a fixed colour */
   color: string;
   dashed?: boolean;
 }
@@ -161,7 +162,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     if (!series) return;
     for (const pl of priceLinesRef.current) { try { series.removePriceLine(pl); } catch { /* ignore */ } }
     priceLinesRef.current = lines.filter((l) => isNum(l.price)).map((l) =>
-      series.createPriceLine({ price: l.price, color: l.color, lineWidth: 1, lineStyle: l.dashed ? LineStyle.Dashed : LineStyle.Solid, axisLabelVisible: true, title: l.title }));
+      series.createPriceLine({ price: l.price, color: themeColor(l.color), lineWidth: 1, lineStyle: l.dashed ? LineStyle.Dashed : LineStyle.Solid, axisLabelVisible: true, title: l.title }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [linesKey, ready]);
 
@@ -174,7 +175,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
       .filter((m) => m.ts >= first)
       .sort((a, b) => a.ts - b.ts)
       .map((m) => ({
-        time: t(m.ts), position: (m.up ? "belowBar" : "aboveBar") as "belowBar" | "aboveBar", color: m.up ? "#0ecb81" : "#f6465d",
+        time: t(m.ts), position: (m.up ? "belowBar" : "aboveBar") as "belowBar" | "aboveBar", color: themeColor(m.up ? "--bull" : "--bear"),
         shape: (m.up ? "arrowUp" : "arrowDown") as "arrowUp" | "arrowDown", text: m.text,
       })));
     // eslint-disable-next-line react-hooks/exhaustive-deps
