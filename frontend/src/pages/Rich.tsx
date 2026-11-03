@@ -44,7 +44,7 @@ function Tile({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls
     <div className="panel p-3.5 sm:p-4">
       <div className="label">{k}</div>
       <div className={`num mt-1.5 text-xl font-semibold leading-none sm:text-2xl ${cls}`}>{v}</div>
-      {sub && <div className="mt-1.5 truncate text-[11px] text-mute">{sub}</div>}
+      {sub && <div className="mt-1.5 truncate text-xs text-mute">{sub}</div>}
     </div>
   );
 }
@@ -58,7 +58,7 @@ function Progress({ bal, start, goal }: { bal: number | null; start: number; goa
         <div className="h-full rounded-full bg-gradient-to-r from-accent/70 to-accent shadow-[0_0_14px_rgb(var(--accent)/0.6)] transition-[width] duration-700"
           style={{ width: `${Math.max(p > 0 ? 2 : 0, p * 100)}%` }} />
       </div>
-      <div className="num mt-1.5 flex justify-between text-[11px] text-mute">
+      <div className="num mt-1.5 flex justify-between text-xs text-mute">
         <span>{usd(start, 0)}</span><span className="font-semibold text-text">{Math.round(p * 100)}%</span><span>{usd(goal, 0)}</span>
       </div>
     </div>
@@ -76,7 +76,7 @@ function OpenTrade({ o, live }: { o: any; live: ReturnType<typeof useLiveRun> })
       <div className="flex flex-wrap items-center gap-2">
         <CoinAvatar symbol={o.symbol} size={22} />
         <Link to={`/asset/${slug(o.symbol)}?tf=${o.timeframe}`} className="font-semibold hover:text-accent">{base(o.symbol)}</Link>
-        <span className="rounded border border-glass/15 px-1.5 text-[11px] text-mute">{o.timeframe}</span>
+        <span className="rounded border border-glass/15 px-1.5 text-xs text-mute">{o.timeframe}</span>
         <span className={`rounded px-1.5 text-[11px] font-bold ${o.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{sideTxt(o.side)} {Math.round(o.leverage)}x</span>
         <span className="ml-auto text-right">
           <span className={`num text-lg font-semibold ${tone(live.pnl)}`}>{signedUsd(live.pnl)}</span>
@@ -103,7 +103,7 @@ function RunCard({ v, live }: { v: any; live: ReturnType<typeof useLiveRun> }) {
       style={{ borderColor: "rgb(var(--accent) / 0.35)", backgroundImage: "radial-gradient(120% 90% at 0% 0%, rgb(var(--accent) / 0.10), transparent 60%)" }}>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <div className="label text-accent">Run #{cur.run} · Hesper</div>
-        <div className="text-[11px] text-mute">started {fmtDate(cur.started_at)} · {cur.trades} trades{st?.n ? ` · streak ${st.n}${st.kind === "win" ? "W" : "L"}` : ""}</div>
+        <div className="text-xs text-mute">started {fmtDate(cur.started_at)} · {cur.trades} trades{st?.n ? ` · streak ${st.n}${st.kind === "win" ? "W" : "L"}` : ""}</div>
       </div>
       <div className="mt-2 flex flex-wrap items-end gap-x-6 gap-y-1">
         <div className={`num text-4xl font-bold tracking-tight sm:text-5xl ${isNum(live.balance) && live.balance < start ? "text-bear" : "text-accent"} drop-shadow-[0_0_18px_rgb(var(--accent)/0.35)]`}>{usd(live.balance)}</div>
@@ -133,7 +133,7 @@ function BalanceCurve({ pts, start, goal, liveBal }: { pts: number[][]; start: n
   const x = (i: number) => (i / (ys.length - 1)) * w, y = (q: number) => h - ((L(q) - bot) / (top - bot)) * h;
   const d = ys.map((q, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(q).toFixed(1)}`).join("");
   const mark = (q: number, cls: string, label: string) => (
-    <span className={`num pointer-events-none absolute right-1 text-[10px] ${cls}`} style={{ top: `calc(${(y(q) / h) * 100}% - 14px)` }}>{label}</span>
+    <span className={`num pointer-events-none absolute right-1 text-xs ${cls}`} style={{ top: `calc(${(y(q) / h) * 100}% - 14px)` }}>{label}</span>
   );
   return (
     <div className="relative">
@@ -153,7 +153,7 @@ function BalanceCurve({ pts, start, goal, liveBal }: { pts: number[][]; start: n
 function ResultTag({ r }: { r: any }) {
   const cls = r.result === "SUCCESS" ? "bg-bull/15 text-bull" : r.result === "FAIL" ? "bg-bear/15 text-bear" : "bg-accent/15 text-accent";
   const txt = r.result === "SUCCESS" ? "Success" : r.result === "FAIL" ? (REASON[r.reason] ?? "Fail") : "Running";
-  return <span className={`whitespace-nowrap rounded px-1.5 py-0.5 text-[11px] font-semibold ${cls}`}>{txt}</span>;
+  return <span className={`whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>{txt}</span>;
 }
 
 /** Share image: a 1080 x 1080 PNG drawn in the browser (no upload, no automatic posting). */
@@ -171,7 +171,7 @@ function Share({ v, balance }: { v: any; balance: number | null }) {
           <div ref={ref} role="dialog" aria-modal="true" aria-label="Hesper Challenge share image" onClick={(e) => e.stopPropagation()}
             className="panel popover animate-in w-full max-w-lg rounded-b-none p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] sm:rounded-2xl">
             <canvas ref={cv} data-hesper-card className="aspect-square w-full rounded-xl border border-glass/10" aria-label="Hesper Challenge image" />
-            <p className="mt-2 text-[11px] text-mute">Nothing is posted automatically.</p>
+            <p className="mt-2 text-xs text-mute">Nothing is posted automatically.</p>
             <div className="mt-3 flex justify-end gap-2">
               <button type="button" className="btn btn-sm" onClick={() => setOpen(false)}>Close</button>
               <button type="button" className="btn btn-sm btn-primary" disabled={busy}
@@ -284,7 +284,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
             <h2 className="label px-4 pt-4">Runs</h2>
             <div className="mt-2 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead><tr className="text-left text-[11px] uppercase tracking-wide text-mute">
+                <thead><tr className="text-left text-xs uppercase tracking-wide text-mute">
                   <th className="py-2 pl-4 pr-2 font-semibold">Run</th><th className="px-2 py-2 font-semibold">Result</th>
                   <th className="px-2 py-2 text-right font-semibold">Trades</th><th className="px-2 py-2 text-right font-semibold">Peak</th>
                   <th className="py-2 pl-2 pr-4 text-right font-semibold sm:pr-2">End</th><th className="hidden px-2 py-2 font-semibold sm:table-cell">Best trade</th>
@@ -310,17 +310,17 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
           <section className="panel p-0" aria-label="Trades">
             <div className="flex items-center justify-between px-4 pt-4">
               <h2 className="label">Trades</h2>
-              <span className="text-[11px] text-mute">{sc.trades ?? trades.length} total · {sc.wins ?? 0} wins</span>
+              <span className="text-xs text-mute">{sc.trades ?? trades.length} total · {sc.wins ?? 0} wins</span>
             </div>
             <ul className="mt-2 sm:hidden">
               {(all ? trades : trades.slice(0, 25)).map((t) => (
                 <li key={t.id} className="border-t border-glass/[0.06] px-4 py-2.5">
                   <div className="flex items-center gap-2 text-sm">
-                    <span className="font-medium">{base(t.symbol)}</span><span className="text-[11px] text-mute">{t.timeframe}</span>
+                    <span className="font-medium">{base(t.symbol)}</span><span className="text-xs text-mute">{t.timeframe}</span>
                     <span className={`text-[11px] font-semibold ${t.side > 0 ? "text-bull" : "text-bear"}`}>{sideTxt(t.side)} {Math.round(t.leverage)}x</span>
                     <span className={`num ml-auto font-semibold ${tone(t.pnl)}`}>{signedUsd(t.pnl)}</span>
                   </div>
-                  <div className="num mt-0.5 flex items-center gap-2 text-[11px] text-mute">
+                  <div className="num mt-0.5 flex items-center gap-2 text-xs text-mute">
                     <span>#{t.run}</span><span className="truncate">{t.exit_reason}</span>
                     <span className={`ml-auto ${tone(t.roi_pct)}`}>{pct(t.roi_pct, 0)}</span><span>→ {usd(t.balance_after)}</span>
                   </div>
@@ -330,7 +330,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
             </ul>
             <div className="mt-2 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[640px] text-sm">
-                <thead><tr className="text-left text-[11px] uppercase tracking-wide text-mute">
+                <thead><tr className="text-left text-xs uppercase tracking-wide text-mute">
                   <th className="px-4 py-2 font-semibold">Run</th><th className="px-2 py-2 font-semibold">Coin</th><th className="px-2 py-2 font-semibold">Side</th>
                   <th className="px-2 py-2 text-right font-semibold">Entry → exit</th><th className="px-2 py-2 text-right font-semibold">P/L</th>
                   <th className="px-2 py-2 text-right font-semibold">ROI</th><th className="px-2 py-2 font-semibold">Exit</th>
@@ -340,12 +340,12 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
                   {(all ? trades : trades.slice(0, 25)).map((t) => (
                     <tr key={t.id} className="border-t border-glass/[0.06]">
                       <td className="num px-4 py-2 text-mute">#{t.run}</td>
-                      <td className="px-2 py-2"><span className="font-medium">{base(t.symbol)}</span> <span className="text-[11px] text-mute">{t.timeframe}</span></td>
+                      <td className="px-2 py-2"><span className="font-medium">{base(t.symbol)}</span> <span className="text-xs text-mute">{t.timeframe}</span></td>
                       <td className={`num px-2 py-2 text-[12px] font-semibold ${t.side > 0 ? "text-bull" : "text-bear"}`}>{sideTxt(t.side)} {Math.round(t.leverage)}x</td>
-                      <td className="num px-2 py-2 text-right text-[12px]">{fmtPrice(t.entry)} → {fmtPrice(t.exit)}</td>
+                      <td className="num px-2 py-2 text-right text-xs">{fmtPrice(t.entry)} → {fmtPrice(t.exit)}</td>
                       <td className={`num px-2 py-2 text-right font-semibold ${tone(t.pnl)}`}>{signedUsd(t.pnl)}</td>
                       <td className={`num px-2 py-2 text-right ${tone(t.roi_pct)}`}>{pct(t.roi_pct, 0)}</td>
-                      <td className="px-2 py-2 text-[12px] text-mute">{t.exit_reason}</td>
+                      <td className="px-2 py-2 text-xs text-mute">{t.exit_reason}</td>
                       <td className="num px-4 py-2 text-right">{usd(t.balance_after)}</td>
                     </tr>
                   ))}
@@ -359,7 +359,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
               </div>
             )}
           </section>
-          <p className="text-center text-[11px] text-mute">{v.label ?? "Demo · virtual money · not financial advice"}</p>
+          <p className="text-center text-xs text-mute">{v.label ?? "Demo · virtual money · not financial advice"}</p>
         </>
       )}
     </div>

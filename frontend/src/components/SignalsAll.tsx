@@ -135,7 +135,7 @@ export function AllList({ rows, market, px, onOpen }: { rows: any[]; market: Mar
                   {ready}<span className="text-mute/50" aria-hidden="true">·</span><span className="num text-mute">{conf}</span>
                   {hasStatus && <><span className="text-mute/50" aria-hidden="true">·</span>{status}</>}
                 </div>
-                {show && <div className="num col-span-full min-w-0 truncate text-xs text-mute lg:hidden">entry {fmtPrice(p.entry)} · stop {fmtPrice(p.stop)} · TP1 {fmtPrice(p.targets?.[0]?.price)}</div>}
+                {show && <div className="num col-span-full min-w-0 text-xs text-mute lg:hidden">entry {fmtPrice(p.entry)} · stop {fmtPrice(p.stop)} · TP1 {fmtPrice(p.targets?.[0]?.price)}</div>}
                 {/* desktop columns */}
                 <span className="hidden text-xs lg:block">{ready}</span>
                 <span className="num hidden text-right text-xs text-mute lg:block">{conf}</span>

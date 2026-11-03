@@ -267,7 +267,7 @@ export default function Landing({ error }: { error: string | null }) {
           <p className="mx-auto mt-3 max-w-xl text-mute">Analysis only, not financial advice.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">{cta(true)}{emailCta(true)}</div>
           <p className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-mute">
-            {TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="hover:text-text hover:underline">{label}</Link>)}
+            {TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="tap-h inline-flex items-center hover:text-text hover:underline">{label}</Link>)}
           </p>
         </section>
       </main>

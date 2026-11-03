@@ -109,7 +109,7 @@ export function TrustContent({ kind }: { kind: TrustKind }) {
         <Body />
       </div>
       <nav aria-label="Other pages" className="mt-10 flex flex-wrap gap-x-4 gap-y-1 border-t border-glass/[0.06] pt-4 text-xs">
-        {TRUST_LINKS.filter(([to]) => TRUST_PATHS[to] !== kind).map(([to, label]) => <Link key={to} to={to} className="text-accent hover:underline">{label}</Link>)}
+        {TRUST_LINKS.filter(([to]) => TRUST_PATHS[to] !== kind).map(([to, label]) => <Link key={to} to={to} className="tap-h inline-flex items-center text-accent hover:underline">{label}</Link>)}
       </nav>
     </article>
   );

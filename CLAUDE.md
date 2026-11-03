@@ -399,6 +399,34 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   25.5x, median 24x; 1.6 % at 50x, 2.7 % at 10x; avg R −0.101 unchanged). Other timeframes unchanged (v2.13). For
   reference, the rule on every timeframe would have removed 4h 49 %, 12h 68 %, 1d 87 %, 3d 94 % (overall 1552 → 1121).
 
+## UI v2.15 design system (3 Nov 2026, branch `ui-v215`, frontend only)
+- Shared blocks in `components/kit.tsx`: `Tile` (label / value / sub; `variant` plain | box | strip = a `.metric-strip`
+  cell; `big` 28 px), `Badge` (tones bull/bear/warn/accent/mute/ai/text, pill, `caps`), `Segmented` (the `.seg` track:
+  timeframes, Futures/Spot, view switches; `strong` = gold fill), `Chip` / `.chip` (standalone filter pills: News,
+  Signal log), `TabStrip` (underlined page tabs: Results, Track record). Old names stay as thin wrappers: `ui.Stat`,
+  `ui.Badge` (caps), `SignalExtras.Pill`, `TradeCall.GradeBadge`, `ui.Tabs` / `TfTabs`; `ui.tsx` re-exports Tile/Segmented/Chip.
+- Type scale 12 / 14 / 16 / 20 / 28 px = `text-xs / sm / base / xl (= lg) / 2xl` (tailwind.config `lg` 20 px, `2xl` 28 px);
+  nothing under 12 px on phones (`text-[10/11px]` removed); larger only on the signed-out landing and the Home hero.
+- Touch: under 768 px or `(pointer: coarse)` every `.btn`, `.input`, `.seg` button and `.chip` is ≥ 44 px; `.tap` gives a
+  small inline control (ⓘ, ★, theme button) a 44 px box without moving the text, `.tap-h` only the height. Desktop stays compact.
+- Radius: cards 12 px (`--r-card`, `.panel`, `.tile`, `.metric-strip`), controls 8 px (`--r-control`), pills full (`--r-pill`, Badge, Chip).
+- Colours only from theme tokens. Charts/canvas: pass a token name (`"--bull"`, `"--bear"`, `"--accent"`, `"--warn"`,
+  `"--ai"`, `"--mute"`) as a line colour; `appearance.themeColor()` resolves it at draw time (charts rebuild on theme
+  change). SVG uses `rgb(var(--x))` (FearGreed zones). Achievements' medal canvas keeps its fixed gold (share art).
+- "Not published yet" (404-type waits) render as neutral `Empty` inside `ErrorBox` (`ui.isNotReady`); real errors stay red.
+- Navigation: phone More sheet grouped Markets (News, Radar) · Tools (Scanner, Backtest, Replay) · Account (Alerts,
+  Community, Settings) · Admin (+ Users with the pending count); unread in-app alerts (`useLive().alerts`) badge Alerts.
+  Desktop: "Tools" dropdown after Radar (sidebar: Tools group). `/users` wrapped in `AdminOnly`. Below 400 px the header
+  wordmark is "Crypto Intel AI".
+- Notifications (Android): `NotifyPrompt` key `cia-notify-asked2` {result, at}: only granted / denied are final; a closed
+  question ("default") shows "Allow notifications" and re-asks at most once a day. `push.enable` says "You closed the
+  question…" for default, wraps the token save ("could not be saved to your account…"), and no longer treats a server
+  PERMISSION_DENIED as "blocked". `push.appWithoutChrome()` (was Settings `oldApk`), `push.APK_URL`, `push.ANDROID_STEPS`;
+  `components/NotifyHelp.tsx`: `BlockedHelp` (collapsible steps), `ChromeWarning` (Settings, Alerts), `AppChromeBanner`
+  (app-wide, Android app without Chrome), `useApkInfo` / `apkVersion` (APK "v2.1.0 (run number)" from `/download/android.json`).
+  Settings → About shows "v<version> · build <BUILD_ID>"; the landing footer has an "Android app (APK)" link.
+- Removed dead files: `pages/Futures.tsx`, `pages/Track.tsx`, `components/Scalping.tsx`, `lib/scalpCard.ts`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

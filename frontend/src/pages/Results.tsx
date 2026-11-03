@@ -1,4 +1,5 @@
 // Results: one place for "does it work?" - track record, demo bots, model accuracy, signal log, and the tools.
+import { TabStrip } from "../components/kit";
 import { lazy, Suspense } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useHesperVisibility } from "../lib/api";
@@ -31,12 +32,7 @@ export default function Results() {
         <h1 className="page-title">Results</h1>
         <p className="page-sub">Every signal's outcome, wins and losses.</p>
       </div>
-      <div className="-mx-3 flex gap-1 overflow-x-auto border-b border-glass/[0.08] px-3 sm:mx-0 sm:px-0" role="tablist">
-        {tabs.map(([k, l]) => (
-          <button key={k} role="tab" aria-selected={tab === k} onClick={() => go(k)}
-            className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm transition-colors ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
-        ))}
-      </div>
+      <TabStrip label="Results" value={tab} options={tabs} onChange={go} className="-mx-3 px-3 sm:mx-0 sm:px-0" />
       {tab === "track" && <TrackRecord />}
       {tab === "bots" && <Bots />}
       {tab === "accuracy" && <Accuracy />}

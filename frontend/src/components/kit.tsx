@@ -33,18 +33,20 @@ export function Badge({ tone = "mute", children, title, caps = false, className 
 
 /** One figure: label, value, optional sub line.
  *  plain = no frame (inside cards) · box = framed tile · strip = a cell of `.metric-strip` (hairlines between cells). */
-export function Tile({ label, value, sub, valueClass = "", variant = "plain", to, title, className = "" }: {
+export function Tile({ label, value, sub, valueClass = "", variant = "plain", to, title, className = "", big = false }: {
   label: ReactNode; value: ReactNode; sub?: ReactNode; valueClass?: string; variant?: "plain" | "box" | "strip"; to?: string; title?: string; className?: string;
+  /** headline figures (Results tiles): 28 px value */
+  big?: boolean;
 }) {
   const strip = variant === "strip";
   const body = (
     <>
-      <div className={strip ? "metric-k" : "label truncate"} title={title ?? (typeof label === "string" ? label : undefined)}>{label}</div>
-      <div className={`${strip ? "metric-v" : "mt-1 truncate text-xl leading-tight"} num ${valueClass}`}>{value}</div>
+      <div className={strip ? "metric-k" : "label leading-snug"} title={title ?? (typeof label === "string" ? label : undefined)}>{label}</div>
+      <div className={`${strip ? "metric-v" : big ? "mt-1.5 truncate text-2xl font-semibold leading-none" : "mt-1 truncate text-xl leading-tight"} num ${valueClass}`}>{value}</div>
       {sub != null && sub !== false && <div className={strip ? "metric-sub num" : "mt-1 text-xs leading-snug text-mute"}>{sub}</div>}
     </>
   );
-  const cls = `${strip ? "metric" : variant === "box" ? "tile p-3" : ""} block min-w-0 ${className}`;
+  const cls = `${strip ? "metric" : variant === "box" ? `tile ${big ? "p-4" : "p-3"}` : ""} block min-w-0 ${className}`;
   return to ? <Link to={to} className={`${cls} transition-colors hover:border-accent/40`}>{body}</Link> : <div className={cls}>{body}</div>;
 }
 
@@ -76,5 +78,19 @@ export function Chip({ on, onClick, children, title, className = "", count }: { 
     <button type="button" aria-pressed={on} title={title} onClick={onClick} className={`chip ${className}`}>
       {children}{count != null && <span className="num text-mute">{count}</span>}
     </button>
+  );
+}
+
+/** Page-level tabs (Results, Track record): underlined, 44 px tall, scroll sideways on narrow screens. */
+export function TabStrip<T extends string>({ value, options, onChange, label, className = "" }: {
+  value: T; options: readonly (readonly [T, ReactNode])[]; onChange: (v: T) => void; label?: string; className?: string;
+}) {
+  return (
+    <div className={`flex gap-1 overflow-x-auto border-b border-glass/[0.08] ${className}`} role="tablist" aria-label={label}>
+      {options.map(([k, l]) => (
+        <button key={k} type="button" role="tab" aria-selected={value === k} onClick={() => onChange(k)}
+          className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm transition-colors ${value === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
+      ))}
+    </div>
   );
 }

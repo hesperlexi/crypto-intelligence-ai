@@ -1,5 +1,6 @@
 // Public track record: every trade signal since launch with its real outcome, the models' results on past data
 // they never trained on (a labelled simulation), and the demo bots. Readable without an account.
+import { TabStrip, Tile } from "./kit";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
 import { useState } from "react";
 import { useApi } from "../lib/api";
@@ -34,7 +35,7 @@ export function Curve({ pts, roi, id = "tr-fill", label = "Cumulative result of 
 }
 
 function Kpi({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
-  return <div className="panel p-4"><div className="label">{k}</div><div className={`num mt-1.5 text-2xl font-semibold leading-none ${cls}`}>{v}</div>{sub && <div className="mt-1.5 text-xs leading-snug text-mute">{sub}</div>}</div>;
+  return <Tile variant="box" big className="panel" label={k} value={v} valueClass={cls} sub={sub} />;
 }
 
 export default function TrackRecord({ compact = false }: { compact?: boolean }) {
@@ -98,12 +99,8 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
       )}
       {compact ? null : (
         <section className="panel p-0">
-          <div className="flex gap-1 overflow-x-auto border-b border-glass/[0.06] px-2 pt-2" role="tablist">
-            {([["live", `Live signals (${sigs.length})`], ...(pro ? [["tested", "Tested on unseen data"]] as const : []), ["bots", "Demo bots"]] as const).map(([k, l]) => (
-              <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-                className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
-            ))}
-          </div>
+          <TabStrip label="Track record" value={tab} onChange={setTab} className="px-2 pt-2"
+            options={[["live", `Live signals (${sigs.length})`], ...(pro ? [["tested", "Tested on unseen data"]] as const : []), ["bots", "Demo bots"]] as const} />
           {(tab === "live" || (!pro && tab === "tested")) && (
             <div className="overflow-x-auto">
               {!sigs.length ? <p className="p-4 text-sm text-mute">No trade signals yet.</p> : (<>

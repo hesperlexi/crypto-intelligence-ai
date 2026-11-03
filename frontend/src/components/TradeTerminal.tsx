@@ -189,12 +189,8 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
       <div><div className={`num text-sm ${tone(t?.change_pct)}`}>{fmtPctRaw(t?.change_pct)}</div><div className="text-xs text-mute">24h change</div></div>
       <div className="hidden sm:block"><div className="num text-sm">{t?.quote_volume != null ? `${fmtNum(t.quote_volume / 1e6, 1)}M` : "—"}</div><div className="text-xs text-mute">24h volume (USDT)</div></div>
       {market === "spot" && <div className="hidden md:block"><div className="num text-sm">{fmtPrice(t?.bid)} / {fmtPrice(t?.ask)}</div><div className="text-xs text-mute">bid / ask</div></div>}
-      <div className="ml-auto inline-flex rounded-xl border border-glass/10 bg-ink/40 p-1" role="group" aria-label="Market">
-        {(["futures", "spot"] as const).map((k) => (
-          <button key={k} aria-pressed={market === k} onClick={() => onMarket(k)}
-            className={`rounded-lg px-3 py-1.5 text-sm font-semibold ${market === k ? "bg-accent text-ink" : "text-mute hover:text-text"}`}>{k === "futures" ? "Futures" : "Spot"}</button>
-        ))}
-      </div>
+      <Segmented label="Market" strong className="ml-auto !flex-nowrap [&>button]:!px-3 [&>button]:!text-sm" value={market} onChange={onMarket}
+        options={[["futures", "Futures"], ["spot", "Spot"]] as const} />
     </div>
   );
 }
@@ -360,7 +356,7 @@ function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d:
         </div>
       )}
       <div className="mb-3 flex gap-4 border-b border-glass/[0.06] text-sm" role="tablist">
-        {(["limit", "market"] as const).map((k) => <button key={k} role="tab" aria-selected={type === k} onClick={() => { setType(k); if (k === "limit" && !limit && px) setLimit(String(px)); }} className={`-mb-px border-b-2 pb-2 capitalize ${type === k ? "border-accent font-semibold" : "border-transparent text-mute"}`}>{k}</button>)}
+        {(["limit", "market"] as const).map((k) => <button key={k} role="tab" aria-selected={type === k} onClick={() => { setType(k); if (k === "limit" && !limit && px) setLimit(String(px)); }} className={`tap-h -mb-px border-b-2 pb-2 capitalize ${type === k ? "border-accent font-semibold" : "border-transparent text-mute"}`}>{k}</button>)}
       </div>
       <div className="space-y-2.5">
         <div className="flex justify-between text-xs text-mute"><span>Available</span><span className="num text-text">{market === "spot" && spotSide === "SELL" ? `${fmtNum(avail, 6)} ${base(symbol)}` : `${fmtNum(avail)} USDT`}</span></div>
@@ -404,7 +400,7 @@ function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d:
 function ModeToggle({ d, act }: { d: any; act: (fn: () => Promise<any>, ok: string) => Promise<void> }) {
   const mode = d?.mode ?? "oneway";
   return (
-    <button className="rounded-md border border-glass/10 px-2 py-1 text-xs hover:border-accent/50" title="One-way: one direction per coin. Hedge: hold a long and a short on the same coin."
+    <button className="tap-h rounded-md border border-glass/10 px-2 py-1 text-xs hover:border-accent/50" title="One-way: one direction per coin. Hedge: hold a long and a short on the same coin."
       onClick={() => act(() => PF.setMode(mode === "hedge" ? "oneway" : "hedge"), mode === "hedge" ? "One-way mode on." : "Hedge mode on: you can hold a long and a short on the same coin.")}>
       {mode === "hedge" ? "Hedge" : "One-way"}
     </button>

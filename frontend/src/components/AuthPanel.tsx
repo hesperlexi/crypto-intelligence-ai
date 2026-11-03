@@ -63,7 +63,7 @@ export function AuthForms({ initial = "signin", onDone }: { initial?: AuthMode; 
 
   const tab = (k: AuthMode, l: string) => (
     <button type="button" role="tab" aria-selected={mode === k} onClick={() => setMode(k)}
-      className={`-mb-px flex-1 border-b-2 pb-2 text-sm ${mode === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
+      className={`tap-h -mb-px flex-1 border-b-2 pb-2 text-sm ${mode === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
   );
   return (
     <div className="text-left">
@@ -98,8 +98,8 @@ export function AuthForms({ initial = "signin", onDone }: { initial?: AuthMode; 
         </button>
       </form>
       <div className="mt-3 flex justify-between text-xs">
-        {mode === "signin" ? <button type="button" className="text-accent hover:underline" onClick={() => setMode("reset")}>Forgot password?</button>
-          : mode === "reset" ? <button type="button" className="text-accent hover:underline" onClick={() => setMode("signin")}>← Back to sign in</button> : <span />}
+        {mode === "signin" ? <button type="button" className="tap-h text-accent hover:underline" onClick={() => setMode("reset")}>Forgot password?</button>
+          : mode === "reset" ? <button type="button" className="tap-h text-accent hover:underline" onClick={() => setMode("signin")}>← Back to sign in</button> : <span />}
         {mode === "signup" && <span className="text-mute">We'll email a confirmation link.</span>}
       </div>
     </div>

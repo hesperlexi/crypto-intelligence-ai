@@ -31,7 +31,7 @@ export default function AutoTrade() {
     <section className={`panel border p-0 ${saved.enabled ? "border-accent/50" : ""}`}>
       <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div>
-          <div className="flex items-center gap-2 font-semibold">Auto-trade signals {saved.enabled && <span className="rounded bg-bull/15 px-1.5 py-0.5 text-[11px] font-bold text-bull">ON</span>}</div>
+          <div className="flex items-center gap-2 font-semibold">Auto-trade signals {saved.enabled && <span className="rounded bg-bull/15 px-1.5 py-0.5 text-xs font-bold text-bull">ON</span>}</div>
           <p className="text-xs text-mute">{saved.enabled
             ? `${saved.timeframes.map((t) => t.toUpperCase()).join(" + ")} · grade ${saved.grades === "A" ? "A" : "A+B"} · $${saved.margin} margin · ${saved.leverage === "signal" ? "suggested" : `${saved.leverage}x`} leverage · also while the app is closed`
             : "Auto-place the app's futures signals here, with virtual money."}</p>
@@ -74,7 +74,7 @@ export default function AutoTrade() {
           <label className="flex items-center gap-2 self-end pb-2 text-sm" title="Grade A trades use 1.2x your margin, grade B 0.8x, up to 1.5x when the trade filter rates the setup highly"><input type="checkbox" checked={s.scale} onChange={(e) => setS({ ...s, scale: e.target.checked })} />Bigger size on stronger signals</label>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={s.notify} onChange={(e) => setS({ ...s, notify: e.target.checked })} />Notify me on each auto-trade</label>
           <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-2">
-            <p className="text-[11px] text-mute">Stop-loss and targets come from the signal. <Info label="Entry rules">Inside the signal's entry zone the trade opens at market; otherwise a limit order waits at the ideal entry (cancelled after 6 candles if it never fills). One entry per signal; a coin with an open trade is skipped.</Info></p>
+            <p className="text-xs text-mute">Stop-loss and targets come from the signal. <Info label="Entry rules">Inside the signal's entry zone the trade opens at market; otherwise a limit order waits at the ideal entry (cancelled after 6 candles if it never fills). One entry per signal; a coin with an open trade is skipped.</Info></p>
             <button className="btn btn-primary" disabled={!dirty || !s.timeframes.length} onClick={() => save(s, "Settings saved.")}>Save settings</button>
           </div>
         </div>

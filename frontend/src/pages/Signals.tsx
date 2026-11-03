@@ -160,7 +160,7 @@ export default function Signals() {
               const on = r.symbol === row?.symbol;
               return (
                 <button key={r.symbol} role="tab" aria-selected={on} onClick={() => pick(r.symbol)}
-                  className={`flex shrink-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm transition-colors ${on ? "border-accent/60 bg-accent/[0.07]" : "border-glass/[0.08] bg-glass/[0.02] hover:border-glass/25"}`}>
+                  className={`tap-h flex shrink-0 items-center gap-2 rounded-lg border px-2.5 py-1.5 text-sm transition-colors ${on ? "border-accent/60 bg-accent/[0.07]" : "border-glass/[0.08] bg-glass/[0.02] hover:border-glass/25"}`}>
                   <CoinAvatar symbol={r.symbol} size={20} />
                   <span className="font-semibold">{base(r.symbol)}</span>
                   <span className={`h-2 w-2 rounded-full ${DOT[vv.tone]}`} aria-hidden="true" />

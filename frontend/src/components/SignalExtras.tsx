@@ -122,7 +122,7 @@ export function AiNote({ ai }: { ai?: any }) {
   const regime: string | undefined = typeof ai?.regime === "string" && ai.regime.trim() ? ai.regime.trim() : undefined;
   return (
     <div className="ai-block text-xs">
-      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-mute transition-colors hover:text-text">
+      <button type="button" aria-expanded={open} onClick={() => setOpen((v) => !v)} className="flex min-h-[44px] w-full items-center justify-between gap-2 px-2.5 py-2 text-left text-mute transition-colors hover:text-text">
         <span className="flex min-w-0 items-center gap-2">
           <AiTag />
           <span className="truncate font-medium">Advisor note · analysis only{regime ? <span className="text-mute/80"> · regime: {regime}</span> : null}</span>

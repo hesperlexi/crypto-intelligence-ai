@@ -243,7 +243,7 @@ function AccessScreen({ user, role }: { user: User; role: Role }) {
           <span className="flex items-center gap-4"><TelegramLink variant="link" /><SupportLink className="text-accent hover:underline" label="Problem? Contact support" /><button className="hover:text-text" onClick={() => signOut(auth)}>Use another account</button></span>
         </div>
         <p className="mt-3 text-center text-xs text-mute">{COPYRIGHT} · v{APP_VERSION} · Analysis and demo trading only, not financial advice.</p>
-        <p className="mt-1 flex flex-wrap justify-center gap-x-3 text-xs">{TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="text-mute hover:text-text">{label}</Link>)}</p>
+        <p className="mt-1 flex flex-wrap justify-center gap-x-3 text-xs">{TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="tap-h inline-flex items-center text-mute hover:text-text">{label}</Link>)}</p>
       </div>
     </div>
   );

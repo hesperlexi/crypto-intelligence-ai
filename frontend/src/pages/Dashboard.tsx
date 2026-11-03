@@ -48,7 +48,7 @@ export default function Dashboard() {
           <div className="-mr-2 max-h-[34rem] space-y-3 overflow-y-auto pr-2">
             {(d?.regimes ?? []).map((r: any) => (
               <div key={r.symbol} className="grid grid-cols-[3.5rem_minmax(0,1fr)_3rem] items-center gap-3 text-sm">
-                <Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{base(r.symbol)}</Link>
+                <Link to={`/asset/${slug(r.symbol)}`} className="tap-h inline-flex items-center font-medium hover:text-accent">{base(r.symbol)}</Link>
                 <div><RegimeBadge regime={r.regime} /><div className="mt-1"><Meter value={r.confidence} tone={regimeTone(r.regime)} /></div></div>
                 <span className="num text-right text-mute" title="Share of regime inputs that agree">{fmtProb(r.confidence)}</span>
               </div>
@@ -101,7 +101,7 @@ export default function Dashboard() {
             <tbody>
               {(d?.forecast_table ?? []).map((r: any) => (
                 <tr key={r.symbol}>
-                  <td><Link to={`/asset/${slug(r.symbol)}`} className="font-medium hover:text-accent">{base(r.symbol)}</Link></td>
+                  <td><Link to={`/asset/${slug(r.symbol)}`} className="tap-h inline-flex items-center font-medium hover:text-accent">{base(r.symbol)}</Link></td>
                   <td className="num text-right">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</td>
                   {HORIZONS.map((h) => {
                     const c = r.horizons[h];
@@ -177,7 +177,7 @@ function MiniHead({ title, to }: { title: string; to: string }) {
   return (
     <div className="mb-2 mt-4 flex items-center justify-between border-t border-glass/[0.06] pt-3">
       <span className="text-xs font-semibold uppercase tracking-wide text-mute">{title}</span>
-      <Link to={to} className="text-xs text-accent hover:underline">See all →</Link>
+      <Link to={to} className="tap-h inline-flex items-center text-xs text-accent hover:underline">See all →</Link>
     </div>
   );
 }
