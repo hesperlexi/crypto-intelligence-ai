@@ -52,8 +52,8 @@ log = logging.getLogger("research.v3")
 HOLDOUT_SHARE = 0.20
 CV_FOLDS = 5
 DECISION_LATENCY_MS = 60_000           # the engine publishes ~1 min after the bar closes (5-minute ticks)
-STRIDE = {"15m": 4, "1h": 2, "4h": 2, "12h": 1, "1d": 1, "3d": 1}   # grid of bars for baselines / direction maker
-MAX_GRID_ROWS = 1600                   # per series (grid rows are thinned evenly above this)
+STRIDE = {"15m": 2, "1h": 1, "4h": 1, "12h": 1, "1d": 1, "3d": 1}   # grid of bars for baselines / direction maker
+MAX_GRID_ROWS = 3000                   # per series (grid rows are thinned evenly above this)
 G_STEP = 0.05                          # base-rate tables: stop distance snapped to 0.05 ATR
 BASE_HORIZON = 30                      # engine/setup.build_setup default horizon of the base rates
 TP2_RANGE = (1.25, 1.5, 1.75, 2.0)
@@ -738,7 +738,7 @@ def evaluate_tf(tf: str, series: list[dict[str, Any]], cut: int, final: bool, wa
     for k, m in strategies.items():
         reg(k, {"fixed": True}, dev_tables[k])
     # filter thresholds (calibrated P scale) chosen on out-of-fold development calls of the pipeline (grades A+B)
-    pp = oof_pc[pipe & oof_mask]
+    pp = oof_p[pipe & oof_mask]                       # thresholds on RAW scores (calibrated ones are steps and tie)
     choices: dict[str, Any] = {}
     if len(pp) >= 50:
         t50 = float(np.nanquantile(pp, 0.5))
@@ -746,7 +746,7 @@ def evaluate_tf(tf: str, series: list[dict[str, Any]], cut: int, final: bool, wa
         best, bscore = None, -np.inf
         for keep in FILTER_GRID:
             thr = float(np.nanquantile(pp, 1 - keep))
-            st = dev_eval(pipe & (oof_pc >= thr))
+            st = dev_eval(pipe & (oof_p >= thr))
             reg("filter_grid", {"keep": keep, "threshold": thr}, st)
             sc = st.get("lb95") if st["n"] >= MIN_DEV_TRADES and st.get("lb95") is not None else -np.inf
             if sc > bscore:
@@ -755,7 +755,7 @@ def evaluate_tf(tf: str, series: list[dict[str, Any]], cut: int, final: bool, wa
             choices["filter_best"] = best[1]
             choices["filter_best_keep"] = best[0]
     # direction maker on the grid: the better side per bar, acting on the top share of scores
-    gp = pd.DataFrame({"row": np.arange(len(df)), "key": df["key"], "j": df["j"], "p": oof_pc, "r": oof_r})[grid & oof_mask]
+    gp = pd.DataFrame({"row": np.arange(len(df)), "key": df["key"], "j": df["j"], "p": oof_p, "r": oof_r})[grid & oof_mask]
     dir_p_rows = gp.loc[gp.groupby(["key", "j"])["p"].idxmax()] if len(gp) else gp
     dir_r_rows = gp.loc[gp.groupby(["key", "j"])["r"].idxmax()] if len(gp) else gp
     if len(dir_p_rows) >= 50:
@@ -774,11 +774,11 @@ def evaluate_tf(tf: str, series: list[dict[str, Any]], cut: int, final: bool, wa
             choices["direction_best_share"] = best[0]
     # fixed-rule configurations, development result for the registry
     if "filter_q50" in choices:
-        reg("filter_q50_ab", {"threshold": choices["filter_q50"]}, dev_eval(pipe & (oof_pc >= choices["filter_q50"])))
+        reg("filter_q50_ab", {"threshold": choices["filter_q50"]}, dev_eval(pipe & (oof_p >= choices["filter_q50"])))
     reg("filter_er_pos_ab", {"rule": "predicted net R > 0"}, dev_eval(pipe & (oof_r > 0)))
     if "filter_best" in choices:
-        reg("filter_best_ab", {"threshold": choices["filter_best"]}, dev_eval(pipe & (oof_pc >= choices["filter_best"])))
-        reg("combined_best", {"threshold": choices["filter_best"]}, dev_eval(current & (oof_pc >= choices["filter_best"])))
+        reg("filter_best_ab", {"threshold": choices["filter_best"]}, dev_eval(pipe & (oof_p >= choices["filter_best"])))
+        reg("combined_best", {"threshold": choices["filter_best"]}, dev_eval(current & (oof_p >= choices["filter_best"])))
     reg("combined_er_pos", {"rule": "current + predicted net R > 0"}, dev_eval(current & (oof_r > 0)))
     m = np.zeros(len(df), bool)
     if len(dir_r_rows):
@@ -814,7 +814,9 @@ def evaluate_tf(tf: str, series: list[dict[str, Any]], cut: int, final: bool, wa
     r_h, _ = _fit_predict(F[trn_rows], yr[trn_rows], cat, F[hold_rows], "reg", 99)
     ph = np.full(len(df), np.nan)
     rh = np.full(len(df), np.nan)
-    ph[hold_rows], rh[hold_rows] = cal(p_h), r_h
+    ph[hold_rows], rh[hold_rows] = p_h, r_h           # raw scores: the thresholds were chosen on raw out-of-fold scores
+    phc = np.full(len(df), np.nan)
+    phc[hold_rows] = cal(p_h)                          # calibrated P(net win): the honest confidence
     strat = dict(strategies)
     if "filter_q50" in choices:
         strat["filter_q50_ab"] = pipe & (ph >= choices["filter_q50"])
@@ -895,7 +897,7 @@ def evaluate_tf(tf: str, series: list[dict[str, Any]], cut: int, final: bool, wa
     base = float(yw[trn_rows].mean()) if len(trn_rows) else 0.5
     calib = {}
     for nm, m in (("pipeline_calls", lab & pipe), ("current_calls", lab & current), ("all_candidates", lab)):
-        calib[nm] = {"meta_v3_calibrated": MV.reliability(ph[m], yw[m]),
+        calib[nm] = {"meta_v3_calibrated": MV.reliability(phc[m], yw[m]),
                      "live_confidence_next_bar": MV.reliability(conf_side[m], yw[m]),
                      "dev_base_rate": MV.reliability(np.full(int(m.sum()), base), yw[m])}
     out["calibration_holdout"] = calib
