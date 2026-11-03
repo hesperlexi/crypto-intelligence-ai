@@ -391,6 +391,10 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
 - **No edge rule** (owner): `REQUIRE_EDGE_FOR_TRADE` default off (see v2.13).
 - Impact study: `research_v213.replay` → `leverage_v214` (per timeframe: removed by the 10x minimum, avg / median leverage,
   R before / after) in `research-results/results/v213-*.json`.
+- **Leverage impact (3 Nov, `results/v213-20261103T174735Z.json`, test split, current grading, honest entry; refused calls free the slot):**
+  removed by the 10x minimum: 15m 0 % (avg 25.5x), 1h 7 % (18.2x), 4h 49 % (13.1x, median 10x), 12h 68 % (12.2x),
+  1d 87 % (11.9x), 3d 94 % (1 of 17 left). Overall 1552 → 1121 trades, avg 18.7x, 27 % at exactly 10x; avg R −0.040 →
+  −0.060 (the removed wide-stop calls were about break-even). Expect few 1d / 3d calls and many 4h / 12h NO TRADEs.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
