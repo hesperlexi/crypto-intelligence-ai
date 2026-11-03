@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-02T19:51:16.639Z",
-  "sha": "6de3d348453d119d7c694b3511a00cc058444066",
-  "total": 108,
-  "passed": 108,
+  "at": "2026-11-03T17:46:47.744Z",
+  "sha": "06cf8ab9a087a4d72a4ce93e23b180a73f2da081",
+  "total": 121,
+  "passed": 121,
   "failed": 0,
   "results": [
     {
@@ -366,6 +366,26 @@
       "ok": true
     },
     {
+      "name": "paper: a new $1,000 account (futures and spot) is accepted",
+      "ok": true
+    },
+    {
+      "name": "paper: Add funds (the app's paperTopUp) is accepted, futures and spot, also on an older account",
+      "ok": true
+    },
+    {
+      "name": "paper: a normal trade (balance changes, deposits untouched) is still accepted",
+      "ok": true
+    },
+    {
+      "name": "paper: deposits never go down, never exceed $1,000,000 and must match the balance",
+      "ok": true
+    },
+    {
+      "name": "paper: a reset may start a new $1,000 account but never a new account above $1,000,000 or with fake deposits",
+      "ok": true
+    },
+    {
       "name": "paper of another uid is denied",
       "ok": true
     },
@@ -374,11 +394,43 @@
       "ok": true
     },
     {
+      "name": "alerts: the website's trade-setup alert is accepted",
+      "ok": true
+    },
+    {
+      "name": "alerts: bad cooldown (text, fraction, NaN, too small, too big) is refused",
+      "ok": true
+    },
+    {
+      "name": "alerts: bad symbol / type / timeframe / extra keys / someone else's uid are refused",
+      "ok": true
+    },
+    {
+      "name": "alerts: the owner switches a rule on/off; other changes are refused",
+      "ok": true
+    },
+    {
       "name": "push_tokens create",
       "ok": true
     },
     {
       "name": "pending user cannot write paper or alerts",
+      "ok": true
+    },
+    {
+      "name": "health_errors: admin reads it",
+      "ok": true
+    },
+    {
+      "name": "health_errors: an active member cannot read it, but still reads views/health",
+      "ok": true
+    },
+    {
+      "name": "health_errors: pending and signed-out people cannot read it",
+      "ok": true
+    },
+    {
+      "name": "admin/migrations: members cannot read or write it",
       "ok": true
     },
     {
