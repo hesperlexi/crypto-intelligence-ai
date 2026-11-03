@@ -1,0 +1,3733 @@
+{
+ "ok": true,
+ "command": "v213",
+ "engine_version": "2.6.0",
+ "method": "`python -m app.research v213`: impact of the v2.13 honest-record and stricter-grading changes (read-only).\n\nPart 1 - live record. Every recorded call (table `signals`) published since 30 Oct 2026 00:00 Dubai is followed again on\nthe stored candles with the current exit rules, in three ways:\n  old    the call as it was recorded (entry = the plan's ideal entry, stop on a gap at the stop, limit fills on a touch);\n  fills  the same entry, v2.13 fills (stop on a gap at the candle's open, limits only when traded through);\n  new    v2.13 entry too: a call filled at publication enters at the price the engine saw (targets rebuilt in R from it,\n         same stop; not recorded when that price was already beyond the stop); pullback / confirm calls unchanged.\nEach closed result is shown gross (price return) and net (minus the 0.15 % round trip and the funding over the hold,\ntracking.net_fields). `edge` marks calls whose model would fail the v2.13 edge requirement (edge test or direction\npolicy edge, from the model version that made the call; 'unknown' when its file is gone).\nApproximation: each call is replayed on its own; a different close time could have let a different later call in.\n\nPart 2 - research replay (research_engine's method: the models' walk-forward out-of-sample calls replayed through the\nlive decision rules, first 70 % of each series as the reference, last 30 % the untouched test). On the test set, per\ntimeframe: current grading vs grading that needs a proven edge, each with the pre-v2.13 record entry (ideal entry,\nfilled at once) and the v2.13 entry (market price, pullback limit through-fill). R after the 0.15 % round trip and the\ndefault funding (0.01 % per 8 h, longs pay) over the hold.",
+ "live_record": {
+  "since": 1793304000000,
+  "now": 1793728063051,
+  "by_timeframe": {
+   "1h": {
+    "calls": 1,
+    "in_record_now": 1,
+    "stored": {
+     "closed": 1,
+     "open": 0,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 0.0,
+     "win_rate_net": 0.0,
+     "avg_gross_pct": -0.8333483875454517,
+     "avg_net_pct": -0.9795983875454517,
+     "total_gross_pct": -0.8333483875454517,
+     "total_net_pct": -0.9795983875454517
+    },
+    "old": {
+     "closed": 1,
+     "open": 0,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 0.0,
+     "win_rate_net": 0.0,
+     "avg_gross_pct": -0.8333483875454517,
+     "avg_net_pct": -0.9811642175454517,
+     "total_gross_pct": -0.8333483875454517,
+     "total_net_pct": -0.9811642175454517
+    },
+    "fills": {
+     "closed": 1,
+     "open": 0,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 0.0,
+     "win_rate_net": 0.0,
+     "avg_gross_pct": -0.8333483875454517,
+     "avg_net_pct": -0.9811642175454517,
+     "total_gross_pct": -0.8333483875454517,
+     "total_net_pct": -0.9811642175454517
+    },
+    "new": {
+     "closed": 1,
+     "open": 0,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 0.0,
+     "win_rate_net": 0.0,
+     "avg_gross_pct": -0.8333483875454517,
+     "avg_net_pct": -0.9811642175454517,
+     "total_gross_pct": -0.8333483875454517,
+     "total_net_pct": -0.9811642175454517
+    },
+    "result_changed": {
+     "win->loss": 0,
+     "loss->win": 0
+    },
+    "entry_moved_pct_avg": 0.0,
+    "edge_blocked": {
+     "blocked": 1,
+     "kept": 0,
+     "unknown": 0,
+     "new_if_only_kept": {
+      "closed": 0,
+      "open": 0,
+      "not_filled_or_void": 0,
+      "not_recorded": 0,
+      "win_rate_gross": null,
+      "win_rate_net": null,
+      "avg_gross_pct": null,
+      "avg_net_pct": null,
+      "total_gross_pct": 0.0,
+      "total_net_pct": 0.0
+     }
+    }
+   },
+   "4h": {
+    "calls": 4,
+    "in_record_now": 4,
+    "stored": {
+     "closed": 1,
+     "open": 3,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 0.36638247724029016,
+     "avg_net_pct": 0.2663824772402901,
+     "total_gross_pct": 0.36638247724029016,
+     "total_net_pct": 0.2663824772402901
+    },
+    "old": {
+     "closed": 1,
+     "open": 3,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 0.36638247724029016,
+     "avg_net_pct": 0.2593861772402901,
+     "total_gross_pct": 0.36638247724029016,
+     "total_net_pct": 0.2593861772402901
+    },
+    "fills": {
+     "closed": 1,
+     "open": 3,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 0.36638247724029016,
+     "avg_net_pct": 0.2593861772402901,
+     "total_gross_pct": 0.36638247724029016,
+     "total_net_pct": 0.2593861772402901
+    },
+    "new": {
+     "closed": 1,
+     "open": 3,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 0.0,
+     "avg_gross_pct": 0.050810921781974105,
+     "avg_net_pct": -0.05618537821802591,
+     "total_gross_pct": 0.050810921781974105,
+     "total_net_pct": -0.05618537821802591
+    },
+    "result_changed": {
+     "win->loss": 1,
+     "loss->win": 0
+    },
+    "entry_moved_pct_avg": 0.8195013208079666,
+    "edge_blocked": {
+     "blocked": 4,
+     "kept": 0,
+     "unknown": 0,
+     "new_if_only_kept": {
+      "closed": 0,
+      "open": 0,
+      "not_filled_or_void": 0,
+      "not_recorded": 0,
+      "win_rate_gross": null,
+      "win_rate_net": null,
+      "avg_gross_pct": null,
+      "avg_net_pct": null,
+      "total_gross_pct": 0.0,
+      "total_net_pct": 0.0
+     }
+    }
+   },
+   "12h": {
+    "calls": 3,
+    "in_record_now": 3,
+    "stored": {
+     "closed": 2,
+     "open": 1,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 3.1078988079051073,
+     "avg_net_pct": 3.0128988079051076,
+     "total_gross_pct": 6.215797615810215,
+     "total_net_pct": 6.025797615810215
+    },
+    "old": {
+     "closed": 2,
+     "open": 1,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 3.1078988079051073,
+     "avg_net_pct": 3.0009541379051075,
+     "total_gross_pct": 6.215797615810215,
+     "total_net_pct": 6.001908275810215
+    },
+    "fills": {
+     "closed": 2,
+     "open": 1,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 3.1078988079051073,
+     "avg_net_pct": 3.0009541379051075,
+     "total_gross_pct": 6.215797615810215,
+     "total_net_pct": 6.001908275810215
+    },
+    "new": {
+     "closed": 2,
+     "open": 1,
+     "not_filled_or_void": 0,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 1.3852599741810023,
+     "avg_net_pct": 1.2783153041810023,
+     "total_gross_pct": 2.7705199483620047,
+     "total_net_pct": 2.5566306083620045
+    },
+    "result_changed": {
+     "win->loss": 0,
+     "loss->win": 0
+    },
+    "entry_moved_pct_avg": 1.8747909900420339,
+    "edge_blocked": {
+     "blocked": 3,
+     "kept": 0,
+     "unknown": 0,
+     "new_if_only_kept": {
+      "closed": 0,
+      "open": 0,
+      "not_filled_or_void": 0,
+      "not_recorded": 0,
+      "win_rate_gross": null,
+      "win_rate_net": null,
+      "avg_gross_pct": null,
+      "avg_net_pct": null,
+      "total_gross_pct": 0.0,
+      "total_net_pct": 0.0
+     }
+    }
+   },
+   "1d": {
+    "calls": 3,
+    "in_record_now": 3,
+    "stored": {
+     "closed": 1,
+     "open": 1,
+     "not_filled_or_void": 1,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 1.9475717302803286,
+     "avg_net_pct": 1.8563217302803288,
+     "total_gross_pct": 1.9475717302803286,
+     "total_net_pct": 1.8563217302803288
+    },
+    "old": {
+     "closed": 1,
+     "open": 1,
+     "not_filled_or_void": 1,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 1.9475717302803286,
+     "avg_net_pct": 1.8427703802803286,
+     "total_gross_pct": 1.9475717302803286,
+     "total_net_pct": 1.8427703802803286
+    },
+    "fills": {
+     "closed": 1,
+     "open": 1,
+     "not_filled_or_void": 1,
+     "not_recorded": 0,
+     "win_rate_gross": 1.0,
+     "win_rate_net": 1.0,
+     "avg_gross_pct": 1.9475717302803286,
+     "avg_net_pct": 1.8427703802803286,
+     "total_gross_pct": 1.9475717302803286,
+     "total_net_pct": 1.8427703802803286
+    },
+    "new": {
+     "closed": 1,
+     "open": 1,
+     "not_filled_or_void": 1,
+     "not_recorded": 0,
+     "win_rate_gross": 0.0,
+     "win_rate_net": 0.0,
+     "avg_gross_pct": -0.37068417708112644,
+     "avg_net_pct": -0.47548552708112646,
+     "total_gross_pct": -0.37068417708112644,
+     "total_net_pct": -0.47548552708112646
+    },
+    "result_changed": {
+     "win->loss": 1,
+     "loss->win": 0
+    },
+    "entry_moved_pct_avg": 2.309694236288573,
+    "edge_blocked": {
+     "blocked": 3,
+     "kept": 0,
+     "unknown": 0,
+     "new_if_only_kept": {
+      "closed": 0,
+      "open": 0,
+      "not_filled_or_void": 0,
+      "not_recorded": 0,
+      "win_rate_gross": null,
+      "win_rate_net": null,
+      "avg_gross_pct": null,
+      "avg_net_pct": null,
+      "total_gross_pct": 0.0,
+      "total_net_pct": 0.0
+     }
+    }
+   }
+  },
+  "total": {
+   "calls": 11,
+   "stored": {
+    "closed": 5,
+    "open": 5,
+    "not_filled_or_void": 1,
+    "not_recorded": 0,
+    "win_rate_gross": 0.8,
+    "win_rate_net": 0.8,
+    "avg_gross_pct": 1.5392806871570763,
+    "avg_net_pct": 1.4337806871570764,
+    "total_gross_pct": 7.696403435785382,
+    "total_net_pct": 7.168903435785382
+   },
+   "old": {
+    "closed": 5,
+    "open": 5,
+    "not_filled_or_void": 1,
+    "not_recorded": 0,
+    "win_rate_gross": 0.8,
+    "win_rate_net": 0.8,
+    "avg_gross_pct": 1.5392806871570763,
+    "avg_net_pct": 1.4245801231570767,
+    "total_gross_pct": 7.696403435785382,
+    "total_net_pct": 7.122900615785383
+   },
+   "fills": {
+    "closed": 5,
+    "open": 5,
+    "not_filled_or_void": 1,
+    "not_recorded": 0,
+    "win_rate_gross": 0.8,
+    "win_rate_net": 0.8,
+    "avg_gross_pct": 1.5392806871570763,
+    "avg_net_pct": 1.4245801231570767,
+    "total_gross_pct": 7.696403435785382,
+    "total_net_pct": 7.122900615785383
+   },
+   "new": {
+    "closed": 5,
+    "open": 5,
+    "not_filled_or_void": 1,
+    "not_recorded": 0,
+    "win_rate_gross": 0.6,
+    "win_rate_net": 0.4,
+    "avg_gross_pct": 0.3234596611034801,
+    "avg_net_pct": 0.20875909710348015,
+    "total_gross_pct": 1.6172983055174006,
+    "total_net_pct": 1.0437954855174008
+   },
+   "result_changed": {
+    "win->loss": 2,
+    "loss->win": 0
+   },
+   "edge_blocked": 11,
+   "new_if_only_kept": {
+    "closed": 0,
+    "open": 0,
+    "not_filled_or_void": 0,
+    "not_recorded": 0,
+    "win_rate_gross": null,
+    "win_rate_net": null,
+    "avg_gross_pct": null,
+    "avg_net_pct": null,
+    "total_gross_pct": 0.0,
+    "total_net_pct": 0.0
+   }
+  },
+  "errors": [],
+  "calls": [
+   {
+    "id": "474b159b720d49028c0baae0bfb3b89d",
+    "symbol": "SOL/USDT",
+    "timeframe": "1d",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793386794361,
+    "in_record": true,
+    "entry_ideal": 96.65237431887921,
+    "price_at_call": 94.42,
+    "stored": {
+     "status": "EXPIRED",
+     "gross": 1.9475717302803286,
+     "fill_status": "FILLED",
+     "net": 1.8563217302803288
+    },
+    "old": {
+     "status": "EXPIRED",
+     "gross": 1.9475717302803286,
+     "fill_status": "FILLED",
+     "net": 1.8427703802803286,
+     "funding": -0.04519865,
+     "cost": 0.15
+    },
+    "fills": {
+     "status": "EXPIRED",
+     "gross": 1.9475717302803286,
+     "fill_status": "FILLED",
+     "net": 1.8427703802803286,
+     "funding": -0.04519865,
+     "cost": 0.15
+    },
+    "new": {
+     "status": "EXPIRED",
+     "gross": -0.37068417708112644,
+     "fill_status": "FILLED",
+     "net": -0.47548552708112646,
+     "funding": -0.04519865,
+     "cost": 0.15
+    },
+    "entry_new": 94.42,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": false,
+     "known": true
+    },
+    "edge_blocked": true,
+    "flip": "win->loss"
+   },
+   {
+    "id": "85d42b1b4c964ef29fc49b3c6f963104",
+    "symbol": "GALA/USDT",
+    "timeframe": "4h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793386850485,
+    "in_record": true,
+    "entry_ideal": 0.0016899925923947081,
+    "price_at_call": 0.001661,
+    "stored": {
+     "status": "OPEN",
+     "gross": 1.2421706751366224,
+     "fill_status": "FILLED"
+    },
+    "old": {
+     "status": "OPEN",
+     "gross": 0.8279676761707377,
+     "fill_status": "FILLED"
+    },
+    "fills": {
+     "status": "OPEN",
+     "gross": 0.8279676761707377,
+     "fill_status": "FILLED"
+    },
+    "new": {
+     "status": "OPEN",
+     "gross": -0.9030704394942912,
+     "fill_status": "FILLED"
+    },
+    "entry_new": 0.001661,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true
+   },
+   {
+    "id": "0d3fb580403c41489bb4fdbfe6e8852d",
+    "symbol": "LTC/USDT",
+    "timeframe": "12h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793404864691,
+    "in_record": true,
+    "entry_ideal": 57.01265131714824,
+    "price_at_call": 56.02,
+    "stored": {
+     "status": "EXPIRED",
+     "gross": 3.144304423199218,
+     "fill_status": "FILLED",
+     "net": 3.049304423199218
+    },
+    "old": {
+     "status": "EXPIRED",
+     "gross": 3.144304423199218,
+     "fill_status": "FILLED",
+     "net": 3.032583203199218,
+     "funding": -0.038278779999999984,
+     "cost": 0.15
+    },
+    "fills": {
+     "status": "EXPIRED",
+     "gross": 3.144304423199218,
+     "fill_status": "FILLED",
+     "net": 3.032583203199218,
+     "funding": -0.038278779999999984,
+     "cost": 0.15
+    },
+    "new": {
+     "status": "EXPIRED",
+     "gross": 1.4280614066404906,
+     "fill_status": "FILLED",
+     "net": 1.3163401866404907,
+     "funding": -0.038278779999999984,
+     "cost": 0.15
+    },
+    "entry_new": 56.02,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true,
+    "flip": null
+   },
+   {
+    "id": "fffdcdca452c4bbabd8410cc27178a74",
+    "symbol": "BNB/USDT",
+    "timeframe": "1d",
+    "side": 1,
+    "decision": "BUY ON PULLBACK",
+    "grade": "B",
+    "created_at": 1793405159843,
+    "in_record": true,
+    "entry_ideal": 692.6636833193314,
+    "price_at_call": 705.3,
+    "stored": {
+     "status": "NOT_FILLED",
+     "gross": null,
+     "fill_status": "NOT_FILLED"
+    },
+    "old": {
+     "status": "NOT_FILLED",
+     "gross": null,
+     "fill_status": "NOT_FILLED"
+    },
+    "fills": {
+     "status": "NOT_FILLED",
+     "gross": null,
+     "fill_status": "NOT_FILLED"
+    },
+    "new": {
+     "status": "NOT_FILLED",
+     "gross": null,
+     "fill_status": "NOT_FILLED"
+    },
+    "entry_new": 692.6636833193314,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true
+   },
+   {
+    "id": "c9e845cee7c940dc97e54282a18002f1",
+    "symbol": "DOGE/USDT",
+    "timeframe": "12h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793405181623,
+    "in_record": true,
+    "entry_ideal": 0.07733535001107196,
+    "price_at_call": 0.07598,
+    "stored": {
+     "status": "EXPIRED",
+     "gross": 3.0714931926109967,
+     "fill_status": "FILLED",
+     "net": 2.976493192610997
+    },
+    "old": {
+     "status": "EXPIRED",
+     "gross": 3.0714931926109967,
+     "fill_status": "FILLED",
+     "net": 2.9693250726109968,
+     "funding": -0.047831879999999966,
+     "cost": 0.15
+    },
+    "fills": {
+     "status": "EXPIRED",
+     "gross": 3.0714931926109967,
+     "fill_status": "FILLED",
+     "net": 2.9693250726109968,
+     "funding": -0.047831879999999966,
+     "cost": 0.15
+    },
+    "new": {
+     "status": "EXPIRED",
+     "gross": 1.342458541721514,
+     "fill_status": "FILLED",
+     "net": 1.240290421721514,
+     "funding": -0.047831879999999966,
+     "cost": 0.15
+    },
+    "entry_new": 0.07598,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true,
+    "flip": null
+   },
+   {
+    "id": "2ce966afc64f41f48888cc2511a8d454",
+    "symbol": "ETH/USDT",
+    "timeframe": "1d",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793417108487,
+    "in_record": true,
+    "entry_ideal": 2291.1232482043224,
+    "price_at_call": 2245.49,
+    "stored": {
+     "status": "OPEN",
+     "gross": 0.03942381559047803,
+     "fill_status": "FILLED"
+    },
+    "old": {
+     "status": "OPEN",
+     "gross": -0.2866171342298829,
+     "fill_status": "FILLED"
+    },
+    "fills": {
+     "status": "OPEN",
+     "gross": -0.2866171342298829,
+     "fill_status": "FILLED"
+    },
+    "new": {
+     "status": "OPEN",
+     "gross": -0.2866171342298829,
+     "fill_status": "FILLED"
+    },
+    "entry_new": 2291.1232482043224,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": false,
+     "known": true
+    },
+    "edge_blocked": true
+   },
+   {
+    "id": "ffe7bafed9174bf4b11ae73e6d0aec36",
+    "symbol": "PAXG/USDT",
+    "timeframe": "4h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793419219608,
+    "in_record": true,
+    "entry_ideal": 3909.1424128109074,
+    "price_at_call": 3896.8,
+    "stored": {
+     "status": "EXPIRED",
+     "gross": 0.36638247724029016,
+     "fill_status": "FILLED",
+     "net": 0.2663824772402901
+    },
+    "old": {
+     "status": "EXPIRED",
+     "gross": 0.36638247724029016,
+     "fill_status": "FILLED",
+     "net": 0.2593861772402901,
+     "funding": -0.04300369999999998,
+     "cost": 0.15
+    },
+    "fills": {
+     "status": "EXPIRED",
+     "gross": 0.36638247724029016,
+     "fill_status": "FILLED",
+     "net": 0.2593861772402901,
+     "funding": -0.04300369999999998,
+     "cost": 0.15
+    },
+    "new": {
+     "status": "EXPIRED",
+     "gross": 0.050810921781974105,
+     "fill_status": "FILLED",
+     "net": -0.05618537821802591,
+     "funding": -0.04300369999999998,
+     "cost": 0.15
+    },
+    "entry_new": 3896.8,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true,
+    "flip": "win->loss"
+   },
+   {
+    "id": "cc02ba8699e246dbbda451a7f28e7751",
+    "symbol": "XRP/USDT",
+    "timeframe": "4h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793520019543,
+    "in_record": true,
+    "entry_ideal": 1.2626982198000019,
+    "price_at_call": 1.2542,
+    "stored": {
+     "status": "OPEN",
+     "gross": -0.9821650181753183,
+     "fill_status": "FILLED"
+    },
+    "old": {
+     "status": "OPEN",
+     "gross": -1.3147860620748908,
+     "fill_status": "FILLED"
+    },
+    "fills": {
+     "status": "OPEN",
+     "gross": -1.3147860620748908,
+     "fill_status": "FILLED"
+    },
+    "new": {
+     "status": "OPEN",
+     "gross": -2.001275713602313,
+     "fill_status": "FILLED"
+    },
+    "entry_new": 1.2542,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true
+   },
+   {
+    "id": "fff22c5245e140bda70c385687a55a8e",
+    "symbol": "ETH/USDT",
+    "timeframe": "4h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793577922544,
+    "in_record": true,
+    "entry_ideal": 2294.1215385550904,
+    "price_at_call": 2280.96,
+    "stored": {
+     "status": "OPEN",
+     "gross": 0.17006677673877535,
+     "fill_status": "FILLED"
+    },
+    "old": {
+     "status": "OPEN",
+     "gross": -0.15554805553839035,
+     "fill_status": "FILLED"
+    },
+    "fills": {
+     "status": "OPEN",
+     "gross": -0.15554805553839035,
+     "fill_status": "FILLED"
+    },
+    "new": {
+     "status": "OPEN",
+     "gross": -0.7334631032547723,
+     "fill_status": "FILLED"
+    },
+    "entry_new": 2280.96,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true
+   },
+   {
+    "id": "201244ccbd5e4806b0f59f2a1c1fc1a6",
+    "symbol": "AVAX/USDT",
+    "timeframe": "12h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "B",
+    "created_at": 1793648505316,
+    "in_record": true,
+    "entry_ideal": 8.486829192528761,
+    "price_at_call": 8.306,
+    "stored": {
+     "status": "OPEN",
+     "gross": -0.43798227380327237,
+     "fill_status": "FILLED"
+    },
+    "old": {
+     "status": "OPEN",
+     "gross": -0.7207734017445455,
+     "fill_status": "FILLED"
+    },
+    "fills": {
+     "status": "OPEN",
+     "gross": -0.7207734017445455,
+     "fill_status": "FILLED"
+    },
+    "new": {
+     "status": "OPEN",
+     "gross": -2.91355646520588,
+     "fill_status": "FILLED"
+    },
+    "entry_new": 8.306,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": false,
+     "known": true
+    },
+    "edge_blocked": true
+   },
+   {
+    "id": "39a1bfce9f034918bc8f97ba1d1722f2",
+    "symbol": "SOL/USDT",
+    "timeframe": "1h",
+    "side": -1,
+    "decision": "SELL",
+    "grade": "A",
+    "created_at": 1793696451129,
+    "in_record": true,
+    "entry_ideal": 92.36976192155285,
+    "price_at_call": 91.97,
+    "stored": {
+     "status": "STOPPED",
+     "gross": -0.8333483875454517,
+     "fill_status": "FILLED",
+     "net": -0.9795983875454517
+    },
+    "old": {
+     "status": "STOPPED",
+     "gross": -0.8333483875454517,
+     "fill_status": "FILLED",
+     "net": -0.9811642175454517,
+     "funding": -0.00218417,
+     "cost": 0.15
+    },
+    "fills": {
+     "status": "STOPPED",
+     "gross": -0.8333483875454517,
+     "fill_status": "FILLED",
+     "net": -0.9811642175454517,
+     "funding": -0.00218417,
+     "cost": 0.15
+    },
+    "new": {
+     "status": "STOPPED",
+     "gross": -0.8333483875454517,
+     "fill_status": "FILLED",
+     "net": -0.9811642175454517,
+     "funding": -0.00218417,
+     "cost": 0.15
+    },
+    "entry_new": 92.36976192155285,
+    "edge": {
+     "edge_confirmed": false,
+     "policy_edge": true,
+     "known": true
+    },
+    "edge_blocked": true,
+    "flip": null
+   }
+  ]
+ },
+ "replay": {
+  "tables": {
+   "cur_ideal": {
+    "overall": {
+     "n": 1592,
+     "win_rate": 0.582286432160804,
+     "expectancy_r": 0.10007612314610972,
+     "profit_factor": 1.2567326051609873,
+     "max_drawdown_r": 41.342821473540894,
+     "total_r": 159.32118804860667,
+     "trades_per_week": 148.97476977374697,
+     "trades_per_month": 647.8274274161225
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 376,
+      "win_rate": 0.5638297872340425,
+      "expectancy_r": 0.0149212842849211,
+      "profit_factor": 1.0347274803561748,
+      "max_drawdown_r": 23.088542848900442,
+      "total_r": 5.610402891130334,
+      "trades_per_week": 94.98947368421052,
+      "trades_per_month": 413.06851127819544,
+      "test_period": [
+       1790640000000,
+       1793683800000
+      ]
+     },
+     "1h": {
+      "n": 393,
+      "win_rate": 0.5597964376590331,
+      "expectancy_r": 0.04805977016918806,
+      "profit_factor": 1.1170128034209286,
+      "max_drawdown_r": 20.132616092406042,
+      "total_r": 18.887489676490908,
+      "trades_per_week": 37.32278123233465,
+      "trades_per_month": 162.3007801017524,
+      "test_period": [
+       1786777200000,
+       1793678400000
+      ]
+     },
+     "4h": {
+      "n": 502,
+      "win_rate": 0.6075697211155379,
+      "expectancy_r": 0.17273032917714998,
+      "profit_factor": 1.4907760226631523,
+      "max_drawdown_r": 23.12247725210191,
+      "total_r": 86.71062524692928,
+      "trades_per_week": 11.918598078010175,
+      "trades_per_month": 51.8288750706614,
+      "test_period": [
+       1767643200000,
+       1793649600000
+      ]
+     },
+     "12h": {
+      "n": 200,
+      "win_rate": 0.57,
+      "expectancy_r": 0.13250388464906557,
+      "profit_factor": 1.329776360220045,
+      "max_drawdown_r": 14.301015401562736,
+      "total_r": 26.500776929813114,
+      "trades_per_week": 3.156708004509583,
+      "trades_per_month": 13.727170236753102,
+      "test_period": [
+       1754740800000,
+       1793577600000
+      ]
+     },
+     "1d": {
+      "n": 103,
+      "win_rate": 0.6407766990291263,
+      "expectancy_r": 0.2056611946351929,
+      "profit_factor": 1.64908638591643,
+      "max_drawdown_r": 5.553636931182606,
+      "total_r": 21.18310304742487,
+      "trades_per_week": 1.280639431616341,
+      "trades_per_month": 5.568952042628775,
+      "test_period": [
+       1744329600000,
+       1793491200000
+      ]
+     },
+     "3d": {
+      "n": 18,
+      "win_rate": 0.5555555555555556,
+      "expectancy_r": 0.023821680934344183,
+      "profit_factor": 1.054087511986652,
+      "max_drawdown_r": 2.208295484036293,
+      "total_r": 0.42879025681819527,
+      "trades_per_week": 0.30656934306569344,
+      "trades_per_month": 1.333138686131387,
+      "test_period": [
+       1757462400000,
+       1793145600000
+      ]
+     }
+    }
+   },
+   "cur_market": {
+    "overall": {
+     "n": 1552,
+     "win_rate": 0.5135309278350515,
+     "expectancy_r": -0.03955580294844291,
+     "profit_factor": 0.9098964885488248,
+     "max_drawdown_r": 111.88077321485389,
+     "total_r": -61.39060617598339,
+     "trades_per_week": 145.2240288371552,
+     "trades_per_month": 631.5170625432864
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 368,
+      "win_rate": 0.5054347826086957,
+      "expectancy_r": -0.10142609195397853,
+      "profit_factor": 0.7867421508189194,
+      "max_drawdown_r": 44.56359528454513,
+      "total_r": -37.3248018390641,
+      "trades_per_week": 92.96842105263157,
+      "trades_per_month": 404.2798195488722,
+      "test_period": [
+       1790640000000,
+       1793683800000
+      ]
+     },
+     "1h": {
+      "n": 379,
+      "win_rate": 0.5013192612137203,
+      "expectancy_r": -0.06844971370553915,
+      "profit_factor": 0.8483533841433388,
+      "max_drawdown_r": 30.603418888912373,
+      "total_r": -25.94244149439934,
+      "trades_per_week": 35.99321650650084,
+      "trades_per_month": 156.5190729225551,
+      "test_period": [
+       1786777200000,
+       1793678400000
+      ]
+     },
+     "4h": {
+      "n": 488,
+      "win_rate": 0.5225409836065574,
+      "expectancy_r": -0.0047724987181260664,
+      "profit_factor": 0.9883036820473078,
+      "max_drawdown_r": 52.99204742604447,
+      "total_r": -2.3289793744455203,
+      "trades_per_week": 11.586206896551724,
+      "trades_per_month": 50.38344827586207,
+      "test_period": [
+       1767643200000,
+       1793649600000
+      ]
+     },
+     "12h": {
+      "n": 196,
+      "win_rate": 0.5255102040816326,
+      "expectancy_r": 0.03327658567188273,
+      "profit_factor": 1.0765736177808944,
+      "max_drawdown_r": 15.0521238378141,
+      "total_r": 6.522210791689014,
+      "trades_per_week": 3.0935738444193914,
+      "trades_per_month": 13.45262683201804,
+      "test_period": [
+       1754740800000,
+       1793577600000
+      ]
+     },
+     "1d": {
+      "n": 104,
+      "win_rate": 0.5192307692307693,
+      "expectancy_r": -0.008757914429058967,
+      "profit_factor": 0.9788139209849233,
+      "max_drawdown_r": 6.752409262822628,
+      "total_r": -0.9108231006221326,
+      "trades_per_week": 1.2930728241563054,
+      "trades_per_month": 5.623019538188276,
+      "test_period": [
+       1744329600000,
+       1793491200000
+      ]
+     },
+     "3d": {
+      "n": 17,
+      "win_rate": 0.5294117647058824,
+      "expectancy_r": -0.08269242112595863,
+      "profit_factor": 0.8232312916709293,
+      "max_drawdown_r": 2.963352866853295,
+      "total_r": -1.4057711591412967,
+      "trades_per_week": 0.2895377128953771,
+      "trades_per_month": 1.2590754257907544,
+      "test_period": [
+       1757462400000,
+       1793145600000
+      ]
+     }
+    }
+   },
+   "edge_ideal": {
+    "overall": {
+     "n": 3,
+     "win_rate": 0.3333333333333333,
+     "expectancy_r": 0.02620861616487528,
+     "profit_factor": 1.0608883065198085,
+     "max_drawdown_r": 1.0228026188972943,
+     "total_r": 0.07862584849462584,
+     "trades_per_week": 0.04735062006764375,
+     "trades_per_month": 0.20590755355129656
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1790640000000,
+       1793683800000
+      ]
+     },
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1786777200000,
+       1793678400000
+      ]
+     },
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1767643200000,
+       1793649600000
+      ]
+     },
+     "12h": {
+      "n": 3,
+      "win_rate": 0.3333333333333333,
+      "expectancy_r": 0.02620861616487528,
+      "profit_factor": 1.0608883065198085,
+      "max_drawdown_r": 1.0228026188972943,
+      "total_r": 0.07862584849462584,
+      "trades_per_week": 0.04735062006764375,
+      "trades_per_month": 0.20590755355129656,
+      "test_period": [
+       1754740800000,
+       1793577600000
+      ]
+     },
+     "1d": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1744329600000,
+       1793491200000
+      ]
+     },
+     "3d": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1757462400000,
+       1793145600000
+      ]
+     }
+    }
+   },
+   "edge_market": {
+    "overall": {
+     "n": 3,
+     "win_rate": 0.3333333333333333,
+     "expectancy_r": -0.04733695474711064,
+     "profit_factor": 0.8995700972959865,
+     "max_drawdown_r": 1.0228026188972943,
+     "total_r": -0.1420108642413319,
+     "trades_per_week": 0.04735062006764375,
+     "trades_per_month": 0.20590755355129656
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1790640000000,
+       1793683800000
+      ]
+     },
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1786777200000,
+       1793678400000
+      ]
+     },
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1767643200000,
+       1793649600000
+      ]
+     },
+     "12h": {
+      "n": 3,
+      "win_rate": 0.3333333333333333,
+      "expectancy_r": -0.04733695474711064,
+      "profit_factor": 0.8995700972959865,
+      "max_drawdown_r": 1.0228026188972943,
+      "total_r": -0.1420108642413319,
+      "trades_per_week": 0.04735062006764375,
+      "trades_per_month": 0.20590755355129656,
+      "test_period": [
+       1754740800000,
+       1793577600000
+      ]
+     },
+     "1d": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1744329600000,
+       1793491200000
+      ]
+     },
+     "3d": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0,
+      "trades_per_month": 0.0,
+      "test_period": [
+       1757462400000,
+       1793145600000
+      ]
+     }
+    }
+   },
+   "policy_ideal": {
+    "overall": {
+     "n": 1187,
+     "win_rate": 0.5762426284751474,
+     "expectancy_r": 0.07535229608060091,
+     "profit_factor": 1.1842171091012843,
+     "max_drawdown_r": 33.019900201256704,
+     "total_r": 89.44317544767328,
+     "trades_per_week": 121.12532524010787,
+     "trades_per_month": 526.7221286155548
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 329,
+      "win_rate": 0.5653495440729484,
+      "expectancy_r": 0.007404458908444475,
+      "profit_factor": 1.0168593497892184,
+      "max_drawdown_r": 25.352222360030538,
+      "total_r": 2.4360669808782323,
+      "trades_per_week": 83.1157894736842,
+      "trades_per_month": 361.43494736842104,
+      "test_period": [
+       1790640000000,
+       1793683800000
+      ]
+     },
+     "1h": {
+      "n": 276,
+      "win_rate": 0.5688405797101449,
+      "expectancy_r": 0.029067317961772865,
+      "profit_factor": 1.068584512200488,
+      "max_drawdown_r": 15.66648836566176,
+      "total_r": 8.02257975744931,
+      "trades_per_week": 26.21141888072357,
+      "trades_per_month": 113.98222724703223,
+      "test_period": [
+       1786777200000,
+       1793678400000
+      ]
+     },
+     "4h": {
+      "n": 354,
+      "win_rate": 0.5847457627118644,
+      "expectancy_r": 0.1411775033709784,
+      "profit_factor": 1.3716170190965586,
+      "max_drawdown_r": 20.558498811243986,
+      "total_r": 49.97683619332635,
+      "trades_per_week": 8.404748445449407,
+      "trades_per_month": 36.54864895421142,
+      "test_period": [
+       1767643200000,
+       1793649600000
+      ]
+     },
+     "12h": {
+      "n": 153,
+      "win_rate": 0.5555555555555556,
+      "expectancy_r": 0.07487766116056466,
+      "profit_factor": 1.1753485353282078,
+      "max_drawdown_r": 17.70020800279308,
+      "total_r": 11.456282157566392,
+      "trades_per_week": 2.414881623449831,
+      "trades_per_month": 10.501285231116125,
+      "test_period": [
+       1754740800000,
+       1793577600000
+      ]
+     },
+     "1d": {
+      "n": 65,
+      "win_rate": 0.6153846153846154,
+      "expectancy_r": 0.18012052170183862,
+      "profit_factor": 1.5031695413305075,
+      "max_drawdown_r": 4.684141833613303,
+      "total_r": 11.70783391061951,
+      "trades_per_week": 0.8081705150976909,
+      "trades_per_month": 3.514387211367673,
+      "test_period": [
+       1744329600000,
+       1793491200000
+      ]
+     },
+     "3d": {
+      "n": 10,
+      "win_rate": 0.9,
+      "expectancy_r": 0.5843576447833501,
+      "profit_factor": 6.982095865101169,
+      "max_drawdown_r": 0.9768443334257189,
+      "total_r": 5.843576447833501,
+      "trades_per_week": 0.170316301703163,
+      "trades_per_month": 0.7406326034063261,
+      "test_period": [
+       1757462400000,
+       1793145600000
+      ]
+     }
+    }
+   },
+   "policy_market": {
+    "overall": {
+     "n": 1152,
+     "win_rate": 0.5095486111111112,
+     "expectancy_r": -0.05732548011465372,
+     "profit_factor": 0.8741925884209509,
+     "max_drawdown_r": 102.5139962031069,
+     "total_r": -66.03895309208109,
+     "trades_per_week": 117.77820216671567,
+     "trades_per_month": 512.1669248506893
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 321,
+      "win_rate": 0.5077881619937694,
+      "expectancy_r": -0.10695313264313117,
+      "profit_factor": 0.7788247094049231,
+      "max_drawdown_r": 42.28961229695324,
+      "total_r": -34.331955578445104,
+      "trades_per_week": 81.09473684210526,
+      "trades_per_month": 352.6462556390978,
+      "test_period": [
+       1790640000000,
+       1793683800000
+      ]
+     },
+     "1h": {
+      "n": 266,
+      "win_rate": 0.5112781954887218,
+      "expectancy_r": -0.08093519163722315,
+      "profit_factor": 0.8239097310842568,
+      "max_drawdown_r": 27.583875024862362,
+      "total_r": -21.52876097550136,
+      "trades_per_week": 25.26172979084228,
+      "trades_per_month": 109.85243640474845,
+      "test_period": [
+       1786777200000,
+       1793678400000
+      ]
+     },
+     "4h": {
+      "n": 341,
+      "win_rate": 0.49853372434017595,
+      "expectancy_r": -0.028855598108839683,
+      "profit_factor": 0.9339711361286199,
+      "max_drawdown_r": 43.35307080209864,
+      "total_r": -9.839758955114332,
+      "trades_per_week": 8.096099491237988,
+      "trades_per_month": 35.2064669304692,
+      "test_period": [
+       1767643200000,
+       1793649600000
+      ]
+     },
+     "12h": {
+      "n": 149,
+      "win_rate": 0.5033557046979866,
+      "expectancy_r": -0.02635486839470582,
+      "profit_factor": 0.9430507786058578,
+      "max_drawdown_r": 17.538459734204793,
+      "total_r": -3.9268753908111673,
+      "trades_per_week": 2.351747463359639,
+      "trades_per_month": 10.22674182638106,
+      "test_period": [
+       1754740800000,
+       1793577600000
+      ]
+     },
+     "1d": {
+      "n": 66,
+      "win_rate": 0.5303030303030303,
+      "expectancy_r": -0.0067380608086298035,
+      "profit_factor": 0.9843867102558439,
+      "max_drawdown_r": 9.420347584493964,
+      "total_r": -0.444712013369567,
+      "trades_per_week": 0.8206039076376554,
+      "trades_per_month": 3.5684547069271764,
+      "test_period": [
+       1744329600000,
+       1793491200000
+      ]
+     },
+     "3d": {
+      "n": 9,
+      "win_rate": 0.8888888888888888,
+      "expectancy_r": 0.44812331346227247,
+      "profit_factor": 5.127495450799844,
+      "max_drawdown_r": 0.9771324691294085,
+      "total_r": 4.033109821160452,
+      "trades_per_week": 0.15328467153284672,
+      "trades_per_month": 0.6665693430656935,
+      "test_period": [
+       1757462400000,
+       1793145600000
+      ]
+     }
+    }
+   }
+  },
+  "series": {
+   "ADA/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 22,
+     "edge": 0,
+     "policy": 22
+    },
+    "test_span": [
+     1763164800000,
+     1792454400000
+    ]
+   },
+   "BCH/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1778889600000,
+     1792627200000
+    ]
+   },
+   "BNB/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 4,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1760572800000,
+     1792972800000
+    ]
+   },
+   "BTC/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1757462400000,
+     1792972800000
+    ]
+   },
+   "DOGE/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 6,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1776124800000,
+     1792972800000
+    ]
+   },
+   "ETH/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1757462400000,
+     1792972800000
+    ]
+   },
+   "HBAR/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 2,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1775779200000,
+     1792627200000
+    ]
+   },
+   "LINK/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 8,
+     "edge": 0,
+     "policy": 8
+    },
+    "test_span": [
+     1769472000000,
+     1792540800000
+    ]
+   },
+   "LTC/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 3,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1760659200000,
+     1793059200000
+    ]
+   },
+   "TRX/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 12,
+     "edge": 0,
+     "policy": 12
+    },
+    "test_span": [
+     1766361600000,
+     1792540800000
+    ]
+   },
+   "XLM/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 8,
+     "edge": 0,
+     "policy": 8
+    },
+    "test_span": [
+     1763337600000,
+     1792627200000
+    ]
+   },
+   "XRP/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1763856000000,
+     1793145600000
+    ]
+   },
+   "ZEC/USDT 3d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 9,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1773187200000,
+     1793145600000
+    ]
+   },
+   "AAVE/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 1
+    },
+    "test_span": [
+     1765843200000,
+     1793491200000
+    ]
+   },
+   "ADA/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 12,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1744329600000,
+     1792972800000
+    ]
+   },
+   "APT/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 12,
+     "edge": 0,
+     "policy": 12
+    },
+    "test_span": [
+     1786320000000,
+     1792972800000
+    ]
+   },
+   "AVAX/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1765843200000,
+     1793491200000
+    ]
+   },
+   "BCH/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 13,
+     "edge": 0,
+     "policy": 13
+    },
+    "test_span": [
+     1758326400000,
+     1792972800000
+    ]
+   },
+   "BNB/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 51,
+     "edge": 0,
+     "policy": 51
+    },
+    "test_span": [
+     1744848000000,
+     1793491200000
+    ]
+   },
+   "BTC/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 3,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1744848000000,
+     1793491200000
+    ]
+   },
+   "DOGE/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 43,
+     "edge": 0,
+     "policy": 43
+    },
+    "test_span": [
+     1754179200000,
+     1793491200000
+    ]
+   },
+   "DOT/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 11,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1765324800000,
+     1792972800000
+    ]
+   },
+   "ETH/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 10,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1744848000000,
+     1793491200000
+    ]
+   },
+   "GALA/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 21,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1775174400000,
+     1793491200000
+    ]
+   },
+   "HBAR/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 19,
+     "edge": 0,
+     "policy": 19
+    },
+    "test_span": [
+     1755993600000,
+     1792972800000
+    ]
+   },
+   "INJ/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 12,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1765324800000,
+     1792972800000
+    ]
+   },
+   "LINK/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1748995200000,
+     1792972800000
+    ]
+   },
+   "LTC/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 19,
+     "edge": 0,
+     "policy": 19
+    },
+    "test_span": [
+     1744848000000,
+     1793491200000
+    ]
+   },
+   "NEAR/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 10,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1765324800000,
+     1792972800000
+    ]
+   },
+   "PAXG/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 5,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1765843200000,
+     1793491200000
+    ]
+   },
+   "SOL/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 6,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1765843200000,
+     1793491200000
+    ]
+   },
+   "TRX/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 40,
+     "edge": 0,
+     "policy": 40
+    },
+    "test_span": [
+     1744329600000,
+     1792972800000
+    ]
+   },
+   "UNI/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 11,
+     "edge": 0,
+     "policy": 11
+    },
+    "test_span": [
+     1765324800000,
+     1792972800000
+    ]
+   },
+   "XLM/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 30,
+     "edge": 0,
+     "policy": 30
+    },
+    "test_span": [
+     1744329600000,
+     1792972800000
+    ]
+   },
+   "XRP/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 11,
+     "edge": 0,
+     "policy": 11
+    },
+    "test_span": [
+     1744848000000,
+     1793491200000
+    ]
+   },
+   "ZEC/USDT 1d": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 26,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1751846400000,
+     1793491200000
+    ]
+   },
+   "AAVE/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 25,
+     "edge": 0,
+     "policy": 25
+    },
+    "test_span": [
+     1762257600000,
+     1793577600000
+    ]
+   },
+   "ADA/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 19,
+     "edge": 0,
+     "policy": 19
+    },
+    "test_span": [
+     1754740800000,
+     1793059200000
+    ]
+   },
+   "APT/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 5,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1780401600000,
+     1793059200000
+    ]
+   },
+   "AVAX/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 19,
+     "edge": 0,
+     "policy": 19
+    },
+    "test_span": [
+     1762257600000,
+     1793577600000
+    ]
+   },
+   "BCH/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 32,
+     "edge": 0,
+     "policy": 32
+    },
+    "test_span": [
+     1754740800000,
+     1793059200000
+    ]
+   },
+   "BNB/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 29,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1755259200000,
+     1793577600000
+    ]
+   },
+   "BTC/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 7,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1755259200000,
+     1793577600000
+    ]
+   },
+   "DOGE/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 48,
+     "edge": 0,
+     "policy": 48
+    },
+    "test_span": [
+     1755259200000,
+     1793577600000
+    ]
+   },
+   "DOT/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 25,
+     "edge": 0,
+     "policy": 25
+    },
+    "test_span": [
+     1761739200000,
+     1793059200000
+    ]
+   },
+   "ENA/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791288000000,
+     1793577600000
+    ]
+   },
+   "ETH/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 13,
+     "edge": 0,
+     "policy": 13
+    },
+    "test_span": [
+     1755259200000,
+     1793577600000
+    ]
+   },
+   "GALA/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 44,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1771588800000,
+     1793577600000
+    ]
+   },
+   "HBAR/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 10,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1754740800000,
+     1793059200000
+    ]
+   },
+   "INJ/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 15,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1761739200000,
+     1793059200000
+    ]
+   },
+   "LINK/USDT 12h": {
+    "edge_confirmed": true,
+    "test_calls": {
+     "cur": 18,
+     "edge": 18,
+     "policy": 18
+    },
+    "test_span": [
+     1754740800000,
+     1793059200000
+    ]
+   },
+   "LTC/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 1
+    },
+    "test_span": [
+     1755259200000,
+     1793577600000
+    ]
+   },
+   "NEAR/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 4,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1761739200000,
+     1793059200000
+    ]
+   },
+   "PAXG/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 87,
+     "edge": 0,
+     "policy": 87
+    },
+    "test_span": [
+     1762257600000,
+     1793577600000
+    ]
+   },
+   "PEPE/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787918400000,
+     1793577600000
+    ]
+   },
+   "SOL/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 44,
+     "edge": 0,
+     "policy": 44
+    },
+    "test_span": [
+     1759924800000,
+     1793577600000
+    ]
+   },
+   "SUI/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 3,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787400000000,
+     1793059200000
+    ]
+   },
+   "TRX/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 157,
+     "edge": 0,
+     "policy": 157
+    },
+    "test_span": [
+     1754740800000,
+     1793059200000
+    ]
+   },
+   "UNI/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 19,
+     "edge": 0,
+     "policy": 19
+    },
+    "test_span": [
+     1761739200000,
+     1793059200000
+    ]
+   },
+   "WLD/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 4,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787400000000,
+     1793059200000
+    ]
+   },
+   "XLM/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 91,
+     "edge": 0,
+     "policy": 91
+    },
+    "test_span": [
+     1754740800000,
+     1793059200000
+    ]
+   },
+   "XRP/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 50,
+     "edge": 0,
+     "policy": 50
+    },
+    "test_span": [
+     1755259200000,
+     1793577600000
+    ]
+   },
+   "ZEC/USDT 12h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 22,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1755259200000,
+     1793577600000
+    ]
+   },
+   "AAVE/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 163,
+     "edge": 0,
+     "policy": 163
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "ADA/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 91,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "APT/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 79,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1779566400000,
+     1793116800000
+    ]
+   },
+   "AVAX/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 152,
+     "edge": 0,
+     "policy": 152
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "BCH/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 164,
+     "edge": 0,
+     "policy": 164
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "BIO/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 50,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1790841600000,
+     1793116800000
+    ]
+   },
+   "BNB/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 169,
+     "edge": 0,
+     "policy": 169
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "BTC/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 66,
+     "edge": 0,
+     "policy": 66
+    },
+    "test_span": [
+     1768176000000,
+     1793649600000
+    ]
+   },
+   "DOGE/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 51,
+     "edge": 0,
+     "policy": 51
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "DOT/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 182,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "ENA/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 2,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1790150400000,
+     1793635200000
+    ]
+   },
+   "ERA/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791691200000,
+     1793116800000
+    ]
+   },
+   "ETH/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 57,
+     "edge": 0,
+     "policy": 57
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "GALA/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 33,
+     "edge": 0,
+     "policy": 33
+    },
+    "test_span": [
+     1768420800000,
+     1793635200000
+    ]
+   },
+   "HBAR/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 158,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "INJ/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 123,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "LINK/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 82,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "LTC/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 44,
+     "edge": 0,
+     "policy": 44
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "NEAR/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 65,
+     "edge": 0,
+     "policy": 65
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "PAXG/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 119,
+     "edge": 0,
+     "policy": 119
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "PEPE/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 4,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1784750400000,
+     1793635200000
+    ]
+   },
+   "SOL/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 34,
+     "edge": 0,
+     "policy": 34
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "SUI/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 51,
+     "edge": 0,
+     "policy": 51
+    },
+    "test_span": [
+     1784232000000,
+     1793116800000
+    ]
+   },
+   "TRX/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 87,
+     "edge": 0,
+     "policy": 87
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "U/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792886400000,
+     1793563200000
+    ]
+   },
+   "UNI/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 129,
+     "edge": 0,
+     "policy": 129
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "WLD/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 22,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786564800000,
+     1793116800000
+    ]
+   },
+   "XLM/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 144,
+     "edge": 0,
+     "policy": 144
+    },
+    "test_span": [
+     1767643200000,
+     1793116800000
+    ]
+   },
+   "XRP/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 48,
+     "edge": 0,
+     "policy": 48
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "ZEC/USDT 4h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 15,
+     "edge": 0,
+     "policy": 15
+    },
+    "test_span": [
+     1768161600000,
+     1793635200000
+    ]
+   },
+   "AAVE/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 29,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "ADA/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 15,
+     "edge": 0,
+     "policy": 15
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "APT/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "AVAX/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 52,
+     "edge": 0,
+     "policy": 52
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "BCH/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 41,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786777200000,
+     1793145600000
+    ]
+   },
+   "BIO/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 23,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787428800000,
+     1793149200000
+    ]
+   },
+   "BNB/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 86,
+     "edge": 0,
+     "policy": 86
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "BTC/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 102,
+     "edge": 0,
+     "policy": 102
+    },
+    "test_span": [
+     1787310000000,
+     1793678400000
+    ]
+   },
+   "DOGE/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 31,
+     "edge": 0,
+     "policy": 31
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "DOT/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "ENA/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "ERA/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 3,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791277200000,
+     1793149200000
+    ]
+   },
+   "ETH/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 54,
+     "edge": 0,
+     "policy": 54
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "GALA/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "GRAM/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 3,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792785600000,
+     1793145600000
+    ]
+   },
+   "HBAR/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 26,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "INJ/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 9,
+     "edge": 0,
+     "policy": 9
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "LINK/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 21,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "LTC/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 134,
+     "edge": 0,
+     "policy": 134
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "MSTRB/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 9,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1793250000000,
+     1793674800000
+    ]
+   },
+   "NEAR/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 15,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "NVDAB/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 6,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1793192400000,
+     1793667600000
+    ]
+   },
+   "PAXG/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 154,
+     "edge": 0,
+     "policy": 154
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "PEPE/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "SOL/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 93,
+     "edge": 0,
+     "policy": 93
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "SPCXB/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 10,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1793203200000,
+     1793674800000
+    ]
+   },
+   "SUI/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 97,
+     "edge": 0,
+     "policy": 97
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "TRX/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "U/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792472400000,
+     1793592000000
+    ]
+   },
+   "UNI/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 38,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "WLD/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 47,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "XAUT/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 30,
+     "edge": 0,
+     "policy": 30
+    },
+    "test_span": [
+     1792364400000,
+     1793149200000
+    ]
+   },
+   "XLM/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 24,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1786780800000,
+     1793149200000
+    ]
+   },
+   "XRP/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 25,
+     "edge": 0,
+     "policy": 25
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "ZEC/USDT 1h": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 220,
+     "edge": 0,
+     "policy": 220
+    },
+    "test_span": [
+     1787299200000,
+     1793667600000
+    ]
+   },
+   "AAVE/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 85,
+     "edge": 0,
+     "policy": 85
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "ADA/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 7,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "APT/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "AVAX/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 18,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "BCH/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 91,
+     "edge": 0,
+     "policy": 91
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "BIO/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 21,
+     "edge": 0,
+     "policy": 21
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "BNB/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 37,
+     "edge": 0,
+     "policy": 37
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "BTC/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 18,
+     "edge": 0,
+     "policy": 18
+    },
+    "test_span": [
+     1792091700000,
+     1793683800000
+    ]
+   },
+   "DOGE/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 126,
+     "edge": 0,
+     "policy": 126
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "DOT/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "ENA/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 28,
+     "edge": 0,
+     "policy": 28
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "ERA/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1790640000000,
+     1793034000000
+    ]
+   },
+   "ETH/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 30,
+     "edge": 0,
+     "policy": 30
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "GALA/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 4,
+     "edge": 0,
+     "policy": 4
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "GRAM/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 4,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792567800000,
+     1793034000000
+    ]
+   },
+   "HBAR/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 79,
+     "edge": 0,
+     "policy": 79
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "INJ/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 77,
+     "edge": 0,
+     "policy": 77
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "LINK/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 61,
+     "edge": 0,
+     "policy": 61
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "LTC/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 27,
+     "edge": 0,
+     "policy": 27
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "MSTRB/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 30,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1793149200000,
+     1793682000000
+    ]
+   },
+   "NEAR/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "NVDAB/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 7,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1793087100000,
+     1793673000000
+    ]
+   },
+   "PAXG/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 14,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "PEPE/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 8,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "SOL/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 3,
+     "edge": 0,
+     "policy": 3
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "SPCXB/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 7,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1793098800000,
+     1793682000000
+    ]
+   },
+   "SUI/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 74,
+     "edge": 0,
+     "policy": 74
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "TRX/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "U/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 0,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792005300000,
+     1793597400000
+    ]
+   },
+   "UNI/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 27,
+     "edge": 0,
+     "policy": 27
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "WLD/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 48,
+     "edge": 0,
+     "policy": 48
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "XAUT/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 7,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1792145700000,
+     1793034000000
+    ]
+   },
+   "XLM/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 1,
+     "edge": 0,
+     "policy": 0
+    },
+    "test_span": [
+     1791441900000,
+     1793034000000
+    ]
+   },
+   "XRP/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 43,
+     "edge": 0,
+     "policy": 43
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   },
+   "ZEC/USDT 15m": {
+    "edge_confirmed": false,
+    "test_calls": {
+     "cur": 16,
+     "edge": 0,
+     "policy": 16
+    },
+    "test_span": [
+     1792080900000,
+     1793673000000
+    ]
+   }
+  },
+  "skipped": [
+   "AAVE/USDT 3d: no model / too few out-of-sample bars",
+   "APT/USDT 3d: no model / too few out-of-sample bars",
+   "AVAX/USDT 3d: span too short to split",
+   "BIO/USDT 3d: no model / too few out-of-sample bars",
+   "DOT/USDT 3d: span too short to split",
+   "ENA/USDT 3d: no model / too few out-of-sample bars",
+   "ERA/USDT 3d: no model / too few out-of-sample bars",
+   "GALA/USDT 3d: no model / too few out-of-sample bars",
+   "GRAM/USDT 3d: no model / too few out-of-sample bars",
+   "INJ/USDT 3d: no model / too few out-of-sample bars",
+   "MSTRB/USDT 3d: no model / too few out-of-sample bars",
+   "NEAR/USDT 3d: no model / too few out-of-sample bars",
+   "NVDAB/USDT 3d: no model / too few out-of-sample bars",
+   "PAXG/USDT 3d: span too short to split",
+   "PEPE/USDT 3d: no model / too few out-of-sample bars",
+   "SOL/USDT 3d: span too short to split",
+   "SPCXB/USDT 3d: no model / too few out-of-sample bars",
+   "SUI/USDT 3d: no model / too few out-of-sample bars",
+   "U/USDT 3d: no model / too few out-of-sample bars",
+   "UNI/USDT 3d: span too short to split",
+   "WLD/USDT 3d: no model / too few out-of-sample bars",
+   "XAUT/USDT 3d: no model / too few out-of-sample bars",
+   "BIO/USDT 1d: no model / too few out-of-sample bars",
+   "ENA/USDT 1d: no model / too few out-of-sample bars",
+   "ERA/USDT 1d: no model / too few out-of-sample bars",
+   "GRAM/USDT 1d: no model / too few out-of-sample bars",
+   "MSTRB/USDT 1d: no model / too few out-of-sample bars",
+   "NVDAB/USDT 1d: no model / too few out-of-sample bars",
+   "PEPE/USDT 1d: no model / too few out-of-sample bars",
+   "SPCXB/USDT 1d: no model / too few out-of-sample bars",
+   "SUI/USDT 1d: no model / too few out-of-sample bars",
+   "U/USDT 1d: no model / too few out-of-sample bars",
+   "WLD/USDT 1d: no model / too few out-of-sample bars",
+   "XAUT/USDT 1d: no model / too few out-of-sample bars",
+   "BIO/USDT 12h: no model / too few out-of-sample bars",
+   "ERA/USDT 12h: no model / too few out-of-sample bars",
+   "GRAM/USDT 12h: no model / too few out-of-sample bars",
+   "MSTRB/USDT 12h: no model / too few out-of-sample bars",
+   "NVDAB/USDT 12h: no model / too few out-of-sample bars",
+   "SPCXB/USDT 12h: no model / too few out-of-sample bars",
+   "U/USDT 12h: no model / too few out-of-sample bars",
+   "XAUT/USDT 12h: no model / too few out-of-sample bars",
+   "GRAM/USDT 4h: no model / too few out-of-sample bars",
+   "MSTRB/USDT 4h: no model / too few out-of-sample bars",
+   "NVDAB/USDT 4h: no model / too few out-of-sample bars",
+   "SPCXB/USDT 4h: no model / too few out-of-sample bars",
+   "XAUT/USDT 4h: no model / too few out-of-sample bars"
+  ],
+  "leverage_v214": {
+   "15m": {
+    "trades_before": 368,
+    "removed_too_wide": 0,
+    "removed_pct": 0.0,
+    "trades_after": 368,
+    "avg_leverage": 25.5,
+    "median_leverage": 24.0,
+    "share_at_50x": 0.016,
+    "share_at_10x": 0.027,
+    "median_stop_pct": 1.29,
+    "avg_r_before": -0.101,
+    "avg_r_after": -0.101,
+    "avg_r_removed": null
+   },
+   "1h": {
+    "trades_before": 379,
+    "removed_too_wide": 28,
+    "removed_pct": 7.4,
+    "trades_after": 361,
+    "avg_leverage": 18.2,
+    "median_leverage": 16.0,
+    "share_at_50x": 0.008,
+    "share_at_10x": 0.222,
+    "median_stop_pct": 2.52,
+    "avg_r_before": -0.068,
+    "avg_r_after": -0.073,
+    "avg_r_removed": -0.229
+   },
+   "4h": {
+    "trades_before": 488,
+    "removed_too_wide": 241,
+    "removed_pct": 49.4,
+    "trades_after": 301,
+    "avg_leverage": 13.1,
+    "median_leverage": 10.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.538,
+    "median_stop_pct": 5.92,
+    "avg_r_before": -0.005,
+    "avg_r_after": 0.014,
+    "avg_r_removed": -0.041
+   },
+   "12h": {
+    "trades_before": 196,
+    "removed_too_wide": 134,
+    "removed_pct": 68.4,
+    "trades_after": 74,
+    "avg_leverage": 12.2,
+    "median_leverage": 10.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.568,
+    "median_stop_pct": 8.49,
+    "avg_r_before": 0.033,
+    "avg_r_after": -0.123,
+    "avg_r_removed": 0.064
+   },
+   "1d": {
+    "trades_before": 104,
+    "removed_too_wide": 90,
+    "removed_pct": 86.5,
+    "trades_after": 16,
+    "avg_leverage": 11.9,
+    "median_leverage": 10.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.562,
+    "median_stop_pct": 14.41,
+    "avg_r_before": -0.009,
+    "avg_r_after": 0.002,
+    "avg_r_removed": 0.009
+   },
+   "3d": {
+    "trades_before": 17,
+    "removed_too_wide": 16,
+    "removed_pct": 94.1,
+    "trades_after": 1,
+    "avg_leverage": 11.0,
+    "median_leverage": 11.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.0,
+    "median_stop_pct": 25.72,
+    "avg_r_before": -0.083,
+    "avg_r_after": 1.051,
+    "avg_r_removed": -0.154
+   },
+   "all": {
+    "trades_before": 1552,
+    "removed_too_wide": 509,
+    "removed_pct": 32.8,
+    "trades_after": 1121,
+    "avg_leverage": 18.7,
+    "median_leverage": 16.0,
+    "share_at_50x": 0.008,
+    "share_at_10x": 0.27,
+    "median_stop_pct": 3.64,
+    "avg_r_before": -0.04,
+    "avg_r_after": -0.06,
+    "avg_r_removed": -0.018
+   }
+  },
+  "variants": {
+   "cur_ideal": "current grading, pre-v2.13 record entry (ideal entry filled at once)",
+   "cur_market": "current grading, v2.13 entry (market price; pullback limit through-fill)",
+   "edge_ideal": "edge required, pre-v2.13 record entry",
+   "edge_market": "v2.13: edge required (edge test AND direction policy) and honest entry",
+   "policy_ideal": "only the direction policy edge required (EDGE_RULE=policy), pre-v2.13 entry",
+   "policy_market": "only the direction policy edge required (EDGE_RULE=policy), honest entry"
+  },
+  "costs": {
+   "round_trip_pct": 0.15,
+   "funding": "0.01% per 8 h (longs pay), over the hold"
+  }
+ },
+ "active_models": {
+  "15m": {
+   "models": 35,
+   "edge_confirmed": 0,
+   "policy_edge": 18,
+   "both": 0,
+   "both_list": [],
+   "policy_list": [
+    "AAVE/USDT",
+    "BIO/USDT",
+    "BNB/USDT",
+    "BTC/USDT",
+    "DOGE/USDT",
+    "ENA/USDT",
+    "ETH/USDT",
+    "GALA/USDT",
+    "INJ/USDT",
+    "LINK/USDT",
+    "LTC/USDT",
+    "SOL/USDT",
+    "SUI/USDT",
+    "UNI/USDT",
+    "WLD/USDT",
+    "XAUT/USDT",
+    "XRP/USDT",
+    "ZEC/USDT"
+   ]
+  },
+  "1h": {
+   "models": 35,
+   "edge_confirmed": 0,
+   "policy_edge": 15,
+   "both": 0,
+   "both_list": [],
+   "policy_list": [
+    "ADA/USDT",
+    "AVAX/USDT",
+    "BNB/USDT",
+    "BTC/USDT",
+    "DOGE/USDT",
+    "ERA/USDT",
+    "ETH/USDT",
+    "INJ/USDT",
+    "LINK/USDT",
+    "LTC/USDT",
+    "PAXG/USDT",
+    "SOL/USDT",
+    "SUI/USDT",
+    "XAUT/USDT",
+    "XRP/USDT"
+   ]
+  },
+  "4h": {
+   "models": 35,
+   "edge_confirmed": 0,
+   "policy_edge": 22,
+   "both": 0,
+   "both_list": [],
+   "policy_list": [
+    "AAVE/USDT",
+    "ADA/USDT",
+    "APT/USDT",
+    "BCH/USDT",
+    "BNB/USDT",
+    "BTC/USDT",
+    "DOGE/USDT",
+    "DOT/USDT",
+    "ETH/USDT",
+    "GALA/USDT",
+    "INJ/USDT",
+    "LTC/USDT",
+    "NEAR/USDT",
+    "PAXG/USDT",
+    "SOL/USDT",
+    "TRX/USDT",
+    "UNI/USDT",
+    "WLD/USDT",
+    "XAUT/USDT",
+    "XLM/USDT",
+    "XRP/USDT",
+    "ZEC/USDT"
+   ]
+  },
+  "12h": {
+   "models": 31,
+   "edge_confirmed": 1,
+   "policy_edge": 18,
+   "both": 1,
+   "both_list": [
+    "LINK/USDT"
+   ],
+   "policy_list": [
+    "ADA/USDT",
+    "AVAX/USDT",
+    "BCH/USDT",
+    "BTC/USDT",
+    "DOGE/USDT",
+    "DOT/USDT",
+    "ETH/USDT",
+    "GALA/USDT",
+    "HBAR/USDT",
+    "LINK/USDT",
+    "LTC/USDT",
+    "NEAR/USDT",
+    "PAXG/USDT",
+    "SOL/USDT",
+    "TRX/USDT",
+    "UNI/USDT",
+    "XLM/USDT",
+    "XRP/USDT"
+   ]
+  },
+  "1d": {
+   "models": 29,
+   "edge_confirmed": 0,
+   "policy_edge": 12,
+   "both": 0,
+   "both_list": [],
+   "policy_list": [
+    "AAVE/USDT",
+    "APT/USDT",
+    "AVAX/USDT",
+    "BCH/USDT",
+    "BNB/USDT",
+    "HBAR/USDT",
+    "INJ/USDT",
+    "LTC/USDT",
+    "TRX/USDT",
+    "UNI/USDT",
+    "XLM/USDT",
+    "XRP/USDT"
+   ]
+  },
+  "3d": {
+   "models": 25,
+   "edge_confirmed": 0,
+   "policy_edge": 2,
+   "both": 0,
+   "both_list": [],
+   "policy_list": [
+    "TRX/USDT",
+    "XLM/USDT"
+   ]
+  }
+ },
+ "seconds": 74.3,
+ "record_since": 1793386630880,
+ "record_since_tf": {
+  "15m": 1793622908333
+ },
+ "fill_window_bars": 3,
+ "tf_ms": {
+  "15m": 900000,
+  "1h": 3600000,
+  "4h": 14400000,
+  "12h": 43200000,
+  "1d": 86400000,
+  "3d": 259200000
+ }
+}

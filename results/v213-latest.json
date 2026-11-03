@@ -5,7 +5,7 @@
  "method": "`python -m app.research v213`: impact of the v2.13 honest-record and stricter-grading changes (read-only).\n\nPart 1 - live record. Every recorded call (table `signals`) published since 30 Oct 2026 00:00 Dubai is followed again on\nthe stored candles with the current exit rules, in three ways:\n  old    the call as it was recorded (entry = the plan's ideal entry, stop on a gap at the stop, limit fills on a touch);\n  fills  the same entry, v2.13 fills (stop on a gap at the candle's open, limits only when traded through);\n  new    v2.13 entry too: a call filled at publication enters at the price the engine saw (targets rebuilt in R from it,\n         same stop; not recorded when that price was already beyond the stop); pullback / confirm calls unchanged.\nEach closed result is shown gross (price return) and net (minus the 0.15 % round trip and the funding over the hold,\ntracking.net_fields). `edge` marks calls whose model would fail the v2.13 edge requirement (edge test or direction\npolicy edge, from the model version that made the call; 'unknown' when its file is gone).\nApproximation: each call is replayed on its own; a different close time could have let a different later call in.\n\nPart 2 - research replay (research_engine's method: the models' walk-forward out-of-sample calls replayed through the\nlive decision rules, first 70 % of each series as the reference, last 30 % the untouched test). On the test set, per\ntimeframe: current grading vs grading that needs a proven edge, each with the pre-v2.13 record entry (ideal entry,\nfilled at once) and the v2.13 entry (market price, pullback limit through-fill). R after the 0.15 % round trip and the\ndefault funding (0.01 % per 8 h, longs pay) over the hold.",
  "live_record": {
   "since": 1793304000000,
-  "now": 1793720246400,
+  "now": 1793728063051,
   "by_timeframe": {
    "1h": {
     "calls": 1,
@@ -437,22 +437,22 @@
     "price_at_call": 0.001661,
     "stored": {
      "status": "OPEN",
-     "gross": -0.1779538927463742,
+     "gross": 1.2421706751366224,
      "fill_status": "FILLED"
     },
     "old": {
      "status": "OPEN",
-     "gross": -0.1779538927463742,
+     "gross": 0.8279676761707377,
      "fill_status": "FILLED"
     },
     "fills": {
      "status": "OPEN",
-     "gross": -0.1779538927463742,
+     "gross": 0.8279676761707377,
      "fill_status": "FILLED"
     },
     "new": {
      "status": "OPEN",
-     "gross": -1.9265502709211457,
+     "gross": -0.9030704394942912,
      "fill_status": "FILLED"
     },
     "entry_new": 0.001661,
@@ -615,22 +615,22 @@
     "price_at_call": 2245.49,
     "stored": {
      "status": "OPEN",
-     "gross": 0.15988874484135218,
+     "gross": 0.03942381559047803,
      "fill_status": "FILLED"
     },
     "old": {
      "status": "OPEN",
-     "gross": 0.26595025863832555,
+     "gross": -0.2866171342298829,
      "fill_status": "FILLED"
     },
     "fills": {
      "status": "OPEN",
-     "gross": 0.26595025863832555,
+     "gross": -0.2866171342298829,
      "fill_status": "FILLED"
     },
     "new": {
      "status": "OPEN",
-     "gross": 0.26595025863832555,
+     "gross": -0.2866171342298829,
      "fill_status": "FILLED"
     },
     "entry_new": 2291.1232482043224,
@@ -704,22 +704,22 @@
     "price_at_call": 1.2542,
     "stored": {
      "status": "OPEN",
-     "gross": -1.2355905754321217,
+     "gross": -0.9821650181753183,
      "fill_status": "FILLED"
     },
     "old": {
      "status": "OPEN",
-     "gross": -1.1484755401250935,
+     "gross": -1.3147860620748908,
      "fill_status": "FILLED"
     },
     "fills": {
      "status": "OPEN",
-     "gross": -1.1484755401250935,
+     "gross": -1.3147860620748908,
      "fill_status": "FILLED"
     },
     "new": {
      "status": "OPEN",
-     "gross": -1.8338383033009054,
+     "gross": -2.001275713602313,
      "fill_status": "FILLED"
     },
     "entry_new": 1.2542,
@@ -743,22 +743,22 @@
     "price_at_call": 2280.96,
     "stored": {
      "status": "OPEN",
-     "gross": 0.2903742649696728,
+     "gross": 0.17006677673877535,
      "fill_status": "FILLED"
     },
     "old": {
      "status": "OPEN",
-     "gross": 0.3962971622164524,
+     "gross": -0.15554805553839035,
      "fill_status": "FILLED"
     },
     "fills": {
      "status": "OPEN",
-     "gross": 0.3962971622164524,
+     "gross": -0.15554805553839035,
      "fill_status": "FILLED"
     },
     "new": {
      "status": "OPEN",
-     "gross": -0.17843364197531741,
+     "gross": -0.7334631032547723,
      "fill_status": "FILLED"
     },
     "entry_new": 2280.96,
@@ -782,22 +782,22 @@
     "price_at_call": 8.306,
     "stored": {
      "status": "OPEN",
-     "gross": -1.27457269396285,
+     "gross": -0.43798227380327237,
      "fill_status": "FILLED"
     },
     "old": {
      "status": "OPEN",
-     "gross": -1.2392238029701907,
+     "gross": -0.7207734017445455,
      "fill_status": "FILLED"
     },
     "fills": {
      "status": "OPEN",
-     "gross": -1.2392238029701907,
+     "gross": -0.7207734017445455,
      "fill_status": "FILLED"
     },
     "new": {
      "status": "OPEN",
-     "gross": -3.4432940043342297,
+     "gross": -2.91355646520588,
      "fill_status": "FILLED"
     },
     "entry_new": 8.306,
@@ -3458,6 +3458,106 @@
    "SPCXB/USDT 4h: no model / too few out-of-sample bars",
    "XAUT/USDT 4h: no model / too few out-of-sample bars"
   ],
+  "leverage_v214": {
+   "15m": {
+    "trades_before": 368,
+    "removed_too_wide": 0,
+    "removed_pct": 0.0,
+    "trades_after": 368,
+    "avg_leverage": 25.5,
+    "median_leverage": 24.0,
+    "share_at_50x": 0.016,
+    "share_at_10x": 0.027,
+    "median_stop_pct": 1.29,
+    "avg_r_before": -0.101,
+    "avg_r_after": -0.101,
+    "avg_r_removed": null
+   },
+   "1h": {
+    "trades_before": 379,
+    "removed_too_wide": 28,
+    "removed_pct": 7.4,
+    "trades_after": 361,
+    "avg_leverage": 18.2,
+    "median_leverage": 16.0,
+    "share_at_50x": 0.008,
+    "share_at_10x": 0.222,
+    "median_stop_pct": 2.52,
+    "avg_r_before": -0.068,
+    "avg_r_after": -0.073,
+    "avg_r_removed": -0.229
+   },
+   "4h": {
+    "trades_before": 488,
+    "removed_too_wide": 241,
+    "removed_pct": 49.4,
+    "trades_after": 301,
+    "avg_leverage": 13.1,
+    "median_leverage": 10.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.538,
+    "median_stop_pct": 5.92,
+    "avg_r_before": -0.005,
+    "avg_r_after": 0.014,
+    "avg_r_removed": -0.041
+   },
+   "12h": {
+    "trades_before": 196,
+    "removed_too_wide": 134,
+    "removed_pct": 68.4,
+    "trades_after": 74,
+    "avg_leverage": 12.2,
+    "median_leverage": 10.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.568,
+    "median_stop_pct": 8.49,
+    "avg_r_before": 0.033,
+    "avg_r_after": -0.123,
+    "avg_r_removed": 0.064
+   },
+   "1d": {
+    "trades_before": 104,
+    "removed_too_wide": 90,
+    "removed_pct": 86.5,
+    "trades_after": 16,
+    "avg_leverage": 11.9,
+    "median_leverage": 10.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.562,
+    "median_stop_pct": 14.41,
+    "avg_r_before": -0.009,
+    "avg_r_after": 0.002,
+    "avg_r_removed": 0.009
+   },
+   "3d": {
+    "trades_before": 17,
+    "removed_too_wide": 16,
+    "removed_pct": 94.1,
+    "trades_after": 1,
+    "avg_leverage": 11.0,
+    "median_leverage": 11.0,
+    "share_at_50x": 0.0,
+    "share_at_10x": 0.0,
+    "median_stop_pct": 25.72,
+    "avg_r_before": -0.083,
+    "avg_r_after": 1.051,
+    "avg_r_removed": -0.154
+   },
+   "all": {
+    "trades_before": 1552,
+    "removed_too_wide": 509,
+    "removed_pct": 32.8,
+    "trades_after": 1121,
+    "avg_leverage": 18.7,
+    "median_leverage": 16.0,
+    "share_at_50x": 0.008,
+    "share_at_10x": 0.27,
+    "median_stop_pct": 3.64,
+    "avg_r_before": -0.04,
+    "avg_r_after": -0.06,
+    "avg_r_removed": -0.018
+   }
+  },
   "variants": {
    "cur_ideal": "current grading, pre-v2.13 record entry (ideal entry filled at once)",
    "cur_market": "current grading, v2.13 entry (market price; pullback limit through-fill)",
@@ -3616,7 +3716,7 @@
    ]
   }
  },
- "seconds": 87.1,
+ "seconds": 74.3,
  "record_since": 1793386630880,
  "record_since_tf": {
   "15m": 1793622908333
