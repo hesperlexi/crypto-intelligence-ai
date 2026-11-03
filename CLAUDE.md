@@ -327,6 +327,11 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
 - Impact study: `python -m app.research v213` (`research_v213.py`, workflow `research-v213.yml`, results
   `research-results/results/v213-*.json`): live record since 30 Oct old / fills / new entry, gross vs net; research replay
   current vs edge-required grading × ideal vs market entry on the 30 % test split. Tests `tests/test_v213.py`.
+- **Impact (3 Nov, `results/v213-20261103T153721Z.json`)**: replay test split, 163 series: old record entry (ideal,
+  filled at once) +0.10R/trade vs honest market entry −0.04R (the ideal entry inflated results by ~0.14R). Edge required
+  (edge test AND policy) leaves 3 test trades (only LINK 12h has both; 1 of 190 active models) → effectively NO public
+  calls; `EDGE_RULE=policy` (direction-policy edge only) keeps ~74 % of trades but is still −0.057R. Live record since
+  30 Oct: 11 calls, all would fail the edge rule; 2 of 5 closed wins become net losses with market entry.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
