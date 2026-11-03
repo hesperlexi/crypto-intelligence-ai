@@ -5,3 +5,7 @@ const V: Record<string, string> = typeof __MEDIA_VERSIONS__ !== "undefined" ? __
 
 /** "/demo.mp4" -> "/demo.mp4?v=<hash of the file>" (the bare path when no hash is known). */
 export const mediaUrl = (path: string) => (V[path] ? `${path}?v=${V[path]}` : path);
+
+/** The 70 s app demo (frontend/public/demo.mp4) is hidden until it is re-recorded: it showed the old menu and results
+ *  deleted by the 3 Nov 2026 fresh start (owner decision 3 Nov 2026). Set to true when a new demo.mp4 is in place. */
+export const SHOW_APP_DEMO = false;

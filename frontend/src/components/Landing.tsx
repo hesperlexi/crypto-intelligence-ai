@@ -11,7 +11,7 @@ import { useMembershipConfig } from "../lib/membership";
 import WinsToday from "./WinsToday";
 import TelegramLink from "./TelegramLink";
 import { BUILD_ID } from "../lib/version";
-import { mediaUrl } from "../lib/media";
+import { mediaUrl, SHOW_APP_DEMO } from "../lib/media";
 import { CoinAvatar } from "./Polish";
 import SiteFooter, { TRUST_LINKS } from "./SiteFooter";
 import { AuthDialog, AuthMode, GoogleIcon } from "./AuthPanel";
@@ -128,7 +128,7 @@ export default function Landing({ error }: { error: string | null }) {
             <div className="mt-7 flex flex-wrap items-center gap-3">
               {cta(true)}
               {emailCta(true)}
-              <button className="btn px-5 py-3 text-base" onClick={() => setDemo("demo")}>▶ App demo (70 s)</button>
+              {SHOW_APP_DEMO && <button className="btn px-5 py-3 text-base" onClick={() => setDemo("demo")}>▶ App demo (70 s)</button>}
               <button className="btn px-5 py-3 text-base" onClick={() => setDemo("story")}>▶ Why traders use it (45 s)</button>
               <TelegramLink label="Free signals on Telegram" />
             </div>
