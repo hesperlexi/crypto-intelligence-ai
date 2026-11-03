@@ -1,0 +1,81 @@
+name: Research scalping (5m/10m/15m from 1m futures candles, read-only)
+
+# Independent scalping study (python -m app.research_scalp, backend/app/research_scalp.py): public Binance USDT-M
+# futures 1m klines + funding from data.binance.vision, 6 strategy families, tune / select / holdout, costs, levers.
+# Read-only: no engine state, no secrets, never runs the engine; results are committed to the `research-results` branch
+# under results/scalp-*.json. Downloads are cached in the Actions cache (scalp-data-*).
+on:
+  push:
+    branches: [scalp-study]
+    paths:
+      - ".github/workflows/research-scalp.yml"
+      - "backend/app/research_scalp.py"
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "seconds for the study"
+        default: "6600"
+      months:
+        description: "months of 1m history"
+        default: "12"
+
+concurrency:
+  group: research-scalp
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 150
+    permissions:
+      contents: write          # commit the JSON results to the research-results branch
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install numpy pandas numba requests pytest
+      - name: Tests of the study
+        run: python -m pytest -q tests/test_research_scalp.py
+      - name: Month key for the download cache
+        id: month
+        run: echo "m=$(date -u +%Y-%m)" >> "$GITHUB_OUTPUT"
+      - name: Cache the archive downloads
+        uses: actions/cache@v4
+        with:
+          path: backend/data/scalp_cache
+          key: scalp-data-v1-${{ steps.month.outputs.m }}
+          restore-keys: scalp-data-v1-
+      - name: Run the study
+        run: |
+          mkdir -p ../out
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          python -m app.research_scalp --cache data/scalp_cache --out ../out/scalp-latest.json \
+              --budget "${{ github.event.inputs.budget || '6600' }}" --months "${{ github.event.inputs.months || '12' }}" \
+            || printf '{"ok": false, "command": "scalp", "reason": "the scalp study crashed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/scalp-latest.json
+          cp ../out/scalp-latest.json ../out/scalp-$stamp.json
+          echo "commit: ${GITHUB_SHA}" > ../out/scalp-source.txt
+      - name: Commit the results to the research-results branch
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3; do
+            rm -rf ../rr; git worktree prune
+            if git ls-remote --exit-code --heads origin research-results >/dev/null 2>&1; then
+              git fetch --depth 1 origin research-results
+              git worktree add ../rr FETCH_HEAD
+              git -C ../rr checkout -B research-results
+            else
+              git worktree add --detach ../rr
+              git -C ../rr checkout --orphan research-results
+              git -C ../rr rm -rf --quiet . || true
+            fi
+            mkdir -p ../rr/results
+            cp out/* ../rr/results/
+            (cd ../rr && git add results && { git commit -m "Research scalp results for ${GITHUB_SHA::7}" || exit 0; } && git push origin HEAD:research-results) && break
+            sleep 10
+          done
