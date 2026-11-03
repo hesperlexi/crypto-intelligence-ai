@@ -23,7 +23,7 @@ def _a():
             "confidence": 0.6, "regime": {"regime": "BULL"}, "volatility": {"state": "NORMAL"},
             "signal": {"signal": "BUY", "score": 70, "reasons": [], "warnings": []},
             "setup": {"valid": True, "side_int": 1, "ideal_entry": 100.0, "stop": 98.0, "risk_reward": 1.6, "atr": 1.0,
-                      "targets": [{"price": t, "rr": 1.0} for t in (102.0, 103.0, 104.0)]}, "flags": []}
+                      "targets": [{"price": t, "rr": (t - 100.0) / 2.0} for t in (102.0, 103.0, 104.0)]}, "flags": []}
 
 
 def test_seal_matches_published_levels_and_text_hashes_to_fingerprint():

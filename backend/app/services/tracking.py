@@ -367,7 +367,14 @@ def _plan(a: dict[str, Any], db: Database | None = None) -> dict[str, Any]:
     entry = setup.get("ideal_entry") or a.get("price")
     pending = a["decision"] == "BUY ON PULLBACK"
     side = int(setup.get("side_int") or _side_of(a["decision"]))
-    rr = [float(t.get("rr") or m) for t, m in zip(setup.get("targets", []), (1.0, 1.75, 2.5))] or [1.0, 1.75, 2.5]
+    ideal, stop0 = setup.get("ideal_entry") or a.get("price"), setup.get("stop")
+    d0 = abs(float(ideal) - float(stop0)) if ideal is not None and stop0 is not None else 0.0
+
+    def _rr(t: dict[str, Any], m: float) -> float:
+        if t.get("rr"):
+            return float(t["rr"])
+        return abs(float(t["price"]) - float(ideal)) / d0 if d0 and t.get("price") is not None else m
+    rr = [_rr(t, m) for t, m in zip(setup.get("targets", []), (1.0, 1.75, 2.5))] or [1.0, 1.75, 2.5]
     rule = None
     mode, k = "old", 0.0
     if db is not None and a.get("timeframe"):

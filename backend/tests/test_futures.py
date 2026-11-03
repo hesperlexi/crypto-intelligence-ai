@@ -24,14 +24,16 @@ def _fcfg(**kw):
 
 
 def test_liquidation_and_safe_leverage():
-    assert F.liquidation_price(100, 1, 10, 0.005) == pytest.approx(90.5)
-    assert F.liquidation_price(100, -1, 10, 0.005) == pytest.approx(109.5)
-    assert F.liquidation_price(100, 1, 1, 0.005) == pytest.approx(0.5)
-    # 2% stop: liquidation must stay >= 3% away -> 1 / (0.03 + 0.005) = 28 -> capped at 20
-    assert F.safe_leverage(100, 98, 20) == 20
-    # 5% stop: 1 / (0.075 + 0.005) = 12.5 -> 12, and the liquidation price is beyond the stop
+    # v2.13: maintenance rate + exit fee: long = e (1 - 1/L) / (1 - m - f), short = e (1 + 1/L) / (1 + m + f)
+    f = F.FUTURES_FEE_RATE
+    assert F.liquidation_price(100, 1, 10, 0.005) == pytest.approx(90 / (1 - 0.005 - f))
+    assert F.liquidation_price(100, -1, 10, 0.005) == pytest.approx(110 / (1 + 0.005 + f))
+    assert F.liquidation_price(100, 1, 1, 0.005) == pytest.approx(0.0)
+    # 2% stop on BTC (0.4 %): liquidation >= 3% away -> 1 / (0.03 * 1.0045 + 0.0045) = 28 -> capped at 20
+    assert F.safe_leverage(100, 98, 20, symbol="BTC/USDT") == 20
+    # 5% stop on an unknown coin (1 %): 1 / (0.075 * 1.0105 + 0.0105) = 11.6 -> 11, liquidation beyond the stop
     lev = F.safe_leverage(100, 95, 20)
-    assert lev == 12 and F.liquidation_price(100, 1, lev) < 95
+    assert lev == 11 and F.liquidation_price(100, 1, lev) < 95
     assert F.funding_times(0, 3 * F.FUNDING_INTERVAL_MS) == [F.FUNDING_INTERVAL_MS * i for i in (1, 2, 3)]
 
 
@@ -50,7 +52,7 @@ def test_futures_long_uses_margin_and_scales_pnl(monkeypatch, no_costs):
     assert abs(pos["qty"] - 50.0) < 1e-9 and pos["lev"] == 5.0
     assert abs(st["cash"] - (10_000 - 50 * 100 / 5)) < 1e-6
     assert abs(eng.equity(st) - 10_000) < 1e-6
-    assert pos["liq"] == pytest.approx(100 * (1 - 1 / 5 + F.MAINTENANCE_MARGIN))
+    assert pos["liq"] == pytest.approx(F.liquidation_price(100, 1, 5, symbol="BTC/USDT"))
     _put(rt, "BTC/USDT", t0 + 4 * STEP, [(100, 100.1, 97.5, 98)])     # stop at 98
     monkeypatch.setattr(analysis, "analyze", lambda *a, **k: {"status": "OK", "decision": "HOLD"})
     eng.run(t0 + 6 * STEP)
@@ -93,7 +95,7 @@ def test_safe_leverage_keeps_liquidation_beyond_stop(monkeypatch, no_costs):
     monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy(stop=95.0))
     eng.run(t0 + 4 * STEP)
     pos = eng.bots()[0][1]["positions"][0]
-    assert pos["lev"] == 12 and pos["liq"] < 95
+    assert pos["lev"] == F.safe_leverage(100, 95, 20, symbol="BTC/USDT") and pos["liq"] < 95
 
 
 def test_funding_is_charged_every_8_hours(monkeypatch, no_costs):

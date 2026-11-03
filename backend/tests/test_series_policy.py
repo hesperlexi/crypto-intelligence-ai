@@ -27,7 +27,7 @@ def test_follow_matches_the_record_rules():
         fill = bool(trial % 3 == 0)
         ref = M.follow(side, entry, stop, tps, df, complete=True, first_is_fill=fill)
         got = S.follow(side, entry, stop, tps, df["high"].to_numpy(), df["low"].to_numpy(), df["close"].to_numpy(),
-                       first_is_fill=fill, complete=True)
+                       first_is_fill=fill, complete=True, open_=df["open"].to_numpy())
         assert got.status == ref["status"], (trial, got, ref["status"])
         assert abs(got.return_pct - ref["return_pct"]) < 1e-9
         assert got.exit_reason == ref["exit_reason"]

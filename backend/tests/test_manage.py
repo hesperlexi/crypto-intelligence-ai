@@ -62,7 +62,8 @@ def _path(rng, n, px=100.0, vol=0.006, drift=0.0):
     return rows
 
 
-def test_managed_off_reproduces_the_old_record_on_many_random_paths():
+def test_managed_off_reproduces_the_old_record_on_many_random_paths(monkeypatch):
+    monkeypatch.setattr(M, "GAP_FILLS", False)          # the pre-v2.13 record filled every stop at its level
     rng = np.random.default_rng(42)
     for k in range(3000):
         side = 1 if k % 2 else -1

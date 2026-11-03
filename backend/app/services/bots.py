@@ -643,7 +643,7 @@ class BotEngine:
             if fut:
                 lev = cfg.get("leverage", 1.0)
                 if cfg.get("safe_leverage", True):
-                    lev = float(min(lev, F.safe_leverage(entry, stop, lev, symbol=a.get("symbol"))))
+                    lev = float(min(lev, F.safe_leverage(entry, stop, lev, symbol=s)))
             fee_rate = F.FUTURES_FEE_RATE if fut else self.fee
             # risk-based size (the stop decides the loss, not the leverage); the margin per position is capped
             mult = size_multiplier(a.get("grade"), a.get("filter_score"), a.get("filter_threshold")) if cfg.get("edge_sizing", True) else 1.0
