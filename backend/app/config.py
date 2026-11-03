@@ -119,6 +119,9 @@ class Settings:
     require_edge_for_ml: bool = field(default_factory=lambda: _b("REQUIRE_EDGE_FOR_ML", True))
     # v2.13 (owner, 3 Nov 2026): on - grades A and B need a proven edge (edge_confirmed and the direction policy's edge)
     require_edge_for_trade: bool = field(default_factory=lambda: _b("REQUIRE_EDGE_FOR_TRADE", True))
+    # which proof counts (v2.13): "both" = edge_confirmed AND direction policy edge (owner-approved default);
+    # "policy" = the direction policy edge alone (the walk-forward edge test passes on very few models)
+    edge_rule: str = field(default_factory=lambda: os.environ.get("EDGE_RULE", "both").strip().lower() or "both")
 
     # signal policy
     min_confidence: float = field(default_factory=lambda: _f("MIN_CONFIDENCE", 0.45))

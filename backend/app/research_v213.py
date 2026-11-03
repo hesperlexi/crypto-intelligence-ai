@@ -218,7 +218,8 @@ def replay(rt, symbols: list[str], tfs: list[str], deadline: float) -> dict[str,
     from .ml import series_policy as SP
     news = RE._news_fn(rt.db)
     frames: dict = {}
-    res: dict[str, dict[str, list]] = {k: {} for k in ("cur_ideal", "cur_market", "edge_ideal", "edge_market")}
+    res: dict[str, dict[str, list]] = {k: {} for k in ("cur_ideal", "cur_market", "edge_ideal", "edge_market",
+                                                       "policy_ideal", "policy_market")}
     weeks: dict[str, float] = {}
     spans: dict[str, list[int]] = {}
     skipped, series = [], {}
@@ -244,8 +245,8 @@ def replay(rt, symbols: list[str], tfs: list[str], deadline: float) -> dict[str,
         ts = ctx.ts[test]
         spans[key] = [int(ts[0]), int(ts[-1])]
         info = {}
-        for grading, req in (("cur", False), ("edge", True)):
-            d = SP.decide(ctx, tune, require_edge=req)
+        for grading, req, rule in (("cur", False, "both"), ("edge", True, "both"), ("policy", True, "policy")):
+            d = SP.decide(ctx, tune, require_edge=req, edge_rule=rule)
             info[grading] = int(d["trade"][test].sum())
             for ent, mode in (("ideal", "ideal"), ("market", "old")):
                 tr = SP.run_series(ctx, paths, test, d, entry_mode=mode, news=news)
@@ -263,8 +264,35 @@ def replay(rt, symbols: list[str], tfs: list[str], deadline: float) -> dict[str,
             "variants": {"cur_ideal": "current grading, pre-v2.13 record entry (ideal entry filled at once)",
                          "cur_market": "current grading, v2.13 entry (market price; pullback limit through-fill)",
                          "edge_ideal": "edge required, pre-v2.13 record entry",
-                         "edge_market": "v2.13: edge required and honest entry"},
+                         "edge_market": "v2.13: edge required (edge test AND direction policy) and honest entry",
+                         "policy_ideal": "only the direction policy edge required (EDGE_RULE=policy), pre-v2.13 entry",
+                         "policy_market": "only the direction policy edge required (EDGE_RULE=policy), honest entry"},
             "costs": {"round_trip_pct": settings.research_cost_pct, "funding": "0.01% per 8 h (longs pay), over the hold"}}
+
+
+def active_models(db, symbols: list[str]) -> dict[str, Any]:
+    """Per timeframe: how many ACTIVE models pass the edge test, the direction-policy edge (on their full out-of-sample
+    record, as the live engine judges it) and both - i.e. how many coin/timeframes could still issue graded calls."""
+    from .ml import direction, trainer
+    out: dict[str, Any] = {}
+    for tf in MODEL_TIMEFRAMES:
+        row = {"models": 0, "edge_confirmed": 0, "policy_edge": 0, "both": 0, "both_list": [], "policy_list": []}
+        for s in symbols:
+            b = trainer.load_bundle(s, tf, db)
+            if not b:
+                continue
+            row["models"] += 1
+            ec = bool((b.get("edge") or {}).get("edge_confirmed"))
+            pe = bool((direction.direction_policy(b.get("oos") or {}, b.get("version")) or {}).get("edge"))
+            row["edge_confirmed"] += ec
+            row["policy_edge"] += pe
+            row["both"] += ec and pe
+            if ec and pe:
+                row["both_list"].append(s)
+            if pe:
+                row["policy_list"].append(s)
+        out[tf] = row
+    return out
 
 
 def run(db_url: str, budget_s: float, symbols: list[str] | None = None, tfs: list[str] | None = None) -> dict[str, Any]:
@@ -293,6 +321,10 @@ def run(db_url: str, budget_s: float, symbols: list[str] | None = None, tfs: lis
     except Exception as exc:
         log.exception("replay")
         out["replay"] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
+    try:
+        out["active_models"] = active_models(db, syms)
+    except Exception as exc:
+        out["active_models"] = {"error": f"{type(exc).__name__}: {exc}"[:300]}
     out["seconds"] = round(time.time() - t0, 1)
     out["record_since"] = db.get_setting("record_since", None)
     out["record_since_tf"] = db.get_setting("record_since_tf", None)

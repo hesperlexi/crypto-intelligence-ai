@@ -216,7 +216,7 @@ def round_trip() -> float:
 
 def decide(ctx: Context, ref: np.ndarray, conf_b: float | np.ndarray | None = None,
            weights: dict[str, float] | None = None, stop_mode: str = "current",
-           require_edge: bool | None = None) -> dict[str, np.ndarray]:
+           require_edge: bool | None = None, edge_rule: str | None = None) -> dict[str, np.ndarray]:
     """Decision of the live pipeline on every row. `ref`: boolean mask of the rows whose outcomes may be used as the
     reference for the directional policy / confidence (rows before the split when proving; all rows in production).
     Returns arrays: trade (bool), side, grade ('A' / 'B' / ''), confidence, decision ('BUY' / 'BUY ON PULLBACK' /
@@ -300,7 +300,8 @@ def decide(ctx: Context, ref: np.ndarray, conf_b: float | np.ndarray | None = No
     reason = np.where((reason == "") & (grade == ""), "no_grade", reason)
     # v2.13 (C2, analysis.analyze): grades need a proven edge - the model's edge test and the direction policy's edge
     req = settings.require_edge_for_trade if require_edge is None else bool(require_edge)
-    if req and not (bool(pol["edge"]) and bool(ctx.edge_confirmed)):
+    rule = (settings.edge_rule if edge_rule is None else edge_rule)
+    if req and not (bool(pol["edge"]) and (rule == "policy" or bool(ctx.edge_confirmed))):
         reason = np.where(reason == "", "no_edge", reason)
         grade = np.where(reason == "no_edge", "", grade)
     # higher-timeframe check: the next two higher timeframes with a direction

@@ -290,3 +290,10 @@ def test_honest_record_restart_never_on_an_empty_database():
     assert rt.db.get_setting("record_since") == 5 and rt.db.get_setting("honest_record_since", None) is None
     T.log_signal(rt.db, _a(), now=BAR + H1)
     assert worker.honest_record_v213(rt, now=2000) is None             # never later either
+
+
+def test_edge_rule_policy_only_needs_the_direction_edge(monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "edge_rule", "policy")
+    assert A.edge_gate({"edge_confirmed": False}, {"policy_edge": True}, required=True) is None
+    assert A.edge_gate({"edge_confirmed": True}, {"policy_edge": False}, required=True)

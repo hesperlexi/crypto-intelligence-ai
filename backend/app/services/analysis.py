@@ -562,6 +562,8 @@ def edge_gate(fc: dict[str, Any] | None, dv: dict[str, Any] | None, required: bo
     if not (settings.require_edge_for_trade if required is None else required):
         return None
     ok_model, ok_dir = bool((fc or {}).get("edge_confirmed")), bool(dv and dv.get("policy_edge"))
+    if settings.edge_rule == "policy":
+        ok_model = True
     if ok_model and ok_dir:
         return None
     missing = [x for x, ok in (("the model's walk-forward edge test", ok_model),
