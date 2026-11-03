@@ -27,6 +27,7 @@ from .metrics import (brier, brier_skill_test, classification_metrics, regressio
                       reliability_table)
 from .models import REGISTRY, default_models, model_status, predict_with_context
 from .walkforward import class_means, ensemble_proba, fit_stage, run_walk_forward
+from ..redact import error_text
 
 log = logging.getLogger(__name__)
 GAP = 1
@@ -157,7 +158,7 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
                                          ind["close"].to_numpy(float), ind["atr"].to_numpy(float), _cost())
         except Exception as exc:          # the filter must never block a model release
             log.warning("trade filter failed for %s %s: %s", symbol, timeframe, exc)
-            tfilter = {"enabled": False, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+            tfilter = {"enabled": False, "reason": error_text(exc, 160)}
     # ---- target model: how far this kind of setup tends to run (picks TP2 / TP3 within their ranges) --------
     tmodel: dict[str, Any] = {"enabled": False, "reason": "not trained (fast model set)"}
     if not fast:
@@ -168,7 +169,7 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
                                         ind["close"].to_numpy(float), ind["atr"].to_numpy(float))
         except Exception as exc:
             log.warning("target model failed for %s %s: %s", symbol, timeframe, exc)
-            tmodel = {"enabled": False, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+            tmodel = {"enabled": False, "reason": error_text(exc, 160)}
 
     # ---- runner model (v2.3): which setups should keep the whole position running past TP1 -------------------
     rmodel: dict[str, Any] = {"enabled": False, "reason": "not trained (fast model set)"}
@@ -180,7 +181,7 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
                                         ind["close"].to_numpy(float), ind["atr"].to_numpy(float), _cost())
         except Exception as exc:
             log.warning("runner model failed for %s %s: %s", symbol, timeframe, exc)
-            rmodel = {"enabled": False, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+            rmodel = {"enabled": False, "reason": error_text(exc, 160)}
 
     created = now_ms()
     digest = hashlib.sha1(f"{symbol}{timeframe}{created}{sorted(stage['models'])}".encode()).hexdigest()[:8]

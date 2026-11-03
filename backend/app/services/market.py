@@ -10,6 +10,7 @@ from ..config import MODEL_TIMEFRAMES, MTF_TIMEFRAMES, settings
 from ..data.base import tf_ms
 from ..features.liquidity import oi_price_state, trade_flow
 from .runtime import Runtime, ttl_get
+from ..redact import error_text
 
 log = logging.getLogger(__name__)
 CORE_TIMEFRAMES = list(dict.fromkeys(MTF_TIMEFRAMES + MODEL_TIMEFRAMES))   # kept in sync continuously
@@ -102,7 +103,7 @@ async def derivatives_snapshot(rt: Runtime, symbol: str) -> dict[str, Any]:
     try:
         out["funding"] = await rt.derivatives.funding_rate(symbol)
     except Exception as exc:
-        out["funding"], out["funding_error"] = None, f"{type(exc).__name__}: {exc}"[:160]
+        out["funding"], out["funding_error"] = None, error_text(exc, 160)
     try:
         hist = [h for h in await rt.derivatives.open_interest_history(symbol, "1h", 25) if h.get("oi")]
         if len(hist) >= 2:
@@ -117,7 +118,7 @@ async def derivatives_snapshot(rt: Runtime, symbol: str) -> dict[str, Any]:
         else:
             out["open_interest"] = None
     except Exception as exc:
-        out["open_interest"], out["oi_error"] = None, f"{type(exc).__name__}: {exc}"[:160]
+        out["open_interest"], out["oi_error"] = None, error_text(exc, 160)
     out["liquidations"] = {"available": False, "reason": "liquidation feeds need a dedicated (usually paid) data source"}
     if out.get("funding") is None and out.get("open_interest") is None:
         out["available"] = False
@@ -153,7 +154,7 @@ async def external_context(rt: Runtime) -> dict[str, Any]:
             }
         except Exception as exc:
             out["market"] = None
-            out["market_error"] = f"{type(exc).__name__}: {exc}"[:160]
+            out["market_error"] = error_text(exc, 160)
         try:
             fg = (await client.get("https://api.alternative.me/fng/?limit=30")).json()["data"]
             vals = [int(d["value"]) for d in fg]
@@ -167,7 +168,7 @@ async def external_context(rt: Runtime) -> dict[str, Any]:
             }
         except Exception as exc:
             out["sentiment"] = None
-            out["sentiment_error"] = f"{type(exc).__name__}: {exc}"[:160]
+            out["sentiment_error"] = error_text(exc, 160)
     # price / sentiment divergence on BTC over the same 7 days
     s = out.get("sentiment")
     try:

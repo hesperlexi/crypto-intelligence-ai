@@ -59,7 +59,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          ENGINE_BACKUP_KEY: ${{ secrets.ENGINE_BACKUP_KEY }}
         run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed"
+      - name: Lost-state guard (no training on an empty state)
+        working-directory: .
+        env:
+          FRESH_INSTALL: ${{ vars.FRESH_INSTALL }}
+        run: python3 scripts/state_guard.py backend/data/crypto_ai.db
       - name: Train this slice (60-minute budget)
         run: python -m app.worker train-shard --shard ${{ matrix.shard }} --of $SHARDS --budget 3600 --out ../shard-out --local /tmp/no-publish
       - uses: actions/upload-artifact@v4
@@ -87,6 +93,8 @@ jobs:
         working-directory: backend
     env:
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      ENGINE_BACKUP_KEY: ${{ secrets.ENGINE_BACKUP_KEY }}   # optional: backup encryption key (else derived from the Firebase key)
+      FRESH_INSTALL: ${{ vars.FRESH_INSTALL }}               # '1' only for a brand-new installation
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-lite-latest' }}
     steps:
@@ -109,7 +117,10 @@ jobs:
             [ "$n" = "0" ] && { echo "engine is idle"; exit 0; }
             echo "engine still running ($n); waiting"; sleep 30
           done
-          echo "::warning::engine did not stop within 60 minutes; merging anyway"
+          # v2.13: never merge while an engine run may still be writing the state (two writers = lost work); the
+          # next night retries, and the engine keeps running on yesterday's models meanwhile
+          echo "::error::engine did not stop within 60 minutes; merge skipped (next night retries)"
+          exit 1
       - id: state
         uses: actions/cache/restore@v4
         with:
@@ -121,20 +132,24 @@ jobs:
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed; starting fresh"
+        run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed"
+      - name: Lost-state guard (never merge into or publish from an empty state)
+        id: guard
+        working-directory: .
+        run: python3 scripts/state_guard.py backend/data/crypto_ai.db
       - uses: actions/download-artifact@v4
         with:
           pattern: slice-*
           path: shards
       - name: Register the new models and publish
         run: python -m app.worker train-merge --in ../shards
-      - if: always()
+      - if: always() && steps.guard.outcome == 'success'
         uses: actions/cache/save@v4
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}
       - name: Daily encrypted backup of the engine state
-        if: always()
+        if: always() && steps.guard.outcome == 'success'
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}

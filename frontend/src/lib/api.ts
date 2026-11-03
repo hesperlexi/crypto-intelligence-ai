@@ -135,7 +135,8 @@ function resolve(path: string, refreshMs: number): Sub {
     case "analysis": return view(`analysis_${slugOf(p[1])}_${tf}`);
     case "models": return p[1] === "status" ? view("models_status") : view(`models_${slugOf(p[1])}_${tf}`);
     case "performance": return p[1] ? view(`perf_${slugOf(p[1])}_${tf}`) : view("performance");
-    case "system": return view("health");
+    // views/health is member-readable (header engine chip); raw error texts are admin only (views/health_errors, v2.13)
+    case "system": return p[1] === "errors" ? view("health_errors") : view("health");
     case "context": return view("context");
     case "market-context": return view("market_context");
     case "news": return view("news");

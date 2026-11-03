@@ -25,6 +25,7 @@ from .ml.trainer import GAP, selective_threshold
 from .ml.walkforward import run_walk_forward
 from .services import market
 from .services.runtime import Runtime
+from .redact import error_text
 
 log = logging.getLogger("evaluate")
 MODELS = ["prior_baseline", "prev_candle", "logistic", "technical_rules", "hist_gbm", "lightgbm", "xgboost"]
@@ -80,7 +81,7 @@ def run(rt: Runtime, symbols: list[str], tfs: list[str], deadline: float) -> dic
                 rows.append({"symbol": s, "timeframe": tf, "skipped": str(exc)})
             except Exception as exc:
                 log.exception("evaluation failed for %s %s", s, tf)
-                rows.append({"symbol": s, "timeframe": tf, "error": f"{type(exc).__name__}: {exc}"[:200]})
+                rows.append({"symbol": s, "timeframe": tf, "error": error_text(exc, 200)})
     done = [r for r in rows if r.get("htf") and r.get("delta_brier_skill") is not None and r.get("oos_ratio", 0) > 0.8]
     wins = sum(r["brier_better"] for r in done)
     summary = {

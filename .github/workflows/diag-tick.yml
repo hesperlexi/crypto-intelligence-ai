@@ -35,6 +35,11 @@ jobs:
           path: backend/data
           key: engine-state-diag-${{ github.run_id }}
           restore-keys: engine-state-
+      - name: Lost-state guard (never run a cycle on an empty state)
+        working-directory: .
+        env:
+          FRESH_INSTALL: ${{ vars.FRESH_INSTALL }}
+        run: python3 scripts/state_guard.py backend/data/crypto_ai.db
       - name: One cycle with stack dumps
         run: |
           ARGS=""; [ "${{ inputs.mode }}" = "live" ] || ARGS="--local /tmp/diag-out"

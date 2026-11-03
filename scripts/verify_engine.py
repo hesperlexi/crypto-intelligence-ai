@@ -40,7 +40,7 @@ after = {r["id"]: (r["status"], r["return_pct"], r["symbol"], r["timeframe"])
 diff = [(k, before[k], after[k]) for k in before if k in after and
         (before[k][0] != after[k][0] or abs((before[k][1] or 0) - (after[k][1] or 0)) > 1e-6)]
 out["record"] = {"closed_checked": len(before), "seconds": round(time.time() - t0, 1), "different": len(diff),
-                 "examples": [{"coin": a[2], "tf": a[3], "record": b, "recomputed": a[:2]} for _, b, a in diff[:8]],
+                 "examples": [{"tf": a[3], "record_status": b[0], "recomputed_status": a[0]} for _, b, a in diff[:8]],
                  "still_open_after_refollow": sum(1 for v in after.values() if v[0] == "OPEN")}
 if diff:
     P(f"{len(diff)} closed signals differ when re-followed from the candles")
@@ -53,12 +53,12 @@ for s in rt.symbols():
         try:
             a = analysis.analyze(rt, s, tf, detail=False, use_cache=False)
         except Exception as exc:
-            errs.append(f"{s} {tf}: {type(exc).__name__}: {exc}"[:160]); continue
+            errs.append(f"{tf}: {type(exc).__name__}: {exc}"[:160]); continue
         stat[a.get("status")] = stat.get(a.get("status"), 0) + 1
         dec[a.get("decision")] = dec.get(a.get("decision"), 0) + 1
         fc = a.get("forecast") or {}
         if fc.get("status") == "MODEL ERROR":
-            errs.append(f"{s} {tf}: {fc.get('reason')}"[:160])
+            errs.append(f"{tf}: {fc.get('reason')}"[:160])
         if fc.get("available"):
             ages.append(fc.get("model_age_h") or 0)
         st = a.get("setup") or {}
@@ -69,7 +69,7 @@ for s in rt.symbols():
             rr = [t["rr"] for t in st["targets"]]
             if side * (e - stp) <= 0 or abs(rr[0] - 1) > 0.01 or not (1.24 <= rr[1] <= 2.01 and 1.99 <= rr[2] <= 3.01) \
                     or any(abs(side * (t["price"] - e) / R - t["rr"]) > 0.02 for t in st["targets"]):
-                bad_plans.append(f"{s} {tf}")
+                bad_plans.append(tf)                       # timeframe only: the report is public
 out["analyses"] = {"statuses": stat, "decisions": dec, "errors": errs[:10], "trade_plans": plans, "bad_plans": bad_plans[:10],
                    "model_age_h_max": round(max(ages), 1) if ages else None, "models_used": len(ages)}
 if errs:

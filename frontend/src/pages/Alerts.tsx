@@ -57,7 +57,7 @@ export default function Alerts() {
     if (need && !param) return setErr(`${need.label} is required`);
     const p = isTrade ? { side, market, min_confidence: minConf ? Number(minConf) / 100 : 0, confident_only: confidentOnly, grade: strongOnly ? "A" : "any" }
       : need ? { [need.key]: Number(param) } : {};
-    run(() => post("/alerts", { type, symbol, timeframe: tf, cooldown_s: Math.max(1, Number(cooldown)) * 60, params: p }),
+    run(() => post("/alerts", { type, symbol, timeframe: tf, cooldown_s: Math.min(525600, Math.max(1, Math.round(Number(cooldown)) || 60)) * 60, params: p }),
       `Alert created for ${symbol} ${tf.toUpperCase()}.`);
   };
   const turnOn = () => run(async () => { const msg = await push.enable(); setPerm(push.permission()); setOk(msg); }, undefined);

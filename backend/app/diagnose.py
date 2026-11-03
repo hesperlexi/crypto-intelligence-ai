@@ -28,6 +28,7 @@ from .ml.metrics import wilson
 from .services import analysis, market
 from .services.runtime import Runtime
 from .data.base import tf_ms
+from .redact import error_text
 
 log = logging.getLogger("diagnose")
 
@@ -129,7 +130,7 @@ def run(rt: Runtime, symbols: list[str], tfs: list[str], days: float, deadline: 
                 b = trainer.load_bundle(s, tf, rt.db)
                 p = policy_study(b, tf) if b else {"error": "no active model"}
             except Exception as exc:
-                g, p = {"error": f"{type(exc).__name__}: {exc}"[:200]}, {}
+                g, p = {"error": error_text(exc, 200)}, {}
             out["series"][key] = {"gates": g, "policy": p}
             for k, v in (g.get("reasons") or {}).items():
                 total[k] += v

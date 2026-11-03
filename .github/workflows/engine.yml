@@ -17,7 +17,7 @@ jobs:
   tick:
     runs-on: ubuntu-latest
     permissions:
-      contents: write          # encrypted backup as a release asset (only when the daily one is missing)
+      contents: write          # encrypted backup as a release asset (when the newest is older than 6 hours)
       actions: write           # see whether the training merge is running; tidy old state caches
     timeout-minutes: 358
     defaults:
@@ -28,6 +28,8 @@ jobs:
       ENABLE_DEEP_MODELS: "false"
       FIREBASE_PROJECT_ID: crypapp-6a9b9
       FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      ENGINE_BACKUP_KEY: ${{ secrets.ENGINE_BACKUP_KEY }}   # optional: backup encryption key (else derived from the Firebase key)
+      FRESH_INSTALL: ${{ vars.FRESH_INSTALL }}               # '1' only for a brand-new installation (see the guard step)
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GEMINI_MODEL: ${{ vars.GEMINI_MODEL || 'gemini-flash-lite-latest' }}
       ADMIN_EMAILS: ${{ vars.ADMIN_EMAILS }}
@@ -62,10 +64,14 @@ jobs:
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}
-        run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed; starting fresh"
+        run: bash scripts/engine_backup.sh restore || echo "::warning::backup restore failed"
+      - name: Lost-state guard (never run the engine on an empty state)
+        id: guard
+        working-directory: .
+        run: python3 scripts/state_guard.py backend/data/crypto_ai.db
       - name: Engine loop, hour 1
         id: loop1
-        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.state.outcome == 'success' && steps.guard.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -79,9 +85,15 @@ jobs:
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-1
+      - name: Encrypted backup if the newest is older than 6 hours (hour 1)
+        if: always() && steps.loop1.outputs.ticked == 'true'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh ensure || echo "::warning::backup failed; will retry after the next hour"
       - name: Engine loop, hour 2
         id: loop2
-        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.state.outcome == 'success' && steps.guard.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -95,9 +107,15 @@ jobs:
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-2
+      - name: Encrypted backup if the newest is older than 6 hours (hour 2)
+        if: always() && steps.loop2.outputs.ticked == 'true'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh ensure || echo "::warning::backup failed; will retry after the next hour"
       - name: Engine loop, hour 3
         id: loop3
-        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.state.outcome == 'success' && steps.guard.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -111,9 +129,15 @@ jobs:
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-3
+      - name: Encrypted backup if the newest is older than 6 hours (hour 3)
+        if: always() && steps.loop3.outputs.ticked == 'true'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh ensure || echo "::warning::backup failed; will retry after the next hour"
       - name: Engine loop, hour 4
         id: loop4
-        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.state.outcome == 'success' && steps.guard.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -127,9 +151,15 @@ jobs:
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-4
+      - name: Encrypted backup if the newest is older than 6 hours (hour 4)
+        if: always() && steps.loop4.outputs.ticked == 'true'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh ensure || echo "::warning::backup failed; will retry after the next hour"
       - name: Engine loop, hour 5
         id: loop5
-        if: ${{ !cancelled() && steps.state.outcome == 'success' }}
+        if: ${{ !cancelled() && steps.state.outcome == 'success' && steps.guard.outcome == 'success' }}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -143,8 +173,14 @@ jobs:
         with:
           path: backend/data
           key: engine-state-${{ github.run_id }}-${{ github.run_attempt }}-5
-      - name: Make sure an encrypted backup from the last day exists
-        if: always() && hashFiles('backend/data/**') != ''
+      - name: Encrypted backup if the newest is older than 6 hours (hour 5)
+        if: always() && steps.loop5.outputs.ticked == 'true'
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: bash scripts/engine_backup.sh ensure || echo "::warning::backup failed; will retry after the next hour"
+      - name: Make sure an encrypted backup from the last 6 hours exists
+        if: always() && steps.guard.outcome == 'success' && hashFiles('backend/data/**') != ''
         working-directory: .
         env:
           GH_TOKEN: ${{ github.token }}

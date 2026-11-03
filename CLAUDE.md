@@ -19,7 +19,7 @@ Version **2.1.0** (fresh start 30 Oct 2026: `reset_v1.py`, record counted from t
 - **Frontend** `frontend/` React + Vite + Tailwind, Firebase Hosting, PWA + Android TWA (Bubblewrap, GitHub release
   `android`). Data comes from Firestore `views/*` (JSON written by the engine), live prices from Binance WebSockets.
 - **Engine** `backend/app` Python, run by GitHub Actions; SQLite state in the Actions cache (`engine-state-*`),
-  encrypted daily backup as release asset `engine-backup` (`scripts/engine_backup.sh`, auto-restore on cache miss).
+  encrypted backup (every ~6 h, v2.13) as release asset `engine-backup` (`scripts/engine_backup.sh`, auto-restore on cache miss; the job fails rather than start on an empty state).
 - **Firestore quota (Spark/free plan: 20,000 writes/day, day = midnight US Pacific).** 27-28 Oct 2026 the always-on
   engine used it up by ~23:00 Dubai and nothing published for ~12 h. `sinks.BaseSink` now counts writes per quota day
   (`fs_writes`), paces coin analyses (`worker.ANALYSIS_EVERY_S`, immediately when `analysis_core` - the call - changes),
@@ -294,6 +294,30 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   (`Rich embedded`, view only: no Share, no switch, line "Demo challenge with virtual money. Not a trading plan.").
   Shown everywhere (admin menu, page, share image) as **"Hesper Challenge"** (owner, 2 Nov 2026); "Road to Rich" is only the
   internal name in code comments. Rules tests in `tests/rules`.
+
+## Safety fixes v2.13 (3 Nov 2026, branch `safety-v213`; no change to signals, grades, the record or results)
+- **Lost-state guard.** `scripts/state_guard.py` (engine.yml, train.yml slices + merge, diag-tick.yml) fails the job when no
+  usable state was restored (no DB / no settings / no candles) unless repo variable `FRESH_INSTALL=1`; engine loops, cache
+  save and backups are skipped then. In code, `worker.migration_guard` (start of `sync_config`): one-time flags listed in
+  `worker.MIGRATION_FLAGS` (a NEW migration must add its flag there; a test checks) count as done when SQLite **or**
+  Firestore `admin/migrations.flags` has them (mirrored by `worker.mirror_migrations` when the set grows; read again at most
+  every 6 h while one is missing); on a DB that looks fresh (no `signals` rows and no flag) every historical migration is
+  marked done instead of run (never `clear_all_practice`, bot resets, `record_since` restarts or `reset_v1` on an empty state).
+- **Backups** (`scripts/engine_backup.sh`): key = secret `ENGINE_BACKUP_KEY` if set, else SHA-256 of
+  `FIREBASE_SERVICE_ACCOUNT`; restore tries both and falls back to older copies (exit 0 restored / 2 none / 1 failed).
+  3 rotating slots by 6-hour period; engine.yml runs `ensure` after every hourly segment (backup when the newest is > 6 h).
+- **train.yml merge** fails (no merge, no save, no backup) if the engine is still running after 60 min; next night retries.
+- **Alerts**: `worker.alert_row` validates member-written alerts (bad ones skipped, insert errors counted
+  `bad_alerts_skipped`); rules `validAlert` (keys, type list, symbol `^[A-Z0-9]{1,20}/[A-Z0-9]{2,10}$`, cooldown int
+  60..31536000, timeframe list); members may only toggle `enabled`. Alerts page clamps the cooldown.
+- **Public reports** (`reports` branch / job logs): `quick_status`, `coin_probe`, `fs_probe`, `audit_live`, `verify_engine` print
+  counts only (no coin + side / grade / levels / record rows). Old commits on `reports` still hold such data.
+- **Engine code**: `scripts/engine_loop.py` moves only to tag `engine-ok`, which `deploy.yml` (test job, after pytest, on main)
+  force-moves forward; no tag yet → code unchanged.
+- **Errors**: `app/redact.py` (`redact`, `error_text`, log formatter) strips Telegram tokens (`bot\d+:[\w-]+`), URL query
+  secrets, Google keys; used by `rt.record_error`, step errors, providers' `last_error`, Telegram status, job errors and all
+  worker logs. `views/health` (member-readable) has no raw error text (`recent_errors_count`, `has_error`); texts go to
+  `views/health_errors` (admin only in the rules; Health page reads `/system/errors`). Tests `tests/test_safety_v213.py`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track

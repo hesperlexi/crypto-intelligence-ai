@@ -58,13 +58,17 @@ function ReadsRow({ e }: { e: any }) {
 
 export default function Health() {
   const h = useApi<any>("/system/health", 10000);
+  // raw error texts live in an admin-only document (v2.13); the Health page is admin-only, so it reads both
+  const he = useApi<any>("/system/errors", 30000);
+  const errs = he.data && typeof he.data === "object" ? he.data : {};
+  const modelMsg: Record<string, string> = Object.fromEntries(arr(errs.model_messages).map((m: any) => [m.symbol + "|" + m.timeframe, m.message]));
   const { connected, feed } = useLive();
   const raw = h.data;
   // the engine publishes {error} instead of the view when it could not build it (e.g. too large for one document)
   const viewError: string | null = raw && typeof raw === "object" && raw.error && !raw.status ? String(raw.error) : null;
   const d = raw && !viewError ? { ...raw, engine: raw.engine ?? {}, market_data: raw.market_data ?? {}, exchange: raw.exchange ?? {},
     database: raw.database ?? {}, config: raw.config ?? {}, series: arr(raw.series), models: arr(raw.models),
-    model_libraries: arr(raw.model_libraries), recent_errors: arr(raw.recent_errors), safety: arr(raw.safety) } : null;
+    model_libraries: arr(raw.model_libraries), recent_errors: arr(errs.recent_errors ?? raw.recent_errors), safety: arr(raw.safety) } : null;
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center gap-3">
@@ -101,7 +105,7 @@ export default function Health() {
                 <Row k="API errors in cycle" v={d.exchange.errors ?? DASH} className={d.exchange.errors ? "text-warn" : ""} />
                 <Row k="Clock difference" v={isNum(d.exchange.clock_skew_ms) ? `${d.exchange.clock_skew_ms} ms` : DASH} />
               </div>
-              {d.exchange.last_error && <Note>Last error: {d.exchange.last_error}</Note>}
+              {(errs.exchange_last_error ?? d.exchange.last_error) && <Note>Last error: {errs.exchange_last_error ?? d.exchange.last_error}</Note>}
             </Card>
             <Card title="Configuration">
               <Row k="Mode" v="Analysis + demo only" />
@@ -142,7 +146,7 @@ export default function Health() {
                   <tr key={m.symbol + m.timeframe}><td className="font-medium">{m.symbol}</td><td className="uppercase text-mute">{m.timeframe}</td>
                     <td><Badge tone={toneOf(m.state)}>{m.state}{m.state === "running" && isNum(m.progress) ? ` ${(m.progress * 100).toFixed(0)}%` : ""}</Badge></td>
                     <td className="text-xs text-mute">{m.edge_confirmed == null ? DASH : m.edge_confirmed ? "confirmed" : "none"}</td><td className="num text-right text-mute">{isNum(m.age_h) ? `${m.age_h}h` : DASH}</td>
-                    <td className="max-w-[16rem] truncate text-xs text-mute" title={m.message ?? ""}>{m.message ?? m.version ?? ""}</td></tr>
+                    <td className="max-w-[16rem] truncate text-xs text-mute" title={modelMsg[m.symbol + "|" + m.timeframe] ?? m.message ?? ""}>{modelMsg[m.symbol + "|" + m.timeframe] ?? m.message ?? m.version ?? ""}</td></tr>
                 ))}</tbody>
               </table></div>
             </Card>

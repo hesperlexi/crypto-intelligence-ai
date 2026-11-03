@@ -35,6 +35,7 @@ from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
 from .sinks import BaseSink, FirestoreSink, LocalSink
 from . import views
+from .redact import error_text, install_logging_redaction, redact
 
 log = logging.getLogger("engine")
 SCHEDULE_MIN = 5
@@ -231,8 +232,127 @@ def load_users(rt: Runtime, sink: BaseSink, force: bool = False) -> tuple[dict[s
     return users, False
 
 
+ALERT_COOLDOWN_MIN_S, ALERT_COOLDOWN_MAX_S = 60, 365 * 86_400     # same range as the Firestore rules
+_SYMBOL_RE = __import__("re").compile(r"^[A-Za-z0-9]{1,20}([/_-]?[A-Za-z0-9]{2,10})?$")
+
+
+def alert_row(a: Any, inactive: set[str] | frozenset = frozenset()) -> tuple | None:
+    """(type, symbol, timeframe, params, cooldown_s, enabled) of one member-written alert, or None when it is malformed
+    (wrong type, missing / odd symbol, bad cooldown ...). Never raises."""
+    try:
+        if not isinstance(a, dict) or a.get("type") not in alerts.ALERT_TYPES:
+            return None
+        sym = a.get("symbol")
+        if not isinstance(sym, str) or not _SYMBOL_RE.match(sym.strip()):
+            return None
+        tf = a.get("timeframe", "4h")
+        if not isinstance(tf, str) or not tf or len(tf) > 8:
+            tf = "4h"
+        params = a.get("params") or {}
+        if not isinstance(params, dict):
+            return None
+        cd = a.get("cooldown_s", 3600)
+        if isinstance(cd, bool) or not isinstance(cd, (int, float)) or cd != cd:
+            cd = 3600
+        cd = int(max(ALERT_COOLDOWN_MIN_S, min(ALERT_COOLDOWN_MAX_S, cd)))
+        enabled = a.get("enabled", True)
+        enabled = enabled if isinstance(enabled, bool) else True
+        return (a["type"], norm_symbol(sym.strip()), tf, dumps(params), cd, int(enabled and a.get("owner_uid") not in inactive))
+    except Exception:
+        return None
+
+
+# ---- one-time migrations: lost-state guard (v2.13) ---------------------------------------------------------
+# Every one-time migration is guarded by a settings flag in the engine's SQLite file. If that file were ever lost
+# (Actions cache gone, backup not restored), the old migrations would run again and wipe real data (members' practice
+# accounts, bot books, the counted record). So: the completed flags are mirrored to Firestore `admin/migrations`
+# (owner-only by the rules; the engine's service account bypasses them) and a flag counts as done when either has it;
+# and on a database that looks brand new (no signals and no migration flag at all) every historical migration is marked
+# done instead of run. A NEW migration must add its flag here.
+MIGRATION_FLAGS = (
+    "drop_inline_proofs_v1", "testing_v24", "testing_v24b", "watchlist_majors_v2", "gold_paxg_v21", "support_email_v23",
+    "fresh_start_v23", "pause_15m_v26", "tf_policy_v28", "demo_1d3d_v210", "scalping_v1", "public_15m_v211",
+    "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
+    "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
+    "scalp_backfill_v1",
+)
+MIGRATIONS_DOC = "admin/migrations"
+MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
+
+
+def _flag_done(v: Any) -> bool:
+    return v not in (None, False, 0, "", [], {})
+
+
+def _local_flags(db: Database) -> dict[str, Any]:
+    return {f: v for f in MIGRATION_FLAGS if _flag_done(v := db.get_setting(f, None))}
+
+
+def _looks_fresh(db: Database) -> bool:
+    """A brand-new (or lost) engine database: no signal ever logged and no one-time migration flag set."""
+    try:
+        n = int((db.one("SELECT COUNT(*) AS n FROM signals") or {}).get("n") or 0)
+    except Exception:
+        n = 0
+    return n == 0 and not _local_flags(db)
+
+
+def migration_guard(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
+    """Before sync_config's one-time migrations: take done flags from Firestore, and on a fresh database mark every
+    historical migration done (never run destructive history - clearing practice accounts, bot books, restarting the
+    record - on an empty state). Returns a note; never raises."""
+    db, note = rt.db, {}
+    local = _local_flags(db)
+    missing = [f for f in MIGRATION_FLAGS if f not in local]
+    if not missing:
+        return note
+    fresh = _looks_fresh(db)
+    now = now_ms()
+    checked = int(db.get_setting("migrations_fs_checked", 0) or 0)
+    if fresh or now - checked >= MIGRATIONS_RECHECK_MS:
+        try:
+            remote = (sink.get(MIGRATIONS_DOC) or {}).get("flags") or {}
+            db.set_setting("migrations_fs_checked", now)
+        except Exception as exc:
+            remote = {}
+            note["firestore_error"] = f"{type(exc).__name__}"[:80]      # a fresh database still never runs history (below)
+        taken = [f for f in missing if _flag_done(remote.get(f))]
+        for f in taken:
+            db.set_setting(f, remote[f])
+        if taken:
+            note["from_firestore"] = taken
+            missing = [f for f in missing if f not in taken]
+    if fresh and missing:
+        for f in missing:
+            db.set_setting(f, now if f == "reset_v1_done" else True)
+        note["fresh_database_marked_done"] = missing
+        log.warning("fresh engine database: %d historical one-time migrations marked done, not run", len(missing))
+    return note
+
+
+def mirror_migrations(rt: Runtime, sink: BaseSink) -> bool:
+    """Copy the completed one-time migration flags to Firestore admin/migrations (only when the set grew). Never raises."""
+    local = _local_flags(rt.db)
+    if not local:
+        return False
+    mirrored = set(rt.db.get_setting("migrations_mirrored", []) or [])
+    if set(local) <= mirrored:
+        return False
+    try:
+        sink.set(MIGRATIONS_DOC, {"flags": {k: (v if isinstance(v, (bool, int, float, str)) else True) for k, v in local.items()},
+                                  "updated_at": now_ms()}, merge=True)
+        rt.db.set_setting("migrations_mirrored", sorted(set(local) | mirrored))
+        return True
+    except Exception as exc:
+        log.warning("migration flags not mirrored: %s", type(exc).__name__)
+        return False
+
+
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     notes: dict[str, Any] = {}
+    guard = migration_guard(rt, sink)
+    if guard:
+        notes["migrations"] = guard
     # memberships: pause the alerts of people who are no longer active; payment / renewal notifications
     _b = getattr(rt, "beat", None) or (lambda *_: None)
     _b("config: members")
@@ -388,18 +508,26 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     local = {a["id"]: a for a in rt.db.query("SELECT * FROM alerts")}
     for aid in set(local) - set(remote):
         rt.db.execute("DELETE FROM alerts WHERE id = ?", (aid,))
+    bad_alerts = 0
     for aid, a in remote.items():
-        if a.get("type") not in alerts.ALERT_TYPES or not a.get("symbol"):
-            continue
-        row = (a["type"], norm_symbol(a["symbol"]), a.get("timeframe", "4h"), dumps(a.get("params") or {}),
-               int(a.get("cooldown_s", 3600)), int(bool(a.get("enabled", True)) and a.get("owner_uid") not in inactive))
-        if aid in local:
-            rt.db.execute("UPDATE alerts SET type = ?, symbol = ?, timeframe = ?, params = ?, cooldown_s = ?, enabled = ?, "
-                          "user_id = ? WHERE id = ?", (*row, a.get("owner_uid") or USER, aid))
-        else:
-            rt.db.execute("INSERT INTO alerts (id, user_id, type, symbol, timeframe, params, cooldown_s, enabled, created_at) "
-                          "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                          (aid, a.get("owner_uid") or USER, *row, int(a.get("created_at") or now_ms())))
+        # member-written documents: one malformed alert is skipped (and counted), never stops the configuration step
+        try:
+            row = alert_row(a, inactive)
+            if row is None:
+                continue
+            owner = a.get("owner_uid") if isinstance(a.get("owner_uid"), str) and a.get("owner_uid") else USER
+            if aid in local:
+                rt.db.execute("UPDATE alerts SET type = ?, symbol = ?, timeframe = ?, params = ?, cooldown_s = ?, enabled = ?, "
+                              "user_id = ? WHERE id = ?", (*row, owner, aid))
+            else:
+                created = a.get("created_at")
+                created = int(created) if isinstance(created, (int, float)) and not isinstance(created, bool) else now_ms()
+                rt.db.execute("INSERT INTO alerts (id, user_id, type, symbol, timeframe, params, cooldown_s, enabled, created_at) "
+                              "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (aid, owner, *row, created))
+        except Exception:
+            bad_alerts += 1
+    if bad_alerts:
+        notes["bad_alerts_skipped"] = bad_alerts
     # support email moved to the app's own domain (owner request, 27 Oct 2026); runs once
     if not rt.db.get_setting("support_email_v23", False):
         m = sink.get("config/membership") or {}
@@ -584,6 +712,8 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         rt.db.set_setting("fresh_start_v2", True)
         notes["fresh_start_v2"] = True
     BotEngine(rt).sync_configs(bots_cfg)
+    if mirror_migrations(rt, sink):
+        notes["migrations_mirrored"] = True
     return notes
 
 
@@ -702,7 +832,7 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             if not plain:
                 log.exception("job %s failed", jid)
             # adjust_signal refusals carry a plain-language reason for the admin (no exception class name)
-            sink.set(f"jobs/{jid}", {"status": "failed", "error": (str(exc) if plain else f"{type(exc).__name__}: {exc}")[:300],
+            sink.set(f"jobs/{jid}", {"status": "failed", "error": redact(str(exc) if plain else f"{type(exc).__name__}: {exc}")[:300],
                                      "finished_at": now_ms()}, merge=True)
         n += 1
     # clean-up of jobs older than 3 days: at most hourly, reading only the old ones (was: every job, every tick)
@@ -857,7 +987,9 @@ def publish_status(rt: Runtime, sink: BaseSink, engine: dict[str, Any]) -> None:
         h["safety"] = safety.overview(rt.db)
     except Exception:
         h["safety"] = []
-    sink.view("health", h, volatile=())
+    public, admin = health.split_errors(h)        # v2.13: raw errors only in the admin-only view
+    sink.view("health", public, volatile=())
+    sink.view(health.ERRORS_VIEW, admin, volatile=("generated_at",))   # written only when the errors change
     sink.view("meta", views.meta(rt, engine), volatile=())
 
 
@@ -931,7 +1063,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         except Exception as exc:   # one failing step must not stop the cycle
             log.exception("step %s failed", name)
             rt.record_error(f"engine {name}", exc)
-            detail["steps"][name] = {"ok": False, "error": f"{type(exc).__name__}: {exc}"[:200]}
+            detail["steps"][name] = {"ok": False, "error": error_text(exc, 200)}
             return None
 
     detail["config"] = step("config", lambda: sync_config(rt, sink))
@@ -941,7 +1073,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         try:
             rt.feed = StaticFeed(asyncio.run(rt.provider.fetch_tickers(rt.symbols())))
         except Exception as exc:
-            rt.feed = StaticFeed({}, f"{type(exc).__name__}: {exc}"[:200])
+            rt.feed = StaticFeed({}, error_text(exc, 200))
         for s in rt.symbols():
             asyncio.run(market.refresh_order_book(rt, s))
         asyncio.run(market.clock_skew(rt))
@@ -1213,6 +1345,7 @@ def scalp_backfill_cli(rt: Runtime, budget: float | None = None) -> dict[str, An
 
 def main() -> None:
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    install_logging_redaction()                   # the job logs are public: no token / key ever reaches them
     ap = argparse.ArgumentParser(prog="python -m app.worker")
     ap.add_argument("command", choices=["tick", "train", "train-shard", "train-merge", "scalp-backfill"])
     ap.add_argument("--shard", type=int, default=0)

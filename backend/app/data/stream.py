@@ -10,6 +10,7 @@ import time
 from typing import Any
 
 from .ccxt_provider import _ticker
+from ..redact import redact
 
 log = logging.getLogger(__name__)
 
@@ -84,7 +85,7 @@ class LiveFeed:
                 raise
             except Exception as exc:
                 self.status = "DOWN"
-                self.last_error = f"{type(exc).__name__}: {exc}"[:300]
+                self.last_error = redact(f"{type(exc).__name__}: {exc}")[:300]
                 self.reconnects += 1
                 await asyncio.sleep(backoff)
                 backoff = min(backoff * 2, 60.0)
@@ -116,7 +117,7 @@ class LiveFeed:
             except Exception as exc:
                 failures += 1
                 self.reconnects += 1
-                self.last_error = f"ws: {type(exc).__name__}: {exc}"[:300]
+                self.last_error = redact(f"ws: {type(exc).__name__}: {exc}")[:300]
                 if failures >= 3:      # give up on the socket for now, poll instead
                     self.status = "POLLING"
                     await self._poll_loop(max_rounds=24)
@@ -137,7 +138,7 @@ class LiveFeed:
                 raise
             except Exception as exc:
                 self.status = "DOWN"
-                self.last_error = f"poll: {type(exc).__name__}: {exc}"[:300]
+                self.last_error = redact(f"poll: {type(exc).__name__}: {exc}")[:300]
             await asyncio.sleep(self.poll_s)
 
     def health(self) -> dict[str, Any]:

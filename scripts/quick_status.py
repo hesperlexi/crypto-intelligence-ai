@@ -1,4 +1,7 @@
-"""v2.1 check: watchlist (gold), 15m/1h/4h signal views, and the newest plans' risk/reward (no personal data)."""
+"""v2.1 check: watchlist (gold), signal views and record, as AGGREGATE COUNTS only (no personal data).
+
+The output goes to the public `reports` branch and public job logs, so it never contains a call's coin, side, grade or
+levels (members pay for those), nor any record row - only counts and statuses (v2.13)."""
 import json, os
 import firebase_admin
 from firebase_admin import credentials, firestore
@@ -13,12 +16,10 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
     rows = v.get("rows") or []
     out["views"][tf] = {
         "rows": len(rows), "updated": (d or {}).get("updated_at"),
-        "tradable": [{"symbol": r.get("symbol"), "side": (r.get("plan") or {}).get("side"), "grade": r.get("grade"),
-                      "rr": round((r.get("plan") or {}).get("risk_reward") or 0, 2),
-                      "targets_rr": [round(t.get("rr") or 0, 2) for t in (r.get("plan") or {}).get("targets") or []]}
-                     for r in rows if r.get("plan")][:8],
+        "with_plan": sum(1 for r in rows if r.get("plan")),
+        "grades": {g: sum(1 for r in rows if r.get("plan") and str(r.get("grade")) == g) for g in sorted({str(r.get("grade")) for r in rows if r.get("plan")})},
         "statuses": sorted({str(r.get("status")) for r in rows}),
-        "gold": next(({k: r.get(k) for k in ("status", "reason", "decision", "grade")} for r in rows if str(r.get("symbol", "")).startswith("PAXG")), None),
+        "gold_row": any(str(r.get("symbol", "")).startswith("PAXG") for r in rows),
     }
 # size of every published view (what the website downloads), largest first
 out["view_sizes_kb"] = sorted(((d.id, round(len((d.to_dict() or {}).get("json") or "") / 1024, 1)) for d in fs.collection("views").stream()),
@@ -47,7 +48,9 @@ out["track_record"] = {"record_since": trj.get("record_since"), "live_signals": 
 sigs = (trj.get("live") or {}).get("signals") or trj.get("signals") or []
 out["record_live"] = {"summary": (trj.get("live") or {}).get("summary") or trj.get("summary"),
                       "by_timeframe": (trj.get("live") or {}).get("by_timeframe") or trj.get("by_timeframe"),
-                      "signals": [{k: x.get(k) for k in ("symbol", "timeframe", "side", "grade", "status", "fill_status", "return_pct", "roi_pct", "peak_r", "exit_reason", "created_at", "closed_at")} for x in sigs][:60]}
+                      # counts only: no coin / side / levels / single results
+                      "signals_by_status": {s: sum(1 for x in sigs if x.get("status") == s) for s in sorted({str(x.get("status")) for x in sigs})},
+                      "signals_by_timeframe": {t: sum(1 for x in sigs if x.get("timeframe") == t) for t in sorted({str(x.get("timeframe")) for x in sigs})}}
 out["counts"] = {c: sum(1 for _ in fs.collection(c).select([]).stream()) for c in ("paper", "paper_trades", "paper_futures_trades", "auto_paper_state", "jobs")}
 bots = fs.document("config/bots").get().to_dict() or {}
 out["bots"] = [{"id": b.get("id"), "reset_token": b.get("reset_token")} for b in bots.get("bots", [])]

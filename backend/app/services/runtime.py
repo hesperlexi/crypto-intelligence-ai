@@ -49,7 +49,8 @@ class Runtime:
         return getattr(self.provider, "name", settings.exchange)
 
     def record_error(self, where: str, exc: Exception) -> None:
-        self.errors.append({"ts": now_ms(), "where": where, "error": f"{type(exc).__name__}: {exc}"[:300]})
+        from ..redact import error_text
+        self.errors.append({"ts": now_ms(), "where": where, "error": error_text(exc, 300)})
         del self.errors[:-100]
 
     # -- watchlist ------------------------------------------------------------------------------------

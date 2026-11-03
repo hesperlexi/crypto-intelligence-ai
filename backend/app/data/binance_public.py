@@ -15,6 +15,8 @@ from typing import Any
 
 import requests
 
+from ..redact import redact
+
 log = logging.getLogger(__name__)
 
 DEFAULT_HOSTS = ["https://data-api.binance.vision", "https://api.binance.com", "https://api1.binance.com",
@@ -59,13 +61,13 @@ class BinancePublicProvider:
                     break
                 if r.status_code >= 400:                    # bad request (e.g. unknown symbol): no point retrying
                     self.errors += 1
-                    self.last_error = f"{path}: HTTP {r.status_code} {r.text[:150]}"
+                    self.last_error = redact(f"{path}: HTTP {r.status_code} {r.text[:150]}")
                     raise ValueError(self.last_error)
                 self.host_used = host
                 self.last_ok_ms = int(time.time() * 1000)
                 return r.json()
         self.errors += 1
-        self.last_error = f"{path}: {type(last_exc).__name__}: {last_exc}"[:300]
+        self.last_error = redact(f"{path}: {type(last_exc).__name__}: {last_exc}")[:300]
         raise ConnectionError(self.last_error)
 
     async def _get(self, path: str, params: dict[str, Any] | None = None) -> Any:

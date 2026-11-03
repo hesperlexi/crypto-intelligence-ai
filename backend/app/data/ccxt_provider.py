@@ -10,6 +10,7 @@ from typing import Any
 
 from ..config import TF_SECONDS
 from .base import resample_ohlcv, tf_ms, to_frame
+from ..redact import redact
 
 log = logging.getLogger(__name__)
 
@@ -40,7 +41,7 @@ class CCXTProvider:
             return out
         except Exception as exc:
             self.errors += 1
-            self.last_error = f"{fn}: {type(exc).__name__}: {exc}"[:300]
+            self.last_error = redact(f"{fn}: {type(exc).__name__}: {exc}")[:300]
             raise
 
     def supports(self, timeframe: str) -> bool:

@@ -13,36 +13,29 @@ def view(name):
     return json.loads(d.get("json") or "null"), d.get("updated_at")
 
 
+# v2.13: the output goes to the public `reports` branch and public job logs, so it holds COUNTS only - never a call's
+# side, grade, levels, decision or a bot's positions (members pay for those).
 out = {"coin": coin}
 sig, _ = view("signals")
 rows = sig.get("signals") if isinstance(sig, dict) else sig
-if coin == "ALL":                                   # every trade signal (not info rows), newest first
-    out["signals"] = [{k: r.get(k) for k in ("symbol", "timeframe", "decision", "side", "entry", "stop", "tp1", "tp2", "tp3",
-                       "status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "return_pct", "created_at", "closed_at")}
-                      for r in (rows or []) if isinstance(r, dict) and r.get("status") != "INFO"][:40]
-    for b in (bots or {}).get("bots", []) if False else []:
-        pass
-else:
-    out["signals"] = [r for r in (rows or []) if isinstance(r, dict) and r.get("symbol") == coin][:12]
+rows = [r for r in (rows or []) if isinstance(r, dict) and r.get("status") != "INFO" and (coin == "ALL" or r.get("symbol") == coin)]
+out["signals"] = {"total": len(rows), "by_status": {s: sum(1 for r in rows if r.get("status") == s) for s in sorted({str(r.get("status")) for r in rows})},
+                  "by_timeframe": {t: sum(1 for r in rows if r.get("timeframe") == t) for t in sorted({str(r.get("timeframe")) for r in rows})}}
 bots, _ = view("bots")
 ob = []
 for b in (bots or {}).get("bots", []):
     st = b.get("state") or {}
+    match = (lambda x: coin == "ALL" or x.get("symbol") == coin)
     ob.append({"bot": (b.get("config") or {}).get("id"),
-               "positions": [p for p in (b.get("positions") or st.get("positions") or []) if coin == "ALL" or p.get("symbol") == coin],
-               "pending": [p for p in (b.get("pending") or st.get("pending") or []) if p.get("symbol") == coin],
-               "trades": [{k: t.get(k) for k in ("symbol", "side", "entry", "exit", "pnl", "reason", "opened_at", "closed_at")}
-                          for t in (b.get("trades") or []) if coin == "ALL" or t.get("symbol") == coin][:10]})
+               "open_positions": sum(1 for p in (b.get("positions") or st.get("positions") or []) if match(p)),
+               "pending_orders": sum(1 for p in (b.get("pending") or st.get("pending") or []) if match(p)),
+               "closed_trades": sum(1 for t in (b.get("trades") or []) if match(t))})
 out["bots"] = ob
 an = {}
 for tf in (() if coin == "ALL" else ("15m", "1h", "4h", "12h", "1d", "3d")):
     a, ts = view(f"analysis_{slug}_{tf}")
     if not a:
         continue
-    st = a.get("setup") or {}
-    an[tf] = {"updated_at": ts, "price": a.get("price"), "decision": a.get("decision"), "grade": a.get("grade"),
-              "reason": a.get("decision_reason"), "flags": a.get("flags"), "confidence": a.get("confidence"),
-              "runner": a.get("runner"), "setup": {k: st.get(k) for k in ("side", "valid", "entry", "stop", "targets", "risk_reward", "reason")},
-              "trend_check": a.get("trend_check")}
+    an[tf] = {"updated_at": ts, "status": a.get("status"), "has_flags": bool(a.get("flags"))}
 out["analysis"] = an
 print(json.dumps(out, indent=1, default=str))

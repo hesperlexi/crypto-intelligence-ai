@@ -69,6 +69,30 @@ def report(rt: Runtime, full: bool = True) -> dict[str, Any]:
     }
 
 
+ERRORS_VIEW = "health_errors"        # views/health_errors: admin only (firestore rules); views/health stays member-readable
+
+
+def split_errors(h: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
+    """(member-readable health, admin-only error detail). Raw error texts (recent engine errors, the exchange / feed's
+    last error, model training messages) go only to the admin view; members see that there is an error, not its text.
+    All texts are redacted (tokens, URL keys) either way."""
+    from ..redact import redact
+    errs = [{**e, "error": redact(e.get("error")), "where": redact(e.get("where"))} for e in (h.get("recent_errors") or [])]
+    md, ex = dict(h.get("market_data") or {}), dict(h.get("exchange") or {})
+    models = [dict(m) for m in (h.get("models") or [])]
+    admin = {"generated_at": h.get("generated_at"), "recent_errors": errs,
+             "exchange_last_error": redact(ex.get("last_error")), "market_data_last_error": redact(md.get("last_error")),
+             "model_messages": [{"symbol": m.get("symbol"), "timeframe": m.get("timeframe"), "message": redact(m.get("message"))}
+                                for m in models if m.get("message")]}
+    md["has_error"], md["last_error"] = bool(md.get("last_error")), None
+    ex["has_error"], ex["last_error"] = bool(ex.get("last_error")), None
+    for m in models:
+        m.pop("message", None)
+    public = {**{k: v for k, v in h.items() if k != "recent_errors"}, "market_data": md, "exchange": ex, "models": models,
+              "recent_errors_count": len(errs)}
+    return public, admin
+
+
 def snapshot(rt: Runtime) -> None:
     """Persist a compact health record (kept for 7 days)."""
     r = report(rt, full=False)

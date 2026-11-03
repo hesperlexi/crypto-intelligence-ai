@@ -24,6 +24,7 @@ import numpy as np
 from .config import ENGINE_VERSION, MODEL_TIMEFRAMES, settings
 from .data.base import tf_ms
 from .ml import series_policy as SP, series_sim as S, trade_filter2 as TF2
+from .redact import error_text
 
 log = logging.getLogger("research.engine")
 TUNE_SHARE = 0.7
@@ -331,7 +332,7 @@ def run(db_url: str, budget_s: float, cost: float, symbols: list[str] | None = N
     try:
         body["market_inputs"] = market_inputs(db, syms)
     except Exception as exc:
-        body["market_inputs"] = {"error": f"{type(exc).__name__}: {exc}"[:200]}
+        body["market_inputs"] = {"error": error_text(exc, 200)}
     body.update({"engine_version": ENGINE_VERSION, "cost_pct_round_trip": cost, "tune_share": TUNE_SHARE,
                  "symbols": syms, "seconds": round(time.time() - t0, 1),
                  "method": __doc__.strip().split("\n\n", 1)[1] if __doc__ else None,

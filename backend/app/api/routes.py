@@ -25,6 +25,7 @@ from ..ml.drift import drift_report
 from ..ml.models import REGISTRY, model_status
 from ..services import alerts, analysis, backtests, health, market, paper, replay, scanner, tracking, training
 from ..services.runtime import get_runtime
+from ..redact import error_text
 
 router = APIRouter()
 OVERLAYS = ["ema_9", "ema_21", "ema_50", "ema_200", "sma_20", "sma_50", "sma_200", "vwap", "bb_upper", "bb_mid",
@@ -317,7 +318,7 @@ def performance(symbol: str, timeframe: str = "4h"):
         vol_now = float(ds.X["vol_pct"].iloc[-1])
         out["drift"] = drift_report(b, recent, p_up, vol_now, tracking.performance_windows(rt.db, b))
     except Exception as exc:
-        out["drift"] = {"drift_detected": None, "error": f"{type(exc).__name__}: {exc}"[:200]}
+        out["drift"] = {"drift_detected": None, "error": error_text(exc, 200)}
     return ok(out)
 
 

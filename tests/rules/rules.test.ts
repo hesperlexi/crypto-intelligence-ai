@@ -461,7 +461,41 @@ async function main() {
   });
   await test("alerts create", async () => {
     await seed(member);
-    await assertSucceeds(addDoc(collection(as("m1", "m1@example.com"), "alerts"), { type: "price_above", symbol: "BTC/USDT", timeframe: "4h", params: { price: 70000 }, cooldown_s: 3600, enabled: true, created_at: NOW(), owner_uid: "m1", owner_email: "m1@example.com" }));
+    await assertSucceeds(addDoc(collection(as("m1", "m1@example.com"), "alerts"), { type: "PRICE_ABOVE", symbol: "BTC/USDT", timeframe: "4h", params: { price: 70000 }, cooldown_s: 3600, enabled: true, created_at: NOW(), owner_uid: "m1", owner_email: "m1@example.com" }));
+  });
+  // v2.13: the exact shape of frontend/src/lib/api.ts "POST /alerts"; anything else is refused (a malformed rule used to
+  // stop the engine's configuration step every cycle)
+  const goodAlert = (uid = "m1", extra: any = {}) => ({ type: "TRADE_SETUP", symbol: "BTC/USDT", timeframe: "4h",
+    params: { side: "any", market: "futures", min_confidence: 0, confident_only: false, grade: "any" }, cooldown_s: 3600, enabled: true,
+    created_at: NOW(), owner_uid: uid, owner_email: `${uid}@example.com`, ...extra });
+  await test("alerts: the website's trade-setup alert is accepted", async () => {
+    await seed(member);
+    await assertSucceeds(addDoc(collection(as("m1", "m1@example.com"), "alerts"), goodAlert()));
+  });
+  await test("alerts: bad cooldown (text, fraction, NaN, too small, too big) is refused", async () => {
+    await seed(member);
+    const db = as("m1", "m1@example.com");
+    for (const cd of ["3600", 3600.5, NaN, 0, 59, 31536001, null]) await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { cooldown_s: cd })));
+  });
+  await test("alerts: bad symbol / type / timeframe / extra keys / someone else's uid are refused", async () => {
+    await seed(member);
+    const db = as("m1", "m1@example.com");
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { symbol: 42 })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { symbol: "btc/usdt; drop" })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { symbol: { x: 1 } })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { type: "NOT_A_TYPE" })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { timeframe: "7m" })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { params: "x" })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { surprise: true })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m2")));
+  });
+  await test("alerts: the owner switches a rule on/off; other changes are refused", async () => {
+    await seed({ ...member, "alerts/a1": goodAlert("m1") });
+    const db = as("m1", "m1@example.com");
+    await assertSucceeds(updateDoc(doc(db, "alerts", "a1"), { enabled: false }));
+    await assertFails(updateDoc(doc(db, "alerts", "a1"), { enabled: "no" }));
+    await assertFails(updateDoc(doc(db, "alerts", "a1"), { cooldown_s: "soon" }));
+    await assertFails(updateDoc(doc(db, "alerts", "a1"), { symbol: 7 }));
   });
   await test("push_tokens create", async () => {
     await seed(member);
@@ -471,6 +505,31 @@ async function main() {
     await seed({ "users/p1": pending("p1", "p1@example.com") });
     await assertFails(setDoc(doc(as("p1", "p1@example.com"), "paper", "p1_futures"), { wallet: 1 }));
     await assertFails(addDoc(collection(as("p1", "p1@example.com"), "alerts"), { owner_uid: "p1", type: "x" }));
+  });
+
+  // ---------------------------------------------------------------- views/health_errors (admin only, v2.13)
+  const healthDocs = { "views/health": { json: "{}", updated_at: NOW() }, "views/health_errors": { json: "{}", updated_at: NOW() } };
+  const readView = async (db: Firestore, id: string) => { const { getDoc } = await import("firebase/firestore"); return getDoc(doc(db, "views", id)); };
+  await test("health_errors: admin reads it", async () => {
+    await seed(healthDocs);
+    await assertSucceeds(readView(admin(), "health_errors"));
+  });
+  await test("health_errors: an active member cannot read it, but still reads views/health", async () => {
+    await seed({ ...member, ...healthDocs });
+    await assertFails(readView(as("m1", "m1@example.com"), "health_errors"));
+    await assertSucceeds(readView(as("m1", "m1@example.com"), "health"));
+  });
+  await test("health_errors: pending and signed-out people cannot read it", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com"), ...healthDocs });
+    await assertFails(readView(as("p1", "p1@example.com"), "health_errors"));
+    await assertFails(readView(env.unauthenticatedContext().firestore() as unknown as Firestore, "health_errors"));
+  });
+  await test("admin/migrations: members cannot read or write it", async () => {
+    await seed({ ...member, "admin/migrations": { flags: { fresh_start_v23: true } } });
+    const { getDoc } = await import("firebase/firestore");
+    await assertFails(getDoc(doc(as("m1", "m1@example.com"), "admin", "migrations")));
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "admin", "migrations"), { flags: {} }));
+    await assertSucceeds(getDoc(doc(admin(), "admin", "migrations")));
   });
 
   // ---------------------------------------------------------------- views/scalping (admin scorecard) + config/scalping

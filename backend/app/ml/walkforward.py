@@ -20,6 +20,7 @@ import numpy as np
 from .calibration import Calibrator, fit_calibrator
 from .metrics import brier
 from .models import REGISTRY, make_model, predict_with_context
+from ..redact import error_text
 
 log = logging.getLogger(__name__)
 MIN_REGIME_ROWS = 80
@@ -115,7 +116,7 @@ def fit_stage(X: np.ndarray, y: np.ndarray, groups: np.ndarray, feature_names: l
             else:
                 cal, rep = fit_calibrator(p_val, yva)
         except Exception as exc:  # a failing model is dropped from this stage and reported, never faked
-            failures[name] = f"{type(exc).__name__}: {exc}"[:200]
+            failures[name] = error_text(exc, 200)
             log.warning("model %s failed: %s", name, failures[name])
             continue
         models[name], cals[name], reports[name] = model, cal, rep
@@ -187,7 +188,7 @@ def run_walk_forward(X: np.ndarray, y: np.ndarray, sigma: np.ndarray, fwd_ret: n
             try:
                 raw = predict_with_context(model, X, *f.test)
             except Exception as exc:
-                res.failures[name] = f"{type(exc).__name__}: {exc}"[:200]
+                res.failures[name] = error_text(exc, 200)
                 continue
             res.P_raw[name][te] = raw
             res.P_cal[name][te] = stage["calibrators"][name].transform(raw)

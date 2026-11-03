@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any
 
 from .db import Database, dumps
+from .redact import error_text
 
 MAX_DOC_BYTES = 1_000_000
 
@@ -502,7 +503,7 @@ class FirestoreSink(BaseSink):
 
             devices = [(d.get("token") or i, d.get("uid"), (d.get("email") or "").lower()) for i, d in self.list("push_tokens")]
         except Exception as exc:
-            return {"sent": 0, "devices": 0, "error": f"{type(exc).__name__}: {exc}"[:200]}
+            return {"sent": 0, "devices": 0, "error": error_text(exc, 200)}
         if not devices:
             return {"sent": 0, "devices": 0, "reason": "no device has turned notifications on"}
         admins = {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()}
@@ -526,7 +527,7 @@ class FirestoreSink(BaseSink):
                 try:
                     res = messaging.send_each_for_multicast(msg)
                 except Exception as exc:
-                    errors.append(f"{type(exc).__name__}: {exc}"[:200])
+                    errors.append(error_text(exc, 200))
                     continue
                 sent += res.success_count
                 for tok, r in zip(chunk, res.responses):

@@ -11,6 +11,7 @@ from ..db import now_ms
 from ..features.dataset import HTF_OF, InsufficientData
 from ..ml import trainer
 from .runtime import Runtime
+from ..redact import error_text
 
 log = logging.getLogger(__name__)
 _lock = asyncio.Lock()
@@ -67,7 +68,7 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
     except Exception as exc:
         log.exception("training failed for %s %s", symbol, timeframe)
         rt.record_error(f"train {symbol} {timeframe}", exc)
-        status.update(state="failed", error=f"{type(exc).__name__}: {exc}"[:300], message="failed", finished_at=now_ms())
+        status.update(state="failed", error=error_text(exc, 300), message="failed", finished_at=now_ms())
     return status
 
 

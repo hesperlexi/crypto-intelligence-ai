@@ -17,6 +17,7 @@ from .ml.drift import drift_report
 from .ml.models import REGISTRY, model_status
 from .services import alerts, backtests, replay, tracking
 from .services.runtime import Runtime
+from .redact import error_text
 
 ASSET_TIMEFRAMES = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"]
 
@@ -106,7 +107,7 @@ def performance(rt: Runtime, symbol: str, tf: str) -> dict[str, Any]:
         p_up = np.array([p["p_up"] for p in preds], float) if len(preds) >= 30 else None
         out["drift"] = drift_report(b, recent, p_up, float(ds.X["vol_pct"].iloc[-1]), tracking.performance_windows(rt.db, b))
     except Exception as exc:
-        out["drift"] = {"drift_detected": None, "error": f"{type(exc).__name__}: {exc}"[:200]}
+        out["drift"] = {"drift_detected": None, "error": error_text(exc, 200)}
     return out
 
 

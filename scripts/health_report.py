@@ -15,6 +15,6 @@ out = {
     "engine": {k: (h.get("engine") or {}).get(k) for k in ("last_tick_finished", "last_tick_seconds", "failed_steps", "data_host", "ticks")},
     "series_total": len(series), "series_not_ok": len(bad),
     "not_ok": [{k: s.get(k) for k in ("symbol", "timeframe", "status", "candles", "missing", "misaligned", "malformed", "quality_pct", "age_s", "gaps")} for s in bad][:60],
-    "recent_errors": (h.get("recent_errors") or [])[:10],
+    "recent_errors_count": h.get("recent_errors_count"),     # texts are admin-only (views/health_errors), never in public reports
 }
 print(json.dumps(out, indent=1, default=str))

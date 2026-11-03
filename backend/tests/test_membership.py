@@ -120,6 +120,7 @@ def test_major_coins_are_added_once_and_removals_stick(tmp_path):
             return [] if q == "HBAR" else [f"{q}/USDT"]         # an unlisted coin is never added
 
     rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.db.set_setting("support_email_v23", True)     # a database with history (v2.13: a fresh one never runs old migrations)
     sink = LocalSink(tmp_path)
     sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}]})
     worker.sync_config(rt, sink)

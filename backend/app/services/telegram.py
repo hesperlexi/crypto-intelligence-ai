@@ -26,6 +26,7 @@ from ..db import Database, now_ms
 
 log = logging.getLogger(__name__)
 from .. import brand
+from ..redact import redact
 from ..pricefmt import fmt_price
 
 SITE = brand.URL
@@ -242,7 +243,7 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
             db.set_setting(marker, value)
             out["sent"].append(kind + (" (waiting for approval)" if cfg["approve_first"] else ""))
         except Exception as exc:
-            errors.append(f"{kind}: {exc}"[:200])
+            errors.append(redact(f"{kind}: {exc}")[:200])
 
     if cfg["post_wins"] and dt.hour >= WINS_HOUR_UTC and db.get_setting("tg_wins_day", "") != day:
         if (wins_view or {}).get("period") == "today":
@@ -285,7 +286,7 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         try:
             out["sent"] += proofs(rt, cfg, now, session)
         except Exception as exc:
-            errors.append(f"proof: {exc}"[:200])
+            errors.append(redact(f"proof: {exc}")[:200])
     status = {"ok": not errors, "checked_at": now, "errors": errors, "last_sent": out["sent"] or None}
     try:
         prev = sink.get("owner/telegram_status") or {}

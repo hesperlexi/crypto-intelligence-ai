@@ -82,7 +82,7 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
             ok = (len(rr) == 3 and abs(rr[0] - 1) < 0.02 and 1.24 <= rr[1] <= 2.01 and 1.99 <= rr[2] <= 3.01
                   and (pl.get("risk_reward") or 0) >= 1.24)
             if not ok:
-                bad.append({"symbol": r["symbol"], "targets_rr": rr, "rr": pl.get("risk_reward")})
+                bad.append({"targets_rr": rr, "rr": pl.get("risk_reward")})        # no coin: public report
         stat = {}
         for r in rows:
             stat[r.get("status")] = stat.get(r.get("status"), 0) + 1
@@ -225,12 +225,12 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
         sym = r.get("symbol")
         pr = [r.get("p_up"), r.get("p_down"), r.get("p_neutral")]
         if all(x is not None for x in pr) and abs(sum(pr) - 1) > 0.02:
-            Q(f"{sym} {tf}: probabilities add to {sum(pr):.3f}")
+            Q(f"{tf}: probabilities add to {sum(pr):.3f}")
         if r.get("confidence") is not None and not 0 <= r["confidence"] <= 1:
-            Q(f"{sym} {tf}: confidence {r['confidence']} outside 0-1")
+            Q(f"{tf}: confidence {r['confidence']} outside 0-1")
         dec, grade = r.get("decision"), r.get("grade")
         if grade and dec not in ("BUY", "BUY ON PULLBACK", "SELL"):
-            Q(f"{sym} {tf}: grade {grade} on a {dec} decision")
+            Q(f"{tf}: grade {grade} on a {dec} decision")
         p = r.get("plan") or {}
         if not p.get("valid"):
             continue
@@ -238,37 +238,37 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
         side = 1 if p.get("side") == "LONG" else -1
         e, s, tg = p.get("entry"), p.get("stop"), p.get("targets") or []
         if dec in ("BUY", "BUY ON PULLBACK") and side < 0 or dec == "SELL" and side > 0:
-            Q(f"{sym} {tf}: decision {dec} but plan side {p.get('side')}")
+            Q(f"{tf}: decision {dec} but plan side {p.get('side')}")
         if not (e and s) or side * (e - s) <= 0:
-            Q(f"{sym} {tf}: stop on the wrong side of entry"); continue
+            Q(f"{tf}: stop on the wrong side of entry"); continue
         R = abs(e - s)
         prices = [t["price"] for t in tg]
         if len(prices) != 3 or any(side * (prices[i] - (prices[i - 1] if i else e)) <= 0 for i in range(3)):
-            Q(f"{sym} {tf}: targets not in order beyond entry")
+            Q(f"{tf}: targets not in order beyond entry")
         for t in tg:
             if abs(side * (t["price"] - e) / R - t["rr"]) > 0.02:
-                Q(f"{sym} {tf}: {t['name']} price is {side * (t['price'] - e) / R:.2f}R but labelled 1:{t['rr']}")
+                Q(f"{tf}: {t['name']} price is {side * (t['price'] - e) / R:.2f}R but labelled 1:{t['rr']}")
         zone = p.get("entry_zone") or []
         if zone and not (min(zone) - 1e-9 <= e <= max(zone) + 1e-9):
-            Q(f"{sym} {tf}: entry outside its entry zone")
+            Q(f"{tf}: entry outside its entry zone")
         if p.get("risk_pct") is not None and abs(p["risk_pct"] - R / e * 100) > 0.01:
-            Q(f"{sym} {tf}: risk % {p['risk_pct']:.3f} vs {R / e * 100:.3f} from entry/stop")
+            Q(f"{tf}: risk % {p['risk_pct']:.3f} vs {R / e * 100:.3f} from entry/stop")
         bl = 0.5 * 1 + 0.25 * tg[1]["rr"] + 0.25 * tg[2]["rr"] if len(tg) == 3 else None
         if bl is not None and p.get("risk_reward") is not None and abs(p["risk_reward"] - bl) > 0.02:
-            Q(f"{sym} {tf}: blended R:R {p['risk_reward']:.2f} vs {bl:.2f}")
+            Q(f"{tf}: blended R:R {p['risk_reward']:.2f} vs {bl:.2f}")
         lev = p.get("suggested_leverage")
         if lev:
             if lev > min(10, safe_lev(e, s)):
-                Q(f"{sym} {tf}: suggested {lev}x above the safe {min(10, safe_lev(e, s))}x")
+                Q(f"{tf}: suggested {lev}x above the safe {min(10, safe_lev(e, s))}x")
             if abs((p.get("liquidation_at_suggested") or 0) - liq(e, side, lev)) > e * 1e-6:
-                Q(f"{sym} {tf}: liquidation price does not match {lev}x")
+                Q(f"{tf}: liquidation price does not match {lev}x")
             if side * (p["liquidation_at_suggested"] - s) >= 0:
-                Q(f"{sym} {tf}: liquidation before the stop at {lev}x")
+                Q(f"{tf}: liquidation before the stop at {lev}x")
         if dec in ("BUY", "BUY ON PULLBACK", "SELL") and R / e < 3 * 0.0015 - 1e-9:
-            Q(f"{sym} {tf}: tradable signal with target 1 only {R / e * 100:.2f}% away (below the cost rule)")
+            Q(f"{tf}: tradable signal with target 1 only {R / e * 100:.2f}% away (below the cost rule)")
         run = p.get("runner") or {}
         if run.get("on") and abs(side * (run["target"] - e) / R - run.get("rr", 4)) > 0.02:
-            Q(f"{sym} {tf}: runner target is not 1:{run.get('rr')}")
+            Q(f"{tf}: runner target is not 1:{run.get('rr')}")
 checks["problems"] = checks["problems"][:40]
 print(json.dumps({"plan_checks": checks}))
 
@@ -341,15 +341,16 @@ for bt in (b or {}).get("bots") or []:
         "leverage": sorted({round(i.get("leverage") or 1, 1) for i in info})[:8],
         "decisions": {d: sum(1 for i in info if i.get("decision") == d) for d in {i.get("decision") for i in info}},
         "tp_hit": {h: sum(1 for i in info if i.get("tp_hit") == h) for h in {i.get("tp_hit") for i in info}},
-        "symbols_top": sorted(((s, sum(1 for t in tr if t["symbol"] == s)) for s in {t["symbol"] for t in tr}), key=lambda x: -x[1])[:6],
+        "coins_traded": len({t.get("symbol") for t in tr}),
         "equity": round((bt.get("stats") or {}).get("equity") or 0, 2), "open": len(bt.get("positions") or []),
         "sizes_notional": sorted(round((t.get("qty") or 0) * (t.get("entry") or 0)) for t in tr)[-5:],
     }
 print(json.dumps({"bot_breakdown": bd}, default=str))
 
-# 19. record by timeframe (since each timeframe's start) and the 15m signals in detail
+# 19. record by timeframe (since each timeframe's start) and the 15m signals as counts (public report: no coin / side)
 tr, _ = view("track_record")
 lv = (tr or {}).get("live") or {}
 print(json.dumps({"tf_record": lv.get("by_timeframe"), "by_grade": lv.get("by_grade"),
-                  "sig15": [{k: x.get(k) for k in ("symbol", "side", "grade", "status", "return_pct", "created_at", "closed_at")}
-                            for x in (lv.get("signals") or []) if x.get("timeframe") == "15m"][:40]}, default=str))
+                  "sig15_by_status": {s: sum(1 for x in (lv.get("signals") or []) if x.get("timeframe") == "15m" and x.get("status") == s)
+                                      for s in sorted({str(x.get("status")) for x in (lv.get("signals") or []) if x.get("timeframe") == "15m"})}},
+                 default=str))

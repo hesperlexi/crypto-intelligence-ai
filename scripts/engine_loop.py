@@ -4,8 +4,9 @@ GitHub starts scheduled workflows late (often 40-60 minutes apart), so instead o
 keeps itself alive: engine.yml calls this script five times in a row (saving the state to the Actions cache after
 each call), which keeps one job running for ~5 h 50 min; the next scheduled run is already queued and takes over.
 
-Each tick runs in a fresh process (`python -m app.worker tick`), exactly like before, after a fast-forward to the
-newest code on main (so engine fixes go live within 5 minutes; workflow changes still need the next run). The loop stops early when:
+Each tick runs in a fresh process (`python -m app.worker tick`), exactly like before, after moving to the newest
+TESTED code: the tag `engine-ok`, which deploy.yml moves only after pytest passed on main (v2.13; before, every commit
+on main ran at the next tick, tested or not). Workflow changes still need the next run. The loop stops early when:
   * the nightly training merge has started (it waits for this job to save the state and end, then takes over;
     it restarts the engine when it is done);
   * the stop file exists (an earlier call in the same job decided to stop).
@@ -54,25 +55,40 @@ def merge_waiting() -> bool:
         return False
 
 
+ENGINE_REF = "engine-ok"      # tag moved by deploy.yml only after the tests passed on main (v2.13)
+
+
 def update_code() -> None:
-    """Fast-forward to the newest code on main, so a change goes live at the next tick instead of the next run."""
+    """Move to the newest TESTED code (tag engine-ok, moved by deploy.yml after pytest passed on main), so a fix goes
+    live at the next tick but an untested commit on main never runs. No tag yet / fetch failed: keep the current code."""
     root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     try:
         before = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
-        # the Actions checkout is a detached commit, so `git pull` does nothing: fetch main and move to it
-        f = subprocess.run(["git", "-C", root, "fetch", "-q", "--depth=1", "origin", "main"], capture_output=True, timeout=60)
-        if f.returncode == 0:
-            subprocess.run(["git", "-C", root, "reset", "-q", "--hard", "FETCH_HEAD"], capture_output=True, timeout=60)
+        # the Actions checkout is a detached commit: fetch the tag and move to it
+        f = subprocess.run(["git", "-C", root, "fetch", "-q", "--depth=1", "--no-tags", "origin",
+                            f"+refs/tags/{ENGINE_REF}:refs/tags/{ENGINE_REF}"], capture_output=True, timeout=60)
+        if f.returncode != 0:
+            print(f"engine loop: no '{ENGINE_REF}' tag yet (or fetch failed): code unchanged", flush=True)
+            return
+        target = subprocess.run(["git", "-C", root, "rev-parse", f"refs/tags/{ENGINE_REF}^{{commit}}"],
+                                capture_output=True, text=True).stdout.strip()
+        if not target or target == before:
+            return
+        r = subprocess.run(["git", "-C", root, "reset", "-q", "--hard", target], capture_output=True, timeout=60)
+        if r.returncode != 0:
+            print("engine loop: code update failed: code unchanged", flush=True)
+            return
         after = subprocess.run(["git", "-C", root, "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
         if before and after and before != after:
-            print(f"engine loop: code updated {before[:7]} -> {after[:7]}", flush=True)
+            print(f"engine loop: code updated {before[:7]} -> {after[:7]} (tested)", flush=True)
             changed = subprocess.run(["git", "-C", root, "diff", "--name-only", before, after],
                                      capture_output=True, text=True).stdout
-            if "backend/requirements-worker.txt" in changed:
+            # a shallow checkout may not know `before`: then reinstall to be safe (pip skips what is installed)
+            if "backend/requirements-worker.txt" in changed or not changed:
                 subprocess.run([sys.executable, "-m", "pip", "install", "-q", "-r",
                                 os.path.join(root, "backend", "requirements-worker.txt")], timeout=600)
     except Exception as exc:                       # never let an update problem stop the engine
-        print(f"engine loop: code update skipped ({exc})", flush=True)
+        print(f"engine loop: code update skipped ({type(exc).__name__})", flush=True)
 
 
 def tick(budget: int) -> int:

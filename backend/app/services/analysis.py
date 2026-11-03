@@ -26,6 +26,7 @@ from ..features.volatility import vol_state_name
 from ..ml import direction as dirview, trainer
 from . import tracking
 from .runtime import Runtime, ttl_get
+from ..redact import error_text
 
 TRADE_DECISIONS = ("BUY", "BUY ON PULLBACK", "SELL")
 # v2.3: a trade is only worth taking when target 1 (= 1R) clearly beats the cost of getting in and out. Futures:
@@ -93,7 +94,7 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
         return {"available": False, "status": "INSUFFICIENT DATA", "reason": str(exc)}
     except Exception as exc:  # model failure: surface it, never substitute a made-up forecast
         rt.record_error(f"forecast {symbol} {timeframe}", exc)
-        return {"available": False, "status": "MODEL ERROR", "reason": f"{type(exc).__name__}: {exc}"[:200]}
+        return {"available": False, "status": "MODEL ERROR", "reason": error_text(exc, 200)}
     try:
         from ..ml import trade_filter
         x_row = ds.X[bundle["feature_names"]].to_numpy(float)[-1]
