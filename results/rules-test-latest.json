@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-03T19:34:33.326Z",
-  "sha": "fd6dfad70769aac306f17556df230ed3477c5951",
-  "total": 121,
-  "passed": 121,
+  "at": "2026-11-03T20:46:52.457Z",
+  "sha": "3a74b41be7bec9b472f178cfb7089872c933f852",
+  "total": 133,
+  "passed": 133,
   "failed": 0,
   "results": [
     {
@@ -487,6 +487,54 @@
     },
     {
       "name": "hesper: nobody writes views/hesper from the website",
+      "ok": true
+    },
+    {
+      "name": "referral: active member creates their invite code (ref_codes + users.ref_code batch)",
+      "ok": true
+    },
+    {
+      "name": "referral: a second code, or changing the code, is denied",
+      "ok": true
+    },
+    {
+      "name": "referral: taking someone else's code, a code for another uid, a bad code or a pending/expired account is denied",
+      "ok": true
+    },
+    {
+      "name": "referral: ref_codes get allowed when signed in, list denied, delete by member denied",
+      "ok": true
+    },
+    {
+      "name": "referral: new account created with referred_by from a valid link",
+      "ok": true
+    },
+    {
+      "name": "referral: wrong referrer for the code, unknown code, or only one of the two fields is denied",
+      "ok": true
+    },
+    {
+      "name": "referral: referring yourself is denied",
+      "ok": true
+    },
+    {
+      "name": "referral: referred_by cannot be added or changed after the account exists",
+      "ok": true
+    },
+    {
+      "name": "rewards: a member cannot give themselves months, history, badges or reward marks",
+      "ok": true
+    },
+    {
+      "name": "rewards: the admin's approval + referral reward (friend and referrer in one batch) is allowed",
+      "ok": true
+    },
+    {
+      "name": "leaderboard: admin awards a prize (users + owner/leaderboard); members cannot",
+      "ok": true
+    },
+    {
+      "name": "leaderboard: views/leaderboard for active members only; admin/leaderboard admin only; nobody writes them",
       "ok": true
     }
   ]
