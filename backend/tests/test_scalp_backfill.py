@@ -247,6 +247,8 @@ def test_backfill_with_a_real_model_and_no_look_ahead(tmp_path, monkeypatch):
         return real(*a, **kw)
     monkeypatch.setattr(analysis, "analyze", spy)
     monkeypatch.setattr(direction, "view", lambda fc, bb: {"margin": 1.0, "policy_margin": 0.0})   # replay every candle
+    from app.config import settings
+    monkeypatch.setattr(settings, "require_edge_for_trade", False)     # v2.13 default on; this test replays every candle
     B._bundles.clear()
     out = B.run(rt, budget_s=600, max_analyses=10_000)
     assert out["done"] and len(seen) == 8 and all(s is not None for s in seen)

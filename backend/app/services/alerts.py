@@ -86,8 +86,8 @@ def trade_message(a: dict[str, Any], market: str = "spot") -> str:
     if market == "futures" and st.get("stop") and entry:
         from ..engine import futures as F
 
-        lev = F.safe_leverage(entry, st["stop"], 10)
-        msg += f", suggested leverage {lev}x (liquidation {_fmt(F.liquidation_price(entry, st.get('side_int', 1), lev))})"
+        lev = F.safe_leverage(entry, st["stop"], 10, symbol=a.get("symbol"))
+        msg += f", suggested leverage {lev}x (liquidation {_fmt(F.liquidation_price(entry, st.get('side_int', 1), lev, symbol=a.get('symbol')))})"
     return msg
 
 

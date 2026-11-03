@@ -48,7 +48,7 @@ export default function WinsToday() {
             </div>
             <div className="relative mt-3 flex items-end justify-between gap-3 px-4">
               <div>
-                <div className="label">{r?.onMargin ? "ROI on margin" : "Price move"}</div>
+                <div className="label">{r?.onMargin ? "ROI on margin" : r?.net ? "After fees" : "Price move"}</div>
                 <div className="num mt-1 text-[32px] font-extrabold leading-none tracking-tight text-bull">{r ? signedPct(r.value) : "—"}</div>
               </div>
               {r?.leverage && (
@@ -72,7 +72,7 @@ export default function WinsToday() {
           {" · "}<Link to="/results" className="text-accent hover:underline">full record, losses included, on Results (members)</Link>
         </p>
       )}
-      <p className="mt-3 text-center text-[11px] text-mute">Selected wins. ROI = price move × suggested leverage; leverage magnifies losses too. Not financial advice.</p>
+      <p className="mt-3 text-center text-[11px] text-mute">Selected wins, after fees. ROI = result × suggested leverage; leverage magnifies losses too. Not financial advice.</p>
       <p className="mt-1 text-center text-[11px] text-mute">Past results do not guarantee future results. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
     </section>
   );

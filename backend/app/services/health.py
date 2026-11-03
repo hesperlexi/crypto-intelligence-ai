@@ -62,6 +62,7 @@ def report(rt: Runtime, full: bool = True) -> dict[str, Any]:
         "exchange": exchange, "database": {"ok": db_ok, "engine": "postgresql" if rt.db.is_postgres else "sqlite"},
         "series": series, "models": models, "model_libraries": model_status(),
         "recent_errors": rt.errors[-20:][::-1],
+        "fail_closed": _gate_failures(rt),
         "config": {"exchange": settings.exchange, "background_jobs": settings.enable_background_jobs,
                    "websocket_feed": settings.enable_websocket_feed, "deep_models": settings.enable_deep_models,
                    "forecast_refresh_s": rt.refresh_seconds(), "retrain_interval_h": settings.retrain_interval_h,
@@ -91,6 +92,15 @@ def split_errors(h: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     public = {**{k: v for k, v in h.items() if k != "recent_errors"}, "market_data": md, "exchange": ex, "models": models,
               "recent_errors_count": len(errs)}
     return public, admin
+
+
+def _gate_failures(rt: Runtime) -> dict[str, Any]:
+    """v2.13: required gates that could not run in the last 24 h (their calls became NO TRADE)."""
+    try:
+        from .analysis import gate_failures
+        return gate_failures(rt.db)
+    except Exception:
+        return {}
 
 
 def snapshot(rt: Runtime) -> None:

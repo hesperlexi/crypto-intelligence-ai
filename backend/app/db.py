@@ -21,7 +21,9 @@ SCHEMA_PATH = Path(__file__).with_name("schema.sql")
 MIGRATIONS: dict[str, list[tuple[str, str]]] = {
     table: [("fill_status", "TEXT"), ("filled_at", "BIGINT"), ("peak_r", "DOUBLE PRECISION"),
             ("peak_pct", "DOUBLE PRECISION"), ("exit_reason", "TEXT"), ("managed", "INTEGER"), ("atr", "DOUBLE PRECISION"),
-            ("app_version", "TEXT"), ("engine_version", "TEXT")]
+            ("app_version", "TEXT"), ("engine_version", "TEXT"),
+            # v2.13 net results (services/tracking.py: return_pct - cost_pct - funding_pct)
+            ("return_net_pct", "DOUBLE PRECISION"), ("cost_pct", "DOUBLE PRECISION"), ("funding_pct", "DOUBLE PRECISION")]
     for table in ("signals", "shadow_signals", "scalp_signals")
 }
 

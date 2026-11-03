@@ -7,7 +7,11 @@ Standard rules (always on, exactly the v2.4 record):
   * three exits 50 % / 25 % / 25 % at TP1 / TP2 / TP3 (`runner`: one exit of the whole position at the runner target);
   * after TP1 the stop moves to break-even (entry), after TP2 to TP1 (runner: also to TP2 after TP3);
   * inside one candle the stop is checked first (the order of high and low is unknown: assume the worse);
-  * a stop exit fills at the stop level; the call expires at the last close of the horizon.
+  * a stop exit fills at the stop level - or, v2.13, at the candle's OPEN when the candle opens beyond the stop (a gap:
+    the price never traded at the stop; the same for the break-even / TP1 stop after TP1 / TP2); the call expires at the
+    last close of the horizon;
+  * v2.13: a limit entry fills only when the price trades THROUGH it (`find_fill`: beyond the limit by at least one
+    tick, `TICK_FRAC` of the price), never on a mere touch.
 Managed exits (params["managed"], setting MANAGED_EXITS, default off):
   * give-back: once the best open profit reached >= arm_r (before TP1), a retrace to peak * (1 - frac) closes the
     whole position. Within a candle: stop first, then give-back against the peak of PRIOR candles using this
@@ -32,6 +36,24 @@ TP_WEIGHTS = (0.5, 0.25, 0.25)
 DEFAULT_PARAMS = {"managed": False, "giveback_arm_r": 0.6, "giveback_frac": 0.5, "trail_atr_k": 2.0,
                   "time_stop_bars": 12, "time_stop_min_r": 0.25}
 MANAGED_REASONS = ("giveback", "trail", "time")
+# v2.13: "one tick" for the limit-fill rule. Tick sizes differ per coin and are not stored, so a tick is approximated
+# as 0.001 % of the limit price (BTC at 70,000: 0.7 USDT; ETH at 3,500: 0.035) - a candle that only touches the limit
+# does not fill it.
+TICK_FRAC = 1e-5
+GAP_FILLS = True          # v2.13: stop exits on a gap fill at the open (False only to replay the pre-v2.13 record)
+
+
+def trades_through(side: int, limit: float, low: float, high: float) -> bool:
+    """True when a candle traded through a limit entry (long: low below it by >= one tick; short: high above it)."""
+    tick = abs(float(limit)) * TICK_FRAC
+    return bool(low <= limit - tick) if side > 0 else bool(high >= limit + tick)
+
+
+def stop_fill(side: int, level: float, op: float, gap: bool = True) -> float:
+    """Price a stop exit fills at: the level, or the candle's open when it opened beyond the level (v2.13)."""
+    if gap and GAP_FILLS and ((side > 0 and op < level) or (side < 0 and op > level)):
+        return float(op)
+    return float(level)
 
 
 # ---- per-candle helpers (shared with services/bots.py) ------------------------------------------------------
@@ -137,6 +159,7 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
     bar_ms = bar_ms or path_ms
     hit = [False, False, False]
     stop_hit = final_hit = False
+    stop_px: float | None = None              # v2.13: where the stop exit filled (the open on a gap)
     closed_ts: int | None = None
     level = stop
     final = runner_target
@@ -177,7 +200,8 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
             level = trail_level(st, effective_stop(side, rule_level(), admin_stop, hit[0]), p, hit[0])
         if (side > 0 and lo <= level) or (side < 0 and hi >= level):
             stop_hit, closed_ts = True, ts
-            events.append({"ts": ts, "type": "stop", "price": level})
+            stop_px = stop_fill(side, level, op, gap=not fill_candle)
+            events.append({"ts": ts, "type": "stop", "price": stop_px})
             break
         gb = None if fill_candle else giveback_exit(st, op, hi, lo, p, hit[0])
         if gb is not None:
@@ -222,7 +246,7 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
                 "events": []}
     expired = closed_ts is None and complete
     last_close = rows[-1][4]              # expiry exits at the last close of the path (only used when nothing else fired)
-    fallback = level if stop_hit else managed_exit_px if managed_exit_px is not None else last_close
+    fallback = (stop_px if stop_px is not None else level) if stop_hit else managed_exit_px if managed_exit_px is not None else last_close
     if final is None:
         legs = [{"weight": w, "price": tps[k] if hit[k] else fallback} for k, w in enumerate(TP_WEIGHTS)]
     else:
@@ -268,10 +292,11 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
 
 
 def find_fill(side: int, entry: float, path: Iterable, until_ts: int | None = None) -> int | None:
-    """Index of the first candle (opened before `until_ts`) that trades through a limit entry, else None."""
+    """Index of the first candle (opened before `until_ts`) that trades THROUGH a limit entry (v2.13: beyond it by at
+    least one tick, not a touch), else None."""
     for i, (ts, op, hi, lo, cl) in enumerate(_rows(path)):
         if until_ts is not None and ts >= until_ts:
             return None
-        if (side > 0 and lo <= entry) or (side < 0 and hi >= entry):
+        if trades_through(side, entry, lo, hi):
             return i
     return None

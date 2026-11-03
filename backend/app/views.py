@@ -217,7 +217,8 @@ def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) 
         "funding_source": f"{next(iter(funding.values())).get('source') or 'Binance futures'} (live)" if funding else
             f"assumed {F.DEFAULT_FUNDING_RATE * 100:.2f}% per 8h: Binance's futures API is not reachable from the engine's "
             "server, your browser shows the live rate",
-        "assumptions": {"maintenance_margin": F.MAINTENANCE_MARGIN, "fee_rate": F.FUTURES_FEE_RATE,
+        "assumptions": {"maintenance_margin": F.MAINTENANCE_MARGIN, "maintenance_tiers": F.MAINTENANCE_TIERS,
+                        "fee_rate": F.FUTURES_FEE_RATE,
                         "max_suggested_leverage": 10, "liquidation_buffer": 1.5},
     }
 
@@ -277,7 +278,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
         sigs.append({"id": r["id"], "symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
                      "decision": r["decision"], "grade": p.get("grade"), "created_at": r["created_at"], "entry": r["entry"],
                      "stop": r["stop"], "tp1": r["tp1"], "tp2": r["tp2"], "tp3": r["tp3"], "status": r["status"],
-                     "closed_at": r["closed_at"], "return_pct": r["return_pct"], **tracking.margin_fields(r, p),
+                     "closed_at": r["closed_at"], **tracking.margin_fields(r, p), **tracking.result_fields(r),
                      **contract_fields(r, p), **live_fields(r, p), **({"adjustments": adj[r["id"]]} if r["id"] in adj else {}),
                      **({"proof": proofs[r["id"]]} if r["id"] in proofs else {})})
     # never-filled pullback entries and void calls (no market data) have no result: listed, never counted
@@ -289,9 +290,13 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
             return {"closed": 0}
         wins = r[r > 0]
         losses = r[r <= 0]
+        g = np.array([x.get("gross_return_pct", x["return_pct"]) for x in xs], float)
         out = {"closed": int(len(r)), "win_rate": float((r > 0).mean()), "avg_return_pct": float(r.mean()),
                "total_return_pct": float(r.sum()), "best_pct": float(r.max()), "worst_pct": float(r.min()),
-               "profit_factor": float(wins.sum() / -losses.sum()) if len(losses) and losses.sum() < 0 else None}
+               "profit_factor": float(wins.sum() / -losses.sum()) if len(losses) and losses.sum() < 0 else None,
+               # v2.13: the figures above are NET (after the 0.15 % round trip and funding); gross kept for reference
+               "net": True, "avg_gross_return_pct": float(g.mean()), "total_gross_return_pct": float(g.sum()),
+               "gross_win_rate": float((g > 0).mean())}
         return {**out, **roi_summary(xs)}
 
     by_tf = {tf: summ([x for x in closed if x["timeframe"] == tf]) for tf in sorted({x["timeframe"] for x in closed})}
@@ -334,7 +339,8 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "benchmark_return_pct": st.get("benchmark_return_pct"), "win_rate": st.get("win_rate"),
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
-    out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None, "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
+    out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None,
+           "honest_since": rt.db.get_setting("honest_record_since", None), "results_net": True, "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "not_filled": sum(x["status"] == "NOT_FILLED" for x in sigs), "void": sum(x["status"] == "VOID" for x in sigs),
             "signals": sigs[:limit]},
@@ -343,7 +349,11 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
             "method": {"live": "Every trade signal the engine published, followed candle by candle: half the position exits "
                                "at take-profit 1 (1:1), a quarter at take-profit 2 and a quarter at take-profit 3; after "
                                "take-profit 1 the stop moves to break-even, after take-profit 2 to take-profit 1. The rest "
-                               f"exits at the stop or when the call's time limit runs out ({horizon_text()}). Fees not included.",
+                               f"exits at the stop or when the call's time limit runs out ({horizon_text()}). Entry = the market price when "
+                               "the call was published (pullback calls: their limit, once the price trades through it). "
+                               f"Results are after fees: a {tracking.cost_pct():.2f}% futures round trip (fees, slippage, spread) "
+                               "and the funding paid or received while the trade was open; a trade counts as a win only "
+                               "if it made money after fees.",
                        "tested": "Walk-forward test: the models are trained only on data before each test period and then "
                                  "scored on the following period, which they never saw. A simulation, not live results."}}
     out["achievements"] = achievements(rt, out, bot_report)
@@ -370,14 +380,14 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
     end = start + WEEK
     rc, rp = record_clause(rt)
     rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL "
-                       f"AND closed_at >= ? AND closed_at < ? AND {rc} ORDER BY return_pct DESC", (start, end, *rp))
+                       f"AND closed_at >= ? AND closed_at < ? AND {rc} ORDER BY {tracking.net_sql()} DESC", (start, end, *rp))
     issued = rt.db.one(f"SELECT COUNT(*) AS n FROM signals WHERE status != 'INFO' AND {rc} AND created_at >= ? AND created_at < ?",
                        (*rp, start, end))["n"]
     trades = []
     for r in rows:
         p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
         trades.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
-                       "grade": p.get("grade"), "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"],
+                       "grade": p.get("grade"), "entry": r["entry"], "status": r["status"], **tracking.result_fields(r),
                        **tracking.margin_fields(r, p), "created_at": r["created_at"], "closed_at": r["closed_at"]})
     # best first by the headline number (ROI on margin; the price return where no leverage is known)
     trades.sort(key=lambda t: t["roi_pct"] if t.get("roi_pct") is not None else t["return_pct"], reverse=True)
@@ -414,7 +424,8 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
             "best": trades[:5], "worst": trades[-1] if trades else None,
             "best_coin": max(by_coin.items(), key=lambda kv: kv[1])[0] if by_coin else None,
             "scorecard_bots": bots, "radar_best": radar_best,
-            "basis": "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, before fees. "
+            "basis": "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, "
+                     f"after fees ({tracking.cost_pct():.2f}% round trip plus funding); a win is a trade that made money after fees. "
                      "ROI is on margin at the leverage each signal card suggested (price return x leverage); losses are multiplied the same way."}
 
 
@@ -441,10 +452,12 @@ def achievements(rt: Runtime, track: dict[str, Any], bot_report: dict[str, Any] 
     import numpy as np
 
     rc, rp = record_clause(rt)
-    rows = rt.db.query("SELECT symbol, side, status, return_pct, closed_at, entry, stop, payload FROM signals "
+    rows = rt.db.query("SELECT symbol, side, status, return_pct, return_net_pct, cost_pct, funding_pct, closed_at, created_at, "
+                       "filled_at, entry, stop, payload FROM signals "
                        f"WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL AND {rc} ORDER BY closed_at", rp)
     for r in rows:
         r.update(tracking.margin_fields(r))
+        r.update(tracking.result_fields(r))        # v2.13: net results (wins judged after fees)
         r.pop("payload", None)
     head = lambda r: r["roi_pct"] if r.get("roi_pct") is not None else r["return_pct"]  # noqa: E731
     out: list[dict[str, Any]] = []
@@ -530,21 +543,22 @@ def wins_today(rt: Runtime, limit: int = 6) -> dict[str, Any]:
     now = now_ms()
     for hours, label in ((24, "today"), (24 * 7, "this week")):
         rc, rp = record_clause(rt)
-        rows = rt.db.query("SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct > 0 AND closed_at >= ? "
-                           f"AND {rc} ORDER BY return_pct DESC LIMIT ?", (now - hours * 3_600_000, *rp, limit))
+        net = tracking.net_sql()
+        rows = rt.db.query(f"SELECT * FROM signals WHERE status NOT IN ('OPEN', 'INFO') AND return_pct IS NOT NULL AND {net} > 0 "
+                           f"AND closed_at >= ? AND {rc} ORDER BY {net} DESC LIMIT ?", (now - hours * 3_600_000, *rp, limit))
         if rows:
             break
     wins = [{"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
-             "entry": r["entry"], "status": r["status"], "return_pct": r["return_pct"], "closed_at": r["closed_at"],
+             "entry": r["entry"], "status": r["status"], **tracking.result_fields(r), "closed_at": r["closed_at"],
              "exit_reason": r.get("exit_reason"), **tracking.margin_fields(r),
              "target": {"TP1": r["tp1"], "TP2": r["tp2"], "TP3": r["tp3"]}.get(r["status"])} for r in rows]
     # v2.5: the same window's complete count, so losses show beside the wins (never only the winners)
     rc, rp = record_clause(rt)
     marks = ",".join("?" * len(tracking.CLOSED_STATUSES))
-    tot = rt.db.one(f"SELECT COUNT(*) AS n, SUM(CASE WHEN return_pct <= 0 THEN 1 ELSE 0 END) AS losses FROM signals "
+    tot = rt.db.one(f"SELECT COUNT(*) AS n, SUM(CASE WHEN {tracking.net_sql()} <= 0 THEN 1 ELSE 0 END) AS losses FROM signals "
                     f"WHERE status IN ({marks}) AND return_pct IS NOT NULL AND closed_at >= ? AND {rc}",
                     (*tracking.CLOSED_STATUSES, now - hours * 3_600_000, *rp))
-    return {"generated_at": now, "period": label if wins else None, "wins": wins,
+    return {"generated_at": now, "period": label if wins else None, "wins": wins, "net": True,
             "window_hours": hours, "closed": int(tot["n"] or 0), "losses": int(tot["losses"] or 0)}
 
 

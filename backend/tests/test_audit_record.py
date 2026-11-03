@@ -12,15 +12,18 @@ H1 = tf_ms("1h")
 BAR = 1_700_000_000_000 - (1_700_000_000_000 % tf_ms("4h"))
 
 
-def _a(decision="BUY", bar=BAR, tf="1h", side=1, entry=100.0, live=101.0, stop=None, tps=(102.0, 103.0, 104.0), **kw):
+def _a(decision="BUY", bar=BAR, tf="1h", side=1, entry=100.0, live=None, stop=None, tps=(102.0, 103.0, 104.0), **kw):
+    # v2.13: a market call is recorded at the live price, so by default the live price equals the plan's entry
+    live = entry if live is None else live
     stop = stop if stop is not None else entry - side * 2
     if side < 0:
         tps = tuple(entry - (t - entry) for t in tps)
+    rr = [abs(t - entry) / abs(entry - stop) for t in tps]
     return {"symbol": "BTC/USDT", "timeframe": tf, "bar_ts": bar, "price": live, "decision": decision, "grade": "A",
             "confidence": 0.6, "regime": {"regime": "BULL"}, "volatility": {"state": "NORMAL"},
             "signal": {"signal": "BUY" if side > 0 else "SELL", "score": 70, "reasons": [], "warnings": []},
             "setup": {"valid": True, "side_int": side, "ideal_entry": entry, "stop": stop, "risk_reward": 1.6, "atr": 1.0,
-                      "targets": [{"price": t, "rr": 1.0} for t in tps]}, "flags": [], **kw}
+                      "targets": [{"price": t, "rr": r} for t, r in zip(tps, rr)]}, "flags": [], **kw}
 
 
 class RT:
@@ -38,11 +41,19 @@ def _df(rows):
     return pd.DataFrame(rows, columns=["ts", "open", "high", "low", "close"])
 
 
-def test_a2_entry_is_the_plan_entry_and_market_calls_are_filled():
+def test_a2_market_calls_enter_at_the_live_price_and_are_filled():
+    # v2.13 (C1): a BUY filled at publication is recorded at the price the engine saw, not the plan's better ideal entry;
+    # targets are rebuilt in R from it with the same stop
     db = Database("sqlite:///:memory:")
     assert T.log_signal(db, _a(entry=100.0, live=101.3), now=BAR + H1 + 1000)
     s = db.one("SELECT * FROM signals")
-    assert s["entry"] == 100.0 and s["price"] == 101.3 and s["fill_status"] == "FILLED"
+    assert s["entry"] == 101.3 and s["price"] == 101.3 and s["fill_status"] == "FILLED"
+    assert s["stop"] == 98.0
+    d = 101.3 - 98.0
+    assert s["tp1"] == pytest.approx(101.3 + d) and s["tp2"] == pytest.approx(101.3 + 1.5 * d)
+    assert s["tp3"] == pytest.approx(101.3 + 2 * d)
+    rule = loads(s["payload"])["entry_rule"]
+    assert rule["mode"] == "market" and rule["ideal_entry"] == 100.0
     assert s["engine_version"] == "2.6.0" and s["app_version"] == "2.1.0"
     assert loads(s["payload"])["live_price"] == 101.3
 

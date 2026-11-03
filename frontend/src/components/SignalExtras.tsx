@@ -5,7 +5,7 @@
 //   row.stale           true when candles are too old to trade on
 import { useState } from "react";
 import { fmtPctRaw, isNum } from "../lib/format";
-import { roiOf, roiTone, signedPct } from "../lib/roi";
+import { roiLabel, roiOf, roiTone, signedPct } from "../lib/roi";
 import { AiTag } from "./ui";
 
 type Tone = "bull" | "bear" | "warn" | "accent" | "mute";
@@ -159,7 +159,7 @@ export function RoiFigure({ x, size = "md", align = "right", label = true }: { x
       </span>
       {label && (
         <span className="num whitespace-nowrap text-[10px] leading-none text-mute">
-          {r.onMargin ? <>ROI on margin · price {signedPct(r.price)}</> : "price move"}
+          {roiLabel(r)}
         </span>
       )}
     </span>

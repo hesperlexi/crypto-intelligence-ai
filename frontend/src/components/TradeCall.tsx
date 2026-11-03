@@ -62,7 +62,7 @@ function entryStatus(side: "LONG" | "SHORT", px: number, zone: [number, number])
 function planText(r: any, market: Market, v: Verdict, plan: any) {
   const parts = [`${r.symbol} ${market === "futures" ? "futures" : "spot"} · ${String(r.timeframe ?? "").toUpperCase()} · ${v.label}`];
   if (plan) {
-    parts.push(`Entry ${fmtPrice(plan.entry_zone?.[0])}–${fmtPrice(plan.entry_zone?.[1])} (ideal ${fmtPrice(plan.entry)})`);
+    parts.push(`Entry ${fmtPrice(plan.entry_zone?.[0])}–${fmtPrice(plan.entry_zone?.[1])} (${plan.recorded ? "recorded" : "ideal"} ${fmtPrice(plan.entry)})`);
     parts.push(`Stop-loss ${fmtPrice(plan.stop)}`);
     parts.push((plan.targets ?? []).map((t: any) => `${t.name} ${fmtPrice(t.price)}`).join(", "));
     if (market === "futures") parts.push(`Leverage ${plan.suggested_leverage}x (liquidation ${fmtPrice(plan.liquidation_at_suggested)})`);
@@ -99,7 +99,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
     for (const [i, tg] of [...(plan.targets ?? [])].entries()) levels.push({ k: `Take-profit ${tg.name.replace("TP", "")} · 1:${isNum(tg.rr) ? (Math.round(tg.rr * 100) / 100).toString() : "?"}`, price: tg.price, cls: "text-bull",
       note: [SPLIT[i], isNum(tg.probability) ? `${fmtProb(tg.probability)} hit before stop` : null].filter(Boolean).join(" · ") });
     if (run && isNum(run.target)) levels.push({ k: `Runner target · 1:${run.rr}`, price: run.target, cls: "text-bull", note: "AI: let it run · closes 100%" });
-    levels.push({ k: "Entry (ideal)", price: plan.entry, cls: "text-accent", note: plan.entry_zone ? `zone ${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined });
+    levels.push({ k: plan.recorded ? "Entry (recorded)" : "Entry (ideal)", price: plan.entry, cls: "text-accent", note: plan.entry_zone ? `zone ${fmtPrice(Math.min(...plan.entry_zone))} – ${fmtPrice(Math.max(...plan.entry_zone))}` : undefined });
     levels.push({ k: "Stop-loss", price: plan.stop, cls: "text-bear", note: isNum(plan.risk_pct) ? `risk ${fmtPctRaw(plan.risk_pct, 1, false)}` : undefined });
     if (market === "futures" && isNum(plan.liquidation_at_suggested)) levels.push({ k: `Liquidation at ${plan.suggested_leverage}x`, price: plan.liquidation_at_suggested, cls: "text-warn" });
     if (isNum(px)) levels.push({ k: "Price now", price: px, cls: "text-text", note: "live" });

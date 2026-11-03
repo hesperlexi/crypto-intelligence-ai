@@ -282,7 +282,7 @@ class BotEngine:
                "last_check": _first_full_candle(now), "exit_at": exit_at, "realized": -fee, "fees": fee,
                "exit_value": 0.0, "info": info, "lev": lev, "coll": fill / lev, "fee_rate": fee_rate,
                "market": "futures" if fut else "spot", "funding": 0.0, "funded_until": now,
-               "liq": F.liquidation_price(fill, side, lev) if fut else None, "margin": qty * fill / lev}
+               "liq": F.liquidation_price(fill, side, lev, symbol=symbol) if fut else None, "margin": qty * fill / lev}
         state["positions"].append(pos)
         return pos
 
@@ -643,7 +643,7 @@ class BotEngine:
             if fut:
                 lev = cfg.get("leverage", 1.0)
                 if cfg.get("safe_leverage", True):
-                    lev = float(min(lev, F.safe_leverage(entry, stop, lev)))
+                    lev = float(min(lev, F.safe_leverage(entry, stop, lev, symbol=s)))
             fee_rate = F.FUTURES_FEE_RATE if fut else self.fee
             # risk-based size (the stop decides the loss, not the leverage); the margin per position is capped
             mult = size_multiplier(a.get("grade"), a.get("filter_score"), a.get("filter_threshold")) if cfg.get("edge_sizing", True) else 1.0

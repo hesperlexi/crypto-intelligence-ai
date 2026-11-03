@@ -25,9 +25,9 @@ from . import membership
 log = logging.getLogger(__name__)
 FEE = 0.0005
 MAKER = 0.0002
-MMR = 0.005
+MMR = F.MAINTENANCE_MARGIN          # v2.13: fallback only; liquidation uses the coin's tier (futures.maintenance_rate)
 ADVERSE = (2 + 0.5) / 1e4
-MAX_LEV = 50
+MAX_LEV = 20                         # v2.13 (owner, 3 Nov 2026): members' auto-trade never above 20x (was 50x)
 TAKES = {"tp1": 0, "tp2": 1, "tp3": 2}
 # v2.4 testing mode: each member's auto-trade holds at most 3 trades at a time and opens at most 6 new ones a day
 MAX_OPEN_CAP = 3
@@ -40,8 +40,9 @@ def _rid(n: int = 10) -> str:
     return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
 
 
-def liq_price(entry: float, side: int, lev: float) -> float:
-    return max(0.0, entry * (1 - 1 / max(1, lev) + MMR)) if side > 0 else entry * (1 + 1 / max(1, lev) - MMR)
+def liq_price(entry: float, side: int, lev: float, symbol: str | None = None) -> float:
+    """v2.13: the coin's maintenance rate and the exit fee included (engine/futures.liquidation_price)."""
+    return F.liquidation_price(entry, side, lev, symbol=symbol, fee=FEE)
 
 
 def new_account(now: int, balance: float = 10_000.0) -> dict[str, Any]:
@@ -96,8 +97,12 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
     reversed_ = None
     # the call flipped on a coin the auto-trader holds: close that auto trade at market (profit or loss), drop an
     # auto order the other way, then take the new direction. Manual trades are never touched; no hedging.
+    # v2.13: only a position / order opened from a call of the SAME timeframe is reversed (a 15m flip never closes a
+    # 4h trade); otherwise the new call is skipped below (one position per coin).
+    tf = sig["timeframe"]
+    same_tf = lambda x: ((x.get("signal") or {}).get("timeframe") == tf)  # noqa: E731
     for key, pos in list(positions.items()):
-        if pos.get("symbol") == sym and pos.get("auto") and int(pos["side"]) != side:
+        if pos.get("symbol") == sym and pos.get("auto") and int(pos["side"]) != side and same_tf(pos):
             price_now = float(sig["price"])
             fill = price_now * (1 - pos["side"] * ADVERSE)
             fee = pos["qty"] * fill * FEE
@@ -114,7 +119,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
                          "realized_pnl": pnl, "roe_pct": pnl / pos["margin"] * 100 if pos["margin"] else None,
                          "funding": pos.get("funding") or 0, "opened_at": pos.get("opened_at"), "auto": True}
     for oid, od in list(orders.items()):
-        if od.get("symbol") == sym and od.get("auto") and int(od["side"]) != side:
+        if od.get("symbol") == sym and od.get("auto") and int(od["side"]) != side and same_tf(od):
             del orders[oid]
             acc = {**acc, "wallet": acc["wallet"] + od.get("reserve", 0), "orders": orders}
     if reversed_:
@@ -137,7 +142,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
     entry = price * (1 + side * ADVERSE) if market else ideal
     if side * (entry - stop) <= 0 or side * (take - entry) <= 0:
         return (acc if reversed_ else None), {**res, "action": "skipped", "reason": "price already moved past the stop or target"}
-    safe = F.safe_leverage(entry, stop, MAX_LEV, MMR, buffer=1.1)
+    safe = F.safe_leverage(entry, stop, MAX_LEV, None, buffer=1.5, symbol=sym)
     lev = int(p.get("suggested_leverage") or safe) if s["leverage"] == "signal" else int(s["leverage"])
     lev = max(1, min(lev, safe, MAX_LEV))           # never so high that liquidation comes before the stop
     from .bots import size_multiplier
@@ -150,7 +155,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
             return (acc if reversed_ else None), {**res, "action": "skipped", "reason": f"not enough virtual balance (${acc['wallet']:.2f})"}
         key = sym.replace("/", "")
         positions[key] = {"key": key, "symbol": sym, "side": side, "qty": qty, "entry": entry, "margin": margin, "leverage": lev,
-                          "liq": liq_price(entry, side, lev), "stop": stop, "take": take, "opened_at": now, "checked_at": now,
+                          "liq": liq_price(entry, side, lev, sym), "stop": stop, "take": take, "opened_at": now, "checked_at": now,
                           "funded_until": now, "funding": 0, "fees": fee, "auto": True, "signal": origin_of(sig)}
         t = acc.get("totals") or {}
         new = {**acc, "wallet": acc["wallet"] - margin - fee, "positions": positions, "totals": {**t, "fees": (t.get("fees") or 0) + fee}}

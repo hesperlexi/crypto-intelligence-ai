@@ -84,7 +84,7 @@ def test_every_win_is_posted_once_as_a_picture(tmp_path):
     add(4, "TP1", 0.4, t0 + 90_000)                                    # target 1 only: not one of the best wins
     out = T.run(rt, sink, None, None, t0 + 300_000, fake)
     assert out["sent"] == ["win"] and fake.sent[0]["photo"] is True
-    assert "GOLD LONG" in fake.sent[0]["text"] and "+16.00% ROI</b> · 10x margin (price +1.60%)" in fake.sent[0]["text"]
+    assert "GOLD LONG" in fake.sent[0]["text"] and "+14.49% ROI</b> · 10x margin (+1.45% after fees)" in fake.sent[0]["text"]   # v2.13: net
     T.run(rt, sink, None, None, t0 + 600_000, fake)                    # not posted twice
     assert len(fake.sent) == 1
 
@@ -105,7 +105,7 @@ def test_approve_first_keeps_the_card_until_the_owner_posts_it(tmp_path):
     out = T.run(rt, sink, WINS, None, ms(2026, 10, 27, 17), fake)
     assert fake.sent == [] and out["sent"] == ["wins (waiting for approval)"]
     items = sink.get(T.DRAFTS)["items"]
-    assert len(items) == 1 and items[0]["png"] and "+4.90%</b> price move" in items[0]["caption"]
+    assert len(items) == 1 and items[0]["png"] and "+4.90%</b> after fees" in items[0]["caption"]
     res = T.post_draft(sink, items[0]["id"], fake)
     assert res["sent"] and fake.sent[0]["photo"] and sink.get(T.DRAFTS)["items"] == []
     assert T.post_draft(sink, items[0]["id"], fake)["sent"] is False                 # not twice

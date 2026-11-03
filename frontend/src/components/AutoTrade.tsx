@@ -8,6 +8,8 @@ import { base, fmtPrice, fmtTime } from "../lib/format";
 import { myUid } from "../lib/session";
 import { Info } from "./ui";
 
+export const AUTO_MAX_LEV = 20;      // v2.13 (owner): auto-trade never above 20x (the engine caps it too)
+const clampLev = (l: any): number | "signal" => (l === "signal" || l == null ? "signal" : Math.max(1, Math.min(AUTO_MAX_LEV, Math.round(Number(l) || 1))));
 const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 3, coins: "all", notify: true, scale: true, max_same_side: 3 };
 type S = typeof DEF;
 
@@ -17,11 +19,11 @@ export default function AutoTrade() {
   const [log, setLog] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-  useEffect(() => onSnapshot(doc(db, "auto_paper", myUid()), (d) => { const v = { ...DEF, ...(d.data() ?? {}) } as S; setS(v); setSaved(v); }, () => {}), []);
+  useEffect(() => onSnapshot(doc(db, "auto_paper", myUid()), (d) => { const raw = { ...DEF, ...(d.data() ?? {}) } as S; const v = { ...raw, leverage: clampLev(raw.leverage) } as S; setS(v); setSaved(v); }, () => {}), []);
   useEffect(() => onSnapshot(doc(db, "auto_paper_state", myUid()), (d) => setLog(d.data()?.log ?? []), () => {}), []);
   const dirty = JSON.stringify(s) !== JSON.stringify(saved);
   const save = async (next: S, note: string) => {
-    try { await setDoc(doc(db, "auto_paper", myUid()), { ...next, updated_at: Date.now() }); setMsg(note); } catch (e: any) { setMsg(e.message); }
+    try { await setDoc(doc(db, "auto_paper", myUid()), { ...next, leverage: clampLev(next.leverage), updated_at: Date.now() }); setMsg(note); } catch (e: any) { setMsg(e.message); }
   };
   const toggleTf = (tf: string) => setS({ ...s, timeframes: s.timeframes.includes(tf) ? s.timeframes.filter((x) => x !== tf) : [...s.timeframes, tf] });
 
@@ -49,7 +51,7 @@ export default function AutoTrade() {
           <label className="block"><span className="text-xs text-mute">Leverage</span>
             <select className="input mt-1" value={String(s.leverage)} onChange={(e) => setS({ ...s, leverage: e.target.value === "signal" ? "signal" : Number(e.target.value) })}>
               <option value="signal">Suggested by the signal (safest)</option>
-              {[1, 2, 3, 5, 10, 20].map((l) => <option key={l} value={l}>{l}x (capped so liquidation stays beyond the stop)</option>)}
+              {[1, 2, 3, 5, 10, 20].filter((l) => l <= AUTO_MAX_LEV).map((l) => <option key={l} value={l}>{l}x (capped so liquidation stays beyond the stop)</option>)}
             </select></label>
           <div><span className="text-xs text-mute">Timeframes</span>
             <div className="mt-1 flex gap-1">{["15m", "1h", "4h", "12h", "1d", "3d"].map((tf) => <button key={tf} className={`btn flex-1 px-2 py-1.5 text-xs ${s.timeframes.includes(tf) ? "btn-on" : ""}`} aria-pressed={s.timeframes.includes(tf)} onClick={() => toggleTf(tf)}>{tf.toUpperCase()}</button>)}</div></div>

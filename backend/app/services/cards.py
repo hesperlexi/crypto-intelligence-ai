@@ -231,7 +231,7 @@ def _hero(img: Image.Image, box, value: float, lev: int | None, price: float, su
         y += 32
         lf = _f("Bold", 20)
         chip = f"{lev}x MARGIN"
-        mv = f"price {pct(price)}"
+        mv = f"{pct(price)} after fees"
         mf = _f("Medium", 22)
         tot = _tw(d, chip, lf) + 36 + 16 + _tw(d, mv, mf)
         e = _chip(d, int(cx - tot / 2), int(y), chip)
@@ -281,7 +281,7 @@ def result_card(w: dict[str, Any]) -> bytes:
             ("Targets hit", HIT.get(status, "none"), GREEN if status in HIT else MUTED),
             ("Held", str(w.get("held") or "—"), WHITE)]
     _rows(d, (M, 304, M + lw, 552), rows)
-    _hero(img, (616, 144, W - M, 552), val, lev, price, "half at TP1, a quarter at TP2 and TP3 · before fees")
+    _hero(img, (616, 144, W - M, 552), val, lev, price, "half at TP1, a quarter at TP2 and TP3 · after fees")
     d = ImageDraw.Draw(img)
     _footer(d)
     return _png(img)
@@ -356,7 +356,7 @@ def weekly_card(r: dict[str, Any]) -> bytes:
     tot_price = float(r["total_return_pct"])
     roi = r.get("total_roi_pct")
     _hero(img, (M, 136, 584, 400), float(roi) if roi is not None else tot_price, None, tot_price,
-          (f"price {pct(tot_price)} · " if roi is not None else "") + f"{r.get('closed', 0)} closed signals, all counted",
+          (f"{pct(tot_price)} after fees · " if roi is not None else "") + f"{r.get('closed', 0)} closed signals, all counted",
           "TOTAL ROI ON MARGIN" if roi is not None else "TOTAL PRICE MOVE")
     d = ImageDraw.Draw(img)
     kp = [("Wins", str(r["wins"]), GREEN), ("Losses", str(r["losses"]), RED),
@@ -382,7 +382,7 @@ def weekly_card(r: dict[str, Any]) -> bytes:
             val, lev, price = result(t)
             vt = pct(val)
             d.text((bx + cw - 24, 496), vt, font=_fit(d, vt, "ExtraBold", 30, 180), fill=GREEN, anchor="rs")
-            d.text((bx + cw - 24, 532), f"{lev}x · price {pct(price)}" if lev else "price move", font=_f("Medium", 16),
+            d.text((bx + cw - 24, 532), f"{lev}x · {pct(price)} after fees" if lev else "after fees", font=_f("Medium", 16),
                    fill=MUTED, anchor="rs")
     _footer(d, "Past results don't guarantee future results")
     return _png(img)
@@ -397,7 +397,7 @@ def teaser_card(s: dict[str, Any], mins: int) -> bytes:
     x = _side_pill(d, x + 12, y, side)
     x = _chip(d, x + 12, y, str(s["timeframe"]).upper())
     from ..engine.futures import signal_leverage
-    lev = signal_leverage(s.get("entry"), s.get("stop"))
+    lev = signal_leverage(s.get("entry"), s.get("stop"), symbol=s.get("symbol"))
     if lev:
         _chip(d, x + 12, y, f"{lev}x SUGGESTED")
     name = pair(s["symbol"])

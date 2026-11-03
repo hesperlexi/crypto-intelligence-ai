@@ -635,6 +635,12 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/bots", {**doc, "bots": keep, "defaults_added": seen, "updated_at": now_ms()})
                 notes["public_1d3d_v212"] = {"removed": sorted(demo_ids & {b.get("id") for b in doc["bots"]}), "added": added}
         rt.db.set_setting("public_1d3d_v212", True)
+    # v2.13 honest record (owner decision, 3 Nov 2026): calls are recorded at the real (market) entry and judged after fees,
+    # so the counted record restarts now for every timeframe (record_since = now, per-timeframe starts cleared) - wins and
+    # losses alike; older calls stay in the Signal log. Never on a fresh / empty database (nothing to restart).
+    honest = honest_record_v213(rt)
+    if honest is not None:
+        notes["honest_record_v213"] = honest
     # v1.0.0 fresh start (owner request, 30 Oct 2026): runs once, only after the owner's typed approval (reset_v1.APPROVED)
     from . import reset_v1
     rv = reset_v1.maybe_run(rt, sink, now_ms())
@@ -715,6 +721,24 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
     if mirror_migrations(rt, sink):
         notes["migrations_mirrored"] = True
     return notes
+
+
+def honest_record_v213(rt: Runtime, now: int | None = None) -> dict[str, Any] | None:
+    """One-time v2.13 record restart (flag `honest_record_v213`). Returns what it did, or None when already done."""
+    if rt.db.get_setting("honest_record_v213", False):
+        return None
+    now = now or now_ms()
+    n = rt.db.one("SELECT COUNT(*) AS n FROM signals")["n"]
+    if not n:
+        rt.db.set_setting("honest_record_v213", True)       # fresh database: nothing to restart, never runs later
+        return {"skipped": "empty database"}
+    old = {"record_since": rt.db.get_setting("record_since", None), "record_since_tf": rt.db.get_setting("record_since_tf", None)}
+    rt.db.set_setting("honest_record_prev", old)
+    rt.db.set_setting("record_since", now)
+    rt.db.set_setting("record_since_tf", {})
+    rt.db.set_setting("honest_record_since", now)
+    rt.db.set_setting("honest_record_v213", True)
+    return {"record_since": now, "previous": old}
 
 
 # ---- jobs queued by the website ---------------------------------------------------------------------------

@@ -31,13 +31,16 @@ def _stats(rows: list[dict[str, Any]]) -> dict[str, Any]:
     n = len(rows)
     if not n:
         return {"n": 0, "avg_return_pct": None, "tp1_rate": None}
-    return {"n": n, "avg_return_pct": sum(float(r["return_pct"]) for r in rows) / n,
+    from .tracking import net_pct
+    # v2.13: judged on the net result (after the round trip and funding), like the record
+    return {"n": n, "avg_return_pct": sum(float(net_pct(r)) for r in rows) / n,
             "tp1_rate": sum(1 for r in rows if r["status"] in ("TP1", "TP2", "TP3")) / n}
 
 
 def _closed(db: Database, table: str, symbol: str, timeframe: str, since: int) -> list[dict[str, Any]]:
     marks = ",".join("?" * len(CLOSED))
-    return db.query(f"SELECT status, return_pct FROM {table} WHERE symbol = ? AND timeframe = ? AND side != 0 "
+    return db.query(f"SELECT status, return_pct, return_net_pct, side, symbol, created_at, filled_at, closed_at FROM {table} "
+                    "WHERE symbol = ? AND timeframe = ? AND side != 0 "
                     f"AND status IN ({marks}) AND return_pct IS NOT NULL AND created_at >= ? "
                     f"ORDER BY created_at DESC LIMIT ?", (symbol, timeframe, *CLOSED, since, WINDOW))
 

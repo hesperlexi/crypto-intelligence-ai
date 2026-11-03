@@ -95,7 +95,7 @@ def test_all_in_sizing_leverage_capped_and_stop_before_liquidation(monkeypatch):
     _call(rt2.db, "c2", symbol="ETH/USDT", side=-1, stop=105.0, tps=(95.0, 92.0, 90.0))
     H.Hesper(rt2).run(NOW)
     pos = _state(rt2)["positions"][0]
-    assert pos["lev"] == F.safe_leverage(pos["entry"], 105.0, 25) < 25
+    assert pos["lev"] == F.safe_leverage(pos["entry"], 105.0, 25, symbol=pos["symbol"]) < 25
     assert pos["entry"] < pos["stop"] < pos["liq"]                                 # short: stop first, then liquidation
     assert (pos["liq"] - pos["entry"]) >= 1.5 * (105.0 - pos["entry"]) - 1e-9
 
@@ -155,7 +155,7 @@ def test_target_exits_follow_the_bots_rules_and_success_starts_a_new_run(quiet):
     H.Hesper(rt).run(NOW)
     pos = _state(rt)["positions"][0]
     lev = pos["lev"]
-    assert lev == 25 and F.safe_leverage(100.0, 98.0, 100) == 28           # 2 % stop: 28x would be safe, capped at 25
+    assert lev == 25 and F.safe_leverage(100.0, 98.0, 100, symbol="BTC/USDT") == 28   # 2 % stop: 28x would be safe, capped at 25
     # TP1 -> TP2 -> TP3 on the next candles
     _put(rt, "BTC/USDT", NOW, [(100, 102.2, 99.9, 102), (102, 103.6, 101.9, 103.5), (103.5, 105.2, 103.4, 105)])
     ev = H.Hesper(rt).run(NOW + 4 * STEP)

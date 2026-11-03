@@ -229,15 +229,17 @@ def open_call(db: Database, symbol: str, timeframe: str, table: str = "signals")
 
 def margin_fields(r: dict[str, Any], payload: dict[str, Any] | None = None) -> dict[str, Any]:
     """`leverage` (the card's suggested leverage: stored at log time, else derived from the row's entry and stop
-    with the same function) and `roi_pct` = return_pct x leverage, the result on margin."""
+    with the same function) and `roi_pct` = the result x leverage, on margin. v2.13: for a closed call the result is
+    the NET return (after costs and funding, `net_pct`); an open call's mark stays the price move."""
     from ..engine import futures as F
     p = payload if payload is not None else r.get("payload")
     if isinstance(p, str):
         p = loads(p, {})
     lev = (p or {}).get("leverage") if isinstance(p, dict) else None
     if not lev:
-        lev = F.signal_leverage(r.get("entry"), r.get("stop")) if r.get("side") else None
-    return {"leverage": int(lev) if lev else None, "roi_pct": F.roi_on_margin(r.get("return_pct"), lev)}
+        lev = F.signal_leverage(r.get("entry"), r.get("stop"), symbol=r.get("symbol")) if r.get("side") else None
+    ret = net_pct(r) if r.get("status") in CLOSED_STATUSES else r.get("return_pct")
+    return {"leverage": int(lev) if lev else None, "roi_pct": F.roi_on_margin(ret, lev)}
 
 
 def call_view(r: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -351,7 +353,12 @@ def entry_gate(db: Database, a: dict[str, Any], table: str = "signals", now: int
 
 
 def _plan(a: dict[str, Any], db: Database | None = None) -> dict[str, Any]:
-    """Entry, stop, targets and fill state of a tradable decision. Entry = the plan's ideal entry (what the card shows).
+    """Entry, stop, targets and fill state of a tradable decision.
+
+    v2.13 (honest entry): a call that is FILLED at publication is entered at the live / decision price (`a["price"]`),
+    never at the plan's ideal entry (which sits 0 - 0.5 ATR on the better side of the market). Targets are rebuilt in R
+    from that price with the same stop (the R multiples of the plan); if the price is already at / beyond the stop the
+    call is not recorded (`entry` None, `skip` set). BUY ON PULLBACK stays a PENDING limit at the ideal entry.
     v2.6 (ENTRY_RULES, per timeframe where proven): 'confirm' waits for a candle closing beyond price + k ATR in the trade
     direction, 'pullback' places a limit at price - k ATR; both are PENDING until filled within the fill window, and the
     recorded entry / targets are set at the fill (targets in R from the actual entry)."""
@@ -359,28 +366,41 @@ def _plan(a: dict[str, Any], db: Database | None = None) -> dict[str, Any]:
     tps = [t["price"] for t in setup.get("targets", [])] + [None, None, None]
     entry = setup.get("ideal_entry") or a.get("price")
     pending = a["decision"] == "BUY ON PULLBACK"
+    side = int(setup.get("side_int") or _side_of(a["decision"]))
+    ideal, stop0 = setup.get("ideal_entry") or a.get("price"), setup.get("stop")
+    d0 = abs(float(ideal) - float(stop0)) if ideal is not None and stop0 is not None else 0.0
+
+    def _rr(t: dict[str, Any], m: float) -> float:
+        if t.get("rr"):
+            return float(t["rr"])
+        return abs(float(t["price"]) - float(ideal)) / d0 if d0 and t.get("price") is not None else m
+    rr = [_rr(t, m) for t, m in zip(setup.get("targets", []), (1.0, 1.75, 2.5))] or [1.0, 1.75, 2.5]
     rule = None
+    mode, k = "old", 0.0
     if db is not None and a.get("timeframe"):
         from .series_nightly import entry_rule
         mode, k = entry_rule(db, a["timeframe"])
-        rr = [float(t.get("rr") or m) for t, m in zip(setup.get("targets", []), (1.0, 1.75, 2.5))] or [1.0, 1.75, 2.5]
-        if mode == "market":                      # proven for this timeframe: enter at the decision price, no limit
-            side = int(setup.get("side_int") or _side_of(a["decision"]))
-            px = float(a.get("price") or entry)
-            if setup.get("stop") is not None and side * (px - float(setup["stop"])) > 0:
-                d = abs(px - float(setup["stop"]))
-                entry, pending = px, False
-                tps = [px + side * m * d for m in rr] + [None, None, None]
-                rule = {"mode": "market", "k": 0.0, "rr": rr}
-        elif mode in ("confirm", "pullback") and setup.get("atr"):
-            side = int(setup.get("side_int") or _side_of(a["decision"]))
-            price = float(a.get("last_close") or a.get("price"))
-            rule = {"mode": mode, "k": k, "price": price, "atr": float(setup["atr"]), "rr": rr,
-                    "level": price + side * k * float(setup["atr"]) * (1 if mode == "confirm" else -1)}
-            pending = True
-            if mode == "pullback":
-                entry = rule["level"]
-    return {"side": int(setup.get("side_int") or _side_of(a["decision"])), "entry": entry, "stop": setup.get("stop"),
+    if mode in ("confirm", "pullback") and setup.get("atr"):
+        price = float(a.get("last_close") or a.get("price"))
+        rule = {"mode": mode, "k": k, "price": price, "atr": float(setup["atr"]), "rr": rr,
+                "level": price + side * k * float(setup["atr"]) * (1 if mode == "confirm" else -1)}
+        pending = True
+        if mode == "pullback":
+            entry = rule["level"]
+    elif mode == "market" or not pending:
+        # entered now: at the price the engine saw when it made the call (what a member could actually get)
+        px = float(a.get("price") or entry)
+        stop = setup.get("stop")
+        if stop is None or side * (px - float(stop)) <= 0:
+            return {"side": side, "entry": None, "stop": stop, "tps": [None, None, None], "rr": setup.get("risk_reward"),
+                    "atr": setup.get("atr"), "fill_status": None, "entry_rule": None,
+                    "skip": "the price is already at or beyond the stop"}
+        d = abs(px - float(stop))
+        entry, pending = px, False
+        tps = [px + side * m * d for m in rr] + [None, None, None]
+        rule = {"mode": "market", "k": 0.0, "rr": rr, "ideal_entry": setup.get("ideal_entry"),
+                "chosen": mode if mode == "market" else "old"}
+    return {"side": side, "entry": entry, "stop": setup.get("stop"),
             "tps": tps[:3], "rr": setup.get("risk_reward"), "atr": setup.get("atr"),
             "fill_status": "PENDING" if pending else "FILLED", "entry_rule": rule}
 
@@ -413,16 +433,21 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
             return res
     fc = a.get("forecast") or {}
     pl = _plan(a, db) if tradable else None
+    if pl is not None and pl.get("entry") is None:
+        why = pl.get("skip") or "no entry price"
+        log_decision(db, "skip_entry", sym, tf, None, {"decision": a["decision"], "reason": why,
+                                                      "live_price": a.get("price"), "stop": pl.get("stop")}, ts=now, dedupe=True)
+        return {"status": "not_logged", "reason": why, "id": None, "written": False}
     app_v, eng_v = versions()
     payload = {"reasons": sig.get("reasons"), "warnings": sig.get("warnings"), "flags": a.get("flags"),
                "decision_reason": a.get("decision_reason"), "grade": a.get("grade"),
-               "runner": setup.get("runner") if tradable else None,
+               "runner": _runner_for(setup.get("runner"), pl) if tradable else None,
                "entry_rule": pl.get("entry_rule") if pl else None}
     if tradable:
         from ..engine.futures import signal_leverage
         payload.update({"manage": manage_params(db), "live_price": a.get("price"),
                         "horizon_bars": horizon_for(a["timeframe"]),
-                        "leverage": signal_leverage(pl["entry"], pl["stop"]),
+                        "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol")),
                         "decision_basis": a.get("decision_basis"),
                         "ai_inputs": {"confidence": a.get("confidence"), "regime": (a.get("regime") or {}).get("regime"),
                                       "trend": _comp(sig, "trend"), "momentum": _comp(sig, "momentum"),
@@ -465,6 +490,16 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
     return {"status": "not_logged", "reason": "not stored", "id": None, "written": False}
 
 
+def _runner_for(run: dict[str, Any] | None, pl: dict[str, Any] | None) -> dict[str, Any] | None:
+    """v2.13: a runner target is rebuilt in R from the recorded entry when the call is entered at the market price."""
+    if not run or not run.get("on") or not pl or (pl.get("entry_rule") or {}).get("mode") != "market":
+        return run
+    d = abs(float(pl["entry"]) - float(pl["stop"]))
+    rr = float(run.get("rr") or 4.0)
+    tgt = float(pl["entry"]) + pl["side"] * rr * d
+    return {**run, "target": tgt, "move_pct": float(pl["side"] * (tgt / float(pl["entry"]) - 1) * 100)}
+
+
 def _comp(sig: dict[str, Any], key: str) -> float | None:
     for c in sig.get("components") or []:
         if c.get("key") == key:
@@ -495,6 +530,8 @@ def log_shadow(db: Database, a: dict[str, Any], decision: str, setup: dict[str, 
     if open_call(db, a["symbol"], a["timeframe"], "shadow_signals"):
         return False
     pl = _plan({**a, "decision": decision, "setup": setup})
+    if pl.get("entry") is None:
+        return False
     fc = a.get("forecast") or {}
     app_v, eng_v = versions()
     now = now_ms()
@@ -507,7 +544,7 @@ def log_shadow(db: Database, a: dict[str, Any], decision: str, setup: dict[str, 
         (new_id(), now, a["symbol"], a["timeframe"], a["bar_ts"], (a.get("signal") or {}).get("signal", ""), decision,
          (a.get("signal") or {}).get("score"), a.get("confidence"), (a.get("regime") or {}).get("regime"), a["price"],
          pl["side"], pl["entry"], pl["stop"], *pl["tps"], pl["rr"], fc.get("model_version"),
-         dumps({"shadow": True, "runner": setup.get("runner"), "manage": manage_params(db),
+         dumps({"shadow": True, "runner": _runner_for(setup.get("runner"), pl), "manage": manage_params(db),
                 "horizon_bars": horizon_for(a["timeframe"])}),
          pl["fill_status"], now if pl["fill_status"] == "FILLED" else None, pl["atr"], app_v, eng_v))
     return n > 0
@@ -571,7 +608,7 @@ def log_scalp(db: Database, a: dict[str, Any], now: int | None = None, extra: di
     payload = {"scalp": True, "grade": demo["grade"], "decision_reason": a.get("decision_reason"),
                "decision_basis": a.get("decision_basis"), "runner": setup.get("runner"), "entry_rule": pl.get("entry_rule"),
                "manage": manage_params(db), "live_price": a.get("price"), "horizon_bars": horizon_for(a["timeframe"]),
-               "leverage": signal_leverage(pl["entry"], pl["stop"]), "risk_pct": setup.get("risk_pct"),
+               "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol")), "risk_pct": setup.get("risk_pct"),
                "targets_r": [t.get("rr") for t in setup.get("targets", [])], **(extra or {})}
     sid = new_id()
     n = db.execute(
@@ -587,6 +624,105 @@ def log_scalp(db: Database, a: dict[str, Any], now: int | None = None, extra: di
     if n == 0:
         return {**res, "status": "not_logged", "reason": "a call was already logged on this candle"}
     return {"status": "logged", "reason": None, "id": sid}
+
+
+# ---- v2.13 net results ------------------------------------------------------------------------------------------
+# Every closed call stores, beside its gross price return (`return_pct`, 50/25/25 blended exits):
+#   cost_pct       = the futures round trip the app uses everywhere (analysis.round_trip_cost(futures=True): 0.05 %
+#                    taker fee + 2 bp slippage + half of a 1 bp spread, on the way in and on the way out = 0.15 %);
+#   funding_pct    = funding paid (+) or received (-) over the hold, on the part of the position still open: 100 % until
+#                    TP1, 50 % until TP2, 25 % until the close (a runner keeps 100 %). Longs pay a positive rate, shorts
+#                    receive it. Rates: the stored hourly funding history of the coin (`derivs` funding_1h, Hyperliquid);
+#                    an hour with no stored rate uses the bots' default (futures.DEFAULT_FUNDING_RATE, 0.01 % per 8 h,
+#                    i.e. 1/8 of it per hour). Hourly accrual approximates Binance's 8-hourly payments.
+#   return_net_pct = return_pct - cost_pct - funding_pct: the headline result, and the one wins / losses are judged
+#                    on (a +0.10 % gross "win" is a -0.05 % net loss).
+# Rows closed before v2.13 have no stored net: `net_pct(row)` estimates it the same way with the default rate over the
+# whole hold at full size (never better than the stored method would give for a long).
+HOUR_MS = 3_600_000
+
+
+def cost_pct() -> float:
+    from .analysis import round_trip_cost
+    return round_trip_cost(futures=True) * 100
+
+
+def exposure(start: int, end: int | None, events: list[dict[str, Any]], runner: bool = False) -> list[tuple[int, int, float]]:
+    """(from, to, share of the position open) from the fill to the close, from the follow's events."""
+    if end is None or end <= start:
+        return []
+    if runner:
+        return [(start, int(end), 1.0)]
+    cuts = [(int(e["ts"]), w) for e, w in ((next((e for e in events if e["type"] == "tp1"), None), 0.5),
+                                         (next((e for e in events if e["type"] == "tp2"), None), 0.25)) if e]
+    out, t, w = [], int(start), 1.0
+    for ts, nw in cuts:
+        ts = max(t, min(ts, int(end)))
+        if ts > t:
+            out.append((t, ts, w))
+        t, w = ts, nw
+    if int(end) > t:
+        out.append((t, int(end), w))
+    return out
+
+
+def funding_pct(db: Database | None, symbol: str, side: int, segs: list[tuple[int, int, float]]) -> float:
+    """Funding paid (+) / received (-) in % of the position's entry notional over the exposure segments."""
+    from ..engine.futures import DEFAULT_FUNDING_RATE
+    if not segs:
+        return 0.0
+    lo, hi = min(a for a, _, _ in segs), max(b for _, b, _ in segs)
+    rates: dict[int, float] = {}
+    if db is not None:
+        try:
+            for r in db.query("SELECT ts, value FROM derivs WHERE symbol = ? AND kind = 'funding_1h' AND ts > ? AND ts <= ?",
+                              (symbol, lo - HOUR_MS, hi + HOUR_MS)):
+                rates[int(r["ts"]) // HOUR_MS * HOUR_MS] = float(r["value"])
+        except Exception:
+            rates = {}
+    default = DEFAULT_FUNDING_RATE / 8
+    total = 0.0
+    for a, b, w in segs:
+        first = (a // HOUR_MS + 1) * HOUR_MS
+        for t in range(first, b + 1, HOUR_MS):
+            total += w * rates.get(t, default)
+    return float(side * total * 100)
+
+
+def net_fields(db: Database | None, symbol: str, side: int, gross: float,
+               segs: list[tuple[int, int, float]] | None) -> dict[str, float]:
+    c = cost_pct()
+    f = funding_pct(db, symbol, side, segs or [])
+    return {"cost_pct": c, "funding_pct": f, "return_net_pct": float(gross) - c - f}
+
+
+def net_sql() -> str:
+    """SQL expression of a row's net result (stored, else the gross minus the round-trip cost) for WHERE / ORDER BY."""
+    return f"COALESCE(return_net_pct, return_pct - {cost_pct():.6f})"
+
+
+def result_fields(r: dict[str, Any]) -> dict[str, Any]:
+    """Record-row result fields (v2.13): `return_pct` = the NET result of a closed call (headline; wins and losses are
+    judged on it), `gross_return_pct` = the price return before costs, plus `cost_pct` / `funding_pct`. Open and
+    unfilled rows keep their (gross) mark."""
+    if r.get("status") not in CLOSED_STATUSES or r.get("return_pct") is None:
+        return {"return_pct": r.get("return_pct"), "gross_return_pct": r.get("return_pct")}
+    net = net_pct(r)
+    c = r.get("cost_pct") if r.get("cost_pct") is not None else cost_pct()
+    f = r.get("funding_pct") if r.get("funding_pct") is not None else float(r["return_pct"]) - c - net
+    return {"return_pct": net, "gross_return_pct": float(r["return_pct"]), "cost_pct": float(c), "funding_pct": float(f),
+            "net": True}
+
+
+def net_pct(r: dict[str, Any]) -> float | None:
+    """The row's net result: stored (v2.13), else estimated (default funding, full size, fill to close)."""
+    if r.get("return_net_pct") is not None:
+        return float(r["return_net_pct"])
+    if r.get("return_pct") is None:
+        return None
+    start = r.get("filled_at") or r.get("created_at")
+    segs = [(int(start), int(r["closed_at"]), 1.0)] if start and r.get("closed_at") else []
+    return net_fields(None, r.get("symbol") or "", int(r.get("side") or 0), float(r["return_pct"]), segs)["return_net_pct"]
 
 
 def _bar_ms(tf: str) -> int:
@@ -692,6 +828,9 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
                    complete=covered or wall_over, first_is_fill=first_is_fill,
                    start_ts=int(path["ts"].iloc[0]) if len(path) else None, bar_ms=step, path_ms=pms,
                    adjust=adjust)
+    if res["status"] != "OPEN" and len(path):
+        out["exposure"] = exposure(int(path["ts"].iloc[0]) if not s.get("filled_at") else int(s["filled_at"]),
+                                   res["closed_ts"], res["events"], bool(run.get("on")))
     out.update(status=res["status"], tp1_hit=int(res["hits"][0]), tp2_hit=int(res["hits"][1]), tp3_hit=int(res["hits"][2]),
                stop_hit=int(res["stop_hit"]), closed_at=res["closed_ts"], return_pct=res["return_pct"],
                peak_r=res["peak_r"], peak_pct=res["peak_pct"], exit_reason=res["exit_reason"], managed=res["managed"])
@@ -704,7 +843,7 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
     return out
 
 
-TRACKED = ("status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "closed_at", "return_pct", "fill_status", "filled_at",
+TRACKED = ("return_net_pct", "cost_pct", "funding_pct", "status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "closed_at", "return_pct", "fill_status", "filled_at",
            "peak_r", "peak_pct", "exit_reason", "managed",
            "entry", "tp1", "tp2", "tp3")       # v2.6: set once, at a confirmation fill (the actual entry)
 
@@ -740,6 +879,9 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
         adj = adjustments_of(db, s["id"]) if table == "signals" else None
         res = evaluate_signal(s, paths[s["symbol"]], own, now, horizon_bars, params, adj)
         events = res.pop("events")
+        expo = res.pop("exposure", None)
+        if res.get("status") in CLOSED_STATUSES and res.get("return_pct") is not None:
+            res.update(net_fields(db, s["symbol"], int(s["side"]), float(res["return_pct"]), expo))
         upd = {k: v for k, v in res.items() if k in TRACKED}
         if upd.get("status") == "OPEN":
             upd["closed_at"] = None
@@ -769,6 +911,7 @@ def signal_history(db: Database, symbol: str | None = None, limit: int = 200) ->
     for r in rows:
         r["payload"] = loads(r["payload"], {})
         r.update(margin_fields(r, r["payload"]))
+        r.update(result_fields(r))                 # v2.13: closed calls show the net result (gross kept beside it)
         if r["id"] in adj:
             r["adjustments"] = adj[r["id"]]
     return rows
@@ -777,19 +920,21 @@ def signal_history(db: Database, symbol: str | None = None, limit: int = 200) ->
 def signal_summary(db: Database) -> dict[str, Any]:
     """Closed calls with a result; never-filled and void calls are counted separately (visible, not in the rates)."""
     marks = ",".join("?" * len(CLOSED_STATUSES))
-    rows = db.query(f"SELECT status, return_pct, side, entry, stop, payload FROM signals WHERE status IN ({marks}) "
-                    "AND return_pct IS NOT NULL",
+    rows = db.query(f"SELECT status, return_pct, return_net_pct, side, entry, stop, payload, symbol, created_at, filled_at, "
+                    f"closed_at FROM signals WHERE status IN ({marks}) AND return_pct IS NOT NULL",
                     CLOSED_STATUSES)
     other = {r["status"]: int(r["n"]) for r in db.query(
         "SELECT status, COUNT(*) AS n FROM signals WHERE status IN ('NOT_FILLED', 'VOID') GROUP BY status")}
     extra = {"not_filled": other.get("NOT_FILLED", 0), "void": other.get("VOID", 0)}
     if not rows:
         return {"closed": 0, **extra, "note": "No tracked trade signals have closed yet."}
-    rets = np.array([r["return_pct"] for r in rows], float)
+    rets = np.array([net_pct(r) for r in rows], float)          # v2.13: net (after costs and funding)
+    gross = np.array([r["return_pct"] for r in rows], float)
     rois = np.array([v if (v := margin_fields(r)["roi_pct"]) is not None else np.nan for r in rows], float)
     rois = rois[np.isfinite(rois)]
     return {"closed": len(rows), **extra, "win_rate": float((rets > 0).mean()) if len(rets) else None,
-            "avg_return_pct": float(rets.mean()) if len(rets) else None,
+            "avg_return_pct": float(rets.mean()) if len(rets) else None, "net": True,
+            "avg_gross_return_pct": float(gross.mean()) if len(gross) else None,
             "avg_roi_pct": float(rois.mean()) if len(rois) else None,
             "by_status": {s: sum(r["status"] == s for r in rows) for s in CLOSED_STATUSES},
             "generated_at": int(time.time() * 1000)}

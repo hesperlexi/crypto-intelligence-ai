@@ -126,9 +126,11 @@ def test_track_record_view_is_honest_and_complete():
     rt.db.execute(ins, ("c", 3, 3, "OPEN", None, None, '{}'))
     v = views.track_record(rt, {"bots": []})
     s = v["live"]["summary"]
-    assert s["closed"] == 2 and s["win_rate"] == 0.5 and abs(s["total_return_pct"] - 1.0) < 1e-9
+    # v2.13: results are net of the 0.15 % round trip (no funding hour crossed here); gross kept beside them
+    assert s["closed"] == 2 and s["win_rate"] == 0.5 and abs(s["total_return_pct"] - 0.7) < 1e-9
+    assert abs(s["total_gross_return_pct"] - 1.0) < 1e-9
     assert v["live"]["open"] == 1 and v["live"]["by_grade"]["A"]["closed"] == 1 and len(v["live"]["signals"]) == 3
-    assert [p["cum_return_pct"] for p in v["live"]["curve"]] == [6.0, 1.0]
+    assert [round(p["cum_return_pct"], 9) for p in v["live"]["curve"]] == [5.85, 0.7]
 
 
 def test_weekly_report_shows_best_trades_and_the_full_totals():
@@ -147,7 +149,7 @@ def test_weekly_report_shows_best_trades_and_the_full_totals():
     rt.db.execute(ins, ("c", st + 3, "SOL/USDT", 3, "TP1", 2.0, st + views.WEEK + 5))     # closes next week
     r = views.weekly_report(rt, st)
     assert r["closed"] == 2 and r["wins"] == 1 and r["losses"] == 1 and r["issued"] == 3
-    assert r["best"][0]["symbol"] == "BTC/USDT" and r["worst"]["symbol"] == "ETH/USDT" and abs(r["total_return_pct"] - 5) < 1e-9
+    assert r["best"][0]["symbol"] == "BTC/USDT" and r["worst"]["symbol"] == "ETH/USDT" and abs(r["total_return_pct"] - 4.7) < 1e-9
 
 
 def test_achievements_unlock_only_from_real_results():
@@ -165,7 +167,7 @@ def test_achievements_unlock_only_from_real_results():
     v = views.track_record(rt, {"bots": []})
     a = {x["id"]: x for x in v["achievements"]}
     assert a["signals_10"]["unlocked"] and not a["signals_50"]["unlocked"] and 0 < a["signals_50"]["progress"] < 1
-    assert a["best_trade"]["value"] == "+75.0% ROI" and a["best_trade"]["leverage"] == 10 and a["best_trade"]["return_pct"] == 7.5 and a["win_streak"]["value"] == "3 in a row" and a["all_targets"]["unlocked"]
+    assert a["best_trade"]["value"] == "+73.5% ROI" and a["best_trade"]["leverage"] == 10 and abs(a["best_trade"]["return_pct"] - 7.35) < 1e-9 and a["win_streak"]["value"] == "3 in a row" and a["all_targets"]["unlocked"]
     assert not a["win_rate_30d"]["unlocked"]                # 12 signals: fewer than the 20 required
     assert v["achievements"][0]["unlocked"] and not v["achievements"][-1]["unlocked"]
 
