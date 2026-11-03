@@ -427,6 +427,33 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   Settings → About shows "v<version> · build <BUILD_ID>"; the landing footer has an "Android app (APK)" link.
 - Removed dead files: `pages/Futures.tsx`, `pages/Track.tsx`, `components/Scalping.tsx`, `lib/scalpCard.ts`.
 
+## AI research v3 (Nov 2026, branch `ai-research-v3`; research only, nothing live changed)
+- Code: `app/research_v3.py` (`python -m app.research aiv3 --mode dev|final`), `app/ml/meta_v3.py` (purged folds, HistGB
+  meta-models, isotonic calibrator, reliability, block bootstrap coin x week, White RC / Hansen SPA, Holm), workflow
+  `research-aiv3.yml` (push trigger on the branch, env `MODE`; restores the state cache read-only; JSON to
+  `research-results/results/aiv3-<mode>-*.json`). Tests `tests/test_research_v3.py` (harness == `log_signal` +
+  `update_signal_outcomes` incl. gaps / limits / confirm / pullback / funding; targets == `build_setup`).
+- Harness = live record rules: `tracking._plan` (honest market entry at the open of the 15m candle ~1 min after the close,
+  live nightly entry rule per TF), 15m leverage gate, `tracking.evaluate_signal` (15m path, horizon_for, gap / through fills),
+  `net_fields` (0.15 % + stored hourly funding), live TP2/TP3 pick from base rates known at the decision (stop snapped to
+  0.05 ATR), `entry_gate` one-at-a-time / cooldown / re-entry cap, news guard. Candidates = pipeline calls + both sides of a
+  bar grid (baselines random / EMA21-50 trend / always-long, and the meta direction maker).
+- Validation: per-TF calendar cut, last 20 % of the OOS span = holdout, evaluated ONCE (`aiv3-final-20261103T204940Z.json`,
+  prior final runs 0); dev = decided AND closed before the cut; 5 purged expanding folds (embargo = horizon); thresholds and
+  isotonic calibration on out-of-fold scores only; 142 configurations registered (`registry`).
+- **Result (holdout, net R/trade, 95 % block CI)**: current pipeline 15m −0.50 (n 7, 0.4 months!), 1h −0.08 (24), 4h −0.01
+  [−0.14, 0.11] (258), 12h −0.03 [−0.18, 0.14] (128), 1d +0.32 [−0.15, 0.76] (15), 3d −0.15 (3): none beats costs with
+  confidence. Meta-model OOF Brier skill only 0.2-0.6 %; no new config (filters at q50 / dev-best / E[R]>0, combined, direction
+  maker) passes Holm + RC/SPA vs zero and vs current on any TF (best: 1d filter_best +0.38 R n 22, Holm p 0.18; 4h direction
+  E[R]>0 +0.025 R, n 789). Baselines are as good as the pipeline (4h trend +0.016, 12h always-long +0.017).
+- Honest confidence: calibrated P(net win) ≈ the base rate (~50 %, holdout Brier skill ≈ 0, ECE 0.1-3 % on big sets); the live
+  "confidence" (next-bar hit rate) has negative Brier skill (−0.6 to −1.6 %) and ECE 1.5-6 % → it overstates. Not switched.
+- Old pieces (retrained on dev with their own exams, item 3): trade_filter v1, filter2, runner, target, the live entry rule
+  vs v2.5 - none survives (Holm p ≥ 0.33). filter2's exam enables on permuted labels 5-30 % of the time. Stored gates: deriv
+  6 on, 0 survive Holm/BH (138 tests); htf 12 on, 1 survives (SOL 15m).
+- No `META_FILTER_V3` / `CONFIDENCE_V3` flags were added (nothing passed). Caveats: 15m/1h holdouts are short; base models'
+  hyper-parameters / gates and earlier research overlap the holdout; a new honest holdout needs ~3-6 months of new data.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,
