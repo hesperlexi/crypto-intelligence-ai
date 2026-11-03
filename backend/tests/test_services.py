@@ -115,7 +115,7 @@ def test_signal_history_tracks_targets_and_stops():
     px = float(bar["close"])
     a = {"symbol": "BTC/USDT", "timeframe": "4h", "bar_ts": int(bar["ts"]), "price": px, "decision": "BUY",
          "confidence": 0.6, "regime": {"regime": "BULL"}, "signal": {"signal": "BUY", "score": 70, "reasons": [], "warnings": []},
-         "setup": {"valid": True, "side_int": 1, "stop": px * 0.95, "risk_reward": 2.0,      # v2.14: a stop 10x can take
+         "setup": {"valid": True, "side_int": 1, "stop": px * 0.5, "risk_reward": 2.0,
                    "targets": [{"price": px * 1.0001}, {"price": px * 1.0002}, {"price": px * 1e6}]}, "flags": []}
     pub = int(bar["ts"]) + tf_ms("4h")                    # v2.5: published when its candle closed; followed from then on
     assert tracking.log_signal(rt.db, a, now=pub) is True

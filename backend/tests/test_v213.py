@@ -38,7 +38,7 @@ def test_sell_is_recorded_at_the_live_price_not_the_better_ideal_entry():
     assert s["entry"] == 99.4 and s["fill_status"] == "FILLED"
     d = 102.0 - 99.4
     assert s["tp1"] == pytest.approx(99.4 - d)                     # TP1 = exactly 1R from the real entry
-    assert loads(s["payload"])["leverage"] == F.signal_leverage(99.4, 102.0, symbol="BTC/USDT", grade="A")
+    assert loads(s["payload"])["leverage"] == F.signal_leverage(99.4, 102.0, symbol="BTC/USDT")
 
 
 def test_pullback_stays_a_pending_limit_at_the_ideal_entry():
@@ -237,13 +237,12 @@ def _sig(tf="1h", side=1, px=100.0):
             "call": {"id": "c1", "created_at": 1}}
 
 
-def test_autotrade_leverage_is_10_to_50x_chosen_by_the_engine():
-    # v2.14 (owner, 3 Nov 2026): 10-50x (v2.13 capped it at 20x); a member setting is only a ceiling, never below 10x
-    assert AP.MAX_LEV == 50 and AP.MIN_LEV == 10
-    assert AP.settings_of({"leverage": 80})["leverage"] == 50 and AP.settings_of({"leverage": 3})["leverage"] == 10
+def test_autotrade_leverage_is_capped_at_20x():
+    assert AP.MAX_LEV == 20
+    assert AP.settings_of({"leverage": 50})["leverage"] == 20
     s = AP.settings_of({"enabled": True, "leverage": 50, "scale": False})
     acc, res = AP.place(None, {**_sig(), "plan": {**_sig()["plan"], "stop": 99.9}}, s, 1000)
-    assert res["action"] == "opened" and res["leverage"] == 50
+    assert res["action"] == "opened" and res["leverage"] <= 20
     pos = next(iter(acc["positions"].values()))
     assert pos["liq"] == pytest.approx(F.liquidation_price(pos["entry"], 1, pos["leverage"], symbol="BTC/USDT", fee=AP.FEE))
 

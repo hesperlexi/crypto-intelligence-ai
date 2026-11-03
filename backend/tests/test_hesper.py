@@ -77,14 +77,14 @@ def test_one_time_start_and_never_restarted(quiet):
 
 def test_all_in_sizing_leverage_capped_and_stop_before_liquidation(monkeypatch):
     monkeypatch.setattr(analysis, "analyze", lambda *a, **k: {"status": "OK", "decision": "HOLD"})
-    # tight stop (0.5 %): the safe leverage would be far above 50 -> capped at 50 (v2.14: 10-50x chosen by the engine)
+    # tight stop (0.5 %): the safe leverage would be far above 25 -> capped at 25
     rt = _rt()
     _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
     _call(rt.db, "c1", stop=99.5, tps=(100.5, 101.0, 101.5))
     ev = H.Hesper(rt).run(NOW)
     assert ev and ev[0]["type"] == "open"
     pos = _state(rt)["positions"][0]
-    assert pos["lev"] == 50 == H.MAX_LEVERAGE
+    assert pos["lev"] == 25 <= H.MAX_LEVERAGE
     spent = pos["margin"] + pos["fees"]
     assert spent == pytest.approx(H.START_BALANCE * H.ALL_IN, rel=1e-3)           # the whole balance (with costs: slippage)
     assert spent <= H.START_BALANCE and _state(rt)["cash"] >= 0
@@ -95,8 +95,7 @@ def test_all_in_sizing_leverage_capped_and_stop_before_liquidation(monkeypatch):
     _call(rt2.db, "c2", symbol="ETH/USDT", side=-1, stop=105.0, tps=(95.0, 92.0, 90.0))
     H.Hesper(rt2).run(NOW)
     pos = _state(rt2)["positions"][0]
-    assert pos["lev"] == F.engine_leverage(100.0, 105.0, "ETH/USDT", "A") == F.safe_max_leverage(100.0, 105.0, "ETH/USDT")
-    assert 10 <= pos["lev"] < 50                                                    # grade A: 100 % of the safe max
+    assert pos["lev"] == F.safe_leverage(pos["entry"], 105.0, 25, symbol=pos["symbol"]) < 25
     assert pos["entry"] < pos["stop"] < pos["liq"]                                 # short: stop first, then liquidation
     assert (pos["liq"] - pos["entry"]) >= 1.5 * (105.0 - pos["entry"]) - 1e-9
 
@@ -156,7 +155,7 @@ def test_target_exits_follow_the_bots_rules_and_success_starts_a_new_run(quiet):
     H.Hesper(rt).run(NOW)
     pos = _state(rt)["positions"][0]
     lev = pos["lev"]
-    assert lev == 28 and F.safe_max_leverage(100.0, 98.0, "BTC/USDT") == 28   # 2 % stop, grade A: the safe max, 28x
+    assert lev == 25 and F.safe_leverage(100.0, 98.0, 100, symbol="BTC/USDT") == 28   # 2 % stop: 28x would be safe, capped at 25
     # TP1 -> TP2 -> TP3 on the next candles
     _put(rt, "BTC/USDT", NOW, [(100, 102.2, 99.9, 102), (102, 103.6, 101.9, 103.5), (103.5, 105.2, 103.4, 105)])
     ev = H.Hesper(rt).run(NOW + 4 * STEP)

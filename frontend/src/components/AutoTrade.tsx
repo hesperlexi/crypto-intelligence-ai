@@ -8,11 +8,8 @@ import { base, fmtPrice, fmtTime } from "../lib/format";
 import { myUid } from "../lib/session";
 import { Info } from "./ui";
 
-// v2.14 (owner, 3 Nov 2026): 10-50x, chosen by the engine per trade (stop distance, coin tier, grade); a number here
-// is only a ceiling (never below 10x). The engine applies the same rule (services/autopaper.py).
-export const AUTO_MIN_LEV = 10;
-export const AUTO_MAX_LEV = 50;
-const clampLev = (l: any): number | "signal" => (l === "signal" || l == null ? "signal" : Math.max(AUTO_MIN_LEV, Math.min(AUTO_MAX_LEV, Math.round(Number(l) || AUTO_MIN_LEV))));
+export const AUTO_MAX_LEV = 20;      // v2.13 (owner): auto-trade never above 20x (the engine caps it too)
+const clampLev = (l: any): number | "signal" => (l === "signal" || l == null ? "signal" : Math.max(1, Math.min(AUTO_MAX_LEV, Math.round(Number(l) || 1))));
 const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 3, coins: "all", notify: true, scale: true, max_same_side: 3 };
 type S = typeof DEF;
 
@@ -36,7 +33,7 @@ export default function AutoTrade() {
         <div>
           <div className="flex items-center gap-2 font-semibold">Auto-trade signals {saved.enabled && <span className="rounded bg-bull/15 px-1.5 py-0.5 text-[11px] font-bold text-bull">ON</span>}</div>
           <p className="text-xs text-mute">{saved.enabled
-            ? `${saved.timeframes.map((t) => t.toUpperCase()).join(" + ")} · grade ${saved.grades === "A" ? "A" : "A+B"} · $${saved.margin} margin · ${saved.leverage === "signal" ? "10–50x by engine" : `engine, max ${saved.leverage}x`} leverage · also while the app is closed`
+            ? `${saved.timeframes.map((t) => t.toUpperCase()).join(" + ")} · grade ${saved.grades === "A" ? "A" : "A+B"} · $${saved.margin} margin · ${saved.leverage === "signal" ? "suggested" : `${saved.leverage}x`} leverage · also while the app is closed`
             : "Auto-place the app's futures signals here, with virtual money."}</p>
         </div>
         <div className="flex gap-2">
@@ -53,9 +50,9 @@ export default function AutoTrade() {
             <input className="input mt-1" type="number" min={1} step={10} value={s.margin} onChange={(e) => setS({ ...s, margin: Math.max(1, Number(e.target.value) || 0) })} /></label>
           <label className="block"><span className="text-xs text-mute">Leverage</span>
             <select className="input mt-1" value={String(s.leverage)} onChange={(e) => setS({ ...s, leverage: e.target.value === "signal" ? "signal" : Number(e.target.value) })}>
-              <option value="signal">10–50x · chosen by engine</option>
-              {[10, 15, 20, 25, 30, 40, 50].map((l) => <option key={l} value={l}>Engine, at most {l}x</option>)}
-            </select></label>
+              <option value="signal">Suggested by the signal (safest)</option>
+              {[1, 2, 3, 5, 10, 20].filter((l) => l <= AUTO_MAX_LEV).map((l) => <option key={l} value={l}>{l}x (capped so liquidation stays beyond the stop)</option>)}
+            </select><span className="mt-1 block text-[11px] text-mute">15m auto-trades use the engine's 10–50x.</span></label>
           <div><span className="text-xs text-mute">Timeframes</span>
             <div className="mt-1 flex gap-1">{["15m", "1h", "4h", "12h", "1d", "3d"].map((tf) => <button key={tf} className={`btn flex-1 px-2 py-1.5 text-xs ${s.timeframes.includes(tf) ? "btn-on" : ""}`} aria-pressed={s.timeframes.includes(tf)} onClick={() => toggleTf(tf)}>{tf.toUpperCase()}</button>)}</div></div>
           <label className="block"><span className="text-xs text-mute">Signals</span>

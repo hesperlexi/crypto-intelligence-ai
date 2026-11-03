@@ -107,11 +107,11 @@ def run(rt: Any, sink: Any, now: int) -> dict[str, Any]:
             pass
     # Telegram: nothing closed before now is ever announced (the calls are gone anyway)
     db.set_setting("tg_win_last", now)
-    # bots: same line-up, every book restarts with its starting balance; futures bots use the engine's leverage (10-50x)
+    # bots: same line-up and settings, every book restarts with its starting balance (15m futures bots use the engine's
+    # 10-50x per trade whatever their config says; the others keep their v2.13 leverage)
     doc = sink.get("config/bots") or {}
     if isinstance(doc.get("bots"), list):
-        bots = [{**b, "reset_token": RESET_TOKEN, **({"leverage": 50.0, "safe_leverage": True}
-                                                     if b.get("market") == "futures" else {})} for b in doc["bots"]]
+        bots = [{**b, "reset_token": RESET_TOKEN} for b in doc["bots"]]
         sink.set("config/bots", {**doc, "bots": bots, "updated_at": now})
         out["bots_reset"] = [b.get("id") for b in bots]
     # the counted record starts now for every timeframe; one restart line on Results

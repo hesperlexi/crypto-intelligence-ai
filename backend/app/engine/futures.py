@@ -16,23 +16,27 @@ Isolated margin, USDT-margined perpetuals (Binance-style):
 from __future__ import annotations
 
 import math
+import os
 from typing import Any
 
 FUNDING_INTERVAL_MS = 8 * 3_600_000
 DEFAULT_FUNDING_RATE = 0.0001        # Binance base rate: 0.01% per 8h
 MAINTENANCE_MARGIN = 0.01            # v2.13: the rate for a coin not in MAINTENANCE_TIERS (was a flat 0.5 %)
 FUTURES_FEE_RATE = 0.0005            # 0.05% taker
-MAX_LEVERAGE = 50                    # v2.14: the highest leverage anything in the app uses (was 20)
-# v2.14 leverage policy (owner, 3 Nov 2026): every futures trade - the signal card, the record's ROI on margin, the demo
-# bots, Hesper and members' auto-trade - uses leverage CHOSEN BY THE ENGINE from the stop distance, the coin's margin
-# tier and the grade: clamp(safe max x grade factor, 10, 50). A trade whose safe max is below 10x (the stop is too wide
-# for 10x without liquidation coming first) is not taken.
+MAX_LEVERAGE = 20                    # futures demo bots' ceiling outside the v2.14 policy timeframes (v2.13)
+# v2.14 leverage policy (owner, 3 Nov 2026), ONLY on the timeframes in POLICY_TFS (owner: 15m only): the signal card,
+# the record's ROI on margin, the demo bots, Hesper and members' auto-trade use leverage CHOSEN BY THE ENGINE from the
+# stop distance, the coin's margin tier and the grade: clamp(safe max x grade factor, 10, 50). A trade whose safe max is
+# below 10x (the stop is too wide for 10x without liquidation coming first) is not taken. Every other timeframe keeps
+# the v2.13 behaviour exactly (card / record: safe leverage capped at 10x; bots: safe up to their config, 20x; Hesper:
+# safe up to 25x; auto-trade: v2.13 rules, cap 20x) - see `leverage_for`.
+POLICY_TFS = tuple(t.strip() for t in os.environ.get("LEVERAGE_POLICY_TFS", "15m").split(",") if t.strip())
 MIN_LEVERAGE = 10
 POLICY_MAX_LEVERAGE = 50
 GRADE_FACTOR = {"A": 1.0, "B": 0.75}  # anything else (no grade): 0.75
 TOO_WIDE_REASON = "stop too wide for 10x minimum"
 SAFE_CAP = 125                       # the safe max is measured up to the exchange's own maximum, then clamped to 10-50
-CARD_MAX_LEVERAGE = POLICY_MAX_LEVERAGE    # kept for older callers: the card's leverage is engine_leverage()
+CARD_MAX_LEVERAGE = 10               # the signal card's suggested leverage is capped here outside POLICY_TFS (v2.13)
 CARD_BUFFER = 1.5                    # liquidation at least 1.5x the stop distance beyond the entry
 MIN_BUFFER = 1.5                     # v2.13: no safe leverage is ever computed with a smaller buffer
 # v2.13: approximate Binance USDT-M tier-1 maintenance margin rates (see the module doc)
@@ -96,11 +100,17 @@ def safe_max_leverage(entry: float | None, stop: float | None, symbol: str | Non
 
 
 def engine_leverage(entry: float | None, stop: float | None, symbol: str | None = None,
-                    grade: str | None = None) -> int | None:
-    """v2.14: THE leverage of a futures trade (card, record, bots, Hesper, auto-trade). Chosen by the engine from the
-    stop distance, the coin's margin tier and the grade: clamp(safe max x grade factor, 10, 50), grade A 100 %,
-    grade B (or none) 75 % of the safe max. None = not taken: the safe max is below 10x (`TOO_WIDE_REASON`), so the
-    minimum leverage would put liquidation too close to (or before) the stop. Never above the safe max."""
+                    grade: str | None = None, timeframe: str | None = None,
+                    cap: float = CARD_MAX_LEVERAGE) -> int | None:
+    """v2.14 leverage of a futures trade (card, record, bots, Hesper, auto-trade). On a timeframe in POLICY_TFS (or with
+    no timeframe given: the bare rule) it is chosen by the engine from the stop distance, the coin's margin tier and the
+    grade: clamp(safe max x grade factor, 10, 50), grade A 100 %, grade B (or none) 75 % of the safe max. None = not
+    taken: the safe max is below 10x (`TOO_WIDE_REASON`), so the minimum leverage would put liquidation too close to (or
+    before) the stop. Never above the safe max. On any other timeframe: the v2.13 rule (safe leverage capped at `cap`)."""
+    if timeframe is not None and not in_policy(timeframe):
+        if not entry or not stop:
+            return None
+        return safe_leverage(float(entry), float(stop), cap, None, CARD_BUFFER, symbol=symbol)
     safe = safe_max_leverage(entry, stop, symbol)
     if safe is None or safe < MIN_LEVERAGE:
         return None
@@ -109,10 +119,24 @@ def engine_leverage(entry: float | None, stop: float | None, symbol: str | None 
     return int(max(MIN_LEVERAGE, min(POLICY_MAX_LEVERAGE, safe, lev)))
 
 
+def in_policy(timeframe: str | None) -> bool:
+    """Does the v2.14 engine-chosen 10-50x leverage policy apply to this timeframe? (owner: 15m only)"""
+    return bool(timeframe) and str(timeframe) in POLICY_TFS
+
+
+def leverage_for(entry: float | None, stop: float | None, symbol: str | None = None, grade: str | None = None,
+                 timeframe: str | None = None, cap: float = CARD_MAX_LEVERAGE) -> int | None:
+    """The leverage of a futures trade on `timeframe`: in POLICY_TFS the v2.14 engine rule (`engine_leverage`, None =
+    not taken); elsewhere the v2.13 rule - the safe leverage (liquidation >= 1.5x the stop distance) capped at `cap`
+    (card / record 10, bots their config, Hesper 25, auto-trade 20), never refused for a wide stop. None without a stop."""
+    return engine_leverage(entry, stop, symbol, grade, timeframe if in_policy(timeframe) else (timeframe or "-"), cap)
+
+
 def signal_leverage(entry: float | None, stop: float | None, symbol: str | None = None,
-                    grade: str | None = None) -> int | None:
-    """The leverage the signal card shows and the record stores (= engine_leverage). None when not tradable."""
-    return engine_leverage(entry, stop, symbol, grade)
+                    grade: str | None = None, timeframe: str | None = None) -> int | None:
+    """The leverage the signal card shows and the record stores: 15m (POLICY_TFS) the engine's 10-50x (None = not
+    tradable), other timeframes the v2.13 suggestion (safe leverage capped at 10x)."""
+    return leverage_for(entry, stop, symbol, grade, timeframe, CARD_MAX_LEVERAGE)
 
 
 def stop_before_liquidation(entry: float, stop: float, side: int, leverage: float, symbol: str | None = None) -> bool:
@@ -135,7 +159,7 @@ def funding_times(after_ms: int, until_ms: int) -> list[int]:
     return list(range(first, until_ms + 1, FUNDING_INTERVAL_MS))
 
 
-def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage: int = POLICY_MAX_LEVERAGE) -> dict[str, Any]:
+def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage: int | None = None) -> dict[str, Any]:
     """Long / short call for one symbol and timeframe, built from the regular analysis."""
     sym = a.get("symbol")
     if a.get("status") != "OK":
@@ -178,7 +202,12 @@ def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage
             runner = {**runner, "target": tgt, "move_pct": abs(tgt / entry - 1) * 100}
     # v2.14: the engine's leverage (10-50x from stop distance, coin tier and grade); a recorded call shows the leverage
     # stored with it (same function, decided at publication)
-    lev = (call.get("leverage") if recorded else None) or (engine_leverage(entry, stop, sym, a.get("grade")) if stop else None)
+    tf = a.get("timeframe")
+    policy = in_policy(tf)
+    if max_leverage is None:
+        max_leverage = POLICY_MAX_LEVERAGE if policy else CARD_MAX_LEVERAGE
+    lev = (call.get("leverage") if recorded else None) or (leverage_for(entry, stop, sym, a.get("grade"), tf, max_leverage)
+                                                           if stop else None)
     if lev:
         lev = int(min(lev, max_leverage))
     rate = (funding or {}).get("rate")
@@ -210,13 +239,14 @@ def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage
             "targets": targets,
             "risk_reward": setup.get("risk_reward"), "risk_pct": risk_pct,
             "runner": runner,
-            "suggested_leverage": lev, "leverage_policy": {"min": MIN_LEVERAGE, "max": POLICY_MAX_LEVERAGE,
-                                                           "chosen_by": "engine", "safe_max": safe_max_leverage(entry, stop, sym)},
+            "suggested_leverage": lev,
+            "leverage_policy": ({"min": MIN_LEVERAGE, "max": POLICY_MAX_LEVERAGE, "chosen_by": "engine",
+                                 "safe_max": safe_max_leverage(entry, stop, sym)} if policy else None),
             "maintenance_rate": maintenance_rate(sym),
             "liquidation_at_suggested": liquidation_price(entry, plan_side, lev, symbol=sym) if lev else None,
             "margin_loss_at_stop_pct": risk_pct * lev if lev else None,
             # holding cost of the funding rate for this side, per day (3 payments), as % of position notional
             "funding_per_day_pct": -plan_side * rate_used * 3 * 100,
-            "liquidation_by_leverage": {str(L): liquidation_price(entry, plan_side, L, symbol=sym) for L in (10, 20, 30, 50)},
+            "liquidation_by_leverage": {str(L): liquidation_price(entry, plan_side, L, symbol=sym) for L in ((10, 20, 30, 50) if policy else (2, 3, 5, 10, 20))},
         }
     return out

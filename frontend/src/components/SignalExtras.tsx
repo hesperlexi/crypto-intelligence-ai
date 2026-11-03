@@ -141,7 +141,7 @@ export function AiNote({ ai }: { ai?: any }) {
 
 /** Gold leverage chip ("10x"). */
 export function LevChip({ lev, className = "" }: { lev: number; className?: string }) {
-  return <span title="Leverage chosen by the engine (10–50x)" className={`num inline-flex h-[18px] items-center rounded-md border border-accent/45 bg-accent/10 px-1.5 text-[10px] font-bold leading-none text-accent ${className}`}>{lev}x</span>;
+  return <span title="Leverage the signal card suggested" className={`num inline-flex h-[18px] items-center rounded-md border border-accent/45 bg-accent/10 px-1.5 text-[10px] font-bold leading-none text-accent ${className}`}>{lev}x</span>;
 }
 
 /** The headline result of a closed call: ROI on margin with its leverage chip, the price move as small text.

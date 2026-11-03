@@ -1,5 +1,4 @@
 """Signals are placed automatically in members' paper futures accounts, once per signal, with their settings."""
-from app.engine import futures as F
 from app.services import autopaper
 from app.sinks import LocalSink
 
@@ -24,7 +23,7 @@ def test_auto_paper_opens_once_respects_settings_and_balance(tmp_path):
     assert r["members"] == 1 and r["opened"] == 1 and r["orders"] == 1
     acc = sink.get("paper/m1_futures")
     pos = acc["positions"]["BTCUSDT"]
-    assert pos["auto"] and pos["margin"] == 300 and pos["leverage"] == F.engine_leverage(pos["entry"], 96.0, "BTC/USDT", "A")          # grade A: 1.2x the chosen $250 and pos["stop"] == 96 and pos["take"] == 108
+    assert pos["auto"] and pos["margin"] == 300 and pos["leverage"] == 5          # grade A: 1.2x the chosen $250 and pos["stop"] == 96 and pos["take"] == 108
     assert pos["signal"]["timeframe"] == "1h" and pos["signal"]["grade"] == "A" and pos["signal"]["side"] == "LONG"
     od = next(iter(acc["orders"].values()))
     assert od["signal"]["symbol"] == "ETH/USDT" and od["signal"]["side"] == "SHORT"

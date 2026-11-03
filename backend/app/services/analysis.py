@@ -401,7 +401,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     # v2.14 leverage policy (owner, 3 Nov 2026): futures trades use 10-50x chosen by the engine; a stop so wide that even
     # 10x would leave liquidation within 1.5x the stop distance (coin tier + closing fee) is no trade. Checked at the
     # card's entry and at the live price (the record's market entry), so card, record, bots and auto-trade agree.
-    lev_why = leverage_gate(setup, price, symbol, grade) if decision in TRADE_DECISIONS else None
+    lev_why = leverage_gate(setup, price, symbol, grade, timeframe) if decision in TRADE_DECISIONS else None
     if lev_why:
         decision, grade, why = "NO TRADE", None, lev_why
         flags.append("STOP TOO WIDE")
@@ -564,14 +564,16 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     return out
 
 
-def leverage_gate(setup: dict[str, Any] | None, price: float | None, symbol: str | None, grade: str | None) -> str | None:
+def leverage_gate(setup: dict[str, Any] | None, price: float | None, symbol: str | None, grade: str | None,
+                  timeframe: str | None = None) -> str | None:
     """v2.14: why a trade call is refused under the 10-50x leverage policy (stop too wide for 10x at the card's entry or
-    at the live price, the record's market entry), or None when it may trade."""
-    if not setup or not setup.get("valid") or not setup.get("stop"):
+    at the live price, the record's market entry), or None when it may trade. Only on the policy timeframes
+    (futures.POLICY_TFS, owner: 15m); every other timeframe is never refused for this (v2.13)."""
+    from ..engine.futures import TOO_WIDE_REASON, engine_leverage, in_policy
+    if not in_policy(timeframe) or not setup or not setup.get("valid") or not setup.get("stop"):
         return None
-    from ..engine.futures import TOO_WIDE_REASON, engine_leverage
     entries = [e for e in (setup.get("ideal_entry"), price) if e]
-    if entries and all(engine_leverage(e, setup["stop"], symbol, grade) is not None for e in entries):
+    if entries and all(engine_leverage(e, setup["stop"], symbol, grade, timeframe) is not None for e in entries):
         return None
     e0 = entries[0] if entries else None
     rp = abs(float(e0) - float(setup["stop"])) / float(e0) * 100 if e0 else None

@@ -37,7 +37,7 @@ function plan(price: number, side: 1 | -1, valid = true, runner = false) {
   const entry = price * (1 - side * 0.002);
   const stop = entry - side * r;
   const tps = [1, 1.6, 2.4].map((k) => entry + side * r * k);
-  const lev = 27;          // v2.14: 10-50x chosen by the engine (1.8 % stop, grade A)
+  const lev = 8;
   return {
     side: side > 0 ? "LONG" : "SHORT", valid, reason: valid ? null : "waiting for the higher timeframe to agree",
     entry, entry_zone: [entry * (1 - side * 0.003), entry * (1 + side * 0.002)], stop,
@@ -63,7 +63,7 @@ function futuresRows(tf: string) {
       filter_score: side ? 0.61 : null, filter_threshold: 0.55, regime: REG[i], signal: SIG[i], funding_rate: 0.0001,
       record_status: side ? "logged" : "not_logged", stale: false,
       ai: side ? { rationale: "Price is holding above the rising 4H trend after a shallow pullback; momentum is recovering and the stop sits under the last swing low.", regime: "trend", model: "advisor", at: NOW - 20 * 60_000 } : undefined,
-      call: side ? { id: `c${i}`, status: "OPEN", fill_status: d === "BUY ON PULLBACK" ? "PENDING" : "FILLED", side: side > 0 ? "LONG" : "SHORT", entry: price * (1 - side * 0.004), stop: price * (1 - side * 0.02), peak_r: 0.42, peak_pct: 0.76, exit_reason: null, managed: 0, created_at: NOW - (1 + ((i * 5 + k * 3) % 11)) * H, leverage: 27 }
+      call: side ? { id: `c${i}`, status: "OPEN", fill_status: d === "BUY ON PULLBACK" ? "PENDING" : "FILLED", side: side > 0 ? "LONG" : "SHORT", entry: price * (1 - side * 0.004), stop: price * (1 - side * 0.02), peak_r: 0.42, peak_pct: 0.76, exit_reason: null, managed: 0, created_at: NOW - (1 + ((i * 5 + k * 3) % 11)) * H, leverage: 8 }
         : i === 6 ? { id: `c${i}`, status: "TP2", fill_status: "FILLED", side: "LONG", entry: price * 0.98, stop: price * 0.962, peak_r: 2.1, peak_pct: 3.4, exit_reason: null, managed: 0, created_at: NOW - 9 * H, closed_at: NOW - 2 * H, return_pct: 2.3, leverage: 10, roi_pct: 23 }
         : i === 9 ? { id: `c${i}`, status: "STOPPED", fill_status: "FILLED", side: "SHORT", entry: price * 0.99, stop: price * 1.008, peak_r: 0.3, peak_pct: 0.4, exit_reason: "stop", managed: 0, created_at: NOW - 9 * H, closed_at: NOW - 3 * H, return_pct: -1.8, leverage: 8, roi_pct: -14.4 } : null,
     };
@@ -553,7 +553,7 @@ function hesper() {
   const cash = cur.peak > 0 ? trades[trades.length - 1].balance_after : 100;
   const sol = PRICES["SOL/USDT"].p, entry = sol * 0.996, margin = cash * 0.995, lev = 22, qty = margin * lev / entry;
   return {
-    name: "Hesper", since: runs[0].started_at, start: 100, goal: 1000, max_leverage: 50, min_leverage: 10, min_balance: 1, started: true, generated_at: NOW,
+    name: "Hesper", since: runs[0].started_at, start: 100, goal: 1000, max_leverage: 25, min_balance: 1, started: true, generated_at: NOW,
     current: { run: cur.run, started_at: cur.started_at, cash: cash - margin / 2 + margin * 0.5 * 0.025 * lev, balance: cash * 1.06, peak: cur.peak, trades: cur.trades, wins: cur.wins, updated_at: NOW - 4 * 60_000,
       open: { id: "hopen", symbol: "SOL/USDT", timeframe: "4h", side: 1, entry, stop: entry, stop0: entry * 0.975, targets: [entry * 1.025, entry * 1.044, entry * 1.06], tp_hit: 1,
         leverage: lev, qty, qty_open: qty / 2, margin, coll: entry / lev, liq: entry * (1 - 1 / lev + 0.005), realized: margin * 0.5 * 0.025 * lev, opened_at: NOW - 7 * H,

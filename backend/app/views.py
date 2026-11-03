@@ -219,8 +219,9 @@ def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) 
             "server, your browser shows the live rate",
         "assumptions": {"maintenance_margin": F.MAINTENANCE_MARGIN, "maintenance_tiers": F.MAINTENANCE_TIERS,
                         "fee_rate": F.FUTURES_FEE_RATE,
-                        "max_suggested_leverage": F.POLICY_MAX_LEVERAGE, "min_leverage": F.MIN_LEVERAGE,
-                        "leverage_chosen_by": "engine", "liquidation_buffer": 1.5},
+                        "max_suggested_leverage": F.POLICY_MAX_LEVERAGE if F.in_policy(timeframe) else F.CARD_MAX_LEVERAGE,
+                        "min_leverage": F.MIN_LEVERAGE if F.in_policy(timeframe) else None,
+                        "leverage_chosen_by": "engine" if F.in_policy(timeframe) else "suggestion", "liquidation_buffer": 1.5},
     }
 
 

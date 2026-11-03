@@ -89,7 +89,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
       </div>
       )}
       {d.restart?.text && <p className="px-1 text-xs text-mute">{d.restart.text}</p>}
-      <Explain>{d.results_net ? "Results are after fees (trading costs and funding). ROI on margin = result × the call's leverage (10–50x, chosen by engine). Leverage magnifies losses." : "ROI on margin = price move × suggested leverage. Leverage magnifies losses."}</Explain>
+      <Explain>{d.results_net ? "Results are after fees (trading costs and funding). ROI on margin = result × suggested leverage (15m: 10–50x chosen by engine). Leverage magnifies losses." : "ROI on margin = price move × suggested leverage. Leverage magnifies losses."}</Explain>
       {(d.live?.curve?.length ?? 0) > 1 && (
         <div className="panel px-4 pt-3">
           <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? `Cumulative ROI on margin${s.net ? " (after fees)" : ""}` : s.net ? "Cumulative result after fees" : "Cumulative price move"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>

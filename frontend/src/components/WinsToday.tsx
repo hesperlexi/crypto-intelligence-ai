@@ -72,7 +72,7 @@ export default function WinsToday() {
           {" · "}<Link to="/results" className="text-accent hover:underline">full record, losses included, on Results (members)</Link>
         </p>
       )}
-      <p className="mt-3 text-center text-[11px] text-mute">Selected wins, after fees. ROI = result × the engine's leverage (10–50x); leverage magnifies losses too. Not financial advice.</p>
+      <p className="mt-3 text-center text-[11px] text-mute">Selected wins, after fees. ROI = result × suggested leverage; leverage magnifies losses too. Not financial advice.</p>
       <p className="mt-1 text-center text-[11px] text-mute">Past results do not guarantee future results. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
     </section>
   );

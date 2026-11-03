@@ -356,12 +356,12 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   calls; `EDGE_RULE=policy` (direction-policy edge only) keeps ~74 % of trades but is still −0.057R. Live record since
   30 Oct: 11 calls, all would fail the edge rule; 2 of 5 closed wins become net losses with market entry.
 
-## v2.14 fresh restart, 10–50x leverage, $1,000 practice + Add funds (3 Nov 2026, owner decisions, branch `release-v214`)
+## v2.14 fresh restart, 10–50x leverage on 15m only, $1,000 practice + Add funds (3 Nov 2026, owner decisions, branch `release-v214`)
 - **Fresh restart** (`app/fresh_restart_v214.py`, flag `fresh_restart_v214` in `worker.MIGRATION_FLAGS`, run from
   `worker.sync_config`; dry run `python -m app.fresh_restart_v214 dry-run`). Owner chose "delete permanently", wins and
   losses alike. DELETES (SQLite): `signals`, `shadow_signals`, `scalp_signals`, `signal_proofs`, `signal_adjustments`,
-  `decisions`, `bot_trades`, `bot_equity`, `bots` rows (re-created from `config/bots`, same line-up, `reset_token` v214,
-  futures `leverage` 50), `hesper_runs`, `hesper_trades`, settings `hesper_state/_since/_v1` (next cycle = Run #1 at $100),
+  `decisions`, `bot_trades`, `bot_equity`, `bots` rows (re-created from `config/bots`, same line-up and settings, `reset_token` v214),
+  `hesper_runs`, `hesper_trades`, settings `hesper_state/_since/_v1` (next cycle = Run #1 at $100),
   `safety:*`, `honest_record_since/_prev`, `record_restart`, `scalp_backfill_state`, the `published` cache (every view
   re-published from the empty record); Firestore `owner/telegram_drafts` items, `views/scalping`, legacy `views/bot_*`.
   Sets `record_since` = now, `record_since_tf` {}, `record_restart` {at, text "Fresh start <d Mon yyyy, Dubai>: real
@@ -370,16 +370,19 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   memberships, alerts, Telegram token/options, other settings, and members' `paper*` / `auto_paper*` (owner). Never on a
   fresh / empty DB (guard marks it done; the module also only sets the flag when no history exists); runs once (Firestore
   mirror). Tests `tests/test_v214.py`.
-- **Leverage policy** `engine/futures.engine_leverage(entry, stop, symbol, grade)` = clamp(safe max × grade factor, 10, 50),
-  A 100 %, B (or none) 75 %; safe max = `safe_max_leverage` (v2.13 tiers + closing fee, liquidation ≥ 1.5× the stop
-  distance, measured up to 125x); safe max < 10 → None = not taken ("stop too wide for 10x minimum", `TOO_WIDE_REASON`).
-  Used by: `analysis.leverage_gate` (public decision → NO TRADE, flag "STOP TOO WIDE", checked at the card entry and the
-  live price), `tracking` (payload `leverage`, ROI on margin; skip_entry if None), `futures_view` (`suggested_leverage`,
-  a recorded call shows its stored leverage, `leverage_policy`), bots (config `leverage` ignored for decision bots; skip
-  if None), Hesper (`MAX_LEVERAGE` 50, `min_leverage` 10 in the view), auto-trade (`autopaper.MIN_LEV/MAX_LEV` 10/50;
-  member setting "signal" = engine, or a ceiling 10–50 that only lowers the engine's choice), alerts text, cards.
-  `stop_before_liquidation` helper. UI: card "Leverage · 27x · 10–50x · chosen by engine", AutoTrade selector
-  "10–50x · chosen by engine" / "Engine, at most Nx", Hesper "$100 → $1,000 · all-in · 10–50x".
+- **Leverage policy — 15m ONLY** (owner, 3 Nov 2026; `futures.POLICY_TFS` = ("15m",), env `LEVERAGE_POLICY_TFS`,
+  `futures.in_policy(tf)`). On 15m: `engine_leverage(entry, stop, symbol, grade, timeframe)` = clamp(safe max × grade
+  factor, 10, 50), A 100 %, B (or none) 75 %; safe max = `safe_max_leverage` (v2.13 tiers + closing fee, liquidation
+  ≥ 1.5× the stop distance, measured up to 125x); safe max < 10 → None = not taken ("stop too wide for 10x minimum",
+  `TOO_WIDE_REASON`): `analysis.leverage_gate(..., timeframe)` → NO TRADE "STOP TOO WIDE", record skip_entry, bots /
+  Hesper / auto-trade skip. **Every other timeframe keeps v2.13 exactly** (`futures.leverage_for(…, timeframe, cap)` →
+  `safe_leverage` capped, never refused for a wide stop): card / record `signal_leverage` ≤ 10x (`CARD_MAX_LEVERAGE`),
+  futures bots ≤ their config (20x, `MAX_LEVERAGE` 20), Hesper ≤ 25x (`hesper.MAX_LEVERAGE`), auto-trade v2.13 (cap 20x,
+  "signal" = the card's suggestion, else the member's setting, ≤ safe); 15m auto-trades use the engine's choice (member
+  setting ignored). `futures_view` sets `plan.leverage_policy` only on 15m; UI shows "10–50x · chosen by engine" only
+  then (TradeCall), else "Nx suggested" / "liq." as before. AutoTrade selector = v2.13 + note "15m auto-trades use the
+  engine's 10–50x"; Hesper "$100 → $1,000 · all-in · up to 25x (15m: 10–50x)". The fresh restart keeps bot configs
+  (leverage 20) - only `reset_token` changes.
 - **Practice accounts**: new accounts $1,000 (`writeShapes.PAPER_START`, `newPaperFields`; `autopaper.START_BALANCE`);
   existing accounts unchanged. "Add funds" (Trade → Assets: +$1,000 / +$5,000 / custom) = `paper.addFunds` /
   `paperFutures.addFunds` → `writeShapes.paperTopUp`: balance + amount, `deposited` (total in; older accounts: their
@@ -391,10 +394,10 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
 - **No edge rule** (owner): `REQUIRE_EDGE_FOR_TRADE` default off (see v2.13).
 - Impact study: `research_v213.replay` → `leverage_v214` (per timeframe: removed by the 10x minimum, avg / median leverage,
   R before / after) in `research-results/results/v213-*.json`.
-- **Leverage impact (3 Nov, `results/v213-20261103T174735Z.json`, test split, current grading, honest entry; refused calls free the slot):**
-  removed by the 10x minimum: 15m 0 % (avg 25.5x), 1h 7 % (18.2x), 4h 49 % (13.1x, median 10x), 12h 68 % (12.2x),
-  1d 87 % (11.9x), 3d 94 % (1 of 17 left). Overall 1552 → 1121 trades, avg 18.7x, 27 % at exactly 10x; avg R −0.040 →
-  −0.060 (the removed wide-stop calls were about break-even). Expect few 1d / 3d calls and many 4h / 12h NO TRADEs.
+- **Leverage impact (3 Nov, `results/v213-20261103T174735Z.json`, test split, current grading, honest entry):** with the
+  policy on 15m only, calls removed = **0 %** (15m: 368 trades before and after, 0 too wide; median stop 1.29 %; avg
+  25.5x, median 24x; 1.6 % at 50x, 2.7 % at 10x; avg R −0.101 unchanged). Other timeframes unchanged (v2.13). For
+  reference, the rule on every timeframe would have removed 4h 49 %, 12h 68 %, 1d 87 %, 3d 94 % (overall 1552 → 1121).
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track

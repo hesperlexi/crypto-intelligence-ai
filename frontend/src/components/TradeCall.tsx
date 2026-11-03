@@ -65,7 +65,9 @@ function planText(r: any, market: Market, v: Verdict, plan: any) {
     parts.push(`Entry ${fmtPrice(plan.entry_zone?.[0])}–${fmtPrice(plan.entry_zone?.[1])} (${plan.recorded ? "recorded" : "ideal"} ${fmtPrice(plan.entry)})`);
     parts.push(`Stop-loss ${fmtPrice(plan.stop)}`);
     parts.push((plan.targets ?? []).map((t: any) => `${t.name} ${fmtPrice(t.price)}`).join(", "));
-    if (market === "futures" && plan.suggested_leverage) parts.push(`Leverage ${plan.suggested_leverage}x, chosen by engine (10–50x; liquidation ${fmtPrice(plan.liquidation_at_suggested)})`);
+    if (market === "futures" && plan.suggested_leverage) parts.push(plan.leverage_policy
+      ? `Leverage ${plan.suggested_leverage}x, chosen by engine (10–50x; liquidation ${fmtPrice(plan.liquidation_at_suggested)})`
+      : `Leverage ${plan.suggested_leverage}x (liquidation ${fmtPrice(plan.liquidation_at_suggested)})`);
   }
   parts.push(`${r.grade ? `Grade ${r.grade} · ` : ""}Hit rate ${fmtProb(r.confidence)} · Crypto Intelligence AI · not financial advice`);
   return parts.join("\n");
@@ -174,7 +176,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           {active && plan && (
             <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-mute">
               <RiskBadge entry={plan.entry} stop={plan.stop} leverage={market === "futures" ? plan.suggested_leverage : 1} />
-              {lev != null && <span className="num">{lev}x by engine</span>}
+              {lev != null && <span className="num">{lev}x {plan.leverage_policy ? "by engine" : "suggested"}</span>}
               {status && <span className={`flex items-center gap-1.5 ${status.ok ? "text-bull" : "text-warn"}`}><span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}</span>}
             </div>
           )}
@@ -206,7 +208,9 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
                 ? <Metric k={`AI: let it run · 1:${plan.runner.rr}`} v={fmtPrice(plan.runner.target)} cls="text-bull" sub={roiSub(plan.runner.target)} />
                 : <Metric k="TP1 · 1:1 · close 50%" v={fmtPrice(plan.targets?.[0]?.price)} cls="text-bull" sub={roiSub(plan.targets?.[0]?.price)} />}
               {market === "futures"
-                ? <Metric k="Leverage" v={plan.suggested_leverage ? `${plan.suggested_leverage}x` : DASH} sub={plan.suggested_leverage ? "10–50x · chosen by engine" : "stop too wide for 10x"} />
+                ? (plan.leverage_policy   // v2.14: 15m only - the engine's 10-50x; other timeframes as before (v2.13)
+                    ? <Metric k="Leverage" v={plan.suggested_leverage ? `${plan.suggested_leverage}x` : DASH} sub={plan.suggested_leverage ? "10–50x · chosen by engine" : "stop too wide for 10x"} />
+                    : <Metric k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />)
                 : <Metric k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="blended: 50% at TP1, 25% TP2, 25% TP3" />}
             </div>
             {lev != null && lev > 1 && <p className="mt-1.5 text-[11px] text-warn">ROI at {lev}x. Leverage magnifies losses.</p>}

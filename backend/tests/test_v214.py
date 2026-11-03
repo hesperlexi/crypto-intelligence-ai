@@ -46,6 +46,7 @@ def test_engine_leverage_clamp_grade_factor_and_skip():
 
 
 def test_engine_leverage_never_puts_liquidation_before_the_stop():
+    """Both paths: the v2.14 rule (15m) and the v2.13 rule (other timeframes) keep the stop before liquidation."""
     n = 0
     for sym in SYMS:
         for pct in [x / 100 for x in range(5, 1000, 7)]:            # 0.05 % .. 10 % stops
@@ -53,120 +54,147 @@ def test_engine_leverage_never_puts_liquidation_before_the_stop():
                 for grade in ("A", "B", None):
                     entry = 100.0
                     stop = entry * (1 - side * pct / 100)
-                    lev = F.engine_leverage(entry, stop, sym, grade)
+                    lev = F.engine_leverage(entry, stop, sym, grade, "15m")
                     safe = F.safe_max_leverage(entry, stop, sym)
                     if safe is None or safe < 10:
                         assert lev is None
-                        continue
-                    n += 1
-                    assert 10 <= lev <= 50 and lev <= safe
-                    assert F.stop_before_liquidation(entry, stop, side, lev, sym)
-                    liq = F.liquidation_price(entry, side, lev, symbol=sym)
-                    assert abs(liq - entry) >= 1.5 * abs(entry - stop) - 1e-9      # buffer >= 1.5x the stop distance
+                    else:
+                        n += 1
+                        assert 10 <= lev <= 50 and lev <= safe
+                        assert F.stop_before_liquidation(entry, stop, side, lev, sym)
+                        assert abs(F.liquidation_price(entry, side, lev, symbol=sym) - entry) >= 1.5 * abs(entry - stop) - 1e-9
+                    for tf, cap in (("1h", 10), ("4h", 20), ("1d", 25)):
+                        old = F.leverage_for(entry, stop, sym, grade, tf, cap)
+                        assert old == F.safe_leverage(entry, stop, cap, symbol=sym) and 1 <= old <= cap   # v2.13, never None
+                        if old > 1:
+                            assert F.stop_before_liquidation(entry, stop, side, old, sym)
     assert n > 500
 
 
-def test_analysis_refuses_a_stop_too_wide_for_10x():
+def test_policy_is_15m_only():
+    assert F.POLICY_TFS == ("15m",) and F.in_policy("15m")
+    for tf in ("1h", "4h", "12h", "1d", "3d", None):
+        assert not F.in_policy(tf)
+    # card / record: 15m engine 10-50x; others the v2.13 suggestion (safe, capped at 10x), never refused for a wide stop
+    assert F.signal_leverage(100.0, 98.0, "BTC/USDT", "A", "15m") == 28
+    assert F.signal_leverage(100.0, 98.0, "BTC/USDT", "A", "1h") == 10 == F.safe_leverage(100.0, 98.0, 10, symbol="BTC/USDT")
+    assert F.signal_leverage(100.0, 92.0, "BTC/USDT", "A", "15m") is None
+    assert F.signal_leverage(100.0, 92.0, "BTC/USDT", "A", "4h") == F.safe_leverage(100.0, 92.0, 10, symbol="BTC/USDT") >= 1
+    assert F.signal_leverage(100.0, 98.0) == F.safe_leverage(100.0, 98.0, 10)       # no timeframe: v2.13
+
+
+def test_analysis_refuses_a_stop_too_wide_for_10x_on_15m_only():
     setup = {"valid": True, "ideal_entry": 100.0, "stop": 92.0}
-    why = A.leverage_gate(setup, 100.0, "BTC/USDT", "A")
+    why = A.leverage_gate(setup, 100.0, "BTC/USDT", "A", "15m")
     assert why and why.startswith(F.TOO_WIDE_REASON)
-    assert A.leverage_gate({**setup, "stop": 98.0}, 100.0, "BTC/USDT", "A") is None
+    for tf in ("1h", "4h", "12h", "1d", "3d"):
+        assert A.leverage_gate(setup, 100.0, "BTC/USDT", "A", tf) is None
+    assert A.leverage_gate({**setup, "stop": 98.0}, 100.0, "BTC/USDT", "A", "15m") is None
     # fine at the card's entry but too wide at the live price (the record's market entry) -> refused too
-    assert A.leverage_gate({**setup, "stop": 95.0}, 104.0, "BTC/USDT", "A")
-    assert A.leverage_gate(None, 100.0, "BTC/USDT", "A") is None
+    assert A.leverage_gate({**setup, "stop": 95.0}, 104.0, "BTC/USDT", "A", "15m")
+    assert A.leverage_gate(None, 100.0, "BTC/USDT", "A", "15m") is None
 
 
-def test_record_never_logs_a_call_too_wide_for_10x():
+def test_record_skips_a_too_wide_15m_call_but_keeps_other_timeframes():
     db = Database("sqlite:///:memory:")
-    a = _a(entry=100.0, stop=90.0)
+    a = _a(entry=100.0, stop=90.0, tf="15m")
     assert not T.log_signal(db, a, now=BAR + H1 + 1000)
     assert a["record_status"] == "not_logged"
-    assert db.one("SELECT COUNT(*) AS n FROM signals WHERE status = 'OPEN'")["n"] == 0
     d = db.one("SELECT * FROM decisions WHERE rule = 'skip_entry'")
     assert d and F.TOO_WIDE_REASON in d["inputs"]
+    db2 = Database("sqlite:///:memory:")
+    assert T.log_signal(db2, _a(entry=100.0, stop=90.0, tf="4h"), now=BAR + H1 + 1000)
+    s = db2.one("SELECT * FROM signals")
+    assert loads(s["payload"])["leverage"] == F.safe_leverage(100.0, 90.0, 10, symbol="BTC/USDT")
+    db3 = Database("sqlite:///:memory:")
+    assert T.log_signal(db3, _a(entry=100.0, stop=98.0, tf="15m"), now=BAR + H1 + 1000)
+    assert loads(db3.one("SELECT * FROM signals")["payload"])["leverage"] == F.engine_leverage(100.0, 98.0, "BTC/USDT", "A", "15m")
 
 
-def test_card_record_bots_hesper_and_autotrade_all_use_engine_leverage(monkeypatch):
-    """One function decides the leverage everywhere: a spy on futures.engine_leverage is what every consumer uses."""
+def _sig15(stop=98.0, tf="15m", tps=(102.0, 103.0, 104.0)):
+    return {"symbol": "BTC/USDT", "timeframe": tf, "side": 1, "price": 100.0, "grade": "A",
+            "plan": {"entry": 100.0, "entry_zone": [99.5, 100.5], "stop": stop, "suggested_leverage": 7,
+                     "targets": [{"price": t} for t in tps]}}
+
+
+def _bot_lev(monkeypatch, tf, stop=98.0, tps=(102.0, 104.0, 106.0)):
+    from .test_bots import _buy, _cfg, _now_aligned
+    from .test_bots import _put as _bput
+    from .test_bots import _rt as _brt
+    rt2 = _brt()
+    t0 = _now_aligned() - 40 * 900_000
+    _bput(rt2, "BTC/USDT", t0, [100.0] * 4)
+    eng = B.BotEngine(rt2)
+    eng.sync_configs([_cfg(market="futures", leverage=20.0, safe_leverage=True, max_position_pct=100.0, timeframe=tf)])
+    monkeypatch.setattr(A, "analyze", lambda *x, **k: {**_buy(stop=stop, tps=tps), "grade": "A"})
+    eng.run(t0 + 4 * 900_000)
+    st = eng.bots()[0][1]
+    return st["positions"][0]["lev"] if st["positions"] else None
+
+
+def _hesper_lev(monkeypatch, tf, stop=98.0, tps=(102.0, 103.5, 105.0)):
+    monkeypatch.setattr(A, "analyze", lambda *x, **k: {"status": "OK", "decision": "HOLD"})
+    rt = _hrt()
+    _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
+    _call(rt.db, "c1", tf=tf, stop=stop, tps=tps)
+    H.Hesper(rt).run(NOW)
+    pos = rt.db.get_setting(H.STATE_KEY)["positions"]
+    return pos[0]["lev"] if pos else None
+
+
+def test_15m_card_record_bots_hesper_and_autotrade_all_use_engine_leverage(monkeypatch):
+    """One function decides 15m leverage everywhere: a spy on futures.engine_leverage is what every consumer uses."""
+    real = F.engine_leverage
     calls = []
 
-    def spy(entry, stop, symbol=None, grade=None):
-        calls.append((round(float(entry), 6), round(float(stop), 6), symbol, grade))
-        return 17
+    def spy(entry, stop, symbol=None, grade=None, timeframe=None, cap=F.CARD_MAX_LEVERAGE):
+        if timeframe == "15m":
+            calls.append(timeframe)
+            return 17
+        return real(entry, stop, symbol, grade, timeframe, cap)
     monkeypatch.setattr(F, "engine_leverage", spy)
-    # signal card
-    a = {"symbol": "BTC/USDT", "status": "OK", "timeframe": "1h", "price": 100.0, "decision": "BUY", "grade": "A",
+    a = {"symbol": "BTC/USDT", "status": "OK", "timeframe": "15m", "price": 100.0, "decision": "BUY", "grade": "A",
          "setup": {"ideal_entry": 100.0, "stop": 98.0, "side_int": 1, "valid": True, "targets": []}}
-    assert F.futures_view(a, None)["plan"]["suggested_leverage"] == 17
-    # record (stored on the call; ROI on margin uses it)
+    v = F.futures_view(a, None)["plan"]
+    assert v["suggested_leverage"] == 17 and v["leverage_policy"]["max"] == 50
     db = Database("sqlite:///:memory:")
-    assert T.log_signal(db, _a(entry=100.0, stop=98.0), now=BAR + H1 + 1000)
+    assert T.log_signal(db, _a(entry=100.0, stop=98.0, tf="15m"), now=BAR + H1 + 1000)
     s = db.one("SELECT * FROM signals")
     assert loads(s["payload"])["leverage"] == 17 and T.margin_fields({**s, "status": "OPEN"})["leverage"] == 17
-    # auto-trade
-    acc, res = AP.place(None, {"symbol": "BTC/USDT", "timeframe": "1h", "side": 1, "price": 100.0, "grade": "A",
-                               "plan": {"entry": 100.0, "entry_zone": [99.5, 100.5], "stop": 98.0,
-                                        "targets": [{"price": 102.0}, {"price": 103.0}, {"price": 104.0}]}},
-                        AP.settings_of({"scale": False}), 1000)
-    assert res["action"] == "opened" and res["leverage"] == 17
-    # Hesper
-    monkeypatch.setattr(A, "analyze", lambda *x, **k: {"status": "OK", "decision": "HOLD"})
-    rt = _hrt()
-    _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
-    _call(rt.db, "c1")
-    H.Hesper(rt).run(NOW)
-    assert rt.db.get_setting(H.STATE_KEY)["positions"][0]["lev"] == 17
-    # futures demo bots
-    from .test_bots import _buy, _cfg, _now_aligned
-    from .test_bots import _put as _bput
-    from .test_bots import _rt as _brt
-    rt2 = _brt()
-    t0 = _now_aligned() - 40 * 900_000
-    _bput(rt2, "BTC/USDT", t0, [100.0] * 4)
-    eng = B.BotEngine(rt2)
-    eng.sync_configs([_cfg(market="futures", leverage=50.0, max_position_pct=100.0)])
-    monkeypatch.setattr(A, "analyze", lambda *x, **k: {**_buy(), "grade": "A"})
-    eng.run(t0 + 4 * 900_000)
-    assert eng.bots()[0][1]["positions"][0]["lev"] == 17
-    assert {c[3] for c in calls} >= {"A"}
+    _, res = AP.place(None, _sig15(), AP.settings_of({"scale": False, "leverage": 5}), 1000)
+    assert res["action"] == "opened" and res["leverage"] == 17          # the member setting does not apply on 15m
+    assert _hesper_lev(monkeypatch, "15m") == 17
+    assert _bot_lev(monkeypatch, "15m") == 17
+    assert len(calls) >= 5
 
 
-def test_bots_hesper_and_autotrade_skip_a_stop_too_wide_for_10x(monkeypatch):
-    acc, res = AP.place(None, {"symbol": "BTC/USDT", "timeframe": "1h", "side": 1, "price": 100.0, "grade": "A",
-                               "plan": {"entry": 100.0, "entry_zone": [99.5, 100.5], "stop": 90.0,
-                                        "targets": [{"price": 110.0}, {"price": 115.0}, {"price": 120.0}]}},
-                        AP.settings_of({}), 1000)
+def test_other_timeframes_keep_the_v213_leverage_exactly(monkeypatch):
+    a = {"symbol": "BTC/USDT", "status": "OK", "timeframe": "4h", "price": 100.0, "decision": "BUY", "grade": "A",
+         "setup": {"ideal_entry": 100.0, "stop": 98.0, "side_int": 1, "valid": True, "targets": []}}
+    v = F.futures_view(a, None)["plan"]
+    assert v["suggested_leverage"] == F.safe_leverage(100.0, 98.0, 10, symbol="BTC/USDT") == 10 and v["leverage_policy"] is None
+    # auto-trade: v2.13 (signal -> the card's suggestion, else the member's setting; <= safe, <= 20x)
+    assert AP.MAX_LEV == 20 and AP.settings_of({"leverage": 50})["leverage"] == 20
+    _, res = AP.place(None, _sig15(tf="1h"), AP.settings_of({"scale": False}), 1000)
+    assert res["leverage"] == 7
+    _, res = AP.place(None, _sig15(tf="1h"), AP.settings_of({"scale": False, "leverage": 20}), 1000)
+    entry = 100.0 * (1 + AP.ADVERSE)
+    assert res["leverage"] == min(20, F.safe_leverage(entry, 98.0, 20, symbol="BTC/USDT"))
+    # a stop too wide for 10x is still taken on other timeframes, at a lower safe leverage (no skip)
+    _, res = AP.place(None, _sig15(stop=90.0, tf="4h", tps=(110.0, 115.0, 120.0)), AP.settings_of({"scale": False, "leverage": 20}), 1)
+    assert res["action"] == "opened" and res["leverage"] == F.safe_leverage(entry, 90.0, 20, symbol="BTC/USDT") < 10
+    # bots: safe up to their config (20x); Hesper: safe up to 25x
+    assert _bot_lev(monkeypatch, "4h") == min(20, F.safe_leverage(100.0, 98.0, 20, symbol="BTC/USDT")) == 20
+    assert _bot_lev(monkeypatch, "4h", stop=90.0, tps=(110.0, 115.0, 120.0)) == F.safe_leverage(100.0, 90.0, 20, symbol="BTC/USDT")
+    assert _hesper_lev(monkeypatch, "1h") == 25 == H.MAX_LEVERAGE
+    assert _hesper_lev(monkeypatch, "4h", stop=90.0, tps=(110.0, 115.0, 120.0)) == F.safe_leverage(100.0, 90.0, 25, symbol="BTC/USDT")
+
+
+def test_15m_bots_hesper_and_autotrade_skip_a_stop_too_wide_for_10x(monkeypatch):
+    acc, res = AP.place(None, _sig15(stop=90.0, tps=(110.0, 115.0, 120.0)), AP.settings_of({}), 1000)
     assert acc is None and res["action"] == "skipped" and res["reason"] == F.TOO_WIDE_REASON
-    monkeypatch.setattr(A, "analyze", lambda *x, **k: {"status": "OK", "decision": "HOLD"})
-    rt = _hrt()
-    _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
-    _call(rt.db, "wide", stop=90.0, tps=(110.0, 115.0, 120.0))
-    assert H.Hesper(rt).run(NOW) == []
-    assert not rt.db.get_setting(H.STATE_KEY)["positions"]
-    from .test_bots import _buy, _cfg, _now_aligned
-    from .test_bots import _put as _bput
-    from .test_bots import _rt as _brt
-    rt2 = _brt()
-    t0 = _now_aligned() - 40 * 900_000
-    _bput(rt2, "BTC/USDT", t0, [100.0] * 4)
-    eng = B.BotEngine(rt2)
-    eng.sync_configs([_cfg(market="futures", leverage=50.0, max_position_pct=100.0)])
-    monkeypatch.setattr(A, "analyze", lambda *x, **k: _buy(stop=90.0, tps=(110.0, 115.0, 120.0)))
-    eng.run(t0 + 4 * 900_000)
-    assert not eng.bots()[0][1]["positions"] and not eng.bots()[0][1]["pending"]
-
-
-def test_autotrade_member_ceiling_never_below_10x():
-    sig = {"symbol": "BTC/USDT", "timeframe": "1h", "side": 1, "price": 100.0, "grade": "A",
-           "plan": {"entry": 100.0, "entry_zone": [99.5, 100.5], "stop": 98.0,
-                    "targets": [{"price": 102.0}, {"price": 103.0}, {"price": 104.0}]}}
-    eng = F.engine_leverage(100.0 * (1 + AP.ADVERSE), 98.0, "BTC/USDT", "A")
-    _, r = AP.place(None, sig, AP.settings_of({"leverage": "signal", "scale": False}), 1)
-    assert r["leverage"] == eng
-    _, r = AP.place(None, sig, AP.settings_of({"leverage": 12, "scale": False}), 1)
-    assert r["leverage"] == 12
-    _, r = AP.place(None, sig, AP.settings_of({"leverage": 2, "scale": False}), 1)
-    assert r["leverage"] == 10                                     # the setting is clamped to 10..50
+    assert _hesper_lev(monkeypatch, "15m", stop=90.0, tps=(110.0, 115.0, 120.0)) is None
+    assert _bot_lev(monkeypatch, "15m", stop=90.0, tps=(110.0, 115.0, 120.0)) is None
 
 
 # ---- practice accounts ------------------------------------------------------------------------------------------------
@@ -310,7 +338,7 @@ def test_fresh_restart_deletes_exactly_the_history_and_keeps_the_rest(tmp_path, 
     assert rt.db.get_setting("honest_record_v213") is True
     cfg = sink.get("config/bots")["bots"]
     assert [b["id"] for b in cfg] == [b["id"] for b in BOTS]
-    assert all(b["reset_token"] == "v214" for b in cfg) and cfg[0]["leverage"] == 50.0 and cfg[1]["leverage"] == 1.0
+    assert all(b["reset_token"] == "v214" for b in cfg) and cfg[0]["leverage"] == 20.0 and cfg[1]["leverage"] == 1.0
     rows = {r["id"]: r for r in rt.db.query("SELECT * FROM bots")}
     assert loads(rows["futures-signal-ab-4h"]["state"])["cash"] == 10_000 and rows["futures-signal-ab-4h"]["reset_token"] == "v214"
     # Firestore: old-history views and Telegram drafts gone; publish cache emptied

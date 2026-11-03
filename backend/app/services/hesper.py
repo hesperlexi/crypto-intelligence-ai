@@ -4,9 +4,9 @@ ever talks to an exchange's trading API.
 * A **run** starts with $100. Hesper takes only **public grade-A calls** from the record (`signals`, any public
   timeframe), one trade at a time: when flat, the best fresh call (published in the last `FRESH_MS`; highest
   confidence, tie -> newer) is entered like the futures bots enter (market, or a limit for BUY ON PULLBACK).
-* **All-in**: margin = the whole balance (`ALL_IN` keeps a sliver for fees), isolated margin, leverage 10-50x chosen
-  by the engine per trade (v2.14, `futures.engine_leverage`: stop distance, coin tier, grade; liquidation 1.5x the
-  stop distance beyond the entry; a stop too wide for 10x is skipped). Futures fees, slippage and 8-hourly funding exactly as the futures bots.
+* **All-in**: margin = the whole balance (`ALL_IN` keeps a sliver for fees), isolated margin, leverage up to 25x but
+  lowered per trade so the liquidation price sits 1.5x the stop distance beyond the entry (`futures.safe_leverage`,
+  the futures bots' rule). v2.14: 15m calls use the engine's 10-50x (`futures.engine_leverage`; too wide -> skipped). Futures fees, slippage and 8-hourly funding exactly as the futures bots.
 * Exits are the bots' own (`BotEngine._manage_decision`, shared rules in engine/manage.py): 50 / 25 / 25 at TP1-3,
   break-even after TP1, TP1 after TP2, runner when the call has one, the call's own time limit, admin stop / TP1
   changes and "Close now" on the call, reversal on a grade-A opposite call (never on 15m), followed on 15m candles.
@@ -35,8 +35,8 @@ NAME = "Hesper"
 START_BALANCE = 100.0
 GOAL = 1000.0
 MIN_BALANCE = 1.0            # below this a run is "busted" (cannot open a meaningful trade)
-MAX_LEVERAGE = F.POLICY_MAX_LEVERAGE     # v2.14: 10-50x chosen by the engine per trade (was <= 25)
-MIN_LEVERAGE = F.MIN_LEVERAGE
+MAX_LEVERAGE = 25                        # v2.13 ceiling (all timeframes except 15m)
+MIN_LEVERAGE = F.MIN_LEVERAGE            # v2.14, 15m only: 10-50x chosen by the engine
 ALL_IN = 0.995               # share of the balance used for margin + entry fee (the bots' own cash buffer)
 FRESH_MS = 30 * 60_000       # a call counts as "fresh" for this long after publication
 PENDING_BARS = 6             # a pullback limit waits this many candles of its timeframe (as the bots)
@@ -188,10 +188,13 @@ class Hesper(BotEngine):
         if side * (entry - stop) <= 0:
             return None
         # v2.14: the engine's leverage (10-50x from stop distance, coin tier, grade); too wide for 10x -> not taken
-        el = F.engine_leverage(entry, stop, r.get("symbol"), (r.get("payload") or {}).get("grade") or "A")
-        if el is None:
-            return None
-        lev = float(el)
+        if F.in_policy(tf):          # v2.14 (15m): the engine's 10-50x; too wide for 10x -> not taken
+            el = F.engine_leverage(entry, stop, r.get("symbol"), (r.get("payload") or {}).get("grade") or "A", tf)
+            if el is None:
+                return None
+            lev = float(el)
+        else:                        # v2.13: up to 25x, lowered so liquidation sits 1.5x the stop distance away
+            lev = float(min(MAX_LEVERAGE, F.safe_leverage(entry, stop, MAX_LEVERAGE, symbol=r.get("symbol"))))
         fee_rate = F.FUTURES_FEE_RATE
         qty = float(state["cash"]) * ALL_IN / (entry * (1 / lev + fee_rate))
         if qty <= 0:
@@ -325,7 +328,8 @@ def view(rt: Any) -> dict[str, Any]:
     db = rt.db
     st = db.get_setting(STATE_KEY, None)
     since = db.get_setting(SINCE, None)
-    base = {"name": NAME, "since": since, "start": START_BALANCE, "goal": GOAL, "max_leverage": MAX_LEVERAGE, "min_leverage": MIN_LEVERAGE,
+    base = {"name": NAME, "since": since, "start": START_BALANCE, "goal": GOAL, "max_leverage": MAX_LEVERAGE,
+            "policy": {"timeframes": list(F.POLICY_TFS), "min": F.MIN_LEVERAGE, "max": F.POLICY_MAX_LEVERAGE},
             "min_balance": MIN_BALANCE, "started": bool(st), "generated_at": now_ms()}
     runs = db.query("SELECT * FROM hesper_runs ORDER BY run DESC")
     for r in runs:

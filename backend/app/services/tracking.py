@@ -238,7 +238,8 @@ def margin_fields(r: dict[str, Any], payload: dict[str, Any] | None = None) -> d
     lev = (p or {}).get("leverage") if isinstance(p, dict) else None
     if not lev:
         g = (p or {}).get("grade") if isinstance(p, dict) else None
-        lev = F.signal_leverage(r.get("entry"), r.get("stop"), symbol=r.get("symbol"), grade=g) if r.get("side") else None
+        lev = F.signal_leverage(r.get("entry"), r.get("stop"), symbol=r.get("symbol"), grade=g,
+                                timeframe=r.get("timeframe")) if r.get("side") else None
     ret = net_pct(r) if r.get("status") in CLOSED_STATUSES else r.get("return_pct")
     return {"leverage": int(lev) if lev else None, "roi_pct": F.roi_on_margin(ret, lev)}
 
@@ -438,7 +439,8 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
         # v2.14 leverage policy: a call the engine could not trade at 10x or more without liquidation before the stop
         # is not recorded (the analysis already makes it NO TRADE; this keeps the record consistent with any entry)
         from ..engine.futures import TOO_WIDE_REASON, signal_leverage
-        if signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=a.get("grade")) is None:
+        if signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=a.get("grade"),
+                           timeframe=a.get("timeframe")) is None:
             pl = {**pl, "entry": None, "skip": TOO_WIDE_REASON}
     if pl is not None and pl.get("entry") is None:
         why = pl.get("skip") or "no entry price"
@@ -454,7 +456,8 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
         from ..engine.futures import signal_leverage
         payload.update({"manage": manage_params(db), "live_price": a.get("price"),
                         "horizon_bars": horizon_for(a["timeframe"]),
-                        "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=a.get("grade")),
+                        "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=a.get("grade"),
+                                                    timeframe=a.get("timeframe")),
                         "decision_basis": a.get("decision_basis"),
                         "ai_inputs": {"confidence": a.get("confidence"), "regime": (a.get("regime") or {}).get("regime"),
                                       "trend": _comp(sig, "trend"), "momentum": _comp(sig, "momentum"),
@@ -615,7 +618,8 @@ def log_scalp(db: Database, a: dict[str, Any], now: int | None = None, extra: di
     payload = {"scalp": True, "grade": demo["grade"], "decision_reason": a.get("decision_reason"),
                "decision_basis": a.get("decision_basis"), "runner": setup.get("runner"), "entry_rule": pl.get("entry_rule"),
                "manage": manage_params(db), "live_price": a.get("price"), "horizon_bars": horizon_for(a["timeframe"]),
-               "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=demo["grade"]),
+               "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=demo["grade"],
+                                           timeframe=a.get("timeframe")),
                "risk_pct": setup.get("risk_pct"),
                "targets_r": [t.get("rr") for t in setup.get("targets", [])], **(extra or {})}
     sid = new_id()
