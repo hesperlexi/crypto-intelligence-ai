@@ -76,7 +76,7 @@ body { font-family: Inter, "DejaVu Sans", Arial, sans-serif; font-size: 10.6pt; 
 .toc { padding: 6mm 22mm 0; page-break-after: always; }
 .toc h2 { margin-top: 0; }
 .toc ol { list-style: none; padding: 0; margin: 8mm 0 0; columns: 1; }
-.toc li { counter-increment: t; padding: 2.6mm 4mm; margin-bottom: 1.8mm; border-radius: 3mm;
+.toc li { counter-increment: t; padding: 2.1mm 4mm; margin-bottom: 1.4mm; border-radius: 3mm;
   background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); border: 1px solid rgba(255,255,255,.07);
   font-size: 11pt; color: #eaecef; }
 .lead { margin: 4mm 0 2mm; break-inside: avoid; padding: 5mm 6mm; border-radius: 3mm; border: 1px solid rgba(240,185,11,.35);
