@@ -101,6 +101,7 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
     except Exception as exc:
         rt.record_error(f"trade filter {symbol} {timeframe}", exc)
         fc["trade_filter"] = None
+        fc["trade_filter_error"] = f"{type(exc).__name__}: {exc}"[:160]      # v2.13: fail closed (analyze)
     try:
         from ..ml import target_model
         fc["target_lift"] = target_model.lifts(bundle.get("target_model"), x_row, fc["probabilities"])
@@ -282,7 +283,9 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     elif not fc["available"]:
         decision, why = ("NO TRADE" if direction else "HOLD"), f"no validated model for {timeframe} ({fc['reason']})"
     elif settings.require_edge_for_trade and not fc["edge_confirmed"]:
-        decision, why = "NO TRADE", "the model has no statistically confirmed edge"
+        decision, why = ("NO TRADE" if direction else "HOLD"), "no proven edge: the model's walk-forward edge test not passed"
+        if direction:
+            flags.append("NO PROVEN EDGE")
     else:
         mside = dv["side"] if dv else 0
         clears = bool(dv and dv["clears_policy"])
@@ -325,6 +328,13 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 decision = "SELL"
             if grade:
                 direction = side
+    # v2.13 (C2): a graded call needs a PROVEN edge: the model's walk-forward edge test passed (`edge_confirmed`) AND
+    # its directional policy is reliably better than a coin flip (`policy_edge`: lower 95 % bound of the chosen margin's
+    # out-of-sample hit rate > 50 %). Setting REQUIRE_EDGE_FOR_TRADE (default on since v2.13).
+    edge_why = edge_gate(fc, dv) if decision in TRADE_DECISIONS else None
+    if edge_why:
+        decision, grade, why = "NO TRADE", None, edge_why
+        flags.append("NO PROVEN EDGE")
     # bigger-trend check (v2.2): a trade against BOTH of the next two higher timeframes' trends is refused; against
     # one of them, a grade A call is lowered to B. Quick timeframes are where this matters most.
     trend_check = higher_trend_check(matrix, timeframe, direction if decision in TRADE_DECISIONS else 0)
@@ -347,6 +357,10 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             grade = None
             flags.append("FILTERED")
 
+    if decision in TRADE_DECISIONS and fc.get("trade_filter_error"):
+        decision, grade, why = "NO TRADE", None, "the trade filter could not be checked (fail-safe: no trade)"
+        flags.append("CHECK UNAVAILABLE")
+        gate_failure(rt, "trade_filter", symbol, timeframe, fc["trade_filter_error"])
     # v2.6 proven-only series gate: a coin/timeframe whose out-of-sample + live expectancy is not credibly positive
     if decision in TRADE_DECISIONS and spol["blocked"]:
         decision, why, grade = "NO TRADE", spol["reason"], None
@@ -371,6 +385,10 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                         flags.append("FILTERED")
         except Exception as exc:
             rt.record_error(f"trade filter2 {symbol} {timeframe}", exc)
+            # v2.13 fail closed: a required check that cannot run blocks the call (shown on Health)
+            decision, grade, why = "NO TRADE", None, f"the {timeframe.upper()} trade filter could not be checked (fail-safe: no trade)"
+            flags.append("CHECK UNAVAILABLE")
+            gate_failure(rt, "trade_filter2", symbol, timeframe, exc)
 
     # costs (v2.3): a target 1 that barely covers fees and slippage is no trade (mostly tight 15m setups)
     if decision in TRADE_DECISIONS and setup and setup.get("valid") and not beats_costs(setup["ideal_entry"], setup["stop"]):
@@ -426,19 +444,34 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             from . import safety
             from ..views import record_for
             safety_state = safety.check(rt.db, symbol, timeframe, record_for(rt, timeframe))
-        except Exception:
-            safety_state = None
+        except Exception as exc:
+            # v2.13 fail closed: without the safety switch's verdict no new call is issued
+            safety_state = {"paused": False, "error": f"{type(exc).__name__}: {exc}"[:160]}
+            if decision in TRADE_DECISIONS:
+                decision, why, grade = "NO TRADE", "the safety switch could not be checked (fail-safe: no trade)", None
+                flags.append("CHECK UNAVAILABLE")
+            gate_failure(rt, "safety", symbol, timeframe, exc)
         if safety_state and safety_state.get("paused") and decision in TRADE_DECISIONS and setup and setup.get("valid"):
             shadow = (decision, setup)
             decision, why, grade = "NO TRADE", safety_state["reason"], None
             flags.append("PAUSED")
     # high-impact US data release (CPI, jobs report, Fed): pause fresh entries around it
     news_risk = None
+    news_down = None
     try:
         from .news import event_risk
         news_risk = event_risk(rt.db, (as_of if as_of is not None else int(time.time() * 1000)))
-    except Exception:
+        if live and bundle is None:
+            news_down = calendar_unavailable(rt.db)
+    except Exception as exc:
         news_risk = None
+        news_down = f"{type(exc).__name__}: {exc}"[:160]
+    if news_down and decision in TRADE_DECISIONS:
+        # v2.13 fail closed: the news guard cannot see the calendar, so it cannot say the next hour is clear
+        decision, why, grade = "NO TRADE", "the economic calendar is unavailable, so the news guard cannot run (fail-safe: no trade)", None
+        flags.append("CHECK UNAVAILABLE")
+    if news_down:
+        gate_failure(rt, "news_calendar", symbol, timeframe, news_down)
     if news_risk:
         flags.append("NEWS RISK")
         if decision in TRADE_DECISIONS:
@@ -523,6 +556,19 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     return out
 
 
+def edge_gate(fc: dict[str, Any] | None, dv: dict[str, Any] | None, required: bool | None = None) -> str | None:
+    """v2.13 (C2): why a graded call is refused for lack of a proven edge, or None when it may trade.
+    Proven = the model's walk-forward edge test (`edge_confirmed`) AND the direction policy's edge (`policy_edge`)."""
+    if not (settings.require_edge_for_trade if required is None else required):
+        return None
+    ok_model, ok_dir = bool((fc or {}).get("edge_confirmed")), bool(dv and dv.get("policy_edge"))
+    if ok_model and ok_dir:
+        return None
+    missing = [x for x, ok in (("the model's walk-forward edge test", ok_model),
+                               ("a direction hit rate reliably above 50% on unseen data", ok_dir)) if not ok]
+    return "no proven edge: " + " and ".join(missing) + " not passed"
+
+
 def series_policy_view(rt: Runtime, symbol: str, timeframe: str) -> dict[str, Any]:
     """The cached nightly policy of this coin/timeframe as the live decision uses it (all off unless enabled)."""
     if not (settings.series_gate or settings.series_conf):
@@ -592,3 +638,41 @@ def final_signal(a: dict[str, Any]) -> dict[str, Any]:
         "warnings": sig.get("warnings"), "flags": a.get("flags"), "decision": a.get("decision"),
         "decision_reason": a.get("decision_reason"),
     }
+
+
+# ---- v2.13 fail closed ------------------------------------------------------------------------------------------
+# A required gate that cannot be evaluated (exception, or the calendar not refreshed) turns the call into NO TRADE with
+# a reason, and is listed on Health (setting `gate_failures`, last occurrence per gate). An expired / missing nightly
+# entry rule is NOT a failure: the record then uses the v2.5 rule, which since v2.13 enters at the market price (honest).
+CALENDAR_MAX_AGE_MS = int(float(os.environ.get("NEWS_CALENDAR_MAX_AGE_H", "72")) * 3_600_000)
+GATE_FAILURES_KEEP_MS = 24 * 3_600_000
+
+
+def calendar_unavailable(db: Any, now: int | None = None) -> str | None:
+    """Why the news guard cannot run, or None. The calendar counts as unavailable when it was synced before but not in
+    the last NEWS_CALENDAR_MAX_AGE_H hours (a database that never synced one - fresh installs, tests - is not blocked)."""
+    now = int(time.time() * 1000) if now is None else now
+    last = int(db.get_setting("calendar_synced_at", 0) or 0)
+    if last and now - last > CALENDAR_MAX_AGE_MS:
+        return f"calendar last refreshed {round((now - last) / 3_600_000)} h ago"
+    return None
+
+
+def gate_failure(rt: Any, gate: str, symbol: str, timeframe: str, err: Any) -> None:
+    """Remember a gate that could not run (Health shows the last 24 h)."""
+    try:
+        now = int(time.time() * 1000)
+        cur = {k: v for k, v in (rt.db.get_setting("gate_failures", {}) or {}).items()
+               if now - int((v or {}).get("at") or 0) < GATE_FAILURES_KEEP_MS}
+        prev = cur.get(gate) or {}
+        cur[gate] = {"at": now, "symbol": symbol, "timeframe": timeframe, "detail": str(err)[:160],
+                     "count": int(prev.get("count") or 0) + 1 if prev else 1}
+        rt.db.set_setting("gate_failures", cur)
+    except Exception:
+        pass
+
+
+def gate_failures(db: Any, now: int | None = None) -> dict[str, Any]:
+    now = int(time.time() * 1000) if now is None else now
+    return {k: v for k, v in (db.get_setting("gate_failures", {}) or {}).items()
+            if now - int((v or {}).get("at") or 0) < GATE_FAILURES_KEEP_MS}

@@ -30,7 +30,7 @@ export default function FuturesPaper() {
   const px = tickers[symbol]?.last ?? null;
   const L = Math.max(1, Math.min(PF.MAX_LEV, Math.round(Number(lev) || 1)));
   const M = Number(margin) || 0;
-  const liq = px ? PF.liqPrice(px, side, L) : null;
+  const liq = px ? PF.liqPrice(px, side, L, symbol) : null;
   const notional = M * L;
   const stopN = Number(sl) || null;
   const lossAtStop = px && stopN ? Math.abs(px - stopN) / px * notional : null;

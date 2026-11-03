@@ -5,7 +5,7 @@ import { Badge, Card, Empty, ErrorBox, Loading, Note, Stat } from "../components
 import { useApi } from "../lib/api";
 import { ago, fmtCompact, fmtPrice } from "../lib/format";
 import TradeCall from "../components/TradeCall";
-import { liqPrice } from "../lib/paperFutures";
+import { FEE, liqPrice, MMR } from "../lib/paperFutures";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 
@@ -97,7 +97,7 @@ function LeverageCalculator() {
           <Stat label="Position size" value={`$${fmtCompact(notional)}`} sub={`${qty.toPrecision(4)} coins`} />
           <Stat label="Margin needed" value={`$${fmtCompact(margin)}`} sub={`${((margin / B) * 100).toFixed(1)}% of balance`} />
           <Stat label="Loss at stop" value={`$${fmtCompact(B * R / 100)}`} sub={`${(dist * L * 100).toFixed(0)}% of margin`} />
-          <Stat label="Max safe leverage" value={`${Math.max(1, Math.floor(1 / (1.5 * dist + 0.005)))}x`} sub="liq. ≥ 1.5× stop distance" />
+          <Stat label="Max safe leverage" value={`${Math.max(1, Math.floor(1 / (1.5 * dist * (1 + MMR + FEE) + MMR + FEE)))}x`} sub="liq. ≥ 1.5× stop distance" />
         </div>
       )}
       <Note>Size comes from the stop and your risk; leverage only changes the margin.</Note>

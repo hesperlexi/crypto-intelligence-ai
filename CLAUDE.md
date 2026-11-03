@@ -295,6 +295,39 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   Shown everywhere (admin menu, page, share image) as **"Hesper Challenge"** (owner, 2 Nov 2026); "Road to Rich" is only the
   internal name in code comments. Rules tests in `tests/rules`.
 
+## v2.13 honest record + stricter grading (3 Nov 2026, branch `honest-v213`, owner-approved audit steps 2-3)
+- **Entry (C1)** `tracking._plan`: a call FILLED at publication is recorded at the live / decision price (`a["price"]`),
+  targets rebuilt in R from it with the same stop (`entry_rule` {mode market, ideal_entry}); price at/beyond the stop →
+  not recorded (`skip_entry` decision). BUY ON PULLBACK / confirm / pullback rules stay PENDING limits. Runner target
+  rebuilt from the recorded entry (`_runner_for`). Signal card: `futures_view` shows the RECORDED levels while the call is
+  OPEN on the same side (`plan.recorded`, "Entry (recorded)").
+- **Net results**: closed calls store `return_net_pct` = `return_pct` − `cost_pct` (`analysis.round_trip_cost(futures=True)`,
+  0.15 %) − `funding_pct` (stored hourly `derivs` funding_1h per coin, default 0.01 %/8 h for missing hours; on the open
+  share: 100 % → 50 % after TP1 → 25 % after TP2, runner 100 %; longs pay). `tracking.net_pct/result_fields/net_sql`.
+  Track record, Signal log summary, wins_today, weekly report, achievements, Telegram/cards, safety switch use NET as the
+  headline and judge win/loss on net (>0); `gross_return_pct` kept; ROI on margin = net × leverage. Old rows: estimate.
+- **Fills** `engine/manage.py`: stop / break-even / trail exit on a candle opening beyond the level fills at the OPEN
+  (`stop_fill`, `GAP_FILLS`); limits fill only when traded THROUGH by one tick (`trades_through`, `TICK_FRAC` 1e-5).
+  `series_sim.follow(open_=...)` + `fill` the same (test proves equality with gaps); `fill` mode "ideal" = old record.
+- **Restart** flag `honest_record_v213` (`worker.honest_record_v213`): `record_since` = now, `record_since_tf` cleared,
+  `honest_record_since` (Results line "Record restarted …: real entry prices, after fees"), old values in
+  `honest_record_prev`; on an empty DB only the flag is set.
+- **Grading (C2)** `REQUIRE_EDGE_FOR_TRADE` default **on**: grade A/B need `fc.edge_confirmed` AND `dv.policy_edge`
+  (`analysis.edge_gate`; research `series_policy.decide(require_edge=)`); else NO TRADE "no proven edge …".
+- **Fail closed**: trade filter (v1) error, filter2 exception, safety switch exception, news calendar unavailable
+  (synced before but older than `NEWS_CALENDAR_MAX_AGE_H` 72 h, or an error) → NO TRADE "CHECK UNAVAILABLE";
+  `analysis.gate_failure` → setting `gate_failures` → Health `fail_closed` card "Fail-safe checks". An expired / missing
+  nightly entry rule is NOT a failure: the v2.5 rule applies (now honest market entry).
+- **Liquidation** `engine/futures.py`: `MAINTENANCE_TIERS` / `maintenance_rate(symbol)` (approx. Binance tier 1: BTC/ETH
+  0.4 %, large caps 0.5 %, alts 1 %, PAXG / memecoins 2-2.5 %, unknown 1 %); `liquidation_price` includes the exit fee;
+  `safe_leverage` buffer ≥ 1.5 (`MIN_BUFFER`), symbol-aware everywhere (bots, Hesper, autopaper, cards, alerts);
+  frontend `paperFutures.MMR_TIERS/mmrOf/liqPrice(…, symbol)`.
+- **Auto-trade**: `autopaper.MAX_LEV` 20 (frontend `AutoTrade.AUTO_MAX_LEV` clamps); reversal only closes an auto
+  position / order opened from the SAME timeframe (`pos.signal.timeframe`); otherwise the new call is skipped.
+- Impact study: `python -m app.research v213` (`research_v213.py`, workflow `research-v213.yml`, results
+  `research-results/results/v213-*.json`): live record since 30 Oct old / fills / new entry, gross vs net; research replay
+  current vs edge-required grading × ideal vs market entry on the 30 % test split. Tests `tests/test_v213.py`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

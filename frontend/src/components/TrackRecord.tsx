@@ -81,17 +81,18 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Kpi k="Closed signals" v={String(s.closed ?? 0)} sub={d.record_since ? `${d.testing_since ? "testing · " : ""}since ${fmtDate(d.record_since)}${d.record_since_tf?.["15m"] ? ` (15M ${fmtDate(d.record_since_tf["15m"])})` : ""} · ${d.live?.open ?? 0} open` : d.since ? `since ${fmtDate(d.since)} · ${d.live?.open ?? 0} open` : undefined} />
         <Kpi k="Win rate (live)" v={rate(s.win_rate)} sub={s.closed ? `${s.closed} closed signals` : "first results soon"} />
-        {roi ? <Kpi k="Avg ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin · price ${pct(s.avg_return_pct, 2)} · before fees`} />
-          : <Kpi k="Avg price move per signal" v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub="before fees" />}
+        {roi ? <Kpi k="Avg ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin · ${pct(s.avg_return_pct, 2)} ${s.net ? "after fees" : "before fees"}`} />
+          : <Kpi k={s.net ? "Avg result per signal" : "Avg price move per signal"} v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub={s.net ? "after fees" : "before fees"} />}
         {pro ? <Kpi k="Tested hit rate" v={rate(avgTested)} sub={`${edge.length} coin/timeframes with a proven edge`} />
-          : roi ? <Kpi k="Total ROI on margin" v={pct(s.total_roi_pct)} cls={tone(s.total_roi_pct)} sub={`all closed signals · price ${pct(s.total_return_pct)}`} />
-          : <Kpi k="Total price move" v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub="all closed signals, equal size" />}
+          : roi ? <Kpi k="Total ROI on margin" v={pct(s.total_roi_pct)} cls={tone(s.total_roi_pct)} sub={`all closed signals · ${pct(s.total_return_pct)}${s.net ? " after fees" : ""}`} />
+          : <Kpi k={s.net ? "Total result" : "Total price move"} v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub={s.net ? "all closed signals, equal size, after fees" : "all closed signals, equal size"} />}
       </div>
       )}
-      <Explain>ROI on margin = price move × suggested leverage. Leverage magnifies losses.</Explain>
+      {d.honest_since && <p className="px-1 text-xs text-mute">Record restarted {fmtDate(d.honest_since)}: real entry prices, after fees.</p>}
+      <Explain>{d.results_net ? "Results are after fees (trading costs and funding). ROI on margin = result × suggested leverage. Leverage magnifies losses." : "ROI on margin = price move × suggested leverage. Leverage magnifies losses."}</Explain>
       {(d.live?.curve?.length ?? 0) > 1 && (
         <div className="panel px-4 pt-3">
-          <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? "Cumulative ROI on margin" : "Cumulative price move"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>
+          <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? `Cumulative ROI on margin${s.net ? " (after fees)" : ""}` : s.net ? "Cumulative result after fees" : "Cumulative price move"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>
           <Curve pts={d.live.curve} roi={roi} />
         </div>
       )}
@@ -192,7 +193,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
               </table>
             </div>
           )}
-          <p className="border-t border-glass/[0.06] px-4 py-2.5 text-[11px] text-mute">Wins and losses alike, never edited. Before fees. Past results do not guarantee future results. {d.method?.live && <Info label="How results are counted">{d.method.live}</Info>}</p>
+          <p className="border-t border-glass/[0.06] px-4 py-2.5 text-[11px] text-mute">Wins and losses alike, never edited. {d.results_net ? "Signals: after fees." : "Before fees."} Past results do not guarantee future results. {d.method?.live && <Info label="How results are counted">{d.method.live}</Info>}</p>
         </section>
       )}
     </div>

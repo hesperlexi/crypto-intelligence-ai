@@ -342,7 +342,7 @@ function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d:
   };
 
   const notional = market === "futures" ? amt * lev : spotSide === "BUY" ? amt : amt * (price ?? 0);
-  const estLiq = (side: number) => (price && market === "futures" ? PF.liqPrice(price, side, lev) : null);
+  const estLiq = (side: number) => (price && market === "futures" ? PF.liqPrice(price, side, lev, symbol) : null);
 
   return (
     <section className="panel p-3">

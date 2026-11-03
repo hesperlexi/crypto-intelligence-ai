@@ -232,7 +232,7 @@ def close(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
     close_validate(sig, price, note, any(a["field"] == "close" for a in adj), still_open)
     res = close_result(sig, adj, p15, price, at)
     ret = res.get("return_pct")
-    lev = F.signal_leverage(sig.get("entry"), sig.get("stop"))
+    lev = F.signal_leverage(sig.get("entry"), sig.get("stop"), symbol=sig.get("symbol"))
     roi = F.roi_on_margin(ret, lev)
     db.execute("INSERT INTO signal_adjustments (id, signal_id, at, field, old, new, note, by, price_at_change) "
                "VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)", (new_id(), sid, at, "close", price, price, note, by, price))

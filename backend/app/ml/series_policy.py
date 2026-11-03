@@ -215,7 +215,8 @@ def round_trip() -> float:
 
 
 def decide(ctx: Context, ref: np.ndarray, conf_b: float | np.ndarray | None = None,
-           weights: dict[str, float] | None = None, stop_mode: str = "current") -> dict[str, np.ndarray]:
+           weights: dict[str, float] | None = None, stop_mode: str = "current",
+           require_edge: bool | None = None) -> dict[str, np.ndarray]:
     """Decision of the live pipeline on every row. `ref`: boolean mask of the rows whose outcomes may be used as the
     reference for the directional policy / confidence (rows before the split when proving; all rows in production).
     Returns arrays: trade (bool), side, grade ('A' / 'B' / ''), confidence, decision ('BUY' / 'BUY ON PULLBACK' /
@@ -297,6 +298,11 @@ def decide(ctx: Context, ref: np.ndarray, conf_b: float | np.ndarray | None = No
     reason = np.where(core, "", "insufficient")
     reason = np.where((reason == "") & (ctx.vol_state == 3), "extreme_vol", reason)
     reason = np.where((reason == "") & (grade == ""), "no_grade", reason)
+    # v2.13 (C2, analysis.analyze): grades need a proven edge - the model's edge test and the direction policy's edge
+    req = settings.require_edge_for_trade if require_edge is None else bool(require_edge)
+    if req and not (bool(pol["edge"]) and bool(ctx.edge_confirmed)):
+        reason = np.where(reason == "", "no_edge", reason)
+        grade = np.where(reason == "no_edge", "", grade)
     # higher-timeframe check: the next two higher timeframes with a direction
     order = sorted([t for t in tfs if TF_SECONDS[t] > TF_SECONDS[tf]], key=lambda t: TF_SECONDS[t])
     against = np.zeros(n, int)
@@ -341,10 +347,12 @@ class Paths:
         self._a = {}
         for k, d in (("p15", self.p15), ("own", self.own)):
             if d is not None and len(d):
-                self._a[k] = tuple(d[c].to_numpy(np.int64 if c == "ts" else float) for c in ("ts", "high", "low", "close"))
+                cols = ("ts", "high", "low", "close", "open") if "open" in d else ("ts", "high", "low", "close", "close")
+                self._a[k] = tuple(d[c].to_numpy(np.int64 if c == "ts" else float) for c in cols)
 
     def window(self, start: int, end: int) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int] | None:
-        """Candles opened in [start, end) - 15m when they cover the whole window, else own-timeframe ones."""
+        """Candles opened in [start, end) - 15m when they cover the whole window, else own-timeframe ones.
+        (ts, high, low, close, bar ms); the matching opens: `last_open` after the call."""
         for k, ms in (("p15", 900_000), ("own", None)):
             a = self._a.get(k)
             if a is None:
@@ -355,6 +363,7 @@ class Paths:
                 continue
             if k == "p15" and (ts[i] > start + ms or ts[j - 1] + ms < end):
                 continue
+            self.last_open = a[4][i:j]
             return a[0][i:j], a[1][i:j], a[2][i:j], a[3][i:j], (ms or 0)
         return None
 
@@ -369,6 +378,7 @@ def simulate(ctx: Context, paths: Paths, j: int, side: int, pl: dict[str, Any], 
     if w is None:
         return None
     ts, hi, lo, cl, ms = w
+    op = getattr(paths, "last_open", None)
     bar = ms or step
     window = max(1, int(round(settings.fill_window_bars * step / bar)))
     f = S.fill(entry_mode, side, float(ctx.close[j]), float(ctx.atr[j]), pl, hi, lo, cl, window, k)
@@ -380,7 +390,8 @@ def simulate(ctx: Context, paths: Paths, j: int, side: int, pl: dict[str, Any], 
         return {"filled": False}
     tps = S.ladder(side, entry, stop)
     complete = int(ts[-1]) + bar >= end
-    out = S.follow(side, entry, stop, tps, hi[i0:], lo[i0:], cl[i0:], first_is_fill=first_is_fill, complete=complete)
+    out = S.follow(side, entry, stop, tps, hi[i0:], lo[i0:], cl[i0:], first_is_fill=first_is_fill, complete=complete,
+                   open_=op[i0:] if op is not None and len(op) == len(hi) else None)
     if out is None:
         return None
     c = settings.research_cost_pct if cost_pct is None else cost_pct

@@ -28,15 +28,26 @@ async function adoptLegacy() {
 }
 const TRADES = "paper_futures_trades";
 export const FEE = 0.0005;             // 0.05% taker
-export const MMR = 0.005;              // maintenance margin (conservative tier-1)
+export const MMR = 0.01;               // maintenance margin for a coin not in MMR_TIERS (v2.13; was a flat 0.5%)
+/** v2.13: approximate Binance tier-1 maintenance rates (same table as backend engine/futures.py MAINTENANCE_TIERS). */
+export const MMR_TIERS: Record<string, number> = {
+  BTC: 0.004, ETH: 0.004, BNB: 0.005, SOL: 0.005, XRP: 0.005, LTC: 0.005, ADA: 0.005, LINK: 0.005, DOT: 0.005,
+  AVAX: 0.01, AAVE: 0.01, TRX: 0.01, BCH: 0.01, ATOM: 0.01, NEAR: 0.01, TON: 0.01, GRAM: 0.01,
+  DOGE: 0.02, SHIB: 0.02, PEPE: 0.02, "1000PEPE": 0.02, "1000SHIB": 0.02, WIF: 0.02, BONK: 0.02, "1000BONK": 0.02,
+  FLOKI: 0.02, "1000FLOKI": 0.02, TRUMP: 0.025, PAXG: 0.02, XAUT: 0.02, GOLD: 0.02,
+};
+export const mmrOf = (symbol?: string) => (symbol ? MMR_TIERS[symbol.toUpperCase().split("/")[0].replace("USDT", "")] ?? MMR : MMR);
 const ADVERSE = (2 + 0.5) / 1e4;       // slippage + half spread
 const SLIP = 2 / 1e4;
 const STEP = 900_000;
 const FUNDING_MS = 8 * 3_600_000;
 export const MAX_LEV = 50;
 
-export const liqPrice = (entry: number, side: number, lev: number) =>
-  side > 0 ? Math.max(0, entry * (1 - 1 / Math.max(1, lev) + MMR)) : entry * (1 + 1 / Math.max(1, lev) - MMR);
+/** Isolated-margin liquidation price with the coin's maintenance rate and the fee of closing there (v2.13). */
+export const liqPrice = (entry: number, side: number, lev: number, symbol?: string) => {
+  const m = mmrOf(symbol), L = Math.max(1, lev);
+  return side > 0 ? Math.max(0, (entry * (1 - 1 / L)) / (1 - m - FEE)) : (entry * (1 + 1 / L)) / (1 + m + FEE);
+};
 
 const keyOf = (s: string) => s.replace("/", "");
 /** Position key: one position per coin in one-way mode, one per coin AND side in hedge mode. */
@@ -155,10 +166,10 @@ function mergeFill(positions: Record<string, any>, symbol: string, side: number,
     const entry = (cur.entry * cur.qty + fill * qty) / q;
     const m = cur.margin + margin;
     const effLev = (q * entry) / m;
-    pos = { ...cur, qty: q, entry, margin: m, leverage: effLev, liq: liqPrice(entry, side, effLev), fees: cur.fees + fee,
+    pos = { ...cur, qty: q, entry, margin: m, leverage: effLev, liq: liqPrice(entry, side, effLev, symbol), fees: cur.fees + fee,
       stop: stop ?? cur.stop ?? null, take: take ?? cur.take ?? null };
   } else {
-    pos = { key, symbol, side, qty, entry: fill, margin, leverage: lev, liq: liqPrice(fill, side, lev),
+    pos = { key, symbol, side, qty, entry: fill, margin, leverage: lev, liq: liqPrice(fill, side, lev, symbol),
       stop, take, opened_at: now, checked_at: now, funded_until: now, funding: 0, fees: fee };
   }
   positions[key] = { ...pos, key };
@@ -354,7 +365,7 @@ export async function settle() {
           // funding comes out of the position's margin (isolated), which moves the liquidation price
           const margin = p.margin - amount;
           const lev = (p.qty * p.entry) / Math.max(margin, 1e-9);
-          tx.update(ACC_REF(), { positions: { ...a.positions, [key]: { ...p, margin, leverage: lev, liq: liqPrice(p.entry, p.side, lev),
+          tx.update(ACC_REF(), { positions: { ...a.positions, [key]: { ...p, margin, leverage: lev, liq: liqPrice(p.entry, p.side, lev, p.symbol),
             funding: (p.funding ?? 0) + amount, funded_until: first + (n - 1) * FUNDING_MS } },
             totals: { ...a.totals, funding: (a.totals.funding ?? 0) + amount, realized: a.totals.realized - amount } });
         });

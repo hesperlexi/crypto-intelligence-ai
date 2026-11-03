@@ -117,7 +117,8 @@ class Settings:
     min_oos_for_edge: int = field(default_factory=lambda: int(_f("MIN_OOS_FOR_EDGE", 300)))
     edge_alpha: float = field(default_factory=lambda: _f("EDGE_ALPHA", 0.01))
     require_edge_for_ml: bool = field(default_factory=lambda: _b("REQUIRE_EDGE_FOR_ML", True))
-    require_edge_for_trade: bool = field(default_factory=lambda: _b("REQUIRE_EDGE_FOR_TRADE", False))
+    # v2.13 (owner, 3 Nov 2026): on - grades A and B need a proven edge (edge_confirmed and the direction policy's edge)
+    require_edge_for_trade: bool = field(default_factory=lambda: _b("REQUIRE_EDGE_FOR_TRADE", True))
 
     # signal policy
     min_confidence: float = field(default_factory=lambda: _f("MIN_CONFIDENCE", 0.45))

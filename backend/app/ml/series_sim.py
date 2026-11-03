@@ -27,6 +27,7 @@ TP_SPLIT = (0.5, 0.25, 0.25)
 STRUCT_BOUNDS = (0.8, 3.5)          # v2.6 structure stop: distance from the entry, in ATR
 CURRENT_BOUNDS = (1.0, 3.0)         # engine/setup.py
 EXTENDED_ATR = 0.4
+TICK_FRAC = 1e-5                    # engine/manage.TICK_FRAC (a limit fills only when traded through by one tick)
 
 
 # ---- exits -------------------------------------------------------------------------------------------------------
@@ -51,9 +52,11 @@ class Outcome:
 
 
 def follow(side: int, entry: float, stop: float, tps: tuple[float, float, float] | list[float], high: np.ndarray,
-           low: np.ndarray, close: np.ndarray, first_is_fill: bool = False, complete: bool = True) -> Outcome | None:
+           low: np.ndarray, close: np.ndarray, first_is_fill: bool = False, complete: bool = True,
+           open_: np.ndarray | None = None) -> Outcome | None:
     """Standard rules on a path that starts at the entry candle. None when the call is still open at the path's end
-    (and `complete` is False) or the path is empty."""
+    (and `complete` is False) or the path is empty. `open_` (v2.13): candle opens - a stop / break-even / trail exit on a
+    candle that OPENS beyond the level fills at the open (gap), as engine/manage.follow does; without opens: the level."""
     n = len(high)
     if n == 0 or side == 0 or entry <= 0:
         return None
@@ -66,6 +69,12 @@ def follow(side: int, entry: float, stop: float, tps: tuple[float, float, float]
     legs = [None, None, None]
     t0 = 1 if first_is_fill else 0
 
+    def gap(idx: int, level: float) -> float:
+        if open_ is None or (first_is_fill and idx == 0):
+            return float(level)
+        o = float(open_[idx])
+        return o if (s > 0 and o < level) or (s < 0 and o > level) else float(level)
+
     def done(status: str, reason: str, idx: int, fallback: float) -> Outcome:
         px = [legs[k] if legs[k] is not None else fallback for k in range(3)]
         ret = sum(w * s * (p / entry - 1) for w, p in zip(TP_SPLIT, px)) * 100
@@ -75,7 +84,7 @@ def follow(side: int, entry: float, stop: float, tps: tuple[float, float, float]
     t1 = _first(hit_fav(tp1), t0)
     if t1 is None or (ts_ is not None and ts_ <= t1):
         if ts_ is not None:
-            return done("STOPPED", "stop", ts_, stop)
+            return done("STOPPED", "stop", ts_, gap(ts_, stop))
         return done("EXPIRED", "expired", n - 1, float(close[-1])) if complete else None
     legs[0] = tp1
     if hit_fav(tp2)[t1]:
@@ -85,7 +94,7 @@ def follow(side: int, entry: float, stop: float, tps: tuple[float, float, float]
         t2 = _first(hit_fav(tp2), t1 + 1)
         if t2 is None or (tb is not None and tb <= t2):
             if tb is not None:
-                return done("TP1", "break_even", tb, entry)
+                return done("TP1", "break_even", tb, gap(tb, entry))
             return done("TP1", "expired", n - 1, float(close[-1])) if complete else None
     legs[1] = tp2
     if hit_fav(tp3)[t2]:
@@ -95,7 +104,7 @@ def follow(side: int, entry: float, stop: float, tps: tuple[float, float, float]
     t3 = _first(hit_fav(tp3), t2 + 1)
     if t3 is None or (tb is not None and tb <= t3):
         if tb is not None:
-            return done("TP2", "trail", tb, tp1)
+            return done("TP2", "trail", tb, gap(tb, tp1))
         return done("TP2", "expired", n - 1, float(close[-1])) if complete else None
     legs[2] = tp3
     return done("TP3", "tp3", t3, tp3)
@@ -161,6 +170,8 @@ def fill(mode: str, side: int, price: float, atr: float, p: dict[str, Any], high
 
     mode "market":   at the decision close (the path starts with its first candle).
     mode "old":      v2.5 - long and extended: limit at the ideal entry; otherwise market.
+    mode "ideal":    the live record before v2.13 (for comparison only): BUY / SELL logged as FILLED at the ideal entry at
+                     once (0 - 0.5 ATR better than the market price); long and extended: limit at the ideal entry.
     mode "confirm":  a path candle within `window` candles closes beyond price + side * k * ATR; entry at that close
                      (the trade starts with the next candle). Cancelled if the stop trades first.
     mode "pullback": limit at price - side * k * ATR within `window` candles (never at / through the stop)."""
@@ -170,11 +181,14 @@ def fill(mode: str, side: int, price: float, atr: float, p: dict[str, Any], high
     w = min(window, len(high))
     if mode == "market" or (mode == "old" and not (side > 0 and p["extended"])):
         return 0, float(price), False
-    if mode == "old" or mode == "pullback":
-        lim = p["ideal"] if mode == "old" else price - side * k * atr
+    if mode == "ideal" and not (side > 0 and p["extended"]):
+        return 0, float(p["ideal"]), False
+    if mode in ("old", "ideal", "pullback"):
+        lim = p["ideal"] if mode in ("old", "ideal") else price - side * k * atr
         if side * (lim - stop) <= 0:
             return None
-        touch = (low[:w] <= lim) if side > 0 else (high[:w] >= lim)
+        tick = abs(lim) * TICK_FRAC                       # v2.13: through the limit, not a touch (engine/manage.py)
+        touch = (low[:w] <= lim - tick) if side > 0 else (high[:w] >= lim + tick)
         i = _first(touch, 0)
         return None if i is None else (i, float(lim), True)
     if mode == "confirm":

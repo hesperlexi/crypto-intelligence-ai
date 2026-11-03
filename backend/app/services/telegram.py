@@ -132,10 +132,12 @@ def _held(ms: int | None) -> str:
 
 
 def win_item(r: dict[str, Any]) -> dict[str, Any]:
-    from .tracking import margin_fields
+    from .tracking import margin_fields, net_pct
     target = {"TP1": r.get("tp1"), "TP2": r.get("tp2"), "TP3": r.get("tp3")}.get(r["status"])
     return {"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
-            "status": r["status"], "return_pct": float(r["return_pct"]), "entry": r.get("entry"),
+            # v2.13: the result after fees (round trip + funding); the price return before fees beside it
+            "status": r["status"], "return_pct": float(net_pct(r)), "gross_return_pct": float(r["return_pct"]),
+            "entry": r.get("entry"),
             "exit_price": target, "held": _held((r.get("closed_at") or 0) - (r.get("created_at") or 0)),
             **margin_fields(r)}
 
@@ -148,8 +150,8 @@ def result_text(x: dict[str, Any], bold: bool = True) -> str:
         roi = ret * float(lev)
     b = (lambda t: f"<b>{t}</b>") if bold else (lambda t: t)
     if roi is None or not lev:
-        return f"{b(f'{ret:+.2f}%')} price move"
-    return f"{b(f'{float(roi):+.2f}% ROI')} · {int(lev)}x margin (price {ret:+.2f}%)"
+        return f"{b(f'{ret:+.2f}%')} after fees"
+    return f"{b(f'{float(roi):+.2f}% ROI')} · {int(lev)}x margin ({ret:+.2f}% after fees)"
 
 
 def win_text(w: dict[str, Any]) -> str:
@@ -191,8 +193,8 @@ def weekly_text(r: dict[str, Any]) -> str | None:
     lines = [f"📊 <b>Weekly results</b> · {d(r['week_start'])} – {d(r['week_end'] - 1)}", "",
              f"✅ {r['wins']} wins / {r['losses']} losses · win rate {r['win_rate']:.0%}",
              (f"📈 Total ROI on margin of all closed signals: <b>{r['total_roi_pct']:+.1f}%</b> "
-              f"(price {r['total_return_pct']:+.1f}%)" if r.get("total_roi_pct") is not None
-              else f"📈 Total price move of all closed signals: <b>{r['total_return_pct']:+.1f}%</b>")]
+              f"({r['total_return_pct']:+.1f}% after fees)" if r.get("total_roi_pct") is not None
+              else f"📈 Total of all closed signals after fees: <b>{r['total_return_pct']:+.1f}%</b>")]
     if best:
         lines += ["", "Top signals:"] + [f"• {_coin(t['symbol'])} {t['side']} ({t['timeframe'].upper()}): {result_text(t, False)}" for t in best]
     lines += ["", f"AI crypto signals from 15 USDT/month 👉 {SITE}", "<i>Past results don't guarantee future results.</i>", f"<i>{html.escape(brand.FOOTER)}</i>"]
@@ -271,7 +273,8 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
             db.set_setting("tg_win_last", now)
         else:
             rc, rp = record_clause(rt)
-            rows = db.query("SELECT * FROM signals WHERE status IN ('TP2', 'TP3') AND return_pct > 0 "
+            from .tracking import net_sql
+            rows = db.query(f"SELECT * FROM signals WHERE status IN ('TP2', 'TP3') AND return_pct IS NOT NULL AND {net_sql()} > 0 "
                             f"AND closed_at IS NOT NULL AND closed_at > ? AND {rc} AND side != 0 "
                             "ORDER BY closed_at LIMIT ?", (int(last), *rp, MAX_WIN_POSTS))
             for r in rows:

@@ -123,6 +123,24 @@ export default function Health() {
             ) : <p className="text-sm text-mute">No coin or timeframe is paused.</p>}
             <Note>Pauses after a losing run; resumes by itself.</Note>
           </Card>
+          {(() => {
+            const fc = Object.entries((raw?.fail_closed ?? {}) as Record<string, any>);
+            return (
+              <Card title="Fail-safe checks" right={<Badge tone={fc.length ? "warn" : "bull"}>{fc.length ? `${fc.length} not working` : "all working"}</Badge>}>
+                {fc.length ? (
+                  <ul className="space-y-1.5 text-sm">
+                    {fc.map(([k, x]) => (
+                      <li key={k} className="flex flex-wrap justify-between gap-2 rounded-lg bg-glass/[0.04] px-2.5 py-1.5">
+                        <span className="font-medium">{k.replace(/_/g, " ")} <span className="text-xs text-mute">{x.symbol} {String(x.timeframe ?? "").toUpperCase()}</span></span>
+                        <span className="text-xs text-warn">{ago(x.at)} · {x.count}x · {x.detail}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : <p className="text-sm text-mute">Every required check ran in the last 24 h.</p>}
+                <Note>A check that cannot run blocks new calls (no trade).</Note>
+              </Card>
+            );
+          })()}
           <Card title="Candle series">
             <div className="max-h-96 overflow-auto"><table className="grid-table">
               <thead><tr><th>Asset</th><th>TF</th><th>Status</th><th className="text-right">Candles</th><th className="text-right">Missing</th><th className="text-right">Duplicates</th><th className="text-right">Malformed</th><th className="text-right">Quality</th><th>Last candle closed</th></tr></thead>

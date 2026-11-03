@@ -186,7 +186,7 @@ class Hesper(BotEngine):
         entry = float(r["entry"]) if pullback else px
         if side * (entry - stop) <= 0:
             return None
-        lev = float(min(MAX_LEVERAGE, F.safe_leverage(entry, stop, MAX_LEVERAGE)))
+        lev = float(min(MAX_LEVERAGE, F.safe_leverage(entry, stop, MAX_LEVERAGE, symbol=r.get("symbol"))))
         fee_rate = F.FUTURES_FEE_RATE
         qty = float(state["cash"]) * ALL_IN / (entry * (1 / lev + fee_rate))
         if qty <= 0:
