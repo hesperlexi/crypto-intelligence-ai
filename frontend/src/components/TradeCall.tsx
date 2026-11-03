@@ -214,7 +214,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
                     : <Metric k="Leverage" v={`${plan.suggested_leverage}x`} sub={`liq. ${fmtPrice(plan.liquidation_at_suggested)}`} />)
                 : <Metric k="Reward : risk" v={isNum(plan.risk_reward) ? `${plan.risk_reward.toFixed(1)} : 1` : DASH} sub="blended: 50% at TP1, 25% TP2, 25% TP3" />}
             </div>
-            {lev != null && lev > 1 && <p className="mt-1.5 text-[11px] text-warn">ROI at {lev}x. Leverage magnifies losses.</p>}
+            {lev != null && lev > 1 && <p className="mt-1.5 text-xs text-warn">ROI at {lev}x. Leverage magnifies losses.</p>}
           </div>
         )}
         {active && plan && (

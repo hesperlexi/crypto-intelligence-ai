@@ -77,7 +77,7 @@ function OpenTrade({ o, live }: { o: any; live: ReturnType<typeof useLiveRun> })
         <CoinAvatar symbol={o.symbol} size={22} />
         <Link to={`/asset/${slug(o.symbol)}?tf=${o.timeframe}`} className="font-semibold hover:text-accent">{base(o.symbol)}</Link>
         <span className="rounded border border-glass/15 px-1.5 text-xs text-mute">{o.timeframe}</span>
-        <span className={`rounded px-1.5 text-[11px] font-bold ${o.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{sideTxt(o.side)} {Math.round(o.leverage)}x</span>
+        <span className={`rounded px-1.5 text-xs font-bold ${o.side > 0 ? "bg-bull/15 text-bull" : "bg-bear/15 text-bear"}`}>{sideTxt(o.side)} {Math.round(o.leverage)}x</span>
         <span className="ml-auto text-right">
           <span className={`num text-lg font-semibold ${tone(live.pnl)}`}>{signedUsd(live.pnl)}</span>
           <span className={`num ml-2 text-sm ${tone(live.roi)}`}>{pct(live.roi)}</span>
@@ -89,7 +89,7 @@ function OpenTrade({ o, live }: { o: any; live: ReturnType<typeof useLiveRun> })
         <Level k="Stop" v={fmtPrice(o.stop)} cls="text-bear" />
         {targets.map((t, i) => <Level key={i} k={`TP${i + 1}${o.tp_hit > i ? " ✓" : ""}`} v={fmtPrice(t)} cls={o.tp_hit > i ? "text-bull" : ""} />)}
       </div>
-      <div className="mt-2 text-[11px] text-mute">Margin {usd(o.margin)} · liquidation {fmtPrice(o.liq)} · opened {fmtDate(o.opened_at)}</div>
+      <div className="mt-2 text-xs text-mute">Margin {usd(o.margin)} · liquidation {fmtPrice(o.liq)} · opened {fmtDate(o.opened_at)}</div>
     </div>
   );
 }
@@ -317,7 +317,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
                 <li key={t.id} className="border-t border-glass/[0.06] px-4 py-2.5">
                   <div className="flex items-center gap-2 text-sm">
                     <span className="font-medium">{base(t.symbol)}</span><span className="text-xs text-mute">{t.timeframe}</span>
-                    <span className={`text-[11px] font-semibold ${t.side > 0 ? "text-bull" : "text-bear"}`}>{sideTxt(t.side)} {Math.round(t.leverage)}x</span>
+                    <span className={`text-xs font-semibold ${t.side > 0 ? "text-bull" : "text-bear"}`}>{sideTxt(t.side)} {Math.round(t.leverage)}x</span>
                     <span className={`num ml-auto font-semibold ${tone(t.pnl)}`}>{signedUsd(t.pnl)}</span>
                   </div>
                   <div className="num mt-0.5 flex items-center gap-2 text-xs text-mute">
@@ -341,7 +341,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
                     <tr key={t.id} className="border-t border-glass/[0.06]">
                       <td className="num px-4 py-2 text-mute">#{t.run}</td>
                       <td className="px-2 py-2"><span className="font-medium">{base(t.symbol)}</span> <span className="text-xs text-mute">{t.timeframe}</span></td>
-                      <td className={`num px-2 py-2 text-[12px] font-semibold ${t.side > 0 ? "text-bull" : "text-bear"}`}>{sideTxt(t.side)} {Math.round(t.leverage)}x</td>
+                      <td className={`num px-2 py-2 text-xs font-semibold ${t.side > 0 ? "text-bull" : "text-bear"}`}>{sideTxt(t.side)} {Math.round(t.leverage)}x</td>
                       <td className="num px-2 py-2 text-right text-xs">{fmtPrice(t.entry)} → {fmtPrice(t.exit)}</td>
                       <td className={`num px-2 py-2 text-right font-semibold ${tone(t.pnl)}`}>{signedUsd(t.pnl)}</td>
                       <td className={`num px-2 py-2 text-right ${tone(t.roi_pct)}`}>{pct(t.roi_pct, 0)}</td>

@@ -52,7 +52,7 @@ export default function AutoTrade() {
             <select className="input mt-1" value={String(s.leverage)} onChange={(e) => setS({ ...s, leverage: e.target.value === "signal" ? "signal" : Number(e.target.value) })}>
               <option value="signal">Suggested by the signal (safest)</option>
               {[1, 2, 3, 5, 10, 20].filter((l) => l <= AUTO_MAX_LEV).map((l) => <option key={l} value={l}>{l}x (capped so liquidation stays beyond the stop)</option>)}
-            </select><span className="mt-1 block text-[11px] text-mute">15m auto-trades use the engine's 10–50x.</span></label>
+            </select><span className="mt-1 block text-xs text-mute">15m auto-trades use the engine's 10–50x.</span></label>
           <div><span className="text-xs text-mute">Timeframes</span>
             <div className="mt-1 flex gap-1">{["15m", "1h", "4h", "12h", "1d", "3d"].map((tf) => <button key={tf} className={`btn flex-1 px-2 py-1.5 text-xs ${s.timeframes.includes(tf) ? "btn-on" : ""}`} aria-pressed={s.timeframes.includes(tf)} onClick={() => toggleTf(tf)}>{tf.toUpperCase()}</button>)}</div></div>
           <label className="block"><span className="text-xs text-mute">Signals</span>
