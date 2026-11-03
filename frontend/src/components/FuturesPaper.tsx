@@ -19,7 +19,7 @@ export default function FuturesPaper() {
   const [margin, setMargin] = useState("500");
   const [sl, setSl] = useState(params.get("sl") ?? "");
   const [tp, setTp] = useState(params.get("tp") ?? "");
-  const [balance, setBalance] = useState("10000");
+  const [balance, setBalance] = useState("1000");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const d = st.data;

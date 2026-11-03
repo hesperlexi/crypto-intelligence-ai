@@ -25,7 +25,7 @@ function SpotPaper() {
   const st = useApi<any>("/paper", 15000);
   const [symbol, setSymbol] = useState("BTC/USDT");
   const [amount, setAmount] = useState("1000");
-  const [balance, setBalance] = useState("10000");
+  const [balance, setBalance] = useState("1000");
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const d = st.data;
 

@@ -246,7 +246,7 @@ function Editor({ cfg, onSave }: { cfg: any; onSave: (patch: any) => void }) {
           : [field("risk_per_trade_pct", "Risk per trade (%)"), field("max_position_pct", "Max position (% of equity)"), field("max_open_positions", "Max open positions"),
             field("pending_bars", "Pullback order valid (bars)"), field("max_hold_bars", "Time exit after (bars)")]}
         <label className="text-xs text-mute">Market<select className="input mt-1" value={f.market ?? "spot"} onChange={(e) => up("market", e.target.value)}><option value="spot">Spot (1x)</option><option value="futures">Futures (perpetual)</option></select></label>
-        {fut && field("leverage", isPred ? "Leverage (1–20x)" : "Maximum leverage (1–20x)")}
+        {fut && field("leverage", isPred ? "Leverage (1–50x)" : "Leverage: 10–50x, chosen by engine")}
         {fut && !isPred && <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={f.safe_leverage !== false} onChange={(e) => up("safe_leverage", e.target.checked)} />Safe leverage (liquidation beyond the stop)</label>}
         <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={!!f.allow_short} onChange={(e) => up("allow_short", e.target.checked)} />Allow short trades</label>
       </div>

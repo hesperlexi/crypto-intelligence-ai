@@ -274,7 +274,7 @@ MIGRATION_FLAGS = (
     "fresh_start_v23", "pause_15m_v26", "tf_policy_v28", "demo_1d3d_v210", "scalping_v1", "public_15m_v211",
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
-    "scalp_backfill_v1",
+    "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -635,9 +635,16 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/bots", {**doc, "bots": keep, "defaults_added": seen, "updated_at": now_ms()})
                 notes["public_1d3d_v212"] = {"removed": sorted(demo_ids & {b.get("id") for b in doc["bots"]}), "added": added}
         rt.db.set_setting("public_1d3d_v212", True)
-    # v2.13 honest record (owner decision, 3 Nov 2026): calls are recorded at the real (market) entry and judged after fees,
-    # so the counted record restarts now for every timeframe (record_since = now, per-timeframe starts cleared) - wins and
-    # losses alike; older calls stay in the Signal log. Never on a fresh / empty database (nothing to restart).
+    # v2.14 fresh restart (owner decision, 3 Nov 2026: "delete permanently", wins and losses alike): the record, bot
+    # books, Hesper and their side tables are deleted and restart now (app/fresh_restart_v214.py). It also replaces the
+    # v2.13 honest-record restart (flag honest_record_v213 is set by it, so the record restarts once, not twice).
+    # Members' own practice accounts, trades and auto-trade logs are kept. Never on a fresh / empty database.
+    from . import fresh_restart_v214
+    if not rt.db.get_setting("fresh_restart_v214", None):
+        _b("config: fresh restart v2.14")
+        fr = fresh_restart_v214.maybe_run(rt, sink, now_ms())
+        if fr is not None:
+            notes["fresh_restart_v214"] = fr
     honest = honest_record_v213(rt)
     if honest is not None:
         notes["honest_record_v213"] = honest
@@ -724,21 +731,12 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
 
 
 def honest_record_v213(rt: Runtime, now: int | None = None) -> dict[str, Any] | None:
-    """One-time v2.13 record restart (flag `honest_record_v213`). Returns what it did, or None when already done."""
+    """v2.13 record restart (flag `honest_record_v213`): merged into the v2.14 fresh restart (owner, 3 Nov 2026), which
+    sets this flag itself. Never restarts the record on its own; only marks the flag. None when already done."""
     if rt.db.get_setting("honest_record_v213", False):
         return None
-    now = now or now_ms()
-    n = rt.db.one("SELECT COUNT(*) AS n FROM signals")["n"]
-    if not n:
-        rt.db.set_setting("honest_record_v213", True)       # fresh database: nothing to restart, never runs later
-        return {"skipped": "empty database"}
-    old = {"record_since": rt.db.get_setting("record_since", None), "record_since_tf": rt.db.get_setting("record_since_tf", None)}
-    rt.db.set_setting("honest_record_prev", old)
-    rt.db.set_setting("record_since", now)
-    rt.db.set_setting("record_since_tf", {})
-    rt.db.set_setting("honest_record_since", now)
     rt.db.set_setting("honest_record_v213", True)
-    return {"record_since": now, "previous": old}
+    return {"merged_into": "fresh_restart_v214"}
 
 
 # ---- jobs queued by the website ---------------------------------------------------------------------------

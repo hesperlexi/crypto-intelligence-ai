@@ -13,6 +13,7 @@ import { latestPrices } from "./live";
 import { visibleInterval } from "./visibleInterval";
 import { isAdmin, myUid } from "./session";
 import { byNewest } from "./format";
+import { depositedOf, newPaperFields, PAPER_START, paperTopUp } from "./writeShapes";
 
 const ACC_REF = () => doc(db, "paper", `${myUid()}_futures`);   // one account per user
 let migrated = false;
@@ -80,12 +81,23 @@ async function price(symbol: string): Promise<number> {
   return t[symbol].last;
 }
 
-export async function reset(startingBalance = 10000) {
+/** A fresh futures practice account with $1,000 virtual USDT (v2.14). */
+export async function reset(startingBalance = PAPER_START) {
   if (!(startingBalance > 0)) throw new Error("starting balance must be positive");
-  const acc = { id: Math.random().toString(36).slice(2, 12), starting_balance: startingBalance, wallet: startingBalance, created_at: Date.now(),
+  const acc = { id: Math.random().toString(36).slice(2, 12), ...newPaperFields(startingBalance), wallet: startingBalance, created_at: Date.now(),
     positions: {}, position_mode: "oneway", totals: { realized: 0, fees: 0, funding: 0, count: 0, wins: 0, liquidations: 0 } };
   await setDoc(ACC_REF(), acc);
   return acc;
+}
+
+/** "Add funds": adds virtual USDT to the wallet and records it as a deposit (P&L stays equity − deposited). */
+export async function addFunds(amount: number) {
+  await adoptLegacy();
+  if (!(await getDoc(ACC_REF())).exists()) await reset();
+  await runTransaction(db, async (tx) => {
+    const acc: any = (await tx.get(ACC_REF())).data();
+    tx.update(ACC_REF(), paperTopUp(acc, amount, "futures", Date.now()));
+  });
 }
 
 async function log(trade: any) {
@@ -434,7 +446,8 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
     const closes = trades.filter((t) => t.type === "CLOSE");
     cb({
       account: acc, mode: acc.position_mode === "hedge" ? "hedge" : "oneway", hedges, wallet: acc.wallet, orders, reserved, margin_used: marginUsed, unrealized_pnl: upnl, equity,
-      return_pct: (equity / acc.starting_balance - 1) * 100, positions, trades,
+      return_pct: depositedOf(acc) > 0 ? (equity / depositedOf(acc) - 1) * 100 : 0, positions, trades,
+      deposited: depositedOf(acc), pnl: equity - depositedOf(acc),
       realized_pnl: acc.totals?.realized ?? 0, fees: acc.totals?.fees ?? 0, funding: acc.totals?.funding ?? 0,
       liquidations: acc.totals?.liquidations ?? 0, closed: closes.length,
       win_rate: closes.length ? closes.filter((t) => t.realized_pnl > 0).length / closes.length : null,

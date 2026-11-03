@@ -37,7 +37,7 @@ def test_trade_setup_alert_message_and_filters():
     assert len(fired) == 1                                          # long-only and min-confidence 70% stay quiet
     msg = fired[0]["message"]
     for part in ("BTC/USDT 4h SHORT (futures)", "stop-loss 102", "TP1 98", "TP2 96", "TP3 94", "R:R 1:2.1",
-                 "confidence 60%", "suggested leverage", "liquidation"):
+                 "confidence 60%", "chosen by engine", "liquidation"):
         assert part in msg, (part, msg)
     assert alerts.evaluate(rt.db, _a(), now=20_000) == []           # still the same call: no repeat
 

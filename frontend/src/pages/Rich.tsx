@@ -243,7 +243,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="page-title"><span className="text-accent">Hesper Challenge</span></h1>
-            <p className="text-sm text-mute">{usd(v?.start ?? 100, 0)} → {usd(v?.goal ?? 1000, 0)} · all-in · virtual money</p>
+            <p className="text-sm text-mute">{usd(v?.start ?? 100, 0)} → {usd(v?.goal ?? 1000, 0)} · all-in · {v?.min_leverage ?? 10}–{v?.max_leverage ?? 50}x</p>
           </div>
           <div className="flex flex-wrap items-center gap-3"><Visibility />{v?.current && <Share v={v} balance={live.balance} />}</div>
         </div>

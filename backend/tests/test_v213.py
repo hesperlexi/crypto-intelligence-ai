@@ -38,7 +38,7 @@ def test_sell_is_recorded_at_the_live_price_not_the_better_ideal_entry():
     assert s["entry"] == 99.4 and s["fill_status"] == "FILLED"
     d = 102.0 - 99.4
     assert s["tp1"] == pytest.approx(99.4 - d)                     # TP1 = exactly 1R from the real entry
-    assert loads(s["payload"])["leverage"] == F.signal_leverage(99.4, 102.0, symbol="BTC/USDT")
+    assert loads(s["payload"])["leverage"] == F.signal_leverage(99.4, 102.0, symbol="BTC/USDT", grade="A")
 
 
 def test_pullback_stays_a_pending_limit_at_the_ideal_entry():
@@ -175,7 +175,8 @@ def test_grades_need_a_proven_edge():
     assert A.edge_gate({"edge_confirmed": False}, None, required=True)
     assert A.edge_gate({"edge_confirmed": False}, None, required=False) is None
     from app.config import settings
-    assert settings.require_edge_for_trade is True                  # on by default since v2.13
+    assert settings.require_edge_for_trade is False                 # owner 3 Nov 2026 (v2.14): no edge rule by default
+    assert A.edge_gate({"edge_confirmed": False}, None) is None      # default: graded calls are not refused for it
 
 
 # ---- fail closed ------------------------------------------------------------------------------------------------------
@@ -236,12 +237,13 @@ def _sig(tf="1h", side=1, px=100.0):
             "call": {"id": "c1", "created_at": 1}}
 
 
-def test_autotrade_leverage_is_capped_at_20x():
-    assert AP.MAX_LEV == 20
-    assert AP.settings_of({"leverage": 50})["leverage"] == 20
+def test_autotrade_leverage_is_10_to_50x_chosen_by_the_engine():
+    # v2.14 (owner, 3 Nov 2026): 10-50x (v2.13 capped it at 20x); a member setting is only a ceiling, never below 10x
+    assert AP.MAX_LEV == 50 and AP.MIN_LEV == 10
+    assert AP.settings_of({"leverage": 80})["leverage"] == 50 and AP.settings_of({"leverage": 3})["leverage"] == 10
     s = AP.settings_of({"enabled": True, "leverage": 50, "scale": False})
     acc, res = AP.place(None, {**_sig(), "plan": {**_sig()["plan"], "stop": 99.9}}, s, 1000)
-    assert res["action"] == "opened" and res["leverage"] <= 20
+    assert res["action"] == "opened" and res["leverage"] == 50
     pos = next(iter(acc["positions"].values()))
     assert pos["liq"] == pytest.approx(F.liquidation_price(pos["entry"], 1, pos["leverage"], symbol="BTC/USDT", fee=AP.FEE))
 
@@ -266,30 +268,18 @@ class _RT:
         self.db = Database("sqlite:///:memory:")
 
 
-def test_honest_record_restart_runs_once_and_clears_per_timeframe_starts():
+def test_honest_record_restart_is_merged_into_the_v214_fresh_restart():
+    """v2.14: the v2.13 restart never moves the record on its own (the fresh restart does it once); it only sets its flag."""
     from app import worker
     rt = _RT()
     T.log_signal(rt.db, _a(), now=BAR + H1)
     rt.db.set_setting("record_since", 5)
     rt.db.set_setting("record_since_tf", {"15m": 9})
-    out = worker.honest_record_v213(rt, now=1234)
-    assert out["record_since"] == 1234
-    assert rt.db.get_setting("record_since") == 1234 and rt.db.get_setting("record_since_tf") == {}
-    assert rt.db.get_setting("honest_record_since") == 1234
-    assert rt.db.get_setting("honest_record_prev") == {"record_since": 5, "record_since_tf": {"15m": 9}}
+    assert worker.honest_record_v213(rt, now=1234) == {"merged_into": "fresh_restart_v214"}
+    assert rt.db.get_setting("record_since") == 5 and rt.db.get_setting("record_since_tf") == {"15m": 9}
+    assert rt.db.get_setting("honest_record_since", None) is None
     assert worker.honest_record_v213(rt, now=9999) is None
-    assert rt.db.get_setting("record_since") == 1234
-    assert rt.db.one("SELECT COUNT(*) AS n FROM signals")["n"] == 1       # nothing deleted
-
-
-def test_honest_record_restart_never_on_an_empty_database():
-    from app import worker
-    rt = _RT()
-    rt.db.set_setting("record_since", 5)
-    assert worker.honest_record_v213(rt, now=1234) == {"skipped": "empty database"}
-    assert rt.db.get_setting("record_since") == 5 and rt.db.get_setting("honest_record_since", None) is None
-    T.log_signal(rt.db, _a(), now=BAR + H1)
-    assert worker.honest_record_v213(rt, now=2000) is None             # never later either
+    assert rt.db.one("SELECT COUNT(*) AS n FROM signals")["n"] == 1       # nothing deleted by it
 
 
 def test_edge_rule_policy_only_needs_the_direction_edge(monkeypatch):

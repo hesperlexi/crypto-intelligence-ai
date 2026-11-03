@@ -397,9 +397,9 @@ def teaser_card(s: dict[str, Any], mins: int) -> bytes:
     x = _side_pill(d, x + 12, y, side)
     x = _chip(d, x + 12, y, str(s["timeframe"]).upper())
     from ..engine.futures import signal_leverage
-    lev = signal_leverage(s.get("entry"), s.get("stop"), symbol=s.get("symbol"))
+    lev = s.get("leverage") or signal_leverage(s.get("entry"), s.get("stop"), symbol=s.get("symbol"), grade=s.get("grade") or "A")
     if lev:
-        _chip(d, x + 12, y, f"{lev}x SUGGESTED")
+        _chip(d, x + 12, y, f"{lev}x BY ENGINE")
     name = pair(s["symbol"])
     d.text((M, 290), name, font=_fit(d, name, "ExtraBold", 84, W - 2 * M), fill=WHITE, anchor="ls")
     cells = [("Entry", px(s.get("entry")), WHITE), ("Stop-loss", px(s.get("stop")), RED),

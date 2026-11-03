@@ -19,6 +19,7 @@ import { useFastTickers } from "../lib/live";
 import { useFocusTrap } from "./Shell";
 import * as SP from "../lib/paper";
 import * as PF from "../lib/paperFutures";
+import { maxTopUp, PAPER_MAX_DEPOSITED, PAPER_START } from "../lib/writeShapes";
 
 type Mkt = "spot" | "futures";
 const CHART_TFS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
@@ -542,15 +543,37 @@ function History({ rows, market, onPair }: { rows: any[]; market: Mkt; onPair: (
   );
 }
 
+const usd = (n: number) => `$${n.toLocaleString("en-US")}`;
+
+/** v2.14 "Add funds": virtual USDT, recorded as a deposit (P&L and return are measured on what was deposited). */
+function AddFunds({ d, market, act }: { d: any; market: Mkt; act: (fn: () => Promise<any>, ok: string) => Promise<void> }) {
+  const [custom, setCustom] = useState("");
+  const room = maxTopUp(d.account);
+  const add = (n: number) => act(() => (market === "futures" ? PF.addFunds(n) : SP.addFunds(n)), `${usd(n)} virtual USDT added.`);
+  const c = Number(custom);
+  return (
+    <div className="rounded-xl border border-glass/[0.08] bg-ink/30 p-3">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="mr-1 text-sm font-semibold">Add funds</span>
+        {[1_000, 5_000].map((n) => <button key={n} className="btn" disabled={n > room} onClick={() => add(n)}>+{usd(n)}</button>)}
+        <input className="input num w-28" inputMode="decimal" placeholder="Amount" aria-label="Custom amount (USDT)" value={custom} onChange={(e) => setCustom(e.target.value)} />
+        <button className="btn" disabled={!(c > 0 && c <= room)} onClick={() => { add(c); setCustom(""); }}>Add</button>
+      </div>
+      <p className="mt-1.5 text-[11px] text-mute">Virtual USDT. Counted as a deposit, so P&L stays honest · up to {usd(PAPER_MAX_DEPOSITED)} in total.</p>
+    </div>
+  );
+}
+
 function Assets({ d, market, act }: { d: any; market: Mkt; act: (fn: () => Promise<any>, ok: string) => Promise<void> }) {
-  const [bal, setBal] = useState("10000");
   const nav = useNavigate();
   const items: [string, string, string?][] = market === "futures" ? [
-    ["Equity", `${fmtNum(d.equity)} USDT`, tone(d.return_pct)], ["Return", fmtPctRaw(d.return_pct), tone(d.return_pct)], ["Available", `${fmtNum(d.wallet)} USDT`],
+    ["Equity", `${fmtNum(d.equity)} USDT`, tone(d.return_pct)], ["Deposited", `${fmtNum(d.deposited)} USDT`], ["P&L", `${d.pnl >= 0 ? "+" : ""}${fmtNum(d.pnl)} USDT`, tone(d.pnl)],
+    ["Return", fmtPctRaw(d.return_pct), tone(d.return_pct)], ["Available", `${fmtNum(d.wallet)} USDT`],
     ["In orders", `${fmtNum(d.reserved ?? 0)} USDT`], ["Margin in use", `${fmtNum(d.margin_used)} USDT`], ["Unrealized P&L", `${fmtNum(d.unrealized_pnl)} USDT`, tone(d.unrealized_pnl)],
     ["Realized P&L", `${fmtNum(d.realized_pnl)} USDT`, tone(d.realized_pnl)], ["Fees / funding", `${fmtNum(d.fees)} / ${fmtNum(d.funding)}`], ["Win rate", d.win_rate != null ? `${Math.round(d.win_rate * 100)}% of ${d.closed}` : "—"], ["Liquidations", String(d.liquidations ?? 0)],
   ] : [
-    ["Equity", `${fmtNum(d.equity)} USDT`, tone(d.return_pct)], ["Return", fmtPctRaw(d.return_pct), tone(d.return_pct)], ["Cash", `${fmtNum(d.cash)} USDT`],
+    ["Equity", `${fmtNum(d.equity)} USDT`, tone(d.return_pct)], ["Deposited", `${fmtNum(d.deposited)} USDT`], ["P&L", `${d.pnl >= 0 ? "+" : ""}${fmtNum(d.pnl)} USDT`, tone(d.pnl)],
+    ["Return", fmtPctRaw(d.return_pct), tone(d.return_pct)], ["Cash", `${fmtNum(d.cash)} USDT`],
     ["In orders", `${fmtNum(d.reserved ?? 0)} USDT`], ["Coins value", `${fmtNum(d.market_value)} USDT`], ["Unrealized P&L", `${fmtNum(d.unrealized_pnl)} USDT`, tone(d.unrealized_pnl)],
     ["Realized P&L", `${fmtNum(d.realized_pnl)} USDT`, tone(d.realized_pnl)], ["Fees", `${fmtNum(d.fees)} USDT`], ["Trades", String(d.trade_count ?? 0)],
     ["vs buy & hold BTC", d.benchmark?.excess_pct != null ? fmtPctRaw(d.benchmark.excess_pct) : "—", tone(d.benchmark?.excess_pct)],
@@ -560,9 +583,9 @@ function Assets({ d, market, act }: { d: any; market: Mkt; act: (fn: () => Promi
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         {items.map(([k, v, c]) => <div key={k} className="rounded-xl border border-glass/[0.08] bg-ink/30 px-3 py-2"><dt className="text-[11px] uppercase tracking-wide text-mute">{k}</dt><dd className={`num mt-0.5 font-semibold ${c ?? ""}`}>{v}</dd></div>)}
       </dl>
+      <AddFunds d={d} market={market} act={act} />
       <div className="flex flex-wrap items-end gap-2">
-        <label className="text-xs text-mute">Starting balance (USDT)<input className="input num mt-1 w-40" inputMode="decimal" value={bal} onChange={(e) => setBal(e.target.value)} /></label>
-        <button className="btn" onClick={() => { if (window.confirm("Start a fresh practice account? Current positions and orders are cleared.")) act(() => (market === "futures" ? PF.reset(Number(bal)) : SP.reset(Number(bal))), "New practice account started."); }}>Reset account</button>
+        <button className="btn" onClick={() => { if (window.confirm(`Start a fresh practice account with ${usd(PAPER_START)}? Current positions, orders and deposits are cleared.`)) act(() => (market === "futures" ? PF.reset(PAPER_START) : SP.reset(PAPER_START)), "New practice account started."); }}>Reset account</button>
         <button className="btn ml-auto" onClick={() => nav("/bots")}>Compare with the demo bots →</button>
       </div>
     </div>

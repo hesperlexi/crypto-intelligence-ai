@@ -21,9 +21,13 @@ def test_signal_leverage_matches_the_futures_card():
         a = {"symbol": "X/USDT", "status": "OK", "timeframe": "1h", "price": entry, "decision": "BUY" if side > 0 else "SELL",
              "setup": {"ideal_entry": entry, "stop": stop, "side_int": side, "valid": True, "targets": []}}
         card = F.futures_view(a, None)["plan"]["suggested_leverage"]
-        assert F.signal_leverage(entry, stop) == card
-        assert 1 <= card <= 10
+        assert F.signal_leverage(entry, stop, "X/USDT") == card
+        assert 10 <= card <= 50                                    # v2.14: 10-50x chosen by the engine
     assert F.signal_leverage(100.0, None) is None
+    # a stop too wide for 10x: no leverage at all (the analysis makes it NO TRADE)
+    a = {"symbol": "X/USDT", "status": "OK", "timeframe": "1h", "price": 100.0, "decision": "BUY",
+         "setup": {"ideal_entry": 100.0, "stop": 90.0, "side_int": 1, "valid": True, "targets": []}}
+    assert F.futures_view(a, None)["plan"]["suggested_leverage"] is None
 
 
 def test_new_signals_store_leverage_and_old_rows_derive_it():
@@ -31,7 +35,7 @@ def test_new_signals_store_leverage_and_old_rows_derive_it():
     assert T.log_signal(db, _a(entry=100.0, stop=98.0), now=BAR + H1 + 1000)
     s = db.one("SELECT * FROM signals")
     lev = loads(s["payload"])["leverage"]
-    assert lev == F.signal_leverage(100.0, 98.0)
+    assert lev == F.signal_leverage(100.0, 98.0, "BTC/USDT", grade="A")
     old = {"side": -1, "entry": 100.0, "stop": 103.0, "return_pct": -3.0, "payload": "{}"}
     m = T.margin_fields(old)
     assert m["leverage"] == F.signal_leverage(100.0, 103.0) and m["roi_pct"] == -3.0 * m["leverage"]
@@ -60,7 +64,7 @@ def test_views_carry_roi_pct():
     w = views.wins_today(rt)
     assert w["wins"][0]["roi_pct"] == pytest.approx(18.5) and w["wins"][0]["leverage"] == 10 and w["losses"] == 1
     tr = views.track_record(rt)
-    lev_l = F.signal_leverage(100.0, 98.0)
+    lev_l = F.signal_leverage(100.0, 98.0, "BTC/USDT")
     sigs = {x["status"]: x for x in tr["live"]["signals"]}
     assert sigs["TP2"]["roi_pct"] == pytest.approx(18.5) and sigs["STOPPED"]["roi_pct"] == pytest.approx(-2.15 * lev_l)
     assert sigs["TP2"]["gross_return_pct"] == 2.0 and sigs["TP2"]["return_pct"] == pytest.approx(1.85)

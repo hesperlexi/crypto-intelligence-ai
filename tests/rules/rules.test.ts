@@ -6,7 +6,7 @@
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { addDoc, collection, deleteDoc, doc, Firestore, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { readFileSync, writeFileSync } from "node:fs";
-import { newUserRecord, ownerProfile, paymentProof, paymentWithoutProof, postDoc, postId, postMeta, proofImageDoc, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
+import { newPaperFields, newUserRecord, ownerProfile, paperTopUp, paymentProof, paymentWithoutProof, postDoc, postId, postMeta, proofImageDoc, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
 
 const ADMIN = { uid: "owner", email: "admin@example.com" };
 const NOW = () => Date.now();
@@ -454,6 +454,49 @@ async function main() {
   await test("paper/{uid}_futures write", async () => {
     await seed(member);
     await assertSucceeds(setDoc(doc(as("m1", "m1@example.com"), "paper", "m1_futures"), { id: "acc1", starting_balance: 10000, wallet: 10000, created_at: NOW(), positions: {}, position_mode: "oneway", totals: { realized: 0, fees: 0, funding: 0, count: 0, wins: 0, liquidations: 0 } }));
+  });
+  // ---------------------------------------------------------------- v2.14 practice accounts: $1,000 start + "Add funds"
+  const futAcc = (extra: any = {}) => ({ id: "acc1", ...newPaperFields(), wallet: 1000, created_at: NOW(), positions: {}, position_mode: "oneway",
+    totals: { realized: 0, fees: 0, funding: 0, count: 0, wins: 0, liquidations: 0 }, ...extra });
+  const spotAcc = (extra: any = {}) => ({ id: "sp1", ...newPaperFields(), cash: 1000, created_at: NOW(), positions: {}, totals: { realized: 0, fees: 0, slippage: 0, count: 0 }, ...extra });
+  await test("paper: a new $1,000 account (futures and spot) is accepted", async () => {
+    await seed(member);
+    const db = as("m1", "m1@example.com");
+    await assertSucceeds(setDoc(doc(db, "paper", "m1_futures"), futAcc()));
+    await assertSucceeds(setDoc(doc(db, "paper", "m1_spot"), spotAcc()));
+  });
+  await test("paper: Add funds (the app's paperTopUp) is accepted, futures and spot, also on an older account", async () => {
+    await seed({ ...member, "paper/m1_futures": futAcc({ wallet: 640.5 }), "paper/m1_spot": spotAcc(),
+      "paper/m1_old": { id: "old", starting_balance: 10000, wallet: 9500, positions: {} } });
+    const db = as("m1", "m1@example.com");
+    await assertSucceeds(updateDoc(doc(db, "paper", "m1_futures"), paperTopUp(futAcc({ wallet: 640.5 }), 5000, "futures", NOW())));
+    await assertSucceeds(updateDoc(doc(db, "paper", "m1_spot"), paperTopUp(spotAcc(), 1000, "spot", NOW())));
+    await assertSucceeds(updateDoc(doc(db, "paper", "m1_old"), paperTopUp({ id: "old", starting_balance: 10000, wallet: 9500 }, 1234.56, "futures", NOW())));
+  });
+  await test("paper: a normal trade (balance changes, deposits untouched) is still accepted", async () => {
+    await seed({ ...member, "paper/m1_futures": futAcc() });
+    await assertSucceeds(updateDoc(doc(as("m1", "m1@example.com"), "paper", "m1_futures"), { wallet: 900, positions: { BTCUSDT: { qty: 1 } } }));
+  });
+  await test("paper: deposits never go down, never exceed $1,000,000 and must match the balance", async () => {
+    await seed({ ...member, "paper/m1_futures": futAcc({ deposited: 6000, deposit_count: 1, wallet: 6000 }) });
+    const db = as("m1", "m1@example.com");
+    const ref = doc(db, "paper", "m1_futures");
+    await assertFails(updateDoc(ref, { deposited: 5000, deposit_count: 2, wallet: 5000 }));                 // goes down
+    await assertFails(updateDoc(ref, { deposited: 1_000_001, deposit_count: 2, wallet: 1_000_001 }));       // above the cap
+    await assertFails(updateDoc(ref, { deposited: 7000, deposit_count: 2, wallet: 9000 }));                 // balance +3000 for a 1000 deposit
+    await assertFails(updateDoc(ref, { deposited: 7000, deposit_count: 1, wallet: 7000 }));                 // count not raised
+    await assertFails(updateDoc(ref, { deposited: 7000, deposit_count: 3, wallet: 7000 }));                 // two at once
+    await assertFails(updateDoc(ref, { deposit_count: 5 }));                                                // count without a deposit
+    await assertFails(updateDoc(ref, { starting_balance: 50_000 }));                                        // start rewritten
+    await assertSucceeds(updateDoc(ref, { deposited: 7000, deposit_count: 2, wallet: 7000 }));
+  });
+  await test("paper: a reset may start a new $1,000 account but never a new account above $1,000,000 or with fake deposits", async () => {
+    await seed({ ...member, "paper/m1_futures": futAcc({ deposited: 6000, deposit_count: 1, wallet: 6000 }) });
+    const db = as("m1", "m1@example.com");
+    await assertFails(setDoc(doc(db, "paper", "m1_futures"), futAcc({ id: "acc2", starting_balance: 2_000_000, deposited: 2_000_000, wallet: 2_000_000 })));
+    await assertFails(setDoc(doc(db, "paper", "m1_futures"), futAcc({ id: "acc2", deposited: 9000 })));
+    await assertFails(setDoc(doc(db, "paper", "m1_futures"), futAcc({ id: "acc2", starting_balance: -5, deposited: -5 })));
+    await assertSucceeds(setDoc(doc(db, "paper", "m1_futures"), futAcc({ id: "acc2" })));
   });
   await test("paper of another uid is denied", async () => {
     await seed(member);

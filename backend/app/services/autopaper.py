@@ -27,7 +27,12 @@ FEE = 0.0005
 MAKER = 0.0002
 MMR = F.MAINTENANCE_MARGIN          # v2.13: fallback only; liquidation uses the coin's tier (futures.maintenance_rate)
 ADVERSE = (2 + 0.5) / 1e4
-MAX_LEV = 20                         # v2.13 (owner, 3 Nov 2026): members' auto-trade never above 20x (was 50x)
+# v2.14 (owner, 3 Nov 2026): auto-trade leverage 10-50x, chosen by the engine per trade (futures.engine_leverage); the
+# member's setting is "signal" (the engine's choice) or a ceiling 10..50 (the engine's choice is never exceeded, and
+# never below 10x). A stop too wide for 10x -> the trade is skipped.
+MAX_LEV = F.POLICY_MAX_LEVERAGE
+MIN_LEV = F.MIN_LEVERAGE
+START_BALANCE = 1_000.0              # v2.14: new practice accounts start with $1,000 virtual USDT (was 10,000)
 TAKES = {"tp1": 0, "tp2": 1, "tp3": 2}
 # v2.4 testing mode: each member's auto-trade holds at most 3 trades at a time and opens at most 6 new ones a day
 MAX_OPEN_CAP = 3
@@ -45,8 +50,9 @@ def liq_price(entry: float, side: int, lev: float, symbol: str | None = None) ->
     return F.liquidation_price(entry, side, lev, symbol=symbol, fee=FEE)
 
 
-def new_account(now: int, balance: float = 10_000.0) -> dict[str, Any]:
-    return {"id": _rid(), "starting_balance": balance, "wallet": balance, "created_at": now, "positions": {},
+def new_account(now: int, balance: float = START_BALANCE) -> dict[str, Any]:
+    return {"id": _rid(), "starting_balance": balance, "wallet": balance, "deposited": balance, "deposits": [],
+            "created_at": now, "positions": {},
             "position_mode": "oneway", "totals": {"realized": 0, "fees": 0, "funding": 0, "count": 0, "wins": 0, "liquidations": 0}}
 
 
@@ -58,7 +64,7 @@ def settings_of(raw: dict[str, Any] | None) -> dict[str, Any]:
         s["margin"] = DEFAULTS["margin"]
     if s["leverage"] != "signal":
         try:
-            s["leverage"] = int(max(1, min(MAX_LEV, float(s["leverage"]))))
+            s["leverage"] = int(max(MIN_LEV, min(MAX_LEV, float(s["leverage"]))))
         except (TypeError, ValueError):
             s["leverage"] = "signal"
     s["timeframes"] = [t for t in (s["timeframes"] or []) if t in ("15m", "1h", "4h", "12h", "1d", "3d")] or ["1h", "4h"]
@@ -142,9 +148,11 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
     entry = price * (1 + side * ADVERSE) if market else ideal
     if side * (entry - stop) <= 0 or side * (take - entry) <= 0:
         return (acc if reversed_ else None), {**res, "action": "skipped", "reason": "price already moved past the stop or target"}
-    safe = F.safe_leverage(entry, stop, MAX_LEV, None, buffer=1.5, symbol=sym)
-    lev = int(p.get("suggested_leverage") or safe) if s["leverage"] == "signal" else int(s["leverage"])
-    lev = max(1, min(lev, safe, MAX_LEV))           # never so high that liquidation comes before the stop
+    eng = F.engine_leverage(entry, stop, sym, sig.get("grade"))
+    if eng is None:
+        return (acc if reversed_ else None), {**res, "action": "skipped", "reason": F.TOO_WIDE_REASON}
+    # the engine's choice at the price the member gets; a member ceiling (10-50) only lowers it, never below 10x
+    lev = eng if s["leverage"] == "signal" else max(MIN_LEV, min(eng, int(s["leverage"])))
     from .bots import size_multiplier
     mult = size_multiplier(sig.get("grade"), sig.get("filter_score"), sig.get("filter_threshold")) if s["scale"] else 1.0
     margin = round(float(s["margin"]) * mult, 2)

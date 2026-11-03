@@ -84,7 +84,7 @@ def test_every_win_is_posted_once_as_a_picture(tmp_path):
     add(4, "TP1", 0.4, t0 + 90_000)                                    # target 1 only: not one of the best wins
     out = T.run(rt, sink, None, None, t0 + 300_000, fake)
     assert out["sent"] == ["win"] and fake.sent[0]["photo"] is True
-    assert "GOLD LONG" in fake.sent[0]["text"] and "+14.49% ROI</b> · 10x margin (+1.45% after fees)" in fake.sent[0]["text"]   # v2.13: net
+    assert "GOLD LONG" in fake.sent[0]["text"] and "+28.98% ROI</b> · 20x margin (+1.45% after fees)" in fake.sent[0]["text"]   # v2.13: net; v2.14: engine 20x
     T.run(rt, sink, None, None, t0 + 600_000, fake)                    # not posted twice
     assert len(fake.sent) == 1
 

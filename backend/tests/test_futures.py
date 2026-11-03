@@ -48,18 +48,21 @@ def test_futures_long_uses_margin_and_scales_pnl(monkeypatch, no_costs):
     eng.run(t0 + 4 * STEP)
     (cfg, st), = eng.bots()
     pos = st["positions"][0]
-    # same risk-based size as spot (1% of 10k / $2), but only notional / 5 is set aside as margin
-    assert abs(pos["qty"] - 50.0) < 1e-9 and pos["lev"] == 5.0
-    assert abs(st["cash"] - (10_000 - 50 * 100 / 5)) < 1e-6
+    # same risk-based size as spot (1% of 10k / $2), but only notional / L is set aside as margin; v2.14: L is the
+    # engine's leverage (10-50x from stop distance, coin tier and grade), whatever the config says
+    L = F.engine_leverage(100, 98, "BTC/USDT", None)
+    assert 10 <= L <= 50
+    assert abs(pos["qty"] - 50.0) < 1e-9 and pos["lev"] == L
+    assert abs(st["cash"] - (10_000 - 50 * 100 / L)) < 1e-6
     assert abs(eng.equity(st) - 10_000) < 1e-6
-    assert pos["liq"] == pytest.approx(F.liquidation_price(100, 1, 5, symbol="BTC/USDT"))
+    assert pos["liq"] == pytest.approx(F.liquidation_price(100, 1, L, symbol="BTC/USDT"))
     _put(rt, "BTC/USDT", t0 + 4 * STEP, [(100, 100.1, 97.5, 98)])     # stop at 98
     monkeypatch.setattr(analysis, "analyze", lambda *a, **k: {"status": "OK", "decision": "HOLD"})
     eng.run(t0 + 6 * STEP)
     t = rt.db.one("SELECT * FROM bot_trades")
     assert t["exit_reason"] == "stop" and abs(t["pnl"] + 100) < 1e-6          # the stop still limits the loss to 1%
     info = __import__("json").loads(t["info"])
-    assert info["market"] == "futures" and info["leverage"] == 5.0 and abs(info["roe_pct"] + 10) < 1e-6
+    assert info["market"] == "futures" and info["leverage"] == L and abs(info["roe_pct"] + 2 * L) < 1e-6
 
 
 def test_liquidation_when_price_gaps_through(monkeypatch, no_costs):
@@ -95,7 +98,7 @@ def test_safe_leverage_keeps_liquidation_beyond_stop(monkeypatch, no_costs):
     monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy(stop=95.0))
     eng.run(t0 + 4 * STEP)
     pos = eng.bots()[0][1]["positions"][0]
-    assert pos["lev"] == F.safe_leverage(100, 95, 20, symbol="BTC/USDT") and pos["liq"] < 95
+    assert pos["lev"] == F.engine_leverage(100, 95, "BTC/USDT", None) >= 10 and pos["liq"] < 95
 
 
 def test_funding_is_charged_every_8_hours(monkeypatch, no_costs):
@@ -105,7 +108,7 @@ def test_funding_is_charged_every_8_hours(monkeypatch, no_costs):
     _put(rt, "BTC/USDT", t0 - 4 * STEP, [100.0] * 4)
     eng = B.BotEngine(rt)
     eng.sync_configs([_fcfg(max_hold_bars=1000)])
-    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy(stop=90.0, tps=(150.0, 160.0, 170.0)))
+    monkeypatch.setattr(analysis, "analyze", lambda *a, **k: _buy(stop=98.0, tps=(150.0, 160.0, 170.0)))
     eng.run(t0)
     _put(rt, "BTC/USDT", t0, [100.0] * 70)
     monkeypatch.setattr(analysis, "analyze", lambda *a, **k: {"status": "OK", "decision": "HOLD"})
@@ -142,5 +145,6 @@ def test_futures_prediction_tracker_and_view(monkeypatch, no_costs):
     a["setup"]["targets"] = [{"name": f"TP{i}", "price": p, "rr": i} for i, p in enumerate((98.0, 96.0, 94.0), 1)]
     v = F.futures_view(a, {"rate": 0.0002, "source": "test"})
     assert v["action"] == "SHORT" and v["plan"]["side"] == "SHORT"
-    assert v["plan"]["suggested_leverage"] == 10 and v["plan"]["liquidation_at_suggested"] > 102
+    assert v["plan"]["suggested_leverage"] == F.engine_leverage(100.0, 102.0, "BTC/USDT", None) >= 10
+    assert v["plan"]["liquidation_at_suggested"] > 102
     assert v["plan"]["funding_per_day_pct"] == pytest.approx(0.06)     # a short receives a positive rate

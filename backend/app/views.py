@@ -219,7 +219,8 @@ def futures(rt: Runtime, timeframe: str, analyses: dict[tuple[str, str], dict]) 
             "server, your browser shows the live rate",
         "assumptions": {"maintenance_margin": F.MAINTENANCE_MARGIN, "maintenance_tiers": F.MAINTENANCE_TIERS,
                         "fee_rate": F.FUTURES_FEE_RATE,
-                        "max_suggested_leverage": 10, "liquidation_buffer": 1.5},
+                        "max_suggested_leverage": F.POLICY_MAX_LEVERAGE, "min_leverage": F.MIN_LEVERAGE,
+                        "leverage_chosen_by": "engine", "liquidation_buffer": 1.5},
     }
 
 
@@ -340,7 +341,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
     out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None,
-           "honest_since": rt.db.get_setting("honest_record_since", None), "results_net": True, "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
+           "restart": restart_note(rt), "results_net": True, "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "not_filled": sum(x["status"] == "NOT_FILLED" for x in sigs), "void": sum(x["status"] == "VOID" for x in sigs),
             "signals": sigs[:limit]},
@@ -443,6 +444,14 @@ def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks:
             break
         out.append(weekly_report(rt, st, bot_report))
     return {"generated_at": now, "reports": out}
+
+
+def restart_note(rt: Runtime) -> dict[str, Any] | None:
+    """The one restart line shown on Results (v2.14: the fresh restart replaces the v2.13 'record restarted' line)."""
+    r = rt.db.get_setting("record_restart", None)
+    if isinstance(r, dict) and r.get("text"):
+        return {"at": r.get("at"), "text": str(r["text"])}
+    return None
 
 
 # ---- achievements (marketing badges, computed from the real record only) ----------------------------------------

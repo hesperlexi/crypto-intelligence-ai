@@ -6,6 +6,7 @@ import { db } from "./firebase";
 import { latestPrices } from "./live";
 import { isAdmin, myUid } from "./session";
 import { byNewest } from "./format";
+import { depositedOf, newPaperFields, PAPER_START, paperTopUp } from "./writeShapes";
 
 const ACC_REF = () => doc(db, "paper", `${myUid()}_spot`);   // one account per user
 let migrated = false;
@@ -30,14 +31,25 @@ async function price(symbol: string): Promise<number> {
   return t[symbol].last;
 }
 
-export async function reset(startingBalance = 10000) {
+/** A fresh practice account with $1,000 virtual USDT (v2.14). */
+export async function reset(startingBalance = PAPER_START) {
   if (!(startingBalance > 0)) throw new Error("starting balance must be positive");
   let bench: number | null = null;
   try { bench = await price("BTC/USDT"); } catch { bench = null; }
-  const acc = { id: Math.random().toString(36).slice(2, 12), starting_balance: startingBalance, cash: startingBalance, created_at: Date.now(),
+  const acc = { id: Math.random().toString(36).slice(2, 12), ...newPaperFields(startingBalance), cash: startingBalance, created_at: Date.now(),
     benchmark_symbol: "BTC/USDT", benchmark_price: bench, positions: {}, totals: { realized: 0, fees: 0, slippage: 0, count: 0 } };
   await setDoc(ACC_REF(), acc);
   return acc;
+}
+
+/** "Add funds": adds virtual USDT to the cash balance and records it as a deposit (P&L stays equity − deposited). */
+export async function addFunds(amount: number) {
+  await adoptLegacy();
+  if (!(await getDoc(ACC_REF())).exists()) await reset();
+  await runTransaction(db, async (tx) => {
+    const acc: any = (await tx.get(ACC_REF())).data();
+    tx.update(ACC_REF(), paperTopUp(acc, amount, "spot", Date.now()));
+  });
 }
 
 export async function order(symbol: string, side: string, qty: number | null | undefined, notional: number | null | undefined, costs: Costs = DEFAULT_COSTS) {
@@ -210,12 +222,14 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
     const orders = Object.values<any>(acc.orders ?? {}).sort(byNewest);
     const reserved = orders.reduce((a, o) => a + (o.reserve ?? 0), 0);
     const equity = acc.cash + reserved + mv;
-    const ret = equity / acc.starting_balance - 1;
+    const deposited = depositedOf(acc);
+    const ret = deposited > 0 ? equity / deposited - 1 : 0;
     const bnow = latestPrices[acc.benchmark_symbol];
     const bret = bnow && acc.benchmark_price ? bnow / acc.benchmark_price - 1 : null;
     const dayAgo = Date.now() - 86_400_000;
     cb({
       mode: "PAPER TRADING", account: acc, cash: acc.cash, orders, reserved, market_value: mv, equity, return_pct: ret * 100,
+      deposited, pnl: equity - deposited,
       realized_pnl: acc.totals?.realized ?? 0, unrealized_pnl: upnl, fees: acc.totals?.fees ?? 0, slippage: acc.totals?.slippage ?? 0,
       trade_count: acc.totals?.count ?? 0, positions: pos, trades,
       benchmark: { label: `Buy & hold ${acc.benchmark_symbol} since account start`, return_pct: bret == null ? null : bret * 100, excess_pct: bret == null ? null : (ret - bret) * 100 },

@@ -331,7 +331,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 direction = side
     # v2.13 (C2): a graded call needs a PROVEN edge: the model's walk-forward edge test passed (`edge_confirmed`) AND
     # its directional policy is reliably better than a coin flip (`policy_edge`: lower 95 % bound of the chosen margin's
-    # out-of-sample hit rate > 50 %). Setting REQUIRE_EDGE_FOR_TRADE (default on since v2.13).
+    # out-of-sample hit rate > 50 %). Setting REQUIRE_EDGE_FOR_TRADE (default OFF since v2.14, owner).
     edge_why = edge_gate(fc, dv) if decision in TRADE_DECISIONS else None
     if edge_why:
         decision, grade, why = "NO TRADE", None, edge_why
@@ -398,6 +398,13 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         why = (f"target 1 is only {rp:.2f}% away: too small to beat trading costs "
                f"(about {round_trip_cost() * 100:.2f}% to get in and out; it needs at least {COST_MULT:g}x that)")
         flags.append("TARGET TOO SMALL FOR COSTS")
+    # v2.14 leverage policy (owner, 3 Nov 2026): futures trades use 10-50x chosen by the engine; a stop so wide that even
+    # 10x would leave liquidation within 1.5x the stop distance (coin tier + closing fee) is no trade. Checked at the
+    # card's entry and at the live price (the record's market entry), so card, record, bots and auto-trade agree.
+    lev_why = leverage_gate(setup, price, symbol, grade) if decision in TRADE_DECISIONS else None
+    if lev_why:
+        decision, grade, why = "NO TRADE", None, lev_why
+        flags.append("STOP TOO WIDE")
 
     # paused timeframes (v2.6): live calls only, so research replays still measure every timeframe
     if decision in TRADE_DECISIONS and timeframe in PAUSED_TFS and live and bundle is None and as_of is None:
@@ -555,6 +562,20 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             out["ai"] = ai
         rt.analysis_cache[key] = (time.time(), out)
     return out
+
+
+def leverage_gate(setup: dict[str, Any] | None, price: float | None, symbol: str | None, grade: str | None) -> str | None:
+    """v2.14: why a trade call is refused under the 10-50x leverage policy (stop too wide for 10x at the card's entry or
+    at the live price, the record's market entry), or None when it may trade."""
+    if not setup or not setup.get("valid") or not setup.get("stop"):
+        return None
+    from ..engine.futures import TOO_WIDE_REASON, engine_leverage
+    entries = [e for e in (setup.get("ideal_entry"), price) if e]
+    if entries and all(engine_leverage(e, setup["stop"], symbol, grade) is not None for e in entries):
+        return None
+    e0 = entries[0] if entries else None
+    rp = abs(float(e0) - float(setup["stop"])) / float(e0) * 100 if e0 else None
+    return f"{TOO_WIDE_REASON}: the stop is {rp:.1f}% away" if rp is not None else TOO_WIDE_REASON
 
 
 def edge_gate(fc: dict[str, Any] | None, dv: dict[str, Any] | None, required: bool | None = None) -> str | None:

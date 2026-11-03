@@ -213,6 +213,42 @@ def _with_funding(ctx, d, trades: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
+def _lev_of(symbol: str, risk_pct: float, grade: str | None) -> int | None:
+    """v2.14: the engine's leverage for a call with this stop distance (% of the entry), coin and grade."""
+    from .engine.futures import engine_leverage
+    return engine_leverage(100.0, 100.0 * (1 - risk_pct / 100), symbol, grade)
+
+
+def _lev_table(lev_res: dict[str, dict[str, list]], weeks: dict[str, float]) -> dict[str, Any]:
+    """Per timeframe: calls removed by the 10x minimum (stop too wide), leverage chosen (mean / median / spread), and the
+    result per trade with and without the rule (R, after costs and funding) on the 30 % test split."""
+    import numpy as np
+    out: dict[str, Any] = {}
+    tfs = sorted({k.split(" ")[1] for k in lev_res["base"]}, key=lambda t: list(MODEL_TIMEFRAMES).index(t)
+                 if t in MODEL_TIMEFRAMES else 99)
+    for tf in tfs + ["all"]:
+        keys = [k for k in lev_res["base"] if tf == "all" or k.endswith(f" {tf}")]
+        base = [t for k in keys for t in lev_res["base"][k]]
+        kept = [t for k in keys for t in lev_res["kept"].get(k, [])]
+        too_wide = [t for t in base if t.get("lev") is None]
+        levs = [t["lev"] for t in kept if t.get("lev") is not None]
+        risk = [t["risk_pct"] for t in base if t.get("risk_pct")]
+        out[tf] = {
+            "trades_before": len(base), "removed_too_wide": len(too_wide),
+            "removed_pct": round(100 * len(too_wide) / len(base), 1) if base else None,
+            "trades_after": len(kept),
+            "avg_leverage": round(float(np.mean(levs)), 1) if levs else None,
+            "median_leverage": float(np.median(levs)) if levs else None,
+            "share_at_50x": round(sum(1 for x in levs if x >= 50) / len(levs), 3) if levs else None,
+            "share_at_10x": round(sum(1 for x in levs if x <= 10) / len(levs), 3) if levs else None,
+            "median_stop_pct": round(float(np.median(risk)), 2) if risk else None,
+            "avg_r_before": round(float(np.mean([t["r"] for t in base])), 3) if base else None,
+            "avg_r_after": round(float(np.mean([t["r"] for t in kept])), 3) if kept else None,
+            "avg_r_removed": round(float(np.mean([t["r"] for t in too_wide])), 3) if too_wide else None,
+        }
+    return out
+
+
 def replay(rt, symbols: list[str], tfs: list[str], deadline: float) -> dict[str, Any]:
     from . import research_engine as RE
     from .ml import series_policy as SP
@@ -223,6 +259,7 @@ def replay(rt, symbols: list[str], tfs: list[str], deadline: float) -> dict[str,
     weeks: dict[str, float] = {}
     spans: dict[str, list[int]] = {}
     skipped, series = [], {}
+    lev_res: dict[str, dict[str, list]] = {"base": {}, "kept": {}}
     for s, tf in [(s, tf) for tf in RE.TF_ORDER if tf in tfs for s in symbols]:
         if time.time() > deadline:
             skipped.append(f"{s} {tf}: time budget")
@@ -251,6 +288,20 @@ def replay(rt, symbols: list[str], tfs: list[str], deadline: float) -> dict[str,
             for ent, mode in (("ideal", "ideal"), ("market", "old")):
                 tr = SP.run_series(ctx, paths, test, d, entry_mode=mode, news=news)
                 res[f"{grading}_{ent}"][key] = _with_funding(ctx, d, tr)
+        # v2.14 leverage policy (10-50x chosen by the engine; stop too wide for 10x -> no trade): current grading,
+        # honest entry; the refused calls no longer occupy the series (one call at a time), as live
+        try:
+            d = SP.decide(ctx, tune, require_edge=False)
+            cands = SP.candidates(ctx, paths, test, d, "old", news=news)
+            for c in cands:
+                if c.get("filled") and c.get("risk_pct"):
+                    c["lev"] = _lev_of(s, float(c["risk_pct"]), str(d["grade"][c["j"]]) or None)
+            base = SP.taken(ctx, cands)
+            kept = SP.taken(ctx, cands, keep=lambda c: not c.get("filled") or c.get("lev") is not None)
+            lev_res["base"][key] = _with_funding(ctx, d, base)
+            lev_res["kept"][key] = _with_funding(ctx, d, kept)
+        except Exception as exc:
+            skipped.append(f"{s} {tf} leverage: {type(exc).__name__}")
         series[key] = {"edge_confirmed": bool(ctx.edge_confirmed), "test_calls": info, "test_span": spans[key]}
         log.info("%s: done", key)
     tables = {k: RE._table(v, weeks) for k, v in res.items()}
@@ -260,7 +311,7 @@ def replay(rt, symbols: list[str], tfs: list[str], deadline: float) -> dict[str,
             sp = [v for kk, v in spans.items() if kk.endswith(f" {tf}")]
             blk["test_period"] = [min(a for a, _ in sp), max(b for _, b in sp)] if sp else None
         t["overall"]["trades_per_month"] = (t["overall"].get("trades_per_week") or 0.0) * 30.44 / 7
-    return {"tables": tables, "series": series, "skipped": skipped,
+    return {"tables": tables, "series": series, "skipped": skipped, "leverage_v214": _lev_table(lev_res, weeks),
             "variants": {"cur_ideal": "current grading, pre-v2.13 record entry (ideal entry filled at once)",
                          "cur_market": "current grading, v2.13 entry (market price; pullback limit through-fill)",
                          "edge_ideal": "edge required, pre-v2.13 record entry",

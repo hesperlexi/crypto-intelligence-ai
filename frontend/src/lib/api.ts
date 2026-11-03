@@ -333,7 +333,7 @@ export async function api<T = any>(path: string, init?: { method?: string; body?
         const trade = await paper.order(toSymbol(body.symbol), body.side, body.qty, body.notional, meta.costs);
         return { trade, state: await first(paper.subscribe) } as T;
       }
-      case "POST /paper/reset": await paper.reset(Number(body.starting_balance ?? 10000)); return (await first<T>(paper.subscribe));
+      case "POST /paper/reset": await paper.reset(Number(body.starting_balance ?? 1000)); return (await first<T>(paper.subscribe));
       case "PUT /bots": await setDoc(doc(db, "config", "bots"), { bots: body.bots, updated_at: Date.now() }, { merge: true }); return { ok: true } as T;
     }
     throw new ApiError(404, `unsupported action ${method} ${path}`);

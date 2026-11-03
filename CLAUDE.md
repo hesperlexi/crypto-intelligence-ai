@@ -332,11 +332,11 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
 - **Fills** `engine/manage.py`: stop / break-even / trail exit on a candle opening beyond the level fills at the OPEN
   (`stop_fill`, `GAP_FILLS`); limits fill only when traded THROUGH by one tick (`trades_through`, `TICK_FRAC` 1e-5).
   `series_sim.follow(open_=...)` + `fill` the same (test proves equality with gaps); `fill` mode "ideal" = old record.
-- **Restart** flag `honest_record_v213` (`worker.honest_record_v213`): `record_since` = now, `record_since_tf` cleared,
-  `honest_record_since` (Results line "Record restarted …: real entry prices, after fees"), old values in
-  `honest_record_prev`; on an empty DB only the flag is set.
-- **Grading (C2)** `REQUIRE_EDGE_FOR_TRADE` default **on**: grade A/B need `fc.edge_confirmed` AND `dv.policy_edge`
-  (`analysis.edge_gate`; research `series_policy.decide(require_edge=)`); else NO TRADE "no proven edge …".
+- **Restart** flag `honest_record_v213`: **merged into the v2.14 fresh restart** (that one sets the flag; on its own
+  `worker.honest_record_v213` only marks the flag, never moves the record). `honest_record_since` no longer shown.
+- **Grading (C2)** `REQUIRE_EDGE_FOR_TRADE` (switch kept) default **OFF** since v2.14 (owner, 3 Nov 2026: "no edge rule");
+  when on: grade A/B need `fc.edge_confirmed` AND `dv.policy_edge` (`analysis.edge_gate`, `EDGE_RULE` both|policy;
+  research `series_policy.decide(require_edge=)`); else NO TRADE "no proven edge …".
 - **Fail closed**: trade filter (v1) error, filter2 exception, safety switch exception, news calendar unavailable
   (synced before but older than `NEWS_CALENDAR_MAX_AGE_H` 72 h, or an error) → NO TRADE "CHECK UNAVAILABLE";
   `analysis.gate_failure` → setting `gate_failures` → Health `fail_closed` card "Fail-safe checks". An expired / missing
@@ -345,7 +345,7 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   0.4 %, large caps 0.5 %, alts 1 %, PAXG / memecoins 2-2.5 %, unknown 1 %); `liquidation_price` includes the exit fee;
   `safe_leverage` buffer ≥ 1.5 (`MIN_BUFFER`), symbol-aware everywhere (bots, Hesper, autopaper, cards, alerts);
   frontend `paperFutures.MMR_TIERS/mmrOf/liqPrice(…, symbol)`.
-- **Auto-trade**: `autopaper.MAX_LEV` 20 (frontend `AutoTrade.AUTO_MAX_LEV` clamps); reversal only closes an auto
+- **Auto-trade**: (v2.13 cap 20x, replaced by v2.14 10–50x below); reversal only closes an auto
   position / order opened from the SAME timeframe (`pos.signal.timeframe`); otherwise the new call is skipped.
 - Impact study: `python -m app.research v213` (`research_v213.py`, workflow `research-v213.yml`, results
   `research-results/results/v213-*.json`): live record since 30 Oct old / fills / new entry, gross vs net; research replay
@@ -355,6 +355,42 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   (edge test AND policy) leaves 3 test trades (only LINK 12h has both; 1 of 190 active models) → effectively NO public
   calls; `EDGE_RULE=policy` (direction-policy edge only) keeps ~74 % of trades but is still −0.057R. Live record since
   30 Oct: 11 calls, all would fail the edge rule; 2 of 5 closed wins become net losses with market entry.
+
+## v2.14 fresh restart, 10–50x leverage, $1,000 practice + Add funds (3 Nov 2026, owner decisions, branch `release-v214`)
+- **Fresh restart** (`app/fresh_restart_v214.py`, flag `fresh_restart_v214` in `worker.MIGRATION_FLAGS`, run from
+  `worker.sync_config`; dry run `python -m app.fresh_restart_v214 dry-run`). Owner chose "delete permanently", wins and
+  losses alike. DELETES (SQLite): `signals`, `shadow_signals`, `scalp_signals`, `signal_proofs`, `signal_adjustments`,
+  `decisions`, `bot_trades`, `bot_equity`, `bots` rows (re-created from `config/bots`, same line-up, `reset_token` v214,
+  futures `leverage` 50), `hesper_runs`, `hesper_trades`, settings `hesper_state/_since/_v1` (next cycle = Run #1 at $100),
+  `safety:*`, `honest_record_since/_prev`, `record_restart`, `scalp_backfill_state`, the `published` cache (every view
+  re-published from the empty record); Firestore `owner/telegram_drafts` items, `views/scalping`, legacy `views/bot_*`.
+  Sets `record_since` = now, `record_since_tf` {}, `record_restart` {at, text "Fresh start <d Mon yyyy, Dubai>: real
+  entry prices, after fees."} (Results shows only this line, `views.restart_note` → track_record `restart`),
+  `tg_win_last` = now, `honest_record_v213` = true. KEPT: candles, models, training data, predictions, news, users,
+  memberships, alerts, Telegram token/options, other settings, and members' `paper*` / `auto_paper*` (owner). Never on a
+  fresh / empty DB (guard marks it done; the module also only sets the flag when no history exists); runs once (Firestore
+  mirror). Tests `tests/test_v214.py`.
+- **Leverage policy** `engine/futures.engine_leverage(entry, stop, symbol, grade)` = clamp(safe max × grade factor, 10, 50),
+  A 100 %, B (or none) 75 %; safe max = `safe_max_leverage` (v2.13 tiers + closing fee, liquidation ≥ 1.5× the stop
+  distance, measured up to 125x); safe max < 10 → None = not taken ("stop too wide for 10x minimum", `TOO_WIDE_REASON`).
+  Used by: `analysis.leverage_gate` (public decision → NO TRADE, flag "STOP TOO WIDE", checked at the card entry and the
+  live price), `tracking` (payload `leverage`, ROI on margin; skip_entry if None), `futures_view` (`suggested_leverage`,
+  a recorded call shows its stored leverage, `leverage_policy`), bots (config `leverage` ignored for decision bots; skip
+  if None), Hesper (`MAX_LEVERAGE` 50, `min_leverage` 10 in the view), auto-trade (`autopaper.MIN_LEV/MAX_LEV` 10/50;
+  member setting "signal" = engine, or a ceiling 10–50 that only lowers the engine's choice), alerts text, cards.
+  `stop_before_liquidation` helper. UI: card "Leverage · 27x · 10–50x · chosen by engine", AutoTrade selector
+  "10–50x · chosen by engine" / "Engine, at most Nx", Hesper "$100 → $1,000 · all-in · 10–50x".
+- **Practice accounts**: new accounts $1,000 (`writeShapes.PAPER_START`, `newPaperFields`; `autopaper.START_BALANCE`);
+  existing accounts unchanged. "Add funds" (Trade → Assets: +$1,000 / +$5,000 / custom) = `paper.addFunds` /
+  `paperFutures.addFunds` → `writeShapes.paperTopUp`: balance + amount, `deposited` (total in; older accounts: their
+  starting_balance), `deposit_count` +1, `deposits` (last 50). Return / P&L = equity vs `deposited` (Assets shows
+  Deposited and P&L). Cap $1,000,000 deposited. Reset → new $1,000 account. Rules (`firestore.rules.template`,
+  `validPaper`): new account (new `id`) 0 < start ≤ 1e6, deposited = start, count 0; same account: start fixed,
+  deposited never down, a rise ≤ 1e6 total with count +1 and the balance up by the same amount (±0.01); rules tests in
+  `tests/rules` ("paper: …").
+- **No edge rule** (owner): `REQUIRE_EDGE_FOR_TRADE` default off (see v2.13).
+- Impact study: `research_v213.replay` → `leverage_v214` (per timeframe: removed by the 10x minimum, avg / median leverage,
+  R before / after) in `research-results/results/v213-*.json`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track

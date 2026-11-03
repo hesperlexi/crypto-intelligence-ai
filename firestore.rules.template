@@ -257,8 +257,38 @@ service cloud.firestore {
     // auto-trading of signals into the member's own paper account: settings by the member, log by the engine
     match /auto_paper/{uid}       { allow read, write: if isAdmin() || (isMember() && uid == me()); }
     match /auto_paper_state/{uid} { allow read: if isAdmin() || (isMember() && uid == me()); allow write: if false; }
-    // paper accounts: members only touch documents named after their own uid
-    match /paper/{id}        { allow read, write: if isAdmin() || (isMember() && id.matches(me() + '_.*')); }
+    // paper accounts: members only touch documents named after their own uid.
+    // v2.14 "Add funds" (frontend/src/lib/writeShapes.ts paperTopUp / newPaperFields): a new or reset account (new `id`)
+    // starts with 0 < starting_balance <= $1,000,000, deposited == starting_balance, deposit_count 0. On the same account
+    // starting_balance never changes and `deposited` (total virtual USDT put in) never goes down; a top-up raises it by a
+    // positive amount to at most $1,000,000, raises deposit_count by exactly one and adds the same amount to the balance
+    // (futures `wallet` / spot `cash`); otherwise deposit_count stays. The trading itself stays the member's own app code.
+    function paperDep(d) { return d.get('deposited', d.get('starting_balance', 0)); }
+    function paperFunds(d) { return d.get('wallet', d.get('cash', 0)); }
+    function paperNewAccount(n) {
+      return n.get('starting_balance', 0) is number && n.get('starting_balance', 0) > 0
+        && n.get('starting_balance', 0) <= 1000000 && paperDep(n) == n.get('starting_balance', 0)
+        && n.get('deposit_count', 0) == 0 && n.get('deposits', []) is list && n.get('deposits', []).size() == 0;
+    }
+    function paperSameAccount(n, o) {
+      return n.get('starting_balance', 0) == o.get('starting_balance', 0)
+        && n.get('deposits', []) is list && n.get('deposits', []).size() <= 50
+        && ((paperDep(n) == paperDep(o) && n.get('deposit_count', 0) == o.get('deposit_count', 0))
+            || (paperDep(n) is number && paperDep(n) > paperDep(o) && paperDep(n) <= 1000000
+                && n.get('deposit_count', 0) == o.get('deposit_count', 0) + 1
+                && math.abs((paperFunds(n) - paperFunds(o)) - (paperDep(n) - paperDep(o))) < 0.01));
+    }
+    function validPaper() {
+      return (resource == null && paperNewAccount(request.resource.data))
+        || (resource != null && request.resource.data.get('id', '') != resource.data.get('id', '')
+            && paperNewAccount(request.resource.data))
+        || (resource != null && request.resource.data.get('id', '') == resource.data.get('id', '')
+            && paperSameAccount(request.resource.data, resource.data));
+    }
+    match /paper/{id} {
+      allow read, delete: if isAdmin() || (isMember() && id.matches(me() + '_.*'));
+      allow create, update: if isAdmin() || (isMember() && id.matches(me() + '_.*') && validPaper());
+    }
     match /paper_trades/{id} {
       allow read: if isAdmin() || (isMember() && resource.data.uid == me());
       allow create: if isAdmin() || (isMember() && request.resource.data.uid == me());

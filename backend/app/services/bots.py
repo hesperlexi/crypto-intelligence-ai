@@ -44,9 +44,10 @@ MIN_NOTIONAL = 10.0          # USDT: smaller trades are skipped (a bot with no f
 CONF_BUCKETS = (0.0, 0.45, 0.5, 0.55, 0.6, 1.0001)
 MAX_EQUITY_POINTS = 3000
 
-# v2.3: futures bots use up to 20x per trade; `safe_leverage` lowers it trade by trade so the liquidation price stays
-# 1.5x the stop distance beyond the entry (tight stops -> up to 20x, wide stops -> less). Size still comes from the
-# risk per trade, so leverage frees margin and lifts the cap on position size rather than the risk taken.
+# v2.14: futures signal bots use the engine's leverage per trade (`futures.engine_leverage`: 10-50x from the stop
+# distance, the coin's margin tier and the grade; liquidation >= 1.5x the stop distance beyond the entry; a stop too
+# wide for 10x -> no trade). The config's `leverage` (50) is only the ceiling shown. Size still comes from the risk per
+# trade, so leverage frees margin and lifts the cap on position size rather than the risk taken.
 _FUT = {"market": "futures", "safe_leverage": True}
 # v2.3 fresh start: 5 spot + 5 futures bots, each trading exactly what the Signals page shows (grades A and B) on one
 # timeframe. The futures 1H / 4H bots keep the scorecard ids. reset_token "v23" restarts every bot with a clean book.
@@ -65,7 +66,7 @@ DEMO_15M = {"id": "futures-demo-a-15m", "name": "Futures demo bot 15M · grade A
             "mode": "decision", "timeframe": "15m", "symbols": "all", "starting_balance": 10_000.0,
             "risk_per_trade_pct": 1.0, "max_position_pct": 20.0, "max_open_positions": 6, "allow_short": True,
             "pending_bars": 6, "max_hold_bars": 250, "reset_token": "v28", "grades": "A", "demo_only": True,
-            "tp1_only": True, "leverage": 20.0, **_FUT}
+            "tp1_only": True, "leverage": 50.0, **_FUT}
 
 
 # v2.10 (owner decision 1 Nov 2026): 1d and 3d run in demo bots only, like 15m - never public, never in the record.
@@ -75,7 +76,7 @@ def _demo_bot(tf: str) -> dict[str, Any]:
             "mode": "decision", "timeframe": tf, "symbols": "all", "starting_balance": 10_000.0,
             "risk_per_trade_pct": 1.0, "max_position_pct": 20.0, "max_open_positions": 6, "allow_short": True,
             "pending_bars": 6, "max_hold_bars": 30, "reset_token": "v210", "grades": "AB", "demo_only": True,
-            "leverage": 20.0, **_FUT}
+            "leverage": 50.0, **_FUT}
 
 
 DEMO_BOTS = [DEMO_15M, _demo_bot("1d"), _demo_bot("3d")]
@@ -87,7 +88,7 @@ def _sig_bot(tf: str, futures: bool) -> dict[str, Any]:
             "mode": "decision", "timeframe": tf, "symbols": "all", "starting_balance": 10_000.0, "risk_per_trade_pct": 1.0,
             "max_position_pct": 20.0 if futures else 100.0, "max_open_positions": 6, "allow_short": True, "pending_bars": 6,
             "max_hold_bars": _HOLD[tf], "reset_token": "v23", "grades": "AB"}
-    return {**base, "leverage": 20.0, **_FUT} if futures else {**base, "market": "spot", "leverage": 1.0}
+    return {**base, "leverage": 50.0, **_FUT} if futures else {**base, "market": "spot", "leverage": 1.0}
 
 
 BOT_TFS = ("15m", "1h", "4h", "12h", "1d")
@@ -641,9 +642,12 @@ class BotEngine:
             fut = cfg.get("market") == "futures"
             lev = 1.0
             if fut:
-                lev = cfg.get("leverage", 1.0)
-                if cfg.get("safe_leverage", True):
-                    lev = float(min(lev, F.safe_leverage(entry, stop, lev, symbol=s)))
+                # v2.14: leverage chosen by the engine (10-50x from stop distance, coin tier and grade); a trade whose
+                # stop is too wide for 10x is skipped (liquidation never before the stop)
+                el = F.engine_leverage(entry, stop, s, a.get("grade"))
+                if el is None:
+                    continue
+                lev = float(el)
             fee_rate = F.FUTURES_FEE_RATE if fut else self.fee
             # risk-based size (the stop decides the loss, not the leverage); the margin per position is capped
             mult = size_multiplier(a.get("grade"), a.get("filter_score"), a.get("filter_threshold")) if cfg.get("edge_sizing", True) else 1.0
