@@ -6,9 +6,12 @@ import { db } from "../lib/firebase";
 import { ago } from "../lib/format";
 import { Card, Note } from "./ui";
 
-const DEF = { enabled: false, token: "", channel: "@crypappai", post_wins: true, post_weekly: true, post_teaser: true, post_each_win: true, approve_first: true };
+// v2.16 funnel: post_daily_call (replaces the teaser), post_briefing, post_week7 (replaces the old weekly) - on by default
+const DEF = { enabled: false, token: "", channel: "@crypappai", post_wins: true, post_weekly: true, post_teaser: true, post_each_win: true, approve_first: true,
+  post_daily_call: true, post_briefing: true, post_week7: true };
 type Draft = { id: string; kind: string; caption: string; created_at: number; png?: string | null };
-const KIND: Record<string, string> = { win: "Best win", wins: "Wins of the day", weekly: "Weekly results", teaser: "Free signal" };
+const KIND: Record<string, string> = { win: "Best win", wins: "Wins of the day", weekly: "Weekly results", teaser: "Free signal",
+  briefing: "Market briefing", week7: "Last 7 days" };
 const plain = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 
 export default function TelegramCard() {
@@ -45,17 +48,20 @@ export default function TelegramCard() {
   return (
     <Card title="Telegram channel autopilot" right={<span className={`text-xs font-semibold ${s.enabled && ready ? "text-bull" : "text-mute"}`}>{s.enabled && ready ? "ON" : "OFF"}</span>}>
       <div className="space-y-3 text-sm">
-        <p className="text-xs text-mute">Picture cards: best wins, daily wins, Monday results and one free signal a day. With "Ask me before posting" each card waits here for Post or Skip. Setup: @BotFather → /newbot → copy token; add the bot as channel admin.</p>
+        <p className="text-xs text-mute">Picture cards: best wins, daily wins, the market briefing, Monday's last-7-days card and one free signal a day. With "Ask me before posting" each card waits here for Post or Skip. Setup: @BotFather → /newbot → copy token; add the bot as channel admin.</p>
         <label className="block"><span className="text-xs text-mute">Bot token (private)</span>
           <div className="mt-1 flex gap-2"><input className="input flex-1" type={show ? "text" : "password"} autoComplete="off" value={s.token} onChange={(e) => setS({ ...s, token: e.target.value.trim() })} placeholder="123456789:AA…" />
             <button className="btn px-3 text-xs" onClick={() => setShow(!show)}>{show ? "Hide" : "Show"}</button></div></label>
         <label className="block"><span className="text-xs text-mute">Channel</span>
           <input className="input mt-1" value={s.channel} onChange={(e) => setS({ ...s, channel: e.target.value.trim() })} placeholder="@yourchannel" /></label>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([["approve_first", "Ask me before posting"], ["post_each_win", "Best wins (target 2 or 3)"], ["post_wins", "Wins of the day"], ["post_weekly", "Weekly results"], ["post_teaser", "Daily free signal"]] as const).map(([k, l]) => (
+          {([["approve_first", "Ask me before posting"], ["post_each_win", "Best wins (target 2 or 3)"], ["post_wins", "Wins of the day"],
+             ["post_daily_call", "Free signal of the day + its result"], ["post_briefing", "Market briefing (2x a day)"], ["post_week7", "Last 7 days (Mondays)"],
+             ...(s.post_week7 ? [] : [["post_weekly", "Weekly results (old card)"]]), ...(s.post_daily_call ? [] : [["post_teaser", "Teaser signal (old)"]])] as [string, string][]).map(([k, l]) => (
             <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={(s as any)[k]} onChange={(e) => setS({ ...s, [k]: e.target.checked })} />{l}</label>
           ))}
         </div>
+        <p className="text-xs text-mute">Free signal of the day: the first grade-A call of the day whose entry filled, posted 2 h after the fill; its result follows when it closes, win or loss. Both always go out directly (never held for approval), so a loss can't be skipped.</p>
         <div className="flex flex-wrap gap-2">
           <button className={`btn ${s.enabled ? "" : "btn-primary"}`} disabled={!ready} onClick={() => save({ ...s, enabled: !s.enabled }, s.enabled ? "Autopilot paused." : "Autopilot on.")}>{s.enabled ? "Pause autopilot" : "Turn on autopilot"}</button>
           <button className="btn" onClick={() => save()}>Save</button>

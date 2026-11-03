@@ -427,6 +427,45 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   Settings → About shows "v<version> · build <BUILD_ID>"; the landing footer has an "Android app (APK)" link.
 - Removed dead files: `pages/Futures.tsx`, `pages/Track.tsx`, `components/Scalping.tsx`, `lib/scalpCard.ts`.
 
+## v2.16 growth: coins, AI briefing & coin reports, Telegram funnel, smarter alerts, 7-day card (4 Nov 2026, branch `growth-v216`)
+Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is paid for by write savings in the same change.
+- **Coins**: live watchlist on 3 Nov was 20 (TEST_COINS + PEPE ENA GALA NVDAB ZEC SPCXB MSTRB TRX U UNI, admin-added).
+  `worker.GROWTH_COINS` LINK ADA SUI DOT NEAR appended once to `config/watchlist` (not pinned, only if the exchange lists
+  them, renames applied) by `worker.add_growth_coins`, flag `coins_growth_v216` (in `MIGRATION_FLAGS`; a fresh DB marks it
+  done instead). Removing one later sticks. Candles / 15m deepening / funding / crowd / tick bootstrap handle them as any
+  new coin; bots use `symbols: all`. `shard_pairs` now trains missing, then oldest models first within each cost tier.
+- **Write savings**: `worker.PERF_EVERY_S` 3600 (perf_ pages changed every candle; ~73 writes/coin/day saved),
+  `ANALYSIS_EVERY_S['15m']` 1800 (env `ANALYSIS_15M_EVERY_S`; a changed call still goes out at once), Telegram status doc
+  only when something was sent / errors changed / hourly (`telegram.STATUS_EVERY_MS`, was every cycle).
+- **AI market briefing** `services/briefing.py`: on hourly analyses, refreshed every 4 h or (≥1 h) when the mood / BTC / ETH
+  4H regime group changes (`core`). Facts = engine numbers only (4H mood + breadth, BTC/ETH regime, 24h change and 4H AI
+  lean, Fear & Greed, dominance, movers, next 24 h High USD releases, open calls by side). Gemini text (`TASK`, ≥25 calls
+  kept free, `AI_RESERVE`) accepted only if `acceptable()`: ai_advisor.clean_text, no predictions / profit / advice
+  (`PREDICT_RE`), every number in the input (`numbers_ok`), 2-6 sentences; else `template()`. Bullets always deterministic.
+  Stored in setting `briefing`, published as `briefing` inside `views/market_context` (core = its `at`, so it goes out at once).
+  Home: `Polish.BriefingLine` replaces the hero sub-line (3 lines + More on phones, facts as Badges).
+- **AI coin reports** `services/coin_reports.py`: per coin on hourly analyses (needs 12H): trend (4H + 1D regime groups),
+  nearest 4H support / resistance, AI lean + directional confidence 4H / 12H (`direction_view`, `confidence`), open call
+  (stop in force after TP1 / TP2), main risk, invalidation. No live price inside. Optional Gemini line per coin (open calls
+  first, ≤3 per cycle, ≤40 a day, renewed only when `core` changed and ≥4 h; same checks as the briefing). ONE document
+  `views/coin_reports` (min 3600 s, hash-dedup). Asset page `components/CoinReport.tsx` (api path `/coin-reports/<slug>`).
+- **Telegram funnel** (`services/telegram.py`, options default on, only while the autopilot is enabled): `post_daily_call`
+  = the first grade-A public call of each UTC day (publication order) whose entry FILLED (an earlier pending call holds the
+  choice; NOT_FILLED / VOID are skipped), posted `CALL_DELAY_MS` 2 h after the fill, result (after fees) when it closes;
+  both sent directly, never drafts (state `tg_daily_calls`, start `tg_daily_since`); replaces the old teaser while on.
+  `post_briefing` at 05:00 and 13:00 UTC (briefing ≤5 h old). `post_week7` Mondays ≥06:00 UTC = `views.recent_summary`
+  (last 7 days, after fees) card `cards.week7_card`; replaces the old `post_weekly` while on. Settings toggles in `TelegramCard`.
+- **Smarter alerts** (`services/alerts.py`): types ENTRY_REACHED, TP2_REACHED, TP3_REACHED, SIGNAL_CLOSED (stop, BE / time
+  limit after a target, admin close, NOT_FILLED), SIGNAL_UPDATES (`params.events` ⊆ entry,tp1,tp2,tp3,closed), MOOD_CHANGE
+  (4H watchlist mood flips BULL↔BEAR, setting `market_mood`). Symbol `ALL/USDT` = every coin, timeframe `all`. Worker step
+  `call_alerts` (`alerts.lifecycle` + `alerts.mood`) after analyses; one per rule per call per event (`alert_marks`), new
+  rules primed (`last_state = 'primed'`, past events never sent), ≤ `MAX_EVENTS_PER_DAY` 30 per member. Delivered as
+  alert_events (→ `alerts_u_{uid}`) + push (`worker.PUSH_TITLES`). Rules `validAlert` types + timeframe 'all'; rules tests.
+  Alerts page: quick-start Chips "My signals: entry / TP / SL" and "Market mood change", event picker, "All coins".
+- **Last 7 days** `views.recent_summary` → `track_record.last_7d` (no time stamps inside, so no extra writes; sample note
+  under `MIN_SAMPLE` 30) → Results card `TrackRecord.Last7`; same numbers as the Telegram week7 card.
+- Tests `tests/test_growth_v216.py`; preview seed: market_context.briefing, views/coin_reports, alerts_u_* events, last_7d.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

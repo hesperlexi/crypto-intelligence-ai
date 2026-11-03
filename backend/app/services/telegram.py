@@ -36,9 +36,16 @@ WEEKLY_HOUR_UTC = 6
 TEASER_DELAY_MS = 60 * 60_000
 MAX_WIN_POSTS = 5
 MAX_DRAFTS = 6                     # each card is ~70 KB; a Firestore document holds 1 MB
+STATUS_EVERY_MS = 3_600_000
+BRIEFING_HOURS_UTC = (5, 13)       # v2.16: market briefing at 09:00 and 17:00 Dubai
+BRIEFING_MAX_AGE_MS = 5 * 3_600_000
+CALL_DELAY_MS = 2 * 3_600_000      # v2.16 daily free call: posted 2 h after its entry filled
+DAY_MS = 86_400_000
 DRAFTS = "owner/telegram_drafts"
 DEFAULTS = {"enabled": False, "channel": brand.TELEGRAM_CHANNEL, "post_wins": True, "post_weekly": True, "post_teaser": True,
-            "post_each_win": True, "approve_first": True, "post_proofs": False}
+            "post_each_win": True, "approve_first": True, "post_proofs": False,
+            # v2.16 funnel (on by default, but only ever posted while the autopilot itself is switched on)
+            "post_daily_call": True, "post_briefing": True, "post_week7": True}
 
 
 def config(sink) -> dict[str, Any]:
@@ -233,17 +240,18 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
     day = dt.strftime("%Y-%m-%d")
     errors = []
 
-    def post(kind: str, text: str | None, marker: str, value: Any, card: tuple | None = None):
+    def post(kind: str, text: str | None, marker: str, value: Any, card: tuple | None = None, direct: bool = False):
         if not text:
             return
         try:
             png = _card(*card) if card else None
-            if cfg["approve_first"]:
+            draft = cfg["approve_first"] and not direct
+            if draft:
                 add_draft(sink, kind, text, png, now)
             else:
                 send_photo(cfg, png, text, session)
             db.set_setting(marker, value)
-            out["sent"].append(kind + (" (waiting for approval)" if cfg["approve_first"] else ""))
+            out["sent"].append(kind + (" (waiting for approval)" if draft else ""))
         except Exception as exc:
             errors.append(redact(f"{kind}: {exc}")[:200])
 
@@ -251,12 +259,19 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         if (wins_view or {}).get("period") == "today":
             post("wins", wins_text(wins_view), "tg_wins_day", day,
                  ("wins_card", wins_view["wins"], wins_view["period"], wins_view.get("closed"), wins_view.get("losses")))
-    if cfg["post_weekly"] and dt.weekday() == 0 and dt.hour >= WEEKLY_HOUR_UTC and db.get_setting("tg_weekly_day", "") != day:
+    if cfg["post_week7"] and dt.weekday() == 0 and dt.hour >= WEEKLY_HOUR_UTC and db.get_setting("tg_week7_day", "") != day:
+        # v2.16: the weekly public report card (last 7 days after fees, sample-size note); replaces the older weekly post
+        from ..views import recent_summary
+        r7 = recent_summary(rt, 7, now)
+        post("week7", week7_text(r7, now), "tg_week7_day", day, ("week7_card", r7, now))
+    if cfg["post_weekly"] and not cfg["post_week7"] and dt.weekday() == 0 and dt.hour >= WEEKLY_HOUR_UTC \
+            and db.get_setting("tg_weekly_day", "") != day:
         reports = (weekly_view or {}).get("reports") or []
         last = reports[1] if len(reports) > 1 else None
         if last and last.get("complete"):
             post("weekly", weekly_text(last), "tg_weekly_day", day, ("weekly_card", last))
-    if cfg["post_teaser"] and db.get_setting("tg_teaser_day", "") != day:
+    if cfg["post_teaser"] and not cfg["post_daily_call"] and db.get_setting("tg_teaser_day", "") != day:
+        # (v2.16: the daily free call below replaces the teaser - it never picks by outcome and always posts the result)
         from ..views import record_clause
         rc, rp = record_clause(rt)
         rows = db.query("SELECT * FROM signals WHERE status = 'OPEN' AND side != 0 AND created_at <= ? AND created_at >= ? "
@@ -284,6 +299,19 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
                 post("win", win_text(w), "tg_win_last", int(r["closed_at"]), ("win_card", w))
                 if len(out["sent"]) == n:      # failed: keep the marker, try again next run
                     break
+    if cfg["post_daily_call"]:
+        try:
+            daily_call(rt, now, post)
+        except Exception as exc:
+            errors.append(redact(f"daily call: {exc}")[:200])
+    if cfg["post_briefing"]:
+        slot = next((h for h in reversed(BRIEFING_HOURS_UTC) if dt.hour >= h), None)
+        mark = f"{day}-{slot}"
+        if slot is not None and db.get_setting("tg_briefing_slot", "") != mark:
+            from .briefing import current
+            b = current(db)
+            if b and now - int(b.get("at") or 0) <= BRIEFING_MAX_AGE_MS:
+                post("briefing", briefing_text(b), "tg_briefing_slot", mark, ("briefing_card", b))
     from .tracking import SEALED_PROOFS
     if cfg["post_proofs"] and SEALED_PROOFS:
         try:
@@ -291,17 +319,185 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         except Exception as exc:
             errors.append(redact(f"proof: {exc}")[:200])
     status = {"ok": not errors, "checked_at": now, "errors": errors, "last_sent": out["sent"] or None}
-    try:
-        prev = sink.get("owner/telegram_status") or {}
-        if any("approval" not in k for k in out["sent"]):
-            status["last_post_at"] = now
-        else:
-            status["last_post_at"] = prev.get("last_post_at")
-        sink.set("owner/telegram_status", status)
-    except Exception:
-        pass
+    # v2.16 (free plan): the status document was rewritten every 5-minute cycle (~288 writes a day); now only when
+    # something was sent, the errors changed, or at most hourly as a sign of life
+    from ..db import dumps as _dumps
+    sig = _dumps({"ok": status["ok"], "errors": errors})
+    written = db.get_setting("tg_status_written", None) or {}
+    if out["sent"] or written.get("sig") != sig or now - int(written.get("at") or 0) >= STATUS_EVERY_MS:
+        try:
+            prev = sink.get("owner/telegram_status") or {}
+            if any("approval" not in k for k in out["sent"]):
+                status["last_post_at"] = now
+            else:
+                status["last_post_at"] = prev.get("last_post_at")
+            if not out["sent"]:
+                status["last_sent"] = prev.get("last_sent")
+            sink.set("owner/telegram_status", status)
+            db.set_setting("tg_status_written", {"sig": sig, "at": now})
+        except Exception:
+            pass
     out["errors"] = errors
     return out
+
+
+# ---- v2.16 funnel: daily free call (delayed, result always follows), market briefing, last-7-days card -----------
+# Daily call rule (fixed in advance, never by outcome): of the grade-A public calls published on a UTC day, in
+# publication order, the first whose entry FILLED is that day's free call. An earlier call still waiting for its entry
+# holds the choice back until it fills (then it is the pick) or expires unfilled (then the next one is considered).
+# The card goes out CALL_DELAY_MS after the entry filled - whether the trade is still running or already closed - and
+# its result (after fees) follows when it closes. Both are sent directly, never as drafts, so a loss can't be skipped.
+def _grade(r: dict[str, Any]) -> str | None:
+    from ..db import loads
+    return (loads(r.get("payload"), {}) or {}).get("grade") if isinstance(r.get("payload"), str) else (r.get("payload") or {}).get("grade")
+
+
+def pick_daily_call(rt, day_start: int) -> tuple[str, dict[str, Any] | None]:
+    """('pick', row) | ('wait', None) | ('none', None) for the UTC day starting at day_start."""
+    from ..views import record_clause
+    rc, rp = record_clause(rt)
+    rows = rt.db.query(f"SELECT * FROM signals WHERE side != 0 AND status != 'INFO' AND created_at >= ? AND created_at < ? "
+                       f"AND {rc} ORDER BY created_at, id", (day_start, day_start + DAY_MS, *rp))
+    for r in rows:
+        if _grade(r) != "A":
+            continue
+        if r["status"] in ("NOT_FILLED", "VOID") and r.get("fill_status") != "FILLED":
+            continue                                    # never traded: no result to show, the next call is considered
+        if r.get("fill_status") == "PENDING":
+            return "wait", None
+        return "pick", r
+    return "none", None
+
+
+def _exit_price(r: dict[str, Any]) -> float | None:
+    """The exit price where the record knows it for sure (all targets, or the stop); otherwise not shown."""
+    if r.get("exit_reason") == "admin_close":
+        return None
+    return {"TP3": r.get("tp3"), "STOPPED": r.get("stop")}.get(r.get("status"))
+
+
+def call_item(r: dict[str, Any]) -> dict[str, Any]:
+    from .tracking import margin_fields, result_fields
+    f = result_fields(r)
+    start = r.get("filled_at") or r.get("created_at")
+    return {"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+            "status": r["status"], "exit_reason": r.get("exit_reason"), "return_pct": f.get("return_pct"),
+            "gross_return_pct": f.get("gross_return_pct"), "entry": r.get("entry"), "exit_price": _exit_price(r),
+            "held": _held((r.get("closed_at") or 0) - (start or 0)), **margin_fields(r)}
+
+
+def _status_now(r: dict[str, Any]) -> str:
+    if r["status"] == "OPEN":
+        hit = [f"TP{i}" for i in (1, 2, 3) if r.get(f"tp{i}_hit")]
+        return "running" + (f" ({', '.join(hit)} hit)" if hit else "")
+    return "closed (result below)"
+
+
+def call_text(r: dict[str, Any], now: int) -> str:
+    side = "LONG 🟢" if r["side"] > 0 else "SHORT 🔴"
+    pub = _utc(int(r["created_at"]))
+    hrs = max(2, round((now - int(r["created_at"])) / 3_600_000))
+    return "\n".join([
+        f"🕑 <b>Free signal of the day</b> · members got it {pub}, {hrs} h ago",
+        "", f"<b>{_coin(r['symbol'])}{'' if r['symbol'].startswith('PAXG/') else '/USDT'} {side}</b> · {r['timeframe'].upper()} · grade A",
+        f"Entry: {_px(r['entry'])}", f"Stop-loss: {_px(r['stop'])}",
+        f"Targets: {_px(r['tp1'])} · {_px(r['tp2'])} · {_px(r['tp3'])}",
+        f"Status now: {_status_now(r)}",
+        "", "Our rule: the first grade-A call of each day that got filled, chosen by time, never by result. Its result "
+            "is posted here when it closes, win or loss.",
+        f"Members get every signal the moment it appears 👉 {SITE}",
+        "<i>Prices have moved since. Not financial advice.</i>", f"<i>{html.escape(brand.FOOTER)}</i>"])
+
+
+def call_result_text(x: dict[str, Any]) -> str:
+    res = {"TP1": "Target 1 hit, rest closed at break-even / time limit", "TP2": "Target 2 hit", "TP3": "All targets hit",
+           "STOPPED": "Stopped out", "EXPIRED": "Closed at the time limit", "VOID": "No market data: void, not counted"}.get(
+        x["status"], x["status"])
+    if x.get("exit_reason") == "admin_close":
+        res = "Closed by the admin at the market price"
+    lines = [f"📌 <b>Result · free signal of the day</b> · {_coin(x['symbol'])} {x['side']} ({x['timeframe'].upper()})", res]
+    if x.get("return_pct") is not None:
+        lines.append(f"{'✅' if x['return_pct'] > 0 else '❌'} {result_text(x)}")
+    lines += [f"Entry {_px(x['entry'])}" + (f" → {_px(x['exit_price'])}" if x.get("exit_price") else "") + f" · held {x['held']}",
+              "", "Every daily free signal's result is posted, wins and losses alike.",
+              f"Full public record 👉 {SITE}", f"<i>{html.escape(brand.FOOTER)}</i>"]
+    return "\n".join(lines)
+
+
+def daily_call(rt, now: int, post) -> None:
+    """Pick, post (CALL_DELAY_MS after the fill) and later post the result of the daily free call."""
+    db = rt.db
+    today = now - now % DAY_MS
+    since = db.get_setting("tg_daily_since", None)
+    if since is None:                                  # first run: start with today (never posts older days)
+        db.set_setting("tg_daily_since", today)
+        since = today
+    state = db.get_setting("tg_daily_calls", None) or {}
+    for day_start in (today - DAY_MS, today):
+        if day_start < int(since):
+            continue
+        key = datetime.fromtimestamp(day_start / 1000, timezone.utc).strftime("%Y-%m-%d")
+        st = dict(state.get(key) or {})
+        if not st.get("signal_id"):
+            what, r = pick_daily_call(rt, day_start)
+            if what != "pick":
+                continue
+            st = {"signal_id": r["id"], "picked_at": now}
+            state[key] = st
+            db.set_setting("tg_daily_calls", state)
+        r = db.one("SELECT * FROM signals WHERE id = ?", (st["signal_id"],))
+        if not r:
+            continue
+        fill = int(r.get("filled_at") or r["created_at"])
+        if not st.get("posted_at") and now >= fill + CALL_DELAY_MS:
+            post("daily_call", call_text(r, now), "tg_daily_last", r["id"],
+                 ("teaser_card", r, max(120, round((now - int(r["created_at"])) / 60_000))), direct=True)
+            if db.get_setting("tg_daily_last", None) == r["id"]:
+                st["posted_at"] = now
+        if st.get("posted_at") and not st.get("result_posted_at") and r["status"] not in ("OPEN", "INFO"):
+            x = call_item(r)
+            post("daily_result", call_result_text(x), "tg_daily_result_last", r["id"],
+                 ("result_card", x) if x.get("return_pct") is not None else None, direct=True)
+            if db.get_setting("tg_daily_result_last", None) == r["id"]:
+                st["result_posted_at"] = now
+        state[key] = st
+    # keep the last 30 days of choices (an audit trail of what was picked and when)
+    keep = sorted(state)[-30:]
+    db.set_setting("tg_daily_calls", {k: state[k] for k in keep})
+
+
+def briefing_text(b: dict[str, Any]) -> str | None:
+    if not b or not b.get("text"):
+        return None
+    lines = ["🧭 <b>Market briefing</b> · " + _utc(int(b.get("at") or now_ms())), "", html.escape(b["text"])]
+    if b.get("bullets"):
+        lines += [""] + [f"• {html.escape(x)}" for x in b["bullets"][:5]]
+    lines += ["", f"Live analysis and signals 👉 {SITE}",
+              "<i>" + ("Written by AI from the engine's numbers. " if b.get("source") == "ai" else "") + "Context, not advice.</i>",
+              f"<i>{html.escape(brand.FOOTER)}</i>"]
+    return "\n".join(lines)
+
+
+def week7_text(r: dict[str, Any], now: int) -> str | None:
+    """Last 7 days of the public record after fees - posted even when it is a losing week."""
+    d = lambda ms: datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%d %b")  # noqa: E731
+    head = f"📊 <b>Last 7 days</b> · {d(now - 7 * DAY_MS)} – {d(now)}"
+    if not r.get("closed"):
+        return "\n".join([head, "", "No signal closed in these 7 days.", "", f"Full public record 👉 {SITE}",
+                          f"<i>{html.escape(brand.FOOTER)}</i>"])
+    lines = [head, "", f"Closed signals: <b>{r['closed']}</b> · {r['wins']} wins / {r['losses']} losses",
+             f"Win rate (after fees): <b>{r['win_rate']:.0%}</b>",
+             f"Average per signal after fees: <b>{r['avg_return_pct']:+.2f}%</b> (total {r['total_return_pct']:+.1f}%)"]
+    if r.get("best"):
+        lines.append(f"Best: {_coin(r['best']['symbol'])} {r['best']['side']} ({r['best']['timeframe'].upper()}) {r['best']['return_pct']:+.2f}%")
+    if r.get("worst"):
+        lines.append(f"Worst: {_coin(r['worst']['symbol'])} {r['worst']['side']} ({r['worst']['timeframe'].upper()}) {r['worst']['return_pct']:+.2f}%")
+    if r.get("sample_note"):
+        lines += ["", f"<i>{html.escape(r['sample_note'])}</i>"]
+    lines += ["", "Equal size per signal, price move after a 0.15% round trip and funding; no leverage.",
+              f"Every signal, wins and losses 👉 {SITE}", "<i>Past results don't guarantee future results.</i>",
+              f"<i>{html.escape(brand.FOOTER)}</i>"]
+    return "\n".join(lines)
 
 
 # ---- v2.9 sealed-signal proof (services/proof.py) --------------------------------------------------------------

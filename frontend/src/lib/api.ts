@@ -139,6 +139,8 @@ function resolve(path: string, refreshMs: number): Sub {
     case "system": return p[1] === "errors" ? view("health_errors") : view("health");
     case "context": return view("context");
     case "market-context": return view("market_context");
+    // v2.16 AI coin reports: one document for all coins (views/coin_reports); /coin-reports/<slug> picks one coin
+    case "coin-reports": return p[1] ? view("coin_reports", (d) => (d?.reports ?? {})[toSymbol(p[1])] ?? null) : view("coin_reports");
     case "news": return view("news");
     case "track-record": return view("track_record");
     // admin scalping scorecard (views/scalping; the rules let members read it only when config/scalping says so)

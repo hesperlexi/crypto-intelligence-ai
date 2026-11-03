@@ -532,6 +532,26 @@ async function main() {
     await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { surprise: true })));
     await assertFails(addDoc(collection(db, "alerts"), goodAlert("m2")));
   });
+  // v2.16 smarter alerts: the Alerts page presets ("My signals: entry / TP / SL" on every coin and timeframe, "Market mood
+  // change") and the single call-event types; other types / timeframes stay refused
+  await test("alerts: v2.16 call-event and market-mood alerts are accepted", async () => {
+    await seed(member);
+    const db = as("m1", "m1@example.com");
+    await assertSucceeds(addDoc(collection(db, "alerts"), goodAlert("m1", { type: "SIGNAL_UPDATES", symbol: "ALL/USDT", timeframe: "all",
+      params: { events: ["entry", "tp1", "tp2", "tp3", "closed"] }, cooldown_s: 60 })));
+    await assertSucceeds(addDoc(collection(db, "alerts"), goodAlert("m1", { type: "MOOD_CHANGE", symbol: "ALL/USDT", timeframe: "4h", params: {}, cooldown_s: 3600 })));
+    for (const t of ["ENTRY_REACHED", "TP2_REACHED", "TP3_REACHED", "SIGNAL_CLOSED"])
+      await assertSucceeds(addDoc(collection(db, "alerts"), goodAlert("m1", { type: t, symbol: "ETH/USDT", timeframe: "1h", params: {}, cooldown_s: 60 })));
+  });
+  await test("alerts: v2.16 types keep the same checks (owner, symbol, timeframe, cooldown)", async () => {
+    await seed(member);
+    const db = as("m1", "m1@example.com");
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m2", { type: "SIGNAL_UPDATES", symbol: "ALL/USDT", timeframe: "all" })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { type: "SIGNAL_UPDATES", symbol: "all coins", timeframe: "all" })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { type: "MOOD_CHANGE", symbol: "ALL/USDT", timeframe: "any" })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { type: "TP2_REACHED", symbol: "BTC/USDT", cooldown_s: 30 })));
+    await assertFails(addDoc(collection(db, "alerts"), goodAlert("m1", { type: "TP4_REACHED", symbol: "BTC/USDT" })));
+  });
   await test("alerts: the owner switches a rule on/off; other changes are refused", async () => {
     await seed({ ...member, "alerts/a1": goodAlert("m1") });
     const db = as("m1", "m1@example.com");

@@ -359,7 +359,48 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                        "tested": "Walk-forward test: the models are trained only on data before each test period and then "
                                  "scored on the following period, which they never saw. A simulation, not live results."}}
     out["achievements"] = achievements(rt, out, bot_report)
+    out["last_7d"] = recent_summary(rt)            # v2.16: Results "Last 7 days" card (same numbers as the Telegram card)
     return out
+
+
+# ---- v2.16 last 7 days (Results card + weekly Telegram card) ----------------------------------------------------
+MIN_SAMPLE = 30
+
+
+def sample_note(n: int) -> str | None:
+    if n >= MIN_SAMPLE:
+        return None
+    return (f"Only {n} closed signal{'s' if n != 1 else ''}: too few to judge the method; results this short swing a lot."
+            if n else "No signal closed in these 7 days.")
+
+
+def recent_summary(rt: Runtime, days: int = 7, now: int | None = None) -> dict[str, Any]:
+    """Calls of the counted record that CLOSED in the last `days` days, after fees (wins and losses alike; unfilled and
+    void calls have no result and are not counted). No time stamps inside, so the track_record document only changes
+    when a call enters or leaves the window."""
+    now = now_ms() if now is None else now
+    rc, rp = record_clause(rt)
+    marks = ",".join("?" * len(tracking.CLOSED_STATUSES))
+    rows = rt.db.query(f"SELECT * FROM signals WHERE status IN ({marks}) AND return_pct IS NOT NULL AND closed_at >= ? "
+                       f"AND closed_at < ? AND {rc} ORDER BY closed_at", (*tracking.CLOSED_STATUSES, now - days * 86_400_000, now, *rp))
+    xs = []
+    for r in rows:
+        f = tracking.result_fields(r)
+        xs.append({"id": r["id"], "symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
+                   "status": r["status"], "return_pct": float(f["return_pct"]), "gross_return_pct": float(f["gross_return_pct"])})
+    n = len(xs)
+    rets = [x["return_pct"] for x in xs]
+    wins = sum(1 for v in rets if v > 0)
+    pick = lambda x: {k: x[k] for k in ("symbol", "timeframe", "side", "status", "return_pct")}  # noqa: E731
+    return {"days": days, "net": True, "closed": n, "wins": wins, "losses": n - wins,
+            "win_rate": wins / n if n else None, "avg_return_pct": float(np.mean(rets)) if n else None,
+            "total_return_pct": float(np.sum(rets)) if n else None,
+            "avg_gross_return_pct": float(np.mean([x["gross_return_pct"] for x in xs])) if n else None,
+            "best": pick(max(xs, key=lambda x: x["return_pct"])) if n else None,
+            "worst": pick(min(xs, key=lambda x: x["return_pct"])) if n else None,
+            "min_sample": MIN_SAMPLE, "sample_note": sample_note(n),
+            "basis": f"Signals that closed in the last {days} days, after fees ({tracking.cost_pct():.2f}% round trip plus "
+                     "funding), equal size, half at TP1 and a quarter at TP2 and TP3. Unfilled calls are not counted."}
 
 
 # ---- weekly report (marketing, built on the full record) ------------------------------------------------------

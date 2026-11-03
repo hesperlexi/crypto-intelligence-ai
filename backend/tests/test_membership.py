@@ -65,6 +65,7 @@ def test_active_members_coins_are_tracked_and_lapsed_ones_dropped(tmp_path):
             return [f"{q}/USDT"]
 
     rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.db.set_setting("coins_growth_v216", True)       # (v2.16 coin additions are tested in test_growth_v216)
     rt.db.set_setting("watchlist_majors_v2", True)      # the one-time major-coin expansion is tested separately
     rt.db.set_setting("gold_paxg_v21", True)            # and so is the one-time gold addition
     sink = LocalSink(tmp_path)
@@ -191,6 +192,7 @@ def test_testing_mode_v24_keeps_ten_coins_futures_bots_and_restarts_practice(tmp
             return [f"{q}/USDT"]
 
     rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.db.set_setting("coins_growth_v216", True)       # (v2.16 coin additions are tested in test_growth_v216)
     for f in ("watchlist_majors_v2", "gold_paxg_v21", "fresh_start_v23"):
         rt.db.set_setting(f, True)
     sink = LocalSink(tmp_path)
@@ -219,6 +221,7 @@ def test_testing_gold_swaps_xaut_for_paxg_once(tmp_path):
             return [f"{q}/USDT"]
 
     rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.db.set_setting("coins_growth_v216", True)       # (v2.16 coin additions are tested in test_growth_v216)
     for f in ("watchlist_majors_v2", "gold_paxg_v21", "fresh_start_v23", "testing_v24"):
         rt.db.set_setting(f, True)
     sink = LocalSink(tmp_path)

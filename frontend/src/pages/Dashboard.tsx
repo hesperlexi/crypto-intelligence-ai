@@ -28,6 +28,7 @@ export default function Dashboard() {
   const dash = useApi<any>(`/dashboard?timeframe=${tf}`, 60000);
   const ctx = useApi<any>("/context", 600000);
   const cross = useApi<any>("/cross-asset?timeframe=1d", 300000);
+  const mc = useApi<any>("/market-context");                  // same document as MarketInsights (one listener in the SDK)
   const d = dash.data;
   const ms = d?.market_status;
   const market = ctx.data?.market;
@@ -36,7 +37,7 @@ export default function Dashboard() {
   return (
     <div className="space-y-5">
       <NewsBanner />
-      <DashboardHero rows={d?.rows} status={ms} tf={tf} sentiment={sentiment} market={market} basket={cross.data?.basket} />
+      <DashboardHero rows={d?.rows} status={ms} tf={tf} sentiment={sentiment} market={market} basket={cross.data?.basket} briefing={mc.data?.briefing} />
       <SectionHead title="Market overview" sub={`${tf.toUpperCase()} timeframe${refreshAt ? " · refreshed just now" : ""}`} right={<TfTabs value={tf} onChange={setTf} />} />
       {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
       {!d && dash.loading && <Loading what="Loading market overview" />}

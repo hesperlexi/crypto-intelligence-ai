@@ -30,6 +30,7 @@ from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
 from .services import hesper, scalp_backfill
+from .services import briefing, coin_reports
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -275,6 +276,7 @@ MIGRATION_FLAGS = (
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214",
+    "coins_growth_v216",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -346,6 +348,33 @@ def mirror_migrations(rt: Runtime, sink: BaseSink) -> bool:
     except Exception as exc:
         log.warning("migration flags not mirrored: %s", type(exc).__name__)
         return False
+
+
+# v2.16 (owner decision, 3 Nov 2026): five more large, liquid coins with years of Binance spot history and perpetual
+# futures on Hyperliquid / OKX (the engine's futures data). Chosen from the majors not on the live watchlist (TRX and
+# UNI are already there; TON is renamed GRAM with only months of history under the new name): LINK, ADA, SUI, DOT, NEAR.
+GROWTH_COINS = ["LINK/USDT", "ADA/USDT", "SUI/USDT", "DOT/USDT", "NEAR/USDT"]
+
+
+def add_growth_coins(rt: Runtime, doc: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """Append GROWTH_COINS to the watchlist document (not pinned) - only coins the exchange lists and that are not on it
+    yet (renames applied). Returns (document, added). The caller writes it and sets the one-time flag."""
+    have = {RENAMED.get(n, n) for n in (norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc.get("symbols") or [])}
+    add = []
+    for m in GROWTH_COINS:
+        m = RENAMED.get(m, m)
+        if m in have or m in add:
+            continue
+        try:
+            listed = m in asyncio.run(rt.provider.search_markets(m.split("/")[0], 50))
+        except Exception:
+            listed = False                    # unknown: not added (the admin can still add it on the website)
+        if listed:
+            add.append(m)
+    if not add:
+        return doc, []
+    return {**doc, "symbols": list(doc.get("symbols") or []) + [{"symbol": m, "pinned": False} for m in add],
+            "updated_at": now_ms()}, add
 
 
 def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
@@ -453,6 +482,13 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                     sink.set("config/watchlist", doc)
                     notes["gold_added"] = GOLD
             rt.db.set_setting("gold_paxg_v21", True)
+        if not rt.db.get_setting("coins_growth_v216", False):
+            # v2.16: five more coins once (removing one later sticks); never on a fresh database (migration_guard)
+            doc, grown = add_growth_coins(rt, doc)
+            if grown:
+                sink.set("config/watchlist", doc)
+                notes["coins_growth_v216"] = grown
+            rt.db.set_setting("coins_growth_v216", True)
         # renamed coins: rewrite the watchlist once so the website shows the new name too
         names = [norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]]
         if any(n in RENAMED for n in names):
@@ -907,10 +943,17 @@ def train_until(rt: Runtime, pairs: list[tuple[str, str]], fast: bool, deadline:
 
 # ---- publishing -------------------------------------------------------------------------------------------
 
+PUSH_TITLES = {"TRADE_SETUP": "Trade signal", "BUY_SIGNAL": "Buy signal", "SELL_SIGNAL": "Sell signal",
+               # v2.16 call events and market mood
+               "ENTRY_REACHED": "Entry reached", "TARGET_REACHED": "TP1 hit", "TP2_REACHED": "TP2 hit",
+               "TP3_REACHED": "TP3 hit", "SIGNAL_CLOSED": "Signal closed", "STOP_REACHED": "Stop hit",
+               "MOOD_CHANGE": "Market mood changed"}
+
+
 def push_message(ev: dict[str, Any], owner: str | None = None) -> dict[str, str]:
-    title = {"TRADE_SETUP": "Trade signal", "BUY_SIGNAL": "Buy signal", "SELL_SIGNAL": "Sell signal"}.get(
-        ev.get("type"), (ev.get("type") or "Alert").replace("_", " ").title())
-    msg = {"title": f"{title} · {ev.get('symbol', '')}", "body": ev.get("message", ""), "url": "/alerts",
+    title = PUSH_TITLES.get(ev.get("type"), (ev.get("type") or "Alert").replace("_", " ").title())
+    sym = "" if ev.get("symbol") == alerts.ALL_SYMBOLS else ev.get("symbol", "")
+    msg = {"title": f"{title} · {sym}" if sym else title, "body": ev.get("message", ""), "url": "/alerts",
            "tag": ev.get("id", "")}
     if owner and owner != USER:
         msg["uid"] = owner            # only this member's devices; without it, the admins' devices
@@ -920,6 +963,9 @@ def push_message(ev: dict[str, Any], owner: str | None = None) -> dict[str, str]
 # Coin analysis pages carry live numbers, so they change every cycle; they are re-published at most this often
 # (seconds) unless the trade call itself changes - then at once (Firebase free plan: 20,000 writes a day).
 ANALYSIS_EVERY_S = {"15m": 900, "1h": 1800, "4h": 3600, "12h": 7200, "1d": 7200, "3d": 7200, "1w": 14400}
+# v2.16 (25 coins on the free plan): the 15m coin pages' live numbers go out every 30 min (a new or changed call still
+# goes out at once through `analysis_core`; the Signals boards and live prices are unaffected). Saves ~1,200 writes a day.
+ANALYSIS_EVERY_S["15m"] = int(os.environ.get("ANALYSIS_15M_EVERY_S", "1800"))
 
 
 def analysis_core(a: dict[str, Any]) -> Any:
@@ -988,16 +1034,29 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     ctx = rt.context_cache[1] if rt.context_cache else {"enabled": False, "reason": "not fetched"}
     sink.view("context", ctx, volatile=("fetched_at",))
     # one document for the Home page's market insights; at most hourly, and only when it changed (hash)
-    sink.view("market_context", market_insights.view(rt.db, ctx, getattr(rt, "funding_rates", None), rt.symbols(),
-                                                     getattr(rt, "headlines", None)), min_interval_s=3600)
+    mc = market_insights.view(rt.db, ctx, getattr(rt, "funding_rates", None), rt.symbols(), getattr(rt, "headlines", None))
+    # v2.16: the AI market briefing rides in this document (no new Firestore document); a new briefing goes out at once
+    brief = briefing.current(rt.db)
+    mc["briefing"] = brief
+    sink.view("market_context", mc, min_interval_s=3600, core=(brief or {}).get("at"))
+    # v2.16 AI coin reports: one compact document for every coin, at most hourly, only when a report changed
+    try:
+        sink.view("coin_reports", coin_reports.view(rt.db, rt.symbols()), min_interval_s=3600)
+    except Exception as exc:
+        rt.record_error("coin reports view", exc)
     publish_status(rt, sink, engine)
+
+
+# v2.16 (free plan, 25 coins): the per-model accuracy pages changed with every new candle (15m: ~96 writes a day per
+# coin); they now go out at most hourly. Saves ~1,800 writes a day for 25 coins - more than the 5 new coins cost.
+PERF_EVERY_S = int(os.environ.get("PERF_EVERY_S", "3600"))
 
 
 def publish_models(rt: Runtime, sink: BaseSink) -> None:
     for s in rt.symbols():
         for tf in MODEL_TIMEFRAMES:
             sink.view(f"models_{views.slug(s)}_{tf}", views.models(rt, s, tf))
-            sink.view(f"perf_{views.slug(s)}_{tf}", views.performance(rt, s, tf))
+            sink.view(f"perf_{views.slug(s)}_{tf}", views.performance(rt, s, tf), min_interval_s=PERF_EVERY_S)
     sink.view("models_status", views.models_status(rt))
 
 
@@ -1146,6 +1205,17 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                 fired_events.extend(evs)
         return fired
     detail["alerts_fired"] = step("analyses", analyse)
+    # v2.16 smarter alerts: entry / TP / early-close events of the public calls, and market-mood flips (own step)
+    def call_alerts():
+        evs = alerts.lifecycle(rt.db) + (alerts.mood(rt.db, analyses) if analyses else [])
+        fired_events.extend(evs)
+        return len(evs)
+    detail["call_alerts"] = step("call_alerts", call_alerts)
+    # v2.16 AI market briefing and coin reports (advisory text only; on the hourly analyses; Gemini within its budget)
+    if analyses:
+        detail["briefing"] = step("briefing", lambda: briefing.run(
+            rt.db, analyses, rt.context_cache[1] if rt.context_cache else None))
+        detail["coin_reports"] = step("coin_reports", lambda: coin_reports.run(rt.db, analyses, rt.symbols()))
     # Gemini advisor (advisory notes only; off without GEMINI_API_KEY): new calls and closed calls, bounded per cycle
     detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
     detail["sentiment"] = step("news_sentiment", lambda: sentiment.collect(rt.db, getattr(rt, "headlines", None)))
@@ -1278,7 +1348,10 @@ def shard_pairs(rt: Runtime, shard: int, of: int, max_age_h: float = 12) -> list
             if v is None or (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > max_age_h * 3.6e6 \
                     or _missing_models(v.get("summary") or {}):
                 pairs.append((s, tf))
-    pairs.sort(key=lambda p: (-TF_COST.get(p[1], 1), p[0]))
+    # v2.16: within a cost tier, missing models first, then the oldest (new coins get their models on the first night,
+    # and a pair a slice could not reach last night goes first the next night)
+    age = {p: (lambda v: 0 if v is None else int(v["created_at"]))(trainer.active_version(p[0], p[1], rt.db)) for p in pairs}
+    pairs.sort(key=lambda p: (-TF_COST.get(p[1], 1), age[p], p[0]))
     return [p for i, p in enumerate(pairs) if i % of == shard]
 
 

@@ -425,3 +425,74 @@ def teaser_card(s: dict[str, Any], mins: int) -> bytes:
            fill=MUTED, anchor="ls")
     _footer(d, "Not financial advice · prices may have moved")
     return _png(img)
+
+
+# ---- v2.16 funnel cards -------------------------------------------------------------------------------------------
+def _wrap(d: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
+    lines, cur = [], ""
+    for w in text.split():
+        t = f"{cur} {w}".strip()
+        if cur and d.textlength(t, font=font) > max_w:
+            lines.append(cur)
+            cur = w
+        else:
+            cur = t
+    if cur:
+        lines.append(cur)
+    return lines
+
+
+def week7_card(r: dict[str, Any], now: int) -> bytes:
+    """Last 7 days of the public record after fees: closed count, win rate, average, best / worst, sample-size note."""
+    f = lambda ms: datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%d %b")  # noqa: E731
+    img, d = _base(f"Last 7 days · {f(now - 7 * 86_400_000)} – {f(now)} · after fees")
+    n = int(r.get("closed") or 0)
+    avg = float(r["avg_return_pct"]) if r.get("avg_return_pct") is not None else 0.0
+    _hero(img, (M, 136, 584, 400), avg, None, avg, f"{n} closed signal{'s' if n != 1 else ''}, wins and losses",
+          "AVERAGE PER SIGNAL")
+    d = ImageDraw.Draw(img)
+    kp = [("Closed", str(n), WHITE), ("Wins", str(r.get("wins") or 0), GREEN),
+          ("Win rate", f"{float(r['win_rate']):.0%}" if r.get("win_rate") is not None else "—", WHITE)]
+    gx, gw, gap = 616, (W - M - 616 - 2 * 16) // 3, 16
+    for i, (k, v, c) in enumerate(kp):
+        bx = gx + i * (gw + gap)
+        _panel(d, (bx, 136, bx + gw, 400))
+        d.text((bx + gw / 2, 192), k.upper(), font=_f("SemiBold", 17), fill=MUTED, anchor="ms")
+        d.text((bx + gw / 2, 300), v, font=_fit(d, v, "ExtraBold", 72, gw - 32), fill=c, anchor="ms")
+    cw = (W - 2 * M - 16) // 2
+    for i, (lab, x) in enumerate((("BEST", r.get("best")), ("WORST", r.get("worst")))):
+        bx = M + i * (cw + 16)
+        _panel(d, (bx, 420, bx + cw, 500), r=18)
+        d.text((bx + 24, 468), lab, font=_f("SemiBold", 16), fill=MUTED, anchor="ls")
+        if x:
+            name = f"{coin(x['symbol'])} {_side(x['side'])} · {str(x['timeframe']).upper()}"
+            d.text((bx + 110, 468), name, font=_fit(d, name, "Bold", 24, cw - 300), fill=WHITE, anchor="ls")
+            v = pct(float(x["return_pct"]))
+            d.text((bx + cw - 24, 470), v, font=_f("ExtraBold", 28), fill=GREEN if x["return_pct"] > 0 else RED, anchor="rs")
+    note = r.get("sample_note") or "Equal size per signal · price move after a 0.15% round trip and funding · no leverage"
+    d.text((M, 548), note, font=_fit(d, note, "Medium", 19, W - 2 * M), fill=GOLD_SOFT if r.get("sample_note") else MUTED, anchor="ls")
+    _footer(d, "Past results don't guarantee future results")
+    return _png(img)
+
+
+def briefing_card(b: dict[str, Any]) -> bytes:
+    """The market briefing: mood pill, the text, and the bullet facts."""
+    at = int(b.get("at") or 0)
+    when = datetime.fromtimestamp(at / 1000, timezone.utc).strftime("%d %b %H:%M UTC") if at else ""
+    img, d = _base(f"Market briefing · {when}")
+    mood = {"BULL": ("LEANING BULLISH", GREEN), "BEAR": ("LEANING BEARISH", RED)}.get(str(b.get("mood")), ("MIXED", GOLD))
+    x = _pill(d, M, 136, mood[0], INK, mood[1])
+    if b.get("source") == "ai":
+        _chip(d, x + 12, 136, "AI SUMMARY")
+    body = _f("Medium", 24)
+    lines = _wrap(d, str(b.get("text") or ""), body, W - 2 * M)[:7]
+    y = 222
+    for ln in lines:
+        d.text((M, y), ln, font=body, fill=WHITE, anchor="ls")
+        y += 34
+    y += 8
+    for t in (b.get("bullets") or [])[: max(0, (566 - y) // 30)]:
+        d.text((M, y), "•  " + t, font=_fit(d, "•  " + t, "SemiBold", 19, W - 2 * M), fill=GOLD_SOFT, anchor="ls")
+        y += 30
+    _footer(d, "Context, not advice")
+    return _png(img)

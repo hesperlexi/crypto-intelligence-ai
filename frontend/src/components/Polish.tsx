@@ -2,7 +2,8 @@
 // dashboard hero and skeleton placeholders.
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { base, fmtCompact, fmtPctRaw, fmtPrice, slug } from "../lib/format";
+import { ago, base, fmtCompact, fmtPctRaw, fmtPrice, slug } from "../lib/format";
+import { Badge } from "./kit";
 import { useLive } from "../lib/live";
 import { useSession } from "../lib/session";
 
@@ -85,7 +86,28 @@ function HeroMetric({ k, v, sub, to, children }: { k: string; v: React.ReactNode
 
 /** Top of the dashboard: market-mood headline, then one strip of the numbers that matter at a glance
  *  (BTC, ETH, Fear & Greed, BTC dominance, total market, active calls). */
-export function DashboardHero({ rows, status, tf, sentiment, market, basket }: { rows?: any[]; status?: any; tf: string; sentiment?: any; market?: any; basket?: any }) {
+/** v2.16 market briefing (views/market_context.briefing): 3-5 sentences from the engine's own numbers + a few facts.
+ *  Three lines on phones until "More" is tapped; the facts as small pills. */
+export function BriefingLine({ b }: { b: any }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="mt-2.5">
+      <p className={`text-sm leading-relaxed text-text/90 ${open ? "" : "line-clamp-3 sm:line-clamp-none"}`}>{b.text}</p>
+      <div className="mt-2 flex flex-wrap items-center gap-1.5">
+        <Badge tone={b.source === "ai" ? "ai" : "mute"} title={b.note}>{b.source === "ai" ? "AI briefing" : "Briefing"}</Badge>
+        <span className="text-xs text-mute">{ago(b.at)}</span>
+        <button type="button" className="tap-h text-xs text-accent hover:underline sm:hidden" aria-expanded={open} onClick={() => setOpen((v) => !v)}>{open ? "Less" : "More"}</button>
+      </div>
+      {(b.bullets ?? []).length > 0 && (
+        <ul className={`mt-2 flex-wrap gap-1.5 ${open ? "flex" : "hidden sm:flex"}`}>
+          {(b.bullets as string[]).slice(0, 5).map((t) => <li key={t}><Badge tone="text">{t}</Badge></li>)}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+export function DashboardHero({ rows, status, tf, sentiment, market, basket, briefing }: { rows?: any[]; status?: any; tf: string; sentiment?: any; market?: any; basket?: any; briefing?: any }) {
   const s = useSession();
   const { tickers } = useLive();
   const first = (s?.name || s?.email || "").split(/[ @]/)[0];
@@ -116,9 +138,9 @@ export function DashboardHero({ rows, status, tf, sentiment, market, basket }: {
           <h1 className="font-display mt-1.5 text-2xl font-bold leading-[1.12] tracking-tight sm:text-[38px]">
             The market is <span className={moodCls}>{moodText}</span>.
           </h1>
-          <p className="mt-2.5 text-sm text-mute">
+          {briefing?.text ? <BriefingLine b={briefing} /> : <p className="mt-2.5 text-sm text-mute">
             {r.length ? <><span className="font-medium text-bull">{buys} buy</span> · <span className="font-medium text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
-          </p>
+          </p>}
           <div className="mt-5 flex flex-wrap gap-2">
             <Link to="/futures" className="btn btn-primary px-4"><span className="sm:hidden">Signals</span><span className="hidden sm:inline">Futures signals</span></Link>
             <Link to="/alerts" className="btn px-4">Set an alert</Link>

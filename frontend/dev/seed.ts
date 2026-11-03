@@ -146,7 +146,12 @@ function trackRecord() {
   let accRoi = 0;
   const curve = sigs.slice().reverse().filter((x) => x.status !== "OPEN").map((x) => ({ ts: x.closed_at, cum_return_pct: (acc += x.return_pct as number), cum_roi_pct: (accRoi += x.roi_pct as number) }));
   const rois = sigs.filter((x) => x.status !== "OPEN").map((x) => x.roi_pct as number);
+  const last7 = { days: 7, net: true, closed: 9, wins: 6, losses: 3, win_rate: 6 / 9, avg_return_pct: 0.41, total_return_pct: 3.69, avg_gross_return_pct: 0.58,
+    best: { symbol: "XRP/USDT", timeframe: "1h", side: "LONG", status: "TP3", return_pct: 2.96 }, worst: { symbol: "ETH/USDT", timeframe: "4h", side: "SHORT", status: "STOPPED", return_pct: -1.78 },
+    min_sample: 30, sample_note: "Only 9 closed signals: too few to judge the method; results this short swing a lot.",
+    basis: "Signals that closed in the last 7 days, after fees (0.15% round trip plus funding), equal size, half at TP1 and a quarter at TP2 and TP3. Unfilled calls are not counted." };
   return {
+    last_7d: last7,
     record_since: NOW - 2 * D, testing_since: NOW - 2 * D,
     restart: { at: NOW - 2 * D, text: "Fresh start 3 Nov 2026: real entry prices, after fees." },
     live: { summary: { closed: closed.length, win_rate: closed.filter((r) => r > 0).length / closed.length, avg_return_pct: closed.reduce((a, b) => a + b, 0) / closed.length, total_return_pct: acc,
@@ -307,6 +312,56 @@ function marketContext() {
     funding: { avg_rate_8h: 0.0000842, read: "neutral", n: 10, as_of: NOW - 12 * 60_000, source: "OKX perpetual", high: "SOL", low: "DOGE" },
     headline: { title: "Fed holds rates steady; Powell says further cuts depend on incoming inflation data", url: "https://example.com/preview-headline", source: "CoinDesk", ts: NOW - 95 * 60_000 },
     errors: [], rules: {},
+    // v2.16 AI market briefing (backend/app/services/briefing.py), published inside this document
+    briefing: { text: "The market is leaning bullish: 6 of 10 coins are in a bullish 4H regime and 2 in a bearish one. Bitcoin is in a bull 4H regime (+1.8% in 24 hours); Ether is in a bearish consolidation 4H regime (-0.9% in 24 hours). 7 of 10 coins trade above their 4H 50-period average and 6 are up on the day. Fear & Greed reads 64 (Greed) and Bitcoin's dominance is 57.2%. Next high-impact US release: CPI m/m in about 26.0 hours; new entries pause around it.",
+      bullets: ["Mood (4H): 6 bullish · 2 neutral · 2 bearish", "BTC +1.8% 24h · ETH -0.9% 24h", "Open calls: 3 long · 1 short · 1 waiting for entry", "24h: strongest AAVE +4.4% · weakest DOGE -2.2%", "Fear & Greed 64 · BTC dominance 57.2%"],
+      source: "ai", model: "gemini-flash-lite-latest", at: NOW - 75 * 60_000, reason: "every 4 h", mood: "BULL",
+      note: "Written by AI from the engine's own numbers. Context, not advice; it never changes a signal." },
+  };
+}
+
+/** v2.16 views/coin_reports (backend/app/services/coin_reports.py): one entry per coin, no live price inside. */
+function coinReports() {
+  const reports: Record<string, any> = {};
+  COINS.forEach(([sym, px], i) => {
+    const up = REG[i].includes("BULL"), coin = sym === "PAXG/USDT" ? "GOLD" : sym.split("/")[0];
+    const trend = REG[i] === "NEUTRAL" ? "Sideways" : up ? "Uptrend" : "Downtrend";
+    const sup = [+(px * 0.968).toPrecision(6), +(px * 0.941).toPrecision(6)], res = [+(px * 1.034).toPrecision(6), +(px * 1.071).toPrecision(6)];
+    const call = i === 0 ? { timeframe: "4h", side: "LONG", fill_status: "FILLED", entry: +(px * 0.994).toPrecision(6), stop: +(px * 0.976).toPrecision(6), tp1: +(px * 1.012).toPrecision(6), tp2: +(px * 1.024).toPrecision(6), tp3: +(px * 1.036).toPrecision(6), tp1_hit: 0, tp2_hit: 0, created_at: NOW - 3 * H } : null;
+    reports[sym] = {
+      symbol: sym, coin, trend: { label: trend, regime_4h: REG[i], regime_1d: up ? "BULL" : "BEARISH CONSOLIDATION" },
+      levels: { support: sup, resistance: res },
+      expects: [{ timeframe: "4h", lean: up ? "up" : "down", confidence: 0.54 + (i % 4) * 0.02, above_threshold: i % 3 !== 2, proven_edge: i % 2 === 0 },
+        { timeframe: "12h", lean: i % 4 === 1 ? (up ? "down" : "up") : up ? "up" : "down", confidence: 0.53 + (i % 3) * 0.02, above_threshold: i % 2 === 0, proven_edge: true }],
+      call, risk: i === 0 ? "No unusual risk flagged; any trade can still hit its stop." : i % 4 === 1 ? "The 4H and 12H AI leans point different ways." : "Volatility is high on 4H, so stops are hit more easily.",
+      invalidation: call ? { price: call.stop, text: `The 4H long call ends if price trades below ${call.stop.toLocaleString("en-US", { maximumFractionDigits: 2 })} (its stop now).` }
+        : { price: up ? sup[0] : res[0], text: `A move ${up ? "below the 4H support" : "above the 4H resistance"} near ${(up ? sup[0] : res[0]).toLocaleString("en-US", { maximumFractionDigits: 4 })} would undo the ${up ? "up" : "down"} lean.` },
+      summary: `${coin}: ${trend.toLowerCase()} (4H ${REG[i].toLowerCase()}, 1D ${up ? "bull" : "bearish consolidation"}). AI view: 4H leans ${up ? "up" : "down"} (${54 + (i % 4) * 2}% confidence); 12H leans ${up ? "up" : "down"}. Key levels: support ${sup[0]}, resistance ${res[0]}.`,
+      ai: i < 3 ? { text: i === 0 ? "BTC sits in an uptrend on both 4H and 1D, and the AI leans up on 4H with 54% confidence. The open 4H long is protected by its stop, which is also the level that would undo this view." : `${coin} keeps a ${trend.toLowerCase()} on 4H; the AI lean matches it, but with modest confidence.`, at: NOW - 40 * 60_000 } : null,
+      bar_ts: NOW - 2 * H,
+    };
+  });
+  return { reports, note: "Built from the engine's own analysis; AI lines are written only from these numbers. Context, not advice.", generated_at: NOW - 40 * 60_000 };
+}
+
+/** v2.16 smarter alerts: a member's rules (presets) and their fired events (views/alerts_u_<uid>). */
+function alertsFor(uid: string) {
+  const rules = {
+    [`alerts/${uid}_sig`]: { type: "SIGNAL_UPDATES", symbol: "ALL/USDT", timeframe: "all", params: { events: ["entry", "tp1", "tp2", "tp3", "closed"] }, cooldown_s: 60, enabled: true, created_at: NOW - 2 * D, owner_uid: uid, owner_email: null },
+    [`alerts/${uid}_mood`]: { type: "MOOD_CHANGE", symbol: "ALL/USDT", timeframe: "4h", params: {}, cooldown_s: 3600, enabled: true, created_at: NOW - 2 * D, owner_uid: uid, owner_email: null },
+    [`alerts/${uid}_trade`]: { type: "TRADE_SETUP", symbol: "BTC/USDT", timeframe: "4h", params: { side: "any", market: "futures", min_confidence: 0, confident_only: false, grade: "A" }, cooldown_s: 3600, enabled: true, created_at: NOW - 3 * D, owner_uid: uid, owner_email: null },
+  };
+  const ev = (i: number, alert: string, type: string, symbol: string, message: string, ago: number) => ({ id: `ev${i}`, alert_id: `${uid}_${alert}`, created_at: NOW - ago, symbol, type, message });
+  return {
+    ...rules,
+    [`views/alerts_u_${uid}`]: v({ state: { [`${uid}_sig`]: { last_fired_at: NOW - 20 * 60_000, last_state: "primed" }, [`${uid}_mood`]: { last_fired_at: NOW - 9 * H, last_state: null } },
+      events: [
+        ev(1, "sig", "TP2_REACHED", "SOL/USDT", "SOL 4H LONG: TP2 172.31 hit, stop moves to TP1", 20 * 60_000),
+        ev(2, "sig", "ENTRY_REACHED", "ETH/USDT", "ETH 1H SHORT: entry reached at 2,471.80, the trade is live. Stop 2,509.00 · TP1 2,434.60", 95 * 60_000),
+        ev(3, "sig", "SIGNAL_CLOSED", "DOGE/USDT", "DOGE 15M SHORT: stopped out · -0.94% after fees", 4 * H),
+        ev(4, "mood", "MOOD_CHANGE", "ALL/USDT", "Market mood turned bullish (was bearish): 6 of 10 coins in a bullish 4H regime, 2 bearish", 9 * H),
+        ev(5, "sig", "TP3_REACHED", "XRP/USDT", "XRP 1H LONG: TP3 0.5292 hit, all targets hit", 11 * H),
+      ], types: {} }),
   };
 }
 
@@ -395,6 +450,9 @@ export function seed(): Record<string, any> {
     "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {} }),
     "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
     "views/market_context": v(marketContext()),
+    "views/coin_reports": v(coinReports()),
+    ...alertsFor("u_member"),
+    ...alertsFor("owner"),
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
     "views/health": v(health()),
     "views/health_errors": v({ generated_at: NOW, recent_errors: [{ ts: NOW - 2 * H, where: "engine news_publish", error: "TimeoutError: calendar feed did not answer" }], exchange_last_error: null, market_data_last_error: null, model_messages: [] }),

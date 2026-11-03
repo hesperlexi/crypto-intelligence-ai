@@ -34,6 +34,35 @@ export function Curve({ pts, roi, id = "tr-fill", label = "Cumulative result of 
   );
 }
 
+/** v2.16 "Last 7 days": calls of the record that closed in the last 7 days, after fees (same numbers as the weekly
+ *  Telegram card; views/track_record.last_7d). A sample-size note under 30 trades. */
+function Last7({ r }: { r: any }) {
+  const one = (x: any) => (x ? <><span className="font-semibold">{base(x.symbol)}</span> <span className="text-mute">{x.side} {String(x.timeframe).toUpperCase()}</span> <span className={`num font-semibold ${tone(x.return_pct)}`}>{pct(x.return_pct, 2)}</span></> : "—");
+  return (
+    <section className="panel p-4" aria-label="Last 7 days">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="label">Last 7 days</h2>
+        <span className="text-xs text-mute">after fees · wins and losses<Info label="How the 7-day figures are counted">{r.basis}</Info></span>
+      </div>
+      {r.closed ? (
+        <>
+          <div className="metric-strip mt-3">
+            <Tile variant="strip" label="Closed" value={String(r.closed)} sub={`${r.wins} won · ${r.losses} lost`} />
+            <Tile variant="strip" label="Win rate" value={rate(r.win_rate)} sub="after fees" />
+            <Tile variant="strip" label="Avg per signal" value={pct(r.avg_return_pct, 2)} valueClass={tone(r.avg_return_pct)} sub="after fees, no leverage" />
+            <Tile variant="strip" label="Total" value={pct(r.total_return_pct)} valueClass={tone(r.total_return_pct)} sub="equal size per signal" />
+          </div>
+          <div className="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
+            <div className="flex flex-wrap items-baseline gap-x-1.5"><span className="w-12 text-xs uppercase tracking-wide text-mute">Best</span>{one(r.best)}</div>
+            <div className="flex flex-wrap items-baseline gap-x-1.5"><span className="w-12 text-xs uppercase tracking-wide text-mute">Worst</span>{one(r.worst)}</div>
+          </div>
+        </>
+      ) : null}
+      {r.sample_note && <p className={`mt-2 text-xs ${r.closed ? "text-warn" : "text-mute"}`}>{r.sample_note}</p>}
+    </section>
+  );
+}
+
 function Kpi({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
   return <Tile variant="box" big className="panel" label={k} value={v} valueClass={cls} sub={sub} />;
 }
@@ -89,6 +118,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           : <Kpi k={s.net ? "Total result" : "Total price move"} v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub={s.net ? "all closed signals, equal size, after fees" : "all closed signals, equal size"} />}
       </div>
       )}
+      {!compact && d.last_7d && <Last7 r={d.last_7d} />}
       {d.restart?.text && <p className="px-1 text-xs text-mute">{d.restart.text}</p>}
       <Explain>{d.results_net ? "Results are after fees (trading costs and funding). ROI on margin = result × suggested leverage (15m: 10–50x chosen by engine). Leverage magnifies losses." : "ROI on margin = price move × suggested leverage. Leverage magnifies losses."}</Explain>
       {(d.live?.curve?.length ?? 0) > 1 && (

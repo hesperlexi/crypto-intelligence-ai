@@ -50,8 +50,9 @@ def test_posts_wins_once_at_the_evening_slot(tmp_path):
 def test_weekly_on_monday_and_teaser_of_a_grade_a_signal(tmp_path):
     rt = Runtime(Database("sqlite:///:memory:"), None)
     sink, fake = LocalSink(tmp_path), Fake()
+    # (v2.16: the daily free call and the last-7-days card replace the teaser and the old weekly post when they are on)
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_wins": False,
-                                "approve_first": False})
+                                "approve_first": False, "post_daily_call": False, "post_week7": False})
     now = ms(2026, 10, 26, 8)                                                                # a Monday
     rt.db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, entry, stop, "
                   "tp1, tp2, tp3, status, payload) VALUES ('s', ?, 'SOL/USDT', '1h', 1, 'BUY', 'BUY', 180, 1, 180, 176, 184, 188, "
