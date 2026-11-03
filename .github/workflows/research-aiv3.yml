@@ -103,3 +103,4 @@ jobs:
             (cd ../rr && git add results && { git commit -m "Research AI v3 results for ${GITHUB_SHA::7}" || exit 0; } && git push origin HEAD:research-results) && break
             sleep 10
           done
+# dev run 2: thresholds on raw scores, denser grid
