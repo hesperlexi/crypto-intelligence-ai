@@ -1,0 +1,39 @@
+name: Backup now (encrypted copy of the latest engine state)
+
+# Manual: restores the newest engine-state cache read-only and uploads an encrypted backup (scripts/engine_backup.sh save).
+# Used before releases that delete history (v2.14 fresh restart). Never runs the engine, never writes Firestore.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: backup-now
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore the newest engine state (read-only)
+        id: state
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-backup-now-${{ github.run_id }}
+          restore-keys: engine-state-
+      - name: Stop if nothing was restored
+        if: steps.state.outputs.cache-matched-key == ''
+        run: |
+          echo "::error::no engine state cache found"
+          exit 1
+      - name: Encrypted backup
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          ENGINE_BACKUP_KEY: ${{ secrets.ENGINE_BACKUP_KEY }}
+        run: |
+          echo "restored: ${{ steps.state.outputs.cache-matched-key }}"
+          bash scripts/engine_backup.sh save
