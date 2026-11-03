@@ -16,7 +16,7 @@ on:
         default: "dev"
 
 env:
-  MODE: dev
+  MODE: final
   BUDGET: "14400"
 
 concurrency:
