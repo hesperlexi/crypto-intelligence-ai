@@ -208,7 +208,7 @@ function Headline({ h }: { h: any }) {
       <a href={h.url} target="_blank" rel="noopener nofollow" className="min-w-0 flex-1 text-sm font-medium text-text hover:text-accent sm:truncate">{h.title}</a>
       <span className="flex shrink-0 items-center gap-3 text-xs text-mute">
         <span>{h.source}{isNum(h.ts) ? ` · ${ago(h.ts)}` : ""}</span>
-        <Link to="/news" className="text-accent hover:underline">All news →</Link>
+        <Link to="/news" className="tap-h inline-flex items-center text-accent hover:underline">All news →</Link>
       </span>
     </div>
   );

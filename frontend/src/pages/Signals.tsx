@@ -204,7 +204,7 @@ export default function Signals() {
                         </>) : <span className="hidden truncate text-right text-xs text-mute sm:col-span-3 sm:block">{r.stale === true ? "Data delayed — no trade" : `leans ${r.lean ?? "—"} · no setup`}</span>}
                         <span className={`sig-side ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
                         {/* phone: the levels as one line; both: status line */}
-                        <div className="num col-span-full min-w-0 truncate pl-[2.1rem] text-xs text-mute sm:hidden">{r.stale === true ? "Data delayed — no trade" : show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
+                        <div className="num col-span-full min-w-0 pl-[2.1rem] text-xs text-mute sm:hidden">{r.stale === true ? "Data delayed — no trade" : show ? `entry ${fmtPrice(p.entry)} · stop ${fmtPrice(p.stop)} · TP1 ${fmtPrice(p.targets?.[0]?.price)}` : `leans ${r.lean ?? "—"} · no setup`}</div>
                         <div className="col-span-full min-w-0 pl-[2.1rem] empty:hidden"><RowExtras r={r} show={!!show} market={market} px={px} /></div>
                       </button>
                     </li>

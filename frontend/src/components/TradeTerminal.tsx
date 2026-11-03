@@ -20,7 +20,7 @@ import { useFocusTrap } from "./Shell";
 import * as SP from "../lib/paper";
 import * as PF from "../lib/paperFutures";
 import { maxTopUp, PAPER_MAX_DEPOSITED, PAPER_START } from "../lib/writeShapes";
-import { Segmented } from "./kit";
+import { Segmented, TabStrip } from "./kit";
 
 type Mkt = "spot" | "futures";
 const CHART_TFS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
@@ -127,12 +127,8 @@ export default function TradeTerminal() {
       </div>
 
       <section className="panel p-0">
-        <div className="flex gap-1 overflow-x-auto border-b border-glass/[0.06] px-2 pt-2" role="tablist">
-          {([["positions", `${market === "futures" ? "Positions" : "Holdings"} (${positions.length})`], ["orders", `Open orders (${orders.length})`], ["history", "Order history"], ["assets", "Assets"]] as const).map(([k, l]) => (
-            <button key={k} role="tab" aria-selected={tab === k} onClick={() => setTab(k)}
-              className={`whitespace-nowrap border-b-2 px-3 py-2 text-sm ${tab === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
-          ))}
-        </div>
+        <TabStrip label="Your trades" value={tab} onChange={setTab} className="px-2 pt-2"
+          options={[["positions", `${market === "futures" ? "Positions" : "Holdings"} (${positions.length})`], ["orders", `Open orders (${orders.length})`], ["history", "Order history"], ["assets", "Assets"]] as const} />
         <div className="p-3">
           {!d ? <div className="skeleton h-16 rounded-lg" /> :
             tab === "positions" ? (market === "futures" ? <FutPositions rows={positions} act={act} hedges={d.hedges} onOpen={setDetail} onPair={showPair} /> : <SpotHoldings rows={positions} act={act} onOpen={setDetail} onPair={showPair} />) :

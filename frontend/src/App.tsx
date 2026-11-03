@@ -288,8 +288,8 @@ function Shell({ user }: { user: User }) {
       <AnimatedLogo size={34} className="shrink-0" />
       <NavLink to="/" aria-label="Crypto Intelligence AI, Home" className={`font-display text-base font-semibold tracking-tight text-text ${wrap ? "leading-tight" : "truncate"}`}>
         {/* very small phones: the short wordmark (matches cryptointelai.com), so the brand is never cut off */}
-        <span className={wrap ? "" : "hidden min-[400px]:inline"}>Crypto Intelligence <span className="text-accent">AI</span></span>
-        {!wrap && <span className="min-[400px]:hidden">Crypto Intel <span className="text-accent">AI</span></span>}
+        <span className={wrap ? "" : "hidden min-[380px]:inline"}>Crypto Intelligence <span className="text-accent">AI</span></span>
+        {!wrap && <span className="min-[380px]:hidden">Crypto Intel <span className="text-accent">AI</span></span>}
       </NavLink>
     </div>
   );

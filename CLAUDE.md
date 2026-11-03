@@ -416,7 +416,7 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
 - "Not published yet" (404-type waits) render as neutral `Empty` inside `ErrorBox` (`ui.isNotReady`); real errors stay red.
 - Navigation: phone More sheet grouped Markets (News, Radar) · Tools (Scanner, Backtest, Replay) · Account (Alerts,
   Community, Settings) · Admin (+ Users with the pending count); unread in-app alerts (`useLive().alerts`) badge Alerts.
-  Desktop: "Tools" dropdown after Radar (sidebar: Tools group). `/users` wrapped in `AdminOnly`. Below 400 px the header
+  Desktop: "Tools" dropdown after Radar (sidebar: Tools group). `/users` wrapped in `AdminOnly`. Below 380 px the header
   wordmark is "Crypto Intel AI".
 - Notifications (Android): `NotifyPrompt` key `cia-notify-asked2` {result, at}: only granted / denied are final; a closed
   question ("default") shows "Allow notifications" and re-asks at most once a day. `push.enable` says "You closed the
