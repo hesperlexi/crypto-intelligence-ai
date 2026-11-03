@@ -10,6 +10,8 @@ import { db } from "../lib/firebase";
 import { ago, fmtTime } from "../lib/format";
 import { useSession } from "../lib/session";
 import { postDoc, postId, postMeta } from "../lib/writeShapes";
+import { useApi } from "../lib/api";
+import { badgeTitle, LbView } from "../lib/leaderboard";
 
 export const POST_MAX = 500;
 const PAGE = 20;
@@ -97,7 +99,7 @@ function Composer({ uid, username, admin }: { uid: string; username: string; adm
 
 const AdminBadge = () => <span className="ml-1.5 rounded border border-accent/60 bg-accent/15 px-1.5 py-0.5 align-middle text-xs font-bold uppercase tracking-wide text-accent" title="App owner">Admin</span>;
 
-const PostItem = memo(function PostItem({ p, canDelete, onDeleted }: { p: Post; canDelete: boolean; onDeleted: (id: string) => void }) {
+const PostItem = memo(function PostItem({ p, canDelete, onDeleted, badge }: { p: Post; canDelete: boolean; onDeleted: (id: string) => void; badge?: string[] }) {
   const [busy, setBusy] = useState(false);
   const del = async () => {
     if (!window.confirm("Delete this post? This cannot be undone.")) return;
@@ -111,7 +113,7 @@ const PostItem = memo(function PostItem({ p, canDelete, onDeleted }: { p: Post; 
         <div className="flex min-w-0 items-center gap-2.5">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15 text-sm font-semibold text-accent" aria-hidden="true">{(p.username || "?")[0].toUpperCase()}</span>
           <div className="min-w-0 leading-tight">
-            <div className="truncate text-sm font-semibold">@{p.username}{p.admin && <AdminBadge />}</div>
+            <div className="truncate text-sm font-semibold">@{p.username}{badge?.length ? <span className="ml-1" role="img" aria-label={badgeTitle(badge)} title={badgeTitle(badge)}>🥇</span> : null}{p.admin && <AdminBadge />}</div>
             <time className="text-xs text-mute" dateTime={new Date(p.created_at).toISOString()} title={fmtTime(p.created_at)}>{Date.now() - p.created_at < 60_000 ? "just now" : ago(p.created_at)}</time>
           </div>
         </div>
@@ -127,6 +129,8 @@ export default function Community() {
   const s = useSession();
   const admin = s?.role === "admin";
   const feed = useFeed();
+  // v2.16: practice leaderboard winners' badges (views/leaderboard.badges, by username; one read)
+  const badges = useApi<LbView>("/leaderboard").data?.badges ?? {};
   const [, tick] = useState(0);
   useEffect(() => { const t = window.setInterval(() => tick((n) => n + 1), 60_000); return () => window.clearInterval(t); }, []);   // "time ago"
   return (
@@ -147,7 +151,7 @@ export default function Community() {
         <ul className="space-y-3" aria-busy="true">{[0, 1, 2].map((i) => <li key={i} className="skeleton h-24 rounded-2xl" />)}</ul>
       ) : feed.posts.length ? (
         <ul className="space-y-3">
-          {feed.posts.map((p) => <PostItem key={p.id} p={p} canDelete={admin || p.author_uid === s?.uid} onDeleted={feed.drop} />)}
+          {feed.posts.map((p) => <PostItem key={p.id} p={p} canDelete={admin || p.author_uid === s?.uid} onDeleted={feed.drop} badge={badges[p.username]} />)}
         </ul>
       ) : !feed.err ? <Empty>Be the first to post.</Empty> : null}
       {feed.loaded && feed.more && feed.posts.length >= PAGE && (

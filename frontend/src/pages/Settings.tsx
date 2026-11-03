@@ -12,6 +12,7 @@ import { APP_VERSION, BUILD_ID, COPYRIGHT } from "../lib/version";
 import { mediaUrl, SHOW_APP_DEMO } from "../lib/media";
 import { ContactCard, MembershipCard } from "../components/Membership";
 import TelegramCard from "../components/TelegramCard";
+import InviteCard from "../components/InviteCard";
 import { post, put, queueJob, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
 import { apkVersion, BlockedHelp, ChromeWarning, useApkInfo } from "../components/NotifyHelp";
@@ -33,7 +34,7 @@ function MemberSettings() {
     <div className="space-y-4">
       <PageHead />
       <div className="grid items-start gap-4 lg:grid-cols-2">
-        <div className="space-y-4"><MembershipCard /><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /><AboutCard /></div>
+        <div className="space-y-4"><MembershipCard /><InviteCard /><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /><AboutCard /></div>
         <div className="space-y-4"><NotificationsCard /><AndroidCard /><ManualCard /><ContactCard /></div>
       </div>
     </div>

@@ -202,11 +202,17 @@ function users() {
   // an old record whose inline "proof" is not an image: the Users page must show "invalid image", never render it
   add("u_badproof", { email: "odd.upload@example.com", name: "Odd Upload", provider: "google", status: "pending", requested_at: NOW - 5 * H,
     payment: { method: "binance", months: 1, amount: 15, currency: "USDT", txid: "B2610319999", proof: "data:text/html;base64,PHNjcmlwdD5hbGVydCgxKTwvc2NyaXB0Pg==", status: "submitted", submitted_at: NOW - 4 * H } });
-  add("u_new", { email: "new.person@example.com", name: "New Person", username: "newperson", provider: "password", status: "pending", requested_at: NOW - 30 * 60_000 });
+  add("u_new", { email: "new.person@example.com", name: "New Person", username: "newperson", provider: "password", status: "pending", requested_at: NOW - 30 * 60_000,
+    referred_by: "u_member", ref_via: "k7m2p9qx" });
   add("u_member", { email: "sara.k@example.com", name: "Sara Kim", username: "sara_k", provider: "google", status: "approved", expires_at: NOW + 74 * D, plan_months: 3, approved_at: NOW - 16 * D, free: false,
-    history: [{ months: 3, amount: 40, free: false, granted_at: NOW - 16 * D }], payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610140032", proof: null, has_proof: true, status: "accepted", submitted_at: NOW - 16 * D, decided_at: NOW - 16 * D } });
+    // v2.16 sample: invite code, two friends joined (one paid -> one free month), last month's leaderboard badge
+    ref_code: "k7m2p9qx", referral_stats: { joined: 2, paid: 1, months: 1, updated_at: NOW - H }, badges: ["lb:2026-10"],
+    history: [{ months: 3, amount: 40, free: false, granted_at: NOW - 16 * D },
+      { months: 1, amount: 0, free: true, kind: "referral", ref_uid: "u_pend3", ref_name: "@dreyes", granted_at: NOW - 2 * D, granted_by: "owner@example.com", from: NOW + 44 * D, to: NOW + 74 * D },
+      { months: 1, amount: 0, free: true, kind: "prize", prize_month: "2026-10", prize_label: "October 2026", granted_at: NOW - D, granted_by: "owner@example.com", from: NOW + 44 * D, to: NOW + 74 * D }], payment: { method: "binance", months: 3, amount: 40, currency: "USDT", txid: "B2610140032", proof: null, has_proof: true, status: "accepted", submitted_at: NOW - 16 * D, decided_at: NOW - 16 * D } });
   u["payment_proofs/u_member"] = { uid: "u_member", proof: proofImage(), submitted_at: NOW - 16 * D };   // decided before screenshots were auto-deleted
   add("u_end", { email: "daniel.r@example.com", name: "Daniel Reyes", username: "dreyes", provider: "password", status: "approved", expires_at: NOW + 4 * D, plan_months: 1, approved_at: NOW - 26 * D,
+    referred_by: "u_member", ref_via: "k7m2p9qx", referral_reward: { to: "u_member", at: NOW - 2 * D, by: "owner@example.com" },
     history: [{ months: 1, amount: 15, granted_at: NOW - 26 * D }] });
   add("u_free", { email: "tester@example.com", name: "Test Account", status: "approved", expires_at: NOW + 180 * D, plan_months: 6, approved_at: NOW - 3 * D, free: true,
     history: [{ months: 6, amount: 0, free: true, granted_at: NOW - 3 * D }] });
@@ -403,6 +409,7 @@ export function seed(): Record<string, any> {
     "views/weekly_report": v(weekly()),
     "views/scalping": v(scalping()),
     "views/hesper": v(hesper()),
+    ...leaderboard(),
     "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
     "users/u_member_self": undefined,
     ...users(),
@@ -563,5 +570,29 @@ function hesper() {
       avg_trades_per_run: done.reduce((a, r) => a + r.trades, 0) / done.length, fastest_success: { run: fastest.run, ms: fastest.ended_at - fastest.started_at, trades: fastest.trades },
       fewest_trades_success: { run: fastest.run, trades: fastest.trades }, trades: trades.length, wins: trades.filter((x) => x.pnl > 0).length, streak: { kind: "win", n: 3 } },
     runs: [...runs].reverse(), trades: [...trades].reverse(), curves, label: "Demo · virtual money · not financial advice",
+  };
+}
+
+/** v2.16 practice leaderboard: views/leaderboard (members), admin/leaderboard (admin JSON), owner/leaderboard (prizes). */
+function leaderboard(): Record<string, any> {
+  const d = new Date(NOW + 4 * H);                 // Dubai month
+  const mk = (y: number, m: number) => `${y}-${String(m + 1).padStart(2, "0")}`;
+  const month = mk(d.getUTCFullYear(), d.getUTCMonth());
+  const pm = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() - 1, 1));
+  const prev = mk(pm.getUTCFullYear(), pm.getUTCMonth());
+  const label = (k: string) => new Date(`${k}-01T00:00:00Z`).toLocaleDateString("en-US", { month: "long", year: "numeric", timeZone: "UTC" });
+  const names: [string, string, number, number][] = [["kenji_w", "u_x8", 38.42, 14], ["sara_k", "u_member", 21.07, 9], ["mrossi", "u_x16", 12.9, 22],
+    ["priya_n", "u_x1", 8.35, 6], ["dreyes", "u_end", 4.1, 11], ["elena_p", "u_x11", 1.02, 5], ["lucasm", "u_x2", -3.6, 8], ["aisha.r", "u_x7", -11.25, 17]];
+  const rows = names.map(([username, , r, t], i) => ({ rank: i + 1, username, return_pct: r, trades: t }));
+  const adminRows = names.map(([username, uid, r, t], i) => ({ uid, username, rank: i + 1, return_pct: r, trades: t, start_equity: 1000 + i * 250, deposits: i === 2 ? 5000 : 0,
+    equity: (1000 + i * 250 + (i === 2 ? 5000 : 0)) * (1 + r / 100), unexplained: 0, flags: [] as string[], qualified: true }))
+    .concat([{ uid: "u_x4", username: "ydemir", rank: null as any, return_pct: 64.2, trades: 3, start_equity: 1000, deposits: 0, equity: 1642, unexplained: 600, flags: ["balance changed without trades"], qualified: false }]);
+  const winners = [{ month: prev, label: label(prev), uid: "u_member", username: "sara_k", return_pct: 27.4, trades: 12, decided_at: NOW - 2 * D }];
+  return {
+    "views/leaderboard": v({ month, label: label(month), since: NOW - 3 * D, generated_at: NOW - 20 * 60_000, min_trades: 5,
+      rules: "Virtual money. Ranked by % return after deposits. Min 5 closed trades.", every_s: 3600, rows, ranked: rows.length, taking_part: 14,
+      last_winner: { month: prev, label: label(prev), winners: [{ username: "sara_k", return_pct: 27.4, trades: 12 }] }, badges: { sara_k: [prev] } }),
+    "admin/leaderboard": { json: JSON.stringify({ month, label: label(month), generated_at: NOW - 20 * 60_000, min_trades: 5, rows: adminRows, winners, excluded: [] }), updated_at: NOW },
+    "owner/leaderboard": { awarded: {}, excluded: [] },
   };
 }

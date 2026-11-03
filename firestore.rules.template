@@ -43,6 +43,16 @@ service cloud.firestore {
     function proofOk(pay) {
       return !('proof' in pay) || pay.proof == null || validProof(pay.proof);
     }
+    // v2.16 referrals: a member's invite code is 8 characters a-z / 0-9 (ref_codes/{code}, users/{uid}.ref_code)
+    function validRefCode(c) { return c is string && c.matches('^[a-z0-9]{8}$'); }
+    // a new account opened from an invite link: referred_by = the referrer's uid, ref_via = their code. Both or neither;
+    // the code must exist and belong to that uid, and nobody can refer themselves. Only at creation (see users update).
+    function validReferral(d) {
+      return (!('referred_by' in d) && !('ref_via' in d))
+        || (d.referred_by is string && d.referred_by != me() && validRefCode(d.ref_via)
+            && exists(/databases/$(database)/documents/ref_codes/$(d.ref_via))
+            && get(/databases/$(database)/documents/ref_codes/$(d.ref_via)).data.uid == d.referred_by);
+    }
     // optional string field of at most 64 characters (null allowed)
     function shortText(d, k) {
       return !(k in d) || d[k] == null || (d[k] is string && d[k].size() <= 64);
@@ -58,7 +68,8 @@ service cloud.firestore {
       allow read: if isAdmin() || (signedIn() && me() == uid);
       // only the fields the website writes (frontend/src/lib/session.tsx and membership.ts); proof size capped
       allow create: if signedIn() && me() == uid
-        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment', 'provider'])
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment', 'provider', 'referred_by', 'ref_via'])
+        && validReferral(request.resource.data)
         && (!('provider' in request.resource.data) || request.resource.data.provider in ['google', 'password'])
         && request.resource.data.status == 'pending'
         && request.resource.data.email == request.auth.token.email
@@ -77,7 +88,29 @@ service cloud.firestore {
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['username'])
         && !('username' in resource.data)
         && validUsername(request.resource.data.username)
-        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == me());
+        && getAfter(/databases/$(database)/documents/usernames/$(request.resource.data.username)).data.uid == me())
+        // v2.16: an active member sets their invite code once, together with its ref_codes/{code} claim. Nothing else
+        // about referrals or rewards (referred_by, referral_reward, referral_stats, history, expires_at, badges) is ever
+        // writable by the member: free months and badges come only from the admin (or the engine).
+        || (isMember() && me() == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['ref_code'])
+        && !('ref_code' in resource.data)
+        && validRefCode(request.resource.data.ref_code)
+        && getAfter(/databases/$(database)/documents/ref_codes/$(request.resource.data.ref_code)).data.uid == me());
+      allow delete: if isAdmin();
+    }
+
+    // v2.16 invite codes: one per member (users/{uid}.ref_code is write-once), never changed. Anyone signed in may look
+    // up one code (a new account checks whose link it came from); nobody may list them.
+    match /ref_codes/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if isMember() && validRefCode(code)
+        && request.resource.data.keys().hasOnly(['uid', 'created_at'])
+        && request.resource.data.uid == me()
+        && request.resource.data.created_at is number
+        && getAfter(/databases/$(database)/documents/users/$(me())).data.get('ref_code', null) == code;
+      allow update: if false;
       allow delete: if isAdmin();
     }
 

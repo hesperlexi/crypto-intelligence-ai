@@ -30,7 +30,8 @@ def test_rules_template_renders_and_keeps_the_hardened_checks(tmp_path):
     assert "request.resource.data.params.uid == me()" in text                       # test_push only to yourself
     assert "request.resource.data.created_at is number" in text
     assert "resource.data.uid == me()" in text.split("match /push_tokens/{id}")[1]   # update needs existing owner
-    assert "hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment', 'provider'])" in text
+    assert "hasOnly(['uid', 'email', 'name', 'photo', 'status', 'requested_at', 'payment', 'provider', 'referred_by', 'ref_via'])" in text
+    assert "validReferral(request.resource.data)" in text and "match /ref_codes/{code}" in text      # v2.16 referrals
     assert "shortText(request.resource.data, 'device')" in text
     assert "request.auth.token.email_verified == true" in text                       # email accounts: verified only
     # usernames: claimed once with the account, never changed or listed; the account may set `username` only once

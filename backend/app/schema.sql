@@ -447,3 +447,31 @@ CREATE TABLE IF NOT EXISTS hesper_trades (
   info TEXT
 );
 CREATE INDEX IF NOT EXISTS ix_hesper_trades_run ON hesper_trades (run, closed_at);
+
+-- v2.16 practice leaderboard (3 Nov 2026, services/leaderboard.py). One row per member and calendar month (Dubai time):
+-- the first reading of their futures practice account in the month (start_*) and the latest one (last_json). Deposits
+-- ("Add funds") are taken out of the return. Winners are decided at the first run after the month ends; never changed.
+CREATE TABLE IF NOT EXISTS leaderboard_entries (
+  month TEXT NOT NULL,                      -- YYYY-MM, Dubai
+  uid TEXT NOT NULL,
+  account_id TEXT,
+  start_equity DOUBLE PRECISION NOT NULL,
+  start_deposited DOUBLE PRECISION NOT NULL,
+  start_count INTEGER NOT NULL,
+  start_realized DOUBLE PRECISION NOT NULL,
+  start_book DOUBLE PRECISION NOT NULL,
+  start_at BIGINT NOT NULL,
+  last_json TEXT NOT NULL,                  -- latest reading (positions kept slim so it can be re-priced hourly)
+  last_read_at BIGINT NOT NULL,
+  reset INTEGER NOT NULL DEFAULT 0,         -- the account was reset during the month: not ranked that month
+  PRIMARY KEY (month, uid)
+);
+CREATE TABLE IF NOT EXISTS leaderboard_winners (
+  month TEXT NOT NULL,
+  uid TEXT NOT NULL,
+  username TEXT,
+  return_pct DOUBLE PRECISION NOT NULL,
+  trades INTEGER NOT NULL,
+  decided_at BIGINT NOT NULL,
+  PRIMARY KEY (month, uid)
+);

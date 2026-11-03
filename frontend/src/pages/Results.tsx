@@ -9,7 +9,8 @@ import Bots from "./Bots";
 import History from "./History";
 
 const Rich = lazy(() => import("./Rich"));
-const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["tools", "Tools"]] as const;
+const Leaderboard = lazy(() => import("../components/Leaderboard"));   // v2.16 practice leaderboard
+const TABS = [["track", "Track record"], ["bots", "Demo bots"], ["accuracy", "Accuracy"], ["log", "Signal log"], ["leaderboard", "Leaderboard"], ["tools", "Tools"]] as const;
 // the Hesper challenge tab appears only when the admin shows it to members (config/hesper.visibility)
 const CHALLENGE = ["challenge", "Hesper Challenge"] as const;
 type Tab = (typeof TABS)[number][0] | (typeof CHALLENGE)[0];
@@ -37,6 +38,7 @@ export default function Results() {
       {tab === "bots" && <Bots />}
       {tab === "accuracy" && <Accuracy />}
       {tab === "log" && <History />}
+      {tab === "leaderboard" && <Suspense fallback={<div className="skeleton h-64 rounded-xl" />}><Leaderboard /></Suspense>}
       {tab === "challenge" && <Suspense fallback={<div className="skeleton h-64 rounded-xl" />}><Rich embedded /></Suspense>}
       {tab === "tools" && (
         <ul className="grid gap-3 sm:grid-cols-3">

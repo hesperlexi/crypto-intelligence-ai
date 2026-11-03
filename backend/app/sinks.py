@@ -159,7 +159,11 @@ class BaseSink:
         try:
             since = _now() - 86_400_000
             # only the people seen in the last 24 h are read (reads = active people, not every presence document)
-            active = len(self.query("presence", "last_seen", ">=", since))
+            rows = self.query("presence", "last_seen", ">=", since)
+            active = len(rows)
+            # v2.16: who was seen when (no extra reads) - the leaderboard re-reads only accounts opened since its last read
+            self.db.set_setting("fs_presence_seen", {uid: d.get("last_seen") for uid, d in rows
+                                                     if isinstance(d.get("last_seen"), (int, float))})
             est = {"active": active, "reserve": min(self.MEMBER_RESERVE_MAX, active * self.MEMBER_WRITES_PER_DAY), "at": _now()}
             self.db.set_setting("fs_member_est", est)
         except Exception:
