@@ -14,637 +14,97 @@
   "ENA/USDT",
   "GALA/USDT",
   "NVDAB/USDT",
-  "ZEC/USDT"
+  "ZEC/USDT",
+  "SPCXB/USDT",
+  "MSTRB/USDT",
+  "TRX/USDT",
+  "U/USDT",
+  "UNI/USDT"
  ],
  "views": {
   "15m": {
-   "rows": 15,
-   "updated": 1793626049371,
-   "tradable": [
-    {
-     "symbol": "ENA/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "BTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.56,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.25
-     ]
-    },
-    {
-     "symbol": "LTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.38,
-     "targets_rr": [
-      1.0,
-      1.5,
-      2.0
-     ]
-    },
-    {
-     "symbol": "SOL/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "AAVE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "PEPE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "GALA/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "XRP/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    }
-   ],
+   "rows": 20,
+   "updated": 1793731480178,
+   "with_plan": 9,
+   "grades": {
+    "None": 9
+   },
    "statuses": [
     "OK"
    ],
-   "gold": {
-    "status": "OK",
-    "reason": null,
-    "decision": "HOLD",
-    "grade": null
-   }
+   "gold_row": true
   },
   "1h": {
-   "rows": 15,
-   "updated": 1793626049373,
-   "tradable": [
-    {
-     "symbol": "BTC/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.69,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.75
-     ]
-    },
-    {
-     "symbol": "AAVE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "LTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "AVAX/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "DOGE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "PAXG/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.69,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.75
-     ]
-    },
-    {
-     "symbol": "SOL/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "BNB/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    }
-   ],
+   "rows": 20,
+   "updated": 1793731480180,
+   "with_plan": 12,
+   "grades": {
+    "None": 12
+   },
    "statuses": [
     "OK"
    ],
-   "gold": {
-    "status": "OK",
-    "reason": null,
-    "decision": "HOLD",
-    "grade": null
-   }
+   "gold_row": true
   },
   "4h": {
-   "rows": 15,
-   "updated": 1793626049375,
-   "tradable": [
-    {
-     "symbol": "BNB/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "SOL/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.38,
-     "targets_rr": [
-      1.0,
-      1.5,
-      2.0
-     ]
-    },
-    {
-     "symbol": "LTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "DOGE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "GALA/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "ZEC/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.38,
-     "targets_rr": [
-      1.0,
-      1.5,
-      2.0
-     ]
-    },
-    {
-     "symbol": "AVAX/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "AAVE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    }
-   ],
+   "rows": 20,
+   "updated": 1793731480182,
+   "with_plan": 14,
+   "grades": {
+    "B": 1,
+    "None": 13
+   },
    "statuses": [
     "OK"
    ],
-   "gold": {
-    "status": "OK",
-    "reason": null,
-    "decision": "NO TRADE",
-    "grade": null
-   }
+   "gold_row": true
   },
   "12h": {
    "rows": 20,
-   "updated": 1793625240927,
-   "tradable": [
-    {
-     "symbol": "PEPE/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.69,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.75
-     ]
-    },
-    {
-     "symbol": "SOL/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "TRX/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "AVAX/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "LTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "PAXG/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "GALA/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "ETH/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    }
-   ],
+   "updated": 1793731480185,
+   "with_plan": 15,
+   "grades": {
+    "None": 15
+   },
    "statuses": [
     "OK"
    ],
-   "gold": {
-    "status": "OK",
-    "reason": null,
-    "decision": "HOLD",
-    "grade": null
-   }
+   "gold_row": true
   },
   "1d": {
    "rows": 20,
-   "updated": 1793625240930,
-   "tradable": [
-    {
-     "symbol": "DOGE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "AAVE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "PAXG/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "UNI/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "BNB/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.44,
-     "targets_rr": [
-      1.0,
-      1.75,
-      2.0
-     ]
-    },
-    {
-     "symbol": "LTC/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "ETH/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "TRX/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    }
-   ],
+   "updated": 1793731480187,
+   "with_plan": 17,
+   "grades": {
+    "None": 17
+   },
    "statuses": [
     "OK"
    ],
-   "gold": {
-    "status": "OK",
-    "reason": null,
-    "decision": "HOLD",
-    "grade": null
-   }
+   "gold_row": true
   },
   "3d": {
    "rows": 20,
-   "updated": 1793625240932,
-   "tradable": [
-    {
-     "symbol": "TRX/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "SOL/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "ZEC/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.56,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.25
-     ]
-    },
-    {
-     "symbol": "UNI/USDT",
-     "side": "LONG",
-     "grade": null,
-     "rr": 1.69,
-     "targets_rr": [
-      1.0,
-      2.0,
-      2.75
-     ]
-    },
-    {
-     "symbol": "XRP/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "PAXG/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "ETH/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    },
-    {
-     "symbol": "DOGE/USDT",
-     "side": "SHORT",
-     "grade": null,
-     "rr": 1.31,
-     "targets_rr": [
-      1.0,
-      1.25,
-      2.0
-     ]
-    }
-   ],
+   "updated": 1793731480189,
+   "with_plan": 9,
+   "grades": {
+    "None": 9
+   },
    "statuses": [
     "INSUFFICIENT DATA",
     "OK"
    ],
-   "gold": {
-    "status": "OK",
-    "reason": null,
-    "decision": "NO TRADE",
-    "grade": null
-   }
+   "gold_row": true
   }
  },
  "view_sizes_kb": [
   [
    "signals",
-   360.3
+   96.1
   ],
   [
-   "bots",
-   236.5
+   "performance",
+   51.6
   ],
   [
    "dashboard_1w",
@@ -653,6 +113,10 @@
   [
    "models_ADAUSDT_1d",
    43.8
+  ],
+  [
+   "health",
+   43.3
   ],
   [
    "models_XLMUSDT_1d",
@@ -675,15 +139,7 @@
    42.0
   ],
   [
-   "performance",
-   41.5
-  ],
-  [
    "models_HBARUSDT_1d",
-   40.5
-  ],
-  [
-   "track_record",
    40.5
   ],
   [
@@ -692,7 +148,11 @@
   ],
   [
    "models_BTCUSDT_1d",
-   38.3
+   38.4
+  ],
+  [
+   "models_XRPUSDT_1d",
+   38.4
   ],
   [
    "models_TRXUSDT_1d",
@@ -703,10 +163,6 @@
    38.3
   ],
   [
-   "models_ETHUSDT_1d",
-   38.2
-  ],
-  [
    "models_BCHUSDT_1d",
    38.1
   ],
@@ -715,12 +171,20 @@
    38.1
   ],
   [
-   "models_XRPUSDT_1d",
+   "models_ZECUSDT_1d",
    38.1
+  ],
+  [
+   "models_ETHUSDT_1d",
+   37.9
   ],
   [
    "models_INJUSDT_4h",
    37.9
+  ],
+  [
+   "models_LTCUSDT_1d",
+   37.7
   ],
   [
    "models_DOTUSDT_4h",
@@ -731,31 +195,27 @@
    37.5
   ],
   [
-   "models_BNBUSDT_1d",
-   37.5
-  ],
-  [
-   "models_LTCUSDT_1d",
-   37.5
+   "models_LINKUSDT_1d",
+   37.4
   ]
  ],
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1793625903709,
-   "last_tick_finished": 1793625997951,
-   "last_tick_seconds": 94.2,
+   "last_tick_started": 1793731299848,
+   "last_tick_finished": 1793731431718,
+   "last_tick_seconds": 131.9,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 5,
-   "ticks": 1965,
-   "firestore_writes_today": 3503,
+   "ticks": 2317,
+   "firestore_writes_today": 7848,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 1695,
+   "firestore_reads_today": 3962,
    "firestore_read_limit": 50000,
-   "firestore_members_active": 5,
-   "firestore_member_reserve": 300,
-   "firestore_engine_budget": 14700,
+   "firestore_members_active": 4,
+   "firestore_member_reserve": 240,
+   "firestore_engine_budget": 14760,
    "firestore_free_limit": 20000,
    "firestore_lean": false
   },
@@ -835,132 +295,182 @@
     "symbol": "ZEC/USDT",
     "state": "active",
     "message": ""
+   },
+   {
+    "symbol": "MSTRB/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "UNI/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "SPCXB/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "TRX/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "U/USDT",
+    "state": "active",
+    "message": ""
    }
   ],
   "series_15m": [
    {
     "symbol": "BTC/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "LTC/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 30659,
+    "candles": 30776,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 30659,
+    "candles": 30776,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 30659,
+    "candles": 30776,
     "status": "OK"
    },
    {
     "symbol": "PAXG/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 30661,
+    "candles": 30778,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 30660,
+    "candles": 30777,
     "status": "OK"
    },
    {
     "symbol": "GALA/USDT",
-    "candles": 30266,
+    "candles": 30383,
     "status": "OK"
    },
    {
     "symbol": "NVDAB/USDT",
-    "candles": 13806,
+    "candles": 13923,
     "status": "OK"
    },
    {
     "symbol": "ZEC/USDT",
-    "candles": 30657,
+    "candles": 30774,
+    "status": "OK"
+   },
+   {
+    "symbol": "MSTRB/USDT",
+    "candles": 12789,
+    "status": "OK"
+   },
+   {
+    "symbol": "UNI/USDT",
+    "candles": 30776,
+    "status": "OK"
+   },
+   {
+    "symbol": "SPCXB/USDT",
+    "candles": 13831,
+    "status": "OK"
+   },
+   {
+    "symbol": "TRX/USDT",
+    "candles": 30775,
+    "status": "OK"
+   },
+   {
+    "symbol": "U/USDT",
+    "candles": 28267,
     "status": "OK"
    }
   ]
  },
  "model_age_h": {
   "15m": {
-   "n": 15,
+   "n": 20,
    "fresh_12h": 0,
-   "max": 163.9,
+   "max": 193.1,
    "missing": 0
   },
   "1h": {
-   "n": 15,
-   "fresh_12h": 14,
-   "max": 21.8,
+   "n": 20,
+   "fresh_12h": 0,
+   "max": 159.6,
    "missing": 0
   },
   "4h": {
-   "n": 15,
-   "fresh_12h": 14,
-   "max": 21.8,
+   "n": 20,
+   "fresh_12h": 0,
+   "max": 159.4,
    "missing": 0
   },
   "12h": {
-   "n": 15,
-   "fresh_12h": 14,
-   "max": 10.3,
-   "missing": 1
+   "n": 20,
+   "fresh_12h": 0,
+   "max": 159.3,
+   "missing": 3
   },
   "1d": {
-   "n": 15,
-   "fresh_12h": 14,
-   "max": 10.3,
-   "missing": 1
+   "n": 20,
+   "fresh_12h": 0,
+   "max": 159.4,
+   "missing": 4
   },
   "3d": {
-   "n": 15,
-   "fresh_12h": 13,
-   "max": 10.3,
-   "missing": 2
+   "n": 20,
+   "fresh_12h": 0,
+   "max": 159.3,
+   "missing": 5
   }
  },
  "last_train": {
-  "started_at": 1793589664490,
-  "finished_at": 1793589722674,
+  "started_at": 1793676235420,
+  "finished_at": 1793676294843,
   "detail": {
    "shards": 15,
-   "imported": 69,
+   "imported": 86,
    "skipped": 0,
-   "pruned_files": 144,
+   "pruned_files": 220,
    "failed": [],
    "derivs": {
     "funding": {
@@ -983,83 +493,83 @@
     "skipped": [],
     "errors": [],
     "entry": {
-     "3d": "old:0.0",
-     "1d": "old:0.0",
+     "3d": "market:0.0",
+     "1d": "pullback:0.5",
      "12h": "old:0.0",
      "4h": "old:0.0",
-     "1h": "old:0.0",
-     "15m": "market:0.0"
+     "1h": "pullback:0.5",
+     "15m": "confirm:0.1"
     },
     "filters": {
      "3d": {
       "enabled": false,
-      "reason": "only 123 trades to learn from",
-      "n": 123
+      "reason": "only 137 trades to learn from",
+      "n": 137
      },
      "1d": {
       "enabled": false,
       "keep_fraction": 0.4,
-      "n": 712,
+      "n": 651,
       "exam": {
-       "n": 178,
-       "kept": 41,
-       "avg_r_all": 0.21809892051269622,
-       "avg_r_kept": 0.15252191533073703
+       "n": 163,
+       "kept": 58,
+       "avg_r_all": 0.16862882640369498,
+       "avg_r_kept": 0.05450406226211338
       },
       "reason": "the filter did not improve results on unseen trades"
      },
      "12h": {
-      "enabled": false,
+      "enabled": true,
       "keep_fraction": 0.4,
-      "n": 1576,
+      "n": 1508,
       "exam": {
-       "n": 394,
-       "kept": 151,
-       "avg_r_all": 0.08105595949256292,
-       "avg_r_kept": -0.04951519162863637
+       "n": 377,
+       "kept": 167,
+       "avg_r_all": 0.09132762635964746,
+       "avg_r_kept": 0.1540423623191657
       },
-      "reason": "the filter did not improve results on unseen trades"
+      "threshold": 0.5742937724844209,
+      "reason": "kept trades earned +0.15R vs +0.09R for all, on unseen trades"
      },
      "4h": {
-      "enabled": true,
-      "keep_fraction": 0.4,
-      "n": 3701,
-      "exam": {
-       "n": 926,
-       "kept": 302,
-       "avg_r_all": 0.02734041297587508,
-       "avg_r_kept": 0.12373020039279181
-      },
-      "threshold": 0.5693575939744365,
-      "reason": "kept trades earned +0.12R vs +0.03R for all, on unseen trades"
-     },
-     "1h": {
       "enabled": false,
-      "keep_fraction": 0.8,
-      "n": 2722,
+      "keep_fraction": 0.4,
+      "n": 3438,
       "exam": {
-       "n": 681,
-       "kept": 572,
-       "avg_r_all": -0.05118094246998155,
-       "avg_r_kept": -0.02593679147996664
+       "n": 860,
+       "kept": 331,
+       "avg_r_all": 0.07870792323465203,
+       "avg_r_kept": 0.0388182296020686
       },
       "reason": "the filter did not improve results on unseen trades"
      },
-     "15m": {
+     "1h": {
       "enabled": true,
       "keep_fraction": 0.8,
-      "n": 1371,
+      "n": 2924,
       "exam": {
-       "n": 343,
-       "kept": 271,
-       "avg_r_all": -0.0365941429614064,
-       "avg_r_kept": 0.009474571589238038
+       "n": 731,
+       "kept": 562,
+       "avg_r_all": -0.0848665933119929,
+       "avg_r_kept": -0.04421224610035943
       },
-      "threshold": 0.3162659030633848,
-      "reason": "kept trades earned +0.01R vs -0.04R for all, on unseen trades"
+      "threshold": 0.4043433020002424,
+      "reason": "kept trades earned -0.04R vs -0.08R for all, on unseen trades"
+     },
+     "15m": {
+      "enabled": false,
+      "keep_fraction": 0.8,
+      "n": 1203,
+      "exam": {
+       "n": 301,
+       "kept": 239,
+       "avg_r_all": -0.18949395754869747,
+       "avg_r_kept": -0.2214379646737421
+      },
+      "reason": "the filter did not improve results on unseen trades"
      }
     },
-    "seconds": 49.0
+    "seconds": 50.2
    }
   }
  },
@@ -1070,225 +580,53 @@
   "launched_at": 1793386630880
  },
  "track_record": {
-  "record_since": 1793386630880,
-  "live_signals": 9,
-  "updated": 1793626049359
+  "record_since": 1793731300842,
+  "live_signals": 1,
+  "updated": 1793731480175
  },
  "record_live": {
   "summary": {
-   "closed": 4,
-   "win_rate": 1.0,
-   "avg_return_pct": 2.1324379558327085,
-   "total_return_pct": 8.529751823330834,
-   "best_pct": 3.144304423199218,
-   "worst_pct": 0.36638247724029016,
-   "profit_factor": null,
-   "avg_roi_pct": 12.187224347096375,
-   "total_roi_pct": 48.7488973883855,
-   "best_roi_pct": 18.865826539195307,
-   "worst_roi_pct": 3.6638247724029016
+   "closed": 0
   },
-  "by_timeframe": {
-   "12h": {
-    "closed": 2,
-    "win_rate": 1.0,
-    "avg_return_pct": 3.1078988079051073,
-    "total_return_pct": 6.215797615810215,
-    "best_pct": 3.144304423199218,
-    "worst_pct": 3.0714931926109967,
-    "profit_factor": null,
-    "avg_roi_pct": 18.647392847430645,
-    "total_roi_pct": 37.29478569486129,
-    "best_roi_pct": 18.865826539195307,
-    "worst_roi_pct": 18.42895915566598
-   },
-   "1d": {
-    "closed": 1,
-    "win_rate": 1.0,
-    "avg_return_pct": 1.9475717302803286,
-    "total_return_pct": 1.9475717302803286,
-    "best_pct": 1.9475717302803286,
-    "worst_pct": 1.9475717302803286,
-    "profit_factor": null,
-    "avg_roi_pct": 7.790286921121314,
-    "total_roi_pct": 7.790286921121314,
-    "best_roi_pct": 7.790286921121314,
-    "worst_roi_pct": 7.790286921121314
-   },
-   "4h": {
-    "closed": 1,
-    "win_rate": 1.0,
-    "avg_return_pct": 0.36638247724029016,
-    "total_return_pct": 0.36638247724029016,
-    "best_pct": 0.36638247724029016,
-    "worst_pct": 0.36638247724029016,
-    "profit_factor": null,
-    "avg_roi_pct": 3.6638247724029016,
-    "total_roi_pct": 3.6638247724029016,
-    "best_roi_pct": 3.6638247724029016,
-    "worst_roi_pct": 3.6638247724029016
-   }
+  "by_timeframe": null,
+  "signals_by_status": {
+   "OPEN": 1
   },
-  "signals": [
-   {
-    "symbol": "ETH/USDT",
-    "timeframe": "4h",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "OPEN",
-    "fill_status": "FILLED",
-    "return_pct": 0.4573226997248936,
-    "roi_pct": 4.573226997248936,
-    "peak_r": 0.3248295332611347,
-    "exit_reason": null,
-    "created_at": 1793577922544,
-    "closed_at": null
-   },
-   {
-    "symbol": "XRP/USDT",
-    "timeframe": "4h",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "OPEN",
-    "fill_status": "FILLED",
-    "return_pct": 0.9898025992292503,
-    "roi_pct": 9.898025992292503,
-    "peak_r": 0.40004887847212556,
-    "exit_reason": null,
-    "created_at": 1793520019543,
-    "closed_at": null
-   },
-   {
-    "symbol": "PAXG/USDT",
-    "timeframe": "4h",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "EXPIRED",
-    "fill_status": "FILLED",
-    "return_pct": 0.36638247724029016,
-    "roi_pct": 3.6638247724029016,
-    "peak_r": 0.2113634917622575,
-    "exit_reason": "admin_close",
-    "created_at": 1793419219608,
-    "closed_at": 1793563453346
-   },
-   {
-    "symbol": "ETH/USDT",
-    "timeframe": "1d",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "OPEN",
-    "fill_status": "FILLED",
-    "return_pct": 0.3270556575337036,
-    "roi_pct": 1.635278287668518,
-    "peak_r": 0.046162997927169554,
-    "exit_reason": null,
-    "created_at": 1793417108487,
-    "closed_at": null
-   },
-   {
-    "symbol": "DOGE/USDT",
-    "timeframe": "12h",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "EXPIRED",
-    "fill_status": "FILLED",
-    "return_pct": 3.0714931926109967,
-    "roi_pct": 18.42895915566598,
-    "peak_r": 0.30562216288153876,
-    "exit_reason": "admin_close",
-    "created_at": 1793405181623,
-    "closed_at": 1793564302179
-   },
-   {
-    "symbol": "BNB/USDT",
-    "timeframe": "1d",
-    "side": "LONG",
-    "grade": "B",
-    "status": "OPEN",
-    "fill_status": "PENDING",
-    "return_pct": null,
-    "roi_pct": null,
-    "peak_r": 0.0,
-    "exit_reason": null,
-    "created_at": 1793405159843,
-    "closed_at": null
-   },
-   {
-    "symbol": "LTC/USDT",
-    "timeframe": "12h",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "EXPIRED",
-    "fill_status": "FILLED",
-    "return_pct": 3.144304423199218,
-    "roi_pct": 18.865826539195307,
-    "peak_r": 0.40844340725417855,
-    "exit_reason": "admin_close",
-    "created_at": 1793404864691,
-    "closed_at": 1793563748906
-   },
-   {
-    "symbol": "GALA/USDT",
-    "timeframe": "4h",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "OPEN",
-    "fill_status": "FILLED",
-    "return_pct": 1.4788581031171089,
-    "roi_pct": 8.873148618702654,
-    "peak_r": 0.20115823562972715,
-    "exit_reason": null,
-    "created_at": 1793386850485,
-    "closed_at": null
-   },
-   {
-    "symbol": "SOL/USDT",
-    "timeframe": "1d",
-    "side": "SHORT",
-    "grade": "B",
-    "status": "EXPIRED",
-    "fill_status": "FILLED",
-    "return_pct": 1.9475717302803286,
-    "roi_pct": 7.790286921121314,
-    "peak_r": 0.1905575226410861,
-    "exit_reason": "admin_close",
-    "created_at": 1793386794361,
-    "closed_at": 1793552442712
-   }
-  ]
+  "signals_by_timeframe": {
+   "4h": 1
+  }
  },
  "counts": {
   "paper": 4,
   "paper_trades": 0,
-  "paper_futures_trades": 15,
+  "paper_futures_trades": 28,
   "auto_paper_state": 4,
   "jobs": 23
  },
  "bots": [
   {
    "id": "futures-signal-ab-1h",
-   "reset_token": "v1"
+   "reset_token": "v214"
   },
   {
    "id": "futures-signal-ab-4h",
-   "reset_token": "v1"
+   "reset_token": "v214"
   },
   {
    "id": "futures-signal-ab-12h",
-   "reset_token": "v1"
-  },
-  {
-   "id": "futures-demo-ab-1d",
-   "reset_token": "v210"
-  },
-  {
-   "id": "futures-demo-ab-3d",
-   "reset_token": "v210"
+   "reset_token": "v214"
   },
   {
    "id": "futures-signal-ab-15m",
-   "reset_token": "v211"
+   "reset_token": "v214"
+  },
+  {
+   "id": "futures-signal-ab-1d",
+   "reset_token": "v214"
+  },
+  {
+   "id": "futures-signal-ab-3d",
+   "reset_token": "v214"
   }
  ]
 }
