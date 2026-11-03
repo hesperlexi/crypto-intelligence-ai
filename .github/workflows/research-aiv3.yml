@@ -1,0 +1,105 @@
+name: Research AI v3 (meta-labelling, honest confidence, strict promotion; read-only)
+
+# python -m app.research aiv3 (backend/app/research_v3.py). Read-only on production state: restores the engine state cache
+# only (never saves it), no Firebase key or other secret, never runs the engine; the JSON goes to the `research-results`
+# branch as results/aiv3-<mode>-*.json. MODE below: `dev` never computes a holdout number; `final` evaluates the holdout
+# once (earlier final runs found on research-results are counted and reported in the JSON).
+on:
+  push:
+    branches: [ai-research-v3]
+    paths:
+      - ".github/workflows/research-aiv3.yml"
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "dev | final"
+        default: "dev"
+
+env:
+  MODE: dev
+  BUDGET: "14400"
+
+concurrency:
+  group: research-aiv3
+  cancel-in-progress: false
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    permissions:
+      contents: write          # commit the JSON results to the research-results branch
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements-worker.txt
+            backend/requirements-torch.txt
+      - run: pip install -r requirements-worker.txt
+      - name: Install PyTorch (CPU) so saved models with LSTM / GRU / Transformer members load
+        run: pip install -r requirements-torch.txt || echo "::warning::torch not installed"
+      - name: Restore the engine state (read-only copy; never saved back)
+        id: state
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-none
+          restore-keys: engine-state-
+      - name: Count earlier final (holdout) runs on record
+        id: prior
+        working-directory: .
+        run: |
+          n=0
+          if git ls-remote --exit-code --heads origin research-results >/dev/null 2>&1; then
+            git fetch --depth 1 origin research-results
+            n=$(git ls-tree --name-only FETCH_HEAD results/ | grep -c '^results/aiv3-final-2' || true)
+          fi
+          echo "n=$n" >> "$GITHUB_OUTPUT"
+      - name: Run the research
+        env:
+          DATABASE_URL: sqlite:///./data/crypto_ai.db
+        run: |
+          mode="${{ github.event.inputs.mode || env.MODE }}"
+          mkdir -p ../out
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          f="../out/aiv3-$mode-$stamp.json"
+          if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
+            printf '{"ok": false, "command": "aiv3", "reason": "engine state cache not restored", "commit": "%s"}\n' "${GITHUB_SHA}" > "$f"
+          else
+            timeout 300m python -m app.research aiv3 --mode "$mode" --budget "$BUDGET" --workers 4 \
+              --prior-final-runs "${{ steps.prior.outputs.n }}" --out "$f" > /dev/null 2> ../out/aiv3-$mode-$stamp.log \
+              || printf '{"ok": false, "command": "aiv3", "mode": "%s", "reason": "the aiv3 research failed or timed out", "stderr_tail": %s, "commit": "%s"}\n' \
+                   "$mode" "$(tail -c 3000 ../out/aiv3-$mode-$stamp.log | python -c 'import json,sys; print(json.dumps(sys.stdin.read()))')" "${GITHUB_SHA}" > "$f"
+          fi
+          tail -c 20000 ../out/aiv3-$mode-$stamp.log > ../out/aiv3-$mode-$stamp.log.tail || true
+          rm -f ../out/aiv3-$mode-$stamp.log
+          cp "$f" "../out/aiv3-$mode-latest.json"
+          printf 'cache key: %s\ncommit: %s\n' "${{ steps.state.outputs.cache-matched-key }}" "${GITHUB_SHA}" > ../out/aiv3-source.txt
+      - name: Commit the results to the research-results branch
+        if: always()
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3; do
+            rm -rf ../rr; git worktree prune
+            if git ls-remote --exit-code --heads origin research-results >/dev/null 2>&1; then
+              git fetch --depth 1 origin research-results
+              git worktree add ../rr FETCH_HEAD
+              git -C ../rr checkout -B research-results
+            else
+              git worktree add --detach ../rr
+              git -C ../rr checkout --orphan research-results
+              git -C ../rr rm -rf --quiet . || true
+            fi
+            mkdir -p ../rr/results
+            cp out/* ../rr/results/ 2>/dev/null || true
+            (cd ../rr && git add results && { git commit -m "Research AI v3 results for ${GITHUB_SHA::7}" || exit 0; } && git push origin HEAD:research-results) && break
+            sleep 10
+          done

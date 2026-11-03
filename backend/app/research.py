@@ -4,6 +4,7 @@
   python -m app.research compare  [--db ...] [--out results/compare.json]
   python -m app.research engine   [--db ...] [--out results/engine.json] [--budget 14400]  (v2.6, see research_engine.py)
   python -m app.research v213     [--db ...] [--out results/v213.json] [--budget 10800]  (v2.13 impact, research_v213.py)
+  python -m app.research aiv3 --mode dev|final [--budget 14400] [--workers 4]  (AI research v3, research_v3.py)
 
 giveback  every closed call ever recorded (and separately those since record_since), replayed from publication on the
           stored 15m candles with the CURRENT rules: how many reached +0.5R / +0.8R / TP1 (1R) and still ended stopped
@@ -219,13 +220,16 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "aiv3"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
     ap.add_argument("--budget", type=float, default=14400, help="engine: seconds before remaining series are skipped")
     ap.add_argument("--symbols", default=None, help="engine: comma-separated symbols (default: all with an active model)")
     ap.add_argument("--timeframes", default=None, help="engine: comma-separated timeframes")
+    ap.add_argument("--mode", default="dev", choices=["dev", "final"], help="aiv3: dev never evaluates the holdout")
+    ap.add_argument("--workers", type=int, default=None, help="aiv3: worker processes")
+    ap.add_argument("--prior-final-runs", type=int, default=0, help="aiv3: earlier final (holdout) runs on record")
     a = ap.parse_args(argv)
     path = a.db.replace("sqlite:///", "")
     if a.db.startswith("sqlite:///") and not Path(path).exists():
@@ -244,7 +248,12 @@ def main(argv: list[str] | None = None) -> int:
             src.close()
             dst.close()
             a.db = f"sqlite:///{tmp}"
-        if a.command == "v213":
+        if a.command == "aiv3":
+            from . import research_v3
+            body = research_v3.run(a.db, a.mode, a.budget, [x for x in (a.symbols or "").split(",") if x] or None,
+                                   [x for x in (a.timeframes or "").split(",") if x] or None, a.workers, a.prior_final_runs)
+            out = {"ok": True, "command": a.command, **body}
+        elif a.command == "v213":
             from . import research_v213
             body = research_v213.run(a.db, a.budget, [x for x in (a.symbols or "").split(",") if x] or None,
                                      [x for x in (a.timeframes or "").split(",") if x] or None)
