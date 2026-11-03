@@ -1,0 +1,156 @@
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
+/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/series_policy.py:268: RuntimeWarning: Mean of empty slice
+  ms, ml_ = np.nanmean(np.vstack(short), axis=0), np.nanmean(np.vstack(long_), axis=0)
