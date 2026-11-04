@@ -59,6 +59,7 @@ const Settings = page(() => import("./pages/Settings"));
 const Signals = page(() => import("./pages/Signals"));
 const Users = page(() => import("./pages/Users"));
 const Rich = page(() => import("./pages/Rich"));
+const Guardian = page(() => import("./pages/Guardian"));
 const Community = page(() => import("./pages/Community"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
@@ -80,7 +81,7 @@ const NAV = [
   ["/settings", "Settings"],
 ] as const;
 // owner-only tools: marketing material and system health
-const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Hesper Challenge"]] as const;
+const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Hesper Challenge"], ["/guardian", "Trade Guardian"]] as const;
 // research tools (also reachable from Results → Tools): one "Tools" menu on desktop, one group in the phone More sheet
 const TOOLS_NAV = [["/scanner", "Scanner"], ["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);
@@ -99,7 +100,7 @@ function Count({ n, tone = "warn" }: { n: number; tone?: "warn" | "accent" }) {
   return <span className={`num ml-1.5 shrink-0 rounded-full px-1.5 text-xs font-bold leading-5 ${tone === "warn" ? "bg-warn/15 text-warn" : "bg-accent/15 text-accent"}`} aria-label={`${n} new`}>{n}</span>;
 }
 
-/** A compact dropdown in the desktop top bar (Tools; Admin: Weekly report, Achievements, Health, Hesper Challenge, Users). */
+/** A compact dropdown in the desktop top bar (Tools; Admin: Weekly report, Achievements, Health, Hesper Challenge, Trade Guardian, Users). */
 function NavMenu({ label, items, pending = 0 }: { label: string; items: (readonly [string, string])[]; pending?: number }) {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
@@ -387,6 +388,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/alerts" element={<Alerts />} />
             <Route path="/health" element={<AdminOnly><Health /></AdminOnly>} />
             <Route path="/rich" element={<AdminOnly><Rich /></AdminOnly>} />
+            <Route path="/guardian" element={<AdminOnly><Guardian /></AdminOnly>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="/community" element={<Community />} />

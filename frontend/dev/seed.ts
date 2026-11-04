@@ -450,7 +450,7 @@ export function seed(): Record<string, any> {
       { symbol: "SOL/USDT", timeframe: "4h", side: "LONG", entry: 164.1, status: "TP2", return_pct: 2.31, leverage: 10, roi_pct: 23.1, closed_at: NOW - 5 * H, target: 168.9 },
       { symbol: "AVAX/USDT", timeframe: "1h", side: "SHORT", entry: 27.92, status: "TP2", return_pct: 1.88, leverage: 9, roi_pct: 16.92, closed_at: NOW - 8 * H, target: 27.11 },
       { symbol: "1000PEPE/USDT", timeframe: "15m", side: "SHORT", entry: 0.00001234, status: "TP1", return_pct: 0.71, closed_at: NOW - 9 * H, target: 0.00001225 }] }),
-    "views/news": v({ calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: newsHeads(), sources: { calendar: "Forex Factory weekly economic calendar", headlines: "CoinDesk, Cointelegraph, Decrypt" }, next_high: { title: "CPI m/m", ts: NOW + 26 * H },
+    "views/news": v({ generated_at: NOW - 12 * 60_000, errors: [], calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: newsHeads(), sources: { calendar: "Forex Factory weekly economic calendar", headlines: "CoinDesk, Cointelegraph, Decrypt" }, next_high: { title: "CPI m/m", ts: NOW + 26 * H },
       sentiment: { latest: { market: { score: 0.28, ts: NOW - 0.4 * H, source: "headlines", headlines: 18 }, BTC: { score: 0.41, ts: NOW - 0.4 * H }, ETH: { score: 0.12, ts: NOW - 0.4 * H }, alts: { score: -0.18, ts: NOW - 0.4 * H } },
         series: Array.from({ length: 48 }, (_, i) => ({ ts: NOW - (47 - i) * H, score: Math.round((0.25 * Math.sin(i / 6) + i / 120) * 100) / 100 })) } }),
     "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {} }),
@@ -461,12 +461,15 @@ export function seed(): Record<string, any> {
     ...alertsFor("owner"),
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
     "views/health": v(health()),
+    "views/bots": v(botsView()),
+    "owner/telegram_status": { ok: true, checked_at: NOW - 6 * 60_000, errors: [], last_post_at: NOW - 2 * H, last_sent: ["win"] },
     "views/health_errors": v({ generated_at: NOW, recent_errors: [{ ts: NOW - 2 * H, where: "engine news_publish", error: "TimeoutError: calendar feed did not answer" }], exchange_last_error: null, market_data_last_error: null, model_messages: [] }),
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
     "views/signals": v(signalLog()),
     "views/weekly_report": v(weekly()),
     "views/scalping": v(scalping()),
     "views/hesper": v(hesper()),
+    "views/guardian": v(guardian()),
     ...leaderboard(),
     "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
     "users/u_member_self": undefined,
@@ -487,6 +490,25 @@ export function seed(): Record<string, any> {
     history: [], scoreboard: { n: 4, saved_r: 0.9, cost_r: -0.3, net_r: 0.6, helped: 3, hurt: 1, pending: 1 }, config: {}, note: "Recommend-only." });
   delete out["users/u_member_self"];
   return out;
+}
+
+/** views/bots: the shape backend/app/services/bots.report publishes (six futures signal bots, trades left out). */
+function botsView() {
+  const line: [string, string, number, number, number][] = [["15m", "A", 1.8, 14, 1], ["1h", "A", -0.9, 9, 1], ["4h", "A+B", 3.4, 6, 2], ["12h", "A+B", 0.6, 3, 1], ["1d", "A", 0, 1, 0], ["3d", "A", -0.4, 1, 0]];
+  const bots = line.map(([tf, g, ret, trades, open]) => {
+    const start = 10_000, eq = start * (1 + ret / 100);
+    const positions = Array.from({ length: open }, (_, i) => {
+      const sym = ["BTC/USDT", "SOL/USDT", "ETH/USDT"][i % 3], px = PRICES[sym].p;
+      return { id: `${tf}-p${i}`, symbol: sym, side: i % 2 ? -1 : 1, qty_open: 1500 / px, entry: px * (i % 2 ? 1.004 : 0.996), lev: 12, liq: px * (i % 2 ? 1.07 : 0.93), stop: px * (i % 2 ? 1.018 : 0.982), tp_hit: i };
+    });
+    return { config: { id: `futures-signal-ab-${tf}`, name: `Futures signals ${g} · ${tf.toUpperCase()}`, mode: "signal", market: "futures", timeframe: tf, grades: g === "A" ? ["A"] : ["A", "B"], leverage: 20, safe_leverage: true, enabled: true, starting_balance: start },
+      state: { cash: eq * 0.8, equity: eq, benchmark: start, started_at: NOW - 30 * H, updated_at: NOW - 3 * 60_000, fees_paid: trades * 3.1, funding_paid: trades * 0.4, liquidations: 0 },
+      positions, pending: [],
+      stats: { trades, return_pct: ret, equity: eq, benchmark_return_pct: 0.8, open_positions: open, win_rate: trades ? 0.56 : null, profit_factor: 1.2, max_drawdown_pct: -1.4, fees_paid: trades * 3.1, funding_paid: trades * 0.4, liquidations: 0, by_exit: {} },
+      trades: [], equity_curve: [{ ts: NOW - 30 * H, equity: start, benchmark: start }, { ts: NOW - 3 * 60_000, equity: eq, benchmark: start * 1.008 }] };
+  });
+  const funding = Object.fromEntries(COINS.slice(0, 8).map(([s], i) => [s, { rate: 0.0001 * (1 + (i % 3)), source: "OKX" }]));
+  return { bots, defaults: [], path_timeframe: "15m", funding, generated_at: NOW - 3 * 60_000 };
 }
 
 /** views/health: the same shape backend/app/services/health.report + worker.engine_info publish. */
@@ -657,5 +679,53 @@ function leaderboard(): Record<string, any> {
       last_winner: { month: prev, label: label(prev), winners: [{ username: "sara_k", return_pct: 27.4, trades: 12 }] }, badges: { sara_k: [prev] } }),
     "admin/leaderboard": { json: JSON.stringify({ month, label: label(month), generated_at: NOW - 20 * 60_000, min_trades: 5, rows: adminRows, winners, excluded: [] }), updated_at: NOW },
     "owner/leaderboard": { awarded: {}, excluded: [] },
+  };
+}
+
+/** views/guardian: the shape backend/app/services/guardian.Guardian.view publishes (v2.19 Trade Guardian, admin only). */
+function guardian() {
+  const M = 60_000;
+  const rec = (o: any) => ({ rules_level: o.level, status: "live", status_at: null, status_reason: null, tp1_hit: false, ...o });
+  const live = [
+    rec({ id: "g1", signal_id: "s-sol", symbol: "SOL/USDT", timeframe: "1h", side: 1, level: "CLOSE", severity: 86,
+      created_at: NOW - 4 * M, expires_at: NOW + 26 * M, price: 166.9, entry: 168.1, stop_in_force: 165.8, proposed_stop: null, atr: 0.82,
+      reasons: [{ code: "move", label: "Moved 1.52 ATR against in 15 min", points: 30 }, { code: "flip", label: "1H analysis flipped to SELL", points: 25 },
+        { code: "btc", label: "BTC -1.74% in 15 min", points: 20 }, { code: "volatility", label: "Volatility 2.9x normal", points: 10 }, { code: "near_stop", label: "0.47R from the stop", points: 15 }],
+      ai: { path: "ai_agreed", model: "gemini-flash-lite-latest", text: "Solana dropped sharply against the long trade in the last 15 minutes while Bitcoin fell over the same window. The 1H analysis now points the other way, so the rules see more risk than reward in staying in." } }),
+    rec({ id: "g2", signal_id: "s-avax", symbol: "AVAX/USDT", timeframe: "4h", side: -1, level: "TIGHTEN", rules_level: "CLOSE", severity: 77,
+      created_at: NOW - 11 * M, expires_at: NOW + 19 * M, price: 27.58, entry: 27.2, stop_in_force: 27.95, proposed_stop: 27.81, atr: 0.19, tp1_hit: false,
+      reasons: [{ code: "move", label: "Moved 1.10 ATR against in 60 min", points: 22 }, { code: "near_stop", label: "0.49R from the stop", points: 15 },
+        { code: "volatility", label: "Volatility 4.2x normal", points: 15 }, { code: "grade_lost", label: "4H grade A no longer confirmed", points: 8 },
+        { code: "funding", label: "Funding 3.4 sd against (estimate)", points: 5, estimate: true }],
+      ai: { path: "ai_downgraded", model: "gemini-flash-lite-latest", text: "Avalanche rose against the short trade over the last hour and volatility jumped. The 4H call is no longer confirmed, but the move is not yet decisive, so tightening fits the facts better than closing." } }),
+    rec({ id: "g3", signal_id: "s-eth", symbol: "ETH/USDT", timeframe: "15m", side: 1, level: "TIGHTEN", severity: 58, tp1_hit: true,
+      created_at: NOW - 27 * M, expires_at: NOW + 3 * M, price: 2471.4, entry: 2452.0, stop_in_force: 2452.0, proposed_stop: 2463.9, atr: 6.1,
+      reasons: [{ code: "giveback", label: "Gave back 62% of the 1.48R peak", points: 15 }, { code: "move", label: "Moved 0.71 ATR against in 5 min", points: 13 },
+        { code: "flip", label: "15M analysis flipped to SELL", points: 25 }, { code: "near_stop", label: "0.55R from the protected stop", points: 2 }],
+      ai: { path: "rules_only", model: null, text: "Severity 58 of 100 from the rules: 15M analysis flipped to SELL; Gave back 62% of the 1.48R peak; Moved 0.71 ATR against in 5 min. The rules suggest to tighten the stop to 2,463.9. Nothing changes unless you apply it." } }),
+  ];
+  const h = (o: any) => ({ rules_level: o.level, reasons: [], tp1_hit: false, ...o });
+  const history = [
+    h({ id: "h1", signal_id: "x1", symbol: "XRP/USDT", timeframe: "1h", side: 1, level: "TIGHTEN", severity: 63, created_at: NOW - 3 * H, expires_at: NOW - 2.5 * H,
+      status: "applied", status_at: NOW - 2.9 * H, status_reason: "applied by the admin at 0.5198", proposed_stop: 0.5176, shadow: { action: "TIGHTEN", applied: true, with_r: -0.42, without_r: -1.08, delta_r: 0.66 } }),
+    h({ id: "h2", signal_id: "x2", symbol: "DOGE/USDT", timeframe: "4h", side: -1, level: "CLOSE", severity: 81, created_at: NOW - 7 * H, expires_at: NOW - 6.5 * H,
+      status: "dismissed", status_at: NOW - 6.8 * H, status_reason: "dismissed by owner", shadow: { action: "CLOSE", applied: false, with_r: -0.31, without_r: 1.12, delta_r: -1.43 } }),
+    h({ id: "h3", signal_id: "x3", symbol: "BNB/USDT", timeframe: "1h", side: 1, level: "TIGHTEN", severity: 54, created_at: NOW - 9 * H, expires_at: NOW - 8.5 * H,
+      status: "expired", status_at: NOW - 8.3 * H, status_reason: "not applied within 30 minutes", proposed_stop: 583.1, shadow: { action: "TIGHTEN", applied: false, with_r: -0.55, without_r: -1.07, delta_r: 0.52 } }),
+    h({ id: "h4", signal_id: "x4", symbol: "LTC/USDT", timeframe: "12h", side: 1, level: "TIGHTEN", severity: 57, created_at: NOW - 20 * H, expires_at: NOW - 19.5 * H,
+      status: "rejected", status_at: NOW - 19.8 * H, status_reason: "no longer valid at the price now (71.40): the proposed stop is closer than 0.2 ATR to the price", proposed_stop: 71.32, shadow: null }),
+    h({ id: "h5", signal_id: "x5", symbol: "AAVE/USDT", timeframe: "4h", side: 1, level: "NONE", rules_level: "TIGHTEN", severity: 52, created_at: NOW - 26 * H, expires_at: NOW - 25.5 * H,
+      status: "downgraded", status_at: NOW - 26 * H, status_reason: "AI downgraded the rules' recommendation to no action", shadow: { action: "TIGHTEN", applied: false, with_r: 0.31, without_r: 0.85, delta_r: -0.54 } }),
+  ];
+  const agg = (n: number, saved: number, cost: number, helped: number, hurt: number) => ({ n, saved_r: saved, cost_r: cost, net_r: Math.round((saved + cost) * 100) / 100, helped, hurt });
+  return {
+    generated_at: NOW, enabled: true,
+    status: { last_check: NOW - 2 * M, watched: { coins: ["SOL", "AVAX", "ETH", "BTC"], calls: 3 }, day: new Date(NOW).toISOString().slice(0, 10),
+      today: { checks: 214, skipped_stale: 2, skipped_price: 0, errors: 0, created: 6, ai_calls: 4, no_valid_stop: 1 }, last_error: null },
+    live, history,
+    scoreboard: { ...agg(4, 1.18, -1.97, 2, 2), applied: agg(1, 0.66, 0, 1, 0), not_applied: agg(3, 0.52, -1.97, 1, 2),
+      by_level: { TIGHTEN: agg(3, 1.18, -0.54, 2, 1), CLOSE: agg(1, 0, -1.43, 0, 1) }, pending: 4, skipped: 0 },
+    config: { tighten_at: 50, close_at: 75, expires_min: 30, min_gap_atr: 0.2, fresh_m1_min: 3, persist_ticks: 3 },
+    note: "Recommend-only: nothing changes unless the admin applies it. Shadow results are net R estimates (same fees on both sides, funding ignored), from the record's own exit rules.",
   };
 }

@@ -475,3 +475,37 @@ CREATE TABLE IF NOT EXISTS leaderboard_winners (
   decided_at BIGINT NOT NULL,
   PRIMARY KEY (month, uid)
 );
+
+-- v2.19 Trade Guardian (4 Nov 2026, services/guardian.py): RECOMMEND-ONLY early warnings on open public calls for the
+-- admin (tighten the stop / close now). A recommendation never changes a call by itself: only the admin's Apply sends it
+-- through the normal adjust job (services/adjust.py). One row per recommendation (dedupe across ticks and restarts);
+-- `shadow` = what the call would have returned with vs without it (evidence; never touches the record).
+CREATE TABLE IF NOT EXISTS guardian_recs (
+  id TEXT PRIMARY KEY,
+  signal_id TEXT NOT NULL,
+  symbol TEXT NOT NULL,
+  timeframe TEXT NOT NULL,
+  side INTEGER NOT NULL,
+  level TEXT NOT NULL,                      -- TIGHTEN | CLOSE | NONE (Gemini downgraded the rules' TIGHTEN to no action)
+  rules_level TEXT NOT NULL,                -- what the rules said (dedupe key per call)
+  severity INTEGER NOT NULL,
+  created_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'live',      -- live | applied | dismissed | expired | rejected | void | superseded | downgraded
+  status_at BIGINT,
+  status_reason TEXT,
+  shadow TEXT,                              -- JSON once the call has closed
+  payload TEXT NOT NULL                     -- JSON: reasons, facts, levels, AI path / explanation
+);
+CREATE INDEX IF NOT EXISTS ix_guardian_recs_signal ON guardian_recs (signal_id, created_at);
+-- 1-minute candles of the coins with open calls (+ BTC), only the last few hours (incremental fetch)
+CREATE TABLE IF NOT EXISTS guardian_m1 (
+  symbol TEXT NOT NULL,
+  ts BIGINT NOT NULL,
+  open DOUBLE PRECISION NOT NULL,
+  high DOUBLE PRECISION NOT NULL,
+  low DOUBLE PRECISION NOT NULL,
+  close DOUBLE PRECISION NOT NULL,
+  volume DOUBLE PRECISION NOT NULL,
+  PRIMARY KEY (symbol, ts)
+);

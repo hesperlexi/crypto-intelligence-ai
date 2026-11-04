@@ -571,6 +571,55 @@ Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is p
   subscribe themselves (`useTickerThrottled` 1 s, table rows memoised) so the page does not re-render on every tick.
 - Preview: `dev/preview.tsx` mocks Binance klines (random walk ending at the sample price); `dev/seed.ts` has a
   `views/guardian` sample.
+## v2.19 Trade Guardian (admin, RECOMMEND-ONLY; owner-approved 4 Nov 2026, branch `guardian-v219`)
+- `services/guardian.py`, worker step `guardian` (after `hesper`) + `guardian_publish` (after `jobs`). Flag `GUARDIAN`
+  (default on; `GUARDIAN=0` off). No migration flag (nothing one-time; `guardian_mirror_checked` is a plain setting).
+  It NEVER changes a call: stop / targets / time limits run exactly as before; only the admin's Apply changes anything.
+- Each tick (GitHub Actions: ~5 min, cannot reliably go lower) every OPEN + FILLED `signals` call (also after TP1): 1m
+  candles of coins with open calls + BTC (provider `fetch_ohlcv(…,"1m")`, incremental SQLite cache `guardian_m1`, 3 h),
+  15m ATR. Deterministic points (constants at the top of the module): adverse move 5/15/60 min in ATR (≤30), distance to
+  the stop in force in R (`stop_in_force` = manage rules: admin stop, BE after TP1, TP1 after TP2; ≤25, halved after TP1),
+  give-back after TP1 (≤25), BTC shock against (1m ≥0.6 % / 15m ≥1.5 %; not for BTC / PAXG; ≤20), 1m volatility ratio
+  while moving against (≤15), own-TF analysis flipped (25) / grade lost (8), funding z ≥3 against (5, estimate; OI not
+  used: 2-day lag). Severity <50 nothing, 50–74 TIGHTEN, ≥75 CLOSE. Proposed stop (`propose_stop`): tighter of 15-min
+  1m extreme ± 0.1 ATR and price ∓ 1 ATR, ≥0.3 ATR from the price, ≥0.05 R tighter; validated (`stop_problem` ≥0.2 ATR,
+  right side, tighter) and by `adjust.validate`. Stale (1m >3 min, BTC stale for alts, analysis older than
+  `ANALYSIS_MAX_AGE_MS`, no ATR) → no recommendation, counted `skipped_stale`; 1m vs engine price >2 % → `skipped_price`.
+- Gemini (`second_opinion`): numbers only in, {explanation 2–3 sentences, verdict agree|downgrade}; may lower one step
+  (CLOSE→TIGHTEN, TIGHTEN→none = status `downgraded`), never raise; rejected when numbers not in the input / predictions /
+  advice (`ai_acceptable`: briefing checks + `ADVICE_RE`) → rules + template. Respects `briefing.ai_room` reserve, ≤3 calls
+  per tick. `ai.path` ai_agreed | ai_downgraded | rules_only | ai_rejected.
+- Table `guardian_recs` (status live | applied | dismissed | expired | rejected | void | superseded | downgraded). Dedupe
+  (`should_create`): one per call per rules level; escalation TIGHTEN→CLOSE supersedes; after expired / rejected / void /
+  downgraded only when the band persisted `PERSIST_TICKS` (3) ticks; applied / dismissed block that level. Expiry 30 min
+  (+10 min grace for a click made in time). Lost DB: rows restored once from `views/guardian`.
+- Admin push (no uid, no broadcast; skipped if `ADMIN_EMAILS` empty) per new live recommendation; optional private
+  Telegram DM only with env `GUARDIAN_TELEGRAM_CHAT` (refused if it equals the public channel). Never in `decisions`
+  (member-readable `decisions_recent`).
+- Apply = job `adjust_signal` with `guardian_id` (TIGHTEN: `stop` = the proposed level exactly; CLOSE: `action: close`):
+  admin check, `request_problem` (wrong level / signal → refused, recommendation stays live), `revalidate` (expired, call
+  closed / pending / changed after the recommendation, price too close) → marked rejected / expired; then exactly
+  `adjust.apply` / `adjust.close` (bots, Hesper, member broadcast) → applied. Dismiss = job `guardian_dismiss` (admin only).
+- Shadow (`shadow_outcome`, when the call closes): `tracking.evaluate_signal` with vs without the change at the
+  recommendation time (applied ones: without = minus the applied adjustment), net R = (return − cost) / original risk %
+  (funding ignored, same both sides). `scoreboard`: net / saved / cost, applied vs not, by level. Never writes `signals`.
+- `views/guardian` (admin only in the rules; rules tests "guardian: …"): status, live, last 50 history, scoreboard,
+  config; hash-dedup, `min_interval_s` 1800 with `core` = recommendation ids + states → ≈48 status writes/day + one per
+  change (≈60–100/day typical); lean mode: only a new CLOSE. Reads: 0 per tick (1 once after a lost DB; 1 per Telegram
+  DM if enabled). Page `/guardian` (`pages/Guardian.tsx`, Admin menu "Trade Guardian"), seed `dev/seed.ts guardian()`.
+  Tests `tests/test_guardian.py`.
+## Health command centre v2.19 (admin, 4 Nov 2026, branch `health-v219`, frontend only)
+`pages/Health.tsx` rebuilt as a command centre (layout only; nothing dropped): KPI row (Engine LIVE/LATE/STALE + last cycle,
+writes today vs lean point / 20,000 with bar, reads vs 50,000, open record calls + closed since restart → Results) ·
+"System health" service tiles (dot ok / warn / down / off; tap opens + scrolls to the matching details): engine loop,
+market data, futures data (funding map in `views/bots`), news & calendar (`views/news` generated_at / errors), Telegram
+(`owner/telegram_status`), training, fail-safe checks, safety switch, database / lean, live prices; a "Trade Guardian"
+tile linking `/guardian` appears only when `views/guardian` exists · open signals (top 5, Oldest / Newest, side bar) ·
+data sources with freshness · models summary (active, edge, oldest, libraries) · demo bots (return since restart,
+open / closed) · safeguards (safety switch + fail-safe lists). Collapsible details: database use, engine &
+configuration, market data + candle series table, models table, recent errors (count badge). Not in any view yet
+(so not shown): Gemini calls today, backup age, Hyperliquid history freshness. Preview seed: `views/bots`,
+`owner/telegram_status`, `views/news.generated_at`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
@@ -582,7 +631,7 @@ record / weekly report / achievements / wins_today `views.py` + `pages/Results.t
 instructions) · Promo video `frontend/public/demo.mp4` (70 s, original soundtrack).
 
 Member menu: Home · Signals · Trade · News · Radar · Results · Community · Alerts · Settings. Owner extras: Weekly report,
-Achievements, Health, Road to Rich, Users.
+Achievements, Health, Road to Rich, Trade Guardian, Users.
 
 ## 31 Oct 2026 features (branch `features-oct31`)
 - Sign-in: Google or email + password (`lib/account.ts`, `components/AuthPanel.tsx`: sign in / create / forgot, "Check your

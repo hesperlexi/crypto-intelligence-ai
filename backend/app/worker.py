@@ -32,6 +32,7 @@ from .data import derivs
 from .services import hesper, scalp_backfill
 from .services import briefing, coin_reports
 from .services import leaderboard, referrals
+from .services import guardian
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -815,10 +816,20 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
             raise PermissionError("only the admin can change a signal's stop-loss or take-profit")
         from .services import adjust
         try:
+            if p.get("guardian_id"):                 # v2.19 Trade Guardian: re-validated, then the same adjust path
+                return guardian.approve(rt, p, str(job.get("by") or ""), sink, job_created_at=job.get("created_at"))
             if p.get("action") == "close":           # v2.8: close the call now at the market price
                 return adjust.close(rt, p, str(job.get("by") or ""), sink)
             return adjust.apply(rt, p, str(job.get("by") or ""), sink)
         except adjust.AdjustError as exc:
+            raise ValueError(str(exc)) from None
+    if kind == "guardian_dismiss":
+        # v2.19: admin only (job creator's email), like adjust_signal; nothing about the call changes
+        if not job.get("_admin"):
+            raise PermissionError("only the admin can dismiss a Trade Guardian recommendation")
+        try:
+            return guardian.dismiss(rt, p, str(job.get("by") or ""))
+        except guardian.GuardianError as exc:
             raise ValueError(str(exc)) from None
     if kind == "backtest":
         p = {**p, "symbol": norm_symbol(p["symbol"])}
@@ -895,7 +906,7 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             result = run_job(rt, job, deadline, sink)
             sink.set(f"jobs/{jid}", {"status": "done", "json": dumps(result), "finished_at": now_ms()}, merge=True)
         except Exception as exc:
-            plain = job.get("type") == "adjust_signal" and isinstance(exc, (PermissionError, ValueError))
+            plain = job.get("type") in ("adjust_signal", "guardian_dismiss") and isinstance(exc, (PermissionError, ValueError))
             if not plain:
                 log.exception("job %s failed", jid)
             # adjust_signal refusals carry a plain-language reason for the admin (no exception class name)
@@ -1231,11 +1242,17 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # Road to Rich (admin, 2 Nov 2026): Hesper's all-in demo runs - its own step and tables, after the bots
     detail["hesper"] = len(step("hesper", lambda: hesper.Hesper(rt).run(started)) or [])
+    # v2.19 Trade Guardian (admin, recommend-only): early warnings on open calls; never changes a call by itself and
+    # never blocks the tick (it catches its own errors; the step wrapper catches anything else)
+    if guardian.ENABLED:
+        detail["guardian"] = step("guardian", lambda: guardian.Guardian(rt, sink).run(analyses))
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
     detail["written_early"] = step("publish_early", sink.flush) or 0
     rt.adjusted_ids = set()
     detail["jobs"] = step("jobs", lambda: process_jobs(rt, sink, deadline))
+    if guardian.ENABLED:                     # an Apply / Dismiss changed a recommendation: show it this cycle (hash-dedup)
+        step("guardian_publish", lambda: guardian.Guardian(rt, sink).publish())
     if rt.adjusted_ids:                      # an admin changed a call's stop / TP1: publish the new levels this cycle
         for (s, tf), a in analyses.items():
             if (a.get("call") or {}).get("id") in rt.adjusted_ids:
