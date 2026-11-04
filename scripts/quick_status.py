@@ -55,3 +55,15 @@ out["counts"] = {c: sum(1 for _ in fs.collection(c).select([]).stream()) for c i
 bots = fs.document("config/bots").get().to_dict() or {}
 out["bots"] = [{"id": b.get("id"), "reset_token": b.get("reset_token")} for b in bots.get("bots", [])]
 print(json.dumps(out, indent=1, default=str))
+# notifications check (no secrets: booleans, kinds and counts only)
+tg = fs.document("owner/telegram").get().to_dict() or {}
+out["telegram"] = {"has_token": bool(tg.get("token")), "has_channel": bool(tg.get("channel")),
+                   **{k: v for k, v in tg.items() if k.startswith(("enabled", "approve_first", "post_"))}}
+st = fs.document("owner/telegram_status").get().to_dict() or {}
+out["telegram_status"] = {k: st.get(k) for k in ("ok", "checked_at", "last_sent", "last_post_at", "updated_at")}
+out["telegram_status"]["errors"] = len(st.get("errors") or [])
+out["telegram_drafts"] = sum(1 for _ in fs.collection("owner").document("telegram_drafts").collections()) if False else None
+dr = fs.document("owner/telegram_drafts").get().to_dict() or {}
+out["telegram_drafts"] = {"n": len(dr.get("items") or dr.get("drafts") or []), "keys": sorted(dr.keys())[:10]}
+out["push_tokens"] = sum(1 for _ in fs.collection("push_tokens").select([]).stream())
+print(json.dumps({k: out[k] for k in ("telegram", "telegram_status", "telegram_drafts", "push_tokens")}, indent=1, default=str))
