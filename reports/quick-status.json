@@ -29,10 +29,10 @@
  "views": {
   "15m": {
    "rows": 25,
-   "updated": 1793802151554,
-   "with_plan": 10,
+   "updated": 1793806562229,
+   "with_plan": 21,
    "grades": {
-    "None": 10
+    "None": 21
    },
    "statuses": [
     "OK"
@@ -41,10 +41,10 @@
   },
   "1h": {
    "rows": 25,
-   "updated": 1793802151558,
-   "with_plan": 13,
+   "updated": 1793806562233,
+   "with_plan": 20,
    "grades": {
-    "None": 13
+    "None": 20
    },
    "statuses": [
     "OK"
@@ -53,10 +53,10 @@
   },
   "4h": {
    "rows": 25,
-   "updated": 1793802151561,
-   "with_plan": 15,
+   "updated": 1793806562236,
+   "with_plan": 14,
    "grades": {
-    "None": 15
+    "None": 14
    },
    "statuses": [
     "OK"
@@ -65,7 +65,7 @@
   },
   "12h": {
    "rows": 25,
-   "updated": 1793801904650,
+   "updated": 1793805546404,
    "with_plan": 19,
    "grades": {
     "None": 19
@@ -77,10 +77,10 @@
   },
   "1d": {
    "rows": 25,
-   "updated": 1793801904654,
-   "with_plan": 23,
+   "updated": 1793805546409,
+   "with_plan": 22,
    "grades": {
-    "None": 23
+    "None": 22
    },
    "statuses": [
     "OK"
@@ -89,7 +89,7 @@
   },
   "3d": {
    "rows": 25,
-   "updated": 1793801904657,
+   "updated": 1793805546412,
    "with_plan": 11,
    "grades": {
     "None": 11
@@ -104,7 +104,7 @@
  "view_sizes_kb": [
   [
    "signals",
-   248.2
+   248.9
   ],
   [
    "performance",
@@ -116,14 +116,18 @@
   ],
   [
    "track_record",
-   46.7
+   47.6
+  ],
+  [
+   "dashboard_15m",
+   45.6
   ],
   [
    "dashboard_1w",
    44.8
   ],
   [
-   "futures_1d",
+   "bots",
    44.7
   ],
   [
@@ -131,7 +135,11 @@
    44.2
   ],
   [
-   "dashboard_15m",
+   "futures_15m",
+   44.2
+  ],
+  [
+   "dashboard_12h",
    44.0
   ],
   [
@@ -139,16 +147,20 @@
    44.0
   ],
   [
-   "dashboard_12h",
-   43.9
+   "futures_1d",
+   43.6
   ],
   [
    "dashboard_1d",
-   43.2
+   43.3
   ],
   [
    "models_XLMUSDT_1d",
    42.9
+  ],
+  [
+   "futures_1h",
+   42.5
   ],
   [
    "models_HBARUSDT_12h",
@@ -164,7 +176,7 @@
   ],
   [
    "futures_12h",
-   41.3
+   41.5
   ],
   [
    "dashboard_3d",
@@ -179,10 +191,6 @@
    39.0
   ],
   [
-   "futures_4h",
-   38.8
-  ],
-  [
    "models_ADAUSDT_1d",
    38.4
   ],
@@ -193,29 +201,21 @@
   [
    "models_XLMUSDT_4h",
    38.3
-  ],
-  [
-   "models_BCHUSDT_1d",
-   38.1
-  ],
-  [
-   "models_TRXUSDT_1d",
-   38.0
   ]
  ],
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1793801911441,
-   "last_tick_finished": 1793802065719,
-   "last_tick_seconds": 154.3,
+   "last_tick_started": 1793806316286,
+   "last_tick_finished": 1793806473139,
+   "last_tick_seconds": 156.9,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 5,
-   "ticks": 2545,
-   "firestore_writes_today": 4535,
+   "ticks": 2559,
+   "firestore_writes_today": 5292,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 2616,
+   "firestore_reads_today": 3044,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -354,127 +354,127 @@
   "series_15m": [
    {
     "symbol": "BTC/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "LTC/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 30855,
+    "candles": 30860,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 30855,
+    "candles": 30860,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 30855,
+    "candles": 30860,
     "status": "OK"
    },
    {
     "symbol": "PAXG/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 30856,
+    "candles": 30861,
     "status": "OK"
    },
    {
     "symbol": "GALA/USDT",
-    "candles": 30462,
+    "candles": 30467,
     "status": "OK"
    },
    {
     "symbol": "NVDAB/USDT",
-    "candles": 14002,
+    "candles": 14007,
     "status": "OK"
    },
    {
     "symbol": "ZEC/USDT",
-    "candles": 30853,
+    "candles": 30858,
     "status": "OK"
    },
    {
     "symbol": "MSTRB/USDT",
-    "candles": 12868,
+    "candles": 12873,
     "status": "OK"
    },
    {
     "symbol": "UNI/USDT",
-    "candles": 30855,
+    "candles": 30860,
     "status": "OK"
    },
    {
     "symbol": "SPCXB/USDT",
-    "candles": 13910,
+    "candles": 13915,
     "status": "OK"
    },
    {
     "symbol": "TRX/USDT",
-    "candles": 30854,
+    "candles": 30859,
     "status": "OK"
    },
    {
     "symbol": "U/USDT",
-    "candles": 28346,
+    "candles": 28351,
     "status": "OK"
    },
    {
     "symbol": "ADA/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    },
    {
     "symbol": "DOT/USDT",
-    "candles": 30856,
+    "candles": 30861,
     "status": "OK"
    },
    {
     "symbol": "SUI/USDT",
-    "candles": 30855,
+    "candles": 30860,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 30855,
+    "candles": 30860,
     "status": "OK"
    },
    {
     "symbol": "NEAR/USDT",
-    "candles": 30857,
+    "candles": 30862,
     "status": "OK"
    }
   ]
@@ -483,37 +483,37 @@
   "15m": {
    "n": 25,
    "fresh_12h": 0,
-   "max": 212.8,
+   "max": 214.0,
    "missing": 0
   },
   "1h": {
    "n": 25,
-   "fresh_12h": 20,
-   "max": 179.3,
+   "fresh_12h": 0,
+   "max": 180.5,
    "missing": 0
   },
   "4h": {
    "n": 25,
-   "fresh_12h": 20,
-   "max": 179.1,
+   "fresh_12h": 0,
+   "max": 180.4,
    "missing": 0
   },
   "12h": {
    "n": 25,
-   "fresh_12h": 17,
-   "max": 179.2,
+   "fresh_12h": 0,
+   "max": 180.4,
    "missing": 3
   },
   "1d": {
    "n": 25,
-   "fresh_12h": 16,
-   "max": 179.1,
+   "fresh_12h": 0,
+   "max": 180.3,
    "missing": 4
   },
   "3d": {
    "n": 25,
-   "fresh_12h": 15,
-   "max": 179.1,
+   "fresh_12h": 0,
+   "max": 180.3,
    "missing": 5
   }
  },
@@ -632,14 +632,14 @@
  },
  "safety": [],
  "release": {
-  "updated_at": 1793386630880,
   "version": "2.1.0",
+  "updated_at": 1793386630880,
   "launched_at": 1793386630880
  },
  "track_record": {
   "record_since": 1793784369962,
-  "live_signals": 2,
-  "updated": 1793802151549
+  "live_signals": 3,
+  "updated": 1793806562222
  },
  "record_live": {
   "summary": {
@@ -679,10 +679,11 @@
    }
   },
   "signals_by_status": {
-   "OPEN": 1,
+   "OPEN": 2,
    "TP2": 1
   },
   "signals_by_timeframe": {
+   "12h": 1,
    "15m": 1,
    "4h": 1
   }
@@ -690,9 +691,9 @@
  "counts": {
   "paper": 4,
   "paper_trades": 0,
-  "paper_futures_trades": 35,
+  "paper_futures_trades": 36,
   "auto_paper_state": 4,
-  "jobs": 27
+  "jobs": 30
  },
  "bots": [
   {
@@ -719,16 +720,14 @@
    "id": "futures-signal-ab-3d",
    "reset_token": "v218"
   }
- ]
-}
-{
+ ],
  "telegram": {
   "has_token": true,
   "has_channel": true,
-  "enabled": true,
   "post_weekly": true,
-  "post_wins": true,
+  "enabled": true,
   "post_teaser": true,
+  "post_wins": true,
   "keys": [
    "channel",
    "enabled",
@@ -740,7 +739,7 @@
  },
  "telegram_status": {
   "ok": true,
-  "checked_at": 1793799393613,
+  "checked_at": 1793803016559,
   "last_sent": [
    "win"
   ],
@@ -758,5 +757,32 @@
    }
   ]
  },
- "push_tokens": 7
+ "push_tokens": 7,
+ "telegram_post_jobs": [
+  {
+   "status": "queued",
+   "created_at": 1793806534225,
+   "error": ""
+  },
+  {
+   "status": "failed",
+   "created_at": 1793806113000,
+   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+  },
+  {
+   "status": "failed",
+   "created_at": 1793805257456,
+   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+  },
+  {
+   "status": "failed",
+   "created_at": 1793804887179,
+   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+  },
+  {
+   "status": "failed",
+   "created_at": 1793803590636,
+   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+  }
+ ]
 }
