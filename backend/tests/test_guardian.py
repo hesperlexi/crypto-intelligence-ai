@@ -602,7 +602,7 @@ def test_view_size_and_writes(monkeypatch):
     sink, _ = _sink(rt)
     run(rt, {SYM: drop(98.6), "BTC/USDT": BTC_DUMP}, decision="SELL", sink=sink)
     assert sink.flush() == 1                                        # the new recommendation went out at once
-    # a calm tick a few minutes later: only the status line changed -> held back (<= every 30 min)
+    # a calm tick a few minutes later: only the status line changed -> held back until the next engine run (PUBLISH_EVERY_S)
     run(rt, {SYM: calm(98.7), "BTC/USDT": BTC_CALM}, decision="SELL", sink=sink, now=NOW + 5 * MIN)
     assert sink.flush() == 0
     # 300 recommendations in history: the document stays small (live + last 50)

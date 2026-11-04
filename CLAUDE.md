@@ -604,8 +604,7 @@ Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is p
   recommendation time (applied ones: without = minus the applied adjustment), net R = (return − cost) / original risk %
   (funding ignored, same both sides). `scoreboard`: net / saved / cost, applied vs not, by level. Never writes `signals`.
 - `views/guardian` (admin only in the rules; rules tests "guardian: …"): status, live, last 50 history, scoreboard,
-  config; hash-dedup, `min_interval_s` 1800 with `core` = recommendation ids + states → ≈48 status writes/day + one per
-  change (≈60–100/day typical); lean mode: only a new CLOSE. Reads: 0 per tick (1 once after a lost DB; 1 per Telegram
+  config; hash-dedup, `min_interval_s` `PUBLISH_EVERY_S` 240 (v2.21; was 1800, "Last check" looked late) → ≤≈288 writes/day; lean mode: only a new CLOSE. Reads: 0 per tick (1 once after a lost DB; 1 per Telegram
   DM if enabled). Page `/guardian` (`pages/Guardian.tsx`, Admin menu "Trade Guardian"), seed `dev/seed.ts guardian()`.
   Tests `tests/test_guardian.py`.
 ## Health command centre v2.19 (admin, 4 Nov 2026, branch `health-v219`, frontend only)

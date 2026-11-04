@@ -51,6 +51,7 @@ from ..pricefmt import fmt_price
 log = logging.getLogger(__name__)
 
 # ---- switches and thresholds (config constants) --------------------------------------------------------------------
+PUBLISH_EVERY_S = int(os.environ.get("GUARDIAN_PUBLISH_EVERY_S", "240"))   # ~288 writes/day at most (free plan OK)
 ENABLED = os.environ.get("GUARDIAN", "1") != "0"     # admin-only output, recommend-only; GUARDIAN=0 switches it off
 MIN = 60_000
 M1_BARS = 100                       # 1-minute candles used per coin (60-minute window + 15/60 volatility baseline)
@@ -796,7 +797,7 @@ class Guardian:
                         "(same fees on both sides, funding ignored), from the record's own exit rules."}
 
     def publish(self, force_close: bool = False) -> bool:
-        """Queue views/guardian: written only when it changed (hash), the status line at most every 30 min, a change of
+        """Queue views/guardian: written only when it changed (hash), the status line every engine run, a change of
         recommendations at once. In lean mode only a new CLOSE recommendation goes out."""
         if self.sink is None:
             return False
@@ -806,7 +807,8 @@ class Guardian:
             self.save(st)
             return False
         v = self.view()
-        self.sink.view(VIEW, v, volatile=("generated_at",), min_interval_s=1800, core=view_core(v))
+        # v2.21 (owner, 4 Nov 2026: "updating late"): every engine run (was 30 min, so "Last check" looked late)
+        self.sink.view(VIEW, v, volatile=("generated_at",), min_interval_s=PUBLISH_EVERY_S, core=view_core(v))
         return True
 
 
