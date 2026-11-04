@@ -179,7 +179,7 @@ export default function Report() {
             {r.closed ? (
               <ul className="space-y-1">
                 {(r.best ?? []).concat(r.closed > 5 && r.worst ? [r.worst] : []).map((t: any, k: number) => (
-                  <li key={k} className="flex items-center justify-between gap-3 border-b border-glass/[0.05] py-1.5 last:border-0"><span className="flex items-center gap-1.5"><span className="font-semibold">{base(t.symbol)}</span> <span className={`text-xs font-bold ${t.side === "LONG" ? "text-bull" : "text-bear"}`}>{t.side}</span> <span className="text-xs text-mute">{String(t.timeframe).toUpperCase()}</span></span><RoiFigure x={t} size="sm" /></li>
+                  <li key={k} className="flex items-center justify-between gap-3 border-b border-glass/[0.05] py-1.5 last:border-0"><span className="flex min-w-0 flex-wrap items-center gap-x-1.5"><span className="font-semibold">{base(t.symbol)}</span> <span className={`text-xs font-bold ${t.side === "LONG" ? "text-bull" : "text-bear"}`}>{t.side}</span> <span className="text-xs text-mute">{String(t.timeframe).toUpperCase()}</span></span><RoiFigure x={t} size="sm" /></li>
                 ))}
               </ul>
             ) : <p className="text-mute">No signals closed in this week yet.</p>}

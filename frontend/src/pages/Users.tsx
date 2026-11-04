@@ -703,9 +703,9 @@ function UserCard({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any
         </dl>
       </details>
 
-      <div className="mt-auto flex items-center gap-2 pt-3">
-        {a.picker("w-auto max-w-[44%] shrink")}
-        {a.primary("min-w-0 flex-1")}
+      <div className="mt-auto flex items-center gap-2 pt-3 max-[359px]:flex-wrap">
+        {a.picker("w-auto max-w-[44%] shrink max-[359px]:max-w-none max-[359px]:flex-1")}
+        {a.primary("min-w-0 flex-1 max-[359px]:min-w-[7rem]")}
         <ActionMenu items={a.menu} u={u} />
       </div>
       {a.mismatch && <p className="mt-2 text-xs text-warn">The proof is for {p.amount} {p.currency}; the current price of this plan is ${a.price}.</p>}

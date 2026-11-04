@@ -93,7 +93,7 @@ function ThemePicker() {
             </span>
             <span className="min-w-0 pl-1 pr-6">
               <span className={`block truncate text-sm font-semibold ${on ? "text-accent" : "text-text"}`}>{t.name}</span>
-              <span className="block text-xs leading-snug text-mute">{t.sub}</span>
+              <span className="block hyphens-auto text-xs leading-snug text-mute">{t.sub}</span>
             </span>
           </button>
         );

@@ -153,7 +153,7 @@ export function RoiFigure({ x, size = "md", align = "right", label = true }: { x
         {r.leverage && <LevChip lev={r.leverage} />}
       </span>
       {label && (
-        <span className="num whitespace-nowrap text-xs leading-none text-mute">
+        <span className="num text-xs leading-tight text-mute sm:whitespace-nowrap sm:leading-none">
           {roiLabel(r)}
         </span>
       )}

@@ -180,7 +180,7 @@ export default function Landing({ error }: { error: string | null }) {
             return (
               <div key={s} className="coin-tile p-3">
                 <div className="flex items-center gap-2"><CoinAvatar symbol={s} size={24} /><span className="font-semibold">{base(s)}</span></div>
-                <div className="num mt-2 text-lg font-semibold">{t?.last != null ? fmtPrice(t.last) : "—"}</div>
+                <div className="num mt-2 truncate text-base font-semibold min-[360px]:text-lg">{t?.last != null ? fmtPrice(t.last) : "—"}</div>
                 <div className={`num text-xs ${t?.change_pct == null ? "text-mute" : t.change_pct >= 0 ? "text-bull" : "text-bear"}`}>{t?.change_pct != null ? `${fmtPctRaw(t.change_pct)} 24h` : "live"}</div>
               </div>
             );

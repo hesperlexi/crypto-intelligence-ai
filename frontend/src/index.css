@@ -616,3 +616,10 @@ a.hero-metric:hover { background: rgb(var(--glass) / 0.035); }
   .all-call { text-align: left; }
 }
 .tf-chip { display: inline-flex; height: 18px; flex-shrink: 0; align-items: center; border-radius: 4px; padding: 0 5px; font-size: 12px; font-weight: 700; line-height: 1; color: rgb(var(--mute)); background: rgb(var(--glass) / 0.06); box-shadow: 0 0 0 1px var(--hair) inset; }
+
+/* Small screens (v2.18, Z Fold cover ≥ 280 px): the phone More sheet's link grid fits as many ≥ 7.25rem columns as the
+   sheet holds (3 on wide phones, 2 on most, 1 below ~260 px of sheet); labels wrap inside their cell, left-aligned. */
+.more-grid { grid-template-columns: repeat(auto-fill, minmax(7.25rem, 1fr)); }
+.nav-sheet .more-grid .nav-link { white-space: normal; line-height: 1.25; gap: 0.25rem; overflow-wrap: break-word; }
+/* below 360 px a segmented control's buttons may be narrower (36 px, still 44 px tall) so six timeframes fit one row */
+@media (max-width: 359px) { .seg > button { min-width: 36px; padding-left: 0.4rem; padding-right: 0.4rem; } }

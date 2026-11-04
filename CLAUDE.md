@@ -426,6 +426,14 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   (app-wide, Android app without Chrome), `useApkInfo` / `apkVersion` (APK "v2.1.0 (run number)" from `/download/android.json`).
   Settings → About shows "v<version> · build <BUILD_ID>"; the landing footer has an "Android app (APK)" link.
 - Removed dead files: `pages/Futures.tsx`, `pages/Track.tsx`, `components/Scalping.tsx`, `lib/scalpCard.ts`.
+- Small screens ≥ 280 px (Z Fold cover, 4 Nov 2026, branch `fold-v218`): tested at 280/320/344/360/390. No custom screen
+  (an `xs` in `extend.screens` would sort after `sm`); use `max-[359px]:` / `min-[360px]:` (and `min-[340px]`/`min-[380px]`
+  for the header wordmark: logo only < 340, "Crypto Intel AI" < 380). More sheet: `.more-grid` (auto-fill
+  minmax(7.25rem) → 3 / 2 / 1 columns), labels wrap in their cell, Count `shrink-0`; the panel scrolls, the wrapper
+  spans top→bar with `pointer-events-none`. `.seg` buttons 36 px wide (44 tall) < 360 so six timeframes fit a row.
+  ROI / Live labels (`RoiFigure`, `LiveRoi`) wrap on phones (`sm:whitespace-nowrap`); Track record phone cards put the
+  result on its own row < 360. Coin tiles < 360: 28 px logo, `text-base` price, badge row wraps. Check for overlaps
+  with a mobile-emulated browser at a fixed width: `innerWidth` grows when content overflows, so compare to the set width.
 
 ## v2.16 growth: coins, AI briefing & coin reports, Telegram funnel, smarter alerts, 7-day card (4 Nov 2026, branch `growth-v216`)
 Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is paid for by write savings in the same change.

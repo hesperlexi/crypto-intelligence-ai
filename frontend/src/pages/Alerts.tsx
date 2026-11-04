@@ -122,7 +122,7 @@ export default function Alerts() {
             : perm === "unsupported" ? <span className="text-mute">not supported here{/iphone|ipad/i.test(navigator.userAgent) ? " — add the app to your Home Screen first" : ""}</span>
             : <span className="text-mute">off</span>}
         </span>
-        <span className="flex gap-2">
+        <span className="flex flex-wrap gap-2">
           {perm !== "granted" && perm !== "unsupported" && <button className="btn btn-primary px-3 py-1 text-xs" onClick={turnOn}>{perm === "denied" ? "Try again" : "Turn on"}</button>}
           <Link className="btn px-3 py-1 text-xs" to="/settings#notifications">Notification settings</Link>
         </span>

@@ -239,7 +239,7 @@ function AndroidCard() {
   const info = useApkInfo();
   return (
     <Card title="Install the app">
-      <a className="btn btn-primary w-full justify-center py-3 text-base" href={info?.url ?? push.APK_URL}>⬇ Download the Android app (APK){apkVersion(info)}</a>
+      <a className="btn btn-primary w-full justify-center !whitespace-normal py-3 text-center text-base" href={info?.url ?? push.APK_URL}>⬇ Download the Android app (APK){apkVersion(info)}</a>
       <p className="mt-1 text-xs text-mute">Needs Google Chrome on the phone.</p>
       <p className="mt-3 text-sm"><b>Android (Chrome):</b> open <span className="text-accent">{SITE_HOST}</span> → menu ⋮ → <b>Install app</b>.</p>
       <p className="mt-1 text-sm"><b>iPhone (Safari):</b> Share → <b>Add to Home Screen</b>.</p>

@@ -137,7 +137,7 @@ export function LiveRoi({ x, size = "sm", plain = false }: { x: any; size?: "sm"
     return (
       <span className="inline-flex flex-col items-end gap-0.5 text-right" title="Live return of the trade, from the current price vs the entry (no leverage). Before fees; not a result until the call closes.">
         <span className={`num font-bold leading-none ${size === "md" ? "text-lg" : "text-sm"} ${c}`}>{fmtPctRaw(l.move, 2)}</span>
-        <span className="num whitespace-nowrap text-xs leading-none text-mute"><span className="font-semibold text-accent">Live</span> · return</span>
+        <span className="num text-xs leading-tight text-mute sm:whitespace-nowrap sm:leading-none"><span className="font-semibold text-accent">Live</span> · return</span>
       </span>
     );
   }
@@ -150,7 +150,7 @@ export function LiveRoi({ x, size = "sm", plain = false }: { x: any; size?: "sm"
         <span className={`num font-bold leading-none ${size === "md" ? "text-lg" : "text-sm"} ${cls}`}>{fmtPctRaw(v, 2)}</span>
         {l.roi != null && l.lev && <LevChip lev={l.lev} />}
       </span>
-      <span className="num whitespace-nowrap text-xs leading-none text-mute"><span className="font-semibold text-accent">Live</span> · {l.roi != null ? <>ROI on margin · price {fmtPctRaw(l.move, 2)}</> : "price move"}</span>
+      <span className="num text-xs leading-tight text-mute sm:whitespace-nowrap sm:leading-none"><span className="font-semibold text-accent">Live</span> · {l.roi != null ? <>ROI on margin · price {fmtPctRaw(l.move, 2)}</> : "price move"}</span>
     </span>
   );
 }

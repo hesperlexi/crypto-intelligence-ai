@@ -61,7 +61,7 @@ export default function Leaderboard() {
                 <li key={r.username} className={`flex items-center gap-3 px-4 py-2.5 ${mine ? "bg-accent/[0.06]" : ""}`} aria-current={mine ? "true" : undefined}>
                   <span className={`num w-8 shrink-0 text-right text-sm font-semibold ${r.rank <= 3 ? "text-accent" : "text-mute"}`}>#{r.rank}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-medium">@{r.username} <Medal months={v.badges[r.username]} />{mine && <Badge tone="accent" className="ml-1">you</Badge>}</span>
+                    <span className="flex min-w-0 items-center gap-1 text-sm font-medium"><span className="truncate">@{r.username}</span><span className="shrink-0"><Medal months={v.badges[r.username]} /></span>{mine && <Badge tone="accent" className="shrink-0">you</Badge>}</span>
                     <span className="num block text-xs text-mute">{r.trades} closed trades</span>
                   </span>
                   <span className={`num shrink-0 text-base font-semibold ${tone(r.return_pct)}`}>{pct(r.return_pct)}</span>

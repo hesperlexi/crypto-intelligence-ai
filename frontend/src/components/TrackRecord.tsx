@@ -143,15 +143,16 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                     const [lab, cls] = statusOf(x);
                     return (
                       <li key={i} {...rowProps(x)} className="cursor-pointer px-4 py-3 outline-none transition-colors hover:bg-glass/[0.03] focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex min-w-0 items-center gap-2.5">
+                        {/* below 360 px (Z Fold cover) the result takes its own row under the coin, so neither is squeezed */}
+                        <div className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1.5 min-[360px]:flex-nowrap">
+                          <div className="flex min-w-0 flex-1 items-center gap-2.5">
                             <CoinAvatar symbol={x.symbol} size={30} />
                             <div className="min-w-0">
-                              <div className="flex items-center gap-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span>{x.grade && <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded border px-1 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}</div>
-                              <div className={`mt-0.5 whitespace-nowrap text-xs font-semibold ${cls}`}>{lab} <span className="num font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
+                              <div className="flex flex-wrap items-center gap-x-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span>{x.grade && <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded border px-1 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}</div>
+                              <div className={`mt-0.5 text-xs font-semibold ${cls}`}>{lab} <span className="num whitespace-nowrap font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
                             </div>
                           </div>
-                          {isOpen(x) ? <LiveRoi x={x} size="md" /> : <RoiFigure x={x} size="md" />}
+                          <div className="shrink-0 text-right max-[359px]:basis-full min-[360px]:max-w-[45%]">{isOpen(x) ? <LiveRoi x={x} size="md" /> : <RoiFigure x={x} size="md" />}</div>
                         </div>
                         <dl className="num mt-2 grid grid-cols-3 gap-2 text-xs">
                           <div><dt className="text-mute">Entry</dt><dd className="font-medium">{fmtPrice(x.entry)}</dd></div>

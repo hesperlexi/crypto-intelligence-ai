@@ -104,18 +104,19 @@ function CoinTile({ w, row, edit, admin, onPin, onRemove }: { w: any; row?: any;
   const canRemove = admin ? !w.mine : !!w.mine;
   return (
     <div className={`coin-tile group relative ${w.mine ? "coin-tile-mine" : ""}`}>
-      <Link to={`/asset/${slug(w.symbol)}`} className="block p-3">
-        <div className="flex items-center gap-2.5">
-          <CoinAvatar symbol={w.symbol} />
+      <Link to={`/asset/${slug(w.symbol)}`} className="block p-2.5 min-[360px]:p-3">
+        <div className="flex min-w-0 items-center gap-2 min-[360px]:gap-2.5">
+          {/* below 360 px a 28 px logo leaves room for "★ DOGE" in a two-column tile */}
+          <span className="shrink-0 max-[359px]:[&>*]:!h-7 max-[359px]:[&>*]:!w-7 max-[359px]:[&>*]:!text-[10px]"><CoinAvatar symbol={w.symbol} /></span>
           <div className="min-w-0">
-            <div className="flex items-center gap-1 font-semibold leading-tight">{w.pinned ? <span className="text-warn" aria-label="pinned">★</span> : null}{base(w.symbol)}</div>
+            <div className="flex min-w-0 items-center gap-1 font-semibold leading-tight">{w.pinned ? <span className="shrink-0 text-warn" aria-label="pinned">★</span> : null}<span className="truncate">{base(w.symbol)}</span></div>
             <div className="text-xs text-mute">{w.mine ? "your coin" : "USDT"}</div>
           </div>
         </div>
-        <div className={`num mt-2.5 truncate text-lg font-semibold transition-colors duration-500 ${flash === "up" ? "text-bull" : flash === "down" ? "text-bear" : ""}`}>{fmtPrice(price)}</div>
-        <div className="mt-1 flex items-center justify-between gap-1">
+        <div className={`num mt-2.5 truncate text-base font-semibold min-[360px]:text-lg transition-colors duration-500 ${flash === "up" ? "text-bull" : flash === "down" ? "text-bear" : ""}`}>{fmtPrice(price)}</div>
+        <div className="mt-1 flex flex-wrap items-center justify-between gap-1">
           <span className={`num rounded-md px-1.5 py-0.5 text-xs ${ch == null ? "text-mute" : ch >= 0 ? "bg-bull/10 text-bull" : "bg-bear/10 text-bear"}`}>{fmtPctRaw(ch)}</span>
-          {row?.signal ? <span className="origin-right scale-90"><SignalBadge signal={row.signal} /></span> : <span className="text-xs text-mute">{w.mine ? "forecast soon" : ""}</span>}
+          {row?.signal ? <span className="origin-right scale-90 max-[359px]:origin-left"><SignalBadge signal={row.signal} /></span> : <span className="text-xs text-mute">{w.mine ? "forecast soon" : ""}</span>}
         </div>
       </Link>
       {edit && (canRemove || admin) && (

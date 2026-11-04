@@ -25,7 +25,7 @@ function PickCard({ p, following, onAdd }: { p: any; following: boolean; onAdd: 
           <span className="font-display w-6 text-center text-lg font-bold text-accent/70">{p.rank}</span>
           <CoinAvatar symbol={p.symbol} size={34} />
           <div className="min-w-0">
-            <div className="font-display text-lg font-bold leading-tight">{base(p.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
+            <div className="flex flex-wrap items-baseline font-display text-lg font-bold leading-tight">{base(p.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
             <div className="num text-xs text-mute">{fmtPrice(p.price)} · <span className={tone(p.change_24h_pct)}>{isNum(p.change_24h_pct) ? `${p.change_24h_pct > 0 ? "+" : ""}${p.change_24h_pct.toFixed(1)}%` : "—"} 24h</span> · vol ${fmtNum(p.quote_volume / 1e6, 0)}M</div>
           </div>
         </div>

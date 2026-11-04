@@ -113,7 +113,7 @@ export default function FearGreed({ value, label, change7d, history = [] }: { va
         {change7d != null && <p className="text-xs text-mute"><span className={`tabular-nums font-medium ${change7d > 0 ? "text-bull" : change7d < 0 ? "text-bear" : ""}`}>{change7d > 0 ? "▲ +" : change7d < 0 ? "▼ " : ""}{change7d}</span> over 7 days</p>}
       </div>
 
-      <div className="mt-3 grid grid-cols-4 gap-1.5 text-center text-xs">
+      <div className="mt-3 grid grid-cols-2 gap-1.5 text-center text-xs min-[340px]:grid-cols-4">
         {([["Now", value], ["Yesterday", yday], ["Last week", week], ["30d range", lo != null && hi != null ? `${lo}–${hi}` : null]] as const).map(([k, x]) => (
           <div key={k} className="rounded-lg bg-glass/[0.04] px-1 py-1.5">
             <div className="text-xs text-mute">{k}</div>

@@ -95,7 +95,7 @@ const MORE_GROUPS: [string, (readonly [string, string])[]][] = [
 /** A small count next to a menu item (unread alerts, pending users). */
 function Count({ n, tone = "warn" }: { n: number; tone?: "warn" | "accent" }) {
   if (!n) return null;
-  return <span className={`num ml-1.5 rounded-full px-1.5 text-xs font-bold leading-5 ${tone === "warn" ? "bg-warn/15 text-warn" : "bg-accent/15 text-accent"}`} aria-label={`${n} new`}>{n}</span>;
+  return <span className={`num ml-1.5 shrink-0 rounded-full px-1.5 text-xs font-bold leading-5 ${tone === "warn" ? "bg-warn/15 text-warn" : "bg-accent/15 text-accent"}`} aria-label={`${n} new`}>{n}</span>;
 }
 
 /** A compact dropdown in the desktop top bar (Tools; Admin: Weekly report, Achievements, Health, Hesper Challenge, Users). */
@@ -287,9 +287,10 @@ function Shell({ user }: { user: User }) {
     <div className="flex min-w-0 items-center gap-2.5">
       <AnimatedLogo size={34} className="shrink-0" />
       <NavLink to="/" aria-label="Crypto Intelligence AI, Home" className={`font-display text-base font-semibold tracking-tight text-text ${wrap ? "leading-tight" : "truncate"}`}>
-        {/* very small phones: the short wordmark (matches cryptointelai.com), so the brand is never cut off */}
+        {/* very small phones: the short wordmark (matches cryptointelai.com), so the brand is never cut off; below 340 px
+            (Z Fold cover) the logo alone, so the price status never squeezes the name to "C…" */}
         <span className={wrap ? "" : "hidden min-[380px]:inline"}>Crypto Intelligence <span className="text-accent">AI</span></span>
-        {!wrap && <span className="min-[380px]:hidden">Crypto Intel <span className="text-accent">AI</span></span>}
+        {!wrap && <span className="hidden min-[340px]:inline min-[380px]:hidden">Crypto Intel <span className="text-accent">AI</span></span>}
       </NavLink>
     </div>
   );
@@ -396,7 +397,7 @@ function Shell({ user }: { user: User }) {
           ))}
           <button onClick={() => setMore((v) => !v)} aria-expanded={more} aria-controls="more-sheet"
             className="tab-link flex min-h-[56px] flex-col items-center justify-center gap-0.5 py-1.5 text-xs">
-            <span className="tab-ico relative" aria-hidden><NavIcon name="more" />{(pending > 0 || unread > 0) && <span className={`absolute -right-1 top-0 h-2 w-2 rounded-full ${pending > 0 ? "bg-warn" : "bg-accent"}`} />}</span>More
+            <span className="tab-ico relative" aria-hidden><NavIcon name="more" />{(pending > 0 || unread > 0) && <span className={`absolute right-1 top-0 h-2 w-2 rounded-full ${pending > 0 ? "bg-warn" : "bg-accent"}`} />}</span>More
           </button>
         </div>
       </nav>
@@ -404,28 +405,31 @@ function Shell({ user }: { user: User }) {
         <div className="fixed inset-0 z-[45] md:hidden" onClick={() => setMore(false)}>
           <div className="fade-in absolute inset-0 bg-ink/70" />
           {/* positioned wrapper: .panel sets its own position, so the sheet's placement lives on this div */}
-          <div ref={sheet} id="more-sheet" role="dialog" aria-modal="true" aria-label="More sections" className="absolute inset-x-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] max-h-[calc(100dvh-7rem)] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
-          <div className="panel popover sheet-in p-2">
+          <div ref={sheet} id="more-sheet" role="dialog" aria-modal="true" aria-label="More sections" className="absolute inset-x-2 bottom-[calc(4.25rem+env(safe-area-inset-bottom))] top-[calc(0.5rem+env(safe-area-inset-top))] pointer-events-none flex flex-col justify-end min-[360px]:inset-x-3">
+          {/* the panel itself scrolls (rounded corners stay visible); the wrapper only places it between the top edge and the bar */}
+          <div className="panel popover sheet-in pointer-events-auto max-h-full overflow-y-auto overscroll-contain p-2" onClick={(e) => e.stopPropagation()}>
             <div className="nav-sheet space-y-2">
               {[...MORE_GROUPS, ...(admin ? [["Admin", adminItems] as [string, (readonly [string, string])[]]] : [])].map(([title, items], i) => (
                 <div key={title} className={i ? "border-t border-glass/[0.06] pt-2" : ""}>
                   <div className="label px-3 pb-1">{title}</div>
-                  <div className="grid grid-cols-3 gap-1">
+                  {/* auto-fill columns: 3 on wide phones, 2 on most phones, 1 on the narrowest (Z Fold cover); long labels
+                      wrap inside their own cell (never into the neighbour), counts stay beside the text */}
+                  <div className="more-grid grid gap-1">
                     {items.map(([to, label]) => (
-                      <NavLink key={to} to={to} onClick={() => setMore(false)} className={`${navCls} min-h-[44px]`}>
-                        {to === "/users" && pending ? <>Users<Count n={pending} /></> : navLabel(to, label)}
+                      <NavLink key={to} to={to} onClick={() => setMore(false)} className={`${navCls} min-h-[44px] min-w-0`}>
+                        {to === "/users" && pending ? <><span className="min-w-0">Users</span><Count n={pending} /></> : to === "/alerts" ? navLabel(to, label) : <span className="min-w-0">{label}</span>}
                       </NavLink>
                     ))}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="mt-2 flex items-center justify-between gap-2 border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
               <span>View</span><ModeSwitch />
             </div>
-            <div className="mt-2 flex items-center justify-between border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
-              <span className="truncate">{user.email}</span>
-              <button className="tap-h px-2 text-text" onClick={() => signOut(auth)}>Sign out</button>
+            <div className="mt-2 flex items-center justify-between gap-2 border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
+              <span className="min-w-0 truncate" title={user.email ?? ""}>{user.email}</span>
+              <button className="tap-h shrink-0 px-2 text-text" onClick={() => signOut(auth)}>Sign out</button>
             </div>
             <SupportLink className="mx-2 mt-2 flex min-h-[44px] items-center justify-center rounded-lg border border-glass/10 px-3 py-2 text-center text-sm" label="✉ Contact support" />
             <a className="mx-2 mt-2 flex min-h-[44px] items-center justify-center rounded-lg border border-glass/10 px-3 py-2 text-center text-sm text-accent" href={apk?.url ?? APK_URL}>⬇ Download Android app (APK){apkVersion(apk)}</a>
