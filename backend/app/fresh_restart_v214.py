@@ -84,8 +84,9 @@ def plan(rt: Any, sink: Any) -> dict[str, Any]:
     }
 
 
-def run(rt: Any, sink: Any, now: int) -> dict[str, Any]:
-    """Delete the old history (see the module doc) and restart the record, the bots and Hesper at `now`."""
+def run(rt: Any, sink: Any, now: int, flag: str = FLAG, token: str = RESET_TOKEN, version: str = "2.14") -> dict[str, Any]:
+    """Delete the old history (see the module doc) and restart the record, the bots and Hesper at `now`.
+    Later restarts (owner decisions) reuse it with their own flag / reset token / version."""
     db = rt.db
     out = plan(rt, sink)
     for t in SQL_TABLES:
@@ -111,7 +112,7 @@ def run(rt: Any, sink: Any, now: int) -> dict[str, Any]:
     # 10-50x per trade whatever their config says; the others keep their v2.13 leverage)
     doc = sink.get("config/bots") or {}
     if isinstance(doc.get("bots"), list):
-        bots = [{**b, "reset_token": RESET_TOKEN} for b in doc["bots"]]
+        bots = [{**b, "reset_token": token} for b in doc["bots"]]
         sink.set("config/bots", {**doc, "bots": bots, "updated_at": now})
         out["bots_reset"] = [b.get("id") for b in bots]
     # the counted record starts now for every timeframe; one restart line on Results
@@ -119,22 +120,22 @@ def run(rt: Any, sink: Any, now: int) -> dict[str, Any]:
                        "record_since_tf": db.get_setting("record_since_tf", None)}
     db.set_setting("record_since", now)
     db.set_setting("record_since_tf", {})
-    db.set_setting("record_restart", {"at": now, "text": note_text(now), "version": "2.14"})
+    db.set_setting("record_restart", {"at": now, "text": note_text(now), "version": version})
     db.set_setting("honest_record_v213", True)       # v2.13's restart is merged into this one (never a second restart)
-    db.set_setting(FLAG, now)
+    db.set_setting(flag, now)
     return out
 
 
-def maybe_run(rt: Any, sink: Any, now: int) -> dict[str, Any] | None:
+def maybe_run(rt: Any, sink: Any, now: int, flag: str = FLAG, token: str = RESET_TOKEN, version: str = "2.14") -> dict[str, Any] | None:
     """Runs once. On a database without any history only the flag is set (nothing to restart, never runs later)."""
     db = rt.db
-    if db.get_setting(FLAG, None):
+    if db.get_setting(flag, None):
         return None
     if not has_history(db):
-        db.set_setting(FLAG, now)
+        db.set_setting(flag, now)
         db.set_setting("honest_record_v213", True)
         return {"skipped": "empty database"}
-    return run(rt, sink, now)
+    return run(rt, sink, now, flag, token, version)
 
 
 if __name__ == "__main__":                              # python -m app.fresh_restart_v214 dry-run

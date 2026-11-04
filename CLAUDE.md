@@ -399,6 +399,10 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   25.5x, median 24x; 1.6 % at 50x, 2.7 % at 10x; avg R −0.101 unchanged). Other timeframes unchanged (v2.13). For
   reference, the rule on every timeframe would have removed 4h 49 %, 12h 68 %, 1d 87 %, 3d 94 % (overall 1552 → 1121).
 
+- **v2.18 fresh restart** (owner, 4 Nov 2026 13:10 Dubai, after the morning updates): flag `fresh_restart_v218` (in
+  `MIGRATION_FLAGS`), runs once after v2.14 via `fresh_restart_v214.maybe_run(..., flag, token="v218", version="2.18")`:
+  the same deletion (record, bot books, Hesper, side tables), record restarts, members' practice accounts kept.
+
 ## UI v2.15 design system (3 Nov 2026, branch `ui-v215`, frontend only)
 - Shared blocks in `components/kit.tsx`: `Tile` (label / value / sub; `variant` plain | box | strip = a `.metric-strip`
   cell; `big` 28 px), `Badge` (tones bull/bear/warn/accent/mute/ai/text, pill, `caps`), `Segmented` (the `.seg` track:

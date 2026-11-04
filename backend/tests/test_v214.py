@@ -421,3 +421,24 @@ def test_note_text_uses_the_dubai_date():
     # 3 Nov 2026 22:00 UTC is already 4 Nov in Dubai
     assert FR.note_text(1793743200000) == "Fresh start 4 Nov 2026: real entry prices, after fees."
     assert FR.note_text(1793700000000) == "Fresh start 3 Nov 2026: real entry prices, after fees."
+
+
+def test_fresh_restart_v218_runs_once_after_v214(tmp_path):
+    """v2.18 (owner, 4 Nov 2026): the same deletion again on a database where v2.14 already ran; once; fresh token."""
+    rt = _rt()
+    sink = _live(tmp_path, rt)
+    flags = _all_but("fresh_restart_v218")
+    for f in flags:
+        rt.db.set_setting(f, True)
+    sink.set(worker.MIGRATIONS_DOC, {"flags": {f: True for f in flags}})
+    notes = worker.sync_config(rt, sink)
+    out = notes["fresh_restart_v218"]
+    assert out["sqlite_rows"]["signals"] == 2
+    for t in ("signals", "bot_trades", "bot_equity", "hesper_runs", "hesper_trades", "decisions"):
+        assert _n(rt.db, t) == 0, t
+    now = rt.db.get_setting("fresh_restart_v218")
+    assert rt.db.get_setting("record_since") == now and rt.db.get_setting("record_restart")["version"] == "2.18"
+    assert all(b["reset_token"] == "v218" for b in sink.get("config/bots")["bots"])
+    assert _n(rt.db, "predictions") == 1                      # forecasts / models kept
+    # once only
+    assert "fresh_restart_v218" not in worker.sync_config(rt, sink)

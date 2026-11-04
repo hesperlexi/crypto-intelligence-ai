@@ -276,7 +276,7 @@ MIGRATION_FLAGS = (
     "fresh_start_v23", "pause_15m_v26", "tf_policy_v28", "demo_1d3d_v210", "scalping_v1", "public_15m_v211",
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
-    "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214",
+    "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
     "coins_growth_v216",
 )
 MIGRATIONS_DOC = "admin/migrations"
@@ -682,6 +682,14 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         fr = fresh_restart_v214.maybe_run(rt, sink, now_ms())
         if fr is not None:
             notes["fresh_restart_v214"] = fr
+    # v2.18 fresh restart (owner decision, 4 Nov 2026 13:10 Dubai: "clear the bots history of trades and delete them all…
+    # clear the performance sheets and trades"): the same deletion as v2.14 again, after the 4 Nov morning updates -
+    # wins and losses alike; members' practice accounts kept. Never on a fresh / empty database.
+    if rt.db.get_setting("fresh_restart_v214", None) and not rt.db.get_setting("fresh_restart_v218", None):
+        _b("config: fresh restart v2.18")
+        fr = fresh_restart_v214.maybe_run(rt, sink, now_ms(), flag="fresh_restart_v218", token="v218", version="2.18")
+        if fr is not None:
+            notes["fresh_restart_v218"] = fr
     honest = honest_record_v213(rt)
     if honest is not None:
         notes["honest_record_v213"] = honest
