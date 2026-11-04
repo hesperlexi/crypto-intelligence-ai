@@ -64,6 +64,7 @@ out["telegram_status"] = {k: st.get(k) for k in ("ok", "checked_at", "last_sent"
 out["telegram_status"]["errors"] = len(st.get("errors") or [])
 out["telegram_drafts"] = sum(1 for _ in fs.collection("owner").document("telegram_drafts").collections()) if False else None
 dr = fs.document("owner/telegram_drafts").get().to_dict() or {}
-out["telegram_drafts"] = {"n": len(dr.get("items") or dr.get("drafts") or []), "keys": sorted(dr.keys())[:10]}
+out["telegram_drafts"] = {"n": len(dr.get("items") or []), "items": [{k: i.get(k) for k in ("kind", "created_at", "at")} for i in (dr.get("items") or [])][:10]}
+out["telegram"]["keys"] = sorted(k for k in tg.keys() if k != "token")
 out["push_tokens"] = sum(1 for _ in fs.collection("push_tokens").select([]).stream())
 print(json.dumps({k: out[k] for k in ("telegram", "telegram_status", "telegram_drafts", "push_tokens")}, indent=1, default=str))
