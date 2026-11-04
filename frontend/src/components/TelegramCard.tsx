@@ -8,7 +8,7 @@ import { Card, Note } from "./ui";
 
 // v2.16 funnel: post_daily_call (replaces the teaser), post_briefing, post_week7 (replaces the old weekly) - on by default
 const DEF = { enabled: false, token: "", channel: "@crypappai", post_wins: true, post_weekly: true, post_teaser: true, post_each_win: true, approve_first: true,
-  post_daily_call: true, post_briefing: true, post_week7: true };
+  post_daily_call: true, post_briefing: true, post_week7: true, post_news: true };
 type Draft = { id: string; kind: string; caption: string; created_at: number; png?: string | null };
 const KIND: Record<string, string> = { win: "Best win", wins: "Wins of the day", weekly: "Weekly results", teaser: "Free signal",
   briefing: "Market briefing", week7: "Last 7 days" };
@@ -55,13 +55,13 @@ export default function TelegramCard() {
         <label className="block"><span className="text-xs text-mute">Channel</span>
           <input className="input mt-1" value={s.channel} onChange={(e) => setS({ ...s, channel: e.target.value.trim() })} placeholder="@yourchannel" /></label>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([["approve_first", "Ask me before posting"], ["post_each_win", "Best wins (target 2 or 3)"], ["post_wins", "Wins of the day"],
-             ["post_daily_call", "Free signal of the day + its result"], ["post_briefing", "Market briefing (2x a day)"], ["post_week7", "Last 7 days (Mondays)"],
+          {([["approve_first", "Ask me before posting"], ["post_each_win", "Every win (target 1, 2 or 3, after fees)"], ["post_wins", "Wins of the day"],
+             ["post_daily_call", "Free signal of the day + its result"], ["post_briefing", "Market briefing (2x a day)"], ["post_week7", "Last 7 days (Mondays)"], ["post_news", "High-impact news (30 min before)"],
              ...(s.post_week7 ? [] : [["post_weekly", "Weekly results (old card)"]]), ...(s.post_daily_call ? [] : [["post_teaser", "Teaser signal (old)"]])] as [string, string][]).map(([k, l]) => (
             <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={(s as any)[k]} onChange={(e) => setS({ ...s, [k]: e.target.checked })} />{l}</label>
           ))}
         </div>
-        <p className="text-xs text-mute">Free signal of the day: the first grade-A call of the day whose entry filled, posted 2 h after the fill; its result follows when it closes, win or loss. Both always go out directly (never held for approval), so a loss can't be skipped.</p>
+        <p className="text-xs text-mute">Free signal of the day: the first grade-A call of the day whose entry filled, posted 2 h after the fill; its result follows when it closes, win or loss. Both always go out directly (never held for approval), so a loss can't be skipped. News heads-ups also go out directly. With “Ask me before posting” ticked, wins and the briefing wait below until you press Post.</p>
         <div className="flex flex-wrap gap-2">
           <button className={`btn ${s.enabled ? "" : "btn-primary"}`} disabled={!ready} onClick={() => save({ ...s, enabled: !s.enabled }, s.enabled ? "Autopilot paused." : "Autopilot on.")}>{s.enabled ? "Pause autopilot" : "Turn on autopilot"}</button>
           <button className="btn" onClick={() => save()}>Save</button>

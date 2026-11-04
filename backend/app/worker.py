@@ -235,6 +235,37 @@ def load_users(rt: Runtime, sink: BaseSink, force: bool = False) -> tuple[dict[s
     return users, False
 
 
+# v2.21 (owner, 4 Nov 2026: "notifications are not coming when trades are closed or wins are made"): close / win
+# pushes needed a rule each person had to create. Now the admin and every active member get one "My signals" rule
+# (every coin, every timeframe: entry, TP1-3, close) once, as an ordinary alert document they can switch off or delete
+# on the Alerts page. Done once per person (settings `auto_call_alerts`), so a deleted rule is never re-added; anyone
+# who already has an every-coin call rule is left alone. One Firestore write per person, once.
+AUTO_CALL_EVENTS = ["entry", "tp1", "tp2", "tp3", "closed"]
+OWNER_KEY = "__owner__"
+
+
+def ensure_call_alerts(rt: Runtime, sink: BaseSink, users: dict[str, dict[str, Any]], remote: dict[str, Any], now: int) -> int:
+    done = dict(rt.db.get_setting("auto_call_alerts", None) or {})
+    have = {(a.get("owner_uid") or OWNER_KEY) for a in remote.values() if isinstance(a, dict)
+            and a.get("type") in ("SIGNAL_UPDATES", "SIGNAL_CLOSED") and a.get("symbol") == alerts.ALL_SYMBOLS}
+    targets = [OWNER_KEY] + sorted(uid for uid, u in users.items() if membership.is_active(u, now))
+    made = 0
+    for key in targets:
+        if key in done:
+            continue
+        if key not in have:
+            doc = {"type": "SIGNAL_UPDATES", "symbol": alerts.ALL_SYMBOLS, "timeframe": alerts.ALL_TFS,
+                   "params": {"events": AUTO_CALL_EVENTS}, "cooldown_s": 60, "enabled": True, "created_at": now, "auto": True}
+            if key != OWNER_KEY:
+                doc |= {"owner_uid": key, "owner_email": (users.get(key) or {}).get("email")}
+            sink.set(f"alerts/auto_calls_{'owner' if key == OWNER_KEY else key}", doc)
+            made += 1
+        done[key] = now
+    if made or len(done) != len(rt.db.get_setting("auto_call_alerts", None) or {}):
+        rt.db.set_setting("auto_call_alerts", done)
+    return made
+
+
 ALERT_COOLDOWN_MIN_S, ALERT_COOLDOWN_MAX_S = 60, 365 * 86_400     # same range as the Firestore rules
 _SYMBOL_RE = __import__("re").compile(r"^[A-Za-z0-9]{1,20}([/_-]?[A-Za-z0-9]{2,10})?$")
 
@@ -566,6 +597,13 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             bad_alerts += 1
     if bad_alerts:
         notes["bad_alerts_skipped"] = bad_alerts
+    # v2.21 (owner, 4 Nov 2026): call notifications on by default (see ensure_call_alerts)
+    try:
+        made = ensure_call_alerts(rt, sink, users, remote, now_ms())
+        if made:
+            notes["call_alerts_added"] = made
+    except Exception as exc:
+        notes["call_alerts_error"] = f"{type(exc).__name__}"[:80]
     # support email moved to the app's own domain (owner request, 27 Oct 2026); runs once
     if not rt.db.get_setting("support_email_v23", False):
         m = sink.get("config/membership") or {}
@@ -1289,6 +1327,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         due = news.due_notifications(rt.db)
         if due:
             detail["news_push"] = step("news_push", lambda: sink.send_push(due))
+            detail["news_telegram"] = step("news_telegram", lambda: telegram.post_news(sink, due))
     last_week = views.week_start(now_ms()) - views.WEEK
     if int(rt.db.get_setting("weekly_report_notified", 0) or 0) < last_week and now_ms() - views.week_start(now_ms()) > 4 * 3_600_000:
         def weekly_push():

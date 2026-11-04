@@ -82,12 +82,12 @@ def test_every_win_is_posted_once_as_a_picture(tmp_path):
     add(1, "TP2", 1.6, t0 + 60_000)
     add(2, "STOPPED", -1.0, t0 + 120_000)                              # losses are not announced as wins
     add(3, "TP2", 0.5, t0 - 60_000)                                    # closed before the start point
-    add(4, "TP1", 0.4, t0 + 90_000)                                    # target 1 only: not one of the best wins
+    add(4, "TP1", 0.4, t0 + 90_000)                                    # v2.21: a target-1 win after fees is posted too
     out = T.run(rt, sink, None, None, t0 + 300_000, fake)
-    assert out["sent"] == ["win"] and fake.sent[0]["photo"] is True
+    assert out["sent"] == ["win", "win"] and fake.sent[0]["photo"] is True and "Target 1 hit" in fake.sent[1]["text"]
     assert "GOLD LONG" in fake.sent[0]["text"] and "+14.49% ROI</b> · 10x margin (+1.45% after fees)" in fake.sent[0]["text"]   # v2.13: net
     T.run(rt, sink, None, None, t0 + 600_000, fake)                    # not posted twice
-    assert len(fake.sent) == 1
+    assert len(fake.sent) == 2
 
 
 def test_cards_render():
@@ -110,3 +110,14 @@ def test_approve_first_keeps_the_card_until_the_owner_posts_it(tmp_path):
     res = T.post_draft(sink, items[0]["id"], fake)
     assert res["sent"] and fake.sent[0]["photo"] and sink.get(T.DRAFTS)["items"] == []
     assert T.post_draft(sink, items[0]["id"], fake)["sent"] is False                 # not twice
+
+
+def test_news_heads_up_goes_out_directly_and_only_when_switched_on(tmp_path):
+    sink, fake = LocalSink(tmp_path), Fake()
+    item = {"title": "High-impact news in 30 min", "body": "US CPI at 12:30 UTC. Expect volatility.", "tag": "econ-1"}
+    assert T.post_news(sink, [item], fake)["sent"] == 0                 # autopilot off: nothing
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "approve_first": True})
+    assert T.post_news(sink, [item], fake)["sent"] == 1                 # never held as a draft
+    assert "US CPI" in fake.sent[0]["text"] and (sink.get("owner/telegram_drafts") or {}).get("items") in (None, [])
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_news": False})
+    assert T.post_news(sink, [item], fake)["sent"] == 0

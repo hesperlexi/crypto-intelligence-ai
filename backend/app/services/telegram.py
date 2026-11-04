@@ -45,7 +45,9 @@ DRAFTS = "owner/telegram_drafts"
 DEFAULTS = {"enabled": False, "channel": brand.TELEGRAM_CHANNEL, "post_wins": True, "post_weekly": True, "post_teaser": True,
             "post_each_win": True, "approve_first": True, "post_proofs": False,
             # v2.16 funnel (on by default, but only ever posted while the autopilot itself is switched on)
-            "post_daily_call": True, "post_briefing": True, "post_week7": True}
+            "post_daily_call": True, "post_briefing": True, "post_week7": True,
+            # v2.21 (owner, 4 Nov 2026): high-impact US news heads-up, sent directly (a fact, not a result)
+            "post_news": True}
 
 
 def config(sink) -> dict[str, Any]:
@@ -290,7 +292,8 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
         else:
             rc, rp = record_clause(rt)
             from .tracking import net_sql
-            rows = db.query(f"SELECT * FROM signals WHERE status IN ('TP2', 'TP3') AND return_pct IS NOT NULL AND {net_sql()} > 0 "
+            # v2.21: every win after fees (TP1 too), not only TP2 / TP3
+            rows = db.query(f"SELECT * FROM signals WHERE status IN ('TP1', 'TP2', 'TP3') AND return_pct IS NOT NULL AND {net_sql()} > 0 "
                             f"AND closed_at IS NOT NULL AND closed_at > ? AND {rc} AND side != 0 "
                             "ORDER BY closed_at LIMIT ?", (int(last), *rp, MAX_WIN_POSTS))
             for r in rows:
@@ -572,3 +575,26 @@ def test_post(sink) -> dict[str, Any]:
     sink.set("owner/telegram_status", {"ok": True, "checked_at": now_ms(), "errors": [], "last_post_at": now_ms(),
                                        "last_sent": ["test"]})
     return {"sent": True}
+
+
+# ---- v2.21 news heads-up (owner, 4 Nov 2026) --------------------------------------------------------------------
+def news_text(m: dict[str, Any]) -> str:
+    return "\n".join([f"📰 <b>{html.escape(str(m.get('title') or 'High-impact news'))}</b>",
+                      html.escape(str(m.get("body") or "")), "", f"Live signals and alerts 👉 {SITE}",
+                      f"<i>{html.escape(brand.FOOTER)}</i>"])
+
+
+def post_news(sink, items: list[dict[str, Any]], session: Any = None) -> dict[str, Any]:
+    """High-impact US release heads-up (the same items as the phone notification). Sent directly, never a draft:
+    it is a calendar fact, not a result. Never raises."""
+    cfg = config(sink)
+    if not (items and cfg["enabled"] and cfg["token"] and cfg["channel"] and cfg["post_news"]):
+        return {"sent": 0}
+    sent, errors = 0, []
+    for m in items:
+        try:
+            send(cfg, news_text(m), session)
+            sent += 1
+        except Exception as exc:
+            errors.append(redact(f"news: {exc}")[:200])
+    return {"sent": sent, "errors": errors}

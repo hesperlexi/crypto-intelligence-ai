@@ -654,3 +654,12 @@ dev/vite.preview.config.ts --port 5193`, `/?preview=admin|member|pending|signedo
 ## Ideas not done yet
 Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance daily metrics
 (OI, long/short, taker) as features · iPhone App Store ($99/yr, owner decision) · real-money auto-trading (only after a proven record and a VARA check).
+
+## v2.21 notifications (4 Nov 2026, branch `notify-fix`)
+- Telegram: `post_each_win` now every win after fees (TP1/TP2/TP3, net > 0); new `post_news` (default on): the
+  high-impact US release heads-up (same items as the phone push, `news.due_notifications`) sent directly by
+  `telegram.post_news` (never a draft). "Ask me before posting" (`approve_first`, default on) still holds wins /
+  briefing in `owner/telegram_drafts` until the owner presses Post.
+- Members: `worker.ensure_call_alerts` gives the admin (`alerts/auto_calls_owner`) and every active member
+  (`alerts/auto_calls_<uid>`) one SIGNAL_UPDATES rule (every coin / timeframe: entry, TP1-3, close) once; settings
+  `auto_call_alerts` remembers who got one, so a switched-off or deleted rule is never re-added.

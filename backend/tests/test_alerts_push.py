@@ -78,3 +78,19 @@ def test_member_alerts_are_private_and_pushed_to_their_devices():
     sink.set("push_tokens/t2", {"token": "t2", "uid": "someone-else"})
     res = sink.send_push([worker.push_message({"id": "e", "type": "PRICE_ABOVE", "symbol": "BTC/USDT", "message": "x"}, "member1")])
     assert res["sent"] == 1
+
+
+def test_call_alerts_on_by_default_once_per_person():
+    rt = Runtime(Database("sqlite:///:memory:"), None)
+    sink = LocalSink(tempfile.mkdtemp())
+    now = 1_800_000_000_000
+    users = {"m1": {"status": "approved", "email": "a@x.com"}, "m2": {"status": "pending"},
+             "m3": {"status": "approved", "expires_at": now - 1}, "m4": {"status": "approved"}}
+    remote = {"r1": {"type": "SIGNAL_UPDATES", "symbol": alerts.ALL_SYMBOLS, "owner_uid": "m4"}}   # already has one
+    assert worker.ensure_call_alerts(rt, sink, users, remote, now) == 2                          # admin + m1
+    a = sink.get("alerts/auto_calls_m1")
+    assert a["owner_uid"] == "m1" and a["type"] == "SIGNAL_UPDATES" and a["params"]["events"][-1] == "closed"
+    assert worker.alert_row(a) is not None and "owner_uid" not in sink.get("alerts/auto_calls_owner")
+    assert sink.get("alerts/auto_calls_m2") is None and sink.get("alerts/auto_calls_m3") is None
+    # deleted by the member: never added again
+    assert worker.ensure_call_alerts(rt, sink, users, {}, now + 1) == 0

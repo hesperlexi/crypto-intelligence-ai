@@ -54,7 +54,6 @@ out["record_live"] = {"summary": (trj.get("live") or {}).get("summary") or trj.g
 out["counts"] = {c: sum(1 for _ in fs.collection(c).select([]).stream()) for c in ("paper", "paper_trades", "paper_futures_trades", "auto_paper_state", "jobs")}
 bots = fs.document("config/bots").get().to_dict() or {}
 out["bots"] = [{"id": b.get("id"), "reset_token": b.get("reset_token")} for b in bots.get("bots", [])]
-print(json.dumps(out, indent=1, default=str))
 # notifications check (no secrets: booleans, kinds and counts only)
 tg = fs.document("owner/telegram").get().to_dict() or {}
 out["telegram"] = {"has_token": bool(tg.get("token")), "has_channel": bool(tg.get("channel")),
@@ -62,9 +61,8 @@ out["telegram"] = {"has_token": bool(tg.get("token")), "has_channel": bool(tg.ge
 st = fs.document("owner/telegram_status").get().to_dict() or {}
 out["telegram_status"] = {k: st.get(k) for k in ("ok", "checked_at", "last_sent", "last_post_at", "updated_at")}
 out["telegram_status"]["errors"] = len(st.get("errors") or [])
-out["telegram_drafts"] = sum(1 for _ in fs.collection("owner").document("telegram_drafts").collections()) if False else None
 dr = fs.document("owner/telegram_drafts").get().to_dict() or {}
 out["telegram_drafts"] = {"n": len(dr.get("items") or []), "items": [{k: i.get(k) for k in ("kind", "created_at", "at")} for i in (dr.get("items") or [])][:10]}
 out["telegram"]["keys"] = sorted(k for k in tg.keys() if k != "token")
 out["push_tokens"] = sum(1 for _ in fs.collection("push_tokens").select([]).stream())
-print(json.dumps({k: out[k] for k in ("telegram", "telegram_status", "telegram_drafts", "push_tokens")}, indent=1, default=str))
+print(json.dumps(out, indent=1, default=str))
