@@ -95,9 +95,9 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
     except Exception as exc:  # model failure: surface it, never substitute a made-up forecast
         rt.record_error(f"forecast {symbol} {timeframe}", exc)
         return {"available": False, "status": "MODEL ERROR", "reason": error_text(exc, 200)}
-    # v2.17 (owner, 4 Nov 2026): the per-model trade filter, AI target lifts and runner model failed the strict holdout
-    # test and are off by default (TRADE_FILTER / TARGET_MODEL / RUNNER_MODEL = 1 turn them back on). Off = None:
-    # no filter, plain historical base rates in setup.pick, standard 50/25/25 exits.
+    # v2.17 switches (default on = unchanged behaviour): TRADE_FILTER / TARGET_MODEL / RUNNER_MODEL = 0 turn the per-model
+    # trade filter, AI target lifts and runner model off. Off = None: no filter, plain historical base rates in
+    # setup.pick, standard 50/25/25 exits.
     fc["trade_filter"] = fc["target_lift"] = fc["runner"] = None
     x_row = None
     if settings.trade_filter_v1:

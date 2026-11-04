@@ -5,7 +5,7 @@ record and the hidden practice (shadow) trades, and cached in app_settings:
   series_policy1|SYMBOL|TF   series gate + grade-B confidence threshold (used when SERIES_GATE / SERIES_CONF are on)
   entry_policy1|TF           entry rule chosen on the older 70 % and kept only if it also wins on the newer 30 %
   trade_filter2|TF           pooled filter summary (+ model file next to the models; used when TRADE_FILTER2 is on;
-                             v2.17: off by default and then not trained)
+                             v2.17: TRADE_FILTER2=0 -> not trained)
 Budgeted; a failure in one series never stops the others or the merge.
 """
 from __future__ import annotations
@@ -122,7 +122,7 @@ def run(rt: Runtime, budget_s: float = 900, symbols: list[str] | None = None) ->
                     for part, sel in (("early", lambda c: c["ts"] < cut), ("late", lambda c: c["ts"] >= cut)):
                         tr = SP.taken(ctx, [c for c in cands if sel(c)])
                         entry_tbl.setdefault(tf, {}).setdefault(f"{mode}:{k}|{part}", []).extend(t["r"] for t in tr)
-                    if (mode, k) == ("old", 0.0) and settings.trade_filter2:    # v2.17: filter2 off -> not trained
+                    if (mode, k) == ("old", 0.0) and settings.trade_filter2:    # v2.17: TRADE_FILTER2=0 -> not trained
                         P = pool.setdefault(tf, {"F": [], "R": [], "ts": []})
                         for c in cands:
                             if c["filled"]:

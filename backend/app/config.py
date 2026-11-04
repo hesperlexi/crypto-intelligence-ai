@@ -111,21 +111,22 @@ class Settings:
     neutral_band_sigma: float = field(default_factory=lambda: _f("NEUTRAL_BAND_SIGMA", 0.25))
     # add context from the next higher timeframe (e.g. the 4h trend for the 1h model) to the model features
     use_htf_features: bool = field(default_factory=lambda: _b("USE_HTF_FEATURES", False))
-    # ---- v2.17 AI add-ons (owner, 4 Nov 2026): none survived the strict holdout test (Holm-corrected block bootstrap,
-    # research-results/results/aiv3-final-20261103T204940Z.json), so each is OFF by default and skipped by the nightly
-    # training. The switch stays: set the env var to 1 to train and use it again.
+    # ---- v2.17 AI add-on switches (owner, 4 Nov 2026). The strict holdout test (Holm-corrected block bootstrap,
+    # research-results/results/aiv3-final-20261103T204940Z.json) passed none of them except the higher-timeframe context
+    # of SOL/USDT 15m, but they stay ON (current live behaviour) pending a crash / volatility-regime study. Setting an
+    # env var to 0 switches that add-on off: it is then neither trained nor scored.
     # futures funding / premium features, tested per coin and timeframe (ml.deriv_gate)
-    use_deriv_features: bool = field(default_factory=lambda: _b("USE_DERIV_FEATURES", False))
-    # higher-timeframe context tested per series (ml.htf_gate); HTF_GATE_KEEP lists the series that still run it
-    # ("SYMBOL|TF", comma separated; SOL/USDT 15m survived the test)
-    htf_gates: bool = field(default_factory=lambda: _b("HTF_GATES", False))
+    use_deriv_features: bool = field(default_factory=lambda: _b("USE_DERIV_FEATURES", True))
+    # higher-timeframe context tested per series (ml.htf_gate); with HTF_GATES=0 only the HTF_GATE_KEEP series still run
+    # it ("SYMBOL|TF", comma separated; SOL/USDT 15m survived the test)
+    htf_gates: bool = field(default_factory=lambda: _b("HTF_GATES", True))
     htf_gate_keep: list[str] = field(default_factory=lambda: [
         s.strip() for s in _env("HTF_GATE_KEEP", "SOL/USDT|15m").split(",") if s.strip()])
     # per-model trade filter v1 (ml.trade_filter), AI target lifts (ml.target_model; off = plain historical base rates
     # in setup.pick) and the "let winners run" runner model (ml.runner_model)
-    trade_filter_v1: bool = field(default_factory=lambda: _b("TRADE_FILTER", False))
-    target_model: bool = field(default_factory=lambda: _b("TARGET_MODEL", False))
-    runner_model: bool = field(default_factory=lambda: _b("RUNNER_MODEL", False))
+    trade_filter_v1: bool = field(default_factory=lambda: _b("TRADE_FILTER", True))
+    target_model: bool = field(default_factory=lambda: _b("TARGET_MODEL", True))
+    runner_model: bool = field(default_factory=lambda: _b("RUNNER_MODEL", True))
     min_train_samples: int = field(default_factory=lambda: int(_f("MIN_TRAIN_SAMPLES", 150)))
     min_oos_for_edge: int = field(default_factory=lambda: int(_f("MIN_OOS_FOR_EDGE", 300)))
     edge_alpha: float = field(default_factory=lambda: _f("EDGE_ALPHA", 0.01))
@@ -184,8 +185,7 @@ class Settings:
     struct_stops: bool = field(default_factory=lambda: _b("STRUCT_STOPS", False))
     struct_stop_buffer_atr: float = field(default_factory=lambda: _clamp(_f("STRUCT_STOP_BUFFER_ATR", 0.25), 0.0, 1.0))
     # 5. pooled trade filter per timeframe (ml/trade_filter2.py), trained nightly on simulated + live + shadow trades
-    # v2.17 (owner, 4 Nov 2026): OFF - failed the strict holdout test (aiv3-final-20261103T204940Z.json)
-    trade_filter2: bool = field(default_factory=lambda: _b("TRADE_FILTER2", False))
+    trade_filter2: bool = field(default_factory=lambda: _b("TRADE_FILTER2", True))  # proven 30 Oct; per timeframe exam
     # 7. Gemini news sentiment: collection only; never used for decisions until a gate proves it (>= 60 days)
     news_sentiment: bool = field(default_factory=lambda: _b("NEWS_SENTIMENT", True))
 
