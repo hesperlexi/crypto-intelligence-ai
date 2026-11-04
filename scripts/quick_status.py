@@ -65,4 +65,9 @@ dr = fs.document("owner/telegram_drafts").get().to_dict() or {}
 out["telegram_drafts"] = {"n": len(dr.get("items") or []), "items": [{k: i.get(k) for k in ("kind", "created_at", "at")} for i in (dr.get("items") or [])][:10]}
 out["telegram"]["keys"] = sorted(k for k in tg.keys() if k != "token")
 out["push_tokens"] = sum(1 for _ in fs.collection("push_tokens").select([]).stream())
+import re as _re
+_jobs = [d.to_dict() or {} for d in fs.collection("jobs").where("type", "==", "telegram_post").stream()]
+out["telegram_post_jobs"] = [{"status": j.get("status"), "created_at": j.get("created_at"),
+                              "error": _re.sub(r"bot\d+:[\w-]+", "bot***", str(j.get("error") or (j.get("result") or {}).get("reason") or ""))[:200]}
+                             for j in sorted(_jobs, key=lambda j: -(j.get("created_at") or 0))[:5]]
 print(json.dumps(out, indent=1, default=str))

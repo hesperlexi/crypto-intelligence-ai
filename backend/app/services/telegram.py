@@ -15,6 +15,7 @@ alike come from the real record - the weekly card always shows the losses too.
 from __future__ import annotations
 
 import html
+import re
 import logging
 import os
 from datetime import datetime, timezone
@@ -42,6 +43,7 @@ BRIEFING_MAX_AGE_MS = 5 * 3_600_000
 CALL_DELAY_MS = 2 * 3_600_000      # v2.16 daily free call: posted 2 h after its entry filled
 DAY_MS = 86_400_000
 DRAFTS = "owner/telegram_drafts"
+CAPTION_MAX = 1000                 # Telegram photo captions: 1024 characters after HTML parsing
 DEFAULTS = {"enabled": False, "channel": brand.TELEGRAM_CHANNEL, "post_wins": True, "post_weekly": True, "post_teaser": True,
             "post_each_win": True, "approve_first": True, "post_proofs": False,
             # v2.16 funnel (on by default, but only ever posted while the autopilot itself is switched on)
@@ -78,8 +80,13 @@ def send_photo(cfg: dict[str, Any], png: bytes | None, caption: str, session: An
     """Image card with an HTML caption; falls back to a text message when there is no picture."""
     if not png:
         return send(cfg, caption, session)
+    # v2.21 fix (4 Nov 2026): a caption over Telegram's 1024-character limit used to be cut mid-text, which can split an
+    # HTML tag ("can't parse entities") - the long market briefing failed every time. Now: picture with its first line,
+    # then the whole text as its own message (limit 4096).
+    long = len(re.sub(r"<[^>]+>", "", caption)) > CAPTION_MAX
+    cap = caption.split("\n", 1)[0] if long else caption
     r = (session or requests).post(f"{API}/bot{cfg['token']}/sendPhoto", timeout=30,
-                                   data={"chat_id": cfg["channel"], "caption": caption[:1024], "parse_mode": "HTML"},
+                                   data={"chat_id": cfg["channel"], "caption": cap, "parse_mode": "HTML"},
                                    files={"photo": ("card.png", png, "image/png")})
     try:
         body = r.json()
@@ -87,6 +94,8 @@ def send_photo(cfg: dict[str, Any], png: bytes | None, caption: str, session: An
         body = {"ok": False, "description": f"HTTP {getattr(r, 'status_code', '?')}"}
     if not body.get("ok"):
         raise RuntimeError(body.get("description") or "Telegram refused the picture")
+    if long:
+        return send(cfg, caption, session)
     return body
 
 

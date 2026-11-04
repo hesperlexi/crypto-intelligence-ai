@@ -121,3 +121,14 @@ def test_news_heads_up_goes_out_directly_and_only_when_switched_on(tmp_path):
     assert "US CPI" in fake.sent[0]["text"] and (sink.get("owner/telegram_drafts") or {}).get("items") in (None, [])
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_news": False})
     assert T.post_news(sink, [item], fake)["sent"] == 0
+
+
+def test_long_caption_goes_as_picture_plus_full_text(tmp_path):
+    fake = Fake()
+    cfg = {"token": "x", "channel": "@c"}
+    text = "🧭 <b>Market briefing</b>\n\n" + "<i>" + ("word " * 400) + "</i>"
+    T.send_photo(cfg, b"png", text, fake)
+    assert len(fake.sent) == 2 and fake.sent[0]["photo"] and fake.sent[0]["text"] == "🧭 <b>Market briefing</b>"
+    assert fake.sent[1]["text"] == text and not fake.sent[1]["photo"]
+    T.send_photo(cfg, b"png", "short <b>x</b>", fake)
+    assert len(fake.sent) == 3
