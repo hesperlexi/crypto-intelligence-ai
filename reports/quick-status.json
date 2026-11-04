@@ -632,8 +632,8 @@
  },
  "safety": [],
  "release": {
-  "version": "2.1.0",
   "updated_at": 1793386630880,
+  "version": "2.1.0",
   "launched_at": 1793386630880
  },
  "track_record": {
@@ -725,10 +725,18 @@
  "telegram": {
   "has_token": true,
   "has_channel": true,
-  "post_weekly": true,
   "enabled": true,
+  "post_weekly": true,
+  "post_wins": true,
   "post_teaser": true,
-  "post_wins": true
+  "keys": [
+   "channel",
+   "enabled",
+   "post_teaser",
+   "post_weekly",
+   "post_wins",
+   "updated_at"
+  ]
  },
  "telegram_status": {
   "ok": true,
@@ -742,9 +750,12 @@
  },
  "telegram_drafts": {
   "n": 1,
-  "keys": [
-   "items",
-   "updated_at"
+  "items": [
+   {
+    "kind": "briefing",
+    "created_at": 1793797247950,
+    "at": null
+   }
   ]
  },
  "push_tokens": 7
