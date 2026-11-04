@@ -19,39 +19,19 @@
   "MSTRB/USDT",
   "TRX/USDT",
   "U/USDT",
-  "UNI/USDT"
+  "UNI/USDT",
+  "LINK/USDT",
+  "ADA/USDT",
+  "SUI/USDT",
+  "DOT/USDT",
+  "NEAR/USDT"
  ],
  "views": {
   "15m": {
-   "rows": 20,
-   "updated": 1793731480178,
-   "with_plan": 9,
+   "rows": 25,
+   "updated": 1793784674391,
+   "with_plan": 13,
    "grades": {
-    "None": 9
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "1h": {
-   "rows": 20,
-   "updated": 1793731480180,
-   "with_plan": 12,
-   "grades": {
-    "None": 12
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "4h": {
-   "rows": 20,
-   "updated": 1793731480182,
-   "with_plan": 14,
-   "grades": {
-    "B": 1,
     "None": 13
    },
    "statuses": [
@@ -59,9 +39,21 @@
    ],
    "gold_row": true
   },
-  "12h": {
-   "rows": 20,
-   "updated": 1793731480185,
+  "1h": {
+   "rows": 25,
+   "updated": 1793784674395,
+   "with_plan": 14,
+   "grades": {
+    "None": 14
+   },
+   "statuses": [
+    "OK"
+   ],
+   "gold_row": true
+  },
+  "4h": {
+   "rows": 25,
+   "updated": 1793784674398,
    "with_plan": 15,
    "grades": {
     "None": 15
@@ -71,12 +63,24 @@
    ],
    "gold_row": true
   },
-  "1d": {
-   "rows": 20,
-   "updated": 1793731480187,
-   "with_plan": 17,
+  "12h": {
+   "rows": 25,
+   "updated": 1793784674402,
+   "with_plan": 20,
    "grades": {
-    "None": 17
+    "None": 20
+   },
+   "statuses": [
+    "OK"
+   ],
+   "gold_row": true
+  },
+  "1d": {
+   "rows": 25,
+   "updated": 1793784674406,
+   "with_plan": 22,
+   "grades": {
+    "None": 22
    },
    "statuses": [
     "OK"
@@ -84,11 +88,11 @@
    "gold_row": true
   },
   "3d": {
-   "rows": 20,
-   "updated": 1793731480189,
-   "with_plan": 9,
+   "rows": 25,
+   "updated": 1793784674408,
+   "with_plan": 11,
    "grades": {
-    "None": 9
+    "None": 11
    },
    "statuses": [
     "INSUFFICIENT DATA",
@@ -100,22 +104,42 @@
  "view_sizes_kb": [
   [
    "signals",
-   96.1
+   121.1
   ],
   [
    "performance",
-   51.6
+   65.9
+  ],
+  [
+   "health",
+   53.2
   ],
   [
    "dashboard_1w",
    44.8
   ],
   [
-   "models_ADAUSDT_1d",
+   "dashboard_4h",
+   44.2
+  ],
+  [
+   "dashboard_1h",
+   44.1
+  ],
+  [
+   "futures_1d",
    43.8
   ],
   [
-   "health",
+   "dashboard_12h",
+   43.6
+  ],
+  [
+   "dashboard_15m",
+   43.6
+  ],
+  [
+   "dashboard_1d",
    43.3
   ],
   [
@@ -123,12 +147,12 @@
    42.9
   ],
   [
-   "models_ADAUSDT_12h",
+   "models_HBARUSDT_12h",
    42.4
   ],
   [
-   "models_HBARUSDT_12h",
-   42.4
+   "futures_12h",
+   42.2
   ],
   [
    "models_XLMUSDT_12h",
@@ -139,6 +163,14 @@
    42.0
   ],
   [
+   "track_record",
+   42.0
+  ],
+  [
+   "dashboard_3d",
+   40.7
+  ],
+  [
    "models_HBARUSDT_1d",
    40.5
   ],
@@ -147,15 +179,15 @@
    39.0
   ],
   [
+   "models_ADAUSDT_1d",
+   38.4
+  ],
+  [
+   "futures_4h",
+   38.3
+  ],
+  [
    "models_BTCUSDT_1d",
-   38.4
-  ],
-  [
-   "models_XRPUSDT_1d",
-   38.4
-  ],
-  [
-   "models_TRXUSDT_1d",
    38.3
   ],
   [
@@ -167,55 +199,27 @@
    38.1
   ],
   [
-   "models_DOTUSDT_12h",
-   38.1
-  ],
-  [
-   "models_ZECUSDT_1d",
-   38.1
-  ],
-  [
-   "models_ETHUSDT_1d",
-   37.9
-  ],
-  [
-   "models_INJUSDT_4h",
-   37.9
-  ],
-  [
-   "models_LTCUSDT_1d",
-   37.7
-  ],
-  [
-   "models_DOTUSDT_4h",
-   37.6
-  ],
-  [
-   "models_ADAUSDT_4h",
-   37.5
-  ],
-  [
-   "models_LINKUSDT_1d",
-   37.4
+   "models_TRXUSDT_1d",
+   38.0
   ]
  ],
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1793731299848,
-   "last_tick_finished": 1793731431718,
-   "last_tick_seconds": 131.9,
+   "last_tick_started": 1793784369074,
+   "last_tick_finished": 1793784581162,
+   "last_tick_seconds": 212.1,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 5,
-   "ticks": 2317,
-   "firestore_writes_today": 7848,
+   "ticks": 2489,
+   "firestore_writes_today": 1112,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 3962,
+   "firestore_reads_today": 1218,
    "firestore_read_limit": 50000,
-   "firestore_members_active": 4,
-   "firestore_member_reserve": 240,
-   "firestore_engine_budget": 14760,
+   "firestore_members_active": 5,
+   "firestore_member_reserve": 300,
+   "firestore_engine_budget": 14700,
    "firestore_free_limit": 20000,
    "firestore_lean": false
   },
@@ -320,313 +324,362 @@
     "symbol": "U/USDT",
     "state": "active",
     "message": ""
+   },
+   {
+    "symbol": "ADA/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "DOT/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "SUI/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "LINK/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "NEAR/USDT",
+    "state": "active",
+    "message": ""
    }
   ],
   "series_15m": [
    {
     "symbol": "BTC/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "LTC/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 30776,
+    "candles": 30835,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 30776,
+    "candles": 30835,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 30776,
+    "candles": 30835,
     "status": "OK"
    },
    {
     "symbol": "PAXG/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 30778,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 30777,
+    "candles": 30836,
     "status": "OK"
    },
    {
     "symbol": "GALA/USDT",
-    "candles": 30383,
+    "candles": 30442,
     "status": "OK"
    },
    {
     "symbol": "NVDAB/USDT",
-    "candles": 13923,
+    "candles": 13982,
     "status": "OK"
    },
    {
     "symbol": "ZEC/USDT",
-    "candles": 30774,
+    "candles": 30833,
     "status": "OK"
    },
    {
     "symbol": "MSTRB/USDT",
-    "candles": 12789,
+    "candles": 12848,
     "status": "OK"
    },
    {
     "symbol": "UNI/USDT",
-    "candles": 30776,
+    "candles": 30835,
     "status": "OK"
    },
    {
     "symbol": "SPCXB/USDT",
-    "candles": 13831,
+    "candles": 13890,
     "status": "OK"
    },
    {
     "symbol": "TRX/USDT",
-    "candles": 30775,
+    "candles": 30834,
     "status": "OK"
    },
    {
     "symbol": "U/USDT",
-    "candles": 28267,
+    "candles": 28326,
+    "status": "OK"
+   },
+   {
+    "symbol": "ADA/USDT",
+    "candles": 30837,
+    "status": "OK"
+   },
+   {
+    "symbol": "DOT/USDT",
+    "candles": 30836,
+    "status": "OK"
+   },
+   {
+    "symbol": "SUI/USDT",
+    "candles": 30835,
+    "status": "OK"
+   },
+   {
+    "symbol": "LINK/USDT",
+    "candles": 30835,
+    "status": "OK"
+   },
+   {
+    "symbol": "NEAR/USDT",
+    "candles": 30837,
     "status": "OK"
    }
   ]
  },
  "model_age_h": {
   "15m": {
-   "n": 20,
+   "n": 25,
    "fresh_12h": 0,
-   "max": 193.1,
+   "max": 207.9,
    "missing": 0
   },
   "1h": {
-   "n": 20,
-   "fresh_12h": 0,
-   "max": 159.6,
+   "n": 25,
+   "fresh_12h": 20,
+   "max": 174.4,
    "missing": 0
   },
   "4h": {
-   "n": 20,
-   "fresh_12h": 0,
-   "max": 159.4,
+   "n": 25,
+   "fresh_12h": 20,
+   "max": 174.3,
    "missing": 0
   },
   "12h": {
-   "n": 20,
-   "fresh_12h": 0,
-   "max": 159.3,
+   "n": 25,
+   "fresh_12h": 17,
+   "max": 174.3,
    "missing": 3
   },
   "1d": {
-   "n": 20,
-   "fresh_12h": 0,
-   "max": 159.4,
+   "n": 25,
+   "fresh_12h": 16,
+   "max": 174.2,
    "missing": 4
   },
   "3d": {
-   "n": 20,
-   "fresh_12h": 0,
-   "max": 159.3,
+   "n": 25,
+   "fresh_12h": 15,
+   "max": 174.2,
    "missing": 5
   }
  },
  "last_train": {
-  "started_at": 1793676235420,
-  "finished_at": 1793676294843,
+  "started_at": 1793762808652,
+  "finished_at": 1793762946012,
   "detail": {
    "shards": 15,
-   "imported": 86,
+   "imported": 88,
    "skipped": 0,
-   "pruned_files": 220,
+   "pruned_files": 73,
    "failed": [],
    "derivs": {
     "funding": {
      "calls": 0,
      "rows": 0,
      "unsupported": [
-      "NVDAB/USDT"
+      "NVDAB/USDT",
+      "MSTRB/USDT",
+      "SPCXB/USDT",
+      "U/USDT"
      ],
      "errors": []
     },
     "crowd": {
-     "files": 14,
-     "rows": 0,
+     "files": 150,
+     "rows": 12384,
      "missing": [],
      "errors": []
     }
    },
    "series_policy": {
-    "series": 80,
+    "series": 126,
     "skipped": [],
     "errors": [],
     "entry": {
-     "3d": "market:0.0",
-     "1d": "pullback:0.5",
-     "12h": "old:0.0",
-     "4h": "old:0.0",
-     "1h": "pullback:0.5",
+     "3d": "confirm:0.25",
+     "1d": "old:0.0",
+     "12h": "confirm:0.25",
+     "4h": "market:0.0",
+     "1h": "confirm:0.1",
      "15m": "confirm:0.1"
     },
     "filters": {
      "3d": {
       "enabled": false,
-      "reason": "only 137 trades to learn from",
-      "n": 137
+      "reason": "only 270 trades to learn from",
+      "n": 270
      },
      "1d": {
-      "enabled": false,
-      "keep_fraction": 0.4,
-      "n": 651,
-      "exam": {
-       "n": 163,
-       "kept": 58,
-       "avg_r_all": 0.16862882640369498,
-       "avg_r_kept": 0.05450406226211338
-      },
-      "reason": "the filter did not improve results on unseen trades"
-     },
-     "12h": {
-      "enabled": true,
-      "keep_fraction": 0.4,
-      "n": 1508,
-      "exam": {
-       "n": 377,
-       "kept": 167,
-       "avg_r_all": 0.09132762635964746,
-       "avg_r_kept": 0.1540423623191657
-      },
-      "threshold": 0.5742937724844209,
-      "reason": "kept trades earned +0.15R vs +0.09R for all, on unseen trades"
-     },
-     "4h": {
-      "enabled": false,
-      "keep_fraction": 0.4,
-      "n": 3438,
-      "exam": {
-       "n": 860,
-       "kept": 331,
-       "avg_r_all": 0.07870792323465203,
-       "avg_r_kept": 0.0388182296020686
-      },
-      "reason": "the filter did not improve results on unseen trades"
-     },
-     "1h": {
       "enabled": true,
       "keep_fraction": 0.8,
-      "n": 2924,
+      "n": 1128,
       "exam": {
-       "n": 731,
-       "kept": 562,
-       "avg_r_all": -0.0848665933119929,
-       "avg_r_kept": -0.04421224610035943
+       "n": 282,
+       "kept": 190,
+       "avg_r_all": 0.14548530607986185,
+       "avg_r_kept": 0.17603800800694822
       },
-      "threshold": 0.4043433020002424,
-      "reason": "kept trades earned -0.04R vs -0.08R for all, on unseen trades"
+      "threshold": 0.3637510197589956,
+      "reason": "kept trades earned +0.18R vs +0.15R for all, on unseen trades"
+     },
+     "12h": {
+      "enabled": false,
+      "keep_fraction": 0.5,
+      "n": 2335,
+      "exam": {
+       "n": 584,
+       "kept": 242,
+       "avg_r_all": 0.11604132820945162,
+       "avg_r_kept": 0.14489443171738
+      },
+      "reason": "the filter did not improve results on unseen trades"
+     },
+     "4h": {
+      "enabled": true,
+      "keep_fraction": 0.8,
+      "n": 6680,
+      "exam": {
+       "n": 1670,
+       "kept": 1289,
+       "avg_r_all": 0.06004804154145208,
+       "avg_r_kept": 0.12747307575419953
+      },
+      "threshold": 0.4531529034088394,
+      "reason": "kept trades earned +0.13R vs +0.06R for all, on unseen trades"
+     },
+     "1h": {
+      "enabled": false,
+      "keep_fraction": 0.8,
+      "n": 3672,
+      "exam": {
+       "n": 918,
+       "kept": 743,
+       "avg_r_all": -0.06793561013875093,
+       "avg_r_kept": -0.09220468809192088
+      },
+      "reason": "the filter did not improve results on unseen trades"
      },
      "15m": {
       "enabled": false,
       "keep_fraction": 0.8,
-      "n": 1203,
+      "n": 2063,
       "exam": {
-       "n": 301,
-       "kept": 239,
-       "avg_r_all": -0.18949395754869747,
-       "avg_r_kept": -0.2214379646737421
+       "n": 516,
+       "kept": 428,
+       "avg_r_all": -0.18666854175916545,
+       "avg_r_kept": -0.19351726309416967
       },
       "reason": "the filter did not improve results on unseen trades"
      }
     },
-    "seconds": 50.2
+    "seconds": 79.7
    }
   }
  },
  "safety": [],
  "release": {
   "version": "2.1.0",
-  "updated_at": 1793386630880,
-  "launched_at": 1793386630880
+  "launched_at": 1793386630880,
+  "updated_at": 1793386630880
  },
  "track_record": {
-  "record_since": 1793731300842,
-  "live_signals": 1,
-  "updated": 1793731480175
+  "record_since": 1793784369962,
+  "live_signals": 0,
+  "updated": 1793784674387
  },
  "record_live": {
   "summary": {
    "closed": 0
   },
   "by_timeframe": null,
-  "signals_by_status": {
-   "OPEN": 1
-  },
-  "signals_by_timeframe": {
-   "4h": 1
-  }
+  "signals_by_status": {},
+  "signals_by_timeframe": {}
  },
  "counts": {
   "paper": 4,
   "paper_trades": 0,
-  "paper_futures_trades": 28,
+  "paper_futures_trades": 34,
   "auto_paper_state": 4,
-  "jobs": 23
+  "jobs": 24
  },
  "bots": [
   {
    "id": "futures-signal-ab-1h",
-   "reset_token": "v214"
+   "reset_token": "v218"
   },
   {
    "id": "futures-signal-ab-4h",
-   "reset_token": "v214"
+   "reset_token": "v218"
   },
   {
    "id": "futures-signal-ab-12h",
-   "reset_token": "v214"
+   "reset_token": "v218"
   },
   {
    "id": "futures-signal-ab-15m",
-   "reset_token": "v214"
+   "reset_token": "v218"
   },
   {
    "id": "futures-signal-ab-1d",
-   "reset_token": "v214"
+   "reset_token": "v218"
   },
   {
    "id": "futures-signal-ab-3d",
-   "reset_token": "v214"
+   "reset_token": "v218"
   }
  ]
 }
