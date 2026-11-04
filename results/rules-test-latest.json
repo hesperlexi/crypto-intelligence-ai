@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-03T20:46:52.457Z",
-  "sha": "3a74b41be7bec9b472f178cfb7089872c933f852",
-  "total": 133,
-  "passed": 133,
+  "at": "2026-11-04T03:02:08.823Z",
+  "sha": "aa647d55d963f20aa9dcd4ab465569e5efb7fc8a",
+  "total": 135,
+  "passed": 135,
   "failed": 0,
   "results": [
     {
@@ -403,6 +403,14 @@
     },
     {
       "name": "alerts: bad symbol / type / timeframe / extra keys / someone else's uid are refused",
+      "ok": true
+    },
+    {
+      "name": "alerts: v2.16 call-event and market-mood alerts are accepted",
+      "ok": true
+    },
+    {
+      "name": "alerts: v2.16 types keep the same checks (owner, symbol, timeframe, cooldown)",
       "ok": true
     },
     {
