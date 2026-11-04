@@ -344,7 +344,8 @@ SIGNED_X = ("ret_1", "ret_5", "ret_20", "d_ema21", "d_ema50", "d_ema200", "macd_
             "taker_24h", "oi_chg_1d", "struct_trend", "htf_regime")
 
 
-def build_series(rt: Any, symbol: str, tf: str, cfg: dict[str, Any], cache: dict) -> dict[str, Any]:
+def build_series(rt: Any, symbol: str, tf: str, cfg: dict[str, Any], cache: dict, bundle: dict | None = None,
+                 key: str | None = None) -> dict[str, Any]:
     """Every candidate call of one coin / timeframe (the pipeline's calls and both sides of a regular grid of bars),
     each simulated with the live rules, with its decision-time features; plus the per-series retraining of the old
     AI pieces on development data (holdout calls scored)."""
@@ -353,7 +354,7 @@ def build_series(rt: Any, symbol: str, tf: str, cfg: dict[str, Any], cache: dict
     from .ml import series_policy as SP, series_sim as S, trainer, trade_filter2 as TF2
     from .services import analysis as A, tracking as T
     t0 = time.time()
-    bundle = trainer.load_bundle(symbol, tf, rt.db)
+    bundle = bundle if bundle is not None else trainer.load_bundle(symbol, tf, rt.db)
     if bundle is None:
         return {"key": f"{symbol} {tf}", "skip": "no active model"}
     frames = cache.get(symbol)
@@ -399,6 +400,8 @@ def build_series(rt: Any, symbol: str, tf: str, cfg: dict[str, Any], cache: dict
     rand_side = np.where(rng.random(ctx.n) < 0.5, 1, -1)
     usable = ~np.isin(d["reason"], ("insufficient", "extreme_vol")) & np.isfinite(ctx.atr) & (ctx.atr > 0)
     grid = np.flatnonzero(usable & (np.arange(ctx.n) % STRIDE.get(tf, 1) == 0))
+    if cfg.get("pipe_only"):
+        grid = grid[:0]
     if len(grid) > MAX_GRID_ROWS:
         grid = grid[np.linspace(0, len(grid) - 1, MAX_GRID_ROWS).round().astype(int)]
     pipe = np.flatnonzero(d["trade"])
@@ -474,7 +477,7 @@ def build_series(rt: Any, symbol: str, tf: str, cfg: dict[str, Any], cache: dict
                 fnames = list(cf) + [f"x_{c}" for c in xcols]
             feats.append(np.concatenate([np.array(list(cf.values()), float), xr]).astype(np.float32))
             recs.append(rec)
-    out = {"key": f"{symbol} {tf}", "symbol": symbol, "tf": tf, "n_oos": int(ctx.n), "span": [int(ctx.ts[0]), int(ctx.ts[-1])],
+    out = {"key": key or f"{symbol} {tf}", "symbol": symbol, "tf": tf, "n_oos": int(ctx.n), "span": [int(ctx.ts[0]), int(ctx.ts[-1])],
            "now": now, "entry_rule": f"{mode}:{k}", "skipped": skipped, "fnames": fnames or [],
            "F": np.vstack(feats) if feats else np.zeros((0, 0), np.float32),
            "pipe_calls": int(len(pipe)), "grid_rows": int(len(grid)),
@@ -482,7 +485,12 @@ def build_series(rt: Any, symbol: str, tf: str, cfg: dict[str, Any], cache: dict
            "uses_htf": bundle.get("uses_htf"), "uses_btc": bool(bundle.get("uses_btc")),
            "edge_confirmed": bool(ctx.edge_confirmed)}
     try:
-        out["old_pieces"] = old_pieces(bundle, ctx, fr, frames, btc, deriv, recs, cut, step, (mode, k), br)
+        if cfg.get("stress"):
+            from .research_stress import crossfit_pieces
+            out["old_pieces"] = crossfit_pieces(bundle, ctx, fr, frames, btc, deriv, recs, step, (mode, k), br,
+                                                skip=cfg.get("skip_pieces", False))
+        else:
+            out["old_pieces"] = old_pieces(bundle, ctx, fr, frames, btc, deriv, recs, cut, step, (mode, k), br)
     except Exception as exc:                            # an old piece must never break the series
         out["old_pieces"] = {"error": error_text(exc, 200)}
     for r in recs:

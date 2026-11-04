@@ -4,6 +4,7 @@
   python -m app.research compare  [--db ...] [--out results/compare.json]
   python -m app.research engine   [--db ...] [--out results/engine.json] [--budget 14400]  (v2.6, see research_engine.py)
   python -m app.research v213     [--db ...] [--out results/v213.json] [--budget 10800]  (v2.13 impact, research_v213.py)
+  python -m app.research aiv3stress [--budget 14400] [--workers 4]  (add-ons in stress windows, research_stress.py)
   python -m app.research aiv3 --mode dev|final [--budget 14400] [--workers 4]  (AI research v3, research_v3.py)
 
 giveback  every closed call ever recorded (and separately those since record_since), replayed from publication on the
@@ -220,7 +221,7 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "aiv3"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "aiv3", "aiv3stress"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
@@ -248,7 +249,12 @@ def main(argv: list[str] | None = None) -> int:
             src.close()
             dst.close()
             a.db = f"sqlite:///{tmp}"
-        if a.command == "aiv3":
+        if a.command == "aiv3stress":
+            from . import research_stress
+            body = research_stress.run(a.db, a.budget, [x for x in (a.symbols or "").split(",") if x] or None,
+                                       [x for x in (a.timeframes or "").split(",") if x] or None, a.workers)
+            out = {"ok": True, "command": a.command, **body}
+        elif a.command == "aiv3":
             from . import research_v3
             body = research_v3.run(a.db, a.mode, a.budget, [x for x in (a.symbols or "").split(",") if x] or None,
                                    [x for x in (a.timeframes or "").split(",") if x] or None, a.workers, a.prior_final_runs)

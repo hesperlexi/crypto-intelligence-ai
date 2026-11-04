@@ -211,7 +211,9 @@ def family_test(strats: dict[str, tuple[np.ndarray, np.ndarray]], bench: tuple[n
     p_one = {k: float(np.nanmean(cen[i] >= dv[i])) for i, k in enumerate(names)}
     adj = holm(p_one)
     out = {k: {"diff": d[k], "se": float(se[i]) if np.isfinite(se[i]) else None, "p": p_one[k], "p_holm": adj[k],
-               "lb95": float(np.nanquantile(D[i], 0.05)) if np.isfinite(D[i]).any() else None}
+               "lb95": float(np.nanquantile(D[i], 0.05)) if np.isfinite(D[i]).any() else None,
+               "ci95": [float(np.nanquantile(D[i], 0.025)), float(np.nanquantile(D[i], 0.975))]
+               if np.isfinite(D[i]).any() else None}
            for i, k in enumerate(names)}
     return {"strategies": out, "reality_check_p": rc, "spa_p": spa, "n_strategies": len(names), "blocks": nblk,
             "best": names[int(np.nanargmax(dv))], "benchmark": "zero (costs only)" if bench is None else "benchmark mean"}
