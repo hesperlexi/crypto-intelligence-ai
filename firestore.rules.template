@@ -201,13 +201,15 @@ service cloud.firestore {
     }
     // engine output; per-member alert views are private to that member
     // wins_today is public (the sign-in page shows it); scalping as above; hesper as above;
-    // health_errors (raw engine error texts, v2.13) is admin only; everything else is for members
+    // health_errors (raw engine error texts, v2.13) and guardian (v2.19 Trade Guardian recommendations) are admin only;
+    // everything else is for members
     match /views/{id} {
       allow read: if id == 'wins_today'
         || (id == 'scalping' && (isAdmin() || (isMember() && scalpingForMembers())))
         || (id == 'hesper' && (isAdmin() || (isMember() && hesperForMembers())))
         || (id == 'health_errors' && isAdmin())
-        || (id != 'scalping' && id != 'hesper' && id != 'health_errors' && allowed()
+        || (id == 'guardian' && isAdmin())
+        || (id != 'scalping' && id != 'hesper' && id != 'health_errors' && id != 'guardian' && allowed()
             && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
       allow write: if false;
     }

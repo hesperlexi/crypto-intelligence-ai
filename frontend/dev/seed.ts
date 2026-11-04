@@ -467,6 +467,7 @@ export function seed(): Record<string, any> {
     "views/weekly_report": v(weekly()),
     "views/scalping": v(scalping()),
     "views/hesper": v(hesper()),
+    "views/guardian": v(guardian()),
     ...leaderboard(),
     "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
     "users/u_member_self": undefined,
@@ -652,5 +653,53 @@ function leaderboard(): Record<string, any> {
       last_winner: { month: prev, label: label(prev), winners: [{ username: "sara_k", return_pct: 27.4, trades: 12 }] }, badges: { sara_k: [prev] } }),
     "admin/leaderboard": { json: JSON.stringify({ month, label: label(month), generated_at: NOW - 20 * 60_000, min_trades: 5, rows: adminRows, winners, excluded: [] }), updated_at: NOW },
     "owner/leaderboard": { awarded: {}, excluded: [] },
+  };
+}
+
+/** views/guardian: the shape backend/app/services/guardian.Guardian.view publishes (v2.19 Trade Guardian, admin only). */
+function guardian() {
+  const M = 60_000;
+  const rec = (o: any) => ({ rules_level: o.level, status: "live", status_at: null, status_reason: null, tp1_hit: false, ...o });
+  const live = [
+    rec({ id: "g1", signal_id: "s-sol", symbol: "SOL/USDT", timeframe: "1h", side: 1, level: "CLOSE", severity: 86,
+      created_at: NOW - 4 * M, expires_at: NOW + 26 * M, price: 166.9, entry: 168.1, stop_in_force: 165.8, proposed_stop: null, atr: 0.82,
+      reasons: [{ code: "move", label: "Moved 1.52 ATR against in 15 min", points: 30 }, { code: "flip", label: "1H analysis flipped to SELL", points: 25 },
+        { code: "btc", label: "BTC -1.74% in 15 min", points: 20 }, { code: "volatility", label: "Volatility 2.9x normal", points: 10 }, { code: "near_stop", label: "0.47R from the stop", points: 15 }],
+      ai: { path: "ai_agreed", model: "gemini-flash-lite-latest", text: "Solana dropped sharply against the long trade in the last 15 minutes while Bitcoin fell over the same window. The 1H analysis now points the other way, so the rules see more risk than reward in staying in." } }),
+    rec({ id: "g2", signal_id: "s-avax", symbol: "AVAX/USDT", timeframe: "4h", side: -1, level: "TIGHTEN", rules_level: "CLOSE", severity: 77,
+      created_at: NOW - 11 * M, expires_at: NOW + 19 * M, price: 27.58, entry: 27.2, stop_in_force: 27.95, proposed_stop: 27.81, atr: 0.19, tp1_hit: false,
+      reasons: [{ code: "move", label: "Moved 1.10 ATR against in 60 min", points: 22 }, { code: "near_stop", label: "0.49R from the stop", points: 15 },
+        { code: "volatility", label: "Volatility 4.2x normal", points: 15 }, { code: "grade_lost", label: "4H grade A no longer confirmed", points: 8 },
+        { code: "funding", label: "Funding 3.4 sd against (estimate)", points: 5, estimate: true }],
+      ai: { path: "ai_downgraded", model: "gemini-flash-lite-latest", text: "Avalanche rose against the short trade over the last hour and volatility jumped. The 4H call is no longer confirmed, but the move is not yet decisive, so tightening fits the facts better than closing." } }),
+    rec({ id: "g3", signal_id: "s-eth", symbol: "ETH/USDT", timeframe: "15m", side: 1, level: "TIGHTEN", severity: 58, tp1_hit: true,
+      created_at: NOW - 27 * M, expires_at: NOW + 3 * M, price: 2471.4, entry: 2452.0, stop_in_force: 2452.0, proposed_stop: 2463.9, atr: 6.1,
+      reasons: [{ code: "giveback", label: "Gave back 62% of the 1.48R peak", points: 15 }, { code: "move", label: "Moved 0.71 ATR against in 5 min", points: 13 },
+        { code: "flip", label: "15M analysis flipped to SELL", points: 25 }, { code: "near_stop", label: "0.55R from the protected stop", points: 2 }],
+      ai: { path: "rules_only", model: null, text: "Severity 58 of 100 from the rules: 15M analysis flipped to SELL; Gave back 62% of the 1.48R peak; Moved 0.71 ATR against in 5 min. The rules suggest to tighten the stop to 2,463.9. Nothing changes unless you apply it." } }),
+  ];
+  const h = (o: any) => ({ rules_level: o.level, reasons: [], tp1_hit: false, ...o });
+  const history = [
+    h({ id: "h1", signal_id: "x1", symbol: "XRP/USDT", timeframe: "1h", side: 1, level: "TIGHTEN", severity: 63, created_at: NOW - 3 * H, expires_at: NOW - 2.5 * H,
+      status: "applied", status_at: NOW - 2.9 * H, status_reason: "applied by the admin at 0.5198", proposed_stop: 0.5176, shadow: { action: "TIGHTEN", applied: true, with_r: -0.42, without_r: -1.08, delta_r: 0.66 } }),
+    h({ id: "h2", signal_id: "x2", symbol: "DOGE/USDT", timeframe: "4h", side: -1, level: "CLOSE", severity: 81, created_at: NOW - 7 * H, expires_at: NOW - 6.5 * H,
+      status: "dismissed", status_at: NOW - 6.8 * H, status_reason: "dismissed by owner", shadow: { action: "CLOSE", applied: false, with_r: -0.31, without_r: 1.12, delta_r: -1.43 } }),
+    h({ id: "h3", signal_id: "x3", symbol: "BNB/USDT", timeframe: "1h", side: 1, level: "TIGHTEN", severity: 54, created_at: NOW - 9 * H, expires_at: NOW - 8.5 * H,
+      status: "expired", status_at: NOW - 8.3 * H, status_reason: "not applied within 30 minutes", proposed_stop: 583.1, shadow: { action: "TIGHTEN", applied: false, with_r: -0.55, without_r: -1.07, delta_r: 0.52 } }),
+    h({ id: "h4", signal_id: "x4", symbol: "LTC/USDT", timeframe: "12h", side: 1, level: "TIGHTEN", severity: 57, created_at: NOW - 20 * H, expires_at: NOW - 19.5 * H,
+      status: "rejected", status_at: NOW - 19.8 * H, status_reason: "no longer valid at the price now (71.40): the proposed stop is closer than 0.2 ATR to the price", proposed_stop: 71.32, shadow: null }),
+    h({ id: "h5", signal_id: "x5", symbol: "AAVE/USDT", timeframe: "4h", side: 1, level: "NONE", rules_level: "TIGHTEN", severity: 52, created_at: NOW - 26 * H, expires_at: NOW - 25.5 * H,
+      status: "downgraded", status_at: NOW - 26 * H, status_reason: "AI downgraded the rules' recommendation to no action", shadow: { action: "TIGHTEN", applied: false, with_r: 0.31, without_r: 0.85, delta_r: -0.54 } }),
+  ];
+  const agg = (n: number, saved: number, cost: number, helped: number, hurt: number) => ({ n, saved_r: saved, cost_r: cost, net_r: Math.round((saved + cost) * 100) / 100, helped, hurt });
+  return {
+    generated_at: NOW, enabled: true,
+    status: { last_check: NOW - 2 * M, watched: { coins: ["SOL", "AVAX", "ETH", "BTC"], calls: 3 }, day: new Date(NOW).toISOString().slice(0, 10),
+      today: { checks: 214, skipped_stale: 2, skipped_price: 0, errors: 0, created: 6, ai_calls: 4, no_valid_stop: 1 }, last_error: null },
+    live, history,
+    scoreboard: { ...agg(4, 1.18, -1.97, 2, 2), applied: agg(1, 0.66, 0, 1, 0), not_applied: agg(3, 0.52, -1.97, 1, 2),
+      by_level: { TIGHTEN: agg(3, 1.18, -0.54, 2, 1), CLOSE: agg(1, 0, -1.43, 0, 1) }, pending: 4, skipped: 0 },
+    config: { tighten_at: 50, close_at: 75, expires_min: 30, min_gap_atr: 0.2, fresh_m1_min: 3, persist_ticks: 3 },
+    note: "Recommend-only: nothing changes unless the admin applies it. Shadow results are net R estimates (same fees on both sides, funding ignored), from the record's own exit rules.",
   };
 }
