@@ -5,7 +5,7 @@ import { useMemo } from "react";
 import { isLightTheme, useAppearance } from "../lib/appearance";
 
 // toolbar colour = the theme's page background (index.css --ink)
-const TOOLBAR: Record<string, string> = { gold: "0d0c0a", obsidian: "000000", graphite: "2e3034", aurora: "081126", light: "f7f6f2" };
+const TOOLBAR: Record<string, string> = { gold: "0d0c0a", obsidian: "000000", aurora: "081126", violet: "0b0914", light: "f7f6f2" };
 const INTERVAL: Record<string, string> = { "1m": "1", "5m": "5", "15m": "15", "30m": "30", "1h": "60", "4h": "240", "12h": "720", "1d": "D", "3d": "3D", "1w": "W" };
 
 export default function TVChart({ symbol, market = "spot", tf = "1h", height = 520, tvSymbolOverride }: { symbol: string; market?: "spot" | "futures"; tf?: string; height?: number; tvSymbolOverride?: string }) {

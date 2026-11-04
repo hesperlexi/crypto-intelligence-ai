@@ -40,17 +40,17 @@
   --shadow: rgba(0, 0, 0, 0.85);
   color-scheme: dark;
 }
-[data-theme="graphite"] {
-  /* Graphite Pro: mid-grey graphite, clearly lighter than the blacks, muted brass */
-  --ink: 46 48 52; --panel: 57 60 65; --raised: 70 73 79; --line: 86 90 97;
-  --text: 238 238 236; --mute: 182 184 188;
-  --bull: 110 214 154; --bear: 255 152 146; --warn: 242 178 112;
-  --accent: 214 180 106; --accent-2: 230 202 140; --ai: 166 190 230;
-  --primary: 206 170 96; --primary-2: 218 186 116; --on-primary: 30 26 18; --on-accent: 30 26 18;
-  --glass: 255 255 255;
-  --panel-bg: 57 60 65; --panel-a: 0.96; --bar-a: 0.94;
-  --glow1: rgba(255, 255, 255, 0.025); --glow2: rgba(214, 180, 106, 0.02);
-  --shadow: rgba(0, 0, 0, 0.35);
+[data-theme="violet"] {
+  /* Violet Night (owner, 4 Nov 2026): deep purple-black surfaces, violet accents and glows, green / red prices */
+  --ink: 11 9 20; --panel: 21 17 36; --raised: 31 25 52; --line: 52 43 82;
+  --text: 241 237 252; --mute: 164 156 192;
+  --bull: 40 216 142; --bear: 247 94 112; --warn: 244 166 74;
+  --accent: 176 132 255; --accent-2: 208 178 255; --ai: 110 200 255;
+  --primary: 132 84 240; --primary-2: 152 106 250; --on-primary: 255 255 255; --on-accent: 18 10 36;
+  --glass: 226 214 255;
+  --panel-bg: 21 17 36; --panel-a: 0.9; --bar-a: 0.9;
+  --glow1: rgba(150, 90, 255, 0.14); --glow2: rgba(70, 170, 255, 0.06);
+  --shadow: rgba(4, 2, 12, 0.75);
   color-scheme: dark;
 }
 [data-theme="aurora"] {
@@ -100,7 +100,7 @@
   --glass-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.18);
   --ease-out: cubic-bezier(.2, .7, .2, 1);
 }
-[data-theme="graphite"] { --hair: rgb(255 255 255 / 0.1); --hair-strong: rgb(255 255 255 / 0.18); --input-bg: rgb(var(--ink) / 0.7); }
+[data-theme="violet"] { --hair: rgb(200 180 255 / 0.1); --hair-strong: rgb(200 180 255 / 0.18); }
 [data-theme="obsidian"] { --hair: rgb(255 255 255 / 0.09); }
 [data-theme="light"] {
   --hair: rgb(15 23 42 / 0.09); --hair-strong: rgb(15 23 42 / 0.16);

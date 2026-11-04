@@ -6,8 +6,8 @@ import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useRe
 export const THEMES = [
   { id: "gold", name: "Midnight Gold", sub: "Default · warm black, rich gold", dark: true },
   { id: "obsidian", name: "Obsidian", sub: "Pure black, champagne gold", dark: true },
-  { id: "graphite", name: "Graphite Pro", sub: "Mid-grey graphite, brass gold", dark: true },
   { id: "aurora", name: "Aurora", sub: "Navy blue, gold and cyan", dark: true },
+  { id: "violet", name: "Violet Night", sub: "Deep purple, violet glow", dark: true },
   { id: "light", name: "Ivory", sub: "Light paper, deep gold", dark: false },
   { id: "system", name: "System", sub: "Follows the device", dark: true },
 ] as const;
