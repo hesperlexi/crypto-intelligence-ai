@@ -595,6 +595,41 @@ async function main() {
     await assertSucceeds(getDoc(doc(admin(), "admin", "migrations")));
   });
 
+  // ---------------------------------------------------------------- views/guardian (v2.19 Trade Guardian, admin only)
+  const guardDocs = { "views/guardian": { json: "{}", updated_at: NOW() }, "views/signals": { json: "{}", updated_at: NOW() } };
+  await test("guardian: admin reads views/guardian", async () => {
+    await seed(guardDocs);
+    await assertSucceeds(readView(admin(), "guardian"));
+  });
+  await test("guardian: an active member cannot read it (but still reads views/signals)", async () => {
+    await seed({ ...member, ...guardDocs });
+    await assertFails(readView(as("m1", "m1@example.com"), "guardian"));
+    await assertSucceeds(readView(as("m1", "m1@example.com"), "signals"));
+  });
+  await test("guardian: pending and signed-out people cannot read it", async () => {
+    await seed({ "users/p1": pending("p1", "p1@example.com"), ...guardDocs });
+    await assertFails(readView(as("p1", "p1@example.com"), "guardian"));
+    await assertFails(readView(env.unauthenticatedContext().firestore() as unknown as Firestore, "guardian"));
+  });
+  await test("guardian: nobody writes views/guardian from the website", async () => {
+    await seed({ ...member });
+    await assertFails(setDoc(doc(admin(), "views", "guardian"), { json: "{}" }));
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "views", "guardian"), { json: "{}" }));
+  });
+  await test("guardian: members / pending cannot queue Apply (adjust_signal + guardian_id) or Dismiss jobs; the admin can", async () => {
+    await seed({ ...member, "users/p1": pending("p1", "p1@example.com") });
+    const apply = (by: string) => ({ type: "adjust_signal", params: { signal_id: "s1", stop: 99.1, note: "tighten", guardian_id: "g1" }, status: "queued", created_at: NOW(), by });
+    const dismiss = (by: string) => ({ type: "guardian_dismiss", params: { guardian_id: "g1" }, status: "queued", created_at: NOW(), by });
+    await assertFails(addDoc(collection(as("m1", "m1@example.com"), "jobs"), apply("m1@example.com")));
+    await assertFails(addDoc(collection(as("m1", "m1@example.com"), "jobs"), dismiss("m1@example.com")));
+    await assertFails(addDoc(collection(as("p1", "p1@example.com"), "jobs"), dismiss("p1@example.com")));
+    await assertFails(addDoc(collection(env.unauthenticatedContext().firestore() as unknown as Firestore, "jobs"), dismiss("x@example.com")));
+    // signed with someone else's address (the admin's) by a member: refused
+    await assertFails(addDoc(collection(as("m1", "m1@example.com"), "jobs"), dismiss(ADMIN.email)));
+    await assertSucceeds(addDoc(collection(admin(), "jobs"), apply(ADMIN.email)));
+    await assertSucceeds(addDoc(collection(admin(), "jobs"), dismiss(ADMIN.email)));
+  });
+
   // ---------------------------------------------------------------- views/scalping (admin scorecard) + config/scalping
   const scalpView = { "views/scalping": { json: "{}", updated_at: NOW() }, "views/track_record": { json: "{}", updated_at: NOW() } };
   const readScalp = async (db: Firestore) => { const { getDoc } = await import("firebase/firestore"); return getDoc(doc(db, "views", "scalping")); };
