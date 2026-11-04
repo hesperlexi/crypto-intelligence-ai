@@ -16,9 +16,13 @@ function hue(s: string) {
 }
 
 /** The coin's logo when a public icon exists, otherwise a coloured monogram. */
+// Coins without an icon file: remembered for the whole session, so a re-mounted avatar shows its letters at once
+// instead of trying the missing image again (that try-then-fallback flashed on every refresh).
+const MISSING_ICONS = new Set<string>();
+
 export function CoinAvatar({ symbol, size = 34 }: { symbol: string; size?: number }) {
   const b = base(symbol);
-  const [failed, setFailed] = useState(false);
+  const [failed, setFailed] = useState(() => MISSING_ICONS.has(b));
   const h = hue(b);
   if (b === "GOLD") {
     return (
@@ -27,7 +31,7 @@ export function CoinAvatar({ symbol, size = 34 }: { symbol: string; size?: numbe
     );
   }
   if (!failed) {
-    return <img src={`${ICONS}/${b.toLowerCase()}.svg`} alt="" width={size} height={size} loading="lazy" onError={() => setFailed(true)}
+    return <img src={`${ICONS}/${b.toLowerCase()}.svg`} alt="" width={size} height={size} loading="lazy" onError={() => { MISSING_ICONS.add(b); setFailed(true); }}
       className="shrink-0 rounded-full bg-glass/[0.04] ring-1 ring-glass/10" style={{ width: size, height: size }} />;
   }
   return (

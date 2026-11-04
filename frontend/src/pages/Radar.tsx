@@ -15,6 +15,34 @@ const tone = (v: unknown) => (isNum(v) ? (v > 0 ? "text-bull" : v < 0 ? "text-be
 /** A radar figure that has no value yet: a calm word instead of a bare dash. */
 const Waiting = () => <span className="text-base font-normal text-mute">Not yet</span>;
 
+/** One radar pick. A top-level component (not created inside Radar), so its coin logo is not rebuilt and reloaded on
+ *  every data refresh - that made the logos blink. */
+function PickCard({ p, following, onAdd }: { p: any; following: boolean; onAdd: (s: string) => void }) {
+  return (
+    <li className="panel p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="font-display w-6 text-center text-lg font-bold text-accent/70">{p.rank}</span>
+          <CoinAvatar symbol={p.symbol} size={34} />
+          <div className="min-w-0">
+            <div className="font-display text-lg font-bold leading-tight">{base(p.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
+            <div className="num text-xs text-mute">{fmtPrice(p.price)} · <span className={tone(p.change_24h_pct)}>{isNum(p.change_24h_pct) ? `${p.change_24h_pct > 0 ? "+" : ""}${p.change_24h_pct.toFixed(1)}%` : "—"} 24h</span> · vol ${fmtNum(p.quote_volume / 1e6, 0)}M</div>
+          </div>
+        </div>
+        {following
+          ? <span className="shrink-0 rounded-lg border border-glass/15 px-3 py-1.5 text-xs text-mute">Following</span>
+          : <button className="btn btn-primary shrink-0 px-3 py-1.5 text-xs" onClick={() => onAdd(p.symbol)}>+ Add</button>}
+      </div>
+      <div className="num mt-3 grid grid-cols-3 gap-2 text-xs">
+        <div><div className="text-mute">vs BTC 7d</div><div className={`text-sm font-semibold ${tone(p.rs_7d)}`}>{pct(p.rs_7d)}</div></div>
+        <div><div className="text-mute">vs BTC 30d</div><div className={`text-sm font-semibold ${tone(p.rs_30d)}`}>{pct(p.rs_30d)}</div></div>
+        <div><div className="text-mute">Volume</div><div className="text-sm font-semibold">{isNum(p.vol_surge) ? `${p.vol_surge.toFixed(1)}x` : "—"}</div></div>
+      </div>
+      {p.reasons?.length > 0 && <ul className="mt-2 flex flex-wrap gap-1.5">{p.reasons.map((r: string) => <li key={r} className={`rounded-md px-2 py-0.5 text-xs ${r.includes("extended") ? "bg-warn/15 text-warn" : "bg-glass/[0.06] text-text/80"}`}>{r}</li>)}</ul>}
+    </li>
+  );
+}
+
 export default function Radar() {
   const v = useApi<any>("/radar");
   const meta = useApi<any>("/meta");
@@ -39,29 +67,6 @@ export default function Radar() {
   const d = v.data ?? {};
   const h = d.historical ?? {}, live = d.live ?? {};
 
-  const Card = ({ p }: { p: any }) => (
-    <li className="panel p-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="font-display w-6 text-center text-lg font-bold text-accent/70">{p.rank}</span>
-          <CoinAvatar symbol={p.symbol} size={34} />
-          <div className="min-w-0">
-            <div className="font-display text-lg font-bold leading-tight">{base(p.symbol)}<span className="text-sm font-normal text-mute">/USDT</span></div>
-            <div className="num text-xs text-mute">{fmtPrice(p.price)} · <span className={tone(p.change_24h_pct)}>{isNum(p.change_24h_pct) ? `${p.change_24h_pct > 0 ? "+" : ""}${p.change_24h_pct.toFixed(1)}%` : "—"} 24h</span> · vol ${fmtNum(p.quote_volume / 1e6, 0)}M</div>
-          </div>
-        </div>
-        {have.has(p.symbol)
-          ? <span className="shrink-0 rounded-lg border border-glass/15 px-3 py-1.5 text-xs text-mute">Following</span>
-          : <button className="btn btn-primary shrink-0 px-3 py-1.5 text-xs" onClick={() => add(p.symbol)}>+ Add</button>}
-      </div>
-      <div className="num mt-3 grid grid-cols-3 gap-2 text-xs">
-        <div><div className="text-mute">vs BTC 7d</div><div className={`text-sm font-semibold ${tone(p.rs_7d)}`}>{pct(p.rs_7d)}</div></div>
-        <div><div className="text-mute">vs BTC 30d</div><div className={`text-sm font-semibold ${tone(p.rs_30d)}`}>{pct(p.rs_30d)}</div></div>
-        <div><div className="text-mute">Volume</div><div className="text-sm font-semibold">{isNum(p.vol_surge) ? `${p.vol_surge.toFixed(1)}x` : "—"}</div></div>
-      </div>
-      {p.reasons?.length > 0 && <ul className="mt-2 flex flex-wrap gap-1.5">{p.reasons.map((r: string) => <li key={r} className={`rounded-md px-2 py-0.5 text-xs ${r.includes("extended") ? "bg-warn/15 text-warn" : "bg-glass/[0.06] text-text/80"}`}>{r}</li>)}</ul>}
-    </li>
-  );
 
   return (
     <div className="space-y-4">
@@ -77,11 +82,11 @@ export default function Radar() {
         <Tile variant="box" className="panel" label="Past check: beat BTC" value={isNum(h.beat_btc_rate) ? `${Math.round(h.beat_btc_rate * 100)}%` : <Waiting />} sub="of test days" />
         <Tile variant="box" className="panel" label="Live record" value={isNum(live.beat_btc_rate) ? `${Math.round(live.beat_btc_rate * 100)}%` : <Waiting />} sub={live.evaluated ? `${live.evaluated} picks scored after 7 days` : `${live.picks ?? 0} picks logged · first scores in 7 days`} />
       </div>
-      <ul className="grid gap-3 md:grid-cols-2">{(d.picks ?? []).map((p: any) => <Card key={p.symbol} p={p} />)}</ul>
+      <ul className="grid gap-3 md:grid-cols-2">{(d.picks ?? []).map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
       {(d.extended ?? []).length > 0 && (
         <section>
           <h2 className="label mb-2">Hot but already extended: wait for a pullback</h2>
-          <ul className="grid gap-3 md:grid-cols-3">{d.extended.map((p: any) => <Card key={p.symbol} p={p} />)}</ul>
+          <ul className="grid gap-3 md:grid-cols-3">{d.extended.map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
         </section>
       )}
       {(live.recent ?? []).length > 0 && (
