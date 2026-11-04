@@ -450,7 +450,7 @@ export function seed(): Record<string, any> {
       { symbol: "SOL/USDT", timeframe: "4h", side: "LONG", entry: 164.1, status: "TP2", return_pct: 2.31, leverage: 10, roi_pct: 23.1, closed_at: NOW - 5 * H, target: 168.9 },
       { symbol: "AVAX/USDT", timeframe: "1h", side: "SHORT", entry: 27.92, status: "TP2", return_pct: 1.88, leverage: 9, roi_pct: 16.92, closed_at: NOW - 8 * H, target: 27.11 },
       { symbol: "1000PEPE/USDT", timeframe: "15m", side: "SHORT", entry: 0.00001234, status: "TP1", return_pct: 0.71, closed_at: NOW - 9 * H, target: 0.00001225 }] }),
-    "views/news": v({ calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: newsHeads(), sources: { calendar: "Forex Factory weekly economic calendar", headlines: "CoinDesk, Cointelegraph, Decrypt" }, next_high: { title: "CPI m/m", ts: NOW + 26 * H },
+    "views/news": v({ generated_at: NOW - 12 * 60_000, errors: [], calendar: [{ id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: newsHeads(), sources: { calendar: "Forex Factory weekly economic calendar", headlines: "CoinDesk, Cointelegraph, Decrypt" }, next_high: { title: "CPI m/m", ts: NOW + 26 * H },
       sentiment: { latest: { market: { score: 0.28, ts: NOW - 0.4 * H, source: "headlines", headlines: 18 }, BTC: { score: 0.41, ts: NOW - 0.4 * H }, ETH: { score: 0.12, ts: NOW - 0.4 * H }, alts: { score: -0.18, ts: NOW - 0.4 * H } },
         series: Array.from({ length: 48 }, (_, i) => ({ ts: NOW - (47 - i) * H, score: Math.round((0.25 * Math.sin(i / 6) + i / 120) * 100) / 100 })) } }),
     "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {} }),
@@ -461,6 +461,8 @@ export function seed(): Record<string, any> {
     ...alertsFor("owner"),
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
     "views/health": v(health()),
+    "views/bots": v(botsView()),
+    "owner/telegram_status": { ok: true, checked_at: NOW - 6 * 60_000, errors: [], last_post_at: NOW - 2 * H, last_sent: ["win"] },
     "views/health_errors": v({ generated_at: NOW, recent_errors: [{ ts: NOW - 2 * H, where: "engine news_publish", error: "TimeoutError: calendar feed did not answer" }], exchange_last_error: null, market_data_last_error: null, model_messages: [] }),
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),
     "views/signals": v(signalLog()),
@@ -483,6 +485,25 @@ export function seed(): Record<string, any> {
   }
   delete out["users/u_member_self"];
   return out;
+}
+
+/** views/bots: the shape backend/app/services/bots.report publishes (six futures signal bots, trades left out). */
+function botsView() {
+  const line: [string, string, number, number, number][] = [["15m", "A", 1.8, 14, 1], ["1h", "A", -0.9, 9, 1], ["4h", "A+B", 3.4, 6, 2], ["12h", "A+B", 0.6, 3, 1], ["1d", "A", 0, 1, 0], ["3d", "A", -0.4, 1, 0]];
+  const bots = line.map(([tf, g, ret, trades, open]) => {
+    const start = 10_000, eq = start * (1 + ret / 100);
+    const positions = Array.from({ length: open }, (_, i) => {
+      const sym = ["BTC/USDT", "SOL/USDT", "ETH/USDT"][i % 3], px = PRICES[sym].p;
+      return { id: `${tf}-p${i}`, symbol: sym, side: i % 2 ? -1 : 1, qty_open: 1500 / px, entry: px * (i % 2 ? 1.004 : 0.996), lev: 12, liq: px * (i % 2 ? 1.07 : 0.93), stop: px * (i % 2 ? 1.018 : 0.982), tp_hit: i };
+    });
+    return { config: { id: `futures-signal-ab-${tf}`, name: `Futures signals ${g} · ${tf.toUpperCase()}`, mode: "signal", market: "futures", timeframe: tf, grades: g === "A" ? ["A"] : ["A", "B"], leverage: 20, safe_leverage: true, enabled: true, starting_balance: start },
+      state: { cash: eq * 0.8, equity: eq, benchmark: start, started_at: NOW - 30 * H, updated_at: NOW - 3 * 60_000, fees_paid: trades * 3.1, funding_paid: trades * 0.4, liquidations: 0 },
+      positions, pending: [],
+      stats: { trades, return_pct: ret, equity: eq, benchmark_return_pct: 0.8, open_positions: open, win_rate: trades ? 0.56 : null, profit_factor: 1.2, max_drawdown_pct: -1.4, fees_paid: trades * 3.1, funding_paid: trades * 0.4, liquidations: 0, by_exit: {} },
+      trades: [], equity_curve: [{ ts: NOW - 30 * H, equity: start, benchmark: start }, { ts: NOW - 3 * 60_000, equity: eq, benchmark: start * 1.008 }] };
+  });
+  const funding = Object.fromEntries(COINS.slice(0, 8).map(([s], i) => [s, { rate: 0.0001 * (1 + (i % 3)), source: "OKX" }]));
+  return { bots, defaults: [], path_timeframe: "15m", funding, generated_at: NOW - 3 * 60_000 };
 }
 
 /** views/health: the same shape backend/app/services/health.report + worker.engine_info publish. */

@@ -573,6 +573,18 @@ Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is p
   change (≈60–100/day typical); lean mode: only a new CLOSE. Reads: 0 per tick (1 once after a lost DB; 1 per Telegram
   DM if enabled). Page `/guardian` (`pages/Guardian.tsx`, Admin menu "Trade Guardian"), seed `dev/seed.ts guardian()`.
   Tests `tests/test_guardian.py`.
+## Health command centre v2.19 (admin, 4 Nov 2026, branch `health-v219`, frontend only)
+`pages/Health.tsx` rebuilt as a command centre (layout only; nothing dropped): KPI row (Engine LIVE/LATE/STALE + last cycle,
+writes today vs lean point / 20,000 with bar, reads vs 50,000, open record calls + closed since restart → Results) ·
+"System health" service tiles (dot ok / warn / down / off; tap opens + scrolls to the matching details): engine loop,
+market data, futures data (funding map in `views/bots`), news & calendar (`views/news` generated_at / errors), Telegram
+(`owner/telegram_status`), training, fail-safe checks, safety switch, database / lean, live prices; a "Trade Guardian"
+tile linking `/guardian` appears only when `views/guardian` exists · open signals (top 5, Oldest / Newest, side bar) ·
+data sources with freshness · models summary (active, edge, oldest, libraries) · demo bots (return since restart,
+open / closed) · safeguards (safety switch + fail-safe lists). Collapsible details: database use, engine &
+configuration, market data + candle series table, models table, recent errors (count badge). Not in any view yet
+(so not shown): Gemini calls today, backup age, Hyperliquid history freshness. Preview seed: `views/bots`,
+`owner/telegram_status`, `views/news.generated_at`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
