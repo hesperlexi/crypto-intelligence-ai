@@ -1,6 +1,6 @@
 import { collection, doc, getDoc, onSnapshot, updateDoc, writeBatch } from "firebase/firestore";
 import { countryName, flagUrl, ONLINE_MS } from "../lib/presence";
-import { KeyboardEvent as ReactKeyboardEvent, ReactNode, RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { createContext, KeyboardEvent as ReactKeyboardEvent, ReactNode, useContext, RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Badge, Card, Empty, ErrorBox, Info, Note } from "../components/ui";
 import { useFocusTrap } from "../components/Shell";
@@ -9,9 +9,9 @@ import { fmtTime } from "../lib/format";
 import { daysLeft, deletableProof, deleteCheckedProofs, deleteProof, fmtDate, grantMembership, markFree, MembershipConfig, planLabel, rejectPayment, saveMembershipConfig, useMembershipConfig } from "../lib/membership";
 import { roleOf, useIsAdmin } from "../lib/session";
 import { Limits, saveLimits, useLimits } from "../lib/limits";
-import { isProofImage } from "../lib/writeShapes";
+import { isProofImage, isRewardEntry } from "../lib/writeShapes";
 
-type Filter = "todo" | "members" | "free" | "ending" | "expired" | "blocked" | "all";
+type Filter = "todo" | "members" | "free" | "ending" | "expired" | "blocked" | "referred" | "all";
 type Sort = "action" | "newest" | "expiry" | "active" | "name";
 type Act = (fn: () => Promise<any>, ok: string | ((res: any) => string)) => void;
 
@@ -19,9 +19,9 @@ const todo = (u: any) => u.status === "pending" || u.payment?.status === "submit
 const ending = (u: any) => roleOf(u) === "member" && u.expires_at && (daysLeft(u.expires_at) ?? 99) <= 7;
 const MATCH: Record<Filter, (u: any) => boolean> = {
   todo, members: (u) => roleOf(u) === "member", free: (u) => !!u.free && roleOf(u) === "member", ending, expired: (u) => roleOf(u) === "expired",
-  blocked: (u) => u.status === "blocked", all: () => true,
+  blocked: (u) => u.status === "blocked", referred: (u) => !!u.referred_by, all: () => true,
 };
-const FILTERS: [Filter, string][] = [["todo", "To check"], ["members", "Active"], ["free", "Free"], ["ending", "Ending ≤7 days"], ["expired", "Expired"], ["blocked", "Blocked"], ["all", "All"]];
+const FILTERS: [Filter, string][] = [["todo", "To check"], ["members", "Active"], ["free", "Free"], ["ending", "Ending ≤7 days"], ["expired", "Expired"], ["blocked", "Blocked"], ["referred", "Invited"], ["all", "All"]];
 const SORTS: [Sort, string][] = [["action", "Needs action first"], ["newest", "Newest sign-ups"], ["expiry", "Ending soonest"], ["active", "Last active"], ["name", "Name A–Z"]];
 const PAGE = 25;
 
@@ -92,7 +92,7 @@ export default function Users() {
       name: (a, b) => String(displayName(a)).replace(/^@/, "").localeCompare(String(displayName(b)).replace(/^@/, ""), undefined, { sensitivity: "base" }),
     };
     return all.filter(MATCH[filter])
-      .filter((u) => !needle || `${u.name ?? ""} ${u.email ?? ""} ${u.username ?? ""} ${u.payment?.txid ?? ""}`.toLowerCase().includes(needle))
+      .filter((u) => !needle || `${u.name ?? ""} ${u.email ?? ""} ${u.username ?? ""} ${u.payment?.txid ?? ""} ${u.ref_code ?? ""}`.toLowerCase().includes(needle))
       .sort(cmp[sort]);
   }, [all, filter, sort, needle, last]);
   if (!admin) return <Empty>Only the app owner can manage users.</Empty>;
@@ -104,6 +104,7 @@ export default function Users() {
   const count = (f: Filter) => all.filter(MATCH[f]).length;
   const free = count("free");
   const act: Act = async (fn, ok) => { try { const res = await fn(); setErr(null); setMsg(typeof ok === "function" ? ok(res) : ok); } catch (e: any) { setErr(e.message); setMsg(null); } };
+  const byId = Object.fromEntries(all.map((u) => [u.id, u]));
   const income = all.flatMap((u) => u.history ?? []).reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0);
   const proofUser = proofOf ? all.find((u) => u.id === proofOf) : null;
   const shown = list.slice(0, limit);
@@ -117,6 +118,7 @@ export default function Users() {
   const filterName = FILTERS.find(([k]) => k === filter)?.[1] ?? "";
 
   return (
+    <RefNames.Provider value={byId}>
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
@@ -221,6 +223,7 @@ export default function Users() {
         </>
       )}
 
+      <RewardsCard all={all} />
       <div className="grid items-start gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
       <section className="panel flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Payment screenshots">
         <div className="text-sm"><span className="font-semibold">Payment screenshots</span>
@@ -231,6 +234,7 @@ export default function Users() {
       {proofUser && <ProofViewer u={proofUser} cfg={cfg} act={act} onClose={() => setProofOf(null)} onAsk={setAsk} />}
       {ask && <ConfirmSheet {...ask} onClose={() => setAsk(null)} />}
     </div>
+    </RefNames.Provider>
   );
 }
 
@@ -330,9 +334,59 @@ function Where({ pr }: { pr?: any }) {
 }
 
 function paidLine(u: any): string | null {
-  if (!u.history?.length) return null;
-  if (u.free && !u.history.some((h: any) => Number(h.amount) > 0)) return "free (nothing paid)";
-  return `${u.history.length} payment${u.history.length === 1 ? "" : "s"} · ${u.history.reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0)} USDT`;
+  const hist = (u.history ?? []).filter((h: any) => !isRewardEntry(h));      // v2.16: free reward months are not payments
+  if (!hist.length) return null;
+  if (u.free && !hist.some((h: any) => Number(h.amount) > 0)) return "free (nothing paid)";
+  return `${hist.length} payment${hist.length === 1 ? "" : "s"} · ${hist.reduce((s: number, h: any) => s + (Number(h.amount) || 0), 0)} USDT`;
+}
+
+/* ---------------------------------------------------------------- v2.16 referrals and prizes
+ * Who invited whom (users/{uid}.referred_by, stored when the friend's record was created) and the free months given
+ * (history entries kind "referral" / "prize", amount 0, never income). */
+const RefNames = createContext<Record<string, any>>({});
+const shortName = (u: any) => (u ? (u.username ? `@${u.username}` : u.name || u.email || u.id) : "deleted account");
+const rewardMonths = (u: any, kind: string) => (u.history ?? []).filter((h: any) => h?.kind === kind).length;
+
+/** "Invited by @x" / "Invited N" line under the name (only when there is something to say). */
+function RefLine({ u }: { u: any }) {
+  const byId = useContext(RefNames);
+  const invited = Object.values(byId).filter((x: any) => x.referred_by === u.id);
+  const paid = invited.filter((x: any) => x.referral_reward).length;
+  const prizes = rewardMonths(u, "prize");
+  if (!u.referred_by && !invited.length && !prizes) return null;
+  return (
+    <div className="mt-0.5 flex min-w-0 flex-wrap items-center gap-x-2 text-xs text-mute">
+      {u.referred_by && <span className="truncate">Invited by <span className="text-text/85">{shortName(byId[u.referred_by])}</span>{u.referral_reward ? <span className="text-bull"> · reward given</span> : null}</span>}
+      {invited.length > 0 && <span className="num">Invited {invited.length} · {paid} paid · <span className="text-accent">{rewardMonths(u, "referral")} free mo</span></span>}
+      {prizes > 0 && <span title="Practice leaderboard winner">🥇 {prizes} prize month{prizes === 1 ? "" : "s"}</span>}
+    </div>
+  );
+}
+
+/** Every free month given for a referral or a leaderboard prize, newest first. */
+function RewardsCard({ all }: { all: any[] }) {
+  const byId = useContext(RefNames);
+  const rows = all.flatMap((u) => (u.history ?? []).filter(isRewardEntry).map((h: any) => ({ u, h }))).sort((a, b) => (b.h.granted_at ?? 0) - (a.h.granted_at ?? 0));
+  const referred = all.filter((u) => u.referred_by).length;
+  const paid = all.filter((u) => u.referral_reward).length;
+  return (
+    <Card title="Referrals & prizes" right={<span className="num text-xs text-mute">{referred} invited · {paid} paid · {rows.length} free month{rows.length === 1 ? "" : "s"}</span>}>
+      {!rows.length ? <Empty>No free months given yet. A referrer gets 1 when their friend's first paid payment is approved.</Empty> : (
+        <ul className="divide-y divide-glass/[0.06] text-sm">
+          {rows.slice(0, 30).map(({ u, h }, i) => (
+            <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2">
+              <span className="min-w-0">
+                <Badge tone={h.kind === "prize" ? "warn" : "accent"}>{h.kind === "prize" ? "prize" : "referral"}</Badge>{" "}
+                <span className="font-medium">{shortName(u)}</span>
+                <span className="text-mute"> · {h.kind === "prize" ? `leaderboard ${h.prize_label ?? h.prize_month ?? ""}` : `friend ${h.ref_name ?? shortName(byId[h.ref_uid])}`}</span>
+              </span>
+              <span className="num text-xs text-mute">+1 month{h.to ? ` → ${fmtDate(h.to)}` : " (no end date)"} · {fmtDate(h.granted_at)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
 }
 
 /** End date with a days-left bar (relative to the last plan's length). */
@@ -369,8 +423,8 @@ function useUserActions(u: any, cfg: MembershipConfig, act: Act) {
   const mismatch = p?.status === "submitted" && p.amount != null && price != null && Number(p.amount) !== price && p.months === months;
   const grantLabel = r === "member" ? `Extend +${planLabel(months)} (paid)` : p?.status === "submitted" ? `Accept · ${planLabel(months)}` : `Approve · paid · ${planLabel(months)}`;
   const shortLabel = r === "member" ? "Extend · paid" : p?.status === "submitted" ? "Accept" : "Approve · paid";
-  const grant = () => act(() => grantMembership(u.id, u, months, p?.status === "submitted" ? Number(p.amount) : price), (to: number) => `${u.email}: member until ${fmtDate(to)}.`);
-  const grantFree = () => act(() => grantMembership(u.id, u, months, 0, true), (to: number) => `${u.email}: free member until ${fmtDate(to)}.`);
+  const grant = () => act(() => grantMembership(u.id, u, months, p?.status === "submitted" ? Number(p.amount) : price), (r: { to: number; reward: string | null }) => `${u.email}: member until ${fmtDate(r.to)}.${r.reward ? ` Referral reward: 1 free month for ${r.reward}.` : ""}`);
+  const grantFree = () => act(() => grantMembership(u.id, u, months, 0, true), (r: { to: number }) => `${u.email}: free member until ${fmtDate(r.to)}.`);
   const canMarkFree = !u.free && (u.history ?? []).some((h: any) => Number(h.amount) > 0);
   const doMarkFree = () => { if (window.confirm(`Mark ${u.email} as a free member? Their recorded payments become 0 USDT; their end date stays the same.`)) act(() => markFree(u.id, u), `${u.email} marked as free.`); };
   const reject = () => {
@@ -566,6 +620,7 @@ function UserRow({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any;
             <div className="truncate font-medium">{displayName(u)}</div>
             <div className="truncate text-xs text-mute">{u.email}</div>
             <Ident u={u} />
+            <RefLine u={u} />
             {st?.push_error && <div className="truncate text-xs text-bear" title={st.push_error.message}>notifications failing</div>}
           </div>
         </div>
@@ -604,6 +659,7 @@ function UserCard({ u, st, pr, cfg, act, onProof }: { u: any; st?: any; pr?: any
           </div>
           <div className="truncate text-xs text-mute">{u.email}</div>
           <Ident u={u} />
+          <RefLine u={u} />
         </div>
       </div>
 

@@ -5,8 +5,42 @@
 export type Provider = "google" | "password";
 
 /** users/{uid}: the access request filed automatically on first sign-in (lib/session.tsx). */
-export const newUserRecord = (u: { uid: string; email: string | null; displayName: string | null; photoURL: string | null }, provider: Provider, now: number) =>
-  ({ uid: u.uid, email: u.email, name: u.displayName ?? "", photo: u.photoURL ?? "", provider, status: "pending", requested_at: now });
+export const newUserRecord = (u: { uid: string; email: string | null; displayName: string | null; photoURL: string | null }, provider: Provider, now: number,
+  ref?: { uid: string; code: string } | null) =>
+  ({ uid: u.uid, email: u.email, name: u.displayName ?? "", photo: u.photoURL ?? "", provider, status: "pending", requested_at: now,
+    ...(ref && ref.uid !== u.uid ? referralFields(ref.uid, ref.code) : {}) });
+
+/* ---------------------------------------------------------------- referrals, v2.16
+ * A member's code: ref_codes/{code} {uid, created_at} + users/{uid}.ref_code, one batch, write-once (rules).
+ * A new account opened from ?ref=<code> stores referred_by (the referrer's uid) + ref_via (the code) in the record it
+ * CREATES; the rules check the code belongs to that uid and that it is not the person themselves. */
+export const REF_CODE_RE = /^[a-z0-9]{8}$/;
+export const refCodeDoc = (uid: string, now: number) => ({ uid, created_at: now });
+export const refCodeOnUser = (code: string) => ({ ref_code: code });
+export const referralFields = (referrerUid: string, code: string) => ({ referred_by: referrerUid, ref_via: code });
+
+/** Free months (referral reward, leaderboard prize): never income - amount 0, free, with what it was for. */
+export type FreeMonthKind = "referral" | "prize";
+export const isRewardEntry = (h: any) => h?.kind === "referral" || h?.kind === "prize";
+/** Whether this approval is the person's first PAID one (> 0 USDT, not free; reward months do not count as payments). */
+export const isFirstPaid = (u: any, price: number | null, free: boolean) =>
+  !free && Number(price) > 0 && !(u?.history ?? []).some((h: any) => !isRewardEntry(h) && !h?.free && Number(h?.amount) > 0);
+/** The referrer's reward is due: a referred friend's first paid approval, once per friend, never yourself. */
+export const referralDue = (friendUid: string, friend: any, price: number | null, free: boolean) =>
+  typeof friend?.referred_by === "string" && !!friend.referred_by && friend.referred_by !== friendUid && !friend.referral_reward && isFirstPaid(friend, price, free);
+/** One free month for `u` (approved members only; expired ones restart from now). null = not eligible (blocked, pending,
+ *  rejected or no record). A member with no end date keeps it (nothing to extend; the month is still recorded). */
+export function freeMonth(u: any, now: number, by: string | null, kind: FreeMonthKind, meta: Record<string, any>, addMonths: (from: number, m: number) => number) {
+  if (!u || u.status !== "approved") return null;
+  const permanent = !u.expires_at;
+  const from = !permanent && u.expires_at > now ? u.expires_at : now;
+  const to = permanent ? null : addMonths(from, 1);
+  const entry = { months: 1, amount: 0, free: true, kind, ...meta, granted_at: now, granted_by: by, from, to };
+  return { entry, fields: permanent ? {} : { expires_at: to } };
+}
+/** owner/leaderboard: prizes given (one per month and winner) and members kept out of the ranking. */
+export const prizeAwarded = (month: string, uid: string, now: number, by: string | null) => ({ awarded: { [month]: { [uid]: { at: now, by } } } });
+export const BADGE_PREFIX = "lb:";
 
 /** usernames/{name}: who owns a username. Written in one batch with usernameOnUser / ownerProfile. */
 export const usernameClaim = (uid: string, now: number) => ({ uid, created_at: now });

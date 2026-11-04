@@ -4,9 +4,9 @@
 // Account / username / Community / payment documents are built with the website's own builders
 // (frontend/src/lib/writeShapes.ts), so these tests check the exact shapes the app sends.
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
-import { addDoc, collection, deleteDoc, doc, Firestore, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { addDoc, arrayUnion, collection, deleteDoc, doc, Firestore, getDoc, getDocs, setDoc, updateDoc, writeBatch } from "firebase/firestore";
 import { readFileSync, writeFileSync } from "node:fs";
-import { newPaperFields, newUserRecord, ownerProfile, paperTopUp, paymentProof, paymentWithoutProof, postDoc, postId, postMeta, proofImageDoc, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
+import { BADGE_PREFIX, freeMonth, newPaperFields, newUserRecord, prizeAwarded, refCodeDoc, refCodeOnUser, referralFields, ownerProfile, paperTopUp, paymentProof, paymentWithoutProof, postDoc, postId, postMeta, proofImageDoc, usernameClaim, usernameOnUser } from "../../frontend/src/lib/writeShapes";
 
 const ADMIN = { uid: "owner", email: "admin@example.com" };
 const NOW = () => Date.now();
@@ -682,6 +682,106 @@ async function main() {
   });
   await test("hesper: nobody writes views/hesper from the website", async () => {
     await assertFails(setDoc(doc(admin(), "views", "hesper"), { json: "{}" }));
+  });
+
+  // ---------------------------------------------------------------- v2.16 referrals, rewards, leaderboard
+  const addM = (from: number, m: number) => from + m * 30 * DAY;
+  /** A member's invite code batch exactly as lib/referral.ts createMyCode sends it. */
+  function makeCode(db: Firestore, uid: string, code: string, owner = uid) {
+    const b = writeBatch(db);
+    b.set(doc(db, "ref_codes", code), refCodeDoc(owner, NOW()));
+    b.update(doc(db, "users", uid), refCodeOnUser(code));
+    return b.commit();
+  }
+  const newbie = (uid: string) => ({ uid, email: `${uid}@example.com`, displayName: null, photoURL: null });
+  const refSeed = { "users/r1": approved("r1", "r1@example.com", { ref_code: "abcd2345" }), "ref_codes/abcd2345": { uid: "r1", created_at: NOW() } };
+  await test("referral: active member creates their invite code (ref_codes + users.ref_code batch)", async () => {
+    await seed({ "users/m1": approved("m1", "m1@example.com") });
+    await assertSucceeds(makeCode(as("m1", "m1@example.com"), "m1", "k7m2p9qx"));
+  });
+  await test("referral: a second code, or changing the code, is denied", async () => {
+    await seed({ "users/m1": approved("m1", "m1@example.com", { ref_code: "k7m2p9qx" }), "ref_codes/k7m2p9qx": { uid: "m1", created_at: NOW() } });
+    await assertFails(makeCode(as("m1", "m1@example.com"), "m1", "zzzz2222"));
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "ref_codes", "yyyy3333"), refCodeDoc("m1", NOW())));
+  });
+  await test("referral: taking someone else's code, a code for another uid, a bad code or a pending/expired account is denied", async () => {
+    await seed({ ...refSeed, "users/m1": approved("m1", "m1@example.com"), "users/p1": pending("p1", "p1@example.com"),
+      "users/x1": approved("x1", "x1@example.com", { expires_at: NOW() - DAY }) });
+    await assertFails(makeCode(as("m1", "m1@example.com"), "m1", "abcd2345"));            // exists: update denied
+    await assertFails(makeCode(as("m1", "m1@example.com"), "m1", "mmmm4444", "r1"));      // claim names another uid
+    await assertFails(makeCode(as("m1", "m1@example.com"), "m1", "BAD-code"));
+    await assertFails(makeCode(as("p1", "p1@example.com"), "p1", "pppp5555"));
+    await assertFails(makeCode(as("x1", "x1@example.com"), "x1", "xxxx6666"));
+  });
+  await test("referral: ref_codes get allowed when signed in, list denied, delete by member denied", async () => {
+    await seed(refSeed);
+    await assertSucceeds(getDoc(doc(as("n1", "n1@example.com"), "ref_codes", "abcd2345")));
+    await assertFails(getDocs(collection(as("n1", "n1@example.com"), "ref_codes")));
+    await assertFails(deleteDoc(doc(as("r1", "r1@example.com"), "ref_codes", "abcd2345")));
+  });
+  await test("referral: new account created with referred_by from a valid link", async () => {
+    await seed(refSeed);
+    await assertSucceeds(setDoc(doc(as("n1", "n1@example.com"), "users", "n1"), newUserRecord(newbie("n1"), "google", NOW(), { uid: "r1", code: "abcd2345" })));
+  });
+  await test("referral: wrong referrer for the code, unknown code, or only one of the two fields is denied", async () => {
+    await seed({ ...refSeed, "users/m2": approved("m2", "m2@example.com") });
+    const db = as("n1", "n1@example.com");
+    const base = newUserRecord(newbie("n1"), "google", NOW());
+    await assertFails(setDoc(doc(db, "users", "n1"), { ...base, ...referralFields("m2", "abcd2345") }));
+    await assertFails(setDoc(doc(db, "users", "n1"), { ...base, ...referralFields("r1", "nope7777") }));
+    await assertFails(setDoc(doc(db, "users", "n1"), { ...base, referred_by: "r1" }));
+    await assertFails(setDoc(doc(db, "users", "n1"), { ...base, ref_via: "abcd2345" }));
+  });
+  await test("referral: referring yourself is denied", async () => {
+    await seed({ "ref_codes/self2345": { uid: "n1", created_at: NOW() } });
+    await assertFails(setDoc(doc(as("n1", "n1@example.com"), "users", "n1"), { ...newUserRecord(newbie("n1"), "google", NOW()), ...referralFields("n1", "self2345") }));
+  });
+  await test("referral: referred_by cannot be added or changed after the account exists", async () => {
+    await seed({ ...refSeed, "users/p1": pending("p1", "p1@example.com"), "users/m1": approved("m1", "m1@example.com", { referred_by: "r1", ref_via: "abcd2345" }) });
+    await assertFails(updateDoc(doc(as("p1", "p1@example.com"), "users", "p1"), referralFields("r1", "abcd2345")));
+    await assertFails(updateDoc(doc(as("m1", "m1@example.com"), "users", "m1"), { referred_by: "x9" }));
+  });
+  await test("rewards: a member cannot give themselves months, history, badges or reward marks", async () => {
+    await seed({ "users/m1": approved("m1", "m1@example.com") });
+    const ref = doc(as("m1", "m1@example.com"), "users", "m1");
+    await assertFails(updateDoc(ref, { expires_at: NOW() + 400 * DAY }));
+    await assertFails(updateDoc(ref, { history: arrayUnion({ months: 1, amount: 0, free: true, kind: "referral" }) }));
+    await assertFails(updateDoc(ref, { badges: arrayUnion(`${BADGE_PREFIX}2026-10`) }));
+    await assertFails(updateDoc(ref, { referral_reward: { to: "m1" } }));
+    await assertFails(updateDoc(ref, { referral_stats: { joined: 99, paid: 99, months: 99 } }));
+  });
+  await test("rewards: the admin's approval + referral reward (friend and referrer in one batch) is allowed", async () => {
+    await seed({ ...refSeed, "users/f1": pending("f1", "f1@example.com", { referred_by: "r1", ref_via: "abcd2345" }) });
+    const db = admin();
+    const g = freeMonth(approved("r1", "r1@example.com"), NOW(), ADMIN.email, "referral", { ref_uid: "f1" }, addM)!;
+    const b = writeBatch(db);
+    b.update(doc(db, "users", "f1"), { status: "approved", expires_at: NOW() + 30 * DAY, referral_reward: { to: "r1", at: NOW(), by: ADMIN.email },
+      history: arrayUnion({ months: 1, amount: 15, free: false }) });
+    b.update(doc(db, "users", "r1"), { ...g.fields, history: arrayUnion(g.entry) });
+    await assertSucceeds(b.commit());
+  });
+  await test("leaderboard: admin awards a prize (users + owner/leaderboard); members cannot", async () => {
+    await seed({ "users/m1": approved("m1", "m1@example.com", { username: "sara_k" }) });
+    const g = freeMonth(approved("m1", "m1@example.com"), NOW(), ADMIN.email, "prize", { prize_month: "2026-10" }, addM)!;
+    const db = admin();
+    const b = writeBatch(db);
+    b.update(doc(db, "users", "m1"), { ...g.fields, history: arrayUnion(g.entry), badges: arrayUnion(`${BADGE_PREFIX}2026-10`) });
+    b.set(doc(db, "owner", "leaderboard"), prizeAwarded("2026-10", "m1", NOW(), ADMIN.email), { merge: true });
+    await assertSucceeds(b.commit());
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "owner", "leaderboard"), prizeAwarded("2026-11", "m1", NOW(), null)));
+    await assertFails(getDoc(doc(as("m1", "m1@example.com"), "owner", "leaderboard")));
+  });
+  await test("leaderboard: views/leaderboard for active members only; admin/leaderboard admin only; nobody writes them", async () => {
+    await seed({ "views/leaderboard": { json: "{}" }, "admin/leaderboard": { json: "{}" }, "users/m1": approved("m1", "m1@example.com"),
+      "users/p1": pending("p1", "p1@example.com"), "users/x1": approved("x1", "x1@example.com", { expires_at: NOW() - DAY }) });
+    await assertSucceeds(getDoc(doc(as("m1", "m1@example.com"), "views", "leaderboard")));
+    await assertSucceeds(getDoc(doc(admin(), "admin", "leaderboard")));
+    await assertFails(getDoc(doc(as("p1", "p1@example.com"), "views", "leaderboard")));
+    await assertFails(getDoc(doc(as("x1", "x1@example.com"), "views", "leaderboard")));
+    await assertFails(getDoc(doc(env.unauthenticatedContext().firestore() as unknown as Firestore, "views", "leaderboard")));
+    await assertFails(getDoc(doc(as("m1", "m1@example.com"), "admin", "leaderboard")));
+    await assertFails(setDoc(doc(as("m1", "m1@example.com"), "views", "leaderboard"), { json: "{}" }));
+    await assertFails(setDoc(doc(admin(), "admin", "leaderboard"), { json: "{}" }));
   });
 
   await env.cleanup();

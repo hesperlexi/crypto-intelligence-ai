@@ -31,6 +31,7 @@ from .ml.models import default_models, model_status
 from .data import derivs
 from .services import hesper, scalp_backfill
 from .services import briefing, coin_reports
+from .services import leaderboard, referrals
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -1278,6 +1279,10 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         owners = {r["id"]: r["user_id"] for r in rt.db.query("SELECT id, user_id FROM alerts")}
         detail["push"] = step("push", lambda: sink.send_push(
             [push_message(e, owners.get(e.get("alert_id"))) for e in fired_events]))
+    # v2.16 community: practice leaderboard (hourly at most, skipped in lean mode) and referral counts (only when the
+    # users cache changed). Both only add documents; neither touches signals, the record or the bots.
+    detail["leaderboard"] = step("leaderboard", lambda: leaderboard.run(rt, sink, allow_rest=fetch_context))
+    detail["referrals"] = step("referrals", lambda: referrals.sync(rt, sink))
     beat("publish", {"pending_docs": len(sink.pending),
                      "pending_mb": round(sum(len(v.get("json") or "") for v in sink.pending.values()) / 1e6, 2)})
     detail["written"] = step("publish", sink.flush) or 0

@@ -1,8 +1,9 @@
 import { BRAND } from "./brand";
 // Paid memberships: a member pays with Binance Pay, uploads the proof, and the owner approves it for a number
 // of months. Prices live in config/membership (editable on the Users page); these are the defaults.
-import { arrayUnion, doc, getDoc, onSnapshot, setDoc, updateDoc, writeBatch } from "firebase/firestore";
-import { isProofImage, paymentProof, paymentWithoutProof, proofImageDoc } from "./writeShapes";
+import { arrayUnion, doc, getDoc, onSnapshot, runTransaction, setDoc, updateDoc, writeBatch } from "firebase/firestore";
+import { freeMonth, isProofImage, paymentProof, paymentWithoutProof, proofImageDoc, referralDue, referralFields } from "./writeShapes";
+import { clearRef, pendingReferral } from "./referral";
 import { useEffect, useState } from "react";
 import { db } from "./firebase";
 import { getSession } from "./session";
@@ -97,32 +98,49 @@ export async function submitPayment(plan: Plan, txid: string, proof: string | nu
   // one batch: the screenshot in payment_proofs/{uid}, the payment details (without the image) in users/{uid}
   const b = writeBatch(db);
   if (proof) b.set(doc(db, "payment_proofs", s.uid), proofImageDoc(s.uid, proof, now));
-  if (!cur.exists()) b.set(ref, { uid: s.uid, email: s.email, name: s.name, photo: "", status: "pending", requested_at: now, payment });
+  const invited = cur.exists() ? null : await pendingReferral(s.uid);       // v2.16: only when the record is created
+  if (!cur.exists()) b.set(ref, { uid: s.uid, email: s.email, name: s.name, photo: "", status: "pending", requested_at: now, payment,
+    ...(invited ? referralFields(invited.uid, invited.code) : {}) });
   else b.update(ref, { payment });
   await b.commit();
+  if (invited) clearRef();
 }
 
 /** Admin: accept a payment (or grant time without one). Extends from the current end date if still active. */
 /** free = complimentary (testers, friends): recorded as 0 USDT and marked free, so it never counts as income. */
-export async function grantMembership(uid: string, u: any, months: number, price: number | null, free = false) {
-  const now = Date.now();
-  const base = u?.status === "approved" && u?.expires_at && u.expires_at > now ? u.expires_at : now;
-  const expires_at = addMonths(base, months);
-  const p = u?.payment;
-  const entry = { months, amount: free ? 0 : price, free, txid: free ? null : p?.txid ?? null, paid_submitted_at: p?.submitted_at ?? null, granted_at: now,
-    granted_by: getSession()?.email ?? null, from: base, to: expires_at };
-  // a decided payment no longer needs its screenshot (free plan storage): it is deleted in the same batch
-  const decided = !!p && p.status === "submitted" && !free;
-  const b = writeBatch(db);
-  b.update(doc(db, "users", uid), {
-    status: "approved", expires_at, plan_months: months, approved_at: u?.approved_at ?? now, approved_by: getSession()?.email ?? null,
-    free,
-    ...(decided ? { payment: { ...(hasScreenshot(p) ? paymentWithoutProof(p, now) : p), status: "accepted", decided_at: now } } : {}),
-    history: arrayUnion(entry),
+/** v2.16 referral reward: when this is a referred friend's FIRST paid approval (> 0 USDT, not free), the referrer gets 1 free
+ *  month in the same transaction (expiry + 1 month, or from now if expired; history entry kind "referral", amount 0, never
+ *  income). The friend is marked referral_reward, so it happens once per friend. A referrer who is not an approved member
+ *  (blocked, pending, deleted) gets nothing. Returns the new end date and whether a reward was given. */
+export async function grantMembership(uid: string, u: any, months: number, price: number | null, free = false): Promise<{ to: number; reward: string | null }> {
+  const by = getSession()?.email ?? null;
+  return runTransaction(db, async (tx) => {
+    const now = Date.now();
+    const ref = doc(db, "users", uid);
+    const snap = await tx.get(ref);
+    const cur = snap.exists() ? snap.data() : u;
+    const due = referralDue(uid, cur, price, free);
+    const refRef = due ? doc(db, "users", cur.referred_by) : null;
+    const referrer = refRef ? (await tx.get(refRef)).data() ?? null : null;
+    const base = cur?.status === "approved" && cur?.expires_at && cur.expires_at > now ? cur.expires_at : now;
+    const expires_at = addMonths(base, months);
+    const p = cur?.payment;
+    const entry = { months, amount: free ? 0 : price, free, txid: free ? null : p?.txid ?? null, paid_submitted_at: p?.submitted_at ?? null, granted_at: now,
+      granted_by: by, from: base, to: expires_at };
+    // a decided payment no longer needs its screenshot (free plan storage): it is deleted in the same transaction
+    const decided = !!p && p.status === "submitted" && !free;
+    const reward = due && refRef ? freeMonth(referrer, now, by, "referral", { ref_uid: uid, ref_name: cur?.username ? `@${cur.username}` : cur?.name || cur?.email || uid }, addMonths) : null;
+    tx.update(ref, {
+      status: "approved", expires_at, plan_months: months, approved_at: cur?.approved_at ?? now, approved_by: by,
+      free,
+      ...(decided ? { payment: { ...(hasScreenshot(p) ? paymentWithoutProof(p, now) : p), status: "accepted", decided_at: now } } : {}),
+      ...(reward ? { referral_reward: { to: cur.referred_by, at: now, by } } : {}),
+      history: arrayUnion(entry),
+    });
+    if (decided && p.has_proof) tx.delete(doc(db, "payment_proofs", uid));
+    if (reward && refRef) tx.update(refRef, { ...reward.fields, history: arrayUnion(reward.entry) });
+    return { to: expires_at, reward: reward ? (referrer?.username ? `@${referrer.username}` : referrer?.email ?? "the referrer") : null };
   });
-  if (decided && p.has_proof) b.delete(doc(db, "payment_proofs", uid));
-  await b.commit();
-  return expires_at;
 }
 
 /** Mark someone as a free (test) member: their recorded payments become 0 USDT, the original amount is kept as

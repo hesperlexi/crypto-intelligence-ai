@@ -465,6 +465,43 @@ Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is p
 - **Last 7 days** `views.recent_summary` → `track_record.last_7d` (no time stamps inside, so no extra writes; sample note
   under `MIN_SAMPLE` 30) → Results card `TrackRecord.Last7`; same numbers as the Telegram week7 card.
 - Tests `tests/test_growth_v216.py`; preview seed: market_context.briefing, views/coin_reports, alerts_u_* events, last_7d.
+## v2.16 referrals + leaderboard (3 Nov 2026, owner decisions, branch `community-v216`; Firebase stays on the free plan)
+- **Referrals.** Member code: `ref_codes/{code}` {uid, created_at} + `users/{uid}.ref_code` in one batch (`lib/referral.ts`
+  `createMyCode`, 8 chars a-z 2-9; rules: active member, once, never changed; `ref_codes` get when signed in, no list). Link
+  `https://cryptointelai.com/?ref=<code>`: `referral.captureRef` (on load) keeps the code 30 days in localStorage `cia-ref`
+  and strips it from the address. A NEW users record (`session.tsx`, or `membership.submitPayment` when it creates the record)
+  gets `referred_by` (referrer uid) + `ref_via` (code) via `writeShapes.newUserRecord(…, ref)`; rules `validReferral`: both or
+  neither, code exists and belongs to that uid, not yourself; members can never add / change it later. Reward:
+  `membership.grantMembership` is now a transaction; when `writeShapes.referralDue` (friend's FIRST paid approval: price > 0,
+  not free, no earlier paid entry, no `referral_reward` yet) the referrer (only if `status == approved`; expired restarts from
+  now; no end date = kept) gets `writeShapes.freeMonth` (+1 month, history entry `kind: "referral"`, amount 0, free, `ref_uid`,
+  `ref_name`) and the friend `referral_reward` {to, at, by} - once per friend. Returns {to, reward}. Reward entries never
+  count as income or payments (`writeShapes.isRewardEntry`, Users `paidLine`). Engine `services/referrals.py`: counts from
+  `users_cache` (no reads) → `users/{uid}.referral_stats` {joined, paid, months} written only when changed. UI: Settings →
+  "Invite friends" (`components/InviteCard.tsx`, active members), Users: "Invited" filter, "Invited by …" / "Invited N · paid ·
+  free mo" lines (`RefLine`), card "Referrals & prizes" (`RewardsCard`).
+- **Practice leaderboard** (`services/leaderboard.py`, worker step `leaderboard`; Results tab "Leaderboard",
+  `components/Leaderboard.tsx`). Futures practice account only (documented choice). Calendar month, Dubai time.
+  return = (equity − equity at month start − deposits) / (equity at start + deposits); equity = wallet + order reserves +
+  Σ max(0, margin + P/L at the engine's price) (Trade-page formula; coins outside the watchlist: one public ticker call).
+  Ranked: active members WITH a username (privacy; others not shown), not in `owner/leaderboard.excluded`, ≥ 5 closed trades
+  (`totals.count` delta), no account reset in the month. Hourly at most (`LEADERBOARD_EVERY_S`), skipped in lean mode. Reads:
+  `paper/{uid}_futures` only when the member was seen since the last read (`fs_presence_seen`, saved by
+  `sinks.refresh_member_estimate` from the presence query it already makes), the reading is > 6 h old
+  (`LEADERBOARD_STALE_S`, auto-trade), or a month began; other accounts are re-priced from the stored reading. Tables
+  `leaderboard_entries` (start + last reading per month/uid), `leaderboard_winners` (decided once at the first run after the
+  month ends; that reading closes the old month and opens the new one; exact ties share #1). Docs: `views/leaderboard`
+  (top 50 usernames, return, trades, last winner, `badges` by username; no uid/email) and `admin/leaderboard` (JSON: every
+  entry with uid, start, deposits, equity, `flags` "balance changed without trades" / "return above 300%" / reset; winners),
+  written only when changed. Prize: admin "Award prize" (`lib/leaderboard.ts awardPrize`, transaction): +1 free month
+  (`kind: "prize"`), `users/{uid}.badges` += `lb:YYYY-MM`, `owner/leaderboard.awarded.{month}.{uid}` (refused twice or for a
+  non-approved member); never automatic. "Keep out" = `owner/leaderboard.excluded`. 🥇 shown in Community and the ranking.
+- **Cost (free plan):** engine reads ≈ members-with-username × 4/day (6 h refresh) + 1 per active member-hour + 24
+  (`owner/leaderboard`); writes ≤ 48/day (two docs, hash-dedup) + referral counts only on change. 50 members ≈ 300 reads,
+  ≤ 50 writes/day; 200 members ≈ 1,000-1,300 reads, ≤ 60 writes/day. Members: 1 read per leaderboard / Community open,
+  2 writes once per code, 1 read at a referred sign-up, admin +1 read/+1 write per rewarded approval.
+- Tests: `backend/tests/test_leaderboard.py`, `test_security.py` (rules template), `tests/rules` ("referral: …", "rewards: …",
+  "leaderboard: …"). Preview seed: `dev/seed.ts` `leaderboard()`, sara_k has a code, referrals and a badge.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
@@ -497,5 +534,5 @@ directly. Frontend type-check: `npx tsc --noEmit` (CI). UI preview without Fireb
 dev/vite.preview.config.ts --port 5193`, `/?preview=admin|member|pending|signedout|unverified|nousername` (mocks in `dev/mocks`, data `dev/seed.ts`).
 
 ## Ideas not done yet
-Arabic (RTL) · referral programme · smarter exits per coin · parallel training matrix · Binance daily metrics
+Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance daily metrics
 (OI, long/short, taker) as features · iPhone App Store ($99/yr, owner decision) · real-money auto-trading (only after a proven record and a VARA check).

@@ -147,6 +147,12 @@ function resolve(path: string, refreshMs: number): Sub {
     case "scalping": return p[1] === "config" ? rawDoc(["config", "scalping"]) : view("scalping");
     // Hesper challenge / Road to Rich (views/hesper; members read it only when config/hesper.visibility is "members")
     case "hesper": return p[1] === "config" ? rawDoc(["config", "hesper"]) : view("hesper");
+    // v2.16 practice leaderboard: views/leaderboard (members), admin/leaderboard (admin: uids, flags, winners as JSON),
+    // owner/leaderboard (admin: prizes awarded, members excluded)
+    case "leaderboard":
+      if (p[1] === "admin") return rawDoc(["admin", "leaderboard"]);
+      if (p[1] === "owner") return rawDoc(["owner", "leaderboard"]);
+      return view("leaderboard");
     case "radar": return view("radar");
     case "wins-today": return view("wins_today");
     case "weekly-report": return view("weekly_report");

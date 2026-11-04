@@ -7,6 +7,7 @@ import { createContext, useContext } from "react";
 import { db } from "./firebase";
 import { markNewAccount, providerOf } from "./account";
 import { newUserRecord } from "./writeShapes";
+import { clearRef, pendingReferral } from "./referral";
 
 export type Role = "loading" | "admin" | "member" | "pending" | "expired" | "blocked";
 export interface Session { uid: string; email: string; name: string; role: Role; username?: string }
@@ -38,6 +39,7 @@ export function watchRole(user: User, cb: (role: Role) => void): () => void {
   let alive = true;
   let last: any = null;
   let timer: any = null;
+  let creating = false;
   probeAdmin().then((admin) => {
     if (!alive) return;
     if (admin) { cb("admin"); return; }
@@ -46,7 +48,15 @@ export function watchRole(user: User, cb: (role: Role) => void): () => void {
       const d = s.data();
       if (!d) {
         markNewAccount(user.uid);
-        setDoc(ref, newUserRecord(user, providerOf(user), Date.now())).catch(() => cb("blocked"));
+        // v2.16: an account opened from an invite link records who invited it (only now, at creation)
+        if (!creating) {
+          creating = true;
+          pendingReferral(user.uid)
+            .then((r) => setDoc(ref, newUserRecord(user, providerOf(user), Date.now(), r))
+              .catch((e) => (r ? setDoc(ref, newUserRecord(user, providerOf(user), Date.now())) : Promise.reject(e))))
+            .then(clearRef)
+            .catch(() => cb("blocked"));
+        }
         cb("pending");
         return;
       }

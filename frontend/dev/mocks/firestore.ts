@@ -39,6 +39,7 @@ export function query(c: Coll, ...w: Clause[]): Coll {
   return out;
 }
 export const arrayUnion = (...items: any[]) => ({ __arrayUnion: items });
+export const arrayRemove = (...items: any[]) => ({ __arrayRemove: items });
 
 function snap(ref: Ref) {
   ensure();
@@ -82,6 +83,7 @@ function merge(cur: Data, patch: Data): Data {
   const out = { ...cur };
   for (const [k, v] of Object.entries(patch)) {
     if (v && typeof v === "object" && "__arrayUnion" in v) out[k] = [...(cur[k] ?? []), ...v.__arrayUnion];
+    else if (v && typeof v === "object" && "__arrayRemove" in v) out[k] = (cur[k] ?? []).filter((x: any) => !v.__arrayRemove.includes(x));
     else out[k] = v;
   }
   return out;
@@ -118,7 +120,8 @@ export async function runTransaction(_db: any, fn: (tx: any) => Promise<any>) {
   const tx = {
     get: async (r: Ref) => snap(r),
     update: (r: Ref, d: Data) => { void updateDoc(r, d); },
-    set: (r: Ref, d: Data) => { void setDoc(r, d); },
+    set: (r: Ref, d: Data, o?: { merge?: boolean }) => { void setDoc(r, d, o); },
+    delete: (r: Ref) => { void deleteDoc(r); },
   };
   return fn(tx);
 }
