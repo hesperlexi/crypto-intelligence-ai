@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-04T11:52:52.891Z",
-  "sha": "8768d65660662a066eb9947fa57baf71a846f159",
-  "total": 135,
-  "passed": 135,
+  "at": "2026-11-04T12:08:31.060Z",
+  "sha": "9e577d8bf5a76392bd7d78fe196cef3ff5194872",
+  "total": 140,
+  "passed": 140,
   "failed": 0,
   "results": [
     {
@@ -439,6 +439,26 @@
     },
     {
       "name": "admin/migrations: members cannot read or write it",
+      "ok": true
+    },
+    {
+      "name": "guardian: admin reads views/guardian",
+      "ok": true
+    },
+    {
+      "name": "guardian: an active member cannot read it (but still reads views/signals)",
+      "ok": true
+    },
+    {
+      "name": "guardian: pending and signed-out people cannot read it",
+      "ok": true
+    },
+    {
+      "name": "guardian: nobody writes views/guardian from the website",
+      "ok": true
+    },
+    {
+      "name": "guardian: members / pending cannot queue Apply (adjust_signal + guardian_id) or Dismiss jobs; the admin can",
       "ok": true
     },
     {
