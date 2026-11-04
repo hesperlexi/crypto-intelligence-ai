@@ -629,6 +629,7 @@ class BotEngine:
                 continue
             fc = a.get("forecast") or {}
             info = {"signal": a["signal"]["signal"], "decision": a["decision"], "confidence": a.get("confidence"),
+                    "grade": a.get("grade"),           # v2.17: shown to members instead of the confidence %
                     "p_up": (fc.get("probabilities") or {}).get("up"), "p_down": (fc.get("probabilities") or {}).get("down"),
                     "predicted": fc.get("predicted"), "model_version": fc.get("model_version"),
                     "edge_confirmed": fc.get("edge_confirmed"), "rr": setup.get("risk_reward"),

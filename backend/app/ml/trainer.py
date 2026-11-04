@@ -31,6 +31,8 @@ from ..redact import error_text
 
 log = logging.getLogger(__name__)
 GAP = 1
+# v2.17 (owner, 4 Nov 2026): add-ons that failed the strict holdout test are not trained (settings switches)
+OFF_REASON = "switched off (v2.17: failed the strict holdout test)"
 _cache: dict[str, dict[str, Any]] = {}
 
 
@@ -149,7 +151,9 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
 
     # ---- trade filter: learn which of the model's calls actually pay under the bots' rules ------------------
     tfilter: dict[str, Any] = {"enabled": False, "reason": "not trained (fast model set)"}
-    if not fast:
+    if not settings.trade_filter_v1:          # v2.17: switched off (TRADE_FILTER=1 trains it again)
+        tfilter = {"enabled": False, "reason": OFF_REASON}
+    elif not fast:
         try:
             from . import trade_filter
             o_rows = idx[oos]
@@ -161,7 +165,9 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
             tfilter = {"enabled": False, "reason": error_text(exc, 160)}
     # ---- target model: how far this kind of setup tends to run (picks TP2 / TP3 within their ranges) --------
     tmodel: dict[str, Any] = {"enabled": False, "reason": "not trained (fast model set)"}
-    if not fast:
+    if not settings.target_model:             # v2.17: switched off (TARGET_MODEL=1 trains it again)
+        tmodel = {"enabled": False, "reason": OFF_REASON}
+    elif not fast:
         try:
             from . import target_model
             ind = frame.ind
@@ -173,7 +179,9 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
 
     # ---- runner model (v2.3): which setups should keep the whole position running past TP1 -------------------
     rmodel: dict[str, Any] = {"enabled": False, "reason": "not trained (fast model set)"}
-    if not fast:
+    if not settings.runner_model:             # v2.17: switched off (RUNNER_MODEL=1 trains it again)
+        rmodel = {"enabled": False, "reason": OFF_REASON}
+    elif not fast:
         try:
             from . import runner_model
             ind = frame.ind

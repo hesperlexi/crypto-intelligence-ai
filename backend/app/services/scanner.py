@@ -123,8 +123,10 @@ def dashboard(rt: Runtime, timeframe: str = "4h") -> dict[str, Any]:
                           "basis": f"share of tracked assets in a bullish / bearish {timeframe} regime (60% needed)"},
         "regimes": [{"symbol": r["symbol"], "regime": r["regime"], "confidence": r["regime_confidence"]} for r in ok],
         "top_signals": [{k: r[k] for k in ("symbol", "signal", "score", "decision", "confidence", "composite")} for r in top],
-        "opportunities": [{k: r[k] for k in ("symbol", "decision", "signal", "score", "confidence", "risk_reward")}
-                          for r in sorted(actionable, key=lambda r: -(r["confidence"] or 0))],
+        # v2.17: Home shows the grade, not a confidence % (confidence stays as the tie-break inside a grade)
+        "opportunities": [{k: r[k] for k in ("symbol", "decision", "signal", "score", "grade", "confidence", "risk_reward")}
+                          for r in sorted(actionable, key=lambda r: ({"A": 0, "B": 1}.get(r.get("grade"), 2),
+                                                                     -(r["confidence"] or 0)))],
         "risks": risks[:12],
         "heatmap": [{"symbol": r["symbol"], "change_24h_pct": r.get("change_24h_pct"), "bull_score": r.get("bull_score"),
                      "signal": r["signal"], "regime": r["regime"]} for r in ok],

@@ -7,11 +7,13 @@ import { useApi } from "../lib/api";
 import { RoiFigure } from "../components/SignalExtras";
 import { DASH, fmtDate, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, slug, tone } from "../lib/format";
 import { UpdatedBadge } from "../components/SignalAdjust";
+import { useIsAdmin } from "../lib/session";
 
 const hit = (v: number, tracked: boolean) => (!tracked ? <span className="text-mute">{DASH}</span> : v ? <span className="text-bull">HIT</span> : <span className="text-mute">not hit</span>);
 
 export default function History() {
   const h = useApi<any>("/signals/history?limit=300", 60000);
+  const admin = useIsAdmin();      // v2.17: the confidence column (model hit rate, next candle) is admin only
   const sum = h.data?.summary;
   const all: any[] = h.data?.signals ?? [];
   const f = useLogFilters();
@@ -37,7 +39,7 @@ export default function History() {
         {!h.data && h.loading && <Loading />}
         <div className="table-wrap">
           <table className="grid-table">
-            <thead><tr><th>When</th><th>Asset</th><th>TF</th><th>Grade</th><th>Signal</th><th>Decision</th><th className="text-right">Price</th><th className="text-right">Conf.</th><th className="text-right">Stop</th><th>TP1</th><th>TP2</th><th>TP3</th><th>Stop hit</th><th>Status</th><th className="text-right">ROI on margin</th></tr></thead>
+            <thead><tr><th>When</th><th>Asset</th><th>TF</th><th>Grade</th><th>Signal</th><th>Decision</th><th className="text-right">Price</th>{admin && <th className="text-right" title="Admin only: model hit rate (next candle)">Hit rate</th>}<th className="text-right">Stop</th><th>TP1</th><th>TP2</th><th>TP3</th><th>Stop hit</th><th>Status</th><th className="text-right">ROI on margin</th></tr></thead>
             <tbody>
               {shown.map((s: any) => {
                 const tracked = s.side !== 0;
@@ -48,7 +50,7 @@ export default function History() {
                     <td className="uppercase text-mute">{s.timeframe}</td>
                     <td>{tracked ? <GradeBadge grade={s.payload?.grade} small /> : null}</td>
                     <td><SignalBadge signal={s.signal} /></td><td><Badge tone={signalTone(s.decision)}>{s.decision}</Badge></td>
-                    <td className="num text-right">{fmtPrice(s.price)}</td><td className="num text-right">{fmtProb(s.confidence)}</td>
+                    <td className="num text-right">{fmtPrice(s.price)}</td>{admin && <td className="num text-right">{fmtProb(s.confidence)}</td>}
                     <td className="num text-right" title={s.adjustments?.length ? s.adjustments.map((a: any) => `${a.field === "stop" ? "Stop-loss" : "TP1"} ${fmtPrice(a.old)} → ${fmtPrice(a.new)} · ${a.note}`).join("\n") : undefined}>{fmtPrice(s.stop)}</td>
                     <td>{hit(s.tp1_hit, tracked)}</td><td>{hit(s.tp2_hit, tracked)}</td><td>{hit(s.tp3_hit, tracked)}</td>
                     <td>{!tracked ? <span className="text-mute">{DASH}</span> : s.stop_hit ? <span className="text-bear">HIT</span> : <span className="text-mute">not hit</span>}</td>

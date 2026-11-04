@@ -20,7 +20,7 @@ ALERT_TYPES = {
     "BREAKDOWN": "Close below the 20-bar range on above-average volume",
     "TARGET_REACHED": "Latest tracked signal reaches TP1",
     "STOP_REACHED": "Latest tracked signal hits its stop",
-    "CONFIDENCE_ABOVE": "Signal confidence rises above a threshold (param: threshold, 0-1)",
+    "CONFIDENCE_ABOVE": "AI view passes a model threshold (param: threshold, 0-1; v2.17: no longer offered to members)",
     "VOLATILITY_SPIKE": "Volatility state becomes HIGH or EXTREME",
     "PRICE_ABOVE": "Price rises above a level (param: level)",
     "PRICE_BELOW": "Price falls below a level (param: level)",
@@ -85,10 +85,11 @@ def trade_message(a: dict[str, Any], market: str = "spot") -> str:
     tps = " · ".join(f"TP{i + 1} {_fmt(t['price'])}" for i, t in enumerate(st.get("targets") or []))
     probs = (a.get("forecast") or {}).get("probabilities") or {}
     p_dir = probs.get("up") if st.get("side_int", 1) > 0 else probs.get("down")
-    grade = f" [grade {a['grade']}]" if a.get("grade") else ""
+    # v2.17 (owner, 4 Nov 2026): no confidence % in members' texts (the next-candle hit rate overstates); grade instead
+    grade = f" [grade {a['grade']}{' · strong' if a['grade'] == 'A' else ''}]" if a.get("grade") else ""
     msg = (f"{sym} {tf} {side}{' (futures)' if market == 'futures' else ''}{grade}: entry {_fmt(zone[0])}–{_fmt(zone[1])} "
            f"(ideal {_fmt(entry)}), stop-loss {_fmt(st.get('stop'))} ({st.get('risk_pct', 0):.1f}%), {tps}, "
-           f"R:R 1:{st.get('risk_reward', 0):.1f}, confidence {(a.get('confidence') or 0):.0%}")
+           f"R:R 1:{st.get('risk_reward', 0):.1f}")
     if p_dir is not None:
         msg += f", P({'up' if st.get('side_int', 1) > 0 else 'down'}) {p_dir:.0%}"
     if market == "futures" and st.get("stop") and entry:
@@ -150,7 +151,7 @@ def _condition(alert: dict[str, Any], a: dict[str, Any], db: Database) -> tuple[
         return bool(s["stop_hit"]), f"{sym} {tf}: stop {s['stop']:,.6g} hit on the {s['signal']} signal"
     if t == "CONFIDENCE_ABOVE":
         c, thr = a.get("confidence"), float(p.get("threshold", 0.6))
-        return c is not None and c >= thr, f"{sym} {tf}: confidence {0 if c is None else c:.0%} ≥ {thr:.0%}"
+        return c is not None and c >= thr, f"{sym} {tf}: the AI view passed your alert level"   # v2.17: no % shown
     if t == "VOLATILITY_SPIKE":
         st = (a.get("volatility") or {}).get("state")
         return st in ("HIGH", "EXTREME"), f"{sym} {tf}: volatility is {st}"

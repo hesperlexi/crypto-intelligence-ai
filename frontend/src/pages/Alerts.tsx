@@ -9,7 +9,6 @@ import * as push from "../lib/push";
 import { BlockedHelp, ChromeWarning } from "../components/NotifyHelp";
 
 const NEEDS: Record<string, { key: string; label: string; placeholder: string }> = {
-  CONFIDENCE_ABOVE: { key: "threshold", label: "Confidence threshold (0–1)", placeholder: "0.6" },
   PRICE_ABOVE: { key: "level", label: "Price level", placeholder: "e.g. 70000" },
   PRICE_BELOW: { key: "level", label: "Price level", placeholder: "e.g. 60000" },
 };
@@ -24,11 +23,15 @@ const LABEL: Record<string, string> = {
   SIGNAL_CLOSED: "Signal closed early (stop, time limit, admin close)",
   STOP_REACHED: "Stop hit",
   MOOD_CHANGE: "Market mood change (bullish ↔ bearish)",
+  // v2.17: no confidence % for members; older alerts of this kind keep working and read like this
+  CONFIDENCE_ABOVE: "AI view passes your alert level (older alert)",
 };
+// v2.17 (owner, 4 Nov 2026): confidence-based alerts are no longer offered (the next-candle hit rate overstates)
+const HIDDEN_TYPES = new Set(["CONFIDENCE_ABOVE"]);
 // the condition list does not depend on the member's own alerts document (new members have none yet)
 const BASE_TYPES = ["TRADE_SETUP", "SIGNAL_UPDATES", "ENTRY_REACHED", "TARGET_REACHED", "TP2_REACHED", "TP3_REACHED", "SIGNAL_CLOSED",
   "STOP_REACHED", "MOOD_CHANGE", "BUY_SIGNAL", "SELL_SIGNAL", "BULLISH_REGIME", "BEARISH_REGIME", "BREAKOUT", "BREAKDOWN",
-  "CONFIDENCE_ABOVE", "VOLATILITY_SPIKE", "PRICE_ABOVE", "PRICE_BELOW"];
+  "VOLATILITY_SPIKE", "PRICE_ABOVE", "PRICE_BELOW"];
 const TRADE_TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 const EVENT_TFS = ["all", ...TRADE_TFS] as const;
 // event alerts work on every coin (ALL/USDT) or one coin, every timeframe ("all") or one
@@ -50,7 +53,7 @@ function describe(a: any): string {
   if (LABEL[a.type] && a.type !== "TRADE_SETUP") return LABEL[a.type];
   if (a.type === "TRADE_SETUP") {
     const parts = [p.side && p.side !== "any" ? `${p.side} only` : "long or short", p.market === "futures" ? "futures" : "spot"];
-    if (p.min_confidence) parts.push(`confidence ≥ ${Math.round(p.min_confidence * 100)}%`);
+    if (p.min_confidence) parts.push("model filter");
     if (p.confident_only) parts.push("confident calls only");
     if (String(p.grade ?? "").toUpperCase() === "A") parts.push("strong (grade A) only");
     return `Trade signal (${parts.join(", ")})`;
@@ -69,7 +72,6 @@ export default function Alerts() {
   const [param, setParam] = useState("");
   const [side, setSide] = useState("any");
   const [market, setMarket] = useState(params.get("market") === "futures" ? "futures" : "spot");
-  const [minConf, setMinConf] = useState("");
   const [confidentOnly, setConfidentOnly] = useState(false);
   const [strongOnly, setStrongOnly] = useState(false);
   const [cooldown, setCooldown] = useState("60");
@@ -98,7 +100,7 @@ export default function Alerts() {
   const create = () => {
     if (need && !param) return setErr(`${need.label} is required`);
     if (type === "SIGNAL_UPDATES" && !events.length) return setErr("Pick at least one event");
-    const p = isTrade ? { side, market, min_confidence: minConf ? Number(minConf) / 100 : 0, confident_only: confidentOnly, grade: strongOnly ? "A" : "any" }
+    const p = isTrade ? { side, market, min_confidence: 0, confident_only: confidentOnly, grade: strongOnly ? "A" : "any" }
       : type === "SIGNAL_UPDATES" ? { events }
       : need ? { [need.key]: Number(param) } : {};
     // event alerts are deduplicated per call per event, so they use the shortest cooldown
@@ -136,7 +138,7 @@ export default function Alerts() {
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <label className="text-xs text-mute sm:col-span-2">Condition
             <select className="input mt-1" value={type} onChange={(e) => { setType(e.target.value); setParam(""); }}>
-              {Object.entries(types).sort(([a], [b]) => order(a) - order(b)).map(([k, v]) => <option key={k} value={k}>{LABEL[k] ?? v}</option>)}
+              {Object.entries(types).filter(([k]) => !HIDDEN_TYPES.has(k)).sort(([a], [b]) => order(a) - order(b)).map(([k, v]) => <option key={k} value={k}>{LABEL[k] ?? v}</option>)}
             </select>
           </label>
           {isMood ? <div className="text-xs text-mute">Coins<div className="mt-1 flex h-10 items-center text-sm text-text">All coins on the watchlist (4H)</div></div>
@@ -166,7 +168,6 @@ export default function Alerts() {
                 <option value="spot">Spot</option><option value="futures">Futures (adds leverage & liquidation)</option>
               </select>
             </label>
-            <label className="text-xs text-mute">Minimum confidence (%, optional)<input className="input mt-1" inputMode="numeric" placeholder="e.g. 55" value={minConf} onChange={(e) => setMinConf(e.target.value)} /></label>
             <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={confidentOnly} onChange={(e) => setConfidentOnly(e.target.checked)} />Confident calls only</label>
             <label className="flex items-center gap-2 self-end pb-2 text-sm" title="Grade A: trend, AI models and their track record all agree. Leave off to also get grade B (moderate) signals."><input type="checkbox" checked={strongOnly} onChange={(e) => setStrongOnly(e.target.checked)} />Strong signals only (grade A)</label>
           </>)}

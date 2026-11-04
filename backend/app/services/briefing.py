@@ -55,12 +55,12 @@ def _regime(a: dict[str, Any] | None) -> tuple[str | None, str | None]:
 
 
 def _lean(a: dict[str, Any] | None) -> dict[str, Any] | None:
-    """The AI's direction on this timeframe with the directional confidence the app shows (None without a model)."""
+    """The AI's direction on this timeframe and whether it clears the model's threshold (None without a model).
+    v2.17 (owner, 4 Nov 2026): no confidence % (the next-candle hit rate overstates), so Gemini never sees one."""
     dv = (a or {}).get("direction_view") or None
     if not dv or not ((a or {}).get("forecast") or {}).get("available"):
         return None
-    conf = (a or {}).get("confidence")
-    return {"lean": "up" if dv.get("side", 0) > 0 else "down", "confidence": _r(conf, 2),
+    return {"lean": "up" if dv.get("side", 0) > 0 else "down",
             "above_threshold": bool(dv.get("clears_policy"))}
 
 

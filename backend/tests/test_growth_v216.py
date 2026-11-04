@@ -308,8 +308,9 @@ def test_coin_report_is_built_from_the_analysis_and_open_call():
     now = ms(2026, 11, 3, 12)
     an = _analyses()
     r = coin_reports.report(rt.db, "BTC/USDT", an)
-    assert r["trend"]["label"] == "Uptrend" and r["expects"][0] == {"timeframe": "4h", "lean": "up", "confidence": 0.58,
+    assert r["trend"]["label"] == "Uptrend" and r["expects"][0] == {"timeframe": "4h", "lean": "up",
                                                                     "above_threshold": True, "proven_edge": True}
+    assert "confidence" not in r["summary"] and "%" not in r["summary"]      # v2.17: no confidence % for members
     assert r["levels"]["support"][0] == 104.5 and r["invalidation"]["price"] == 104.5 and r["call"] is None
     assert "price" not in r                                         # no live price: unchanged markets write nothing
     _sig(rt, "c", now - H, tf="12h", entry=110, stop=106, tp=(1, 0, 0))

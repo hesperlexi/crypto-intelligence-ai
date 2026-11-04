@@ -208,7 +208,7 @@ class Advisor:
         lim = {k: LIMITS[k] for k in ("giveback_arm_r", "giveback_frac", "trail_atr_k")}
         out = self.generate(
             "Write 'rationale': 2-3 plain sentences explaining this trade call to a member, using only the input values "
-            "(decision, grade, confidence, regime, trend and momentum scores, entry/stop/targets in R, risk notes). "
+            "(decision, grade, regime, trend and momentum scores, entry/stop/targets in R, risk notes). "
             "Write 'regime': a market-regime label of at most 4 words. Optionally 'params': trade-management values "
             f"within these limits {dumps(lim)}.", inputs, schema, now)
         if not out:
@@ -231,7 +231,8 @@ def _inputs(s: dict[str, Any], pay: dict[str, Any]) -> dict[str, Any]:
     r_of = (lambda px: round((px - s["entry"]) * s["side"] / risk, 2) if px and risk else None)
     ai_in = pay.get("ai_inputs") or {}
     return {"symbol": s["symbol"].split("/")[0], "timeframe": s["timeframe"], "decision": s["decision"],
-            "grade": pay.get("grade"), "confidence": s.get("confidence"), "regime": s.get("regime"),
+            # v2.17 (owner, 4 Nov 2026): no confidence % for members, so the note is written without it
+            "grade": pay.get("grade"), "regime": s.get("regime"),
             "trend_score": ai_in.get("trend"), "momentum_score": ai_in.get("momentum"),
             "volatility": ai_in.get("volatility"), "risk_pct": ai_in.get("risk_pct"),
             "stop_r": -1.0, "targets_r": [r_of(s.get("tp1")), r_of(s.get("tp2")), r_of(s.get("tp3"))],

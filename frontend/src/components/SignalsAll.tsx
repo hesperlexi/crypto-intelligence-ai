@@ -9,7 +9,7 @@ export const SIG_TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 
 export type SortKey = "ready" | "strong" | "new" | "coin" | "tf";
 export const SORTS: readonly (readonly [SortKey, string])[] = [
-  ["ready", "Ready first"], ["strong", "Strongest"], ["new", "Newest"], ["coin", "Coin A–Z"], ["tf", "Timeframe"],
+  ["ready", "Ready first"], ["strong", "Strongest (grade)"], ["new", "Newest"], ["coin", "Coin A–Z"], ["tf", "Timeframe"],
 ];
 export const isSort = (s: string | null): s is SortKey => SORTS.some(([k]) => k === s);
 
@@ -31,11 +31,12 @@ export function sortRows(rows: any[], sort: SortKey, market: Market, px: (s: str
   const call = (r: any) => (verdictOf(r, market).tone === "wait" ? 1 : 0);
   const g = (r: any) => (r.grade === "A" ? 0 : r.grade === "B" ? 1 : 2);
   const zone = (r: any) => (entryState(r, market, px(r.symbol)) === "ready" ? 0 : 1);
+  // internal tie-break only (v2.17: the confidence % is never shown to members)
   const conf = (r: any) => -(Number(r.confidence) || 0);
   const ready = (a: any, b: any) => call(a) - call(b) || g(a) - g(b) || zone(a) - zone(b) || conf(a) - conf(b);
   const cmp: Record<SortKey, (a: any, b: any) => number> = {
     ready,
-    strong: (a, b) => call(a) - call(b) || conf(a) - conf(b) || g(a) - g(b),
+    strong: (a, b) => call(a) - call(b) || g(a) - g(b) || conf(a) - conf(b),
     new: (a, b) => call(a) - call(b) || when(b) - when(a) || ready(a, b),
     coin: (a, b) => base(a.symbol).localeCompare(base(b.symbol)) || tfIdx(a.timeframe) - tfIdx(b.timeframe),
     tf: (a, b) => tfIdx(a.timeframe) - tfIdx(b.timeframe) || ready(a, b),
@@ -93,7 +94,7 @@ export function AllList({ rows, market, px, onOpen }: { rows: any[]; market: Mar
   return (
     <section className="panel overflow-hidden p-0" aria-label="All timeframes">
       <div className="all-row all-head label border-b border-glass/[0.06]" aria-hidden="true">
-        <span>Coin</span><span>Call</span><span>Entry now</span><span className="text-right">Conf.</span>
+        <span>Coin</span><span>Call</span><span>Entry now</span><span className="text-right">Grade</span>
         <span className="text-right">Entry</span><span className="text-right">Stop</span><span className="text-right">TP1</span><span className="text-right">Status</span>
       </div>
       <ul className="divide-y divide-glass/[0.06]">
@@ -108,7 +109,7 @@ export function AllList({ rows, market, px, onOpen }: { rows: any[]; market: Mar
           const fill = c ? fillLabel(c.fill_status) : null;
           const pnl = c?.status === "OPEN" && c.fill_status !== "PENDING" && c.fill_status !== "NOT_FILLED" ? livePnl(c.side, c.entry, price) : null;
           const lev = isNum(c?.leverage) && c.leverage > 1 ? c.leverage : null;
-          const conf = isNum(r.confidence) ? `${Math.round(r.confidence * 100)}%` : "—";
+          const strength = vv.tone !== "wait" && r.grade === "A" ? "strong" : vv.tone !== "wait" && r.grade === "B" ? "moderate" : "—";
           const ready = es === "ready" ? <span className="font-semibold text-bull">Ready</span> : es === "wait" ? <span className="text-warn">Wait for entry</span> : <span className="text-mute">{vv.tone === "wait" ? (r.stale === true ? "Data delayed" : "No setup") : "—"}</span>;
           const status = (
             <>
@@ -130,15 +131,15 @@ export function AllList({ rows, market, px, onOpen }: { rows: any[]; market: Mar
                   {vv.tone !== "wait" && (r.grade === "A" || r.grade === "B") && <span className={`grade-mini ${r.grade === "A" ? "is-a" : ""}`}>{r.grade}</span>}
                 </div>
                 <span className={`all-call text-xs font-extrabold tracking-wide ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
-                {/* phone: ready · conf · status, then the levels */}
+                {/* phone: ready · grade strength · status, then the levels */}
                 <div className="col-span-full flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs lg:hidden">
-                  {ready}<span className="text-mute/50" aria-hidden="true">·</span><span className="num text-mute">{conf}</span>
+                  {ready}{strength !== "—" && <><span className="text-mute/50" aria-hidden="true">·</span><span className="text-mute">{strength}</span></>}
                   {hasStatus && <><span className="text-mute/50" aria-hidden="true">·</span>{status}</>}
                 </div>
                 {show && <div className="num col-span-full min-w-0 text-xs text-mute lg:hidden">entry {fmtPrice(p.entry)} · stop {fmtPrice(p.stop)} · TP1 {fmtPrice(p.targets?.[0]?.price)}</div>}
                 {/* desktop columns */}
                 <span className="hidden text-xs lg:block">{ready}</span>
-                <span className="num hidden text-right text-xs text-mute lg:block">{conf}</span>
+                <span className="hidden text-right text-xs text-mute lg:block">{strength}</span>
                 <span className="num hidden text-right text-sm text-accent lg:block">{show ? fmtPrice(p.entry) : "—"}</span>
                 <span className="num hidden text-right text-sm text-bear lg:block">{show ? fmtPrice(p.stop) : "—"}</span>
                 <span className="num hidden text-right text-sm text-bull lg:block">{show ? fmtPrice(p.targets?.[0]?.price) : "—"}</span>

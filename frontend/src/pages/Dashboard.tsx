@@ -143,9 +143,9 @@ export default function Dashboard() {
           {d?.opportunities?.length ? d.opportunities.map((o: any) => (
             <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="grid min-h-[44px] grid-cols-[minmax(3rem,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] sm:grid-cols-[minmax(0,1fr)_auto_4.5rem_4.5rem]">
               <span className="truncate font-medium">{base(o.symbol)}</span><SignalBadge signal={o.decision} />
-              <span className="num text-mute sm:text-right">{fmtProb(o.confidence)}<span className="text-xs"> conf.</span></span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-xs"> R:R</span></span>
+              <span className="text-mute sm:text-right">{o.grade ? <span className="text-xs">Grade {o.grade === "A" ? "A · strong" : o.grade === "B" ? "B · moderate" : o.grade}</span> : DASH}</span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-xs"> R:R</span></span>
             </Link>
-          )) : <Empty>No setup currently passes every check (confidence, model agreement, risk/reward). That is a valid outcome.</Empty>}
+          )) : <Empty>No setup currently passes every check (grade, model agreement, risk/reward). That is a valid outcome.</Empty>}
         </Card>
         <Card title="Top risks">
           {d?.risks?.length ? d.risks.map((r: any, i: number) => (

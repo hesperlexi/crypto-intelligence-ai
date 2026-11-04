@@ -113,8 +113,9 @@ def test_v26_settings_default_off_until_proven():
     # the proof (python -m app.research engine) decides the defaults; see CLAUDE.md "v2.6 accuracy upgrades"
     assert settings.news_sentiment is True                   # collection only, never used by a decision
     from app.services import series_nightly
-    # defaults from the proof: entry rules and the pooled filter on; gate, per-series threshold, structure stops off
-    assert settings.entry_rules and settings.trade_filter2
+    # defaults from the proof: entry rules on; gate, per-series threshold, structure stops off.
+    # v2.17 (owner, 4 Nov 2026): the pooled filter (filter2) is off too - it failed the strict holdout test
+    assert settings.entry_rules and not settings.trade_filter2
     assert not (settings.series_gate or settings.series_conf or settings.struct_stops)
     # without a nightly choice the v2.5 entry rule stays
     assert series_nightly.entry_rule(Database("sqlite:///:memory:"), "1h") == ("old", 0.0)

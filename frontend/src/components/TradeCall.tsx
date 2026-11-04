@@ -9,6 +9,7 @@ import { AiTag } from "./ui";
 import { Badge, Tile } from "./kit";
 import { AdjustButton, AdjustHistory, adjustedPlan, UpdatedBadge } from "./SignalAdjust";
 import { Explain, PLAIN, useIsPro } from "../lib/mode";
+import { useIsAdmin } from "../lib/session";
 
 export type Market = "spot" | "futures";
 type Tone = "bull" | "bear" | "wait";
@@ -16,6 +17,9 @@ type Tone = "bull" | "bear" | "wait";
 interface Verdict { label: string; tone: Tone; headline: string }
 
 /** Signal strength: A = strong (trend, AI and track record agree), B = moderate (AI-led, proven out-of-sample edge). */
+/** v2.17: members see the grade, never a confidence % (the next-candle hit rate overstates). */
+export const gradeWord = (g?: string | null) => (g === "A" ? "A · strong" : g === "B" ? "B · moderate" : g ?? "");
+
 export function GradeBadge({ grade, small = false }: { grade?: string | null; small?: boolean }) {
   if (grade !== "A" && grade !== "B") return null;
   const a = grade === "A";
@@ -70,7 +74,7 @@ function planText(r: any, market: Market, v: Verdict, plan: any) {
       ? `Leverage ${plan.suggested_leverage}x, chosen by engine (10–50x; liquidation ${fmtPrice(plan.liquidation_at_suggested)})`
       : `Leverage ${plan.suggested_leverage}x (liquidation ${fmtPrice(plan.liquidation_at_suggested)})`);
   }
-  parts.push(`${r.grade ? `Grade ${r.grade} · ` : ""}Hit rate ${fmtProb(r.confidence)} · Crypto Intelligence AI · not financial advice`);
+  parts.push(`${r.grade ? `Grade ${gradeWord(r.grade)} · ` : ""}Crypto Intelligence AI · not financial advice`);
   return parts.join("\n");
 }
 
@@ -78,6 +82,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   const { tickers } = useLive();
   const nav = useNavigate();
   const pro = useIsPro();
+  const admin = useIsAdmin();
   const [copied, setCopied] = useState(false);
   if (!r) return null;
   const px = tickers[r.symbol]?.last ?? r.price;
@@ -258,15 +263,17 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </div>
         )}
 
-        {/* AI: advisor note + confidence (advanced numbers: Pro view only) */}
+        {/* AI: advisor note + AI view (advanced numbers: Pro view only). v2.17: no confidence % for members; the
+            admin still sees the model's next-candle hit rate, labelled as such */}
         {(r.ai?.rationale || pro) && (
           <div className="sc-section space-y-2">
             <AiNote ai={r.ai} />
             {pro && <div className="ai-block px-3 py-2">
-              <div className="mb-1.5"><AiTag label="AI confidence" /></div>
+              <div className="mb-1.5"><AiTag label="AI view" /></div>
               <div className="grid grid-cols-3 gap-3 text-xs">
-                <div title="How often the AI was right in past out-of-sample calls leaning the same way by a similar margin"><div className="text-mute">Hit rate (similar calls)</div><div className="num mt-0.5 text-base font-semibold">{fmtProb(r.confidence)}</div>
-                  <div className="mt-1 h-1 overflow-hidden rounded-full bg-glass/10"><div className="h-full rounded-full bg-ai" style={{ width: `${Math.round((r.confidence ?? 0) * 100)}%` }} /></div></div>
+                {admin
+                  ? <div title="Admin only: how often the model's direction was right on the next candle in comparable out-of-sample calls"><div className="text-mute">Model hit rate (next candle)</div><div className="num mt-0.5 text-base font-semibold">{fmtProb(r.confidence)}</div></div>
+                  : <div title="Grade A: trend, AI models and their record agree. Grade B: AI-led call with an out-of-sample edge."><div className="text-mute">Grade</div><div className="mt-0.5 text-base font-semibold">{r.grade && v.tone !== "wait" ? gradeWord(r.grade) : DASH}</div></div>}
                 <div><div className="text-mute">Up / down</div><div className="num mt-0.5 text-base font-semibold"><span className="text-bull">{upPct}%</span> / <span className="text-bear">{downPct}%</span></div></div>
                 {market === "futures"
                   ? <div><div className="text-mute">Funding 8h</div><div className="num mt-0.5 text-base font-semibold">{isNum(funding) ? fmtPctRaw(funding * 100, 3) : "0.010%"}</div></div>

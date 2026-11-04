@@ -93,7 +93,7 @@ Open **Signals** (bottom bar on phones). Pick **Futures** or **Spot** and a time
 
 If a call reaches neither the stop nor its last target within its time limit, the rest is closed at the market price.
 
-**All** lists every coin and timeframe with a trade call in one list. Each row shows the coin, timeframe, grade, call, **Ready** (price is in the entry zone now) or **Wait for entry**, confidence, entry / stop / TP1 and the live result. Tap a row to open that coin on its timeframe. Tick **Show waits** to also see coins with no trade.
+**All** lists every coin and timeframe with a trade call in one list. Each row shows the coin, timeframe, grade, call, **Ready** (price is in the entry zone now) or **Wait for entry**, strength (strong / moderate), entry / stop / TP1 and the live result. **Strongest (grade)** sorts grade A first. Tap a row to open that coin on its timeframe. Tick **Show waits** to also see coins with no trade.
 
 **Filters and Sort:** search a coin, filter by direction, grade and status (open / closed). **Sort:** Ready first (default), Strongest, Newest, Coin A–Z, and Timeframe (All only).
 
@@ -108,7 +108,7 @@ If a call reaches neither the stop nor its last target within its time limit, th
 - **The price ladder** puts every level in order with the live price, so you see how far you are from the stop and the targets.
 - **Grade:** **A · strong**: trend, AI models and their track record all agree. **B · moderate**: an AI-led call (only on 4H and 12H). Treat B as a smaller, more careful trade.
 - **Why:** one line on what the call is based on.
-- **AI confidence** (Pro view): **hit rate (similar calls)**, how often the AI was right before when it leaned the same way, on data it never trained on. 50% is a coin flip; 53–60% is a useful edge in crypto. Also the up / down chances and the funding rate.
+- **AI view** (Pro view): the grade again, the up / down chances and the funding rate. The app shows no confidence % on calls: the grade is the strength label.
 
 Buttons: **Practise this trade** opens it in Trade with stop and target filled in, the bell sets an alert, **Copy** copies the plan as text. The **All coins** list shows every coin's call with entry, stop and TP1.
 
@@ -119,14 +119,14 @@ Buttons: **Practise this trade** opens it in Trade with stop and target filled i
 Tap any coin to open its page. The chart has two modes: **AI chart** (the app's levels and trade plan drawn in) and **Pro chart** (TradingView, with its drawing tools and indicators). Below the trade call, read top to bottom:
 
 1. **Decision: BUY, BUY ON PULLBACK, SELL or HOLD.** BUY ON PULLBACK means the direction is up but the price is stretched, so wait for the entry in the trade plan instead of chasing. HOLD means no edge worth trading. Most of the time HOLD is the right answer, and doing nothing is fine.
-2. **Confidence / probability up.** The chance the models give that the price is higher at the end of the horizon. 50% is a coin flip. Around 55–60% is a real lean for crypto; anything that claims 80%+ should make you more careful, not less.
-3. **Confident calls.** Results → Accuracy shows the confidence level above which the model has historically been right more often (the *Confident calls* card). Above it is a confident call, worth acting on; below it, treat the call as a lean only.
+2. **Grade.** **A · strong** or **B · moderate** (Pro view, next to the decision). This is the call's strength label; the app shows no confidence %.
+3. **Probability up** (forecast card). The chance the models give that the price is higher at the end of the next candle. 50% is a coin flip; anything that claims 80%+ should make you more careful, not less.
 4. **Expected move / edge.** How big the move is expected to be. A 55% call with a tiny expected move is often not worth fees and slippage.
 5. **Trade setup: entry, stop loss, targets.** The stop comes from recent volatility and support/resistance. **TP1 is always 1:1** (as far as the stop) and closes **half** the trade; then the stop moves to break-even. **TP2 (up to 1:2) and TP3 (up to 1:3)** are chosen by the AI and pulled in when support/resistance is in the way; a quarter closes at each. Tap **Trade plan** above the chart to draw it. "No valid setup" means a level is in the way or the odds are poor.
 6. **Multi-timeframe card.** Each timeframe's view and an *alignment* score. The strongest setups are when timeframes agree. Signals are made on **15M, 1H and 4H** for quick trades and **12H, 1D and 3D** for swing trades; the weekly view is background trend only.
 7. **Model consensus** (Pro view) **and "Why this signal?".** Each AI model votes; the explanation lists the reasons. Agreement between different models is a better sign than one model being very sure.
 
-> **Rule of thumb:** act only when the decision is a confident call, at least two timeframes agree, and you place the stop loss. Take half off at TP1 (1:1), then let the rest run to TP2 / TP3 with the stop at break-even.
+> **Rule of thumb:** prefer grade A calls, act only when at least two timeframes agree, and you place the stop loss. Take half off at TP1 (1:1), then let the rest run to TP2 / TP3 with the stop at break-even.
 
 ## 5. A daily routine that gets the most out of it
 
@@ -145,7 +145,7 @@ About 10 minutes a day is enough. Prices update every few seconds and prediction
 
 ## 6. Futures: long, short and leverage
 
-**Signals → Futures** shows every coin's futures call: **GO LONG**, **GO SHORT** or **WAIT**, with entry zone, stop-loss, take-profits, leverage, liquidation price, confidence and funding.
+**Signals → Futures** shows every coin's futures call: **GO LONG**, **GO SHORT** or **WAIT**, with entry zone, stop-loss, take-profits, leverage, liquidation price, grade and funding.
 
 - **Leverage:** on **15M** the engine picks **10–50x**; on the other timeframes the card suggests **up to 10x**. In both cases the liquidation price stays well beyond the stop.
 - **Funding 8h** (Pro view): positive funding means longs pay shorts every 8 hours. High positive funding plus a crowded long side often comes before a drop; the opposite before a squeeze up.
@@ -164,11 +164,11 @@ Alerts let the app watch the market for you. Open **Alerts → New alert**:
 2. **Coin** and **Timeframe** (1H or 4H are the best balance of speed and accuracy).
 3. **Direction:** long or short, long only, or short only.
 4. **Market:** Spot, or Futures (adds suggested leverage and liquidation to the message).
-5. **Minimum confidence** (optional, e.g. 55). Tick **Strong signals only (grade A)** for fewer, higher-quality alerts, or leave it off to also get grade B calls; **Confident calls only** narrows further.
+5. Tick **Strong signals only (grade A)** for fewer, higher-quality alerts, or leave it off to also get grade B calls; **Confident calls only** narrows further.
 6. **Cooldown:** minutes before the same alert can fire again (e.g. 240 for 4H).
 7. Press **Create alert**.
 
-When it fires, you get a notification with the side, entry, stop loss, take profit and confidence, and it is listed under **Fired alerts**. The engine checks every 5 minutes, so allow a few minutes of delay and check the price before entering.
+When it fires, you get a notification with the side, entry, stop loss, take profit and grade, and it is listed under **Fired alerts**. The engine checks every 5 minutes, so allow a few minutes of delay and check the price before entering.
 
 **The Alerts menu item shows a number** when you have unread alerts.
 
@@ -295,7 +295,7 @@ Tap a row for details: levels hit, time limit and time left, **Open chart** and 
 
 1. **The verdict** for the coin and timeframe: does the model beat a naive guess, and is the p-value below 0.05 (edge unlikely to be luck)?
 2. **Directional accuracy:** for crypto, **51–56% is realistic and useful**; nobody gets 70% consistently.
-3. **Confident calls:** accuracy on the calls above the confidence threshold, usually a couple of points better.
+3. **Confident calls:** accuracy on the calls above the model's threshold, usually a couple of points better.
 4. **Calibration:** when the model says 60%, is it right about 60% of the time?
 5. **Model comparison:** which model is best for this coin.
 6. **Live predictions:** calls made in real time and scored after the outcome — the most honest check of all.
@@ -314,7 +314,7 @@ Tap a row for details: levels hit, time limit and time left, **Open chart** and 
 ## 14. Rules for getting the most out of it
 
 1. **Let the app find setups; you make the decision.** A second opinion, not an autopilot.
-2. **Prefer confident calls with timeframe agreement.** Fewer trades, better trades.
+2. **Prefer grade A calls with timeframe agreement.** Fewer trades, better trades.
 3. **Always use the stop loss** from the trade setup, and never move it further away.
 4. **Risk 1–2% of your account per trade.** Size from the stop, not from leverage.
 5. **Respect WAIT and NO TRADE.** Not trading is a position.

@@ -42,6 +42,7 @@ export default function Asset() {
   const price = tk?.last ?? a?.price;
   const setup = a?.setup;
   const fc = a?.forecast;
+  const admin = useIsAdmin();
 
   const lines = useMemo<PriceLine[]>(() => {
     const out: PriceLine[] = [];
@@ -92,7 +93,10 @@ export default function Asset() {
                 <Stat label="Decision" value={<Badge tone={signalTone(a.decision)}>{a.decision}</Badge>} />
                 <ProOnly>
                   <Stat label="Signal score" value={isNum(a.signal.score) ? `${a.signal.score.toFixed(0)}/100` : DASH} />
-                  <Stat label="Confidence" value={isNum(a.confidence) ? `${(a.confidence * 100).toFixed(0)}/100` : DASH} />
+                  {/* v2.17: members see the grade; the next-candle hit rate only for the admin, labelled as such */}
+                  {admin
+                    ? <Stat label="Model hit rate (next candle)" value={isNum(a.confidence) ? fmtProb(a.confidence) : DASH} />
+                    : <Stat label="Grade" value={a.grade ? (a.grade === "A" ? "A · strong" : a.grade === "B" ? "B · moderate" : a.grade) : DASH} />}
                 </ProOnly>
               </div>
             )}
@@ -174,7 +178,7 @@ export default function Asset() {
             <Card title="Regime">
               <div className="flex items-center gap-2"><RegimeBadge regime={a.regime.regime} /><span className="num text-sm text-mute">score {fmtNum(a.regime.score)}</span></div>
               <div className="mt-3 space-y-0.5">
-                <Row k="Regime confidence (input agreement)" v={fmtProb(a.regime.confidence)} />
+                <Row k="Regime input agreement" v={fmtProb(a.regime.confidence)} />
                 <Row k="Trend strength" v={a.regime.trend_strength ?? DASH} />
                 <Row k="Momentum" v={a.regime.momentum ?? DASH} />
                 <Row k="Volatility" v={a.volatility.state} className={a.volatility.state === "EXTREME" || a.volatility.state === "HIGH" ? "text-warn" : ""} />
@@ -214,13 +218,14 @@ function ForecastCard({ fc, tf, price }: { fc: any; tf: string; price: number })
   const d = fc.distribution;
   const p = fc.probabilities;
   const raw = fc.raw_probabilities;
+  const admin = useIsAdmin();
   return (
     <Card ai title={`Forecast · next ${tf.toUpperCase()} bar`} right={<span className="text-xs text-mute">from the close at {fmtPrice(price)}</span>}>
       <ProbBar up={p.up} neutral={p.neutral} down={p.down} />
       <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <Stat label="Point forecast" value={d ? fmtPrice(d.expected_price) : DASH} sub={<span className={tone(fc.expected_return)}>{fmtPct(fc.expected_return)}</span>} />
         <Stat label="Raw → calibrated P(up)" value={`${fmtProb(raw.up)} → ${fmtProb(p.up)}`} sub="final uses calibrated" />
-        <Stat label="Model confidence" value={isNum(fc.confidence?.confidence) ? fmtProb(fc.confidence.confidence) : DASH} sub={fc.confidence?.n ? `hit-rate of ${fc.confidence.n} similar past calls` : fc.confidence?.basis} />
+        {admin && <Stat label="Model hit rate (next candle)" value={isNum(fc.confidence?.confidence) ? fmtProb(fc.confidence.confidence) : DASH} sub={fc.confidence?.n ? `admin only · ${fc.confidence.n} similar past calls` : fc.confidence?.basis} />}
       </div>
       {d ? (
         <div className="mt-4">

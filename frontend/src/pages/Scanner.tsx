@@ -8,7 +8,8 @@ import { useLive } from "../lib/live";
 import { useIsAdmin } from "../lib/session";
 
 const SORTS: Record<string, { label: string; key: (r: any) => number }> = {
-  confidence: { label: "Highest confidence", key: (r) => r.confidence ?? -1 },
+  // v2.17: members see the grade, not a confidence %; the hidden confidence only breaks ties inside a grade
+  grade: { label: "Strongest (grade)", key: (r) => (r.grade === "A" ? 2 : r.grade === "B" ? 1 : 0) + (r.confidence ?? 0) / 10 },
   bullish: { label: "Strongest bullish", key: (r) => r.composite ?? -9 },
   bearish: { label: "Strongest bearish", key: (r) => -(r.composite ?? 9) },
   rr: { label: "Best risk/reward", key: (r) => r.risk_reward ?? -1 },
@@ -20,7 +21,7 @@ const SORTS: Record<string, { label: string; key: (r: any) => number }> = {
 export default function Scanner() {
   const admin = useIsAdmin();
   const [tf, setTf] = useState("4h");
-  const [sort, setSort] = useState("confidence");
+  const [sort, setSort] = useState("grade");
   const [filter, setFilter] = useState("all");
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<string[] | null>(null);
@@ -87,7 +88,7 @@ export default function Scanner() {
         {!scan.data && scan.loading && <Loading what="Scanning" />}
         <div className="table-wrap">
           <table className="grid-table">
-            <thead><tr><th></th><th>Coin</th><th className="text-right">Price</th><th className="text-right">24h</th><th className="text-right">Volume</th><th>Trend</th><th className="text-right">RSI</th><th className="text-right">ADX</th><th className="text-right">ML P(up)</th><th>Regime</th><th>Signal</th><th>Decision</th><th className="text-right">Conf.</th><th className="text-right">R:R</th><th className="text-right">Breakout</th><th></th></tr></thead>
+            <thead><tr><th></th><th>Coin</th><th className="text-right">Price</th><th className="text-right">24h</th><th className="text-right">Volume</th><th>Trend</th><th className="text-right">RSI</th><th className="text-right">ADX</th><th className="text-right">ML P(up)</th><th>Regime</th><th>Signal</th><th>Decision</th><th>Grade</th><th className="text-right">R:R</th><th className="text-right">Breakout</th><th></th></tr></thead>
             <tbody>
               {rows.map((r) => {
                 const tk = tickers[r.symbol];
@@ -107,7 +108,7 @@ export default function Scanner() {
                     <td className="num text-right" title={r.edge_confirmed ? "edge confirmed" : r.model_status === "OK" ? "no confirmed edge" : r.model_status}>{isNum(r.p_up) ? fmtProb(r.p_up) + (r.edge_confirmed ? "" : "*") : <span className="text-xs text-mute">{r.model_status === "OK" ? DASH : "no model"}</span>}</td>
                     <td><RegimeBadge regime={r.regime} /></td><td><SignalBadge signal={r.signal} /></td>
                     <td title={r.decision_reason ?? ""}><Badge tone={signalTone(r.decision)}>{r.decision}</Badge></td>
-                    <td className="num text-right">{fmtProb(r.confidence)}</td>
+                    <td>{r.grade ? <span className={`grade-mini ${r.grade === "A" ? "is-a" : ""}`} title={r.grade === "A" ? "Grade A · strong" : "Grade B · moderate"}>{r.grade}</span> : <span className="text-mute">{DASH}</span>}</td>
                     <td className="num text-right">{isNum(r.risk_reward) ? `1:${r.risk_reward.toFixed(1)}` : DASH}</td>
                     <td className="num text-right" title={`historical base rate, n=${r.breakout_n}`}>{fmtProb(r.breakout_base_rate)}</td>
                     <td>{admin && <button className="tap-h px-1 text-xs text-mute hover:text-bear" onClick={() => act(() => del(`/watchlist/${slug(r.symbol)}`), `${r.symbol} removed`)}>Remove</button>}</td>

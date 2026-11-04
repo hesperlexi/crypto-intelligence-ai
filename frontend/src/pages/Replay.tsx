@@ -89,7 +89,7 @@ export default function Replay() {
                     <Row k="Expected return (next bar)" v={fmtPct(fc.expected_return)} className={tone(fc.expected_return)} />
                     <Row k="80% range" v={fc.distribution ? `${fmtPct(fc.distribution.intervals["80"].low_return, 1)} … ${fmtPct(fc.distribution.intervals["80"].high_return, 1)}` : DASH} />
                     <Row k="Model agreement" v={fmtProb(fc.model_agreement)} />
-                    <Row k="Confidence" v={fmtProb(a.confidence)} />
+                    <Row k="Grade" v={a.grade ? (a.grade === "A" ? "A · strong" : a.grade === "B" ? "B · moderate" : a.grade) : DASH} />
                   </div>
                 </>
               ) : <Empty>{fc?.reason ?? "No model forecast"}</Empty>}

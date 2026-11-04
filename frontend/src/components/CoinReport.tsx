@@ -6,7 +6,8 @@ import { Card, Info } from "./ui";
 import { useApi } from "../lib/api";
 import { ago, fmtPrice, slug } from "../lib/format";
 
-type Expect = { timeframe: string; lean: "up" | "down" | null; confidence?: number | null; above_threshold?: boolean; proven_edge?: boolean; note?: string };
+// v2.17: no confidence % (the next-candle hit rate overstates): strong / weak against the model's threshold only
+type Expect = { timeframe: string; lean: "up" | "down" | null; above_threshold?: boolean; proven_edge?: boolean; note?: string };
 
 const trendTone = (t: string) => (t === "Uptrend" ? "bull" : t === "Downtrend" ? "bear" : t.startsWith("Mixed") || t === "Unsettled" ? "warn" : "mute");
 
@@ -16,7 +17,7 @@ function Lean({ e }: { e: Expect }) {
   return (
     <Tile label={`AI ${e.timeframe.toUpperCase()}`} valueClass={up ? "text-bull" : "text-bear"}
       value={<>{up ? "▲ Up" : "▼ Down"}</>}
-      sub={<>{e.confidence != null ? `${Math.round(e.confidence * 100)}% confidence` : "confidence n/a"}{e.above_threshold ? "" : " · weak"}</>} />
+      sub={e.above_threshold ? "clears the model's bar" : "weak · below the model's bar"} />
   );
 }
 
@@ -49,7 +50,7 @@ export default function CoinReport({ symbol }: { symbol: string }) {
         </ul>
         <p className="text-xs text-mute">
           {r.ai?.text ? `AI line ${ago(r.ai.at)} · ` : ""}From the engine's analysis. Context, not advice.
-          <Info label="How this report is made">Trend = 4H and 1D regimes. AI lean and confidence come from the coin's 4H and 12H models (the same figures as on the Signals page); "weak" means below the model's proven threshold. Levels are the nearest 4H support and resistance zones. Updated at most hourly.</Info>
+          <Info label="How this report is made">Trend = 4H and 1D regimes. AI lean comes from the coin's 4H and 12H models; "weak" means below the model's proven threshold. Levels are the nearest 4H support and resistance zones. Updated at most hourly.</Info>
         </p>
       </div>
     </Card>

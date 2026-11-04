@@ -1,8 +1,8 @@
 """v2.16 AI coin reports (advisory only: they never change a decision, a level or a risk limit).
 
 One short report per watchlist coin, built from the engine's own analyses: trend (4H and 1D regimes), the nearest
-support / resistance zones on 4H, what the AI expects on 4H and 12H (direction lean with the same directional
-confidence the app shows on the coin page), the current public call if one is open, the main risk, and the level that
+support / resistance zones on 4H, what the AI expects on 4H and 12H (direction lean, "weak" when below the
+model's threshold; v2.17: no confidence %), the current public call if one is open, the main risk, and the level that
 would invalidate the view. The text is deterministic; Gemini may add 1-2 sentences built only from the report's own
 numbers, within the daily Gemini budget (coins with an open call first; a coin's sentence is renewed only when its
 report changes, at most every COIN_AI_EVERY_MS).
@@ -71,9 +71,8 @@ def _expect(a: dict[str, Any] | None, tf: str) -> dict[str, Any]:
     if not a or a.get("status") != "OK" or not (a.get("forecast") or {}).get("available"):
         return {"timeframe": tf, "lean": None, "note": "no trained model yet" if a else "not analysed yet"}
     dv = a.get("direction_view") or {}
-    conf = a.get("confidence")
+    # v2.17 (owner, 4 Nov 2026): no confidence % in the report (the next-candle hit rate overstates); strong / weak only
     return {"timeframe": tf, "lean": "up" if dv.get("side", 0) > 0 else "down",
-            "confidence": round(float(conf), 2) if isinstance(conf, (int, float)) else None,
             "above_threshold": bool(dv.get("clears_policy")), "proven_edge": bool(dv.get("policy_edge"))}
 
 
@@ -140,9 +139,8 @@ def _invalidation(call: dict[str, Any] | None, lean: str | None, zones: dict[str
 def _lean_text(e: dict[str, Any]) -> str:
     if not e.get("lean"):
         return f"{e['timeframe'].upper()}: {e.get('note', 'no view')}"
-    conf = f" ({e['confidence']:.0%} confidence)" if e.get("confidence") is not None else ""
     weak = "" if e.get("above_threshold") else ", weak"
-    return f"{e['timeframe'].upper()} leans {e['lean']}{conf}{weak}"
+    return f"{e['timeframe'].upper()} leans {e['lean']}{weak}"
 
 
 def report(db: Database, symbol: str, analyses: dict[tuple[str, str], dict[str, Any]]) -> dict[str, Any] | None:
@@ -182,7 +180,7 @@ def core(r: dict[str, Any]) -> str:
 
 
 AI_TASK = ("Write 'text': 1 or 2 plain sentences for members that explain this coin report, using ONLY the input values "
-           "(trend, AI lean and confidence per timeframe, key levels, open call, main risk, invalidation level). Describe; "
+           "(trend, AI lean and its strength per timeframe, key levels, open call, main risk, invalidation level). Describe; "
            "do NOT predict prices, do NOT mention profit or guarantees, do NOT advise to buy or sell, and do NOT write any "
            "number that is not in the input. No emojis.")
 

@@ -65,12 +65,12 @@ re-follow of TP1/TP2 signals, flag `tracking_be_v23`). Safety switch `services/s
 1. `services/analysis.py`: technical tilt + ensemble forecast (`ml/trainer.py`, walk-forward, calibrated).
 2. Directional confidence = hit rate of comparable out-of-sample calls (`ml/direction.py`); per-model margin policy.
 3. Grades: **A** tilt + AI agree above proven threshold; **B** AI-led where the model has an out-of-sample edge.
-4. **Trade filter** (`ml/trade_filter.py`): meta-model on bot-rule trade outcomes, enabled per model only if it
+4. **Trade filter** (`ml/trade_filter.py`, off since v2.17): meta-model on bot-rule trade outcomes, enabled per model only if it
    improved avg R on unseen data; filtered calls → NO TRADE. Enabled gradually as models retrain nightly.
 5. **News guard** (`services/news.py`): no new entries 45 min before → 30 min after high-impact US releases.
 6. Futures features (funding/premium, `data/derivs.py`, `features/dataset.py`) used only where `ml/deriv_gate.py`
    proves they help.
-7. **Let winners run** (v2.3, `ml/runner_model.py`): per coin/timeframe, trained nightly on out-of-sample calls; on only if
+7. **Let winners run** (v2.3, `ml/runner_model.py`, off since v2.17): per coin/timeframe, trained nightly on out-of-sample calls; on only if
    'runner when scored, standard otherwise' beat 'always standard' by ≥0.04R on the last quarter. Runner = nothing closes
    at TP1, stop → BE at TP1, → TP1 at TP2, → TP2 at TP3, whole position at 1:4 (`setup.runner`, signal payload `runner`,
    bots `info.run_target`, tracking single exit). Signal card shows move % and ROI at the suggested leverage.
@@ -502,6 +502,28 @@ Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is p
   2 writes once per code, 1 read at a referred sign-up, admin +1 read/+1 write per rewarded approval.
 - Tests: `backend/tests/test_leaderboard.py`, `test_security.py` (rules template), `tests/rules` ("referral: …", "rewards: …",
   "leaderboard: …"). Preview seed: `dev/seed.ts` `leaderboard()`, sara_k has a code, referrals and a badge.
+
+## v2.17 AI add-ons off + no confidence % for members (owner, 4 Nov 2026, branch `tidy-v217`)
+- **AI add-ons off.** Strict holdout test (`research-results/results/aiv3-final-20261103T204940Z.json`, Holm-corrected block
+  bootstrap): none survived except the higher-timeframe context of SOL/USDT 15m. Config defaults (`config.Settings`), each
+  switch kept (env = 1 turns it back on): `TRADE_FILTER` (v1 per-model filter, `trade_filter_v1`), `TRADE_FILTER2`
+  (pooled filter), `RUNNER_MODEL` ("let winners run"), `TARGET_MODEL` (AI target lifts; off = plain historical base rates in
+  `setup.pick`), `USE_DERIV_FEATURES` (futures-data gate per series), `HTF_GATES` (higher-timeframe gate per series) with
+  `HTF_GATE_KEEP` = "SOL/USDT|15m" (`settings.htf_gate_on`). Off = not trained either (saves training time):
+  `trainer.train_bundle` stores `{"enabled": False, "reason": trainer.OFF_REASON}`, `training.train_one` skips the deriv /
+  htf gates, `series_nightly.run` skips filter2 features + training (series / entry policies unchanged); `analysis.model_forecast`
+  never scores them (`trade_filter` / `target_lift` / `runner` = None, so no fail-closed on a switched-off filter). Models
+  trained before keep their htf / futures features until the nightly retrain replaces them. Unchanged: base ensemble,
+  direction policy, grading, entry rules, honest record, leverage rules. Bot trade info now also stores `grade`.
+- **No confidence % for members** (the next-candle hit rate overstates, negative Brier skill). Grade (`A · strong` /
+  `B · moderate`, `TradeCall.gradeWord`) instead on the signal card (Pro "AI view"), Signals All ("Grade" column, sort
+  "Strongest (grade)" = grade then the hidden confidence), Home opportunities (`scanner.dashboard` adds `grade`, sorted by
+  grade), Asset header, Scanner (sort "Strongest (grade)"), Replay, Demo bots (signal-confidence buckets admin only),
+  Track record KPI (admin only), Signal log column (admin only), copy text, coin reports (`coin_reports._expect` has no
+  `confidence`; "weak" only), briefing facts (no confidence, so Gemini never sees one), advisor note inputs, alert texts
+  (`TRADE_SETUP` message, `CONFIDENCE_ABOVE` text; the Alerts page no longer offers confidence alerts / minimum
+  confidence; old rules keep working), manual + PDF. The admin still sees it labelled "Model hit rate (next candle)".
+  Internal value kept for sorting, grading, Hesper and research. Tests `tests/test_v217.py`.
 
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track

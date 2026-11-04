@@ -8,6 +8,7 @@ import { base, fmtDate, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { CoinAvatar } from "./Polish";
 import { Info } from "./ui";
 import { Explain, useIsPro } from "../lib/mode";
+import { useIsAdmin } from "../lib/session";
 import { managedLabel, fillLabel, Pill, RoiFigure } from "./SignalExtras";
 import { isOpen, LiveResult, LiveRoi, RecordSheet, statusOf } from "./RecordDetails";
 
@@ -72,6 +73,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   const [tab, setTab] = useState<"live" | "tested" | "bots">("live");
   const [detail, setDetail] = useState<string | null>(null);   // row key; the row is looked up again when the view refreshes
   const pro = useIsPro();
+  const admin = useIsAdmin();
   const d = v.data;
   if (!d && v.error) return <p className="panel p-4 text-center text-sm text-mute">The track record appears after the next update.</p>;
   if (!d) return <div className="skeleton h-40 rounded-xl" />;
@@ -113,7 +115,8 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
         <Kpi k="Win rate (live)" v={rate(s.win_rate)} sub={s.closed ? `${s.closed} closed signals` : "first results soon"} />
         {roi ? <Kpi k="Avg ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin · ${pct(s.avg_return_pct, 2)} ${s.net ? "after fees" : "before fees"}`} />
           : <Kpi k={s.net ? "Avg result per signal" : "Avg price move per signal"} v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub={s.net ? "after fees" : "before fees"} />}
-        {pro ? <Kpi k="Tested hit rate" v={rate(avgTested)} sub={`${edge.length} coin/timeframes with a proven edge`} />
+        {/* v2.17: the next-candle hit rate is admin only (it overstates); members see the total result */}
+        {admin ? <Kpi k="Model hit rate (next candle)" v={rate(avgTested)} sub={`admin only · ${edge.length} coin/timeframes with a proven edge`} />
           : roi ? <Kpi k="Total ROI on margin" v={pct(s.total_roi_pct)} cls={tone(s.total_roi_pct)} sub={`all closed signals · ${pct(s.total_return_pct)}${s.net ? " after fees" : ""}`} />
           : <Kpi k={s.net ? "Total result" : "Total price move"} v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub={s.net ? "all closed signals, equal size, after fees" : "all closed signals, equal size"} />}
       </div>

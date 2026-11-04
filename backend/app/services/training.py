@@ -34,7 +34,8 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
             hf = _try_frame(rt, symbol, HTF_OF[timeframe])
             if hf is not None and settings.use_htf_features:          # forced on for every series (old switch)
                 htf = hf
-            elif hf is not None and not fast:                          # v2.3: on only where it proves it helps
+            elif hf is not None and not fast and settings.htf_gate_on(symbol, timeframe):
+                # v2.3: on only where it proves it helps; v2.17: the gate runs only for HTF_GATES / HTF_GATE_KEEP series
                 status.update(message="testing higher-timeframe context")
                 try:
                     from ..ml import htf_gate
@@ -44,7 +45,7 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
                 except Exception as exc:               # the gate must never stop training
                     log.warning("htf gate failed for %s %s: %s", symbol, timeframe, exc)
         deriv, gate = None, None
-        if settings.use_deriv_features and not fast:
+        if settings.use_deriv_features and not fast:           # v2.17: off by default (USE_DERIV_FEATURES=1)
             status.update(message="testing futures features")
             try:
                 from ..ml import deriv_gate

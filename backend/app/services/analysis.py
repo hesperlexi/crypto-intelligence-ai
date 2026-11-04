@@ -95,24 +95,37 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
     except Exception as exc:  # model failure: surface it, never substitute a made-up forecast
         rt.record_error(f"forecast {symbol} {timeframe}", exc)
         return {"available": False, "status": "MODEL ERROR", "reason": error_text(exc, 200)}
-    try:
-        from ..ml import trade_filter
-        x_row = ds.X[bundle["feature_names"]].to_numpy(float)[-1]
-        fc["trade_filter"] = trade_filter.score(bundle.get("trade_filter"), x_row, fc["probabilities"])
-    except Exception as exc:
-        rt.record_error(f"trade filter {symbol} {timeframe}", exc)
-        fc["trade_filter"] = None
-        fc["trade_filter_error"] = f"{type(exc).__name__}: {exc}"[:160]      # v2.13: fail closed (analyze)
-    try:
-        from ..ml import target_model
-        fc["target_lift"] = target_model.lifts(bundle.get("target_model"), x_row, fc["probabilities"])
-    except Exception:
-        fc["target_lift"] = None
-    try:
-        from ..ml import runner_model
-        fc["runner"] = runner_model.score(bundle.get("runner_model"), x_row, fc["probabilities"])
-    except Exception:
-        fc["runner"] = None
+    # v2.17 (owner, 4 Nov 2026): the per-model trade filter, AI target lifts and runner model failed the strict holdout
+    # test and are off by default (TRADE_FILTER / TARGET_MODEL / RUNNER_MODEL = 1 turn them back on). Off = None:
+    # no filter, plain historical base rates in setup.pick, standard 50/25/25 exits.
+    fc["trade_filter"] = fc["target_lift"] = fc["runner"] = None
+    x_row = None
+    if settings.trade_filter_v1:
+        try:
+            from ..ml import trade_filter
+            x_row = ds.X[bundle["feature_names"]].to_numpy(float)[-1]
+            fc["trade_filter"] = trade_filter.score(bundle.get("trade_filter"), x_row, fc["probabilities"])
+        except Exception as exc:
+            rt.record_error(f"trade filter {symbol} {timeframe}", exc)
+            fc["trade_filter"] = None
+            fc["trade_filter_error"] = f"{type(exc).__name__}: {exc}"[:160]      # v2.13: fail closed (analyze)
+    if (settings.target_model or settings.runner_model) and x_row is None:
+        try:
+            x_row = ds.X[bundle["feature_names"]].to_numpy(float)[-1]
+        except Exception:
+            pass
+    if settings.target_model:
+        try:
+            from ..ml import target_model
+            fc["target_lift"] = target_model.lifts(bundle.get("target_model"), x_row, fc["probabilities"])
+        except Exception:
+            fc["target_lift"] = None
+    if settings.runner_model:
+        try:
+            from ..ml import runner_model
+            fc["runner"] = runner_model.score(bundle.get("runner_model"), x_row, fc["probabilities"])
+        except Exception:
+            fc["runner"] = None
     edge = bundle["edge"]
     fc.update({
         "available": True, "status": "OK", "timeframe": timeframe,

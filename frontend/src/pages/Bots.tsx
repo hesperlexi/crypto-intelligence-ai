@@ -163,7 +163,9 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
           ) : <Empty>{isPred ? "No open predictions right now." : "No open positions. Quiet stretches are normal."}</Empty>}
         </div>
         <div className="min-w-0">
-          <div className="label mb-1">Accuracy by {s.confidence_key === "p_max" ? "model probability" : "signal confidence"}</div>
+          {/* v2.17: the signal-confidence buckets (next-candle hit rate) are admin only */}
+          {(s.confidence_key === "p_max" || admin) && <>
+          <div className="label mb-1">Accuracy by {s.confidence_key === "p_max" ? "model probability" : "model hit rate (next candle)"}</div>
           {s.by_confidence?.length ? (
             <div className="table-wrap"><table className="grid-table">
               <thead><tr><th>Bucket</th><th className="text-right">Trades</th><th className="text-right">Predicted</th><th className="text-right">Direction right</th><th className="text-right">Avg return</th></tr></thead>
@@ -173,6 +175,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
               ))}</tbody>
             </table></div>
           ) : <Empty>Appears after the first closed trades.</Empty>}
+          </>}
           {s.trades > 0 && (
             <div className="mt-3 grid gap-x-6 sm:grid-cols-2">
               <Row k="Longs / shorts" v={`${s.longs} / ${s.shorts}`} />
@@ -191,13 +194,13 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
         <div className="label mb-1">Closed trades ({bot.trades.length} most recent)</div>
         {bot.trades.length ? (
           <div className="max-h-80 overflow-auto"><table className="grid-table">
-            <thead><tr><th>Closed</th><th>Coin</th><th>Side</th><th>{isPred ? "Predicted" : "Decision"}</th><th className="text-right">{isPred ? "Probability" : "Confidence"}</th><th className="text-right">Entry</th><th className="text-right">Exit</th><th className="text-right">Return</th>{fut && <th className="text-right">Lev · on margin</th>}<th className="text-right">P&L</th><th>Exit</th><th>Right?</th></tr></thead>
+            <thead><tr><th>Closed</th><th>Coin</th><th>Side</th><th>{isPred ? "Predicted" : "Decision"}</th><th className="text-right">{isPred ? "Probability" : admin ? "Model hit rate" : "Grade"}</th><th className="text-right">Entry</th><th className="text-right">Exit</th><th className="text-right">Return</th>{fut && <th className="text-right">Lev · on margin</th>}<th className="text-right">P&L</th><th>Exit</th><th>Right?</th></tr></thead>
             <tbody>{bot.trades.map((t: any) => (
               <tr key={t.id}>
                 <td className="text-mute">{fmtTime(t.closed_at)}</td><td className="font-medium">{t.symbol}</td>
                 <td className={t.side > 0 ? "text-bull" : "text-bear"}>{t.side > 0 ? "LONG" : "SHORT"}</td>
                 <td>{isPred ? t.info.predicted : t.info.decision}</td>
-                <td className="num text-right">{fmtProb(isPred ? t.info.p_max : t.info.confidence)}</td>
+                <td className="num text-right">{isPred ? fmtProb(t.info.p_max) : admin ? fmtProb(t.info.confidence) : (t.info.grade ?? DASH)}</td>
                 <td className="num text-right">{fmtPrice(t.entry)}</td><td className="num text-right">{fmtPrice(t.exit)}</td>
                 <td className={`num text-right ${tone(t.return_pct)}`}>{fmtPctRaw(t.return_pct)}</td>
                 {fut && <td className={`num text-right ${tone(t.info.roe_pct)}`}>{t.info.leverage ?? 1}x · {fmtPctRaw(t.info.roe_pct)}</td>}
