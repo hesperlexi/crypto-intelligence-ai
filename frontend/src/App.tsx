@@ -1,6 +1,6 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
-import { lazy, Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
 import InstallButton from "./components/InstallButton";
@@ -11,7 +11,7 @@ import { APK_URL } from "./lib/push";
 import { Badge } from "./components/ui";
 import { useApi } from "./lib/api";
 import { useAppearance } from "./lib/appearance";
-import { Role, SessionCtx, setSession, useIsAdmin, watchRole } from "./lib/session";
+import { Role, SessionCtx, setSession, useIsAdmin, useSession, watchRole } from "./lib/session";
 import { auth, db, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
@@ -19,6 +19,7 @@ import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 import { AnimatedLogo, HeroLogo } from "./components/Logo";
 import SiteFooter, { TRUST_LINKS } from "./components/SiteFooter";
 import { AdminOnly, BootLoader, ErrorBoundary, NavIcon, NotFound, RouteSkeleton, useFocusTrap } from "./components/Shell";
+import { AlertsBell, LiveChip, NavGroup, PageTitle, ProfileMenu, Sidebar } from "./components/AppNav";
 import { ModeSwitch } from "./lib/mode";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
@@ -275,14 +276,28 @@ function Shell({ user }: { user: User }) {
   const admin = useIsAdmin();
   const pending = usePendingCount(admin);
   const apk = useApkInfo();
-  const { a } = useAppearance();
+  const { a, set } = useAppearance();
+  const sessionName = useSession()?.username ?? "";
+  // v2.20: the sidebar is the default on computers (≥ 1024 px); tablets and phones always get the classic header
   const side = a.nav === "side";
+  const collapsed = !!a.sideCollapsed;
+  const toggleSide = useCallback(() => set({ sideCollapsed: !collapsed }), [set, collapsed]);
   const width = a.width === "wide" ? "max-w-none" : "max-w-[1600px]";
   // active state comes from NavLink's aria-current="page" (index.css .nav-link: gold rule under / beside the item)
   const navCls = "nav-link";
   const unread = useLive().alerts.length;       // in-app alerts not dismissed yet
   const navLabel = (to: string, label: string) => (to === "/alerts" ? <>{label}<Count n={unread} tone="accent" /></> : label);
   const adminItems: (readonly [string, string])[] = admin ? [...ADMIN_NAV, ["/users", pending ? `Users (${pending})` : "Users"] as const] : [];
+  // sidebar groups (v2.20): main · markets · tools (folds) · account · admin. Memoised: the shell re-renders with every
+  // live-price snapshot, the sidebar only when these change.
+  const sideGroups = useMemo<NavGroup[]>(() => [
+    { title: "", items: [NAV[0], NAV[1], NAV[2], NAV[5]] },
+    { title: "Markets", items: [NAV[3], NAV[4]] },
+    { title: "Tools", items: [...TOOLS_NAV], fold: true },
+    { title: "Account", items: [NAV[6], NAV[7], NAV[8]] },
+    ...(admin ? [{ title: "Admin", items: [...ADMIN_NAV, ["/users", "Users"] as const] }] : []),
+  ], [admin]);
+  const sideCounts = useMemo<Record<string, number>>(() => ({ "/alerts": unread, "/users": pending }), [unread, pending]);
   const brand = (wrap = false) => (
     <div className="flex min-w-0 items-center gap-2.5">
       <AnimatedLogo size={34} className="shrink-0" />
@@ -296,33 +311,32 @@ function Shell({ user }: { user: User }) {
   );
   return (
     <div className="flex min-h-full">
-      {/* computer: optional sidebar */}
-      {side && (
-        <aside className="glass-bar sticky top-0 hidden h-screen w-56 shrink-0 flex-col border-r md:flex">
-          <div className="px-4 py-3.5">{brand(true)}</div>
-          <nav className="nav-side flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-3" aria-label="Sections">
-            {[...NAV_GROUPS, [...TOOLS_NAV], ...(admin ? [adminItems] : [])].map((g, i) => (
-              <div key={i} className={`flex flex-col gap-0.5 ${i ? "mt-2 border-t border-glass/[0.07] pt-2" : ""}`}>
-                {i === NAV_GROUPS.length && <div className="label px-3 pb-1 pt-1">Tools</div>}
-                {i === NAV_GROUPS.length + 1 && <div className="label px-3 pb-1 pt-1">Admin</div>}
-                {g.map(([to, label]) => <NavLink key={to} to={to} end={to === "/"} className={navCls}>{navLabel(to, label)}</NavLink>)}
-              </div>
-            ))}
-          </nav>
-          <div className="border-t border-glass/[0.06] px-4 py-3 text-xs text-mute">
-            <div className="truncate">{user.email}</div>
-            <button className="mt-1 text-text hover:text-accent" onClick={() => signOut(auth)}>Sign out</button>
-          </div>
-        </aside>
-      )}
+      {/* computer (≥ 1024 px): sidebar, the default; Appearance → Menu "Top bar" switches back */}
+      {side && <Sidebar groups={sideGroups} counts={sideCounts} collapsed={collapsed} onToggle={toggleSide} />}
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="glass-bar safe-top sticky top-0 z-40 border-b">
+        {side && (
+          <header className="glass-bar sticky top-0 z-40 hidden border-b lg:block">
+            <div className={`mx-auto flex ${width} items-center justify-between gap-4 px-5 py-2.5`}>
+              <PageTitle />
+              <div className="flex shrink-0 items-center gap-2.5">
+                <Badge tone="mute" title="This application never places real orders">Analysis only</Badge>
+                <ModeSwitch className="hidden xl:inline-flex" />
+                <InstallButton compact />
+                <AppearanceButton />
+                <span className="mx-1 hidden h-6 w-px bg-glass/10 lg:block" aria-hidden="true" />
+                <LiveChip />
+                <AlertsBell unread={unread} />
+                <ProfileMenu user={user} admin={admin} username={sessionName} />
+              </div>
+            </div>
+          </header>
+        )}
+        <header className={`glass-bar safe-top sticky top-0 z-40 border-b ${side ? "lg:hidden" : ""}`}>
           <div className={`mx-auto flex ${width} items-center justify-between gap-3 px-3 py-2.5 sm:px-4`}>
-            <div className={`flex min-w-0 items-center gap-2.5 ${side ? "md:hidden" : ""}`}>
+            <div className="flex min-w-0 items-center gap-2.5">
               {brand()}
               <span className="hidden sm:inline"><Badge tone="mute" title="This application never places real orders">Analysis only</Badge></span>
             </div>
-            {side && <span className="hidden md:inline"><Badge tone="mute" title="This application never places real orders">Analysis only</Badge></span>}
             <div className="flex items-center gap-2">
               <ModeSwitch className="hidden sm:inline-flex" />
               <InstallButton compact />
@@ -330,21 +344,20 @@ function Shell({ user }: { user: User }) {
               <StatusPill user={user} />
             </div>
           </div>
-          {!side && (
-            <nav className={`nav-top mx-auto hidden ${width} items-center px-3 pb-1.5 sm:px-4 md:flex`} aria-label="Sections">
-              {NAV_GROUPS.map((g, i) => (
-                <div key={i} className={`flex items-center gap-0.5 ${i ? "nav-group" : ""}`}>
-                  {g.map(([to, label]) => (
-                    <span key={to} className="contents">
-                      <NavLink to={to} end={to === "/"} className={navCls}>{navLabel(to, label)}</NavLink>
-                      {to === "/radar" && <NavMenu label="Tools" items={[...TOOLS_NAV]} />}
-                    </span>
-                  ))}
-                </div>
-              ))}
-              {admin && <div className="ml-auto"><NavMenu label="Admin" items={adminItems} pending={pending} /></div>}
-            </nav>
-          )}
+          {/* tablets (768-1023 px) always, computers too when the top bar was chosen */}
+          <nav className={`nav-top mx-auto hidden ${width} items-center px-3 pb-1.5 sm:px-4 md:flex ${side ? "lg:hidden" : ""}`} aria-label="Sections">
+            {NAV_GROUPS.map((g, i) => (
+              <div key={i} className={`flex items-center gap-0.5 ${i ? "nav-group" : ""}`}>
+                {g.map(([to, label]) => (
+                  <span key={to} className="contents">
+                    <NavLink to={to} end={to === "/"} className={navCls}>{navLabel(to, label)}</NavLink>
+                    {to === "/radar" && <NavMenu label="Tools" items={[...TOOLS_NAV]} />}
+                  </span>
+                ))}
+              </div>
+            ))}
+            {admin && <div className="ml-auto"><NavMenu label="Admin" items={adminItems} pending={pending} /></div>}
+          </nav>
         </header>
         <AppChromeBanner />
         <TickerTape />

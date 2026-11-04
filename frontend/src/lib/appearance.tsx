@@ -16,12 +16,14 @@ export type ResolvedTheme = Exclude<ThemeId, "system">;
 
 export interface Appearance {
   theme: ThemeId;
-  nav: "top" | "side";             // desktop navigation
+  nav: "top" | "side";             // desktop navigation (v2.20: sidebar by default on screens ≥ 1024 px)
+  navChosen?: boolean;             // true once the person picked top / side themselves (then their choice is kept)
+  sideCollapsed?: boolean;         // desktop sidebar folded to icons
   density: "comfortable" | "compact";
   width: "contained" | "wide";
   glass: boolean;                  // frosted blur (switch off on slow phones)
 }
-const DEFAULTS: Appearance = { theme: "gold", nav: "top", density: "comfortable", width: "contained", glass: true };
+const DEFAULTS: Appearance = { theme: "gold", nav: "side", density: "comfortable", width: "contained", glass: true, sideCollapsed: false };
 const KEY = "cia-appearance-v2";     // v2: the new Gold look becomes everyone's starting theme once
 // names people might have saved under other spellings; anything else unknown falls back to Midnight Gold
 const ALIASES: Record<string, ThemeId> = { midnight: "gold", "midnight-gold": "gold", dark: "gold", ivory: "light" };
@@ -36,6 +38,8 @@ function load(): Appearance {
   try {
     const a = { ...DEFAULTS, ...JSON.parse(localStorage.getItem(KEY) ?? "{}") };
     a.theme = normalizeTheme(a.theme);
+    // v2.20: the whole object used to be saved with the old default nav "top"; only an explicit choice is kept
+    if (!a.navChosen) a.nav = "side";
     return a;
   } catch { return DEFAULTS; }
 }
@@ -90,7 +94,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     return () => { if (timer) { window.clearTimeout(timer); el.classList.remove("theme-switching"); } };
   }, [a, resolved]);
 
-  return <Ctx.Provider value={{ a, resolved, set: (p) => setA((x) => ({ ...x, ...p })) }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ a, resolved, set: (p) => setA((x) => ({ ...x, ...p, ...("nav" in p ? { navChosen: true } : {})})) }}>{children}</Ctx.Provider>;
 }
 
 export const useAppearance = () => useContext(Ctx);

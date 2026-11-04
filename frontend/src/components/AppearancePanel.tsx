@@ -111,7 +111,7 @@ export function AppearancePanel() {
         <ThemePicker />
       </div>
       <div className="space-y-3">
-        <Choice label="Menu (computer)" k="nav" options={[["top", "Top bar"], ["side", "Sidebar"]]} />
+        <Choice label="Menu (computer)" k="nav" options={[["side", "Sidebar"], ["top", "Top bar"]]} />
         <Choice label="Density" k="density" options={[["comfortable", "Comfortable"], ["compact", "Compact"]]} />
         <Choice label="Page width" k="width" options={[["contained", "Centered"], ["wide", "Full width"]]} />
         <Choice label="Glass effect" k="glass" options={[[true, "On"], [false, "Off (faster)"]]} />

@@ -536,6 +536,42 @@ Firebase stays on the free Spark plan (owner, 3 Nov 2026): everything below is p
   confidence; old rules keep working), manual + PDF. The admin still sees it labelled "Model hit rate (next candle)".
   Internal value kept for sorting, grading, Hesper and research. Tests `tests/test_v217.py`.
 
+## v2.20 Overview + sidebar (owner, 4 Nov 2026, branch `home-v220`, frontend only)
+- **Desktop sidebar is the default** (`lib/appearance.tsx`: `nav` default "side"; the saved object used to carry the old
+  "top", so only `navChosen: true` - set whenever the person picks Top bar / Sidebar - keeps "top"). Sidebar only at
+  ≥ 1024 px (`lg`); 768-1023 px always get the classic header + top nav row, phones the header + bottom bar (unchanged).
+  `components/AppNav.tsx`: `Sidebar` (logo, groups main · Markets · Tools (folds, localStorage `cia-side-open-Tools`) ·
+  Account · Admin, icons `Ico`, accent bar on the active row `.side-link`, collapse to icons = `appearance.sideCollapsed`,
+  bottom: Theme switch light ↔ last dark theme (`cia-last-dark`) + Help & support mailto), desktop top bar `PageTitle`
+  (title + one-line subtitle per path, not an h1), `LiveChip` (feed status, ticking clock, engine age from views/health),
+  `AlertsBell` (`useLive().alerts`), `ProfileMenu` (initials, username, "Owner" / "Member · until <date>" from the
+  users/{uid} listener the session already has; Settings, Alerts, Sign out). Admin group = `ADMIN_NAV` + Users (icon map
+  has `/guardian`). App.tsx keeps NAV / ADMIN_NAV / TOOLS_NAV; sidebar groups memoised.
+- **Home = Overview** (`pages/Dashboard.tsx` + `components/Overview.tsx`), only real data:
+  row 1 BTC price (live ticker + 24h, sparkline = last 24 hourly closes) · Total market cap (`market_context.pulse`, else
+  `context.market`; no cap history exists, so the line is BTC dominance 7d, labelled) · BTC 24h volatility (realised vol of
+  the last 24 hourly log returns, annualised ×√8760; line = rolling 24h vol over 7 days; plus 24h range) · Market
+  sentiment (4H `dashboard_4h.market_status` mood word + Fear & Greed gauge). Candles via `lib/klines.ts useKlines`
+  (Binance futures klines, spot fallback, module cache shared by cards and chart: 1h × 200 = one request per 5 min,
+  only while visible). Row 2 BTC chart (CandleChart lazy, 1H/4H/1D/1W, choice in `cia-home-chart-tf`) + "Market
+  intelligence" = v2.16 briefing (mood chip, 1-2 sentence headline, 3 bullets, View details = full text). Row 3 Global
+  market status (BTC, ETH, total cap, F&G, altcoin strength = `market_context.altseason`), Active signals
+  (`track_record.live.signals` OPEN; Live % = `RecordDetails.liveOf().move`, no leverage, before fees; status rule
+  `Overview.healthOf`: position of the price between the stop in force (0) and the next target (1): Healthy ≥ 0.5,
+  Watch 0.25-0.5, At risk < 0.25 or beyond the stop; all targets hit = Healthy; pending = Waiting; rows open
+  `RecordSheet`), Trade Guardian card (admin only, `views/guardian` via `/guardian`; renders nothing when missing).
+  Row 4 Recent activity (record opens / closes, the member's alert events `/alert-events` = views/alerts_u_<uid>,
+  briefing time) and Performance overview (`track_record.live.summary` win rate / total / profit factor, max drawdown
+  from `live.curve`, 7-day toggle from `last_7d`; "Too early to judge: N closed since <date>" under 30).
+  Below: the old Home (market line + Know why + quick actions on top as `OverviewHead`; Market overview TF tabs,
+  My coins, then "More market detail" fold, `cia-home-detail`: regimes, top signals, sentiment, Market insights,
+  forecasts, heatmap, opportunities, risks). Old `Polish.DashboardHero` removed.
+- Reads: + `views/track_record` (1 per Home open) for everyone, + `views/guardian` for the admin; everything else was
+  already subscribed (dashboard_4h, market_context, context, alerts_u, health). No new sockets. Price-driven parts
+  subscribe themselves (`useTickerThrottled` 1 s, table rows memoised) so the page does not re-render on every tick.
+- Preview: `dev/preview.tsx` mocks Binance klines (random walk ending at the sample price); `dev/seed.ts` has a
+  `views/guardian` sample.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

@@ -480,6 +480,11 @@ export function seed(): Record<string, any> {
     out[`views/dashboard_${tf}`] = v(dashboard(tf));
     out[`views/futures_${tf}`] = v({ timeframe: tf, rows: futuresRows(tf) });
   }
+  // v2.20 Home: the admin's Trade Guardian card reads views/guardian (shape of backend services/guardian.view)
+  out["views/guardian"] = out["views/guardian"] ?? v({ generated_at: NOW - 4 * 60_000, enabled: true,
+    status: { last_check: NOW - 4 * 60_000, watched: { coins: ["BTC/USDT", "SOL/USDT"], calls: 3 }, today: {}, day: null, last_error: null },
+    live: [{ id: "g1", signal_id: "seed-BTC/USDT-4h", symbol: "BTC/USDT", timeframe: "4h", side: 1, level: "TIGHTEN", rules_level: "TIGHTEN", severity: 0.62, created_at: NOW - 30 * 60_000, expires_at: NOW + 60 * 60_000, status: "live" }],
+    history: [], scoreboard: { n: 4, saved_r: 0.9, cost_r: -0.3, net_r: 0.6, helped: 3, hurt: 1, pending: 1 }, config: {}, note: "Recommend-only." });
   delete out["users/u_member_self"];
   return out;
 }
