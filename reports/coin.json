@@ -1,0 +1,104 @@
+{
+ "coin": "SPCXB/USDT",
+ "calls_in_record": 2,
+ "calls": [
+  {
+   "status": "OPEN",
+   "timeframe": "15m",
+   "age_h": 0.4,
+   "record_hits": {
+    "tp1_hit": 0,
+    "tp2_hit": 0,
+    "tp3_hit": 0,
+    "stop_hit": 0
+   },
+   "levels_R": {
+    "tp1": 1.0,
+    "tp2": 1.25,
+    "tp3": 2.0
+   },
+   "sources": {
+    "spot (engine)": {
+     "candles": 2,
+     "last_candle_age_min": 5,
+     "best_move_R": 2.51,
+     "worst_move_R": -0.19,
+     "reached": {
+      "tp1": true,
+      "tp2": true,
+      "tp3": true
+     },
+     "last_close_R": 2.33
+    },
+    "futures (website)": {
+     "error": "HTTP 451 {\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location accordin"
+    },
+    "spot api.binance.com": {
+     "error": "HTTP 451 {\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location accordin"
+    }
+   }
+  },
+  {
+   "status": "TP2",
+   "timeframe": "15m",
+   "age_h": 26.8,
+   "record_hits": {
+    "tp1_hit": 1,
+    "tp2_hit": 1,
+    "tp3_hit": 0,
+    "stop_hit": 1
+   },
+   "levels_R": {
+    "tp1": 1.0,
+    "tp2": 1.25,
+    "tp3": 2.0
+   },
+   "sources": {
+    "spot (engine)": {
+     "candles": 108,
+     "last_candle_age_min": 5,
+     "best_move_R": 2.48,
+     "worst_move_R": -2.13,
+     "reached": {
+      "tp1": true,
+      "tp2": true,
+      "tp3": true
+     },
+     "last_close_R": 2.38
+    },
+    "futures (website)": {
+     "error": "HTTP 451 {\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location accordin"
+    },
+    "spot api.binance.com": {
+     "error": "HTTP 451 {\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location accordin"
+    }
+   }
+  }
+ ],
+ "engine_series": [
+  {
+   "tf": "15m",
+   "candles": 14007,
+   "status": "OK",
+   "age_min": null
+  },
+  {
+   "tf": "1h",
+   "candles": 3502,
+   "status": "OK",
+   "age_min": null
+  },
+  {
+   "tf": "4h",
+   "candles": 876,
+   "status": "OK",
+   "age_min": null
+  },
+  {
+   "tf": "1d",
+   "candles": 147,
+   "status": "OK",
+   "age_min": null
+  }
+ ]
+}
