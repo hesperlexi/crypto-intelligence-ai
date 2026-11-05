@@ -82,3 +82,12 @@ def test_addons_are_scored_by_default():
             mock.patch.object(runner_model, "score", lambda *a, **k: calls.append("runner")):
         fc = analysis.model_forecast(rt, "BTC/USDT", "4h")
     assert fc["available"] and sorted(calls) == ["filter", "runner", "target"]
+
+
+def test_record_rows_show_let_it_run_calls():
+    from app import views
+    r = {"created_at": 0, "timeframe": "15m", "tp1_hit": 1, "tp2_hit": 1, "tp3_hit": 1, "stop_hit": 0}
+    assert "runner" not in views.live_fields(r, {})
+    assert "runner" not in views.live_fields(r, {"runner": {"on": False, "target": 1.0}})
+    out = views.live_fields(r, {"runner": {"on": True, "rr": 4.0, "target": 95.5}})
+    assert out["runner"] == {"on": True, "rr": 4.0, "target": 95.5}

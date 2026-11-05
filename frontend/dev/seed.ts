@@ -138,9 +138,12 @@ function trackRecord() {
   const tp1Row = mk("BTC/USDT", "4h", "LONG", "A", 9, 0.021, { tp1_hit: 1, peak_pct: 2.6 });
   tp1Row.adjustments = [{ at: NOW - 6 * H, field: "tp1", old: tp1Row.tp1 * 1.004, new: tp1Row.tp1, note: "Nearer target 1 before the US data" }];
   const pendRow = mk("ETH/USDT", "1h", "SHORT", "A", 1.5, -0.006, { fill_status: "PENDING", filled_at: undefined });
+  // v2.21: a "let it run" call past target 3 (stop at TP2, one exit at 1:4)
+  const runnerRow = mk("XRP/USDT", "15m", "SHORT", "A", 1, -0.05, { tp1_hit: 1, tp2_hit: 1, tp3_hit: 1, peak_pct: 5.2 });
+  runnerRow.runner = { on: true, rr: 4, target: runnerRow.entry * (1 - 4 * 0.018) };
   const runRow = mk("SOL/USDT", "1h", "LONG", "A", 3, 0.008, { peak_pct: 1.1,
     ai: { rationale: "Sample advisor note for the preview: momentum is rising with the 4h trend; the main risk is the resistance just above target 2.", regime: "trending up" } });
-  sigs.unshift(tp1Row, pendRow, runRow);
+  sigs.unshift(runnerRow, tp1Row, pendRow, runRow);
   const closed = sigs.filter((x) => x.status !== "OPEN").map((x) => x.return_pct as number);
   let acc = 0;
   let accRoi = 0;

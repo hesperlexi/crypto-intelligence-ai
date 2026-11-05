@@ -150,6 +150,10 @@ def live_fields(r: dict[str, Any], payload: dict[str, Any] | None = None) -> dic
         out["expires_at"] = None
     if r.get("filled_at"):
         out["filled_at"] = r["filled_at"]
+    # v2.21 (owner, 5 Nov 2026): "let it run" calls show it on Results (they stay open after TP3, one exit at 1:rr)
+    run = p.get("runner") if isinstance(p.get("runner"), dict) else None
+    if run and run.get("on") and run.get("target") is not None:
+        out["runner"] = {"on": True, "rr": float(run.get("rr") or 4.0), "target": float(run["target"])}
     return out
 
 

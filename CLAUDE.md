@@ -662,3 +662,6 @@ Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance da
 - Members: `worker.ensure_call_alerts` gives the admin (`alerts/auto_calls_owner`) and every active member
   (`alerts/auto_calls_<uid>`) one SIGNAL_UPDATES rule (every coin / timeframe: entry, TP1-3, close) once; settings
   `auto_call_alerts` remembers who got one, so a switched-off or deleted rule is never re-added.
+- Results "let it run" (owner, 5 Nov 2026): `views.live_fields` adds `runner` {on, rr, target} for AI runner calls;
+  `RecordDetails` shows "Let it run · 1:4", stop at TP2 after TP3 (`stopNow`), next target = final 1:rr (`liveOf`), the
+  sheet's level notes ("nothing closes") and the final target row; runner rows' live figure = whole position (no 50/25/25).

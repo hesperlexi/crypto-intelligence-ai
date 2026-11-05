@@ -43,7 +43,19 @@ export function stopNow(x: any): { price: number; why: string | null } {
   const tighter = (lvl: unknown, w: string) => { if (isNum(lvl) && s * (lvl - price) > 0) { price = lvl; why = w; } };
   if (x.tp1_hit) tighter(x.entry, "break-even after target 1");
   if (x.tp2_hit) tighter(x.tp1, "target 1 after target 2");
+  if (x.tp3_hit && x.runner?.on) tighter(x.tp2, "target 2 after target 3");
   return { price, why };
+}
+
+/** "Let it run" call (AI runner): nothing closes at the targets, the stop steps up, one exit at 1:rr (engine/manage.py). */
+export const isRunner = (x: any): boolean => !!x?.runner?.on;
+export const runnerLabel = (x: any): string => `Let it run · 1:${Number(x?.runner?.rr ?? 4)}`;
+
+/** Short name of where the stop now sits after targets (rules only), for the row line. */
+function stopAt(x: any): string | null {
+  if (!x.tp1_hit) return null;
+  if (x.tp3_hit && isRunner(x)) return "TP2";
+  return x.tp2_hit ? "TP1" : "break-even";
 }
 
 /** A record row as the admin Adjust / Close dialogs expect a call: the levels now in force (latest admin values). */
@@ -66,7 +78,8 @@ export function liveOf(x: any, px: number | undefined) {
   const st = stopNow(x);
   const s = x.side === "SHORT" ? -1 : 1;
   const dist = (lvl: unknown) => (isNum(px) && px && isNum(lvl) ? (s * (lvl - px) / px) * 100 : null);   // + = in the trade's favour
-  const nextTp = !x.tp1_hit ? ["Target 1", tp1Now(x)] as const : !x.tp2_hit ? ["Target 2", x.tp2] as const : !x.tp3_hit ? ["Target 3", x.tp3] as const : null;
+  const nextTp = !x.tp1_hit ? ["Target 1", tp1Now(x)] as const : !x.tp2_hit ? ["Target 2", x.tp2] as const : !x.tp3_hit ? ["Target 3", x.tp3] as const
+    : isRunner(x) ? [`Final target 1:${Number(x.runner.rr ?? 4)}`, x.runner.target] as const : null;
   return { move, roi: move != null && lev ? move * lev : null, lev, stop: st, toStop: dist(st.price), next: nextTp, toNext: nextTp ? dist(nextTp[1]) : null };
 }
 
@@ -99,14 +112,15 @@ export function LiveResult({ x, compact = false }: { x: any; compact?: boolean }
     <div className="font-normal">
       <div className="flex flex-wrap items-center gap-1">
         <Pill tone="accent" title="Still running. The figures follow the live price and are not a result yet">● Live</Pill>
+        {isRunner(x) && <Pill tone="accent" title="The AI let this trade run: nothing closes at the targets, the stop moves up after each one, and the whole trade exits at the final target or the raised stop.">{runnerLabel(x)}</Pill>}
         <HitTags x={x} />
-        {l.stop.why && x.tp1_hit ? <span className="text-xs text-mute">stop at {x.tp2_hit ? "TP1" : "break-even"}</span> : null}
+        {l.stop.why && x.tp1_hit ? <span className="text-xs text-mute">stop at {stopAt(x)}</span> : null}
       </div>
       {!compact && (
         <div className="num mt-0.5 text-xs text-mute">
           {isNum(px) ? <>now <span className="text-text">{fmtPrice(px)}</span></> : "waiting for the live price"}
           {isNum(l.toStop) && <> · stop {fmtPctRaw(Math.abs(l.toStop), 2, false)} away</>}
-          {l.next && isNum(l.toNext) && <> · {l.next[0] === "Target 1" ? "TP1" : l.next[0] === "Target 2" ? "TP2" : "TP3"} {fmtPctRaw(Math.abs(l.toNext), 2, false)} away</>}
+          {l.next && isNum(l.toNext) && <> · {l.next[0] === "Target 1" ? "TP1" : l.next[0] === "Target 2" ? "TP2" : l.next[0] === "Target 3" ? "TP3" : `1:${Number(x.runner?.rr ?? 4)}`} {fmtPctRaw(Math.abs(l.toNext), 2, false)} away</>}
         </div>
       )}
     </div>
@@ -181,7 +195,9 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
   );
   const paperQ = new URLSearchParams({ market: "futures", symbol: x.symbol, side: x.side,
     ...(isNum(x.leverage) ? { lev: String(x.leverage) } : {}), ...(isNum(l.stop.price) ? { sl: String(l.stop.price) } : {}),
-    ...(isNum(x.tp2) && !x.tp2_hit ? { tp: String(x.tp2) } : isNum(x.tp3) ? { tp: String(x.tp3) } : {}) });
+    ...(isRunner(x) && isNum(x.runner.target) ? { tp: String(x.runner.target) }
+      : isNum(x.tp2) && !x.tp2_hit ? { tp: String(x.tp2) } : isNum(x.tp3) ? { tp: String(x.tp3) } : {}) });
+  const run = isRunner(x);
   const title = `${base(x.symbol)} ${x.side} · ${tf}`;
   return createPortal(
     <div className="fixed inset-0 z-[60]" onClick={onClose}>
@@ -211,7 +227,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                   <div className="min-w-0">
                     <div className="label">{pending ? "Waiting for entry" : "Live · still running"}</div>
                     <div className="num mt-1 text-xs text-mute">{isNum(px) ? <>Price now <span className="font-semibold text-text">{fmtPrice(px)}</span></> : "Waiting for the live price…"}</div>
-                    <div className="mt-1 flex flex-wrap gap-1"><HitTags x={x} /></div>
+                    <div className="mt-1 flex flex-wrap gap-1">{run && <Pill tone="accent">{runnerLabel(x)}</Pill>}<HitTags x={x} /></div>
                   </div>
                   {!pending && <LiveRoi x={x} size="md" plain={scalp} />}
                 </div>
@@ -242,11 +258,12 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
               {level("Stop-loss", x.stop, !!closedStop && x.exit_reason !== "break_even" && x.exit_reason !== "trail", "text-bear",
                 open ? (l.stop.why ? `now ${fmtPrice(l.stop.price)} (${l.stop.why})` : null)
                   : x.exit_reason === "break_even" ? "the rest closed at break-even (entry)"
-                  : x.exit_reason === "trail" ? "the rest closed at target 1 (trailed stop)"
+                  : x.exit_reason === "trail" ? (run && x.tp3_hit ? "closed at target 2 (raised stop after target 3)" : run ? "closed at target 1 (raised stop after target 2)" : "the rest closed at target 1 (trailed stop)")
                   : x.exit_reason === "admin_stop" ? `the admin's stop ${fmtPrice(l.stop.price)} was hit` : null)}
-              {level("Target 1", tp1Now(x), !!x.tp1_hit, "text-bull", "closes 50%, stop to break-even")}
-              {level("Target 2", x.tp2, !!x.tp2_hit, "text-bull", "closes 25%, stop to target 1")}
-              {level("Target 3", x.tp3, !!x.tp3_hit, "text-bull", "closes the last 25%")}
+              {level("Target 1", tp1Now(x), !!x.tp1_hit, "text-bull", run ? "nothing closes, stop to break-even" : "closes 50%, stop to break-even")}
+              {level("Target 2", x.tp2, !!x.tp2_hit, "text-bull", run ? "nothing closes, stop to target 1" : "closes 25%, stop to target 1")}
+              {level("Target 3", x.tp3, !!x.tp3_hit, "text-bull", run ? "nothing closes, stop to target 2" : "closes the last 25%")}
+              {run && level(`Final target 1:${Number(x.runner.rr ?? 4)}`, x.runner.target, !open && x.exit_reason === "tp3", "text-bull", "Let it run (AI): the whole trade closes here")}
               {open && !pending && (isNum(l.toStop) || isNum(l.toNext)) && (
                 <div className="flex items-start justify-between gap-4 py-2"><dt className="text-mute">Distance</dt>
                   <dd className="num text-right text-xs">{isNum(l.toStop) && <span className="block">to stop {fmtPctRaw(Math.abs(l.toStop), 2, false)}</span>}{l.next && isNum(l.toNext) && <span className="block">to {l.next[0].toLowerCase()} {fmtPctRaw(Math.abs(l.toNext), 2, false)}</span>}</dd></div>
