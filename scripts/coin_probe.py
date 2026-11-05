@@ -1,41 +1,64 @@
-"""Read-only: everything the live app shows about one coin (signals, bot positions/trades, analysis per timeframe)."""
-import json, os, sys
+"""Read-only: Binance spot (engine record) vs Binance USD-M futures (website live price) for every watchlist coin, from
+Binance's public daily archives (data.binance.vision). Aggregate gaps only."""
+import io, json, os, sys, zipfile, datetime as dt
+import requests
 import firebase_admin
 from firebase_admin import credentials, firestore
 firebase_admin.initialize_app(credentials.Certificate(json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])), {"projectId": "crypapp-6a9b9"})
 fs = firestore.client()
-coin = (sys.argv[1] if len(sys.argv) > 1 else "SOL/USDT").upper()
-slug = coin.replace("/", "")
+wl = [x.get("symbol") for x in (fs.document("config/watchlist").get().to_dict() or {}).get("symbols", [])]
+DAYS = [(dt.date.today() - dt.timedelta(days=i)).isoformat() for i in (1, 2, 3)]
 
 
-def view(name):
-    d = fs.document(f"views/{name}").get().to_dict() or {}
-    return json.loads(d.get("json") or "null"), d.get("updated_at")
+def load(kind, sym, day):
+    base = "futures/um" if kind == "fut" else "spot"
+    url = f"https://data.binance.vision/data/{base}/daily/klines/{sym}/1m/{sym}-1m-{day}.zip"
+    r = requests.get(url, timeout=30)
+    if r.status_code != 200:
+        return None
+    z = zipfile.ZipFile(io.BytesIO(r.content))
+    out = {}
+    for line in z.read(z.namelist()[0]).decode().splitlines():
+        p = line.split(",")
+        if not p[0].isdigit():
+            continue
+        t = int(p[0])
+        t = t // 1000 if t > 10**14 else t          # spot archives use microseconds since 2025
+        out[t] = (float(p[2]), float(p[3]), float(p[4]))
+    return out
 
 
-# v2.13: the output goes to the public `reports` branch and public job logs, so it holds COUNTS only - never a call's
-# side, grade, levels, decision or a bot's positions (members pay for those).
-out = {"coin": coin}
-sig, _ = view("signals")
-rows = sig.get("signals") if isinstance(sig, dict) else sig
-rows = [r for r in (rows or []) if isinstance(r, dict) and r.get("status") != "INFO" and (coin == "ALL" or r.get("symbol") == coin)]
-out["signals"] = {"total": len(rows), "by_status": {s: sum(1 for r in rows if r.get("status") == s) for s in sorted({str(r.get("status")) for r in rows})},
-                  "by_timeframe": {t: sum(1 for r in rows if r.get("timeframe") == t) for t in sorted({str(r.get("timeframe")) for r in rows})}}
-bots, _ = view("bots")
-ob = []
-for b in (bots or {}).get("bots", []):
-    st = b.get("state") or {}
-    match = (lambda x: coin == "ALL" or x.get("symbol") == coin)
-    ob.append({"bot": (b.get("config") or {}).get("id"),
-               "open_positions": sum(1 for p in (b.get("positions") or st.get("positions") or []) if match(p)),
-               "pending_orders": sum(1 for p in (b.get("pending") or st.get("pending") or []) if match(p)),
-               "closed_trades": sum(1 for t in (b.get("trades") or []) if match(t))})
-out["bots"] = ob
-an = {}
-for tf in (() if coin == "ALL" else ("15m", "1h", "4h", "12h", "1d", "3d")):
-    a, ts = view(f"analysis_{slug}_{tf}")
-    if not a:
-        continue
-    an[tf] = {"updated_at": ts, "status": a.get("status"), "has_flags": bool(a.get("flags"))}
-out["analysis"] = an
-print(json.dumps(out, indent=1, default=str))
+def q(v, f):
+    v = sorted(v)
+    return round(v[min(len(v) - 1, int(f * len(v)))], 3) if v else None
+
+
+res = {"days": DAYS, "coins": {}}
+for s in wl:
+    sym = s.replace("/", "")
+    gaps, hi15, lo15, miss = [], [], [], 0
+    fut_seen = spot_seen = 0
+    for day in DAYS:
+        f, sp = load("fut", sym, day), load("spot", sym, day)
+        fut_seen += f is not None
+        spot_seen += sp is not None
+        if not f or not sp:
+            continue
+        common = sorted(set(f) & set(sp))
+        for t in common:
+            gaps.append(abs(f[t][2] / sp[t][2] - 1) * 100)
+        # 15-minute highs / lows: what a target check sees
+        buckets = {}
+        for t in common:
+            b = t // 900_000
+            fh, fl, _ = f[t]; sh, sl, _ = sp[t]
+            x = buckets.setdefault(b, [0, 1e18, 0, 1e18])
+            x[0], x[1], x[2], x[3] = max(x[0], fh), min(x[1], fl), max(x[2], sh), min(x[3], sl)
+        for x in buckets.values():
+            hi15.append(abs(x[0] / x[2] - 1) * 100)
+            lo15.append(abs(x[1] / x[3] - 1) * 100)
+    res["coins"][s] = {"futures_days": fut_seen, "spot_days": spot_seen, "minutes": len(gaps),
+                       "close_gap_pct": {"median": q(gaps, .5), "p95": q(gaps, .95), "max": q(gaps, 1)},
+                       "15m_high_gap_pct": {"median": q(hi15, .5), "p95": q(hi15, .95), "max": q(hi15, 1)},
+                       "15m_low_gap_pct": {"median": q(lo15, .5), "p95": q(lo15, .95), "max": q(lo15, 1)}}
+print(json.dumps(res, indent=1))
