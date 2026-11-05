@@ -31,6 +31,7 @@ for arm in (0.5, 0.7):
 
 _ORIG_FOLLOW = S.follow
 _RULE: dict[str, Any] | None = None
+_LAST_PEAK = [0.0]                               # best move (R) before the exit candle of the last follow_rule call
 
 
 def follow_rule(side, entry, stop, tps, high, low, close, first_is_fill=False, complete=True, open_=None,
@@ -49,6 +50,7 @@ def follow_rule(side, entry, stop, tps, high, low, close, first_is_fill=False, c
     early = False
 
     def done(status, reason, idx, fallback):
+        _LAST_PEAK[0] = peak
         px = [legs[k] if legs[k] is not None else fallback for k in range(3)]
         ret = sum(w * s * (p / entry - 1) for w, p in zip(S.TP_SPLIT, px)) * 100
         return S.Outcome(status, reason, float(ret), float(risk_pct), int(idx))
@@ -142,6 +144,7 @@ def run(db_url: str, budget_s: float, symbols: list[str] | None = None, tfs: lis
     weeks = {"tune": {}, "test": {}}
     exits: dict[str, dict[str, int]] = {v: {} for v in VARIANTS}
     skipped = []
+    paired: list[dict[str, Any]] = []
     S.follow = _patched
     try:
         for s, tf in [(s, tf) for tf in RE.TF_ORDER if tf in (tfs or MODEL_TIMEFRAMES) for s in syms]:
@@ -172,6 +175,26 @@ def run(db_url: str, budget_s: float, symbols: list[str] | None = None, tfs: lis
                     if part == "test":
                         for t in tr:
                             exits[name][t.get("exit") or "?"] = exits[name].get(t.get("exit") or "?", 0) + 1
+            # v2 (owner, 5 Nov 2026: "check it on the trades in loss only"): the SAME standard test trades, each
+            # replayed with every variant (paired) - losers and winners kept apart
+            try:
+                for t in res["test"]["standard (live rules)"][key]:
+                    _RULE = None
+                    SP.simulate(ctx, paths, t["j"], int(d["side"][t["j"]]), d["plan"][t["j"]],
+                                "market" if d["decision"][t["j"]] != "BUY ON PULLBACK" else "old")
+                    row = {"tf": tf, "r": t["r"], "peak": float(_LAST_PEAK[0]), "alt": {}}
+                    for name, rule in VARIANTS.items():
+                        if rule is None:
+                            continue
+                        _RULE = rule
+                        mode = "market" if d["decision"][t["j"]] != "BUY ON PULLBACK" else "old"
+                        o = SP.simulate(ctx, paths, t["j"], int(d["side"][t["j"]]), d["plan"][t["j"]], mode)
+                        if o and o.get("filled"):
+                            o = V._with_funding(ctx, d, [{**o, "j": t["j"], "ts": t["ts"]}])[0]
+                            row["alt"][name] = o["r"]
+                    paired.append(row)
+            except Exception as exc:
+                skipped.append(f"{key} paired: {type(exc).__name__}")
             log.info("%s: done", key)
     finally:
         S.follow = _ORIG_FOLLOW
@@ -199,7 +222,54 @@ def run(db_url: str, budget_s: float, symbols: list[str] | None = None, tfs: lis
         "chosen_on_tune": best, "tune_rank": tune_rank[:5],
         "verdict_test": {"chosen": best, "chosen_mean_r": tables["test"][best]["overall"].get("expectancy_r"),
                          "standard_mean_r": tables["test"][base]["overall"].get("expectancy_r")},
+        "losers_only": losers_report(paired), "live_record_losses": live_losses(db),
         "per_timeframe": per_tf_best, "exits_test": exits, "tables": tables, "skipped": skipped,
         "costs": {"round_trip_pct": settings.research_cost_pct, "funding": "0.01% per 8 h (longs pay), over the hold"},
         "seconds": round(time.time() - t0, 1)})
     return out
+
+
+def losers_report(paired: list[dict[str, Any]]) -> dict[str, Any]:
+    """Standard test trades that LOST: how far into profit they went first, and what each early rule makes of them -
+    next to what the same rule does to the trades that WON (the rule cannot know in advance which is which)."""
+    lose = [p for p in paired if p["r"] < 0]
+    win = [p for p in paired if p["r"] >= 0]
+    out: dict[str, Any] = {"trades": len(paired), "losers": len(lose), "winners": len(win),
+                           "losers_reached": {f"+{x}R": sum(1 for p in lose if p["peak"] >= x) for x in (0.3, 0.5, 0.7, 0.9)},
+                           "losers_total_r": round(sum(p["r"] for p in lose), 1), "by_rule": {}}
+    for name, rule in VARIANTS.items():
+        if rule is None:
+            continue
+        lz = [(p["r"], p["alt"][name]) for p in lose if name in p["alt"]]
+        wz = [(p["r"], p["alt"][name]) for p in win if name in p["alt"]]
+        out["by_rule"][name] = {
+            "losers_saved_r": round(sum(b - a for a, b in lz), 1),
+            "losers_turned_into_wins": sum(1 for a, b in lz if b > 0),
+            "losers_made_smaller": sum(1 for a, b in lz if a < b <= 0),
+            "winners_cost_r": round(sum(b - a for a, b in wz), 1),
+            "winners_cut_short": sum(1 for a, b in wz if b < a - 1e-9),
+            "net_r": round(sum(b - a for a, b in lz + wz), 1)}
+    tfs = sorted({p["tf"] for p in paired}, key=lambda t: MODEL_TIMEFRAMES.index(t) if t in MODEL_TIMEFRAMES else 99)
+    out["losers_by_timeframe"] = {tf: {"losers": sum(1 for p in lose if p["tf"] == tf),
+                                       "reached_+0.5R": sum(1 for p in lose if p["tf"] == tf and p["peak"] >= 0.5)} for tf in tfs}
+    return out
+
+
+def live_losses(db) -> dict[str, Any]:
+    """The live record's own closed losing calls (after fees): how far into profit each went first (peak_r)."""
+    from .services.tracking import net_pct
+    rows = db.query("SELECT * FROM signals WHERE side != 0 AND status IN ('STOPPED', 'EXPIRED', 'TP1', 'TP2', 'TP3') "
+                    "AND return_pct IS NOT NULL AND closed_at IS NOT NULL")
+    since = int(db.get_setting("record_since", 0) or 0)
+    rows = [r for r in rows if int(r["created_at"]) >= since]
+    lose = []
+    for r in rows:
+        try:
+            if float(net_pct(r)) < 0:
+                lose.append(r)
+        except Exception:
+            continue
+    pk = [float(r["peak_r"]) for r in lose if r.get("peak_r") is not None]
+    return {"closed": len(rows), "losses": len(lose), "with_peak": len(pk),
+            "reached": {f"+{x}R": sum(1 for v in pk if v >= x) for x in (0.3, 0.5, 0.7, 0.9)},
+            "by_timeframe": {tf: sum(1 for r in lose if r["timeframe"] == tf) for tf in MODEL_TIMEFRAMES}}
