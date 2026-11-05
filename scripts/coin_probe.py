@@ -1,41 +1,71 @@
-"""Read-only: everything the live app shows about one coin (signals, bot positions/trades, analysis per timeframe)."""
-import json, os, sys
+"""Read-only TP-hit probe for one coin's OPEN record calls: did the price reach each level, on Binance spot (the engine's
+candles) and on Binance futures (the website's live price)? Output: booleans and R multiples only - never a call's side,
+grade or levels (public report)."""
+import json, os, sys, time
+import requests
 import firebase_admin
 from firebase_admin import credentials, firestore
 firebase_admin.initialize_app(credentials.Certificate(json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])), {"projectId": "crypapp-6a9b9"})
 fs = firestore.client()
 coin = (sys.argv[1] if len(sys.argv) > 1 else "SOL/USDT").upper()
-slug = coin.replace("/", "")
+sym = coin.replace("/", "")
 
 
 def view(name):
     d = fs.document(f"views/{name}").get().to_dict() or {}
-    return json.loads(d.get("json") or "null"), d.get("updated_at")
+    return json.loads(d.get("json") or "null")
 
 
-# v2.13: the output goes to the public `reports` branch and public job logs, so it holds COUNTS only - never a call's
-# side, grade, levels, decision or a bot's positions (members pay for those).
-out = {"coin": coin}
-sig, _ = view("signals")
-rows = sig.get("signals") if isinstance(sig, dict) else sig
-rows = [r for r in (rows or []) if isinstance(r, dict) and r.get("status") != "INFO" and (coin == "ALL" or r.get("symbol") == coin)]
-out["signals"] = {"total": len(rows), "by_status": {s: sum(1 for r in rows if r.get("status") == s) for s in sorted({str(r.get("status")) for r in rows})},
-                  "by_timeframe": {t: sum(1 for r in rows if r.get("timeframe") == t) for t in sorted({str(r.get("timeframe")) for r in rows})}}
-bots, _ = view("bots")
-ob = []
-for b in (bots or {}).get("bots", []):
-    st = b.get("state") or {}
-    match = (lambda x: coin == "ALL" or x.get("symbol") == coin)
-    ob.append({"bot": (b.get("config") or {}).get("id"),
-               "open_positions": sum(1 for p in (b.get("positions") or st.get("positions") or []) if match(p)),
-               "pending_orders": sum(1 for p in (b.get("pending") or st.get("pending") or []) if match(p)),
-               "closed_trades": sum(1 for t in (b.get("trades") or []) if match(t))})
-out["bots"] = ob
-an = {}
-for tf in (() if coin == "ALL" else ("15m", "1h", "4h", "12h", "1d", "3d")):
-    a, ts = view(f"analysis_{slug}_{tf}")
-    if not a:
-        continue
-    an[tf] = {"updated_at": ts, "status": a.get("status"), "has_flags": bool(a.get("flags"))}
-out["analysis"] = an
-print(json.dumps(out, indent=1, default=str))
+def klines(base, path, since):
+    out, t = [], since
+    for _ in range(20):
+        try:
+            r = requests.get(base + path, params={"symbol": sym, "interval": "15m", "startTime": t, "limit": 1000}, timeout=15)
+        except Exception as e:
+            return {"error": type(e).__name__}
+        if r.status_code != 200:
+            return {"error": f"HTTP {r.status_code} {r.text[:80]}"}
+        rows = r.json()
+        if not rows:
+            break
+        out += rows
+        if len(rows) < 1000:
+            break
+        t = rows[-1][0] + 1
+    return out
+
+
+tr = view("track_record") or {}
+sigs = (tr.get("live") or {}).get("signals") or tr.get("signals") or []
+mine = [s for s in sigs if s.get("symbol") == coin]
+res = {"coin": coin, "calls_in_record": len(mine), "calls": []}
+sources = {"spot (engine)": ("https://data-api.binance.vision", "/api/v3/klines"),
+           "futures (website)": ("https://fapi.binance.com", "/fapi/v1/klines"),
+           "spot api.binance.com": ("https://api.binance.com", "/api/v3/klines")}
+for s in mine:
+    side = 1 if str(s.get("side")).upper() in ("1", "LONG", "BUY") or s.get("side") == 1 else -1
+    entry, stop = float(s["entry"]), float(s["stop"])
+    risk = abs(entry - stop) or 1e-12
+    since = int(s.get("filled_at") or s.get("created_at"))
+    c = {"status": s.get("status"), "timeframe": s.get("timeframe"), "age_h": round((time.time() * 1000 - since) / 3.6e6, 1),
+         "record_hits": {k: s.get(k) for k in ("tp1_hit", "tp2_hit", "tp3_hit", "stop_hit")},
+         "levels_R": {k: round((float(s[k]) - entry) * side / risk, 2) for k in ("tp1", "tp2", "tp3") if s.get(k)}, "sources": {}}
+    for name, (base, path) in sources.items():
+        k = klines(base, path, since)
+        if isinstance(k, dict):
+            c["sources"][name] = k
+            continue
+        hi = max(float(x[2]) for x in k) if k else None
+        lo = min(float(x[3]) for x in k) if k else None
+        best = ((hi - entry) if side > 0 else (entry - lo)) / risk if k else None
+        worst = ((lo - entry) if side > 0 else (entry - hi)) / risk if k else None
+        c["sources"][name] = {"candles": len(k), "last_candle_age_min": round((time.time() * 1000 - k[-1][0]) / 60000) if k else None,
+                              "best_move_R": round(best, 2) if best is not None else None,
+                              "worst_move_R": round(worst, 2) if worst is not None else None,
+                              "reached": {t: (best is not None and best >= r) for t, r in c["levels_R"].items()},
+                              "last_close_R": round((float(k[-1][4]) - entry) * side / risk, 2) if k else None}
+    res["calls"].append(c)
+h = view("health") or {}
+res["engine_series"] = [{"tf": x.get("timeframe"), "candles": x.get("candles"), "status": x.get("status"), "age_min": x.get("age_min")}
+                        for x in h.get("series", []) if x.get("symbol") == coin]
+print(json.dumps(res, indent=1, default=str))
