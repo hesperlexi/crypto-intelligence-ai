@@ -1,41 +1,57 @@
-{
- "updated_at": 1793891197319,
- "calls": [
-  {
-   "timeframe": "15m",
-   "status": "OPEN",
-   "exit_reason": null,
-   "closed": false,
-   "hits": {
-    "tp1_hit": 1,
-    "tp2_hit": 1,
-    "tp3_hit": 1,
-    "stop_hit": 0
-   },
-   "runner_on_row": false,
-   "runner_in_payload": false,
-   "row_keys": [
-    "exit_reason",
-    "managed"
-   ]
-  },
-  {
-   "timeframe": "15m",
-   "status": "TP2",
-   "exit_reason": "trail",
-   "closed": true,
-   "hits": {
-    "tp1_hit": 1,
-    "tp2_hit": 1,
-    "tp3_hit": 0,
-    "stop_hit": 1
-   },
-   "runner_on_row": false,
-   "runner_in_payload": false,
-   "row_keys": [
-    "exit_reason",
-    "managed"
-   ]
-  }
- ]
-}
+[
+ {
+  "bot": "futures-signal-ab-15m",
+  "runner_target": true,
+  "info_keys": [
+   "atr",
+   "bar_ts",
+   "confidence",
+   "decision",
+   "edge_confirmed",
+   "grade",
+   "leverage",
+   "model_version",
+   "p_down",
+   "p_up",
+   "predicted",
+   "rr",
+   "run_target",
+   "signal",
+   "size_mult",
+   "timeframe"
+  ],
+  "pos_keys": [
+   "adj",
+   "coll",
+   "entry",
+   "exit_at",
+   "exit_value",
+   "fee_rate",
+   "fees",
+   "funded_until",
+   "funding",
+   "id",
+   "info",
+   "last_check",
+   "lev",
+   "liq",
+   "margin",
+   "market",
+   "opened_at",
+   "qty",
+   "qty_open",
+   "realized",
+   "side",
+   "stop",
+   "stop0",
+   "symbol",
+   "targets",
+   "tp_hit"
+  ]
+ },
+ {
+  "bot": "futures-signal-ab-15m",
+  "closed_trade_reason": "TP3",
+  "opened": 1793792181862
+ }
+]
