@@ -7,9 +7,9 @@
    "timeframe": "15m",
    "age_h": 0.4,
    "record_hits": {
-    "tp1_hit": 0,
-    "tp2_hit": 0,
-    "tp3_hit": 0,
+    "tp1_hit": 1,
+    "tp2_hit": 1,
+    "tp3_hit": 1,
     "stop_hit": 0
    },
    "levels_R": {
@@ -20,15 +20,20 @@
    "sources": {
     "spot (engine)": {
      "candles": 2,
-     "last_candle_age_min": 5,
-     "best_move_R": 2.51,
+     "last_candle_age_min": 6,
+     "best_move_R": 2.95,
      "worst_move_R": -0.19,
+     "first_reach_min_after_fill": {
+      "tp1": 1,
+      "tp2": 1,
+      "tp3": 1
+     },
      "reached": {
       "tp1": true,
       "tp2": true,
       "tp3": true
      },
-     "last_close_R": 2.33
+     "last_close_R": 2.91
     },
     "futures (website)": {
      "error": "HTTP 451 {\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location accordin"
@@ -41,7 +46,7 @@
   {
    "status": "TP2",
    "timeframe": "15m",
-   "age_h": 26.8,
+   "age_h": 26.9,
    "record_hits": {
     "tp1_hit": 1,
     "tp2_hit": 1,
@@ -55,16 +60,20 @@
    },
    "sources": {
     "spot (engine)": {
-     "candles": 108,
-     "last_candle_age_min": 5,
-     "best_move_R": 2.48,
-     "worst_move_R": -2.13,
+     "candles": 6,
+     "last_candle_age_min": 1536,
+     "best_move_R": 1.6,
+     "worst_move_R": -0.02,
+     "first_reach_min_after_fill": {
+      "tp1": 45,
+      "tp2": 45
+     },
      "reached": {
       "tp1": true,
       "tp2": true,
-      "tp3": true
+      "tp3": false
      },
-     "last_close_R": 2.38
+     "last_close_R": 0.52
     },
     "futures (website)": {
      "error": "HTTP 451 {\n  \"code\": 0,\n  \"msg\": \"Service unavailable from a restricted location accordin"
@@ -75,10 +84,19 @@
    }
   }
  ],
+ "engine": {
+  "last_tick": {
+   "last_tick_finished": 1793890181615,
+   "last_tick_seconds": 102.1,
+   "failed_steps": []
+  },
+  "now": 1793890287726
+ },
+ "track_record_updated": 1793890236395,
  "engine_series": [
   {
    "tf": "15m",
-   "candles": 14007,
+   "candles": 14008,
    "status": "OK",
    "age_min": null
   },
