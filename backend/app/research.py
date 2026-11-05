@@ -219,7 +219,7 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "early"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
@@ -244,7 +244,12 @@ def main(argv: list[str] | None = None) -> int:
             src.close()
             dst.close()
             a.db = f"sqlite:///{tmp}"
-        if a.command == "v213":
+        if a.command == "early":
+            from . import research_early
+            body = research_early.run(a.db, a.budget, [x for x in (a.symbols or "").split(",") if x] or None,
+                                      [x for x in (a.timeframes or "").split(",") if x] or None)
+            out = {"ok": True, "command": a.command, **body}
+        elif a.command == "v213":
             from . import research_v213
             body = research_v213.run(a.db, a.budget, [x for x in (a.symbols or "").split(",") if x] or None,
                                      [x for x in (a.timeframes or "").split(",") if x] or None)

@@ -56,14 +56,14 @@ jobs:
           mkdir -p ../out
           stamp=$(date -u +%Y%m%dT%H%M%SZ)
           if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
-            printf '{"ok": false, "command": "v213", "reason": "engine state cache not restored", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/v213-latest.json
+            printf '{"ok": false, "command": "v213", "reason": "engine state cache not restored", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/early-latest.json
           else
-            python -m app.research v213 --budget "${{ github.event.inputs.budget || '10800' }}" --out ../out/v213-latest.json > /dev/null \
-              || printf '{"ok": false, "command": "v213", "reason": "the v213 research failed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/v213-latest.json
+            python -m app.research early --budget "${{ github.event.inputs.budget || '10800' }}" --out ../out/early-latest.json > /dev/null \
+              || printf '{"ok": false, "command": "v213", "reason": "the v213 research failed (see the job log)", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/early-latest.json
           fi
-          cp ../out/v213-latest.json ../out/v213-$stamp.json
-          echo "cache key: ${{ steps.state.outputs.cache-matched-key }}" > ../out/v213-source.txt
-          echo "commit: ${GITHUB_SHA}" >> ../out/v213-source.txt
+          cp ../out/early-latest.json ../out/early-$stamp.json
+          echo "cache key: ${{ steps.state.outputs.cache-matched-key }}" > ../out/early-source.txt
+          echo "commit: ${GITHUB_SHA}" >> ../out/early-source.txt
       - name: Commit the results to the research-results branch
         working-directory: .
         run: |
