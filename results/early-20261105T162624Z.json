@@ -1,0 +1,2301 @@
+{
+ "ok": true,
+ "command": "early",
+ "method": "Early profit-taking before TP1 (owner question, 5 Nov 2026) - read-only replay (python -m app.research early).\n\nQuestion: a call that is in profit but has not reached TP1 turns back. Should it close (or protect the profit) before the\nstop? Variants, applied ONLY before TP1 (after TP1 the live rules run unchanged: break-even, TP1 after TP2, 50/25/25):\n  * lock:     once the best move so far reaches `arm` R, the stop moves to entry + `lock` R (lock 0 = break-even);\n  * giveback: once the best move reaches `arm` R, a trailing stop keeps (1 - frac) of the best move.\nThe best move is measured on candles BEFORE the current one (no look-ahead); inside a candle the stop is checked first,\ngap opens fill at the open - as the live rules. Same calls as the live pipeline (current grading, honest market entry,\npullback limits as live), 0.15 % round-trip cost + funding, one call at a time per series. The variant is chosen on the\nfirst 70 % of each series (tune) and judged on the untouched last 30 % (test).",
+ "self_check": {
+  "trials": 3000,
+  "mismatches": 0
+ },
+ "summary_test": {
+  "standard (live rules)": {
+   "n": 1555,
+   "expectancy_r": -0.04416357355495655,
+   "total_r": -68.67435687795744,
+   "win_rate": 0.5048231511254019,
+   "max_drawdown_r": 129.10058849900182
+  },
+  "lock 0.0R at 0.5R": {
+   "n": 1677,
+   "expectancy_r": -0.04210835864420074,
+   "total_r": -70.61571744632464,
+   "win_rate": 0.3875968992248062,
+   "max_drawdown_r": 122.78245410483221
+  },
+  "lock 0.2R at 0.5R": {
+   "n": 1744,
+   "expectancy_r": -0.042256346799014265,
+   "total_r": -73.69506881748087,
+   "win_rate": 0.6238532110091743,
+   "max_drawdown_r": 128.14027232961521
+  },
+  "lock 0.4R at 0.5R": {
+   "n": 1852,
+   "expectancy_r": -0.04315124773724518,
+   "total_r": -79.91611080937807,
+   "win_rate": 0.6382289416846653,
+   "max_drawdown_r": 127.40389661091659
+  },
+  "giveback 40% after 0.5R": {
+   "n": 1846,
+   "expectancy_r": -0.04711619249923679,
+   "total_r": -86.97649135359111,
+   "win_rate": 0.6365113759479957,
+   "max_drawdown_r": 134.24563502747097
+  },
+  "giveback 50% after 0.5R": {
+   "n": 1812,
+   "expectancy_r": -0.04385071111569132,
+   "total_r": -79.45748854163267,
+   "win_rate": 0.6346578366445916,
+   "max_drawdown_r": 133.93494876675143
+  },
+  "giveback 60% after 0.5R": {
+   "n": 1776,
+   "expectancy_r": -0.045859076393519674,
+   "total_r": -81.44571967489094,
+   "win_rate": 0.6311936936936937,
+   "max_drawdown_r": 134.6012360169762
+  },
+  "lock 0.0R at 0.7R": {
+   "n": 1596,
+   "expectancy_r": -0.03710479764230751,
+   "total_r": -59.21925703712279,
+   "win_rate": 0.4605263157894737,
+   "max_drawdown_r": 114.14389267214621
+  },
+  "lock 0.2R at 0.7R": {
+   "n": 1621,
+   "expectancy_r": -0.03909098736527099,
+   "total_r": -63.36649051910427,
+   "win_rate": 0.5638494756323257,
+   "max_drawdown_r": 114.94209537682295
+  },
+  "lock 0.4R at 0.7R": {
+   "n": 1656,
+   "expectancy_r": -0.044599797370967115,
+   "total_r": -73.85726444632154,
+   "win_rate": 0.5688405797101449,
+   "max_drawdown_r": 118.40268677389028
+  },
+  "giveback 40% after 0.7R": {
+   "n": 1672,
+   "expectancy_r": -0.04526889390290941,
+   "total_r": -75.68959060566453,
+   "win_rate": 0.5675837320574163,
+   "max_drawdown_r": 121.51381776270642
+  },
+  "giveback 50% after 0.7R": {
+   "n": 1659,
+   "expectancy_r": -0.04154056914364342,
+   "total_r": -68.91580420930444,
+   "win_rate": 0.568414707655214,
+   "max_drawdown_r": 120.3393485348154
+  },
+  "giveback 60% after 0.7R": {
+   "n": 1640,
+   "expectancy_r": -0.04170584232701849,
+   "total_r": -68.39758141631032,
+   "win_rate": 0.5676829268292682,
+   "max_drawdown_r": 115.70311919887119
+  }
+ },
+ "summary_tune": {
+  "standard (live rules)": {
+   "n": 4269,
+   "expectancy_r": -0.024466983158728077,
+   "total_r": -104.44955110461017,
+   "win_rate": 0.5113609744670883
+  },
+  "lock 0.0R at 0.5R": {
+   "n": 4643,
+   "expectancy_r": -0.03310163695262368,
+   "total_r": -153.69090037103174,
+   "win_rate": 0.3734654318328667
+  },
+  "lock 0.2R at 0.5R": {
+   "n": 4853,
+   "expectancy_r": -0.03200711791255192,
+   "total_r": -155.33054322961445,
+   "win_rate": 0.6132289305584174
+  },
+  "lock 0.4R at 0.5R": {
+   "n": 5112,
+   "expectancy_r": -0.030962624265782845,
+   "total_r": -158.2809352466819,
+   "win_rate": 0.6251956181533647
+  },
+  "giveback 40% after 0.5R": {
+   "n": 5106,
+   "expectancy_r": -0.03321785109741315,
+   "total_r": -169.61034770339154,
+   "win_rate": 0.6239717978848414
+  },
+  "giveback 50% after 0.5R": {
+   "n": 5031,
+   "expectancy_r": -0.030269649381842876,
+   "total_r": -152.2866060400515,
+   "win_rate": 0.6247266944941363
+  },
+  "giveback 60% after 0.5R": {
+   "n": 4935,
+   "expectancy_r": -0.03034631976247847,
+   "total_r": -149.75908802783124,
+   "win_rate": 0.6226950354609929
+  },
+  "lock 0.0R at 0.7R": {
+   "n": 4410,
+   "expectancy_r": -0.03095987635673698,
+   "total_r": -136.5330547332101,
+   "win_rate": 0.4433106575963719
+  },
+  "lock 0.2R at 0.7R": {
+   "n": 4487,
+   "expectancy_r": -0.02909516299159421,
+   "total_r": -130.54999634328323,
+   "win_rate": 0.5605081346110987
+  },
+  "lock 0.4R at 0.7R": {
+   "n": 4591,
+   "expectancy_r": -0.026497358617290506,
+   "total_r": -121.64937341198072,
+   "win_rate": 0.5687214114571989
+  },
+  "giveback 40% after 0.7R": {
+   "n": 4650,
+   "expectancy_r": -0.02786636620065871,
+   "total_r": -129.578602833063,
+   "win_rate": 0.567741935483871
+  },
+  "giveback 50% after 0.7R": {
+   "n": 4597,
+   "expectancy_r": -0.025675429064810386,
+   "total_r": -118.02994741093335,
+   "win_rate": 0.5686317163367414
+  },
+  "giveback 60% after 0.7R": {
+   "n": 4546,
+   "expectancy_r": -0.02554368028305956,
+   "total_r": -116.12157056678876,
+   "win_rate": 0.567751869775627
+  }
+ },
+ "chosen_on_tune": "standard (live rules)",
+ "tune_rank": [
+  "standard (live rules)",
+  "giveback 60% after 0.7R",
+  "giveback 50% after 0.7R",
+  "lock 0.4R at 0.7R",
+  "giveback 40% after 0.7R"
+ ],
+ "verdict_test": {
+  "chosen": "standard (live rules)",
+  "chosen_mean_r": -0.04416357355495655,
+  "standard_mean_r": -0.04416357355495655
+ },
+ "losers_only": {
+  "trades": 1555,
+  "losers": 770,
+  "winners": 785,
+  "losers_reached": {
+   "+0.3R": 389,
+   "+0.5R": 211,
+   "+0.7R": 98,
+   "+0.9R": 27
+  },
+  "losers_total_r": -692.1,
+  "by_rule": {
+   "lock 0.0R at 0.5R": {
+    "losers_saved_r": 147.2,
+    "losers_turned_into_wins": 15,
+    "losers_made_smaller": 187,
+    "winners_cost_r": -152.9,
+    "winners_cut_short": 204,
+    "net_r": -5.7
+   },
+   "lock 0.2R at 0.5R": {
+    "losers_saved_r": 186.1,
+    "losers_turned_into_wins": 189,
+    "losers_made_smaller": 21,
+    "winners_cost_r": -200.8,
+    "winners_cut_short": 309,
+    "net_r": -14.7
+   },
+   "lock 0.4R at 0.5R": {
+    "losers_saved_r": 220.8,
+    "losers_turned_into_wins": 197,
+    "losers_made_smaller": 13,
+    "winners_cost_r": -248.2,
+    "winners_cut_short": 456,
+    "net_r": -27.4
+   },
+   "giveback 40% after 0.5R": {
+    "losers_saved_r": 219.7,
+    "losers_turned_into_wins": 196,
+    "losers_made_smaller": 14,
+    "winners_cost_r": -244.6,
+    "winners_cut_short": 449,
+    "net_r": -24.9
+   },
+   "giveback 50% after 0.5R": {
+    "losers_saved_r": 209.4,
+    "losers_turned_into_wins": 196,
+    "losers_made_smaller": 14,
+    "winners_cost_r": -230.0,
+    "winners_cut_short": 404,
+    "net_r": -20.6
+   },
+   "giveback 60% after 0.5R": {
+    "losers_saved_r": 198.4,
+    "losers_turned_into_wins": 195,
+    "losers_made_smaller": 15,
+    "winners_cost_r": -219.0,
+    "winners_cut_short": 363,
+    "net_r": -20.6
+   },
+   "lock 0.0R at 0.7R": {
+    "losers_saved_r": 63.3,
+    "losers_turned_into_wins": 6,
+    "losers_made_smaller": 87,
+    "winners_cost_r": -59.0,
+    "winners_cut_short": 78,
+    "net_r": 4.3
+   },
+   "lock 0.2R at 0.7R": {
+    "losers_saved_r": 81.7,
+    "losers_turned_into_wins": 88,
+    "losers_made_smaller": 9,
+    "winners_cost_r": -83.9,
+    "winners_cut_short": 125,
+    "net_r": -2.1
+   },
+   "lock 0.4R at 0.7R": {
+    "losers_saved_r": 99.6,
+    "losers_turned_into_wins": 93,
+    "losers_made_smaller": 4,
+    "winners_cost_r": -106.6,
+    "winners_cut_short": 202,
+    "net_r": -6.9
+   },
+   "giveback 40% after 0.7R": {
+    "losers_saved_r": 107.2,
+    "losers_turned_into_wins": 93,
+    "losers_made_smaller": 4,
+    "winners_cost_r": -119.6,
+    "winners_cut_short": 244,
+    "net_r": -12.4
+   },
+   "giveback 50% after 0.7R": {
+    "losers_saved_r": 100.5,
+    "losers_turned_into_wins": 93,
+    "losers_made_smaller": 4,
+    "winners_cost_r": -104.7,
+    "winners_cut_short": 207,
+    "net_r": -4.2
+   },
+   "giveback 60% after 0.7R": {
+    "losers_saved_r": 93.5,
+    "losers_turned_into_wins": 93,
+    "losers_made_smaller": 4,
+    "winners_cost_r": -94.4,
+    "winners_cut_short": 166,
+    "net_r": -0.9
+   }
+  },
+  "losers_by_timeframe": {
+   "15m": {
+    "losers": 176,
+    "reached_+0.5R": 48
+   },
+   "1h": {
+    "losers": 189,
+    "reached_+0.5R": 60
+   },
+   "4h": {
+    "losers": 251,
+    "reached_+0.5R": 65
+   },
+   "12h": {
+    "losers": 99,
+    "reached_+0.5R": 19
+   },
+   "1d": {
+    "losers": 45,
+    "reached_+0.5R": 15
+   },
+   "3d": {
+    "losers": 10,
+    "reached_+0.5R": 4
+   }
+  }
+ },
+ "live_record_losses": {
+  "closed": 2,
+  "losses": 0,
+  "with_peak": 0,
+  "reached": {
+   "+0.3R": 0,
+   "+0.5R": 0,
+   "+0.7R": 0,
+   "+0.9R": 0
+  },
+  "by_timeframe": {
+   "15m": 0,
+   "1h": 0,
+   "4h": 0,
+   "12h": 0,
+   "1d": 0,
+   "3d": 0
+  }
+ },
+ "per_timeframe": {
+  "15m": {
+   "chosen_on_tune": "giveback 40% after 0.5R",
+   "tune_mean_r": -0.10666912899485163,
+   "test_mean_r": -0.10909149760539337,
+   "test_standard_mean_r": -0.06620751430976936,
+   "test_n": 403
+  },
+  "1h": {
+   "chosen_on_tune": "lock 0.4R at 0.5R",
+   "tune_mean_r": -0.053206024329975204,
+   "test_mean_r": -0.06995272187055647,
+   "test_standard_mean_r": -0.10673864041787005,
+   "test_n": 415
+  },
+  "4h": {
+   "chosen_on_tune": "standard (live rules)",
+   "tune_mean_r": 0.03316023741899905,
+   "test_mean_r": -0.014011718798526524,
+   "test_standard_mean_r": -0.014011718798526524,
+   "test_n": 523
+  },
+  "12h": {
+   "chosen_on_tune": "standard (live rules)",
+   "tune_mean_r": 0.029093029353029393,
+   "test_mean_r": 0.025775600278235358,
+   "test_standard_mean_r": 0.025775600278235358,
+   "test_n": 202
+  },
+  "1d": {
+   "chosen_on_tune": "giveback 50% after 0.7R",
+   "tune_mean_r": 0.05968873508322808,
+   "test_mean_r": 0.07481861632540751,
+   "test_standard_mean_r": 0.01604373949476515,
+   "test_n": 98
+  },
+  "3d": {
+   "chosen_on_tune": "giveback 40% after 0.5R",
+   "tune_mean_r": -0.09070859441445846,
+   "test_mean_r": -0.008692316732596267,
+   "test_standard_mean_r": -0.37941855796631907,
+   "test_n": 16
+  }
+ },
+ "exits_test": {
+  "standard (live rules)": {
+   "stop": 589,
+   "trail": 115,
+   "expired": 582,
+   "tp3": 111,
+   "break_even": 158
+  },
+  "lock 0.0R at 0.5R": {
+   "early": 465,
+   "stop": 482,
+   "trail": 91,
+   "tp3": 99,
+   "expired": 403,
+   "break_even": 137
+  },
+  "lock 0.2R at 0.5R": {
+   "early": 641,
+   "stop": 495,
+   "trail": 83,
+   "tp3": 78,
+   "expired": 328,
+   "break_even": 119
+  },
+  "lock 0.4R at 0.5R": {
+   "early": 928,
+   "stop": 517,
+   "trail": 48,
+   "tp3": 51,
+   "expired": 242,
+   "break_even": 66
+  },
+  "giveback 40% after 0.5R": {
+   "early": 920,
+   "stop": 518,
+   "trail": 51,
+   "tp3": 45,
+   "expired": 242,
+   "break_even": 70
+  },
+  "giveback 50% after 0.5R": {
+   "early": 829,
+   "stop": 509,
+   "trail": 64,
+   "tp3": 61,
+   "expired": 267,
+   "break_even": 82
+  },
+  "giveback 60% after 0.5R": {
+   "early": 743,
+   "stop": 501,
+   "trail": 71,
+   "tp3": 72,
+   "expired": 291,
+   "break_even": 98
+  },
+  "lock 0.0R at 0.7R": {
+   "stop": 542,
+   "trail": 109,
+   "early": 185,
+   "tp3": 103,
+   "expired": 508,
+   "break_even": 149
+  },
+  "lock 0.2R at 0.7R": {
+   "stop": 547,
+   "trail": 108,
+   "early": 258,
+   "tp3": 95,
+   "expired": 466,
+   "break_even": 147
+  },
+  "lock 0.4R at 0.7R": {
+   "stop": 556,
+   "trail": 90,
+   "early": 385,
+   "tp3": 83,
+   "expired": 416,
+   "break_even": 126
+  },
+  "giveback 40% after 0.7R": {
+   "stop": 563,
+   "trail": 78,
+   "early": 459,
+   "tp3": 72,
+   "expired": 388,
+   "break_even": 112
+  },
+  "giveback 50% after 0.7R": {
+   "stop": 557,
+   "trail": 91,
+   "early": 389,
+   "tp3": 84,
+   "expired": 414,
+   "break_even": 124
+  },
+  "giveback 60% after 0.7R": {
+   "stop": 554,
+   "trail": 98,
+   "early": 327,
+   "tp3": 92,
+   "expired": 436,
+   "break_even": 133
+  }
+ },
+ "tables": {
+  "tune": {
+   "standard (live rules)": {
+    "overall": {
+     "n": 4269,
+     "win_rate": 0.5113609744670883,
+     "expectancy_r": -0.024466983158728077,
+     "profit_factor": 0.9423547987412361,
+     "max_drawdown_r": 181.4879661930851,
+     "total_r": -104.44955110461017,
+     "trades_per_week": 157.45848852438118
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 918,
+      "win_rate": 0.4793028322440087,
+      "expectancy_r": -0.12377903471678312,
+      "profit_factor": 0.7381867845894405,
+      "max_drawdown_r": 124.13284545488956,
+      "total_r": -113.6291538700069,
+      "trades_per_week": 98.26314112774769
+     },
+     "1h": {
+      "n": 989,
+      "win_rate": 0.48938321536905965,
+      "expectancy_r": -0.06271340718104157,
+      "profit_factor": 0.8528034820923129,
+      "max_drawdown_r": 70.86429717068819,
+      "total_r": -62.023559702050115,
+      "trades_per_week": 39.56942129078352
+     },
+     "4h": {
+      "n": 1367,
+      "win_rate": 0.528895391367959,
+      "expectancy_r": 0.03316023741899905,
+      "profit_factor": 1.0811623302348878,
+      "max_drawdown_r": 39.156707640717954,
+      "total_r": 45.33004455177171,
+      "trades_per_week": 13.673255537032626
+     },
+     "12h": {
+      "n": 592,
+      "win_rate": 0.5371621621621622,
+      "expectancy_r": 0.029093029353029393,
+      "profit_factor": 1.0727509147262186,
+      "max_drawdown_r": 17.986425431022596,
+      "total_r": 17.2230733769934,
+      "trades_per_week": 3.8710882765063057
+     },
+     "1d": {
+      "n": 354,
+      "win_rate": 0.559322033898305,
+      "expectancy_r": 0.0529936085759229,
+      "profit_factor": 1.1370524828910347,
+      "max_drawdown_r": 22.83547174664419,
+      "total_r": 18.759737435876705,
+      "trades_per_week": 1.7891696750902526
+     },
+     "3d": {
+      "n": 49,
+      "win_rate": 0.40816326530612246,
+      "expectancy_r": -0.2063202632080602,
+      "profit_factor": 0.5862292052520176,
+      "max_drawdown_r": 10.109692897194948,
+      "total_r": -10.10969289719495,
+      "trades_per_week": 0.29241261722080136
+     }
+    }
+   },
+   "lock 0.0R at 0.5R": {
+    "overall": {
+     "n": 4643,
+     "win_rate": 0.3734654318328667,
+     "expectancy_r": -0.03310163695262368,
+     "profit_factor": 0.8996214808533314,
+     "max_drawdown_r": 198.89449945763448,
+     "total_r": -153.69090037103174,
+     "trades_per_week": 170.68194142286478
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 994,
+      "win_rate": 0.317907444668008,
+      "expectancy_r": -0.12965324217460358,
+      "profit_factor": 0.6519501480659695,
+      "max_drawdown_r": 137.1535715219853,
+      "total_r": -128.87532272155596,
+      "trades_per_week": 106.39821599235425
+     },
+     "1h": {
+      "n": 1070,
+      "win_rate": 0.34579439252336447,
+      "expectancy_r": -0.06263792413764997,
+      "profit_factor": 0.8158324090121064,
+      "max_drawdown_r": 70.31855213080465,
+      "total_r": -67.02257882728547,
+      "trades_per_week": 42.810192903072156
+     },
+     "4h": {
+      "n": 1503,
+      "win_rate": 0.37857618097139056,
+      "expectancy_r": 0.01969852076820321,
+      "profit_factor": 1.0632495193574658,
+      "max_drawdown_r": 36.90052198679969,
+      "total_r": 29.606876714609424,
+      "trades_per_week": 15.033579423672302
+     },
+     "12h": {
+      "n": 642,
+      "win_rate": 0.440809968847352,
+      "expectancy_r": 0.017088925437246112,
+      "profit_factor": 1.0567911757892412,
+      "max_drawdown_r": 18.528780492420424,
+      "total_r": 10.971090130712003,
+      "trades_per_week": 4.198038299859879
+     },
+     "1d": {
+      "n": 381,
+      "win_rate": 0.45144356955380577,
+      "expectancy_r": 0.025800246307492367,
+      "profit_factor": 1.085919281759065,
+      "max_drawdown_r": 18.462667839891957,
+      "total_r": 9.829893843154592,
+      "trades_per_week": 1.9256317689530686
+     },
+     "3d": {
+      "n": 53,
+      "win_rate": 0.4528301886792453,
+      "expectancy_r": -0.1547331983144588,
+      "profit_factor": 0.6136312628975761,
+      "max_drawdown_r": 8.20085951066632,
+      "total_r": -8.200859510666318,
+      "trades_per_week": 0.31628303495311166
+     }
+    }
+   },
+   "lock 0.2R at 0.5R": {
+    "overall": {
+     "n": 4853,
+     "win_rate": 0.6132289305584174,
+     "expectancy_r": -0.03200711791255192,
+     "profit_factor": 0.89749172989606,
+     "max_drawdown_r": 193.4537379940026,
+     "total_r": -155.33054322961445,
+     "trades_per_week": 177.4675384103622
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 1028,
+      "win_rate": 0.5573929961089494,
+      "expectancy_r": -0.11556247488836538,
+      "profit_factor": 0.6569284569670133,
+      "max_drawdown_r": 128.05251567601113,
+      "total_r": -118.7982241852396,
+      "trades_per_week": 110.03759158967824
+     },
+     "1h": {
+      "n": 1123,
+      "win_rate": 0.6170970614425646,
+      "expectancy_r": -0.06110695167094762,
+      "profit_factor": 0.8100768905977314,
+      "max_drawdown_r": 72.27936101243368,
+      "total_r": -68.62310672647418,
+      "trades_per_week": 44.93069778518694
+     },
+     "4h": {
+      "n": 1573,
+      "win_rate": 0.6331849968213604,
+      "expectancy_r": 0.01400629403666754,
+      "profit_factor": 1.0465949453271686,
+      "max_drawdown_r": 29.07626326512844,
+      "total_r": 22.03190051967804,
+      "trades_per_week": 15.733746130030958
+     },
+     "12h": {
+      "n": 679,
+      "win_rate": 0.6377025036818851,
+      "expectancy_r": 0.009747633968692505,
+      "profit_factor": 1.033597398459107,
+      "max_drawdown_r": 21.045100494337987,
+      "total_r": 6.618643464742211,
+      "trades_per_week": 4.439981317141523
+     },
+     "1d": {
+      "n": 394,
+      "win_rate": 0.631979695431472,
+      "expectancy_r": 0.02368552875556394,
+      "profit_factor": 1.080557642944083,
+      "max_drawdown_r": 20.761366825252,
+      "total_r": 9.332098329692192,
+      "trades_per_week": 1.991335740072202
+     },
+     "3d": {
+      "n": 56,
+      "win_rate": 0.5714285714285714,
+      "expectancy_r": -0.10521168985737685,
+      "profit_factor": 0.7324030645127994,
+      "max_drawdown_r": 6.417049477127998,
+      "total_r": -5.8918546320131036,
+      "trades_per_week": 0.3341858482523444
+     }
+    }
+   },
+   "lock 0.4R at 0.5R": {
+    "overall": {
+     "n": 5112,
+     "win_rate": 0.6251956181533647,
+     "expectancy_r": -0.030962624265782845,
+     "profit_factor": 0.9003658602547826,
+     "max_drawdown_r": 177.19100292208591,
+     "total_r": -158.2809352466819,
+     "trades_per_week": 184.68876160727825
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 1055,
+      "win_rate": 0.5886255924170616,
+      "expectancy_r": -0.10688108484336284,
+      "profit_factor": 0.6832358141675847,
+      "max_drawdown_r": 119.21431013673342,
+      "total_r": -112.7595445097478,
+      "trades_per_week": 112.92768397578847
+     },
+     "1h": {
+      "n": 1199,
+      "win_rate": 0.6305254378648875,
+      "expectancy_r": -0.053206024329975204,
+      "profit_factor": 0.832910426289473,
+      "max_drawdown_r": 69.39016755975885,
+      "total_r": -63.79402317164027,
+      "trades_per_week": 47.9714217670874
+     },
+     "4h": {
+      "n": 1659,
+      "win_rate": 0.6359252561784208,
+      "expectancy_r": 0.005091320603360247,
+      "profit_factor": 1.0168569958465326,
+      "max_drawdown_r": 42.45776026805135,
+      "total_r": 8.44650088097465,
+      "trades_per_week": 16.593950940700164
+     },
+     "12h": {
+      "n": 728,
+      "win_rate": 0.6428571428571429,
+      "expectancy_r": 0.009946116413543954,
+      "profit_factor": 1.0349522972534415,
+      "max_drawdown_r": 21.116392741290472,
+      "total_r": 7.240772749059999,
+      "trades_per_week": 4.760392340028025
+     },
+     "1d": {
+      "n": 411,
+      "win_rate": 0.6374695863746959,
+      "expectancy_r": 0.024758621427419643,
+      "profit_factor": 1.0857547853714895,
+      "max_drawdown_r": 19.203366760014582,
+      "total_r": 10.175793406669474,
+      "trades_per_week": 2.0772563176895305
+     },
+     "3d": {
+      "n": 60,
+      "win_rate": 0.5666666666666667,
+      "expectancy_r": -0.12650724336663338,
+      "profit_factor": 0.6832291509255713,
+      "max_drawdown_r": 8.502887634136512,
+      "total_r": -7.590434601998004,
+      "trades_per_week": 0.35805626598465473
+     }
+    }
+   },
+   "giveback 40% after 0.5R": {
+    "overall": {
+     "n": 5106,
+     "win_rate": 0.6239717978848414,
+     "expectancy_r": -0.03321785109741315,
+     "profit_factor": 0.8935697509632824,
+     "max_drawdown_r": 181.90302097265092,
+     "total_r": -169.61034770339154,
+     "trades_per_week": 185.04478643837425
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 1061,
+      "win_rate": 0.590009425070688,
+      "expectancy_r": -0.10666912899485163,
+      "profit_factor": 0.6832711754482251,
+      "max_drawdown_r": 119.33463288531873,
+      "total_r": -113.17594586353758,
+      "trades_per_week": 113.5699267282574
+     },
+     "1h": {
+      "n": 1193,
+      "win_rate": 0.6278290025146689,
+      "expectancy_r": -0.05719805865763184,
+      "profit_factor": 0.8221045547705519,
+      "max_drawdown_r": 71.23355953406795,
+      "total_r": -68.23728397855479,
+      "trades_per_week": 47.731364610621576
+     },
+     "4h": {
+      "n": 1657,
+      "win_rate": 0.6354858177429089,
+      "expectancy_r": 3.7342872510186567e-05,
+      "profit_factor": 1.000123242167113,
+      "max_drawdown_r": 42.8767790036714,
+      "total_r": 0.06187713974937914,
+      "trades_per_week": 16.573946177661348
+     },
+     "12h": {
+      "n": 724,
+      "win_rate": 0.638121546961326,
+      "expectancy_r": 0.012374294184356273,
+      "profit_factor": 1.0431141364798353,
+      "max_drawdown_r": 23.08734887705961,
+      "total_r": 8.95898898947394,
+      "trades_per_week": 4.7342363381597385
+     },
+     "1d": {
+      "n": 411,
+      "win_rate": 0.6374695863746959,
+      "expectancy_r": 0.020011025971642404,
+      "profit_factor": 1.0687955461662222,
+      "max_drawdown_r": 21.948345408303123,
+      "total_r": 8.224531674345029,
+      "trades_per_week": 2.0772563176895305
+     },
+     "3d": {
+      "n": 60,
+      "win_rate": 0.5666666666666667,
+      "expectancy_r": -0.09070859441445846,
+      "profit_factor": 0.7663724732522373,
+      "max_drawdown_r": 7.070231041096658,
+      "total_r": -5.442515664867507,
+      "trades_per_week": 0.35805626598465473
+     }
+    }
+   },
+   "giveback 50% after 0.5R": {
+    "overall": {
+     "n": 5031,
+     "win_rate": 0.6247266944941363,
+     "expectancy_r": -0.030269649381842876,
+     "profit_factor": 0.9027732424748105,
+     "max_drawdown_r": 181.65049202740437,
+     "total_r": -152.2866060400515,
+     "trades_per_week": 182.44981509957927
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 1049,
+      "win_rate": 0.5853193517635844,
+      "expectancy_r": -0.11077249082270298,
+      "profit_factor": 0.6717541246499029,
+      "max_drawdown_r": 122.35106514094265,
+      "total_r": -116.20034287301542,
+      "trades_per_week": 112.28544122331952
+     },
+     "1h": {
+      "n": 1168,
+      "win_rate": 0.6292808219178082,
+      "expectancy_r": -0.05676513402517106,
+      "profit_factor": 0.8217687182344059,
+      "max_drawdown_r": 70.13973865700238,
+      "total_r": -66.3016765413998,
+      "trades_per_week": 46.731126458680635
+     },
+     "4h": {
+      "n": 1636,
+      "win_rate": 0.6363080684596577,
+      "expectancy_r": 0.005975420962504847,
+      "profit_factor": 1.0197087804975007,
+      "max_drawdown_r": 40.055001897508674,
+      "total_r": 9.77578869465793,
+      "trades_per_week": 16.36389616575375
+     },
+     "12h": {
+      "n": 715,
+      "win_rate": 0.6489510489510489,
+      "expectancy_r": 0.02093606788265926,
+      "profit_factor": 1.0740589971131733,
+      "max_drawdown_r": 22.0706213501734,
+      "total_r": 14.969288536101372,
+      "trades_per_week": 4.675385333956096
+     },
+     "1d": {
+      "n": 404,
+      "win_rate": 0.6361386138613861,
+      "expectancy_r": 0.03081647408273275,
+      "profit_factor": 1.1057901823110452,
+      "max_drawdown_r": 19.713057947299227,
+      "total_r": 12.449855529424031,
+      "trades_per_week": 2.0418772563176897
+     },
+     "3d": {
+      "n": 59,
+      "win_rate": 0.5423728813559322,
+      "expectancy_r": -0.11829693874270594,
+      "profit_factor": 0.7148738285737355,
+      "max_drawdown_r": 7.919815482358121,
+      "total_r": -6.979519385819651,
+      "trades_per_week": 0.35208866155157714
+     }
+    }
+   },
+   "giveback 60% after 0.5R": {
+    "overall": {
+     "n": 4935,
+     "win_rate": 0.6226950354609929,
+     "expectancy_r": -0.03034631976247847,
+     "profit_factor": 0.9023884216535076,
+     "max_drawdown_r": 178.08739080578596,
+     "total_r": -149.75908802783124,
+     "trades_per_week": 179.19004010230424
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 1034,
+      "win_rate": 0.5793036750483559,
+      "expectancy_r": -0.11005701304598867,
+      "profit_factor": 0.6722465860151402,
+      "max_drawdown_r": 122.3931951587958,
+      "total_r": -113.79895148955228,
+      "trades_per_week": 110.67983434214717
+     },
+     "1h": {
+      "n": 1137,
+      "win_rate": 0.6297273526824978,
+      "expectancy_r": -0.05417774822127879,
+      "profit_factor": 0.8295387290145305,
+      "max_drawdown_r": 68.76309377961935,
+      "total_r": -61.600099727593985,
+      "trades_per_week": 45.49083115027387
+     },
+     "4h": {
+      "n": 1608,
+      "win_rate": 0.6337064676616916,
+      "expectancy_r": 0.0068620526421304,
+      "profit_factor": 1.0226228724505968,
+      "max_drawdown_r": 36.21766595598956,
+      "total_r": 11.034180648545682,
+      "trades_per_week": 16.083829483210287
+     },
+     "12h": {
+      "n": 701,
+      "win_rate": 0.6462196861626248,
+      "expectancy_r": 0.012230838909990474,
+      "profit_factor": 1.042919215277284,
+      "max_drawdown_r": 21.590655606801732,
+      "total_r": 8.573818075903322,
+      "trades_per_week": 4.583839327417095
+     },
+     "1d": {
+      "n": 398,
+      "win_rate": 0.6381909547738693,
+      "expectancy_r": 0.028631694605680397,
+      "profit_factor": 1.0985565722708492,
+      "max_drawdown_r": 21.005768679733077,
+      "total_r": 11.395414453060798,
+      "trades_per_week": 2.0115523465703973
+     },
+     "3d": {
+      "n": 57,
+      "win_rate": 0.5614035087719298,
+      "expectancy_r": -0.09409561382797883,
+      "profit_factor": 0.7618242529656386,
+      "max_drawdown_r": 6.720690538632439,
+      "total_r": -5.363449988194794,
+      "trades_per_week": 0.34015345268542196
+     }
+    }
+   },
+   "lock 0.0R at 0.7R": {
+    "overall": {
+     "n": 4410,
+     "win_rate": 0.4433106575963719,
+     "expectancy_r": -0.03095987635673698,
+     "profit_factor": 0.9185185946141429,
+     "max_drawdown_r": 203.8524353914393,
+     "total_r": -136.5330547332101,
+     "trades_per_week": 162.57255872991914
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 948,
+      "win_rate": 0.38924050632911394,
+      "expectancy_r": -0.13695914783369742,
+      "profit_factor": 0.6792884173905014,
+      "max_drawdown_r": 139.5153761971274,
+      "total_r": -129.83727214634516,
+      "trades_per_week": 101.47435489009239
+     },
+     "1h": {
+      "n": 1020,
+      "win_rate": 0.42058823529411765,
+      "expectancy_r": -0.06813351878810943,
+      "profit_factor": 0.8269144451083646,
+      "max_drawdown_r": 73.92801616333114,
+      "total_r": -69.49618916387162,
+      "trades_per_week": 40.80971659919028
+     },
+     "4h": {
+      "n": 1413,
+      "win_rate": 0.45718329794762913,
+      "expectancy_r": 0.03191729926525059,
+      "profit_factor": 1.0901229320415928,
+      "max_drawdown_r": 29.383862107376608,
+      "total_r": 45.09914386179908,
+      "trades_per_week": 14.133365086925458
+     },
+     "12h": {
+      "n": 612,
+      "win_rate": 0.4950980392156863,
+      "expectancy_r": 0.020545518584398924,
+      "profit_factor": 1.0573589414941102,
+      "max_drawdown_r": 20.894926130838485,
+      "total_r": 12.573857373652142,
+      "trades_per_week": 4.001868285847735
+     },
+     "1d": {
+      "n": 367,
+      "win_rate": 0.5095367847411444,
+      "expectancy_r": 0.04056309289272772,
+      "profit_factor": 1.1166990361079892,
+      "max_drawdown_r": 22.35051192387462,
+      "total_r": 14.886655091631074,
+      "trades_per_week": 1.8548736462093862
+     },
+     "3d": {
+      "n": 50,
+      "win_rate": 0.42,
+      "expectancy_r": -0.19518499500151265,
+      "profit_factor": 0.5580776897637799,
+      "max_drawdown_r": 9.759249750075636,
+      "total_r": -9.759249750075632,
+      "trades_per_week": 0.2983802216538789
+     }
+    }
+   },
+   "lock 0.2R at 0.7R": {
+    "overall": {
+     "n": 4487,
+     "win_rate": 0.5605081346110987,
+     "expectancy_r": -0.02909516299159421,
+     "profit_factor": 0.9213763370219409,
+     "max_drawdown_r": 197.70081082210777,
+     "total_r": -130.54999634328323,
+     "trades_per_week": 165.53564553400966
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 966,
+      "win_rate": 0.5082815734989649,
+      "expectancy_r": -0.13083607322165153,
+      "profit_factor": 0.6798383094006836,
+      "max_drawdown_r": 135.8842711944637,
+      "total_r": -126.38764673211537,
+      "trades_per_week": 103.4010831474992
+     },
+     "1h": {
+      "n": 1037,
+      "win_rate": 0.5458052073288332,
+      "expectancy_r": -0.06343733439501176,
+      "profit_factor": 0.8342162251787745,
+      "max_drawdown_r": 70.56839650104625,
+      "total_r": -65.7845157676272,
+      "trades_per_week": 41.48987854251012
+     },
+     "4h": {
+      "n": 1438,
+      "win_rate": 0.5897079276773296,
+      "expectancy_r": 0.02574636648075663,
+      "profit_factor": 1.0738814046298133,
+      "max_drawdown_r": 30.618116507665235,
+      "total_r": 37.02327499932803,
+      "trades_per_week": 14.383424624910692
+     },
+     "12h": {
+      "n": 625,
+      "win_rate": 0.5856,
+      "expectancy_r": 0.024542707183862807,
+      "profit_factor": 1.0703668554024737,
+      "max_drawdown_r": 21.41694400939062,
+      "total_r": 15.339191989914255,
+      "trades_per_week": 4.0868752919196645
+     },
+     "1d": {
+      "n": 370,
+      "win_rate": 0.5918918918918918,
+      "expectancy_r": 0.04711705559029398,
+      "profit_factor": 1.136438461225186,
+      "max_drawdown_r": 22.327589376279455,
+      "total_r": 17.43331056840877,
+      "trades_per_week": 1.8700361010830324
+     },
+     "3d": {
+      "n": 51,
+      "win_rate": 0.49019607843137253,
+      "expectancy_r": -0.16026689021944626,
+      "profit_factor": 0.6282998511998288,
+      "max_drawdown_r": 8.348019338889195,
+      "total_r": -8.17361140119176,
+      "trades_per_week": 0.3043478260869565
+     }
+    }
+   },
+   "lock 0.4R at 0.7R": {
+    "overall": {
+     "n": 4591,
+     "win_rate": 0.5687214114571989,
+     "expectancy_r": -0.026497358617290506,
+     "profit_factor": 0.9283107957244822,
+     "max_drawdown_r": 182.0484964678428,
+     "total_r": -121.64937341198072,
+     "trades_per_week": 168.4823428433841
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 977,
+      "win_rate": 0.5332650972364381,
+      "expectancy_r": -0.11874334223952317,
+      "profit_factor": 0.7096071561061834,
+      "max_drawdown_r": 123.76052014797531,
+      "total_r": -116.01224536801413,
+      "trades_per_week": 104.57852819369225
+     },
+     "1h": {
+      "n": 1068,
+      "win_rate": 0.549625468164794,
+      "expectancy_r": -0.06027826838914286,
+      "profit_factor": 0.8420918131418015,
+      "max_drawdown_r": 69.39325620069528,
+      "total_r": -64.37719063960458,
+      "trades_per_week": 42.730173850916884
+     },
+     "4h": {
+      "n": 1474,
+      "win_rate": 0.5902306648575305,
+      "expectancy_r": 0.020107660131277346,
+      "profit_factor": 1.0571114333079807,
+      "max_drawdown_r": 34.08642956967399,
+      "total_r": 29.638691033502806,
+      "trades_per_week": 14.74351035960943
+     },
+     "12h": {
+      "n": 649,
+      "win_rate": 0.5947611710323575,
+      "expectancy_r": 0.02659137643853872,
+      "profit_factor": 1.0776201021666039,
+      "max_drawdown_r": 20.98162906767131,
+      "total_r": 17.257803308611628,
+      "trades_per_week": 4.243811303129379
+     },
+     "1d": {
+      "n": 370,
+      "win_rate": 0.6,
+      "expectancy_r": 0.05609741801852926,
+      "profit_factor": 1.1656103613339155,
+      "max_drawdown_r": 22.296074470333533,
+      "total_r": 20.756044666855825,
+      "trades_per_week": 1.8700361010830324
+     },
+     "3d": {
+      "n": 53,
+      "win_rate": 0.4716981132075472,
+      "expectancy_r": -0.1681599323270236,
+      "profit_factor": 0.613862652646333,
+      "max_drawdown_r": 9.20315529730308,
+      "total_r": -8.91247641333225,
+      "trades_per_week": 0.31628303495311166
+     }
+    }
+   },
+   "giveback 40% after 0.7R": {
+    "overall": {
+     "n": 4650,
+     "win_rate": 0.567741935483871,
+     "expectancy_r": -0.02786636620065871,
+     "profit_factor": 0.924755482602828,
+     "max_drawdown_r": 179.3573785886378,
+     "total_r": -129.578602833063,
+     "trades_per_week": 170.10307218100223
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 984,
+      "win_rate": 0.532520325203252,
+      "expectancy_r": -0.11311807769430501,
+      "profit_factor": 0.7240984651803174,
+      "max_drawdown_r": 119.6768662033792,
+      "total_r": -111.30818845119613,
+      "trades_per_week": 105.32781140490602
+     },
+     "1h": {
+      "n": 1082,
+      "win_rate": 0.5508317929759704,
+      "expectancy_r": -0.05974925137853973,
+      "profit_factor": 0.8437320179836284,
+      "max_drawdown_r": 70.6938096990779,
+      "total_r": -64.64868999157999,
+      "trades_per_week": 43.29030721600381
+     },
+     "4h": {
+      "n": 1496,
+      "win_rate": 0.5909090909090909,
+      "expectancy_r": 0.01917816523255061,
+      "profit_factor": 1.0547546190739934,
+      "max_drawdown_r": 36.30838394995077,
+      "total_r": 28.690535187895716,
+      "trades_per_week": 14.963562753036436
+     },
+     "12h": {
+      "n": 656,
+      "win_rate": 0.586890243902439,
+      "expectancy_r": 0.01350995028743683,
+      "profit_factor": 1.0388265245567048,
+      "max_drawdown_r": 23.923876477522,
+      "total_r": 8.86252738855856,
+      "trades_per_week": 4.289584306398879
+     },
+     "1d": {
+      "n": 379,
+      "win_rate": 0.5963060686015831,
+      "expectancy_r": 0.043198450154230184,
+      "profit_factor": 1.1256468051338415,
+      "max_drawdown_r": 23.612518212193912,
+      "total_r": 16.37221260845324,
+      "trades_per_week": 1.915523465703971
+     },
+     "3d": {
+      "n": 53,
+      "win_rate": 0.4716981132075472,
+      "expectancy_r": -0.14239621839989391,
+      "profit_factor": 0.6633041816035337,
+      "max_drawdown_r": 7.837678459165206,
+      "total_r": -7.546999575194377,
+      "trades_per_week": 0.31628303495311166
+     }
+    }
+   },
+   "giveback 50% after 0.7R": {
+    "overall": {
+     "n": 4597,
+     "win_rate": 0.5686317163367414,
+     "expectancy_r": -0.025675429064810386,
+     "profit_factor": 0.9305530889295491,
+     "max_drawdown_r": 177.60692830907735,
+     "total_r": -118.02994741093335,
+     "trades_per_week": 168.61753387649065
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 977,
+      "win_rate": 0.5322415557830092,
+      "expectancy_r": -0.11467425151649407,
+      "profit_factor": 0.7195633199711862,
+      "max_drawdown_r": 119.78055581999025,
+      "total_r": -112.0367437316147,
+      "trades_per_week": 104.57852819369225
+     },
+     "1h": {
+      "n": 1071,
+      "win_rate": 0.5508870214752568,
+      "expectancy_r": -0.06034490123213959,
+      "profit_factor": 0.8414644834177054,
+      "max_drawdown_r": 69.56419370699666,
+      "total_r": -64.6293892196215,
+      "trades_per_week": 42.850202429149796
+     },
+     "4h": {
+      "n": 1474,
+      "win_rate": 0.5909090909090909,
+      "expectancy_r": 0.020226279701191226,
+      "profit_factor": 1.0575314404936376,
+      "max_drawdown_r": 35.31605233501468,
+      "total_r": 29.81353627955587,
+      "trades_per_week": 14.74351035960943
+     },
+     "12h": {
+      "n": 649,
+      "win_rate": 0.5916795069337443,
+      "expectancy_r": 0.024359548267423474,
+      "profit_factor": 1.0704596238313198,
+      "max_drawdown_r": 21.638382897972328,
+      "total_r": 15.809346825557835,
+      "trades_per_week": 4.243811303129379
+     },
+     "1d": {
+      "n": 373,
+      "win_rate": 0.6005361930294906,
+      "expectancy_r": 0.05968873508322808,
+      "profit_factor": 1.1762024574176948,
+      "max_drawdown_r": 21.627606007763102,
+      "total_r": 22.263898186044074,
+      "trades_per_week": 1.8851985559566786
+     },
+     "3d": {
+      "n": 53,
+      "win_rate": 0.4716981132075472,
+      "expectancy_r": -0.17453954246896072,
+      "profit_factor": 0.6056209146622733,
+      "max_drawdown_r": 9.541274634825749,
+      "total_r": -9.250595750854918,
+      "trades_per_week": 0.31628303495311166
+     }
+    }
+   },
+   "giveback 60% after 0.7R": {
+    "overall": {
+     "n": 4546,
+     "win_rate": 0.567751869775627,
+     "expectancy_r": -0.02554368028305956,
+     "profit_factor": 0.930972349973077,
+     "max_drawdown_r": 176.60647159721114,
+     "total_r": -116.12157056678876,
+     "trades_per_week": 166.94508381616745
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 971,
+      "win_rate": 0.5324407826982492,
+      "expectancy_r": -0.11764787688463596,
+      "profit_factor": 0.7111664797873306,
+      "max_drawdown_r": 124.1871567742578,
+      "total_r": -114.23608845498151,
+      "trades_per_week": 103.93628544122332
+     },
+     "1h": {
+      "n": 1050,
+      "win_rate": 0.5504761904761905,
+      "expectancy_r": -0.055570678750494755,
+      "profit_factor": 0.8540674475140093,
+      "max_drawdown_r": 66.78116610148265,
+      "total_r": -58.34921268801949,
+      "trades_per_week": 42.010002381519406
+     },
+     "4h": {
+      "n": 1463,
+      "win_rate": 0.5905673274094326,
+      "expectancy_r": 0.01966706875100204,
+      "profit_factor": 1.0559046232787686,
+      "max_drawdown_r": 33.79826665937344,
+      "total_r": 28.772921582715988,
+      "trades_per_week": 14.633484162895927
+     },
+     "12h": {
+      "n": 640,
+      "win_rate": 0.5875,
+      "expectancy_r": 0.024902151587667176,
+      "profit_factor": 1.0713470970680534,
+      "max_drawdown_r": 22.340816619887924,
+      "total_r": 15.937377016106993,
+      "trades_per_week": 4.184960298925736
+     },
+     "1d": {
+      "n": 370,
+      "win_rate": 0.5972972972972973,
+      "expectancy_r": 0.0540004805348079,
+      "profit_factor": 1.1581284821826736,
+      "max_drawdown_r": 22.519192029287986,
+      "total_r": 19.980177797878923,
+      "trades_per_week": 1.8700361010830324
+     },
+     "3d": {
+      "n": 52,
+      "win_rate": 0.4807692307692308,
+      "expectancy_r": -0.15820665039403237,
+      "profit_factor": 0.634220994568605,
+      "max_drawdown_r": 8.497412244675978,
+      "total_r": -8.226745820489683,
+      "trades_per_week": 0.3103154305200341
+     }
+    }
+   }
+  },
+  "test": {
+   "standard (live rules)": {
+    "overall": {
+     "n": 1555,
+     "win_rate": 0.5048231511254019,
+     "expectancy_r": -0.04416357355495655,
+     "profit_factor": 0.9007798219986303,
+     "max_drawdown_r": 129.10058849900182,
+     "total_r": -68.67435687795744,
+     "trades_per_week": 143.37186490448286
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 366,
+      "win_rate": 0.5191256830601093,
+      "expectancy_r": -0.06620751430976936,
+      "profit_factor": 0.8518643616219045,
+      "max_drawdown_r": 46.008354838432325,
+      "total_r": -24.231950237375585,
+      "trades_per_week": 92.46315789473684
+     },
+     "1h": {
+      "n": 357,
+      "win_rate": 0.47058823529411764,
+      "expectancy_r": -0.10673864041787005,
+      "profit_factor": 0.7702585573953531,
+      "max_drawdown_r": 39.62807711195533,
+      "total_r": -38.10569462917961,
+      "trades_per_week": 33.903900508762014
+     },
+     "4h": {
+      "n": 523,
+      "win_rate": 0.5200764818355641,
+      "expectancy_r": -0.014011718798526524,
+      "profit_factor": 0.967501918572383,
+      "max_drawdown_r": 45.120047552170824,
+      "total_r": -7.328128931629372,
+      "trades_per_week": 12.417184850197852
+     },
+     "12h": {
+      "n": 202,
+      "win_rate": 0.5099009900990099,
+      "expectancy_r": 0.025775600278235358,
+      "profit_factor": 1.0584711714049384,
+      "max_drawdown_r": 19.97284963059658,
+      "total_r": 5.206671256203542,
+      "trades_per_week": 3.188275084554679
+     },
+     "1d": {
+      "n": 92,
+      "win_rate": 0.5108695652173914,
+      "expectancy_r": 0.01604373949476515,
+      "profit_factor": 1.0386907533279088,
+      "max_drawdown_r": 7.8295634798278515,
+      "total_r": 1.4760240335183938,
+      "trades_per_week": 1.1438721136767318
+     },
+     "3d": {
+      "n": 15,
+      "win_rate": 0.3333333333333333,
+      "expectancy_r": -0.37941855796631907,
+      "profit_factor": 0.43132068864273804,
+      "max_drawdown_r": 6.784447876350724,
+      "total_r": -5.691278369494786,
+      "trades_per_week": 0.25547445255474455
+     }
+    }
+   },
+   "lock 0.0R at 0.5R": {
+    "overall": {
+     "n": 1677,
+     "win_rate": 0.3875968992248062,
+     "expectancy_r": -0.04210835864420074,
+     "profit_factor": 0.8801660959159774,
+     "max_drawdown_r": 122.78245410483221,
+     "total_r": -70.61571744632464,
+     "trades_per_week": 152.78220216252433
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 388,
+      "win_rate": 0.4020618556701031,
+      "expectancy_r": -0.06668013702708019,
+      "profit_factor": 0.8216649479526006,
+      "max_drawdown_r": 43.41070280694597,
+      "total_r": -25.87189316650711,
+      "trades_per_week": 98.02105263157894
+     },
+     "1h": {
+      "n": 381,
+      "win_rate": 0.32808398950131235,
+      "expectancy_r": -0.09201647541430483,
+      "profit_factor": 0.738986854468237,
+      "max_drawdown_r": 35.52174038205731,
+      "total_r": -35.05827713285014,
+      "trades_per_week": 36.1831543244771
+     },
+     "4h": {
+      "n": 574,
+      "win_rate": 0.3693379790940767,
+      "expectancy_r": -0.0233786965624534,
+      "profit_factor": 0.9309320444993933,
+      "max_drawdown_r": 49.042149546476615,
+      "total_r": -13.419371826848252,
+      "trades_per_week": 13.628038439796494
+     },
+     "12h": {
+      "n": 216,
+      "win_rate": 0.44907407407407407,
+      "expectancy_r": -0.002094077942262197,
+      "profit_factor": 0.994235757481718,
+      "max_drawdown_r": 17.53916246447134,
+      "total_r": -0.45232083552863456,
+      "trades_per_week": 3.4092446448703497
+     },
+     "1d": {
+      "n": 102,
+      "win_rate": 0.5196078431372549,
+      "expectancy_r": 0.05066643805892838,
+      "profit_factor": 1.1669278477251726,
+      "max_drawdown_r": 6.073884234122025,
+      "total_r": 5.1679766820106945,
+      "trades_per_week": 1.2682060390763765
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.4375,
+      "expectancy_r": -0.061364447912575414,
+      "profit_factor": 0.8408033519809447,
+      "max_drawdown_r": 3.4643255743194303,
+      "total_r": -0.9818311666012066,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "lock 0.2R at 0.5R": {
+    "overall": {
+     "n": 1744,
+     "win_rate": 0.6238532110091743,
+     "expectancy_r": -0.042256346799014265,
+     "profit_factor": 0.8728889458587425,
+     "max_drawdown_r": 128.14027232961521,
+     "total_r": -73.69506881748087,
+     "trades_per_week": 156.05107840257486
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 392,
+      "win_rate": 0.5867346938775511,
+      "expectancy_r": -0.09372311752403663,
+      "profit_factor": 0.7307011504314058,
+      "max_drawdown_r": 53.53134886728697,
+      "total_r": -36.73946206942236,
+      "trades_per_week": 99.03157894736842
+     },
+     "1h": {
+      "n": 394,
+      "win_rate": 0.6269035532994924,
+      "expectancy_r": -0.0788281967329668,
+      "profit_factor": 0.759545555213982,
+      "max_drawdown_r": 32.777771744742026,
+      "total_r": -31.05830951278892,
+      "trades_per_week": 37.41775014132278
+     },
+     "4h": {
+      "n": 606,
+      "win_rate": 0.6468646864686468,
+      "expectancy_r": -0.017951442090845673,
+      "profit_factor": 0.9445770701244096,
+      "max_drawdown_r": 45.56656184802268,
+      "total_r": -10.878573907052479,
+      "trades_per_week": 14.387789711701526
+     },
+     "12h": {
+      "n": 228,
+      "win_rate": 0.6008771929824561,
+      "expectancy_r": -0.005724172567669614,
+      "profit_factor": 0.9836708964523554,
+      "max_drawdown_r": 18.74204579182735,
+      "total_r": -1.305111345428672,
+      "trades_per_week": 3.5986471251409244
+     },
+     "1d": {
+      "n": 108,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.05921056859538911,
+      "profit_factor": 1.2003189780397907,
+      "max_drawdown_r": 7.016761232233522,
+      "total_r": 6.394741408302024,
+      "trades_per_week": 1.3428063943161634
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.625,
+      "expectancy_r": -0.006772086943154773,
+      "profit_factor": 0.9820801992753658,
+      "max_drawdown_r": 3.464325574319431,
+      "total_r": -0.10835339109047637,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "lock 0.4R at 0.5R": {
+    "overall": {
+     "n": 1852,
+     "win_rate": 0.6382289416846653,
+     "expectancy_r": -0.04315124773724518,
+     "profit_factor": 0.8680579594345873,
+     "max_drawdown_r": 127.40389661091659,
+     "total_r": -79.91611080937807,
+     "trades_per_week": 162.16951587860606
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 402,
+      "win_rate": 0.6194029850746269,
+      "expectancy_r": -0.10397820058042047,
+      "profit_factor": 0.7021341002868693,
+      "max_drawdown_r": 54.41379049900156,
+      "total_r": -41.79923663332903,
+      "trades_per_week": 101.5578947368421
+     },
+     "1h": {
+      "n": 415,
+      "win_rate": 0.6313253012048192,
+      "expectancy_r": -0.06995272187055647,
+      "profit_factor": 0.7868714359904654,
+      "max_drawdown_r": 30.769498069474686,
+      "total_r": -29.030379576280936,
+      "trades_per_week": 39.412097230073485
+     },
+     "4h": {
+      "n": 657,
+      "win_rate": 0.6605783866057838,
+      "expectancy_r": -0.01078512118185328,
+      "profit_factor": 0.9653733383418498,
+      "max_drawdown_r": 42.527471670588696,
+      "total_r": -7.0858246164776055,
+      "trades_per_week": 15.59864330130017
+     },
+     "12h": {
+      "n": 247,
+      "win_rate": 0.6194331983805668,
+      "expectancy_r": -0.017575025084655964,
+      "profit_factor": 0.9479435768316598,
+      "max_drawdown_r": 21.590715848245594,
+      "total_r": -4.341031195910023,
+      "trades_per_week": 3.898534385569335
+     },
+     "1d": {
+      "n": 115,
+      "win_rate": 0.6434782608695652,
+      "expectancy_r": 0.022796379030434563,
+      "profit_factor": 1.074733808701756,
+      "max_drawdown_r": 7.278933865123383,
+      "total_r": 2.6215835884999747,
+      "trades_per_week": 1.4298401420959148
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.625,
+      "expectancy_r": -0.01757639849252869,
+      "profit_factor": 0.9534906209730163,
+      "max_drawdown_r": 3.4643255743194303,
+      "total_r": -0.28122237588045906,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "giveback 40% after 0.5R": {
+    "overall": {
+     "n": 1846,
+     "win_rate": 0.6365113759479957,
+     "expectancy_r": -0.04711619249923679,
+     "profit_factor": 0.8567683827638151,
+     "max_drawdown_r": 134.24563502747097,
+     "total_r": -86.97649135359111,
+     "trades_per_week": 162.28317807598026
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 403,
+      "win_rate": 0.6178660049627791,
+      "expectancy_r": -0.10909149760539337,
+      "profit_factor": 0.6892268057895528,
+      "max_drawdown_r": 55.95036578473798,
+      "total_r": -43.96387353497353,
+      "trades_per_week": 101.81052631578947
+     },
+     "1h": {
+      "n": 415,
+      "win_rate": 0.6337349397590362,
+      "expectancy_r": -0.06954995921772701,
+      "profit_factor": 0.7873494133632193,
+      "max_drawdown_r": 30.115921562201954,
+      "total_r": -28.86323307535671,
+      "trades_per_week": 39.412097230073485
+     },
+     "4h": {
+      "n": 653,
+      "win_rate": 0.6584992343032159,
+      "expectancy_r": -0.009627647268015798,
+      "profit_factor": 0.9692335581279846,
+      "max_drawdown_r": 42.527860802608075,
+      "total_r": -6.286853666014316,
+      "trades_per_week": 15.50367439231204
+     },
+     "12h": {
+      "n": 245,
+      "win_rate": 0.6081632653061224,
+      "expectancy_r": -0.03997210332047046,
+      "profit_factor": 0.8846316158010454,
+      "max_drawdown_r": 24.391904629699184,
+      "total_r": -9.793165313515262,
+      "trades_per_week": 3.866967305524239
+     },
+     "1d": {
+      "n": 114,
+      "win_rate": 0.6491228070175439,
+      "expectancy_r": 0.018155362315703836,
+      "profit_factor": 1.0595208484563008,
+      "max_drawdown_r": 7.654544295349166,
+      "total_r": 2.0697113039902373,
+      "trades_per_week": 1.4174067495559501
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.625,
+      "expectancy_r": -0.008692316732596267,
+      "profit_factor": 0.9769990277751862,
+      "max_drawdown_r": 3.4643255743194303,
+      "total_r": -0.13907706772154027,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "giveback 50% after 0.5R": {
+    "overall": {
+     "n": 1812,
+     "win_rate": 0.6346578366445916,
+     "expectancy_r": -0.04385071111569132,
+     "profit_factor": 0.866726707373806,
+     "max_drawdown_r": 133.93494876675143,
+     "total_r": -79.45748854163267,
+     "trades_per_week": 160.44820137124358
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 400,
+      "win_rate": 0.62,
+      "expectancy_r": -0.10660738404606963,
+      "profit_factor": 0.6935446564373442,
+      "max_drawdown_r": 55.72557794626193,
+      "total_r": -42.64295361842785,
+      "trades_per_week": 101.05263157894737
+     },
+     "1h": {
+      "n": 409,
+      "win_rate": 0.6259168704156479,
+      "expectancy_r": -0.07048927965386508,
+      "profit_factor": 0.7845730954325317,
+      "max_drawdown_r": 30.916821680866732,
+      "total_r": -28.83011537843082,
+      "trades_per_week": 38.84228377614471
+     },
+     "4h": {
+      "n": 638,
+      "win_rate": 0.6551724137931034,
+      "expectancy_r": -0.013815608693900626,
+      "profit_factor": 0.9563534308427148,
+      "max_drawdown_r": 44.154813119029654,
+      "total_r": -8.8143583467086,
+      "trades_per_week": 15.147540983606557
+     },
+     "12h": {
+      "n": 237,
+      "win_rate": 0.6118143459915611,
+      "expectancy_r": -0.014878889804274723,
+      "profit_factor": 0.9567372991375421,
+      "max_drawdown_r": 20.455902523316055,
+      "total_r": -3.5262968836131092,
+      "trades_per_week": 3.740698985343856
+     },
+     "1d": {
+      "n": 112,
+      "win_rate": 0.6517857142857143,
+      "expectancy_r": 0.043362044835147176,
+      "profit_factor": 1.1440308388263896,
+      "max_drawdown_r": 7.252068321668442,
+      "total_r": 4.856549021536484,
+      "trades_per_week": 1.3925399644760212
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.625,
+      "expectancy_r": -0.03126958349929839,
+      "profit_factor": 0.9172567172050071,
+      "max_drawdown_r": 3.4643255743194303,
+      "total_r": -0.5003133359887743,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "giveback 60% after 0.5R": {
+    "overall": {
+     "n": 1776,
+     "win_rate": 0.6311936936936937,
+     "expectancy_r": -0.045859076393519674,
+     "profit_factor": 0.8613520824354286,
+     "max_drawdown_r": 134.6012360169762,
+     "total_r": -81.44571967489094,
+     "trades_per_week": 158.253056951605
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 396,
+      "win_rate": 0.6111111111111112,
+      "expectancy_r": -0.11635042068417956,
+      "profit_factor": 0.665435663676984,
+      "max_drawdown_r": 59.0077688507499,
+      "total_r": -46.074766590935106,
+      "trades_per_week": 100.0421052631579
+     },
+     "1h": {
+      "n": 402,
+      "win_rate": 0.6293532338308457,
+      "expectancy_r": -0.07275258873139767,
+      "profit_factor": 0.7760493860567064,
+      "max_drawdown_r": 32.29445500157959,
+      "total_r": -29.246540670021865,
+      "trades_per_week": 38.17750141322781
+     },
+     "4h": {
+      "n": 621,
+      "win_rate": 0.6489533011272142,
+      "expectancy_r": -0.020241218647246303,
+      "profit_factor": 0.9372234671050912,
+      "max_drawdown_r": 45.162377743032195,
+      "total_r": -12.569796779939955,
+      "trades_per_week": 14.74392312040701
+     },
+     "12h": {
+      "n": 232,
+      "win_rate": 0.603448275862069,
+      "expectancy_r": 0.001490069594714519,
+      "profit_factor": 1.0042721386379256,
+      "max_drawdown_r": 19.40585324749431,
+      "total_r": 0.3456961459737684,
+      "trades_per_week": 3.6617812852311165
+     },
+     "1d": {
+      "n": 109,
+      "win_rate": 0.6697247706422018,
+      "expectancy_r": 0.05370158126299198,
+      "profit_factor": 1.183363411560248,
+      "max_drawdown_r": 6.383753471879402,
+      "total_r": 5.853472357666126,
+      "trades_per_week": 1.355239786856128
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.625,
+      "expectancy_r": 0.015388491397881857,
+      "profit_factor": 1.0407198994368383,
+      "max_drawdown_r": 3.4643255743194303,
+      "total_r": 0.2462158623661097,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "lock 0.0R at 0.7R": {
+    "overall": {
+     "n": 1596,
+     "win_rate": 0.4605263157894737,
+     "expectancy_r": -0.03710479764230751,
+     "profit_factor": 0.9082425222065902,
+     "max_drawdown_r": 114.14389267214621,
+     "total_r": -59.21925703712279,
+     "trades_per_week": 146.65519318508717
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 373,
+      "win_rate": 0.47989276139410186,
+      "expectancy_r": -0.05365543718256722,
+      "profit_factor": 0.8714533221315223,
+      "max_drawdown_r": 43.022259412378276,
+      "total_r": -20.013478069097573,
+      "trades_per_week": 94.23157894736842
+     },
+     "1h": {
+      "n": 368,
+      "win_rate": 0.4076086956521739,
+      "expectancy_r": -0.08996741189832891,
+      "profit_factor": 0.7794561583756958,
+      "max_drawdown_r": 35.418025351218525,
+      "total_r": -33.10800757858504,
+      "trades_per_week": 34.94855850763143
+     },
+     "4h": {
+      "n": 538,
+      "win_rate": 0.4758364312267658,
+      "expectancy_r": -0.006314462232500873,
+      "profit_factor": 0.9839378994409625,
+      "max_drawdown_r": 41.8938478660485,
+      "total_r": -3.3971806810854694,
+      "trades_per_week": 12.773318258903334
+     },
+     "12h": {
+      "n": 205,
+      "win_rate": 0.47317073170731705,
+      "expectancy_r": -0.010763458657476759,
+      "profit_factor": 0.9741648518356169,
+      "max_drawdown_r": 20.735332063317845,
+      "total_r": -2.2065090247827355,
+      "trades_per_week": 3.2356257046223225
+     },
+     "1d": {
+      "n": 96,
+      "win_rate": 0.5,
+      "expectancy_r": 0.03606239042946915,
+      "profit_factor": 1.1030465684558932,
+      "max_drawdown_r": 5.969613041728529,
+      "total_r": 3.4619894812290384,
+      "trades_per_week": 1.1936056838365896
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.3125,
+      "expectancy_r": -0.24725444780006187,
+      "profit_factor": 0.5639342641597667,
+      "max_drawdown_r": 5.049240671656928,
+      "total_r": -3.95607116480099,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "lock 0.2R at 0.7R": {
+    "overall": {
+     "n": 1621,
+     "win_rate": 0.5638494756323257,
+     "expectancy_r": -0.03909098736527099,
+     "profit_factor": 0.9009747680680519,
+     "max_drawdown_r": 114.94209537682295,
+     "total_r": -63.36649051910427,
+     "trades_per_week": 147.76675198139034
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 374,
+      "win_rate": 0.5508021390374331,
+      "expectancy_r": -0.06078099657223495,
+      "profit_factor": 0.8499349319676448,
+      "max_drawdown_r": 43.62769434345438,
+      "total_r": -22.73209271801587,
+      "trades_per_week": 94.48421052631579
+     },
+     "1h": {
+      "n": 373,
+      "win_rate": 0.5522788203753352,
+      "expectancy_r": -0.08605963796144858,
+      "profit_factor": 0.7824603534955441,
+      "max_drawdown_r": 36.4286440653737,
+      "total_r": -32.10024495962032,
+      "trades_per_week": 35.42340305257208
+     },
+     "4h": {
+      "n": 549,
+      "win_rate": 0.581056466302368,
+      "expectancy_r": -0.012433246887017755,
+      "profit_factor": 0.9677599427777743,
+      "max_drawdown_r": 40.8357528179009,
+      "total_r": -6.825852540972747,
+      "trades_per_week": 13.034482758620689
+     },
+     "12h": {
+      "n": 212,
+      "win_rate": 0.5518867924528302,
+      "expectancy_r": -0.013886810464709623,
+      "profit_factor": 0.9661349403527267,
+      "max_drawdown_r": 21.001463964568348,
+      "total_r": -2.94400381851844,
+      "trades_per_week": 3.346110484780158
+     },
+     "1d": {
+      "n": 97,
+      "win_rate": 0.6082474226804123,
+      "expectancy_r": 0.04918740703609524,
+      "profit_factor": 1.143588000603026,
+      "max_drawdown_r": 5.983189305003883,
+      "total_r": 4.771178482501238,
+      "trades_per_week": 1.206039076376554
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.4375,
+      "expectancy_r": -0.22096718527988293,
+      "profit_factor": 0.6062603144446298,
+      "max_drawdown_r": 4.628644471334065,
+      "total_r": -3.535474964478127,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "lock 0.4R at 0.7R": {
+    "overall": {
+     "n": 1656,
+     "win_rate": 0.5688405797101449,
+     "expectancy_r": -0.044599797370967115,
+     "profit_factor": 0.8864746509813646,
+     "max_drawdown_r": 118.40268677389028,
+     "total_r": -73.85726444632154,
+     "trades_per_week": 150.39538255289511
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 379,
+      "win_rate": 0.5620052770448549,
+      "expectancy_r": -0.10154962861108104,
+      "profit_factor": 0.7488453862096569,
+      "max_drawdown_r": 49.98893768315114,
+      "total_r": -38.48730924359971,
+      "trades_per_week": 95.74736842105263
+     },
+     "1h": {
+      "n": 383,
+      "win_rate": 0.5587467362924282,
+      "expectancy_r": -0.07255963477766846,
+      "profit_factor": 0.8158139989769542,
+      "max_drawdown_r": 34.867845050207485,
+      "total_r": -27.790340119847016,
+      "trades_per_week": 36.37309214245336
+     },
+     "4h": {
+      "n": 562,
+      "win_rate": 0.5818505338078291,
+      "expectancy_r": -0.013370923702393159,
+      "profit_factor": 0.9652193387403775,
+      "max_drawdown_r": 39.39196259740071,
+      "total_r": -7.514459120744956,
+      "trades_per_week": 13.343131712832108
+     },
+     "12h": {
+      "n": 218,
+      "win_rate": 0.5596330275229358,
+      "expectancy_r": -0.018619201360421552,
+      "profit_factor": 0.9538446124398369,
+      "max_drawdown_r": 22.024823534238465,
+      "total_r": -4.058985896571898,
+      "trades_per_week": 3.4408117249154455
+     },
+     "1d": {
+      "n": 98,
+      "win_rate": 0.6020408163265306,
+      "expectancy_r": 0.07270032921042538,
+      "profit_factor": 1.2127880717798822,
+      "max_drawdown_r": 5.190736466932044,
+      "total_r": 7.124632262621687,
+      "trades_per_week": 1.2184724689165187
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.4375,
+      "expectancy_r": -0.1956751455112274,
+      "profit_factor": 0.6513280007300423,
+      "max_drawdown_r": 4.447937417169905,
+      "total_r": -3.130802328179638,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "giveback 40% after 0.7R": {
+    "overall": {
+     "n": 1672,
+     "win_rate": 0.5675837320574163,
+     "expectancy_r": -0.04526889390290941,
+     "profit_factor": 0.8851775582756058,
+     "max_drawdown_r": 121.51381776270642,
+     "total_r": -75.68959060566453,
+     "trades_per_week": 151.4035733538666
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 381,
+      "win_rate": 0.5564304461942258,
+      "expectancy_r": -0.10043914302172048,
+      "profit_factor": 0.7542792538565621,
+      "max_drawdown_r": 51.160914352055805,
+      "total_r": -38.2673134912755,
+      "trades_per_week": 96.25263157894736
+     },
+     "1h": {
+      "n": 386,
+      "win_rate": 0.5544041450777202,
+      "expectancy_r": -0.07633467697325458,
+      "profit_factor": 0.807390835503425,
+      "max_drawdown_r": 36.97325939826106,
+      "total_r": -29.46518531167627,
+      "trades_per_week": 36.657998869417746
+     },
+     "4h": {
+      "n": 568,
+      "win_rate": 0.5827464788732394,
+      "expectancy_r": -0.00980670104800347,
+      "profit_factor": 0.9744353844660035,
+      "max_drawdown_r": 39.657166646761226,
+      "total_r": -5.570206195265971,
+      "trades_per_week": 13.485585076314301
+     },
+     "12h": {
+      "n": 222,
+      "win_rate": 0.5630630630630631,
+      "expectancy_r": -0.02428582524339728,
+      "profit_factor": 0.9396097098583667,
+      "max_drawdown_r": 22.336148521560474,
+      "total_r": -5.391453204034196,
+      "trades_per_week": 3.503945885005637
+     },
+     "1d": {
+      "n": 99,
+      "win_rate": 0.6060606060606061,
+      "expectancy_r": 0.059477158562146415,
+      "profit_factor": 1.1715156200748964,
+      "max_drawdown_r": 4.386998747813368,
+      "total_r": 5.888238697652495,
+      "trades_per_week": 1.2309058614564832
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.4375,
+      "expectancy_r": -0.18022944381656933,
+      "profit_factor": 0.6788505748205509,
+      "max_drawdown_r": 4.447937417169905,
+      "total_r": -2.8836711010651093,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "giveback 50% after 0.7R": {
+    "overall": {
+     "n": 1659,
+     "win_rate": 0.568414707655214,
+     "expectancy_r": -0.04154056914364342,
+     "profit_factor": 0.8943297628637547,
+     "max_drawdown_r": 120.3393485348154,
+     "total_r": -68.91580420930444,
+     "trades_per_week": 150.7508078936287
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 380,
+      "win_rate": 0.5605263157894737,
+      "expectancy_r": -0.09896684718458122,
+      "profit_factor": 0.7565588300786028,
+      "max_drawdown_r": 50.19715763862146,
+      "total_r": -37.60740193014087,
+      "trades_per_week": 96.0
+     },
+     "1h": {
+      "n": 384,
+      "win_rate": 0.5572916666666666,
+      "expectancy_r": -0.07716005748070269,
+      "profit_factor": 0.8041005853068521,
+      "max_drawdown_r": 35.7156685824806,
+      "total_r": -29.629462072589835,
+      "trades_per_week": 36.46806105144149
+     },
+     "4h": {
+      "n": 561,
+      "win_rate": 0.5828877005347594,
+      "expectancy_r": -0.005914432230033407,
+      "profit_factor": 0.984570121554729,
+      "max_drawdown_r": 38.688853498862656,
+      "total_r": -3.3179964810487412,
+      "trades_per_week": 13.319389485585075
+     },
+     "12h": {
+      "n": 220,
+      "win_rate": 0.5590909090909091,
+      "expectancy_r": -0.011970465992708013,
+      "profit_factor": 0.9703929623322184,
+      "max_drawdown_r": 21.91792957924256,
+      "total_r": -2.6335025183957628,
+      "trades_per_week": 3.4723788049605413
+     },
+     "1d": {
+      "n": 98,
+      "win_rate": 0.6020408163265306,
+      "expectancy_r": 0.07481861632540751,
+      "profit_factor": 1.2189881294077998,
+      "max_drawdown_r": 5.060456895354958,
+      "total_r": 7.332224399889936,
+      "trades_per_week": 1.2184724689165187
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.4375,
+      "expectancy_r": -0.19122910043869762,
+      "profit_factor": 0.6592503733963978,
+      "max_drawdown_r": 4.447937417169905,
+      "total_r": -3.059665607019162,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   },
+   "giveback 60% after 0.7R": {
+    "overall": {
+     "n": 1640,
+     "win_rate": 0.5676829268292682,
+     "expectancy_r": -0.04170584232701849,
+     "profit_factor": 0.894416319068879,
+     "max_drawdown_r": 115.70311919887119,
+     "total_r": -68.39758141631032,
+     "trades_per_week": 149.3944423711762
+    },
+    "by_timeframe": {
+     "15m": {
+      "n": 378,
+      "win_rate": 0.5634920634920635,
+      "expectancy_r": -0.08816398913281147,
+      "profit_factor": 0.7820003540326176,
+      "max_drawdown_r": 47.58837168921283,
+      "total_r": -33.32598789220273,
+      "trades_per_week": 95.49473684210525
+     },
+     "1h": {
+      "n": 377,
+      "win_rate": 0.5596816976127321,
+      "expectancy_r": -0.06859666731117296,
+      "profit_factor": 0.8249012152653238,
+      "max_drawdown_r": 33.23272843033863,
+      "total_r": -25.86094357631221,
+      "trades_per_week": 35.803278688524586
+     },
+     "4h": {
+      "n": 557,
+      "win_rate": 0.5798922800718133,
+      "expectancy_r": -0.016120706083822406,
+      "profit_factor": 0.9584470871485178,
+      "max_drawdown_r": 42.95695147087102,
+      "total_r": -8.97923328868908,
+      "trades_per_week": 13.224420576596946
+     },
+     "12h": {
+      "n": 215,
+      "win_rate": 0.5488372093023256,
+      "expectancy_r": -0.01468671151037819,
+      "profit_factor": 0.9644970327644558,
+      "max_drawdown_r": 23.279821145507356,
+      "total_r": -3.157642974731311,
+      "trades_per_week": 3.393461104847802
+     },
+     "1d": {
+      "n": 97,
+      "win_rate": 0.6082474226804123,
+      "expectancy_r": 0.06350991828323392,
+      "profit_factor": 1.1853983109550605,
+      "max_drawdown_r": 5.393090017074918,
+      "total_r": 6.16046207347369,
+      "trades_per_week": 1.206039076376554
+     },
+     "3d": {
+      "n": 16,
+      "win_rate": 0.4375,
+      "expectancy_r": -0.2021397348655407,
+      "profit_factor": 0.6398087999202573,
+      "max_drawdown_r": 4.447937417169905,
+      "total_r": -3.2342357578486514,
+      "trades_per_week": 0.2725060827250608
+     }
+    }
+   }
+  }
+ },
+ "skipped": [
+  "AAVE/USDT 3d: no model / too few out-of-sample bars",
+  "APT/USDT 3d: no model / too few out-of-sample bars",
+  "AVAX/USDT 3d: span too short to split",
+  "BIO/USDT 3d: no model / too few out-of-sample bars",
+  "DOT/USDT 3d: span too short to split",
+  "ENA/USDT 3d: no model / too few out-of-sample bars",
+  "ERA/USDT 3d: no model / too few out-of-sample bars",
+  "GALA/USDT 3d: no model / too few out-of-sample bars",
+  "GRAM/USDT 3d: no model / too few out-of-sample bars",
+  "INJ/USDT 3d: no model / too few out-of-sample bars",
+  "MSTRB/USDT 3d: no model / too few out-of-sample bars",
+  "NEAR/USDT 3d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 3d: no model / too few out-of-sample bars",
+  "PAXG/USDT 3d: span too short to split",
+  "PEPE/USDT 3d: no model / too few out-of-sample bars",
+  "SOL/USDT 3d: span too short to split",
+  "SPCXB/USDT 3d: no model / too few out-of-sample bars",
+  "SUI/USDT 3d: no model / too few out-of-sample bars",
+  "U/USDT 3d: no model / too few out-of-sample bars",
+  "UNI/USDT 3d: span too short to split",
+  "WLD/USDT 3d: no model / too few out-of-sample bars",
+  "XAUT/USDT 3d: no model / too few out-of-sample bars",
+  "BIO/USDT 1d: no model / too few out-of-sample bars",
+  "ENA/USDT 1d: no model / too few out-of-sample bars",
+  "ERA/USDT 1d: no model / too few out-of-sample bars",
+  "GRAM/USDT 1d: no model / too few out-of-sample bars",
+  "MSTRB/USDT 1d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 1d: no model / too few out-of-sample bars",
+  "PEPE/USDT 1d: no model / too few out-of-sample bars",
+  "SPCXB/USDT 1d: no model / too few out-of-sample bars",
+  "SUI/USDT 1d: no model / too few out-of-sample bars",
+  "U/USDT 1d: no model / too few out-of-sample bars",
+  "WLD/USDT 1d: no model / too few out-of-sample bars",
+  "XAUT/USDT 1d: no model / too few out-of-sample bars",
+  "BIO/USDT 12h: no model / too few out-of-sample bars",
+  "ERA/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 12h: no model / too few out-of-sample bars",
+  "MSTRB/USDT 12h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 12h: no model / too few out-of-sample bars",
+  "SPCXB/USDT 12h: no model / too few out-of-sample bars",
+  "U/USDT 12h: no model / too few out-of-sample bars",
+  "XAUT/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 4h: no model / too few out-of-sample bars",
+  "MSTRB/USDT 4h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 4h: no model / too few out-of-sample bars",
+  "SPCXB/USDT 4h: no model / too few out-of-sample bars",
+  "XAUT/USDT 4h: no model / too few out-of-sample bars"
+ ],
+ "costs": {
+  "round_trip_pct": 0.15,
+  "funding": "0.01% per 8 h (longs pay), over the hold"
+ },
+ "seconds": 122.7
+}
