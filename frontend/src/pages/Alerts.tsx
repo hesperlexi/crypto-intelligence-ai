@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { PageHeader } from "../components/kit";
 import { Link, useSearchParams } from "react-router-dom";
 import { SymbolSelect, TfTabs, useSymbols } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, Note } from "../components/ui";
@@ -111,10 +112,10 @@ export default function Alerts() {
   const turnOn = () => run(async () => { const msg = await push.enable(); setPerm(push.permission()); setOk(msg); }, undefined);
 
   return (
-    <div className="space-y-4">
-      <h1 className="page-title">Alerts</h1>
+    <div className="space-y-5">
+      <PageHeader title="Alerts" sub="Get a phone notification when a call opens, hits a target or closes, or when the market turns." />
 
-      <div className={`panel flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm ${perm === "granted" ? "" : "border-warn/40"}`}>
+      <div className={`panel panel-hero flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm ${perm === "granted" ? "" : "border-warn/40"}`}>
         <span>
           <span className="font-medium">Phone notifications: </span>
           {perm === "granted" ? (push.savedToken() ? <span className="text-bull">on, also when the app is closed</span> : <span className="text-warn">on while the app is open</span>)
@@ -189,7 +190,7 @@ export default function Alerts() {
               {data.data.alerts.map((a: any) => (
                 <li key={a.id} className="flex items-center justify-between gap-3 py-2.5">
                   <div className="min-w-0">
-                    <div className="truncate text-sm"><span className="font-medium">{coinLabel(a.symbol)}</span> <span className="text-xs uppercase text-mute">{a.timeframe === "all" ? "all timeframes" : a.timeframe}</span></div>
+                    <div className="truncate text-sm"><span className="font-medium">{coinLabel(a.symbol)}</span> <span className="text-xs text-mute">{a.timeframe === "all" ? "all timeframes" : a.timeframe}</span></div>
                     <div className="truncate text-xs text-mute" title={types[a.type]}>{describe(a)}{EVENT_TYPES.has(a.type) ? "" : ` · cooldown ${Math.round(a.cooldown_s / 60)} min`} · last fired {a.last_fired_at ? fmtTime(a.last_fired_at) : "never"}</div>
                   </div>
                   <div className="flex shrink-0 items-center gap-2">

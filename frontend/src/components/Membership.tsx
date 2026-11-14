@@ -63,7 +63,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
           {pay.reason && <span className="text-mute"> Reason: {pay.reason}</span>} Please check and send it again.
         </div>
       )}
-      <div className="text-xs font-medium uppercase tracking-[0.12em] text-mute">1 · Choose a plan</div>
+      <div className="text-sm font-medium text-text"><span className="num text-accent">1</span>  Choose a plan</div>
       <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
         {cfg.plans.map((p) => {
           const on = p.months === plan.months;
@@ -80,7 +80,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
         })}
       </div>
 
-      <div className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-mute">2 · Choose how to pay</div>
+      <div className="mt-6 text-sm font-medium text-text"><span className="num text-accent">2</span>  Choose how to pay</div>
       <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">Pay in <b>USDT only</b>. Other coins can't be credited.</p>
       <div className="mt-2 grid grid-cols-2 gap-2">
         {([["binance", "Binance", BinanceLogo, "Binance Pay · QR"], ["mexc", "MEXC", MexcLogo, "Transfer to UID"]] as const).map(([id, name, Logo, sub]) => {
@@ -95,7 +95,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
         })}
       </div>
 
-      <div className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-mute">3 · Pay with {exch}</div>
+      <div className="mt-6 text-sm font-medium text-text"><span className="num text-accent">3</span>  Pay with {exch}</div>
       {method === "binance" ? (
         <>
           <div className={`mt-2 grid items-center gap-4 ${compact ? "" : "sm:grid-cols-[220px_1fr]"}`}>
@@ -125,7 +125,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
         </div>
       )}
 
-      <div className="mt-5 text-xs font-medium uppercase tracking-[0.12em] text-mute">4 · Send the proof</div>
+      <div className="mt-6 text-sm font-medium text-text"><span className="num text-accent">4</span>  Send the proof</div>
       <div className="mt-2 grid gap-3 sm:grid-cols-2">
         <label className="flex min-h-[96px] cursor-pointer flex-col items-center justify-center gap-1 rounded-xl border border-dashed border-accent/40 bg-accent/[0.04] p-3 text-center text-sm hover:bg-accent/[0.08]">
           {proof ? (isProofImage(proof) ? <img src={proof} alt="Payment screenshot" className="max-h-40 rounded-lg" /> : <span className="text-bear">invalid image</span>) : <><span className="text-accent">＋ Upload screenshot</span><span className="text-xs text-mute">PNG or JPG from your gallery</span></>}
@@ -152,7 +152,7 @@ export function MembershipCard() {
   const left = daysLeft(r.expires_at);
   const tone = left == null ? "bull" : left <= 3 ? "bear" : left <= 7 ? "warn" : "bull";
   return (
-    <Card title="Membership" right={<Badge tone={tone as any}>{left == null ? "no end date" : left > 0 ? `${left} days left` : "ended"}</Badge>}>
+    <Card className="panel-hero" title="Membership" right={<Badge tone={tone as any}>{left == null ? "no end date" : left > 0 ? `${left} days left` : "ended"}</Badge>}>
       <dl className="grid grid-cols-2 gap-y-1.5 text-sm">
         <dt className="text-mute">Plan</dt><dd className="text-right">{r.plan_months ? planLabel(r.plan_months) : "—"}</dd>
         <dt className="text-mute">Active until</dt><dd className="text-right">{r.expires_at ? fmtDate(r.expires_at) : "no end date"}</dd>

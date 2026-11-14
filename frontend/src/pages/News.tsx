@@ -3,6 +3,7 @@
 //   views/news: {calendar[], headlines[{title,url,source,ts,summary?,coins?[]}], sentiment?{latest{market,BTC,ETH,alts}, series[]},
 //                risk_now?, next_high?, sources{calendar, headlines}, errors[]}
 import { useEffect, useMemo, useState } from "react";
+import { PageHeader } from "../components/kit";
 import NewsBanner, { countdown } from "../components/NewsBanner";
 import { AiTag, ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
@@ -71,7 +72,7 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
             <div className="num text-xs text-mute">score {m.score > 0 ? "+" : ""}{m.score.toFixed(2)} · {m.source === "calendar" ? "from the calendar only" : `${m.headlines ?? "recent"} headlines`} · {ago(m.ts)}</div>
             <MoodBar v={m.score} />
             <Spark pts={s.series ?? []} />
-            <div className="mt-1 flex justify-between text-xs uppercase tracking-wide text-mute"><span>48 h ago</span><span>now</span></div>
+            <div className="mt-1 flex justify-between text-xs text-mute"><span>48 h ago</span><span>now</span></div>
           </>
         ) : (
           <p className="mt-2 text-sm text-mute">First reading within the hour.</p>
@@ -152,7 +153,7 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
       </div>
       {coins.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 border-b border-glass/[0.06] px-4 py-2" role="group" aria-label="Coins in the news">
-          <span className="mr-1 text-xs uppercase tracking-wide text-mute">Coins in the news</span>
+          <span className="mr-1 text-xs text-mute">Coins in the news</span>
           <button type="button" aria-pressed={coin === "all"} className={chip(coin === "all")} onClick={() => setCoin("all")}>All</button>
           {coins.map(([c, n]) => <button key={c} type="button" aria-pressed={coin === c} className={chip(coin === c)} onClick={() => setCoin(c)}>{c} <span className="num opacity-70">{n}</span></button>)}
         </div>
@@ -161,7 +162,7 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
       {heads.length > 0 && !list.length && <p className="px-4 py-8 text-center text-sm text-mute">No headlines match this filter.</p>}
       {lead && (
         <a href={lead.url} target="_blank" rel="noopener noreferrer" className="group block border-b border-glass/[0.06] px-4 py-4 hover:bg-glass/[0.03]">
-          <div className="flex items-center gap-2 text-xs uppercase tracking-wide text-mute">
+          <div className="flex items-center gap-2 text-xs text-mute">
             <span className={`h-1.5 w-1.5 rounded-full ${SRC_DOT[lead.source] ?? "bg-mute"}`} />{lead.source}{lead.ts ? ` · ${ago(lead.ts)}` : ""}
             <span className="ml-auto rounded border border-accent/30 px-1.5 text-xs font-bold text-accent">LATEST</span>
           </div>
@@ -222,10 +223,7 @@ export default function News() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="page-title">News & economic calendar</h1>
-        <p className="text-sm text-mute">What is moving crypto now.</p>
-      </div>
+      <PageHeader title="News and calendar" sub="What is moving crypto now, and the US releases that can move it next." />
       <NewsBanner hours={24} />
       <Overview d={d} now={now} heads={heads} />
 
@@ -234,13 +232,13 @@ export default function News() {
 
         <section className="panel self-start p-0">
           <div className="card-head flex items-center justify-between border-b border-glass/[0.06] px-4 py-2.5">
-            <h2 className="label">Economic calendar · your local time</h2>
+            <h2 className="label">Economic calendar, in your local time</h2>
             <label className="flex items-center gap-2 text-xs text-mute"><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />show medium impact</label>
           </div>
           {!groups.length && <p className="px-4 py-6 text-sm text-mute">No high-impact releases scheduled in the next days{d.errors?.length ? " (the calendar could not be loaded on the last run)" : ""}.</p>}
           {groups.map(([day, evs]) => (
             <div key={day}>
-              <div className="bg-glass/[0.03] px-4 py-1.5 text-xs font-semibold uppercase tracking-wide text-mute">{day}</div>
+              <div className="bg-glass/[0.03] px-4 py-1.5 text-xs font-medium text-text/80">{day}</div>
               <ul className="divide-y divide-glass/[0.06]">
                 {evs.map((e) => {
                   const near = Math.abs(e.ts - now) <= 45 * 60_000;
