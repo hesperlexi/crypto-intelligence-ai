@@ -459,6 +459,8 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
                         "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=a.get("grade"),
                                                     timeframe=a.get("timeframe")),
                         "decision_basis": a.get("decision_basis"),
+                        # v2.24 proof checks: the setup's stated TP1-3 chances, compared later with what happened
+                        "expect": _expect_of(setup),
                         "ai_inputs": {"confidence": a.get("confidence"), "regime": (a.get("regime") or {}).get("regime"),
                                       "trend": _comp(sig, "trend"), "momentum": _comp(sig, "momentum"),
                                       "risk_reward": setup.get("risk_reward"), "risk_pct": setup.get("risk_pct"),
@@ -498,6 +500,11 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
     if not tradable:
         return {**res, "written": n > 0, "id": sid if n > 0 else None}
     return {"status": "not_logged", "reason": "not stored", "id": None, "written": False}
+
+
+def _expect_of(setup: dict[str, Any] | None) -> dict[str, Any] | None:
+    from .proof_checks import expect_of
+    return expect_of(setup)
 
 
 def _runner_for(run: dict[str, Any] | None, pl: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -865,7 +872,7 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
     """Follow OPEN signals (v2.5: engine/manage.py) on 15-minute candles that opened after publication. Standard
     rules: 50% / 25% / 25% at the targets, stop first within a candle, break-even after TP1, TP1 after TP2, expiry at
     the last close; managed exits only when MANAGED_EXITS is on. Pullback entries wait for their fill."""
-    if table not in ("signals", "shadow_signals", SCALP_TABLE, "held_signals"):
+    if table not in ("signals", "shadow_signals", SCALP_TABLE, "held_signals", "rejected_signals"):
         raise ValueError(table)
     # admin adjustments and `decisions` rows belong to the record only (table == "signals" below)
     db = rt.db

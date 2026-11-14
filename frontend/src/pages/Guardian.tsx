@@ -7,6 +7,7 @@ import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Badge, Tile, type Tone, PageHeader } from "../components/kit";
 import { MarketTurnCard, useMarketTurn } from "../components/MarketTurn";
+import { FilterBoard, ModelCheck } from "../components/ProofChecks";
 import { CoinAvatar } from "../components/Polish";
 import { useFocusTrap } from "../components/Shell";
 import { Empty, ErrorBox } from "../components/ui";
@@ -73,6 +74,8 @@ export default function Guardian() {
           </section>
           <Scoreboard sb={v.scoreboard} />
           <HeldBoard h={(v as any).held} />
+          <FilterBoard c={(v as any).checks} />
+          <ModelCheck c={(v as any).checks} />
           <History rows={hist} />
           {v.config && (
             <p className="text-xs leading-relaxed text-mute">

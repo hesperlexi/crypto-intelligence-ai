@@ -224,6 +224,11 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
     services.push({ id: "hc-guardian", name: "Trade Guardian", level: gl, target: "/guardian",
       line: guardian.enabled === false ? "switched off" : `${isNum(w) ? `${w} call${w === 1 ? "" : "s"} watched` : "published"}${lc ? ` · checked ${ago(lc)}` : ""}` });
   }
+  const aiWarn: string[] = guardian?.checks?.calibration?.warnings ?? [];
+  if (guardian?.checks) {
+    services.push({ id: "hc-aicheck", name: "AI check", level: aiWarn.length ? "warn" : "ok", target: "/guardian",
+      line: aiWarn.length ? aiWarn[0] : "live forecasts on track" });
+  }
   if (turn) {
     const t = stateTone(turn.market?.state);
     services.push({ id: "hc-turn", name: "Market turn", level: t === "warn" ? "warn" : "ok", target: "hc-turn",

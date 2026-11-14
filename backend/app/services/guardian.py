@@ -790,7 +790,7 @@ class Guardian:
         return {"generated_at": self.now, "enabled": ENABLED,
                 "status": {"last_check": st.get("last_check"), "watched": st.get("watched") or {"coins": [], "calls": 0},
                            "today": st.get("today") or {}, "day": st.get("day"), "last_error": st.get("last_error")},
-                "live": live, "history": hist, "scoreboard": scoreboard(rows), "held": _held(self.db),
+                "live": live, "history": hist, "scoreboard": scoreboard(rows), "held": _held(self.db), "checks": _checks(self.db, self.now),
                 "config": {"tighten_at": TIGHTEN_AT, "close_at": CLOSE_AT, "expires_min": EXPIRES_MS // MIN,
                            "min_gap_atr": MIN_GAP_ATR, "fresh_m1_min": FRESH_M1_MS // MIN, "persist_ticks": PERSIST_TICKS},
                 "note": "Recommend-only: nothing changes unless the admin applies it. Shadow results are net R estimates "
@@ -1021,6 +1021,15 @@ def dismiss(rt: Any, params: dict[str, Any], by: str, now: int | None = None) ->
         raise GuardianError(f"this recommendation is no longer live ({rec['status']})")
     g.mark(rid, "dismissed", f"dismissed by {by}")
     return {"ok": True, "guardian": {"id": rid, "status": "dismissed"}, "message": "Dismissed. Nothing was changed."}
+
+
+def _checks(db: Any, now: int) -> dict[str, Any] | None:
+    """v2.24 proof checks (services/proof_checks.py): filters' blocked calls + live AI calibration, at most hourly."""
+    try:
+        from .proof_checks import checks
+        return checks(db, now)
+    except Exception:
+        return None
 
 
 def _held(db: Any) -> dict[str, Any]:

@@ -342,6 +342,9 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 decision = "SELL"
             if grade:
                 direction = side
+    # v2.24 proof checks: the call as formed, before any filter; a filter that blocks it logs it in `rejected_signals`
+    pre_gate = ((decision, dict(setup), grade, len(flags))
+                if decision in TRADE_DECISIONS and setup and setup.get("valid") else None)
     # v2.13 (C2): a graded call needs a PROVEN edge: the model's walk-forward edge test passed (`edge_confirmed`) AND
     # its directional policy is reliably better than a coin flip (`policy_edge`: lower 95 % bound of the chosen margin's
     # out-of-sample hit rate > 50 %). Setting REQUIRE_EDGE_FOR_TRADE (default OFF since v2.14, owner).
@@ -586,6 +589,14 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             out["record_status"] = "not_logged"
         if shadow and not stale:
             tracking.log_shadow(rt.db, out, shadow[0], shadow[1])
+        if pre_gate and decision not in TRADE_DECISIONS and not stale and as_of is None:
+            try:
+                from . import proof_checks
+                flag = proof_checks.blocking_flag(flags[pre_gate[3]:])
+                if flag:
+                    proof_checks.log_rejected(rt.db, out, pre_gate[0], pre_gate[1], pre_gate[2], flag, why)
+            except Exception as exc:              # the log never blocks an analysis
+                rt.record_error(f"rejected log {symbol}", exc)
         if tracking.SCALPING_ON and timeframe in tracking.SCALP_TFS and (demo or (decision in TRADE_DECISIONS and grade == "A")):
             # admin scalping log: its own table, never the record; `out` is not changed (views stay byte-identical)
             try:

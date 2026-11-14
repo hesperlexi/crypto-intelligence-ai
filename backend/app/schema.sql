@@ -545,3 +545,38 @@ CREATE TABLE IF NOT EXISTS held_signals (
   hold_note TEXT,
   UNIQUE (symbol, timeframe, bar_ts)
 );
+
+-- v2.24 proof checks (services/proof_checks.py): would-be calls a filter turned into NO TRADE, followed like the record
+CREATE TABLE IF NOT EXISTS rejected_signals (
+  id TEXT PRIMARY KEY,
+  created_at BIGINT NOT NULL,
+  symbol TEXT NOT NULL,
+  timeframe TEXT NOT NULL,
+  bar_ts BIGINT NOT NULL,
+  signal TEXT NOT NULL,
+  decision TEXT NOT NULL,
+  score DOUBLE PRECISION,
+  confidence DOUBLE PRECISION,
+  regime TEXT,
+  price DOUBLE PRECISION NOT NULL,
+  side INTEGER NOT NULL DEFAULT 0,
+  entry DOUBLE PRECISION,
+  stop DOUBLE PRECISION,
+  tp1 DOUBLE PRECISION,
+  tp2 DOUBLE PRECISION,
+  tp3 DOUBLE PRECISION,
+  rr DOUBLE PRECISION,
+  status TEXT NOT NULL DEFAULT 'OPEN',
+  tp1_hit INTEGER NOT NULL DEFAULT 0,
+  tp2_hit INTEGER NOT NULL DEFAULT 0,
+  tp3_hit INTEGER NOT NULL DEFAULT 0,
+  stop_hit INTEGER NOT NULL DEFAULT 0,
+  closed_at BIGINT,
+  return_pct DOUBLE PRECISION,
+  model_version_id TEXT,
+  payload TEXT,
+  reject_flag TEXT,
+  reject_reason TEXT,
+  UNIQUE (symbol, timeframe, bar_ts)
+);
+

@@ -1276,6 +1276,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
                                   tracking.update_signal_outcomes(rt, table="shadow_signals"),
                                   tracking.update_signal_outcomes(rt, table="held_signals")))
+    # v2.24 proof checks: would-be calls the filters blocked, followed like the record (own step: never stops the above)
+    step("rejected_outcomes", lambda: tracking.update_signal_outcomes(rt, table="rejected_signals"))
     # admin scalping log: its own step, so a problem there never stops the record's outcomes above
     if tracking.SCALPING_ON:
         step("scalp_outcomes", lambda: tracking.update_signal_outcomes(rt, table=tracking.SCALP_TABLE))

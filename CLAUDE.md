@@ -725,3 +725,17 @@ Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance da
   run" (job `hesper_start_run` {amount}, admin, 10–1,000,000 USDT) starts the next run with that amount
   (`Hesper.start_new`). Each run stores `start_balance` / `goal` = 10x start (milestone, `goal_of`); liquidation / bust
   still restart at once with the same amount. Members see the open trade's full PositionGrid with every target.
+
+## v2.24 proof checks (admin, owner-approved 14 Nov 2026, branch `proof-v224`)
+`services/proof_checks.py`. (1) **Filter check**: in `analysis.analyze` (live only) the call as formed (`pre_gate`: decision,
+setup, grade, flags count) is kept; when a measured filter (`proof_checks.FLAGS`: bigger trend, edge, trade filters, costs,
+stop too wide, VP / fee / same-side cap, paused TF, grade A only, call running, news) makes it NO TRADE, `log_rejected`
+stores it in **`rejected_signals`** (signals columns + `reject_flag` / `reject_reason`; record's `_plan` with entry rules;
+skipped while the record or the table has a call open there; check failures / Hold / safety pause / stale not logged).
+Followed by worker step `rejected_outcomes` (`update_signal_outcomes(table=...)`). Never read by the record, bots,
+Telegram, training or safety. (2) **AI check**: `calibration` scores live `predictions` per TF (3-class Brier vs base
+rates of the 30 days before; last 7 d vs prior; reliability buckets; state ok / drift / no skill / overconfident / too
+few, warnings). `tp1_check`: record calls now store payload `expect` {p_tp, expectancy_r} → TP1 expected vs reached.
+`checks()` cached hourly in setting `proof_checks`, published as `views/guardian.checks` (no new docs, no reads).
+UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian; Health tile "AI check". Tests
+`tests/test_proof_checks.py`.
