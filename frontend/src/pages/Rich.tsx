@@ -2,6 +2,7 @@
 // at $1,000 (success) or by liquidation / a balance too small to trade (failure); a new run starts by itself.
 // Data: views/hesper (backend services/hesper.py). Virtual money only.
 import { useMemo, useRef, useState } from "react";
+import { botFacts, PositionGrid } from "../components/PositionInfo";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { CoinAvatar } from "../components/Polish";
@@ -83,13 +84,7 @@ function OpenTrade({ o, live }: { o: any; live: ReturnType<typeof useLiveRun> })
           <span className={`num ml-2 text-sm ${tone(live.roi)}`}>{pct(live.roi)}</span>
         </span>
       </div>
-      <div className="mt-3 grid grid-cols-3 gap-x-3 gap-y-2 sm:grid-cols-6">
-        <Level k="Entry" v={fmtPrice(o.entry)} />
-        <Level k="Live" v={fmtPrice(live.px)} />
-        <Level k="Stop" v={fmtPrice(o.stop)} cls="text-bear" />
-        {targets.map((t, i) => <Level key={i} k={`TP${i + 1}${o.tp_hit > i ? " ✓" : ""}`} v={fmtPrice(t)} cls={o.tp_hit > i ? "text-bull" : ""} />)}
-      </div>
-      <div className="mt-2 text-xs text-mute">Margin {usd(o.margin)} · liquidation {fmtPrice(o.liq)} · opened {fmtDate(o.opened_at)}</div>
+      <div className="mt-3"><PositionGrid p={botFacts(o, live.px)} note={`Opened ${fmtDate(o.opened_at)}. Realized PNL includes closed targets and fees.`} /></div>
     </div>
   );
 }

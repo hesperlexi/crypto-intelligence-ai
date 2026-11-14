@@ -426,7 +426,12 @@ export function subscribe(cb: (s: any) => void, err: (e: Error) => void) {
       const p = { ...p0, key };
       const mark = fpx(p.symbol) ?? null;
       const upnl = mark != null ? p.side * p.qty * (mark - p.entry) : null;
-      return { ...p, mark, upnl, roe_pct: upnl != null ? (upnl / p.margin) * 100 : null, notional: mark != null ? p.qty * mark : p.qty * p.entry };
+      // v2.22 Binance-style "Realized PNL" of this position: its partial closes (net) minus the opening fee and funding
+      // still carried by the open part
+      const closed = trades.filter((t) => t.type === "CLOSE" && t.symbol === p.symbol && t.side === p.side && t.opened_at === p.opened_at)
+        .reduce((a, t) => a + (Number(t.realized_pnl) || 0), 0);
+      const realized = closed - (p.fees ?? 0) - (p.funding ?? 0);
+      return { ...p, mark, upnl, realized, roe_pct: upnl != null ? (upnl / p.margin) * 100 : null, notional: mark != null ? p.qty * mark : p.qty * p.entry };
     });
     const bySym: Record<string, any[]> = {};
     for (const p of positions) (bySym[p.symbol] ??= []).push(p);

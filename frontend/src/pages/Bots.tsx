@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { botFacts, PositionGrid } from "../components/PositionInfo";
 import LineChart, { Series } from "../components/LineChart";
 import { Badge, Card, Empty, ErrorBox, Info, Loading, Note, Row, Stat } from "../components/ui";
 import { put, useApi } from "../lib/api";
@@ -143,11 +144,27 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
       <div className="mt-4 grid gap-6 2xl:grid-cols-2 2xl:[&_.table-wrap]:mx-0">
         <div className="min-w-0">
           <div className="label mb-1">Open positions{bot.pending.length ? ` · ${bot.pending.length} pending limit order(s)` : ""}</div>
-          {live.length || bot.pending.length ? (
+          {!isPred && live.length > 0 && (
+            <div className="mb-2 space-y-2">
+              {live.map((p: any) => (
+                <div key={p.id} className="tile p-3">
+                  <div className="mb-2 flex flex-wrap items-center gap-2 text-sm">
+                    <span className="font-semibold">{p.symbol}</span>
+                    <span className={`text-xs font-bold ${p.side > 0 ? "text-bull" : "text-bear"}`}>{p.side > 0 ? "▲ LONG" : "▼ SHORT"}</span>
+                    {fut && <span className="rounded bg-glass/[0.06] px-1.5 text-xs">Isolated {p.lev}x</span>}
+                    {p.info?.timeframe && <span className="text-xs uppercase text-mute">{p.info.timeframe}</span>}
+                    {p.opened_at ? <span className="ml-auto text-xs text-mute">opened {fmtTime(p.opened_at)}</span> : null}
+                  </div>
+                  <PositionGrid p={botFacts(p, p.px)} note={fut ? "Realized PNL includes the closed targets, fees and funding so far." : undefined} />
+                </div>
+              ))}
+            </div>
+          )}
+          {(isPred ? live.length : 0) || bot.pending.length ? (
             <div className="table-wrap"><table className="grid-table">
               <thead><tr><th>Coin</th><th>Side</th><th className="text-right">Entry</th><th className="text-right">Now</th><th className="text-right">P&L{fut ? " (on margin)" : ""}</th>{fut && <th className="text-right">Liquidation</th>}<th className="text-right">{isPred ? "Closes" : "Stop / TP hit"}</th></tr></thead>
               <tbody>
-                {live.map((p: any) => (
+                {(isPred ? live : []).map((p: any) => (
                   <tr key={p.id}><td className="font-medium">{p.symbol}</td><td className={p.side > 0 ? "text-bull" : "text-bear"}>{p.side > 0 ? "▲ LONG" : "▼ SHORT"}{fut ? ` ${p.lev}x` : ""}</td>
                     <td className="num text-right">{fmtPrice(p.entry)}</td><td className="num text-right">{fmtPrice(p.px)}</td>
                     <td className={`num text-right ${tone(p.u)}`}>{p.u != null ? `$${fmtNum(p.u)} (${fmtPctRaw(p.upct)})` : DASH}</td>
@@ -160,7 +177,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
                 ))}
               </tbody>
             </table></div>
-          ) : <Empty>{isPred ? "No open predictions right now." : "No open positions. Quiet stretches are normal."}</Empty>}
+          ) : !live.length ? <Empty>{isPred ? "No open predictions right now." : "No open positions. Quiet stretches are normal."}</Empty> : null}
         </div>
         <div className="min-w-0">
           {/* v2.17: the signal-confidence buckets (next-candle hit rate) are admin only */}

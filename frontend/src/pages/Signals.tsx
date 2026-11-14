@@ -26,7 +26,10 @@ const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;
 const TXT = { bull: "text-bull", bear: "text-bear", wait: "text-mute" } as const;
 type Dir = "all" | "long" | "short";
 type Grade = "all" | "A" | "B";
-type St = "all" | "open" | "closed";
+// v2.22 (owner, 14 Nov 2026): open and closed calls kept apart - "Active" (default) hides closed calls
+type St = "active" | "running" | "waiting" | "closed" | "all";
+const ST_OPTS = ["active", "running", "waiting", "closed", "all"] as const;
+const isSt = (x: string | null): x is St => (ST_OPTS as readonly string[]).includes(x ?? "");
 
 /** Direction of a row's call on this market ("long" / "short" / null when it is a wait). */
 function dirOf(r: any, market: Market): "long" | "short" | null {
@@ -34,11 +37,14 @@ function dirOf(r: any, market: Market): "long" | "short" | null {
   return t === "bull" ? "long" : t === "bear" ? "short" : null;
 }
 /** Open / closed from the tracked call (contract field row.call); rows without it count as neither. */
-function callState(r: any): "open" | "closed" | null {
-  const st = r?.call?.status;
-  if (!st) return null;
-  return st === "OPEN" ? "open" : "closed";
+/** running = entered and open · waiting = open, entry not reached yet · closed · new = a setup with no recorded call */
+function callState(r: any): "running" | "waiting" | "closed" | "new" {
+  const c = r?.call;
+  if (!c?.status) return "new";
+  if (c.status === "OPEN") return c.fill_status === "PENDING" ? "waiting" : "running";
+  return "closed";
 }
+const stMatch = (r: any, st: St) => { const c = callState(r); return st === "all" || (st === "active" ? c !== "closed" : c === st); };
 
 
 /** Pick a coin, pick spot or futures: one clear call with entry, stop and targets. */
@@ -73,7 +79,9 @@ export default function Signals() {
   const px = (s: string): number | undefined => tickers[s]?.last ?? undefined;
   const [dir, setDir] = useState<Dir>("all");
   const [grade, setGrade] = useState<Grade>("all");
-  const [st, setSt] = useState<St>("all");
+  const stParam = params.get("status");
+  const st: St = isSt(stParam) ? stParam : "active";
+  const setSt = (x: St) => setQuery({ status: x === "active" ? null : x });
   const [q, setQ] = useState("");
   const boardData = boards.map((b) => b.data);
   const allRows: any[] = useMemo(() => {
@@ -83,13 +91,14 @@ export default function Signals() {
     return waits ? out : out.filter((r) => verdictOf(r, market).tone !== "wait");
   }, [all, v.data, tf, waits, market, ...boardData]);
   const hasCalls = allRows.some((r) => r.call);
+  const stCount = (x: St) => allRows.filter((r) => stMatch(r, x)).length;
   const filteredRows: any[] = useMemo(() => {
     const needle = q.trim().toUpperCase();
     return allRows.filter((r) => {
       if (needle && !base(r.symbol).toUpperCase().includes(needle) && !String(r.symbol).toUpperCase().includes(needle)) return false;
       if (dir !== "all" && dirOf(r, market) !== dir) return false;
       if (grade !== "all" && (dirOf(r, market) == null || r.grade !== grade)) return false;
-      if (st !== "all" && callState(r) !== st) return false;
+      if (!stMatch(r, st)) return false;
       return true;
     });
   }, [allRows, q, dir, grade, st, market]);
@@ -99,7 +108,7 @@ export default function Signals() {
   const boardsErr = all ? boards.find((b) => b.error) : undefined;
   const boardsEmpty = all && !boardsLoading && boards.every((b) => !b.data);
   const openOne = (r: any) => setQuery({ timeframe: r.timeframe, symbol: r.symbol, ...(sort === "tf" ? { sort: null } : {}) });
-  const filtered = rows.length !== allRows.length;
+  const filtered = !!q.trim() || dir !== "all" || grade !== "all" || st !== "active";
   const sel = params.get("symbol") ?? rows[0]?.symbol;
   const row = rows.find((r) => r.symbol === sel) ?? rows[0];
   const pick = (s: string) => setQuery({ symbol: s });
@@ -128,14 +137,15 @@ export default function Signals() {
           </label>
           <Segmented label="Direction" value={dir} onChange={setDir} options={[["all", "All"], ["long", market === "futures" ? "Long" : "Buy"], ["short", market === "futures" ? "Short" : "Sell"]] as const} />
           <Segmented label="Grade" value={grade} onChange={setGrade} options={[["all", "Any grade"], ["A", "A"], ["B", "B"]] as const} />
-          {hasCalls && <Segmented label="Status" value={st} onChange={setSt} options={[["all", "Any status"], ["open", "Open"], ["closed", "Closed"]] as const} />}
+          {hasCalls && <Segmented label="Status" value={st} onChange={setSt} options={[["active", `Active ${stCount("active")}`], ["running", `Running ${stCount("running")}`],
+            ["waiting", `Waiting entry ${stCount("waiting")}`], ["closed", `Closed ${stCount("closed")}`], ["all", "All"]] as const} />}
           {all && (
             <label className="tap-h flex cursor-pointer items-center gap-1.5 text-xs text-mute">
               <input type="checkbox" className="accent-[rgb(var(--accent))]" checked={waits} onChange={(e) => setQuery({ waits: e.target.checked ? "1" : null })} />
               Show waits
             </label>
           )}
-          {filtered && <button type="button" className="btn btn-ghost btn-sm text-accent" onClick={() => { setDir("all"); setGrade("all"); setSt("all"); setQ(""); }}>Clear filters</button>}
+          {filtered && <button type="button" className="btn btn-ghost btn-sm text-accent" onClick={() => { setDir("all"); setGrade("all"); setQuery({ status: null }); setQ(""); }}>Clear filters</button>}
           <div className="ml-auto"><SortMenu value={sort} onChange={(k) => setQuery({ sort: k === "ready" ? null : k })} options={all ? SORTS : SORTS.filter(([k]) => k !== "tf")} /></div>
         </div>
       )}

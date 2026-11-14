@@ -225,6 +225,7 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
                   ["Stop-loss", p.stop ? fmtPrice(p.stop) : "—", p.stop ? "text-bear" : "text-mute"],
                   ["Leverage", `${fmtNum(p.leverage, 1)}x`, ""],
                   ["Take-profit", p.take ? fmtPrice(p.take) : "—", p.take ? "text-bull" : "text-mute"],
+                  ["Realized PNL", `$${fmtNum(p.realized ?? 0)}`, tone(p.realized)],
                 ] as const).map(([k, v, c]) => (
                   <div key={k} className="flex items-baseline justify-between gap-2">
                     <dt className="text-mute">{k}</dt>
@@ -237,7 +238,7 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
           ))}
         </div>
         <div className="hidden overflow-x-auto sm:block"><table className="grid-table">
-          <thead><tr><th>Coin</th><th>Side</th><th className="hidden text-right 2xl:table-cell">Size</th><th className="text-right">Entry</th><th className="text-right">Mark</th><th className="text-right">Liq.</th><th className="text-right">Margin</th><th className="text-right">P&L / ROE</th><th className="text-right">SL / TP</th><th className="text-right">Close</th></tr></thead>
+          <thead><tr><th>Coin</th><th>Side</th><th className="hidden text-right 2xl:table-cell">Size</th><th className="text-right">Entry</th><th className="text-right">Mark</th><th className="text-right">Liq.</th><th className="text-right">Margin</th><th className="text-right">P&L / ROE</th><th className="hidden text-right xl:table-cell">Realized</th><th className="text-right">SL / TP</th><th className="text-right">Close</th></tr></thead>
           <tbody>{rows.map((p: any) => (
             <tr key={p.key}>
               <td className="font-medium">{p.symbol}</td>
@@ -248,6 +249,7 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
               <td className="num text-right text-warn">{fmtPrice(p.liq)}</td>
               <td className="num text-right">${fmtNum(p.margin)}</td>
               <td className={`num text-right leading-tight ${tone(p.u)}`}>{p.u != null ? <><div>${fmtNum(p.u)}</div><div className="text-xs">{fmtPctRaw(p.roe, 1)}</div></> : DASH}</td>
+              <td className={`num hidden text-right xl:table-cell ${tone(p.realized)}`}>${fmtNum(p.realized ?? 0)}</td>
               <td className="num text-right text-xs leading-tight">
                 <div className="flex justify-end gap-1.5"><span className="text-mute">SL</span><span className={p.stop ? "text-bear" : "text-mute"}>{p.stop ? fmtPrice(p.stop) : "—"}</span></div>
                 <div className="flex justify-end gap-1.5"><span className="text-mute">TP</span><span className={p.take ? "text-bull" : "text-mute"}>{p.take ? fmtPrice(p.take) : "—"}</span></div>

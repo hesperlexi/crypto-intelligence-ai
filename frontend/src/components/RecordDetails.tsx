@@ -14,6 +14,47 @@ import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
 import { useFocusTrap } from "./Shell";
 import { closeEstimate } from "./SignalAdjust";
 import { AdjustButton } from "./SignalAdjust";
+import { liqPrice } from "../lib/paperFutures";
+import { PositionFacts, PositionGrid, TpLevel } from "./PositionInfo";
+
+// v2.22: a public signal has no real money behind it, so the Binance view uses an example margin (default 100 USDT,
+// remembered on this device) at the card's suggested leverage. Closed parts are booked at their targets, before fees.
+const REF_KEY = "cia-ref-margin";
+const refMarginSaved = () => { try { const v = Number(localStorage.getItem(REF_KEY)); return v > 0 && v <= 1e6 ? v : 100; } catch { return 100; } };
+const SPLIT = [0.5, 0.25, 0.25];
+
+export function signalFacts(x: any, px: number | undefined, margin: number): PositionFacts {
+  const side = x.side === "SHORT" ? -1 : 1;
+  const lev = isNum(x.leverage) && x.leverage >= 1 ? x.leverage : 1;
+  const qty = (margin * lev) / x.entry;
+  const run = isRunner(x);
+  const hits = [x.tp1_hit, x.tp2_hit, x.tp3_hit].map(Boolean);
+  const prices = [tp1Now(x), x.tp2, x.tp3];
+  let closed = 0, realized = 0;
+  if (!run) hits.forEach((h, i) => { if (h && isNum(prices[i])) { closed += SPLIT[i]; realized += SPLIT[i] * qty * side * (prices[i] - x.entry); } });
+  const tps: TpLevel[] = prices.map((p, i) => ({ label: `TP${i + 1}`, price: p, hit: hits[i],
+    note: run ? ["stop to break-even", "stop to TP1", "stop to TP2"][i] : `closes ${SPLIT[i] * 100}%` })).filter((t) => isNum(t.price));
+  if (run && isNum(x.runner?.target)) tps.push({ label: `Final 1:${Number(x.runner.rr ?? 4)}`, price: x.runner.target, hit: false, note: "closes all" });
+  const st = stopNow(x);
+  return { side, entry: x.entry, mark: px ?? null, lev, qty, qtyOpen: qty * (1 - closed), realized, liq: liqPrice(x.entry, side, lev, x.symbol),
+           stop: st.price, stopNote: st.why, tps };
+}
+
+function ExampleMargin({ x, px }: { x: any; px: number | undefined }) {
+  const [m, setM] = useState(refMarginSaved);
+  const save = (v: string) => { const n = Number(v); if (n > 0 && n <= 1e6) { setM(n); try { localStorage.setItem(REF_KEY, String(n)); } catch { /* ignore */ } } };
+  return (
+    <div className="rounded-xl border border-glass/[0.1] px-3 py-2.5">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="label">Position (example)</div>
+        <label className="flex items-center gap-1.5 text-xs text-mute">Margin
+          <input className="input h-8 w-24 py-0 text-right text-sm" inputMode="decimal" defaultValue={m} onBlur={(e) => save(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") save((e.target as HTMLInputElement).value); }} aria-label="Example margin in USDT" /> USDT</label>
+      </div>
+      <PositionGrid p={signalFacts(x, px, m)} allTps note="Example size at the card's leverage; closed targets booked at their price, before fees." />
+    </div>
+  );
+}
 
 const TF_MS: Record<string, number> = { "15m": 9e5, "1h": 36e5, "4h": 144e5, "12h": 432e5, "1d": 864e5, "3d": 2592e5, "1w": 6048e5 };
 export const STATUS_LABEL: Record<string, [string, string]> = {
@@ -246,6 +287,7 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                 {isNum(x.return_pct) ? (scalp ? <ReturnFigure x={x} /> : <RoiFigure x={x} size="md" />) : <span className="text-xs text-mute">no result (not counted)</span>}
               </div>
             )}
+            {open && !pending && !scalp && <ExampleMargin x={x} px={px} />}
             <div className="flex flex-wrap items-center gap-1.5">
               <UpdatedBadge adj={x.adjustments} />
               {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}

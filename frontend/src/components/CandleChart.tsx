@@ -1,7 +1,8 @@
 import { ColorType, createChart, CrosshairMode, IChartApi, ISeriesApi, LineStyle } from "lightweight-charts";
 import { useEffect, useRef, useState } from "react";
 import { chartColors, themeColor, useAppearance } from "../lib/appearance";
-import { isNum, pricePrecision } from "../lib/format";
+import { fmtPrice, isNum, pricePrecision } from "../lib/format";
+import { Profile, VolumeProfilePrimitive } from "../lib/vrvp";
 
 export type Candle = [number, number, number, number, number, number]; // ts(ms), o, h, l, c, v
 
@@ -44,7 +45,13 @@ interface Props {
   future?: Candle[];
   /** remembers the zoom / scroll under this key (e.g. symbol + timeframe), also across reloads in this tab */
   viewKey?: string;
+  /** v2.22: offer the VRVP (visible range volume profile) switch on this chart (default on) */
+  vrvpToggle?: boolean;
 }
+
+// VRVP on / off is remembered for all charts on this device
+const VRVP_KEY = "cia-vrvp";
+const vrvpSaved = () => { try { return localStorage.getItem(VRVP_KEY) === "1"; } catch { return false; } };
 
 const t = (ms: number) => Math.floor(ms / 1000) as any;
 const NONE: Candle[] = [];
@@ -65,7 +72,9 @@ function saveView(key: string | undefined, v: View) {
   try { sessionStorage.setItem("cia-chart-view:" + key, JSON.stringify(v)); } catch { /* ignore */ }
 }
 
-export default function CandleChart({ candles, overlays, show = NO_KEYS, lines = [], markers = [], livePrice, liveCandle = null, height = 460, future = NONE, viewKey }: Props) {
+export default function CandleChart({ candles, overlays, show = NO_KEYS, lines = [], markers = [], livePrice, liveCandle = null, height = 460, future = NONE, viewKey, vrvpToggle = true }: Props) {
+  const [vrvp, setVrvp] = useState(() => vrvpToggle && vrvpSaved());
+  const [prof, setProf] = useState<Profile | null>(null);
   const el = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<"Candlestick"> | null>(null);
@@ -117,6 +126,13 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
       fs.setData(future.map((c) => ({ time: t(c[0]), open: c[1], high: c[2], low: c[3], close: c[4] })));
     }
 
+    if (vrvp) {
+      const vp = new VolumeProfilePrimitive();
+      vp.onChange = (p) => setProf(p);
+      series.attachPrimitive(vp);
+      vp.setData(all);
+    }
+
     const volume = chart.addHistogramSeries({ priceFormat: { type: "volume" }, priceScaleId: "", priceLineVisible: false, lastValueVisible: false });
     volume.priceScale().applyOptions({ scaleMargins: { top: 0.86, bottom: 0 } });
     volume.setData(candles.map((c) => ({ time: t(c[0]), value: c[5], color: c[4] >= c[1] ? cc.bullSoft(0.28) : cc.bearSoft(0.28) })));
@@ -153,7 +169,7 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
       chart.remove();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [candles, overlays, show.join(","), future, resolved]);
+  }, [candles, overlays, show.join(","), future, resolved, vrvp]);
 
   // entry / SL / TP / liquidation lines change without rebuilding the chart (so zoom and scroll stay put)
   const linesKey = JSON.stringify(lines.filter((l) => isNum(l.price)).map((l) => [+l.price.toPrecision(8), l.title, l.color, !!l.dashed]));
@@ -207,5 +223,18 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
   }, [livePrice, future.length]);
 
   if (!candles.length) return <div className="flex items-center justify-center text-sm text-mute" style={{ height }}>No candles stored for this series yet</div>;
-  return <div ref={el} style={{ height }} className="w-full" aria-label="Candlestick chart (times in UTC)" role="img" />;
+  const toggle = () => { const v = !vrvp; setVrvp(v); if (!v) setProf(null); try { localStorage.setItem(VRVP_KEY, v ? "1" : "0"); } catch { /* ignore */ } };
+  return (
+    <div className="relative w-full">
+      <div ref={el} style={{ height }} className="w-full" aria-label="Candlestick chart (times in UTC)" role="img" />
+      {vrvpToggle && (
+        <div className="pointer-events-none absolute left-2 top-2 z-[2] flex flex-wrap items-center gap-1.5 text-xs">
+          <button type="button" onClick={toggle} aria-pressed={vrvp}
+            title="Visible range volume profile: how much was traded at each price for the candles on screen (POC = most traded price; VAH / VAL = edges of the 70 % value area)"
+            className={`pointer-events-auto rounded-md border px-1.5 py-0.5 font-semibold backdrop-blur ${vrvp ? "border-accent/60 bg-accent/15 text-accent" : "border-glass/15 bg-ink/40 text-mute hover:text-text"}`}>VRVP</button>
+          {vrvp && prof && <span className="num rounded-md bg-ink/50 px-1.5 py-0.5 text-mute backdrop-blur">POC <span className="text-accent">{fmtPrice(prof.poc)}</span> · VAH {fmtPrice(prof.vah)} · VAL {fmtPrice(prof.val)}</span>}
+        </div>
+      )}
+    </div>
+  );
 }
