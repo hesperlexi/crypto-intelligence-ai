@@ -720,3 +720,8 @@ Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance da
   raised 49 45 40); with Glass on (default) every theme gets translucent cards (`--panel-a` 0.62, blur 18px, saturate
   165 %), a top-left sheen (`--crystal-sheen`), a crystal edge (`--crystal-edge`, bright inset top line), sheen on tiles,
   buttons and bars, and two extra cool / accent background lights so the frosting picks up colour. Glass off = solid.
+- **Hesper v2.23** (owner, 14 Nov 2026): "Stop run" (job `hesper_new_run`, now stop only) ends the run (record kept) and
+  leaves the challenge idle (state `{"idle": True, ...}`, `run()` does nothing, view `idle`, `current` null); "Start new
+  run" (job `hesper_start_run` {amount}, admin, 10–1,000,000 USDT) starts the next run with that amount
+  (`Hesper.start_new`). Each run stores `start_balance` / `goal` = 10x start (milestone, `goal_of`); liquidation / bust
+  still restart at once with the same amount. Members see the open trade's full PositionGrid with every target.

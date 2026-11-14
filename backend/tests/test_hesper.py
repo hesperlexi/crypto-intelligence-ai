@@ -178,7 +178,7 @@ def test_target_exits_follow_the_bots_rules_and_1000_is_a_milestone_not_an_end(q
     assert v["open_ended"] and v["current"]["goal_reached_at"] and v["score"]["milestones"] == 1
 
 
-def test_admin_stop_closes_the_trade_at_the_engine_price_and_starts_a_new_run(quiet, monkeypatch):
+def test_admin_stop_closes_the_trade_then_admin_starts_a_new_run_with_its_amount(quiet, monkeypatch):
     rt = _rt()
     _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
     _call(rt.db, "s", stop=98.0, tps=(102.0, 103.5, 105.0))
@@ -186,17 +186,26 @@ def test_admin_stop_closes_the_trade_at_the_engine_price_and_starts_a_new_run(qu
     pos = _state(rt)["positions"][0]
     monkeypatch.setattr(rt, "live_price", lambda s: 101.0)
     res = H.Hesper(rt).stop_run(NOW + STEP, by="boss@example.com")
-    assert res["stopped_run"] == 1 and res["next_run"] == 2 and res["closed_trades"] == 1
+    assert res["stopped_run"] == 1 and res["next_run"] is None and res["closed_trades"] == 1
     t = rt.db.one("SELECT * FROM hesper_trades")
     assert t["exit_reason"] == "stopped by admin" and t["exit"] == pytest.approx(101.0, rel=2e-3) and t["pnl"] > 0
     r1 = rt.db.one("SELECT * FROM hesper_runs WHERE run = 1")
     assert r1["result"] == "STOPPED" and r1["reason"] == "stopped" and r1["end_balance"] == pytest.approx(res["final_balance"], abs=0.01)
     assert res["multiple"] == pytest.approx(res["final_balance"] / H.START_BALANCE, abs=1e-3)
     st = _state(rt)
-    assert st["run"] == 2 and st["cash"] == H.START_BALANCE and not st["positions"] and not st["pending"]
+    assert st["idle"] and st["run"] == 1                      # v2.23: waits for the admin's "Start new run"
+    assert H.Hesper(rt).run(NOW + 2 * STEP) == [] and H.view(rt)["idle"] and H.view(rt)["current"] is None
+    with pytest.raises(ValueError):
+        H.Hesper(rt).start_new(5, NOW + 3 * STEP)              # below the minimum
+    out = H.Hesper(rt).start_new(250, NOW + 3 * STEP)
+    st = _state(rt)
+    assert out["run"] == 2 and st["cash"] == 250 and st["goal"] == 2500 and not st["positions"]
     assert "s" in st["taken"]                                  # the stopped call is never taken again
-    assert rt.db.one("SELECT result FROM hesper_runs WHERE run = 2")["result"] == "RUNNING"
-    assert H.view(rt)["score"]["stopped"] == 1
+    assert rt.db.one("SELECT result, start_balance FROM hesper_runs WHERE run = 2") == {"result": "RUNNING", "start_balance": 250}
+    v = H.view(rt)
+    assert v["score"]["stopped"] == 1 and v["start"] == 250 and v["goal"] == 2500 and not v["idle"]
+    with pytest.raises(ValueError):
+        H.Hesper(rt).start_new(100, NOW + 4 * STEP)            # a run is already going
 
 
 def test_stop_job_is_admin_only(quiet):
@@ -206,10 +215,13 @@ def test_stop_job_is_admin_only(quiet):
     with pytest.raises(PermissionError):
         worker.run_job(rt, {"type": "hesper_new_run", "params": {}}, 0)
     out = worker.run_job(rt, {"type": "hesper_new_run", "params": {}, "_admin": True, "by": "boss@example.com"}, 0)
-    assert out["stopped_run"] == 1 and _state(rt)["run"] == 2
+    assert out["stopped_run"] == 1 and _state(rt)["idle"]
     with pytest.raises(ValueError):                           # a second click for the run that already ended
         worker.run_job(rt, {"type": "hesper_new_run", "params": {"run": 1}, "_admin": True}, 0)
-    assert _state(rt)["run"] == 2
+    with pytest.raises(PermissionError):
+        worker.run_job(rt, {"type": "hesper_start_run", "params": {"amount": 100}}, 0)
+    out = worker.run_job(rt, {"type": "hesper_start_run", "params": {"amount": 100}, "_admin": True}, 0)
+    assert out["run"] == 2 and _state(rt)["run"] == 2
 
 
 def test_breakeven_after_tp1(quiet):

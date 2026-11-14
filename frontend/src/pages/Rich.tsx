@@ -1,6 +1,6 @@
-// Road to Rich (admin only): Hesper, an all-in demo bot on the public grade-A calls. Each run starts at $100 and keeps
-// going (v2.22, owner 14 Nov 2026) until the admin ends it ("End run & start new") or it is liquidated / too small to
-// trade (failure); $1,000 is a milestone, not an end. A new run starts at once.
+// Hesper Challenge: an all-in demo bot on the public grade-A calls. A run keeps going until the admin stops it or it is
+// liquidated / too small to trade; 10x the start is a milestone. v2.23: after a stop the admin starts the next run
+// with a chosen amount.
 // Data: views/hesper (backend services/hesper.py). Virtual money only.
 import { PageHeader } from "../components/kit";
 import { useMemo, useRef, useState } from "react";
@@ -27,8 +27,7 @@ const dur = (ms: unknown) => {
   const h = ms / 3_600_000;
   return h < 1 ? `${Math.max(1, Math.round(ms / 60_000))} min` : h < 48 ? `${h.toFixed(h < 10 ? 1 : 0)} h` : `${(h / 24).toFixed(1)} d`;
 };
-const REASON: Record<string, string> = { goal: "$1,000 reached", liquidated: "Liquidated", busted: "Busted", stopped: "Stopped by admin" };
-const SUBLINE = "$100 start · runs until stopped or liquidated · $1,000 milestone";
+const REASON: Record<string, string> = { goal: "Goal reached", liquidated: "Liquidated", busted: "Busted", stopped: "Stopped by admin" };
 
 /** Live balance and open P/L of the current trade (ticker at most once a second). */
 function useLiveRun(cur: any) {
@@ -57,7 +56,7 @@ function Progress({ bal, start, goal }: { bal: number | null; start: number; goa
   const p = progressOf(bal, start, goal);
   return (
     <div>
-      <div className="h-3 overflow-hidden rounded-full bg-glass/[0.08]" role="progressbar" aria-label="Progress to $1,000"
+      <div className="h-3 overflow-hidden rounded-full bg-glass/[0.08]" role="progressbar" aria-label="Progress to the milestone"
         aria-valuemin={start} aria-valuemax={goal} aria-valuenow={isNum(bal) ? Math.round(bal) : start}>
         <div className="h-full rounded-full bg-gradient-to-r from-accent/70 to-accent shadow-[0_0_14px_rgb(var(--accent)/0.6)] transition-[width] duration-700"
           style={{ width: `${Math.max(p > 0 ? 2 : 0, p * 100)}%` }} />
@@ -87,7 +86,7 @@ function OpenTrade({ o, live }: { o: any; live: ReturnType<typeof useLiveRun> })
           <span className={`num ml-2 text-sm ${tone(live.roi)}`}>{pct(live.roi)}</span>
         </span>
       </div>
-      <div className="mt-3"><PositionGrid p={botFacts(o, live.px)} note={`Opened ${fmtDate(o.opened_at)}. Realized PNL includes closed targets and fees.`} /></div>
+      <div className="mt-3"><PositionGrid p={botFacts(o, live.px)} allTps note={`Opened ${fmtDate(o.opened_at)}`} /></div>
     </div>
   );
 }
@@ -109,7 +108,7 @@ function RunCard({ v, live }: { v: any; live: ReturnType<typeof useLiveRun> }) {
       <div className="mt-4"><Progress bal={live.balance} start={start} goal={goal} /></div>
       {cur.goal_reached_at && (
         <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-bull/40 bg-bull/10 px-2.5 py-0.5 text-xs font-semibold text-bull">
-          ✓ {usd(goal, 0)} milestone reached {fmtDate(cur.goal_reached_at)} · still running{isNum(live.balance) ? ` · ${(live.balance / start).toFixed(1)}x` : ""}
+          ✓ {usd(goal, 0)} reached {fmtDate(cur.goal_reached_at)}{isNum(live.balance) ? ` · ${(live.balance / start).toFixed(1)}x` : ""}
         </div>
       )}
       <div className="mt-4">
@@ -160,7 +159,7 @@ function ResultTag({ r }: { r: any }) {
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       <span className={`whitespace-nowrap rounded px-1.5 py-0.5 text-xs font-semibold ${cls}`}>{txt}</span>
-      {r.goal_reached_at && r.result !== "SUCCESS" && <span className="whitespace-nowrap rounded bg-bull/15 px-1.5 py-0.5 text-xs font-semibold text-bull" title="Reached the $1,000 milestone">$1k ✓</span>}
+      {r.goal_reached_at && r.result !== "SUCCESS" && <span className="whitespace-nowrap rounded bg-bull/15 px-1.5 py-0.5 text-xs font-semibold text-bull" title="Reached 10x its start">10x ✓</span>}
     </span>
   );
 }
@@ -193,39 +192,66 @@ function Share({ v, balance }: { v: any; balance: number | null }) {
 }
 
 /** Admin switch: the challenge for the admin only, or view-only for active members too (never public). Asks first. */
-/** Admin: end the current run now (open trade closed at the engine's price) and start the next one at $100. Asks first. */
-function EndRun({ run, onDone }: { run: number; onDone: () => void }) {
+/** Admin: stop the current run now (open trade closed at the engine's price); the record is kept. Asks first. */
+function StopRun({ run, onDone }: { run: number; onDone: () => void }) {
   const [ask, setAsk] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const ref = useFocusTrap(ask, () => setAsk(false));
   const go = async () => {
-    setAsk(false); setBusy(true); setMsg("Ending the run on the next engine cycle (within 5 min)…");
+    setAsk(false); setBusy(true); setMsg("Stopping…");
     try {
       const j = await queueJob("hesper_new_run", { run });
       const r: any = await j.done;
-      setMsg(r?.stopped_run ? `Run #${r.stopped_run} ended at ${usd(r.final_balance)} (${Number(r.multiple).toFixed(1)}x). Run #${r.next_run} started at $100.` : "Done.");
+      setMsg(r?.stopped_run ? `Run #${r.stopped_run} stopped at ${usd(r.final_balance)} (${Number(r.multiple).toFixed(1)}x).` : "Stopped.");
       onDone();
-    } catch (e: any) { setMsg(`Not ended: ${e?.message ?? e}`); }
+    } catch (e: any) { setMsg(`Not stopped: ${e?.message ?? e}`); }
     setBusy(false);
   };
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setAsk(true)}>End run & start new</button>
+      <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setAsk(true)}>Stop run</button>
       {msg && <span className="text-xs text-mute" role="status">{msg}</span>}
       {ask && createPortal(
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setAsk(false)}>
-          <div ref={ref} role="alertdialog" aria-modal="true" aria-label="End this run" onClick={(e) => e.stopPropagation()}
+          <div ref={ref} role="alertdialog" aria-modal="true" aria-label="Stop this run" onClick={(e) => e.stopPropagation()}
             className="panel popover animate-in w-full max-w-md rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
-            <h2 className="text-base font-semibold">End run #{run} and start a new one?</h2>
-            <p className="mt-2 text-sm text-mute">An open trade closes at the engine's price, a waiting order is cancelled, and the run is saved as
-              “Stopped” with its final balance. Run #{run + 1} starts at $100 straight away. This cannot be undone.</p>
+            <h2 className="text-base font-semibold">Stop run #{run}?</h2>
+            <p className="mt-2 text-sm text-mute">An open trade closes at the engine's price. The run and its record are kept.</p>
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" className="btn btn-sm" onClick={() => setAsk(false)}>Cancel</button>
-              <button type="button" className="btn btn-sm btn-primary" onClick={() => void go()}>End run</button>
+              <button type="button" className="btn btn-sm btn-primary" onClick={() => void go()}>Stop run</button>
             </div>
           </div>
         </div>, document.body)}
+    </div>
+  );
+}
+
+/** Admin: start the next run with a chosen amount (USDT, virtual). */
+function StartRun({ onDone, last }: { onDone: () => void; last?: number }) {
+  const [amount, setAmount] = useState(String(last ?? 100));
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  const n = Number(amount);
+  const ok = isNum(n) && n >= 10 && n <= 1_000_000;
+  const go = async () => {
+    setBusy(true); setMsg("Starting…");
+    try {
+      const j = await queueJob("hesper_start_run", { amount: n });
+      const r: any = await j.done;
+      setMsg(r?.run ? `Run #${r.run} started with ${usd(r.start_balance, 0)}.` : "Started.");
+      onDone();
+    } catch (e: any) { setMsg(`Not started: ${e?.message ?? e}`); }
+    setBusy(false);
+  };
+  return (
+    <div className="flex flex-wrap items-end gap-2">
+      <label className="text-sm text-mute">Starting amount (USDT)
+        <input className="input mt-1 block w-36" inputMode="decimal" value={amount} onChange={(e) => setAmount(e.target.value)} aria-label="Starting amount in USDT" />
+      </label>
+      <button type="button" className="btn btn-primary" disabled={busy || !ok} onClick={() => void go()}>Start new run</button>
+      {msg && <span className="text-xs text-mute" role="status">{msg}</span>}
     </div>
   );
 }
@@ -286,25 +312,29 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="space-y-4">
       {admin && !embedded ? (
-        <PageHeader title="Hesper Challenge" sub={`${SUBLINE}. All-in, up to ${v?.max_leverage ?? 25}x (15m: 10–50x). Virtual money.`}
-          actions={<><Visibility />{v?.current && <EndRun run={v.current.run} onDone={q.reload} />}{v?.current && <Share v={v} balance={live.balance} />}</>} />
+        <PageHeader title="Hesper Challenge"
+          actions={<><Visibility />{v?.current && <StopRun run={v.current.run} onDone={q.reload} />}{v?.current && <Share v={v} balance={live.balance} />}</>} />
       ) : (
-        <div>
-          <h2 className="text-lg font-semibold"><span className="text-accent">Hesper Challenge</span></h2>
-          <p className="text-sm text-mute">{SUBLINE}</p>
-          <p className="text-sm text-mute">Demo challenge with virtual money. Not a trading plan.</p>
-        </div>
+        <h2 className="text-lg font-semibold"><span className="text-accent">Hesper Challenge</span></h2>
       )}
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}
       {!v && !q.error && <div className="skeleton h-64 rounded-xl" />}
-      {v && !v.current && <p className="panel p-4 text-center text-sm text-mute">Hesper starts with the next engine cycle.</p>}
-      {v?.current && (
+      {v && !v.current && (
+        <section className="panel panel-hero flex flex-wrap items-end justify-between gap-4 p-4 sm:p-5" aria-label="No run in progress">
+          <div>
+            <div className="font-display text-base font-semibold">{v.idle ? "Stopped" : "Not started"}</div>
+            <div className="text-sm text-mute">{v.idle ? "No run in progress." : "Starts with the next engine cycle."}</div>
+          </div>
+          {admin && !embedded && v.idle && <StartRun onDone={q.reload} last={v.start} />}
+        </section>
+      )}
+      {v && (
         <>
-          <RunCard v={v} live={live} />
+          {v.current && <RunCard v={v} live={live} />}
           <div className="panel rich-facts grid grid-cols-2 p-0 sm:grid-cols-3 lg:grid-cols-6">
-            <Tile k="Reached $1,000" v={String(sc.milestones ?? sc.successes ?? 0)} cls="text-bull" sub="runs that hit the milestone" />
+            <Tile k="Reached 10x" v={String(sc.milestones ?? sc.successes ?? 0)} cls="text-bull" />
             <Tile k="Failures" v={String(sc.failures ?? 0)} cls="text-bear" sub={`${sc.liquidations ?? 0} liquidated · ${sc.busted ?? 0} busted`} />
-            <Tile k="Runs" v={String(sc.runs ?? 0)} sub={`now #${curRun}${sc.stopped ? ` · ${sc.stopped} stopped` : ""}`} />
+            <Tile k="Runs" v={String(sc.runs ?? 0)} sub={`${curRun ? `now #${curRun}` : "none running"}${sc.stopped ? ` · ${sc.stopped} stopped` : ""}`} />
             <Tile k="Best peak" v={usd(sc.best_peak?.peak, 0)} cls="text-accent" sub={sc.best_peak ? `run #${sc.best_peak.run}` : undefined} />
             <Tile k="Avg trades / run" v={isNum(sc.avg_trades_per_run) ? sc.avg_trades_per_run.toFixed(1) : "—"} sub="finished runs" />
             <Tile k="Fastest success" v={sc.fastest_success ? dur(sc.fastest_success.ms) : "—"} sub={sc.fastest_success ? `run #${sc.fastest_success.run} · ${sc.fastest_success.trades} trades` : "none yet"} />
@@ -401,7 +431,6 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
               </div>
             )}
           </section>
-          <p className="text-center text-xs text-mute">{v.label ?? "Demo · virtual money · not financial advice"}</p>
         </>
       )}
     </div>

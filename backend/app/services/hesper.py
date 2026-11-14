@@ -54,11 +54,25 @@ VIEW_CURVES = 20
 CURVE_POINTS = 300
 
 
-def _fresh_state(run: int, now: int) -> dict[str, Any]:
-    return {"run": run, "started_at": now, "cash": START_BALANCE, "positions": [], "pending": [], "start_prices": {},
+MIN_START, MAX_START = 10.0, 1_000_000.0      # v2.23: the admin chooses each run's starting amount (USDT)
+
+
+def goal_of(start: float) -> float:
+    """v2.23: the milestone is 10x the run's start ($100 -> $1,000)."""
+    return float(start) * 10
+
+
+def _fresh_state(run: int, now: int, start: float = START_BALANCE) -> dict[str, Any]:
+    start = float(start)
+    return {"run": run, "started_at": now, "cash": start, "start_balance": start, "goal": goal_of(start),
+            "positions": [], "pending": [], "start_prices": {},
             "last_bar": {}, "last_entry_bar": {}, "fees_paid": 0.0, "funding_paid": 0.0, "liquidations": 0,
-            "notes": [], "peak": START_BALANCE, "trades": 0, "wins": 0, "trade_cfg": None, "end": None,
+            "notes": [], "peak": start, "trades": 0, "wins": 0, "trade_cfg": None, "end": None,
             "taken": []}
+
+
+def _start_of(state: dict[str, Any] | None) -> float:
+    return float((state or {}).get("start_balance") or START_BALANCE)
 
 
 def _trade_cfg(tf: str, horizon: int, lev: float) -> dict[str, Any]:
@@ -96,9 +110,10 @@ class Hesper(BotEngine):
         return state
 
     def _insert_run(self, state: dict[str, Any]) -> None:
+        st = _start_of(state)
         self.db.execute("INSERT INTO hesper_runs (run, started_at, result, start_balance, peak, trades, wins) "
                         "VALUES (?, ?, 'RUNNING', ?, ?, 0, 0) ON CONFLICT (run) DO NOTHING",
-                        (state["run"], state["started_at"], START_BALANCE, START_BALANCE))
+                        (state["run"], state["started_at"], st, st))
 
     def bots(self) -> list[tuple[dict[str, Any], dict[str, Any]]]:
         return []               # never part of the bots machinery's own list (report, adjustments of `bots` rows)
@@ -107,6 +122,8 @@ class Hesper(BotEngine):
     def run(self, now: int | None = None) -> list[dict[str, Any]]:
         now = now_ms() if now is None else now
         state = self.start(now)
+        if state.get("idle"):                  # v2.23: stopped by the admin, waiting for "Start new run"
+            return []
         events: list[dict[str, Any]] = []
         self._funding(state, now)
         cfg = state.get("trade_cfg")
@@ -129,32 +146,62 @@ class Hesper(BotEngine):
 
     def _milestone(self, state: dict[str, Any], now: int) -> dict[str, Any] | None:
         """v2.22: the first time the run's balance (equity at the engine's price) reaches GOAL, note it once."""
-        if state.get("goal_reached_at") or float(state.get("equity", state["cash"])) < GOAL - 1e-9:
+        goal = float(state.get("goal") or goal_of(_start_of(state)))
+        if state.get("goal_reached_at") or float(state.get("equity", state["cash"])) < goal - 1e-9:
             return None
         state["goal_reached_at"] = int(now)
         self.db.execute("UPDATE hesper_runs SET goal_reached_at = ? WHERE run = ? AND result = 'RUNNING' "
                         "AND goal_reached_at IS NULL", (int(now), state["run"]))
         return {"bot": BOT_ID, "type": "goal_reached", "run": state["run"], "balance": float(state["equity"])}
 
-    def _finish(self, state: dict[str, Any], now: int, result: str, reason: str, at: int) -> None:
-        """Close the run's row (result / reason / balance) and start the next run at $100."""
+    def _finish(self, state: dict[str, Any], now: int, result: str, reason: str, at: int, start_next: bool = True) -> None:
+        """Close the run's row (result / reason / balance). An automatic end (liquidated / busted) starts the next run
+        at once with the same starting amount; an admin stop (v2.23) leaves the challenge idle until "Start new run"."""
         cash = float(state["cash"])
         self.db.execute("UPDATE hesper_runs SET ended_at = ?, result = ?, reason = ?, end_balance = ?, peak = ?, "
                         "trades = ?, wins = ? WHERE run = ? AND result = 'RUNNING'",
                         (at, result, reason, cash, max(float(state["peak"]), cash), state["trades"], state["wins"],
                          state["run"]))
-        nxt = _fresh_state(int(state["run"]) + 1, now)
-        nxt["taken"] = list(state.get("taken") or [])[-50:]       # a call is never taken twice, even across runs
+        taken = list(state.get("taken") or [])[-50:]       # a call is never taken twice, even across runs
+        if not start_next:
+            self.save({"idle": True, "run": int(state["run"]), "stopped_at": int(at), "taken": taken,
+                       "start_balance": _start_of(state), "last_end_balance": cash})
+            return
+        nxt = _fresh_state(int(state["run"]) + 1, now, _start_of(state))
+        nxt["taken"] = taken
         self._insert_run(nxt)
         self.save(nxt)
 
-    def stop_run(self, now: int | None = None, by: str = "") -> dict[str, Any]:
-        """v2.22 admin "End run & start new": close any open position at the engine's price, cancel a pending order,
-        end the run as STOPPED ("stopped") with its final balance and start the next run at $100 at once."""
+    def start_new(self, amount: float, now: int | None = None, by: str = "") -> dict[str, Any]:
+        """v2.23 admin "Start new run" after a stop, with the starting amount the admin chose."""
+        now = now_ms() if now is None else now
+        amount = float(amount)
+        if not (MIN_START <= amount <= MAX_START):
+            raise ValueError(f"the starting amount must be between {MIN_START:,.0f} and {MAX_START:,.0f} USDT")
+        state = self.load()
+        if state is not None and not state.get("idle"):
+            raise ValueError(f"run #{state['run']} is still running; stop it first")
+        last = self.db.one("SELECT MAX(run) AS n FROM hesper_runs")
+        run = int((last or {}).get("n") or 0) + 1
+        nxt = _fresh_state(run, now, amount)
+        nxt["taken"] = list((state or {}).get("taken") or [])
+        if not self.db.get_setting(SINCE, None):
+            self.db.set_setting(SINCE, now)
+        self.db.set_setting(FLAG, True)
+        self._insert_run(nxt)
+        self.save(nxt)
+        return {"run": run, "start_balance": amount, "goal": goal_of(amount), "by": by}
+
+    def stop_run(self, now: int | None = None, by: str = "", start_next: bool = False) -> dict[str, Any]:
+        """Admin "Stop run": close any open position at the engine's price, cancel a pending order and end the run as
+        STOPPED ("stopped") with its final balance. v2.23: the challenge then waits for "Start new run" (the admin
+        chooses the amount); `start_next=True` keeps the v2.22 behaviour (next run at the same amount at once)."""
         now = now_ms() if now is None else now
         state = self.load()
         if state is None:
             raise ValueError("the Hesper challenge has not started yet")
+        if state.get("idle"):
+            raise ValueError(f"run #{state['run']} has already ended")
         closed = []
         for pos in list(state.get("positions") or []):
             px = self._price(pos["symbol"]) or pos["entry"]
@@ -166,9 +213,10 @@ class Hesper(BotEngine):
         state["pending"] = []
         state["trade_cfg"] = None
         run, cash = int(state["run"]), float(state["cash"])
-        self._finish(state, now, "STOPPED", "stopped", int(now))
-        return {"stopped_run": run, "final_balance": round(cash, 2), "multiple": round(cash / START_BALANCE, 3),
-                "closed_trades": len(closed), "next_run": run + 1, "by": by}
+        start = _start_of(state)
+        self._finish(state, now, "STOPPED", "stopped", int(now), start_next=start_next)
+        return {"stopped_run": run, "final_balance": round(cash, 2), "multiple": round(cash / start, 3),
+                "closed_trades": len(closed), "next_run": run + 1 if start_next else None, "by": by}
 
     def _check_end(self, state: dict[str, Any], now: int) -> dict[str, Any] | None:
         """Flat: has the run ended by itself? Liquidation or a balance below MIN_BALANCE -> FAIL. (v2.22: reaching
@@ -292,7 +340,7 @@ class Hesper(BotEngine):
                         "ON CONFLICT (id) DO NOTHING", list(trade.values()))
         state["trades"] = int(state.get("trades", 0)) + 1
         state["wins"] = int(state.get("wins", 0)) + (1 if pnl > 0 else 0)
-        state["peak"] = max(float(state.get("peak", START_BALANCE)), bal)
+        state["peak"] = max(float(state.get("peak", _start_of(state))), bal)
         best = self.db.one("SELECT id, symbol, timeframe, pnl, roi_pct FROM hesper_trades WHERE run = ? "
                            "ORDER BY pnl DESC LIMIT 1", (trade["run"],))
         self.db.execute("UPDATE hesper_runs SET trades = ?, wins = ?, peak = ?, best_trade = ? "
@@ -369,7 +417,9 @@ def view(rt: Any) -> dict[str, Any]:
     db = rt.db
     st = db.get_setting(STATE_KEY, None)
     since = db.get_setting(SINCE, None)
-    base = {"name": NAME, "since": since, "start": START_BALANCE, "goal": GOAL, "max_leverage": MAX_LEVERAGE,
+    start = _start_of(st if isinstance(st, dict) else None)
+    base = {"name": NAME, "since": since, "start": start, "goal": float((st or {}).get("goal") or goal_of(start)) if isinstance(st, dict) else goal_of(start),
+            "max_leverage": MAX_LEVERAGE, "idle": bool(isinstance(st, dict) and st.get("idle")),
             "policy": {"timeframes": list(F.POLICY_TFS), "min": F.MIN_LEVERAGE, "max": F.POLICY_MAX_LEVERAGE},
             "min_balance": MIN_BALANCE, "started": bool(st), "generated_at": now_ms()}
     runs = db.query("SELECT * FROM hesper_runs ORDER BY run DESC")
@@ -390,7 +440,7 @@ def view(rt: Any) -> dict[str, Any]:
              "liquidations": sum(1 for r in fails if r["reason"] == "liquidated"),
              "busted": sum(1 for r in fails if r["reason"] == "busted"), "runs": len(runs), "finished": len(done),
              "best_peak": {"run": best_run["run"], "peak": best_run["peak"]} if best_run else None,
-             "all_time_peak": max([r["peak"] for r in runs] or [START_BALANCE]),
+             "all_time_peak": max([r["peak"] for r in runs] or [start]),
              "avg_trades_per_run": (sum(r["trades"] for r in done) / len(done)) if done else None,
              "fastest_success": {"run": fastest["run"], "ms": fastest["ended_at"] - fastest["started_at"],
                                  "trades": fastest["trades"]} if fastest else None,
@@ -398,13 +448,14 @@ def view(rt: Any) -> dict[str, Any]:
              "trades": len(all_trades), "wins": sum(1 for t in all_trades if t["pnl"] > 0),
              "streak": _streak(all_trades)}
     current = None
-    if st:
+    if st and not st.get("idle"):
         pos = (st.get("positions") or [None])[0]
         pend = (st.get("pending") or [None])[0]
         current = {"run": st["run"], "started_at": st["started_at"], "cash": st["cash"],
                    "balance": st.get("equity", st["cash"]), "peak": st.get("peak"), "trades": st.get("trades", 0),
                    "wins": st.get("wins", 0), "updated_at": st.get("updated_at"), "open": None, "pending": None,
-                   "goal_reached_at": st.get("goal_reached_at")}
+                   "goal_reached_at": st.get("goal_reached_at"), "start_balance": _start_of(st),
+                   "goal": float(st.get("goal") or goal_of(_start_of(st)))}
         if pos:
             i = pos.get("info") or {}
             current["open"] = {"id": pos["id"], "symbol": pos["symbol"], "timeframe": i.get("timeframe"), "side": pos["side"],
@@ -427,7 +478,7 @@ def view(rt: Any) -> dict[str, Any]:
     for t in reversed(all_trades):
         by_run.setdefault(int(t["run"]), []).append(t)
     for r in runs[:VIEW_CURVES]:
-        pts = [[r["started_at"], START_BALANCE]] + [[t["closed_at"], round(t["balance_after"], 4)]
+        pts = [[r["started_at"], float(r.get("start_balance") or START_BALANCE)]] + [[t["closed_at"], round(t["balance_after"], 4)]
                                                    for t in by_run.get(int(r["run"]), [])]
         if len(pts) > CURVE_POINTS:
             step = len(pts) / CURVE_POINTS
@@ -448,4 +499,4 @@ def core(v: dict[str, Any]) -> Any:
     o = c.get("open") or {}
     p = c.get("pending") or {}
     return [c.get("run"), c.get("trades"), (v.get("score") or {}).get("trades"), o.get("id"), o.get("tp_hit"),
-            o.get("stop"), p.get("id"), c.get("goal_reached_at")]
+            o.get("stop"), p.get("id"), c.get("goal_reached_at"), v.get("idle")]

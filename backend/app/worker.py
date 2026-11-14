@@ -879,10 +879,26 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
         cur = (hesper.Hesper(rt).load() or {}).get("run")
         if want is not None and cur is not None and int(want) != int(cur):
             raise ValueError(f"run #{want} has already ended (run #{cur} is running now)")
-        res = hesper.Hesper(rt).stop_run(by=str(job.get("by") or ""))
+        res = hesper.Hesper(rt).stop_run(by=str(job.get("by") or ""))       # v2.23: stops only; "Start new run" next
         if sink is not None:
             try:
                 hv = hesper.view(rt)               # the new run number changes `core`, so it goes out at once
+                sink.view("hesper", hv, min_interval_s=900, core=hesper.core(hv))
+            except Exception:
+                pass
+        return res
+    if kind == "hesper_start_run":
+        # v2.23: admin only: start the next Hesper run with the amount the admin chose
+        if not job.get("_admin"):
+            raise PermissionError("only the admin can start a Hesper run")
+        try:
+            amount = float(p.get("amount"))
+        except (TypeError, ValueError):
+            raise ValueError("enter a starting amount in USDT") from None
+        res = hesper.Hesper(rt).start_new(amount, by=str(job.get("by") or ""))
+        if sink is not None:
+            try:
+                hv = hesper.view(rt)
                 sink.view("hesper", hv, min_interval_s=900, core=hesper.core(hv))
             except Exception:
                 pass
@@ -970,7 +986,7 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             result = run_job(rt, job, deadline, sink)
             sink.set(f"jobs/{jid}", {"status": "done", "json": dumps(result), "finished_at": now_ms()}, merge=True)
         except Exception as exc:
-            plain = job.get("type") in ("adjust_signal", "guardian_dismiss", "hold_signal", "hesper_new_run") and isinstance(exc, (PermissionError, ValueError))
+            plain = job.get("type") in ("adjust_signal", "guardian_dismiss", "hold_signal", "hesper_new_run", "hesper_start_run") and isinstance(exc, (PermissionError, ValueError))
             if not plain:
                 log.exception("job %s failed", jid)
             # adjust_signal refusals carry a plain-language reason for the admin (no exception class name)
