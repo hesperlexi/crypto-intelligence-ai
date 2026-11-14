@@ -89,15 +89,20 @@ export function AdjustButton({ call, symbol, timeframe }: { call: any; symbol: s
   const admin = useIsAdmin();
   const [open, setOpen] = useState(false);
   const [closing, setClosing] = useState(false);
+  const [holding, setHolding] = useState(false);
   const { pending } = useNotices();
   if (!admin || !call || call.status !== "OPEN" || !call.id) return null;
   const busy = pending.get(call.id);
-  if (busy) return <Pill tone="warn" title="Saved; the engine applies it on its next run">{busy === "close" ? "Closing…" : "Updating…"}</Pill>;
+  if (busy) return <Pill tone="warn" title="Saved; the engine applies it on its next run">{busy === "close" ? "Closing…" : busy === "hold" ? "Holding…" : "Updating…"}</Pill>;
   const canClose = call.fill_status !== "PENDING" && !(call.adjustments ?? []).some((a: Adjustment) => a.field === "close");
+  // v2.22 Hold: withdraw a call within HOLD_WINDOW_MIN of publication (the engine checks the time again)
+  const canHold = isNum(call.created_at) && Date.now() - call.created_at <= HOLD_WINDOW_MIN * 60_000;
   return (
     <>
       <button type="button" className="btn btn-sm px-2.5 text-xs" onClick={() => setOpen(true)} title="Move the stop-loss or take-profit 1 (admin, public)">Adjust</button>
+      {canHold && <button type="button" className="btn btn-sm border-warn/40 px-2.5 text-xs text-warn" onClick={() => setHolding(true)} title={`Withdraw this call (only within ${HOLD_WINDOW_MIN} minutes of publication)`}>Hold</button>}
       {canClose && <button type="button" className="btn btn-sm px-2.5 text-xs" onClick={() => setClosing(true)} title="Close this call now at the market price (admin, public)">Close now</button>}
+      {holding && <HoldModal call={call} symbol={symbol} timeframe={timeframe} onClose={() => setHolding(false)} />}
       {open && <AdjustModal call={call} symbol={symbol} timeframe={timeframe} onClose={() => setOpen(false)} />}
       {closing && <CloseModal call={call} symbol={symbol} timeframe={timeframe} onClose={() => setClosing(false)} />}
     </>
@@ -112,6 +117,57 @@ export function closeEstimate(call: any, px: number | undefined): number | null 
   const t1 = call.tp1_hit && isNum(call.tp1) ? leg(Number(call.tp1)) : leg(px);
   const t2 = call.tp2_hit && isNum(call.tp2) ? leg(Number(call.tp2)) : leg(px);
   return (0.5 * t1 + 0.25 * t2 + 0.25 * leg(px)) * 100;
+}
+
+export const HOLD_WINDOW_MIN = 15;
+
+/** v2.22 admin Hold: the call is withdrawn from the record (moved, not deleted), bots / Hesper close or cancel what
+ *  they took, members are told; it is still followed privately for the hold scoreboard on the Guardian page. */
+export function HoldModal({ call, symbol, timeframe, onClose }: { call: any; symbol: string; timeframe?: string; onClose: () => void }) {
+  const [note, setNote] = useState("");
+  const [step, setStep] = useState<"edit" | "sending" | "done" | "failed">("edit");
+  const [msg, setMsg] = useState("");
+  const n = note.trim();
+  const tf = String(timeframe ?? call.timeframe ?? "").toUpperCase();
+  const left = isNum(call.created_at) ? Math.max(0, Math.round((call.created_at + HOLD_WINDOW_MIN * 60_000 - Date.now()) / 60_000)) : null;
+  const send = async () => {
+    setStep("sending");
+    try {
+      const j = await queueJob("hold_signal", { signal_id: call.id, note: n });
+      track(call.id, "hold", j.done, (r: any) => `${base(symbol)} ${tf}: ${r?.message ?? "held."}`);
+      setStep("done");
+      setMsg("Saved. The engine withdraws it on its next run (within about 5 minutes).");
+    } catch (e: any) {
+      setStep("failed");
+      setMsg(e?.message ?? "The hold could not be saved.");
+    }
+  };
+  return createPortal(
+    <div className="fixed inset-0 z-[75] flex items-end justify-center bg-black/75 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => step !== "sending" && onClose()} role="dialog" aria-modal="true" aria-label="Hold signal">
+      <div className="panel w-full max-w-md rounded-b-none sm:rounded-2xl" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
+          <h2 className="label">Hold {base(symbol)} {tf} {call.side === "SHORT" ? "short" : "long"}</h2>
+          <button className="btn btn-ghost px-3" onClick={onClose} disabled={step === "sending"} aria-label="Close window">Cancel</button>
+        </div>
+        <div className="space-y-3 p-4 text-sm">
+          {step === "edit" || step === "sending" ? (
+            <>
+              <p className="rounded-lg border border-glass/10 bg-ink/40 px-2.5 py-2 text-xs text-mute">
+                The call is withdrawn: it leaves the record (Results shows how many calls were withdrawn), the demo bots close what they took, and members are told. It is still followed privately, so your Hold scoreboard on the Trade Guardian page shows whether holding helped.{left != null ? ` ${left} min left to hold.` : ""}
+              </p>
+              <label className="block">
+                <span className="text-xs text-mute">Note for members (required, 3–200 characters)</span>
+                <textarea className="input mt-1 min-h-[64px] w-full py-2" maxLength={200} value={note} onChange={(e) => setNote(e.target.value)} placeholder="e.g. Big US data in 20 minutes" />
+              </label>
+              <div className="flex justify-end gap-2">
+                <button type="button" className="btn" onClick={onClose} disabled={step === "sending"}>Cancel</button>
+                <button type="button" className="btn btn-primary" disabled={step === "sending" || n.length < 3 || n.length > 200} onClick={send}>{step === "sending" ? "Saving…" : "Hold this call"}</button>
+              </div>
+            </>
+          ) : <p className={step === "failed" ? "text-bear" : "text-mute"} role="status">{msg}</p>}
+        </div>
+      </div>
+    </div>, document.body);
 }
 
 export function CloseModal({ call, symbol, timeframe, onClose }: { call: any; symbol: string; timeframe?: string; onClose: () => void }) {

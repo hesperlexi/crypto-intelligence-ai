@@ -861,6 +861,15 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
             return adjust.apply(rt, p, str(job.get("by") or ""), sink)
         except adjust.AdjustError as exc:
             raise ValueError(str(exc)) from None
+    if kind == "hold_signal":
+        # v2.22: admin only (job creator's email, like adjust_signal)
+        if not job.get("_admin"):
+            raise PermissionError("only the admin can hold a signal")
+        from .services import hold as H
+        try:
+            return H.hold(rt, p, str(job.get("by") or ""), sink)
+        except H.HoldError as exc:
+            raise ValueError(str(exc)) from None
     if kind == "guardian_dismiss":
         # v2.19: admin only (job creator's email), like adjust_signal; nothing about the call changes
         if not job.get("_admin"):
@@ -944,7 +953,7 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             result = run_job(rt, job, deadline, sink)
             sink.set(f"jobs/{jid}", {"status": "done", "json": dumps(result), "finished_at": now_ms()}, merge=True)
         except Exception as exc:
-            plain = job.get("type") in ("adjust_signal", "guardian_dismiss") and isinstance(exc, (PermissionError, ValueError))
+            plain = job.get("type") in ("adjust_signal", "guardian_dismiss", "hold_signal") and isinstance(exc, (PermissionError, ValueError))
             if not plain:
                 log.exception("job %s failed", jid)
             # adjust_signal refusals carry a plain-language reason for the admin (no exception class name)
@@ -1232,7 +1241,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         detail["tracking_be_v23b"] = tracking.reopen_for_break_even(rt.db)  # (wins and losses alike) under the BE rule
         rt.db.set_setting("tracking_be_v23b", True)
     step("outcomes", lambda: (tracking.resolve_outcomes(rt), tracking.update_signal_outcomes(rt),
-                                  tracking.update_signal_outcomes(rt, table="shadow_signals")))
+                                  tracking.update_signal_outcomes(rt, table="shadow_signals"),
+                                  tracking.update_signal_outcomes(rt, table="held_signals")))
     # admin scalping log: its own step, so a problem there never stops the record's outcomes above
     if tracking.SCALPING_ON:
         step("scalp_outcomes", lambda: tracking.update_signal_outcomes(rt, table=tracking.SCALP_TABLE))

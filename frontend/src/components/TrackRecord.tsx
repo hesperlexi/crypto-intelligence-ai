@@ -123,6 +123,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
       )}
       {!compact && d.last_7d && <Last7 r={d.last_7d} />}
       {d.restart?.text && <p className="px-1 text-xs text-mute">{d.restart.text}</p>}
+      {d.withdrawn?.count > 0 && <p className="px-1 text-xs text-mute">{d.withdrawn.count} call{d.withdrawn.count === 1 ? " was" : "s were"} withdrawn by the admin within {d.withdrawn.window_min} min of publication and {d.withdrawn.count === 1 ? "is" : "are"} not counted.</p>}
       <Explain>{d.results_net ? "Results are after fees (trading costs and funding). ROI on margin = result × suggested leverage (15m: 10–50x chosen by engine). Leverage magnifies losses." : "ROI on margin = price move × suggested leverage. Leverage magnifies losses."}</Explain>
       {(d.live?.curve?.length ?? 0) > 1 && (
         <div className="panel px-4 pt-3">

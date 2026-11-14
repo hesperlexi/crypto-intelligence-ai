@@ -509,3 +509,39 @@ CREATE TABLE IF NOT EXISTS guardian_m1 (
   volume DOUBLE PRECISION NOT NULL,
   PRIMARY KEY (symbol, ts)
 );
+
+-- v2.22 (owner, 14 Nov 2026): calls the admin withdrew ("Hold") within services/hold.HOLD_WINDOW_MIN of publication.
+-- Moved out of `signals` (never in the public record), followed with the same rules for the admin's hold scoreboard.
+CREATE TABLE IF NOT EXISTS held_signals (
+  id TEXT PRIMARY KEY,
+  created_at BIGINT NOT NULL,
+  symbol TEXT NOT NULL,
+  timeframe TEXT NOT NULL,
+  bar_ts BIGINT NOT NULL,
+  signal TEXT NOT NULL,
+  decision TEXT NOT NULL,
+  score DOUBLE PRECISION,
+  confidence DOUBLE PRECISION,
+  regime TEXT,
+  price DOUBLE PRECISION NOT NULL,
+  side INTEGER NOT NULL DEFAULT 0,
+  entry DOUBLE PRECISION,
+  stop DOUBLE PRECISION,
+  tp1 DOUBLE PRECISION,
+  tp2 DOUBLE PRECISION,
+  tp3 DOUBLE PRECISION,
+  rr DOUBLE PRECISION,
+  status TEXT NOT NULL DEFAULT 'OPEN',
+  tp1_hit INTEGER NOT NULL DEFAULT 0,
+  tp2_hit INTEGER NOT NULL DEFAULT 0,
+  tp3_hit INTEGER NOT NULL DEFAULT 0,
+  stop_hit INTEGER NOT NULL DEFAULT 0,
+  closed_at BIGINT,
+  return_pct DOUBLE PRECISION,
+  model_version_id TEXT,
+  payload TEXT,
+  held_at BIGINT,
+  held_by TEXT,
+  hold_note TEXT,
+  UNIQUE (symbol, timeframe, bar_ts)
+);

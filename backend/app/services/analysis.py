@@ -419,6 +419,12 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         decision, grade, why = "NO TRADE", None, lev_why
         flags.append("STOP TOO WIDE")
 
+    # v2.22 admin Hold: while a withdrawn call on this coin / timeframe would still be running, no new call there
+    if decision in TRADE_DECISIONS and live and bundle is None and as_of is None:
+        from .hold import held_open
+        if held_open(rt.db, symbol, timeframe):
+            decision, grade, why = "NO TRADE", None, "the admin withdrew the last call here; no new call until it would have ended"
+            flags.append("WITHDRAWN BY ADMIN")
     # v2.22 combination (owner-approved 14 Nov 2026, services/combo_gates.py): volume profile, fee and same-side cap,
     # live calls only (research replays and rebuilds keep measuring every call)
     if decision in TRADE_DECISIONS and live and bundle is None and as_of is None and setup and setup.get("valid"):

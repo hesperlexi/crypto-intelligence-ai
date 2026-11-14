@@ -24,7 +24,7 @@ MIGRATIONS: dict[str, list[tuple[str, str]]] = {
             ("app_version", "TEXT"), ("engine_version", "TEXT"),
             # v2.13 net results (services/tracking.py: return_pct - cost_pct - funding_pct)
             ("return_net_pct", "DOUBLE PRECISION"), ("cost_pct", "DOUBLE PRECISION"), ("funding_pct", "DOUBLE PRECISION")]
-    for table in ("signals", "shadow_signals", "scalp_signals")
+    for table in ("signals", "shadow_signals", "scalp_signals", "held_signals")
 }
 
 

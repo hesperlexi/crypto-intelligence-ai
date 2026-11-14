@@ -346,7 +346,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
     out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None,
-           "restart": restart_note(rt), "results_net": True, "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
+           "restart": restart_note(rt), "results_net": True, "withdrawn": _withdrawn(rt), "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "not_filled": sum(x["status"] == "NOT_FILLED" for x in sigs), "void": sum(x["status"] == "VOID" for x in sigs),
             "signals": sigs[:limit]},
@@ -490,6 +490,13 @@ def weekly_reports(rt: Runtime, bot_report: dict[str, Any] | None = None, weeks:
             break
         out.append(weekly_report(rt, st, bot_report))
     return {"generated_at": now, "reports": out}
+
+
+def _withdrawn(rt: Runtime) -> dict[str, Any] | None:
+    """v2.22: calls the admin withdrew (Hold) since the record start - shown so nothing disappears silently."""
+    from .services.hold import HOLD_WINDOW_MIN, withdrawn_count
+    n = withdrawn_count(rt.db, record_since(rt))
+    return {"count": n, "window_min": HOLD_WINDOW_MIN} if n else None
 
 
 def restart_note(rt: Runtime) -> dict[str, Any] | None:

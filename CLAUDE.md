@@ -683,3 +683,9 @@ Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance da
   (test −0.021R → +0.013R, max DD 130R → 31R, ~half the calls). Record not restarted. Tests `tests/test_combo_gates.py`.
 - Live review: `python -m app.research review` (`research_review.py`, branch `review-nov14`): record as stored and
   re-assessed without admin decisions, by TF/side/coin/session, bots, Hesper, Guardian.
+- **Admin Hold** (owner, 14 Nov 2026, `services/hold.py`, job `hold_signal`, admin only): within `HOLD_WINDOW_MIN` (15)
+  of publication the admin withdraws a call: row MOVED from `signals` to `held_signals` (held_at/by/hold_note; never
+  deleted), bots / Hesper `apply_close`, member broadcast "withdrawn", `analysis` gate "WITHDRAWN BY ADMIN" (no new call
+  on that coin/TF while the held one would still run). `held_signals` followed by `update_signal_outcomes(table=...)`;
+  `hold.scoreboard` → `views/guardian.held` → Guardian page "Hold scoreboard"; public `track_record.withdrawn` {count,
+  window_min} → Results line ("N calls were withdrawn ... not counted"). UI: `SignalAdjust` Hold button + `HoldModal`.

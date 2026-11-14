@@ -865,7 +865,7 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
     """Follow OPEN signals (v2.5: engine/manage.py) on 15-minute candles that opened after publication. Standard
     rules: 50% / 25% / 25% at the targets, stop first within a candle, break-even after TP1, TP1 after TP2, expiry at
     the last close; managed exits only when MANAGED_EXITS is on. Pullback entries wait for their fill."""
-    if table not in ("signals", "shadow_signals", SCALP_TABLE):
+    if table not in ("signals", "shadow_signals", SCALP_TABLE, "held_signals"):
         raise ValueError(table)
     # admin adjustments and `decisions` rows belong to the record only (table == "signals" below)
     db = rt.db

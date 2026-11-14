@@ -72,6 +72,7 @@ export default function Guardian() {
             )}
           </section>
           <Scoreboard sb={v.scoreboard} />
+          <HeldBoard h={(v as any).held} />
           <History rows={hist} />
           {v.config && (
             <p className="text-xs leading-relaxed text-mute">
@@ -299,6 +300,33 @@ function Scoreboard({ sb }: { sb?: any }) {
         <Tile variant="strip" label="Applied" value={line(sb.applied)} sub={`not applied: ${line(sb.not_applied)}`} />
       </div>
       <p className="text-xs text-mute">Tighten {line(sb.by_level?.TIGHTEN)} · Close {line(sb.by_level?.CLOSE)}. A positive number means the warning would have helped. Judge it after a few weeks; small samples mislead.</p>
+    </section>
+  );
+}
+
+/** v2.22 admin Hold scoreboard: what the withdrawn calls did afterwards (net R, after fees). Positive = holding cost money. */
+function HeldBoard({ h }: { h?: any }) {
+  if (!h || !h.n) return null;
+  return (
+    <section aria-label="Hold scoreboard" className="space-y-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 className="label">Hold scoreboard</h2>
+        <span className="text-xs text-mute">Calls you withdrew, followed privately with the normal rules (net R, after fees)</span>
+      </div>
+      <div className="metric-strip">
+        <Tile variant="strip" label="Held" value={String(h.n)} sub={`${h.closed} finished · ${h.open} still running`} />
+        <Tile variant="strip" label="Would have" value={`${h.would_have_won ?? 0} won · ${h.would_have_lost ?? 0} lost`} />
+        <Tile variant="strip" label="Their total" value={r2(h.total_r)} valueClass={rTone(h.total_r)} sub={h.verdict ?? "judge after 5+ finished"} />
+      </div>
+      <ul className="divide-y divide-glass/[0.06] rounded-xl border border-glass/[0.08] text-sm">
+        {(h.items ?? []).slice(0, 10).map((x: any) => (
+          <li key={x.id} className="flex flex-wrap items-baseline justify-between gap-2 px-3 py-2">
+            <span><span className="font-semibold">{base(x.symbol)}</span> <span className="num text-mute">{String(x.timeframe).toUpperCase()}</span> <span className={x.side === "LONG" ? "text-bull" : "text-bear"}>{x.side}</span> <span className="text-xs text-mute">held {ago(x.held_at)}{x.note ? ` · ${x.note}` : ""}</span></span>
+            <span className={`num ${rTone(x.net_r)}`}>{x.status === "OPEN" ? <span className="text-mute">still running</span> : isNum(x.net_r) ? `${r2(x.net_r)} R` : x.status}</span>
+          </li>
+        ))}
+      </ul>
+      <p className="text-xs text-mute">A positive total means the held calls would have made money, so holding cost you that much; negative means holding saved it.</p>
     </section>
   );
 }
