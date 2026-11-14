@@ -595,6 +595,16 @@ async function main() {
     await assertSucceeds(getDoc(doc(admin(), "admin", "migrations")));
   });
 
+  // ---------------------------------------------------------------- views/market_turn (v2.22 market turn detector, admin only)
+  await test("market turn: only the admin reads views/market_turn; nobody writes it", async () => {
+    await seed({ ...member, "users/p1": pending("p1", "p1@example.com"), "views/market_turn": { json: "{}", updated_at: NOW() } });
+    await assertSucceeds(readView(admin(), "market_turn"));
+    await assertFails(readView(as("m1", "m1@example.com"), "market_turn"));
+    await assertFails(readView(as("p1", "p1@example.com"), "market_turn"));
+    await assertFails(readView(env.unauthenticatedContext().firestore() as unknown as Firestore, "market_turn"));
+    await assertFails(setDoc(doc(admin(), "views", "market_turn"), { json: "{}" }));
+  });
+
   // ---------------------------------------------------------------- views/guardian (v2.19 Trade Guardian, admin only)
   const guardDocs = { "views/guardian": { json: "{}", updated_at: NOW() }, "views/signals": { json: "{}", updated_at: NOW() } };
   await test("guardian: admin reads views/guardian", async () => {

@@ -13,6 +13,7 @@ import { useApi } from "../lib/api";
 import { db } from "../lib/firebase";
 import { ago, DASH, fmtDate, fmtNum, fmtPctRaw, fmtTime, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
+import { MarketTurnCard, stateTone, useMarketTurn } from "../components/MarketTurn";
 
 const toneOf = (s: string) => (["LIVE", "OK", "active", "done"].includes(s) ? "bull" : ["DOWN", "failed"].includes(s) ? "bear" : ["POLLING", "running", "queued"].includes(s) ? "accent" : "warn") as Tone;
 
@@ -119,6 +120,7 @@ export default function Health() {
   const nv = useApi<any>("/news");
   const tg = useDoc(["owner", "telegram_status"]);
   const guardian = useViewDoc("guardian");     // Trade Guardian (separate admin page): shown only when published
+  const turn = useMarketTurn();                // v2.22 market turn detector (admin only): shown only when published
   const { connected, feed } = useLive();
   const [open, setOpen] = useState<Record<string, boolean>>({});
   const [sigSort, setSigSort] = useState<"oldest" | "newest">("oldest");
@@ -147,13 +149,13 @@ export default function Health() {
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
       {viewError && <ErrorBox error={`The engine could not publish the health report: ${viewError}`} retry={h.reload} />}
       {!d && h.loading && <Loading />}
-      {d && <Centre d={d} raw={raw} errs={errs} modelMsg={modelMsg} tr={tr.data} bots={bv.data} news={nv.data} tg={tg} guardian={guardian}
+      {d && <Centre d={d} raw={raw} errs={errs} modelMsg={modelMsg} tr={tr.data} bots={bv.data} news={nv.data} tg={tg} guardian={guardian} turn={turn}
         connected={connected} feed={feed} open={open} toggle={toggle} jump={jump} sigSort={sigSort} setSigSort={setSigSort} />}
     </div>
   );
 }
 
-function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, connected, feed, open, toggle, jump, sigSort, setSigSort }: any) {
+function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, connected, feed, open, toggle, jump, sigSort, setSigSort }: any) {
   const e = d.engine;
   // ---- engine
   const tickAge = age(e.last_tick_finished);
@@ -220,6 +222,11 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, connecte
     const gs = String(guardian.status ?? guardian.state ?? "").trim();
     const gl: Level = !gs ? "off" : /^(ok|live|active|on|running|healthy)$/i.test(gs) ? "ok" : /^(down|error|failed|off)$/i.test(gs) ? "down" : "warn";
     services.push({ id: "hc-guardian", name: "Trade Guardian", level: gl, target: "/guardian", line: `${gs || "published"}${guardian.generated_at ? ` · ${ago(guardian.generated_at)}` : ""}` });
+  }
+  if (turn) {
+    const t = stateTone(turn.market?.state);
+    services.push({ id: "hc-turn", name: "Market turn", level: t === "warn" ? "warn" : "ok", target: "hc-turn",
+      line: `${turn.market?.state ?? "—"} · score ${turn.market?.score ?? "—"} · ${ago(turn.generated_at)}` });
   }
   const attention = services.filter((s) => s.level === "warn" || s.level === "down");
 
@@ -374,6 +381,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, connecte
           <Link to="/results?tab=bots" className="mt-3 block border-t border-glass/[0.06] pt-3 text-center text-sm text-mute transition-colors hover:text-accent">View all bots →</Link>
         </Card>
 
+        {turn && <div id="hc-turn" className="scroll-mt-24 lg:col-span-2 xl:col-span-3"><MarketTurnCard v={turn} /></div>}
         <Card title="Safeguards" className="lg:col-span-2 xl:col-span-1">
           <div id="hc-safeguards" className="scroll-mt-24 space-y-4">
             <div>

@@ -6,6 +6,7 @@ import { type ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { Badge, Tile, type Tone } from "../components/kit";
+import { MarketTurnCard, useMarketTurn } from "../components/MarketTurn";
 import { CoinAvatar } from "../components/Polish";
 import { useFocusTrap } from "../components/Shell";
 import { Empty, ErrorBox } from "../components/ui";
@@ -51,6 +52,7 @@ const mmss = (ms: number) => { const s = Math.max(0, Math.round(ms / 1000)); ret
 
 export default function Guardian() {
   const q = useApi<any>("/guardian");
+  const turn = useMarketTurn();
   const v = q.data;
   const live: GuardianRec[] = v?.live ?? [];
   const hist: GuardianRec[] = v?.history ?? [];
@@ -65,6 +67,7 @@ export default function Guardian() {
       {v && (
         <>
           <StatusLine v={v} />
+          {turn && <MarketTurnCard v={turn} compact />}
           <section aria-label="Live recommendations" className="space-y-3">
             <h2 className="label">Live recommendations{live.length ? <span className="num ml-1.5 text-accent">{live.length}</span> : null}</h2>
             {live.length ? live.map((r) => <RecCard key={r.id} r={r} />) : (
