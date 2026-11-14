@@ -20,7 +20,10 @@ export default function History() {
   const shown = useMemo(() => f.apply(all), [all, f.apply]);   // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="space-y-4">
-      <h1 className="page-title">Signal history</h1>
+      <div>
+        <h2 className="section-title">Signal log</h2>
+        <p className="page-sub">Every published call with its outcome. Filter by coin, timeframe or result.</p>
+      </div>
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
       {sum && (
         <Card title="Tracked trade signals">

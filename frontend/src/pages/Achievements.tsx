@@ -1,6 +1,7 @@
 // Achievements: milestones the app really reached (computed by the engine from the public record). Each one can be
 // downloaded as a square badge image for social media, or all of them together as one poster.
 import { useState } from "react";
+import { PageHeader } from "../components/kit";
 import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
 import { fmtDate, isNum } from "../lib/format";
@@ -132,13 +133,8 @@ export default function Achievements() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="page-title">Achievements</h1>
-          <p className="text-sm text-mute">Real milestones from the track record. Download to share.</p>
-        </div>
-        <button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>
-      </div>
+      <PageHeader title="Achievements" sub="Real milestones from the track record. Download to share."
+        actions={<button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>} />
       {!list.length && <p className="panel p-4 text-sm text-mute">Achievements appear as soon as the first signals have closed.</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((a) => (

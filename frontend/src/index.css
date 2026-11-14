@@ -733,3 +733,11 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 /* numbers that matter: champagne-ivory, tight */
 .figure { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-weight: 600; color: rgb(var(--text)); }
 @media (prefers-reduced-motion: reduce) { .panel-hero::before { animation: none; } }
+
+/* ===== premium-c (Results, track record, admin pages) ===== */
+.statement-figure { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; font-size: 2.5rem; line-height: 1; letter-spacing: -0.04em; }
+@media (min-width: 640px) { .statement-figure { font-size: 3.25rem; } }
+.statement-facts > div + div { border-left: 1px solid rgb(var(--glass) / 0.07); }
+@media (max-width: 639px) { .statement-facts > div:nth-child(3) { border-left: 0; } .statement-facts > div:nth-child(n+3) { border-top: 1px solid rgb(var(--glass) / 0.07); } }
+.rich-facts > div + div { border-left: 1px solid rgb(var(--glass) / 0.07); }
+@media (max-width: 1023px) { .rich-facts > div { border-top: 1px solid rgb(var(--glass) / 0.07); } .rich-facts > div + div { border-left: 0; } }

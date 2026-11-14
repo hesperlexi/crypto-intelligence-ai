@@ -1,6 +1,7 @@
 // Weekly report for marketing: the week's best signals up front, the complete totals (wins and losses) on the same
 // image, a link to the public track record, and a ready caption. Download as a post (1080x1080) or story (1080x1920).
 import { useEffect, useMemo, useRef, useState } from "react";
+import { PageHeader } from "../components/kit";
 import { ErrorBox, Loading } from "../components/ui";
 import { RoiFigure } from "../components/SignalExtras";
 import { useApi } from "../lib/api";
@@ -152,10 +153,7 @@ export default function Report() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="page-title">Weekly report</h1>
-        <p className="text-sm text-mute">Ready to post: best signals plus full totals, wins and losses.</p>
-      </div>
+      <PageHeader title="Weekly report" sub="Ready to post: the best signals plus full totals, wins and losses." />
       <div className="flex flex-wrap items-center gap-2">
         <select className="input w-auto" value={idx} onChange={(e) => setI(Number(e.target.value))} aria-label="Week">
           {reports.map((x, k) => <option key={x.week_start} value={k}>{range(x)}{x.complete ? "" : " (so far)"}</option>)}
@@ -170,7 +168,7 @@ export default function Report() {
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
         <canvas ref={cv} className="w-full max-w-[560px] rounded-xl border border-glass/10" style={{ aspectRatio: story ? "9 / 16" : "1 / 1" }} aria-label="Weekly report image" />
         <div className="space-y-3">
-          <section className="panel p-4">
+          <section className="panel panel-hero p-4">
             <h2 className="label mb-2">Caption</h2>
             <pre className="whitespace-pre-wrap font-sans text-sm text-text/90">{cap}</pre>
           </section>

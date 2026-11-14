@@ -2,6 +2,7 @@
 // going (v2.22, owner 14 Nov 2026) until the admin ends it ("End run & start new") or it is liquidated / too small to
 // trade (failure); $1,000 is a milestone, not an end. A new run starts at once.
 // Data: views/hesper (backend services/hesper.py). Virtual money only.
+import { PageHeader } from "../components/kit";
 import { useMemo, useRef, useState } from "react";
 import { botFacts, PositionGrid } from "../components/PositionInfo";
 import { createPortal } from "react-dom";
@@ -44,10 +45,10 @@ function useLiveRun(cur: any) {
 
 function Tile({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
   return (
-    <div className="panel p-3.5 sm:p-4">
-      <div className="label">{k}</div>
-      <div className={`num mt-1.5 text-xl font-semibold leading-none sm:text-2xl ${cls}`}>{v}</div>
-      {sub && <div className="mt-1.5 truncate text-xs text-mute">{sub}</div>}
+    <div className="min-w-0 px-4 py-3">
+      <div className="text-xs text-mute">{k}</div>
+      <div className={`num mt-1 text-lg font-semibold leading-tight tracking-tight sm:text-xl ${cls}`}>{v}</div>
+      {sub && <div className="mt-0.5 truncate text-xs text-mute">{sub}</div>}
     </div>
   );
 }
@@ -96,10 +97,9 @@ function RunCard({ v, live }: { v: any; live: ReturnType<typeof useLiveRun> }) {
   const start = v.start ?? 100, goal = v.goal ?? 1000;
   const st = v.score?.streak;
   return (
-    <section className="panel relative overflow-hidden p-4 sm:p-5" aria-label="Current run"
-      style={{ borderColor: "rgb(var(--accent) / 0.35)", backgroundImage: "radial-gradient(120% 90% at 0% 0%, rgb(var(--accent) / 0.10), transparent 60%)" }}>
+    <section className="panel panel-hero p-4 sm:p-6" aria-label="Current run">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div className="label text-accent">Run #{cur.run} · Hesper</div>
+        <div className="font-display text-sm font-semibold text-accent">Run #{cur.run}</div>
         <div className="text-xs text-mute">started {fmtDate(cur.started_at)} · {cur.trades} trades{st?.n ? ` · streak ${st.n}${st.kind === "win" ? "W" : "L"}` : ""}</div>
       </div>
       <div className="mt-2 flex flex-wrap items-end gap-x-6 gap-y-1">
@@ -286,13 +286,8 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
   return (
     <div className="space-y-4">
       {admin && !embedded ? (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h1 className="page-title"><span className="text-accent">Hesper Challenge</span></h1>
-            <p className="text-sm text-mute">{SUBLINE} · all-in · up to {v?.max_leverage ?? 25}x (15m: 10–50x)</p>
-          </div>
-          <div className="flex flex-wrap items-center gap-3"><Visibility />{v?.current && <EndRun run={v.current.run} onDone={q.reload} />}{v?.current && <Share v={v} balance={live.balance} />}</div>
-        </div>
+        <PageHeader title="Hesper Challenge" sub={`${SUBLINE}. All-in, up to ${v?.max_leverage ?? 25}x (15m: 10–50x). Virtual money.`}
+          actions={<><Visibility />{v?.current && <EndRun run={v.current.run} onDone={q.reload} />}{v?.current && <Share v={v} balance={live.balance} />}</>} />
       ) : (
         <div>
           <h2 className="text-lg font-semibold"><span className="text-accent">Hesper Challenge</span></h2>
@@ -306,7 +301,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
       {v?.current && (
         <>
           <RunCard v={v} live={live} />
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="panel rich-facts grid grid-cols-2 p-0 sm:grid-cols-3 lg:grid-cols-6">
             <Tile k="Reached $1,000" v={String(sc.milestones ?? sc.successes ?? 0)} cls="text-bull" sub="runs that hit the milestone" />
             <Tile k="Failures" v={String(sc.failures ?? 0)} cls="text-bear" sub={`${sc.liquidations ?? 0} liquidated · ${sc.busted ?? 0} busted`} />
             <Tile k="Runs" v={String(sc.runs ?? 0)} sub={`now #${curRun}${sc.stopped ? ` · ${sc.stopped} stopped` : ""}`} />
@@ -331,7 +326,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
             <h2 className="label px-4 pt-4">Runs</h2>
             <div className="mt-2 overflow-x-auto">
               <table className="w-full text-sm">
-                <thead><tr className="text-left text-xs uppercase tracking-wide text-mute">
+                <thead><tr className="text-left text-xs text-mute">
                   <th className="py-2 pl-4 pr-2 font-semibold">Run</th><th className="px-2 py-2 font-semibold">Result</th>
                   <th className="px-2 py-2 text-right font-semibold">Trades</th><th className="px-2 py-2 text-right font-semibold">Peak</th>
                   <th className="py-2 pl-2 pr-4 text-right font-semibold sm:pr-2">End</th><th className="hidden px-2 py-2 font-semibold sm:table-cell">Best trade</th>
@@ -377,7 +372,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
             </ul>
             <div className="mt-2 hidden overflow-x-auto sm:block">
               <table className="w-full min-w-[640px] text-sm">
-                <thead><tr className="text-left text-xs uppercase tracking-wide text-mute">
+                <thead><tr className="text-left text-xs text-mute">
                   <th className="px-4 py-2 font-semibold">Run</th><th className="px-2 py-2 font-semibold">Coin</th><th className="px-2 py-2 font-semibold">Side</th>
                   <th className="px-2 py-2 text-right font-semibold">Entry → exit</th><th className="px-2 py-2 text-right font-semibold">P/L</th>
                   <th className="px-2 py-2 text-right font-semibold">ROI</th><th className="px-2 py-2 font-semibold">Exit</th>

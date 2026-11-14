@@ -1,7 +1,8 @@
 import { useMemo, useState } from "react";
 import { botFacts, PositionGrid } from "../components/PositionInfo";
 import LineChart, { Series } from "../components/LineChart";
-import { Badge, Card, Empty, ErrorBox, Info, Loading, Note, Row, Stat } from "../components/ui";
+import { Card, Empty, ErrorBox, Info, Loading, Note, Row, Stat } from "../components/ui";
+import { Badge } from "../components/kit";
 import { put, useApi } from "../lib/api";
 import { DASH, fmtNum, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
@@ -49,15 +50,15 @@ export default function Bots() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="page-title">Demo trading bots</h1>
-          <Badge tone="warn">Demo only — virtual money</Badge>
+        <div className="min-w-0">
+          <h2 className="section-title">Demo trading bots</h2>
+          <p className="page-sub">Virtual money. Each bot takes the app's calls with their entry, stop and targets, fees included.</p>
         </div>
         {admin && <div className="flex flex-wrap gap-2">
-          <button className="btn" onClick={() => add("decision")}>+ Signal bot</button>
-          <button className="btn" onClick={() => add("prediction")}>+ Prediction tracker</button>
-          <button className="btn" onClick={() => add("decision", "futures")}>+ Futures signal bot</button>
-          <button className="btn" onClick={() => add("prediction", "futures")}>+ Futures tracker</button>
+          <button className="btn btn-sm" onClick={() => add("decision")}>Add signal bot</button>
+          <button className="btn btn-sm" onClick={() => add("prediction")}>Add prediction tracker</button>
+          <button className="btn btn-sm" onClick={() => add("decision", "futures")}>Add futures signal bot</button>
+          <button className="btn btn-sm" onClick={() => add("prediction", "futures")}>Add futures tracker</button>
         </div>}
       </div>
       <div className="flex flex-wrap items-center gap-1" role="group" aria-label="Market">
@@ -111,7 +112,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
     return { ...p, px, u, lev, upct: px != null ? p.side * (px / p.entry - 1) * 100 * lev : null };
   });
   return (
-    <Card title={<span className="flex items-center gap-2"><span className="text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "prediction tracker" : "signal bot"}</Badge><Badge tone="mute">{bot.config.timeframe}</Badge>{fut ? <Badge tone="warn">futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">spot</Badge>}{!bot.config.enabled && <Badge tone="warn">paused</Badge>}</span>}
+    <Card title={<span className="flex items-center gap-2"><span className="text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "Prediction tracker" : "Signal bot"}</Badge><Badge tone="mute">{String(bot.config.timeframe).toUpperCase()}</Badge>{fut ? <Badge tone="warn">Futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">Spot</Badge>}{!bot.config.enabled && <Badge tone="warn">Paused</Badge>}</span>}
       right={!admin ? undefined : <div className="flex gap-1">
         <button className="btn px-2 py-0.5 text-xs" onClick={onToggle}>{bot.config.enabled ? "Pause" : "Resume"}</button>
         <button className="btn px-2 py-0.5 text-xs" onClick={onEdit}>{editing ? "Close" : "Settings"}</button>

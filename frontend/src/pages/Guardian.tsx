@@ -5,7 +5,7 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
-import { Badge, Tile, type Tone } from "../components/kit";
+import { Badge, Tile, type Tone, PageHeader } from "../components/kit";
 import { MarketTurnCard, useMarketTurn } from "../components/MarketTurn";
 import { CoinAvatar } from "../components/Polish";
 import { useFocusTrap } from "../components/Shell";
@@ -58,10 +58,7 @@ export default function Guardian() {
   const hist: GuardianRec[] = v?.history ?? [];
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="page-title"><span className="text-accent">Trade Guardian</span></h1>
-        <p className="text-sm text-mute">Early warnings on open calls. Recommend-only: nothing changes until you apply it.</p>
-      </div>
+      <PageHeader title="Trade Guardian" sub="Early warnings on open calls. Recommend-only: nothing changes until you apply it." />
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}
       {!v && !q.error && <div className="skeleton h-64 rounded-xl" />}
       {v && (
@@ -98,7 +95,7 @@ function StatusLine({ v }: { v: any }) {
   const late = isNum(s.last_check) && Date.now() - s.last_check > 20 * 60_000;
   return (
     <section aria-label="Guardian status" className="space-y-2">
-      <div className="metric-strip">
+      <div className="metric-strip panel-hero">
         <Tile variant="strip" label="Last check" value={isNum(s.last_check) ? ago(s.last_check) : "—"} valueClass={late ? "text-warn" : ""}
           sub={v.enabled === false ? "switched off (GUARDIAN=0)" : late ? "engine late" : "every engine run"} />
         <Tile variant="strip" label="Watching" value={`${w.calls ?? 0} call${w.calls === 1 ? "" : "s"}`}

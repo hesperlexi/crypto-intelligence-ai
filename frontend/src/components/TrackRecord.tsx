@@ -1,6 +1,6 @@
 // Public track record: every trade signal since launch with its real outcome, the models' results on past data
 // they never trained on (a labelled simulation), and the demo bots. Readable without an account.
-import { Segmented, TabStrip, Tile } from "./kit";
+import { Segmented, TabStrip } from "./kit";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
 import { useState } from "react";
 import { useApi } from "../lib/api";
@@ -43,19 +43,19 @@ function Last7({ r }: { r: any }) {
     <section className="panel p-4" aria-label="Last 7 days">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="label">Last 7 days</h2>
-        <span className="text-xs text-mute">after fees · wins and losses<Info label="How the 7-day figures are counted">{r.basis}</Info></span>
+        <span className="text-xs text-mute">After fees, wins and losses<Info label="How the 7-day figures are counted">{r.basis}</Info></span>
       </div>
       {r.closed ? (
         <>
-          <div className="metric-strip mt-3">
-            <Tile variant="strip" label="Closed" value={String(r.closed)} sub={`${r.wins} won · ${r.losses} lost`} />
-            <Tile variant="strip" label="Win rate" value={rate(r.win_rate)} sub="after fees" />
-            <Tile variant="strip" label="Avg per signal" value={pct(r.avg_return_pct, 2)} valueClass={tone(r.avg_return_pct)} sub="after fees, no leverage" />
-            <Tile variant="strip" label="Total" value={pct(r.total_return_pct)} valueClass={tone(r.total_return_pct)} sub="equal size per signal" />
-          </div>
+          <dl className="statement-facts mt-3 grid grid-cols-2 rounded-xl border border-glass/[0.07] sm:grid-cols-4">
+            <Fact k="Closed" v={String(r.closed)} sub={`${r.wins} won, ${r.losses} lost`} />
+            <Fact k="Win rate" v={rate(r.win_rate)} sub="after fees" />
+            <Fact k="Average per signal" v={pct(r.avg_return_pct, 2)} cls={tone(r.avg_return_pct)} sub="after fees, no leverage" />
+            <Fact k="Total" v={pct(r.total_return_pct)} cls={tone(r.total_return_pct)} sub="equal size per signal" />
+          </dl>
           <div className="mt-3 grid gap-1.5 text-sm sm:grid-cols-2">
-            <div className="flex flex-wrap items-baseline gap-x-1.5"><span className="w-12 text-xs uppercase tracking-wide text-mute">Best</span>{one(r.best)}</div>
-            <div className="flex flex-wrap items-baseline gap-x-1.5"><span className="w-12 text-xs uppercase tracking-wide text-mute">Worst</span>{one(r.worst)}</div>
+            <div className="flex flex-wrap items-baseline gap-x-1.5"><span className="w-12 text-xs text-mute">Best</span>{one(r.best)}</div>
+            <div className="flex flex-wrap items-baseline gap-x-1.5"><span className="w-12 text-xs text-mute">Worst</span>{one(r.worst)}</div>
           </div>
         </>
       ) : null}
@@ -64,8 +64,14 @@ function Last7({ r }: { r: any }) {
   );
 }
 
-function Kpi({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
-  return <Tile variant="box" big className="panel" label={k} value={v} valueClass={cls} sub={sub} />;
+function Fact({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
+  return (
+    <div className="min-w-0 px-4 py-3 sm:px-5">
+      <dt className="text-xs text-mute">{k}</dt>
+      <dd className={`num mt-0.5 text-lg font-semibold tracking-tight ${cls}`}>{v}</dd>
+      {sub && <dd className="text-xs text-mute">{sub}</dd>}
+    </div>
+  );
 }
 
 export default function TrackRecord({ compact = false }: { compact?: boolean }) {
@@ -106,36 +112,46 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   return (
     <div className="space-y-3">
       {fresh ? (
-        <div className="panel flex flex-col items-center px-5 py-8 text-center">
+        <div className="panel panel-hero flex flex-col items-center px-5 py-9 text-center">
           <svg aria-hidden="true" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent))" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" /></svg>
-          <h2 className="mt-3 text-lg font-semibold">No trades yet</h2>
+          <h2 className="mt-3 font-display text-xl font-semibold">No closed trades yet</h2>
           <p className="mt-1 max-w-md text-sm text-mute">
-            {d.record_since ? `Since ${fmtDate(d.record_since)}. ` : ""}Every result, win or loss, appears here when a signal closes.
+            {d.record_since ? `Counting since ${fmtDate(d.record_since)}. ` : ""}Every result, win or loss, appears here when a signal closes.
             {sigs.length ? ` ${sigs.filter((x) => x.status === "OPEN").length} open now.` : ""}
           </p>
         </div>
       ) : (
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <Kpi k="Closed signals" v={String(s.closed ?? 0)} sub={d.record_since ? `${d.testing_since ? "testing · " : ""}since ${fmtDate(d.record_since)}${d.record_since_tf?.["15m"] ? ` (15M ${fmtDate(d.record_since_tf["15m"])})` : ""} · ${d.live?.open ?? 0} open` : d.since ? `since ${fmtDate(d.since)} · ${d.live?.open ?? 0} open` : undefined} />
-        <Kpi k="Win rate (live)" v={rate(s.win_rate)} sub={s.closed ? `${s.closed} closed signals` : "first results soon"} />
-        {roi ? <Kpi k="Avg ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`on margin · ${pct(s.avg_return_pct, 2)} ${s.net ? "after fees" : "before fees"}`} />
-          : <Kpi k={s.net ? "Avg result per signal" : "Avg price move per signal"} v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub={s.net ? "after fees" : "before fees"} />}
-        {/* v2.17: the next-candle hit rate is admin only (it overstates); members see the total result */}
-        {admin ? <Kpi k="Model hit rate (next candle)" v={rate(avgTested)} sub={`admin only · ${edge.length} coin/timeframes with a proven edge`} />
-          : roi ? <Kpi k="Total ROI on margin" v={pct(s.total_roi_pct)} cls={tone(s.total_roi_pct)} sub={`all closed signals · ${pct(s.total_return_pct)}${s.net ? " after fees" : ""}`} />
-          : <Kpi k={s.net ? "Total result" : "Total price move"} v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub={s.net ? "all closed signals, equal size, after fees" : "all closed signals, equal size"} />}
-      </div>
+        /* the statement: one lead figure, the curve beside it, the supporting facts underneath */
+        <section className="panel panel-hero p-0" aria-label="Track record statement">
+          <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.25fr)] lg:items-end">
+            <div className="min-w-0">
+              <div className="label">{roi ? `Total ROI on margin${s.net ? ", after fees" : ""}` : s.net ? "Total result after fees" : "Total price move"}</div>
+              <div className={`num statement-figure mt-1 font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</div>
+              <p className="mt-1.5 text-sm text-mute">
+                {s.closed ?? 0} closed {s.closed === 1 ? "signal" : "signals"}{d.record_since ? ` since ${fmtDate(d.record_since)}` : d.since ? ` since ${fmtDate(d.since)}` : ""}{d.record_since_tf?.["15m"] ? ` (15M since ${fmtDate(d.record_since_tf["15m"])})` : ""}, {d.live?.open ?? 0} open now{d.testing_since ? ", testing" : ""}.
+              </p>
+            </div>
+            {(d.live?.curve?.length ?? 0) > 1 && <div className="min-w-0"><Curve pts={d.live.curve} roi={roi} /></div>}
+          </div>
+          <dl className="statement-facts grid grid-cols-2 border-t border-glass/[0.07] sm:grid-cols-4">
+            <Fact k="Win rate" v={rate(s.win_rate)} sub={s.closed ? `${s.closed} closed` : "first results soon"} />
+            {roi ? <Fact k="Average ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`${pct(s.avg_return_pct, 2)} price ${s.net ? "after fees" : "before fees"}`} />
+              : <Fact k={s.net ? "Average per signal" : "Average price move"} v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub={s.net ? "after fees" : "before fees"} />}
+            <Fact k={s.net ? "Total price result" : "Total price move"} v={pct(s.total_return_pct)} cls={tone(s.total_return_pct)} sub="equal size, no leverage" />
+            {/* v2.17: the next-candle hit rate is admin only (it overstates) */}
+            {admin ? <Fact k="Model hit rate (next candle)" v={rate(avgTested)} sub={`admin only, ${edge.length} proven`} />
+              : <Fact k="Open now" v={String(d.live?.open ?? 0)} sub="live, not final" />}
+          </dl>
+        </section>
       )}
       {!compact && d.last_7d && <Last7 r={d.last_7d} />}
-      {d.restart?.text && <p className="px-1 text-xs text-mute">{d.restart.text}</p>}
-      {d.withdrawn?.count > 0 && <p className="px-1 text-xs text-mute">{d.withdrawn.count} call{d.withdrawn.count === 1 ? " was" : "s were"} withdrawn by the admin within {d.withdrawn.window_min} min of publication and {d.withdrawn.count === 1 ? "is" : "are"} not counted.</p>}
-      <Explain>{d.results_net ? "Results are after fees (trading costs and funding). ROI on margin = result × suggested leverage (15m: 10–50x chosen by engine). Leverage magnifies losses." : "ROI on margin = price move × suggested leverage. Leverage magnifies losses."}</Explain>
-      {(d.live?.curve?.length ?? 0) > 1 && (
-        <div className="panel px-4 pt-3">
-          <div className="flex items-center justify-between text-xs text-mute"><span>{roi ? `Cumulative ROI on margin${s.net ? " (after fees)" : ""}` : s.net ? "Cumulative result after fees" : "Cumulative price move"}</span><span className={`num font-semibold ${tone(roi ? s.total_roi_pct : s.total_return_pct)}`}>{pct(roi ? s.total_roi_pct : s.total_return_pct)}</span></div>
-          <Curve pts={d.live.curve} roi={roi} />
-        </div>
+      {(d.restart?.text || d.withdrawn?.count > 0) && (
+        <p className="px-1 text-xs text-mute">
+          {d.restart?.text}{d.restart?.text && d.withdrawn?.count > 0 ? " " : ""}
+          {d.withdrawn?.count > 0 && <>{d.withdrawn.count} call{d.withdrawn.count === 1 ? " was" : "s were"} withdrawn by the admin within {d.withdrawn.window_min} min of publication and {d.withdrawn.count === 1 ? "is" : "are"} not counted.</>}
+        </p>
       )}
+      <Explain>{d.results_net ? "Results are after fees (trading costs and funding). ROI on margin = result × suggested leverage (15m: 10–50x chosen by engine). Leverage magnifies losses." : "ROI on margin = price move × suggested leverage. Leverage magnifies losses."}</Explain>
       {compact ? null : (
         <section className="panel p-0">
           <TabStrip label="Track record" value={tab} onChange={setTab} className="px-2 pt-2"
@@ -209,7 +225,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                   {tested.map((t, i) => (
                     <tr key={i} className={t.edge ? "" : "opacity-60"}>
                       <td><span className="font-semibold">{base(t.symbol)}</span> <span className="text-xs text-mute">{String(t.timeframe).toUpperCase()}</span></td>
-                      <td className={`text-xs font-bold ${t.edge ? "text-bull" : "text-mute"}`}>{t.edge ? "PROVEN" : "none"}</td>
+                      <td className={`text-xs font-semibold ${t.edge ? "text-bull" : "text-mute"}`}>{t.edge ? "Proven" : "None"}</td>
                       <td className="num text-right">{rate(t.selective_hit_rate)}</td>
                       <td className="num text-right text-xs text-mute">{t.selective_ci95 ? `${rate(t.selective_ci95[0])}–${rate(t.selective_ci95[1])}` : "—"}</td>
                       <td className="num text-right">{isNum(t.calls_per_day) ? t.calls_per_day.toFixed(1) : "—"}</td>
@@ -222,12 +238,12 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           )}
           {tab === "bots" && (
             <div className="overflow-x-auto">
-              <p className="px-4 pt-3 text-xs text-mute">Virtual money. <b className="text-accent">APP SCORECARD</b> bots take exactly the Signals-page calls, fees included.</p>
+              <p className="px-4 pt-3 text-xs text-mute">Virtual money. <b className="text-accent">Scorecard</b> bots take exactly the Signals-page calls, fees included.</p>
               <table className="grid-table mt-2 min-w-[600px]">
                 <thead><tr><th>Bot (virtual money)</th><th className="text-right">Trades</th><th className="text-right">Win rate</th><th className="text-right">Return</th><th className="text-right">Buy &amp; hold</th><th className="text-right">Max drop</th></tr></thead>
                 <tbody>
                   {(d.bots ?? []).map((b: any, i: number) => (
-                    <tr key={i} className={b.scorecard ? "bg-accent/[0.05]" : ""}><td>{b.name}{b.scorecard && <span className="ml-2 rounded-md border border-accent/40 bg-accent/15 px-1.5 py-0.5 text-xs font-bold leading-none text-accent">APP SCORECARD</span>}<div className="text-xs text-mute">{b.started_at ? `since ${fmtDate(b.started_at)}` : ""}</div></td>
+                    <tr key={i} className={b.scorecard ? "bg-accent/[0.05]" : ""}><td>{b.name}{b.scorecard && <span className="ml-2 rounded-md border border-accent/40 bg-accent/15 px-1.5 py-0.5 text-xs font-semibold leading-none text-accent">Scorecard</span>}<div className="text-xs text-mute">{b.started_at ? `since ${fmtDate(b.started_at)}` : ""}</div></td>
                       <td className="num text-right">{b.trades ?? 0}</td><td className="num text-right">{rate(b.win_rate)}</td>
                       <td className={`num text-right font-semibold ${tone(b.return_pct)}`}>{pct(b.return_pct)}</td>
                       <td className={`num text-right ${tone(b.benchmark_return_pct)}`}>{pct(b.benchmark_return_pct)}</td>

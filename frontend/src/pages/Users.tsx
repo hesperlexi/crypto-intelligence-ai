@@ -1,4 +1,5 @@
 import { collection, doc, getDoc, onSnapshot, updateDoc, writeBatch } from "firebase/firestore";
+import { PageHeader } from "../components/kit";
 import { countryName, flagUrl, ONLINE_MS } from "../lib/presence";
 import { createContext, KeyboardEvent as ReactKeyboardEvent, ReactNode, useContext, RefObject, useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -120,16 +121,11 @@ export default function Users() {
   return (
     <RefNames.Provider value={byId}>
     <div className="space-y-4">
-      <div className="flex flex-wrap items-end justify-between gap-2">
-        <div>
-          <h1 className="page-title">Users & memberships</h1>
-          <p className="page-sub">Payments, memberships and who is online.</p>
-        </div>
+      <PageHeader title="Users & memberships" sub="Payments, memberships and who is online." actions={
         <div className="flex items-center gap-2 text-xs text-mute">
           <span className="num rounded-md border border-glass/10 px-2 py-1"><span className="font-semibold text-text">{all.length}</span> accounts</span>
           <span className="num rounded-md border border-glass/10 px-2 py-1"><span className="font-semibold text-accent">{income}</span> USDT received</span>
-        </div>
-      </div>
+        </div>} />
 
       {/* summary: each tile is also a filter */}
       <div className="grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
@@ -140,7 +136,7 @@ export default function Users() {
       </div>
 
       {/* activity: one compact strip */}
-      <section className="panel flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:gap-6" aria-label="Activity">
+      <section className="panel panel-hero flex flex-col gap-3 px-4 py-3 lg:flex-row lg:items-center lg:gap-6" aria-label="Activity">
         <div className="grid shrink-0 grid-cols-3 gap-2 text-center lg:flex lg:gap-6 lg:text-left">
           <ActivityNum n={within(ONLINE_MS)} label="online now" dot />
           <ActivityNum n={within(86_400_000)} label="active today" />

@@ -1,5 +1,5 @@
 // Results: one place for "does it work?" - track record, demo bots, model accuracy, signal log, and the tools.
-import { TabStrip } from "../components/kit";
+import { TabStrip, PageHeader } from "../components/kit";
 import { lazy, Suspense } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useHesperVisibility } from "../lib/api";
@@ -29,10 +29,7 @@ export default function Results() {
   const go = (k: Tab) => { const p = new URLSearchParams(params); p.set("tab", k); setParams(p, { replace: true }); };
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="page-title">Results</h1>
-        <p className="page-sub">Every signal's outcome, wins and losses.</p>
-      </div>
+      <PageHeader title="Results" sub="Every signal since the restart, wins and losses alike, after fees. Nothing is edited." />
       <TabStrip label="Results" value={tab} options={tabs} onChange={go} className="-mx-3 px-3 sm:mx-0 sm:px-0" />
       {tab === "track" && <TrackRecord />}
       {tab === "bots" && <Bots />}
@@ -44,7 +41,7 @@ export default function Results() {
         <ul className="grid gap-3 sm:grid-cols-3">
           {TOOLS.map(([to, title, text]) => (
             <li key={to}><Link to={to} className="panel block h-full p-4 transition hover:border-accent/50">
-              <div className="font-semibold">{title} <span className="text-accent">→</span></div>
+              <div className="font-semibold">{title}</div>
               <p className="mt-1 text-sm text-mute">{text}</p>
             </Link></li>
           ))}

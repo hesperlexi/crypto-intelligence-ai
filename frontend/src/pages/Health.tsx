@@ -7,7 +7,7 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { ReactNode, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Badge, Segmented, Tile, Tone } from "../components/kit";
+import { Badge, Segmented, Tile, Tone, PageHeader } from "../components/kit";
 import { Card, Empty, ErrorBox, Loading, Note, Row } from "../components/ui";
 import { useApi } from "../lib/api";
 import { db } from "../lib/firebase";
@@ -56,7 +56,8 @@ function Icon({ name }: { name: keyof typeof ICONS }) {
 }
 
 /** One headline figure: label top-left, icon top-right, big number, chip + caption, optional bar. */
-function Kpi({ label, icon, value, valueClass = "", chip, caption, bar, to }: {
+function Kpi({ label, icon, value, valueClass = "", chip, caption, bar, to, hero = false }: {
+  hero?: boolean;
   label: string; icon: keyof typeof ICONS; value: ReactNode; valueClass?: string; chip?: ReactNode; caption?: ReactNode; bar?: ReactNode; to?: string;
 }) {
   const body = (
@@ -67,7 +68,7 @@ function Kpi({ label, icon, value, valueClass = "", chip, caption, bar, to }: {
       {bar && <div className="mt-3">{bar}</div>}
     </>
   );
-  const cls = "panel block min-w-0 p-4 sm:p-5";
+  const cls = `panel block min-w-0 p-4 sm:p-5${hero ? " panel-hero" : ""}`;
   return to ? <Link to={to} className={`${cls} transition-colors hover:border-accent/40`}>{body}</Link> : <section className={cls}>{body}</section>;
 }
 
@@ -141,11 +142,8 @@ export default function Health() {
 
   return (
     <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <h1 className="page-title">System health</h1>
-        {d?.status && <Badge tone={toneOf(d.status)}>● {d.status}</Badge>}
-        {d?.generated_at && <span className="text-xs text-mute">report {ago(d.generated_at)}</span>}
-      </div>
+      <PageHeader title="System health" sub={d?.generated_at ? `Engine, data, budget and safeguards. Report from ${ago(d.generated_at)}.` : "Engine, data, budget and safeguards."}
+        actions={d?.status ? <Badge tone={toneOf(d.status)}>● {d.status}</Badge> : undefined} />
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
       {viewError && <ErrorBox error={`The engine could not publish the health report: ${viewError}`} retry={h.reload} />}
       {!d && h.loading && <Loading />}
@@ -219,9 +217,12 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
     { id: "hc-prices", name: "Live prices", level: connected ? "ok" : "warn", target: "hc-sources", line: connected ? "this browser · live" : "this browser · reconnecting" },
   ];
   if (guardian) {
-    const gs = String(guardian.status ?? guardian.state ?? "").trim();
-    const gl: Level = !gs ? "off" : /^(ok|live|active|on|running|healthy)$/i.test(gs) ? "ok" : /^(down|error|failed|off)$/i.test(gs) ? "down" : "warn";
-    services.push({ id: "hc-guardian", name: "Trade Guardian", level: gl, target: "/guardian", line: `${gs || "published"}${guardian.generated_at ? ` · ${ago(guardian.generated_at)}` : ""}` });
+    // views/guardian.status is an object {last_check, watched, ...}: judge by the switch and the last check's age
+    const lc = isNum(guardian.status?.last_check) ? guardian.status.last_check : null;
+    const gl: Level = guardian.enabled === false ? "off" : lc == null ? "warn" : Date.now() - lc > 20 * MIN ? "warn" : "ok";
+    const w = guardian.status?.watched?.calls;
+    services.push({ id: "hc-guardian", name: "Trade Guardian", level: gl, target: "/guardian",
+      line: guardian.enabled === false ? "switched off" : `${isNum(w) ? `${w} call${w === 1 ? "" : "s"} watched` : "published"}${lc ? ` · checked ${ago(lc)}` : ""}` });
   }
   if (turn) {
     const t = stateTone(turn.market?.state);
@@ -249,7 +250,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
     <>
       {/* ---- KPI row ---- */}
       <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-        <Kpi label="Engine" icon="pulse" value={engineLevel === "ok" ? "LIVE" : engineLevel === "off" ? DASH : engineLevel === "down" ? "STALE" : "LATE"}
+        <Kpi hero label="Engine" icon="pulse" value={engineLevel === "ok" ? "LIVE" : engineLevel === "off" ? DASH : engineLevel === "down" ? "STALE" : "LATE"}
           valueClass={engineLevel === "ok" ? "text-bull" : engineLevel === "down" ? "text-bear" : engineLevel === "warn" ? "text-warn" : ""}
           chip={<Badge tone={LEVEL_TONE[engineLevel]}>{tickAge == null ? "no cycle" : ago(e.last_tick_finished)}</Badge>}
           caption={isNum(e.last_tick_seconds) ? `cycle ${e.last_tick_seconds}s · every ${e.schedule_minutes ?? 5} min` : `every ${e.schedule_minutes ?? 5} min`} />

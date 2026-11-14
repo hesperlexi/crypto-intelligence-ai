@@ -57,8 +57,8 @@ export default function Accuracy() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="page-title">Forecast accuracy</h1>
-          <p className="text-sm text-mute">Scored on unseen data and live predictions.</p>
+          <h2 className="section-title">Forecast accuracy</h2>
+          <p className="page-sub">Scored on data the models never trained on, and on live predictions.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SymbolSelect value={symbol} onChange={(v) => set("symbol", slug(v))} symbols={symbols.length ? symbols : [symbol]} />
