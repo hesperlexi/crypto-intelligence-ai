@@ -1,6 +1,6 @@
 // Public track record: every trade signal since launch with its real outcome, the models' results on past data
 // they never trained on (a labelled simulation), and the demo bots. Readable without an account.
-import { TabStrip, Tile } from "./kit";
+import { Segmented, TabStrip, Tile } from "./kit";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
 import { useState } from "react";
 import { useApi } from "../lib/api";
@@ -71,6 +71,7 @@ function Kpi({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?
 export default function TrackRecord({ compact = false }: { compact?: boolean }) {
   const v = useApi<any>("/track-record");
   const [tab, setTab] = useState<"live" | "tested" | "bots">("live");
+  const [show, setShow] = useState<"all" | "running" | "waiting" | "closed">("all");
   const [detail, setDetail] = useState<string | null>(null);   // row key; the row is looked up again when the view refreshes
   const pro = useIsPro();
   const admin = useIsAdmin();
@@ -87,6 +88,10 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
     if (ao !== bo) return ao - bo;
     return ao === 0 ? (b.created_at ?? 0) - (a.created_at ?? 0) : (b.closed_at ?? b.created_at ?? 0) - (a.closed_at ?? a.created_at ?? 0);
   });
+  // v2.22 (owner, 14 Nov 2026): open and closed calls apart - Running / Waiting entry / Closed / All
+  const stOf = (x: any) => (x.status === "OPEN" ? (x.fill_status === "PENDING" ? "waiting" : "running") : "closed");
+  const cnt = (k: string) => sigs.filter((x) => stOf(x) === k).length;
+  const rows = show === "all" ? sigs : sigs.filter((x) => stOf(x) === show);
   const keyOf = (x: any) => `${x.symbol}|${x.timeframe}|${x.created_at}`;
   const shown = detail ? sigs.find((x) => keyOf(x) === detail) : null;
   const rowProps = (x: any) => ({
@@ -137,10 +142,17 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
             options={[["live", `Live signals (${sigs.length})`], ...(pro ? [["tested", "Tested on unseen data"]] as const : []), ["bots", "Demo bots"]] as const} />
           {(tab === "live" || (!pro && tab === "tested")) && (
             <div className="overflow-x-auto">
-              {!sigs.length ? <p className="p-4 text-sm text-mute">No trade signals yet.</p> : (<>
+              {sigs.length > 0 && (
+                <div className="px-3 pt-3">
+                  <Segmented label="Show" value={show} onChange={setShow}
+                    options={[["all", `All ${sigs.length}`], ["running", `Running ${cnt("running")}`], ["waiting", `Waiting entry ${cnt("waiting")}`], ["closed", `Closed ${cnt("closed")}`]] as const} />
+                </div>
+              )}
+              {sigs.length > 0 && !rows.length && <p className="p-4 text-sm text-mute">Nothing here right now.</p>}
+              {!rows.length ? (sigs.length ? null : <p className="p-4 text-sm text-mute">No trade signals yet.</p>) : (<>
                 {/* phones: one card per signal, the result on margin up front */}
                 <ul className="divide-y divide-glass/[0.06] sm:hidden">
-                  {sigs.map((x, i) => {
+                  {rows.map((x, i) => {
                     const [lab, cls] = statusOf(x);
                     return (
                       <li key={i} {...rowProps(x)} className="cursor-pointer px-4 py-3 outline-none transition-colors hover:bg-glass/[0.03] focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
@@ -169,7 +181,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                 <table className="grid-table hidden min-w-[720px] sm:table">
                   <thead><tr><th>Signal</th><th className="text-center">Grade</th><th className="text-right">Entry</th><th className="text-right">Stop</th><th className="text-right">Target 1</th><th>Result</th><th className="text-right">ROI on margin</th></tr></thead>
                   <tbody>
-                    {sigs.map((x, i) => {
+                    {rows.map((x, i) => {
                       const [lab, cls] = statusOf(x);
                       return (
                         <tr key={i} {...rowProps(x)} className="cursor-pointer outline-none focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
