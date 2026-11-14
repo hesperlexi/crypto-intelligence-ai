@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { CoinAvatar } from "../components/Polish";
 import { useIsAdmin } from "../lib/session";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import TVChart from "../components/TVChart";
@@ -69,18 +70,19 @@ export default function Asset() {
   return (
     <div className="space-y-4">
       {/* ---- header ---- */}
-      <div className="panel p-4">
+      <div className="panel panel-hero p-4 sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h1 className="text-2xl font-semibold tracking-tight">{symbol}</h1>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <CoinAvatar symbol={symbol} size={34} />
+              <h1 className="page-title">{symbol}</h1>
               {ok && <RegimeBadge regime={a.regime.regime} />}
               {ok && <SignalBadge signal={a.signal.signal} />}
               <Link className="btn px-2.5 py-1 text-xs" to={`/alerts?symbol=${encodeURIComponent(symbol)}&timeframe=${["15m", "1h", "4h", "12h", "1d", "3d"].includes(tf) ? tf : "4h"}`}
                 title="Get an alert with entry, stop-loss and take-profits when a trade signal appears">🔔 Alert me</Link>
             </div>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-              <span className="num text-3xl">{fmtPrice(price)}</span>
+              <span className="figure font-display text-4xl sm:text-5xl">{fmtPrice(price)}</span>
               <span className={`num ${tone(tk?.change_pct)}`}>{fmtPctRaw(tk?.change_pct)} 24h</span>
               <span className="num text-sm text-mute">Vol {fmtCompact(tk?.quote_volume)} USDT</span>
               {isNum(tk?.spread_bps) && <span className="num text-sm text-mute">Spread {fmtNum(tk?.spread_bps, 2)} bps</span>}
@@ -277,7 +279,7 @@ function ConsensusCard({ fc, symbol, tf }: { fc: any; symbol: string; tf: string
               <tbody>
                 {fc.per_model.map((m: any) => (
                   <tr key={m.name} className={m.baseline ? "text-mute" : ""}>
-                    <td>{m.label}{m.baseline && <span className="ml-1 text-xs uppercase">benchmark</span>}</td>
+                    <td>{m.label}{m.baseline && <span className="ml-1 text-xs text-mute">benchmark</span>}</td>
                     {m.error ? <td colSpan={5} className="text-bear">{m.error}</td> : (
                       <>
                         <td><Badge tone={m.predicted === "UP" ? "bull" : m.predicted === "DOWN" ? "bear" : "mute"}>{m.predicted}</Badge></td>

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { PageHeader } from "../components/kit";
 import CandleChart, { Candle, PriceLine } from "../components/CandleChart";
 import { SymbolSelect, TfTabs, useSymbols } from "../components/Pickers";
 import { Badge, Card, Check, Empty, ErrorBox, FlagList, Note, ProbBar, RegimeBadge, Row, SignalBadge, signalTone, Stat } from "../components/ui";
@@ -51,11 +52,8 @@ export default function Replay() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="page-title">Replay market</h1>
-        <p className="text-sm text-mute">Pick a past moment: see the forecast made with only data known then, then what happened.</p>
-      </div>
-      <Card title="Choose a moment">
+      <PageHeader title="Replay market" sub="Pick a past moment: see the forecast made with only the data known then, and what happened next." />
+      <Card title="Choose a moment" className="panel-hero">
         <div className="flex flex-wrap items-end gap-3">
           <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols.length ? symbols : [symbol]} />
           <TfTabs value={tf} onChange={setTf} />

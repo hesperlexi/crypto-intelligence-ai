@@ -733,3 +733,40 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 /* numbers that matter: champagne-ivory, tight */
 .figure { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-weight: 600; color: rgb(var(--text)); }
 @media (prefers-reduced-motion: reduce) { .panel-hero::before { animation: none; } }
+
+
+/* ---- premium-b (owner, 14 Nov 2026): signals, coin page and trade terminal ------------------------------------
+   The signal card is a trade ticket: frosted, a gold-leaf top edge (.panel-hero), the call's colour as a soft light
+   in the header, and a perforated tear line with two punched notches between the header and the body. */
+.signal-card .sc-head { position: relative; border-bottom: 1px dashed rgb(var(--glass) / 0.16);
+  background: radial-gradient(90% 140% at 100% 0%, rgb(var(--tone) / 0.12), transparent 60%); }
+.signal-card .sc-head::before, .signal-card .sc-head::after {
+  content: ""; position: absolute; bottom: -8px; width: 16px; height: 16px; border-radius: 9999px;
+  background: rgb(var(--ink)); box-shadow: inset 0 0 0 1px var(--crystal-edge, var(--hair)); z-index: 1; }
+.signal-card .sc-head::before { left: -9px; }
+.signal-card .sc-head::after { right: -9px; }
+.signal-card.sc-wait .sc-head { background: none; }
+.sc-headline { letter-spacing: -0.028em; }
+.sc-label { text-transform: none; letter-spacing: 0; font-size: 0.8125rem; font-weight: 500; }
+.sc-chip { text-transform: none; letter-spacing: 0; font-weight: 600; }
+.sc-side { letter-spacing: 0.01em; font-weight: 700; border-radius: 10px; box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.22); }
+.sig-side, .all-call { letter-spacing: 0.01em; font-weight: 700; }
+/* price ladder: a vertical rail, the entry row lit in gold, the live price as a frosted pill */
+.sc-ladder { position: relative; padding-left: 0.85rem; }
+.sc-ladder::before { content: ""; position: absolute; left: 0.2rem; top: 0.4rem; bottom: 0.4rem; width: 1px;
+  background: linear-gradient(180deg, rgb(var(--bull) / 0.55), rgb(var(--accent) / 0.6) 55%, rgb(var(--bear) / 0.55)); }
+.sc-ladder > li { position: relative; border-bottom-color: rgb(var(--glass) / 0.06); padding: 0.4rem 0; }
+.sc-ladder > li::before { content: ""; position: absolute; left: -0.82rem; top: 50%; width: 7px; height: 7px; margin-top: -3.5px;
+  border-radius: 9999px; background: rgb(var(--panel)); box-shadow: 0 0 0 1px rgb(var(--glass) / 0.3); }
+.sc-ladder > li.is-now::before { background: rgb(var(--text)); box-shadow: 0 0 0 3px rgb(var(--text) / 0.15); left: -0.32rem; }
+/* filters sit on one frosted toolbar */
+.sig-toolbar { padding: 0.5rem; border-radius: var(--r-card); border: 1px solid var(--crystal-edge, var(--hair));
+  background: rgb(var(--panel) / 0.45); }
+[data-glass="on"] .sig-toolbar { -webkit-backdrop-filter: blur(14px) saturate(160%); backdrop-filter: blur(14px) saturate(160%); }
+.all-head, .sig-head { font-weight: 500; }
+/* trade terminal: the order form reads as a ticket too (a quiet gold rule on top) */
+.order-ticket { position: relative; overflow: hidden; }
+.order-ticket::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px;
+  background: linear-gradient(90deg, rgb(var(--accent) / 0.0), rgb(var(--accent) / 0.55), rgb(var(--accent) / 0.0)); }
+.signal-card .metric-k { text-transform: none; letter-spacing: 0; font-size: 0.8125rem; font-weight: 500; }
+.signal-card .metric-strip { background: rgb(var(--ink) / 0.28); }

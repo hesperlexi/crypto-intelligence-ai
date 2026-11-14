@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { PageHeader } from "../components/kit";
 import { useSearchParams } from "react-router-dom";
 import { TfTabs, useSymbols } from "../components/Pickers";
 import { CoinAvatar } from "../components/Polish";
@@ -117,20 +118,16 @@ export default function Signals() {
   return (
     <div className="space-y-4">
       <NewsBanner />
-      <div className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h1 className="page-title">Trade signals</h1>
-          <p className="page-sub">{all ? `${active} calls · all timeframes` : rows.length ? `${active} of ${rows.length} coins with a call · ${tf.toUpperCase()}` : "One call per coin."}</p>
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+      <PageHeader title="Trade signals"
+        sub={all ? `${active} live calls across every timeframe` : rows.length ? `${active} of ${rows.length} coins have a call on ${tf.toUpperCase()}` : "One call per coin, per timeframe."}
+        actions={<>
           <Segmented label="Market" value={market} onChange={setMarket} strong className="[&>button]:!px-4 [&>button]:!text-sm"
             options={[["futures", "Futures"], ["spot", "Spot"]] as const} />
           <TfTabs value={tf} onChange={setTf} options={TF_OPTIONS} notes={TF_NOTES} />
-        </div>
-      </div>
+        </>} />
 
       {(allRows.length > 0 || (all && !boardsLoading && !boardsEmpty)) && (
-        <div className="relative z-30 flex flex-wrap items-center gap-2" aria-label="Filters">
+        <div className="sig-toolbar relative z-30 flex flex-wrap items-center gap-2" aria-label="Filters">
           <label className="w-full sm:w-auto">
             <span className="sr-only">Search coin</span>
             <input className="input input-sm w-full sm:w-44" type="search" placeholder="Search coin" value={q} onChange={(e) => setQ(e.target.value)} />
@@ -185,7 +182,7 @@ export default function Signals() {
 
             {/* all coins at a glance: table-like rows, side rule on the left */}
             <section className="panel self-start overflow-hidden p-0">
-              <div className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">All coins · {market}</h2><span className="text-xs text-mute">{active} active</span></div>
+              <div className="card-head flex items-center justify-between border-b px-4 py-3"><h2 className="label">All coins, {market}</h2><span className="text-xs text-mute">{active} with a call</span></div>
               <div className="sig-row sig-head label border-b border-glass/[0.06]" aria-hidden="true">
                 <span>Coin</span><span className="text-right">Entry</span><span className="text-right">Stop</span><span className="text-right">TP1</span><span className="text-right">Call</span>
               </div>
@@ -225,7 +222,7 @@ export default function Signals() {
           </div>
         </>
       )}
-      <p className="text-xs text-mute">Analysis only, not financial advice. Spot calls are buy-only.</p>
+      <p className="pt-2 text-xs text-mute">Analysis only, not financial advice. Spot calls are buy-only.</p>
     </div>
   );
 }

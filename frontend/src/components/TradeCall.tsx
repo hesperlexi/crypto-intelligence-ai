@@ -154,13 +154,13 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   ].filter(Boolean);
 
   return (
-    <section className={`panel signal-card overflow-hidden sc-${v.tone}`}>
+    <section className={`panel panel-hero signal-card overflow-hidden sc-${v.tone}`}>
       {/* header row: coin · timeframe · market | grade · side */}
       <header className="sc-head">
         <Link to={`/asset/${slug(r.symbol)}`} className="flex min-w-0 items-center gap-3 hover:text-accent">
           <CoinAvatar symbol={r.symbol} size={compact ? 32 : 38} />
           <div className="min-w-0">
-            <div className="flex items-baseline gap-1.5"><span className="font-display text-lg font-bold leading-tight">{base(r.symbol)}</span><span className="text-xs text-mute">/USDT</span></div>
+            <div className="flex items-baseline gap-1.5"><span className="font-display text-xl font-semibold leading-tight tracking-tight">{base(r.symbol)}</span><span className="text-xs text-mute">/USDT</span></div>
             <div className="mt-0.5 flex items-center gap-1.5 text-xs text-mute">
               <span className="sc-chip">{tfLabel}</span><span className="sc-chip">{market}</span><span className="num">{fmtPrice(px)}</span>
             </div>

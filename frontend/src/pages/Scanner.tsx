@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { PageHeader } from "../components/kit";
 import { Link } from "react-router-dom";
 import { TfTabs } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Loading, RegimeBadge, SignalBadge, signalTone } from "../components/ui";
@@ -61,10 +62,7 @@ export default function Scanner() {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="page-title">Scanner</h1>
-        <TfTabs value={tf} onChange={setTf} />
-      </div>
+      <PageHeader title="Scanner" sub="Every coin on the watchlist ranked by its current setup." actions={<TfTabs value={tf} onChange={setTf} />} />
       {admin && <Card title="Watchlist">
         <div className="flex flex-wrap items-center gap-2">
           <input className="input w-56" placeholder="Search a coin, e.g. PEPE" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} aria-label="Search cryptocurrency" />
