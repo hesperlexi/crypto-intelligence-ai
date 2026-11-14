@@ -84,6 +84,7 @@ export default function Signals() {
   const st: St = isSt(stParam) ? stParam : "active";
   const setSt = (x: St) => setQuery({ status: x === "active" ? null : x });
   const [q, setQ] = useState("");
+  const [moreF, setMoreF] = useState(false);
   const boardData = boards.map((b) => b.data);
   const allRows: any[] = useMemo(() => {
     if (!all) return [...(v.data?.rows ?? [])].map((r: any) => ({ ...r, timeframe: r.timeframe ?? tf }));
@@ -128,10 +129,15 @@ export default function Signals() {
 
       {(allRows.length > 0 || (all && !boardsLoading && !boardsEmpty)) && (
         <div className="sig-toolbar relative z-30 flex flex-wrap items-center gap-2" aria-label="Filters">
-          <label className="w-full sm:w-auto">
+          <label className="min-w-0 flex-1 sm:w-auto sm:flex-none">
             <span className="sr-only">Search coin</span>
             <input className="input input-sm w-full sm:w-44" type="search" placeholder="Search coin" value={q} onChange={(e) => setQ(e.target.value)} />
           </label>
+          {/* phones: the filter buttons fold behind one "Filters" button (the toolbar was taller than the screen) */}
+          <button type="button" className="btn btn-sm sm:hidden" aria-expanded={moreF} onClick={() => setMoreF((v) => !v)}>
+            Filters{filtered ? " · on" : ""}
+          </button>
+          <div className={`${moreF ? "flex w-full flex-wrap gap-2" : "hidden"} sm:contents`}>
           <Segmented label="Direction" value={dir} onChange={setDir} options={[["all", "All"], ["long", market === "futures" ? "Long" : "Buy"], ["short", market === "futures" ? "Short" : "Sell"]] as const} />
           <Segmented label="Grade" value={grade} onChange={setGrade} options={[["all", "Any grade"], ["A", "A"], ["B", "B"]] as const} />
           {hasCalls && <Segmented label="Status" value={st} onChange={setSt} options={[["active", `Active ${stCount("active")}`], ["running", `Running ${stCount("running")}`],
@@ -142,6 +148,7 @@ export default function Signals() {
               Show waits
             </label>
           )}
+          </div>
           {filtered && <button type="button" className="btn btn-ghost btn-sm text-accent" onClick={() => { setDir("all"); setGrade("all"); setQuery({ status: null }); setQ(""); }}>Clear filters</button>}
           <div className="ml-auto"><SortMenu value={sort} onChange={(k) => setQuery({ sort: k === "ready" ? null : k })} options={all ? SORTS : SORTS.filter(([k]) => k !== "tf")} /></div>
         </div>
