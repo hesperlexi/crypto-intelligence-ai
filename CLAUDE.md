@@ -716,3 +716,7 @@ Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance da
 - `views/market_turn` (admin only in the rules + rules test "market turn: ..."): min 1800 s, `core` = market + coin states,
   skipped in lean mode -> <= ~48 writes/day, 0 engine reads. UI `components/MarketTurn.tsx`: Health ("Market turn" tile +
   card `hc-turn`) and Trade Guardian (compact card). Seed `dev/seed.ts marketTurn()`. Tests `tests/test_market_turn.py`.
+- **Glass & crystal look** (owner, 14 Nov 2026, `index.css`): Midnight Gold lightened (ink 26 24 21, panel 37 34 30,
+  raised 49 45 40); with Glass on (default) every theme gets translucent cards (`--panel-a` 0.62, blur 18px, saturate
+  165 %), a top-left sheen (`--crystal-sheen`), a crystal edge (`--crystal-edge`, bright inset top line), sheen on tiles,
+  buttons and bars, and two extra cool / accent background lights so the frosting picks up colour. Glass off = solid.
