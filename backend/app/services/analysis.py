@@ -34,6 +34,10 @@ TRADE_DECISIONS = ("BUY", "BUY ON PULLBACK", "SELL")
 COST_MULT = 3.0
 ONE_CALL_TFS = ("15m",)
 # timeframes whose trade calls are paused (owner decision 30 Oct 2026: 15m lost money on unseen data, -0.17R per trade);
+# v2.32 (owner, 14 Nov 2026): Binance bStocks (tokenized shares) not tradable on MEXC / most accounts: no new calls,
+# removed from the watchlist once nothing runs on them (worker.retire_coins, flag RETIRE_FLAG)
+RETIRING_COINS = tuple(c.strip() for c in os.environ.get("RETIRING_COINS", "MSTRB/USDT,SPCXB/USDT").split(",") if c.strip())
+RETIRE_FLAG = "retire_bstocks_v232"
 # the analysis, chart and forecast still run, only no trade call is issued. Env PAUSED_TFS, comma separated ("" = none).
 # v2.8 (owner decision 31 Oct 2026, from the time-limit / timeframe study `research_horizon.py`): 1d and 3d paused
 # (they lost after costs on unseen calls); 1h grade A only; 15m demo bots only (grade A, never on the public list)
@@ -428,6 +432,11 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         if held_open(rt.db, symbol, timeframe):
             decision, grade, why = "NO TRADE", None, "the admin withdrew the last call here; no new call until it would have ended"
             flags.append("WITHDRAWN BY ADMIN")
+    # v2.32 (owner, 14 Nov 2026): coins being taken off the watchlist get no new calls; running ones finish first
+    if decision in TRADE_DECISIONS and live and bundle is None and as_of is None and symbol in RETIRING_COINS \
+            and not rt.db.get_setting(RETIRE_FLAG, False):
+        decision, grade, why = "NO TRADE", None, "this coin is being removed from the watchlist; running trades finish first"
+        flags.append("COIN BEING REMOVED")
     # v2.22 combination (owner-approved 14 Nov 2026, services/combo_gates.py): volume profile, fee and same-side cap,
     # live calls only (research replays and rebuilds keep measuring every call)
     if decision in TRADE_DECISIONS and live and bundle is None and as_of is None and setup and setup.get("valid"):

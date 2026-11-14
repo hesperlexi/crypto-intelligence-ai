@@ -315,6 +315,36 @@ def hesper_members(rt: Runtime, sink: BaseSink, force: bool = False) -> list[str
     return uids
 
 
+def coin_busy(rt: Runtime, sym: str) -> bool:
+    """True while anything still runs on the coin: a record call (open or waiting for entry), a bot position / order,
+    or the Hesper Challenge trade / order."""
+    if rt.db.one("SELECT 1 AS x FROM signals WHERE symbol = ? AND status = 'OPEN' LIMIT 1", (sym,)):
+        return True
+    for r in rt.db.query("SELECT state FROM bots"):
+        st = loads(r["state"], {}) or {}
+        if any(q.get("symbol") == sym for q in (st.get("positions") or []) + (st.get("pending") or [])):
+            return True
+    hs = rt.db.get_setting(hesper.STATE_KEY, None) or {}
+    return any(q.get("symbol") == sym for q in (hs.get("positions") or []) + (hs.get("pending") or []))
+
+
+def retire_coins(rt: Runtime, sink: BaseSink, doc: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
+    """v2.32 (owner, 14 Nov 2026: "after they complete their running trades"): analysis.RETIRING_COINS get no new calls;
+    each leaves config/watchlist once nothing runs on it. Flag RETIRE_FLAG when all are gone (then the coins may be
+    re-added by the admin like any coin)."""
+    if rt.db.get_setting(analysis.RETIRE_FLAG, False):
+        return doc, []
+    names = [norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]]
+    gone = [c for c in analysis.RETIRING_COINS if c in names and not coin_busy(rt, c)]
+    if gone:
+        doc = {**doc, "symbols": [i for i, n in zip(doc["symbols"], names) if n not in gone], "updated_at": now_ms()}
+        sink.set("config/watchlist", doc)
+    left = [c for c in analysis.RETIRING_COINS if c in names and c not in gone]
+    if not left:
+        rt.db.set_setting(analysis.RETIRE_FLAG, True)
+    return doc, gone
+
+
 ALERT_COOLDOWN_MIN_S, ALERT_COOLDOWN_MAX_S = 60, 365 * 86_400     # same range as the Firestore rules
 _SYMBOL_RE = __import__("re").compile(r"^[A-Za-z0-9]{1,20}([/_-]?[A-Za-z0-9]{2,10})?$")
 
@@ -353,7 +383,7 @@ def alert_row(a: Any, inactive: set[str] | frozenset = frozenset()) -> tuple | N
 # and on a database that looks brand new (no signals and no migration flag at all) every historical migration is marked
 # done instead of run. A NEW migration must add its flag here.
 MIGRATION_FLAGS = (
-    "auto_call_new_v230", "drop_inline_proofs_v1", "testing_v24", "testing_v24b", "watchlist_majors_v2", "gold_paxg_v21", "support_email_v23",
+    "retire_bstocks_v232", "auto_call_new_v230", "drop_inline_proofs_v1", "testing_v24", "testing_v24b", "watchlist_majors_v2", "gold_paxg_v21", "support_email_v23",
     "fresh_start_v23", "pause_15m_v26", "tf_policy_v28", "demo_1d3d_v210", "scalping_v1", "public_15m_v211",
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
@@ -584,6 +614,9 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             doc = {**doc, "symbols": items, "updated_at": now_ms()}
             sink.set("config/watchlist", doc)
             notes["renamed"] = {o: n for o, n in RENAMED.items() if o in names}
+        doc, gone = retire_coins(rt, sink, doc)
+        if gone:
+            notes["retired"] = gone
         wanted = {}
         for item in doc["symbols"]:
             sym = norm_symbol(item["symbol"] if isinstance(item, dict) else item)

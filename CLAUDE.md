@@ -820,3 +820,11 @@ already sent it); Hesper = admin + setting `hesper_push_members` (refreshed by t
 `backend/data/watch_sent.json` (7 days); status `watch_status.json` → Health `engine.watch_*`. The engine's confirmed push
 uses the same tag (`<call id>-<event>`, `hesper-<run>-<type>-<coin>-<tp>`) so the phone replaces the early one. Never
 changes the record, bots, Hesper or Firestore. Tests `tests/test_watch.py`.
+
+## v2.32 bStocks removed (owner, 14 Nov 2026: MSTRB not on MEXC / not findable on Binance; "after they complete their running trades")
+`analysis.RETIRING_COINS` (env `RETIRING_COINS`, default MSTRB/USDT, SPCXB/USDT = Binance bStocks, tokenized shares, spot
+only): live calls → NO TRADE "COIN BEING REMOVED" (in `proof_checks.SKIP_FLAGS`). `worker.retire_coins` (in
+`sync_config`, before `wanted`) removes each from `config/watchlist` once `coin_busy` is false (no OPEN record call incl.
+pending, no bot position/order, no Hesper trade/order); flag `retire_bstocks_v232` (in `MIGRATION_FLAGS`) when all are
+gone — afterwards the gate is off, so the admin may re-add them. MEXC's "MSTR" is a different product (other price).
+Tests `tests/test_retire_v232.py`.
