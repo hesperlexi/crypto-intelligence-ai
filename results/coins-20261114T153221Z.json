@@ -1,0 +1,2504 @@
+{
+ "stamp": "20261114T153221Z",
+ "commit": "e2bad1fb9fd20ed0862e3c1f7500c6f47c2dc9b4",
+ "baseline": {
+  "ok": true,
+  "command": "coin-baseline",
+  "coins": {
+   "AAVE/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 33,
+      "win_rate": 0.45454545454545453,
+      "expectancy_r": -0.0831954640768141,
+      "profit_factor": 0.8270057176554314,
+      "max_drawdown_r": 7.251217164628803,
+      "total_r": -2.745450314534865,
+      "trades_per_week": 0.78
+     },
+     "1h": {
+      "n": 11,
+      "win_rate": 0.5454545454545454,
+      "expectancy_r": -0.1769727272985661,
+      "profit_factor": 0.6334416163360228,
+      "max_drawdown_r": 2.5599944604312244,
+      "total_r": -1.9467000002842272,
+      "trades_per_week": 1.04
+     },
+     "15m": {
+      "n": 21,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.3564817525634377,
+      "profit_factor": 2.0739920679552117,
+      "max_drawdown_r": 3.6517872605010444,
+      "total_r": 7.486116803832193,
+      "trades_per_week": 7.97
+     }
+    },
+    "trades": 65,
+    "avg_r": 0.043,
+    "total_r": 2.79,
+    "win_rate": 0.538,
+    "trades_per_week": 9.79
+   },
+   "ADA/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 21,
+      "win_rate": 0.6190476190476191,
+      "expectancy_r": 0.2241142489420891,
+      "profit_factor": 1.8288063402885864,
+      "max_drawdown_r": 4.070412329835687,
+      "total_r": 4.706399227783871,
+      "trades_per_week": 0.5
+     },
+     "1h": {
+      "n": 11,
+      "win_rate": 0.7272727272727273,
+      "expectancy_r": 0.3081855134494393,
+      "profit_factor": 2.5557346157911787,
+      "max_drawdown_r": 1.094468478496984,
+      "total_r": 3.390040647943832,
+      "trades_per_week": 1.04
+     },
+     "15m": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": -0.008142755184545103,
+      "profit_factor": 0.9851023116560994,
+      "max_drawdown_r": 1.0931568705931387,
+      "total_r": -0.016285510369090206,
+      "trades_per_week": 0.76
+     }
+    },
+    "trades": 34,
+    "avg_r": 0.2377,
+    "total_r": 8.08,
+    "win_rate": 0.647,
+    "trades_per_week": 2.3
+   },
+   "APT/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 15,
+      "win_rate": 0.7333333333333333,
+      "expectancy_r": 0.2436096352491371,
+      "profit_factor": 2.059985038140061,
+      "max_drawdown_r": 1.4003892739930257,
+      "total_r": 3.6541445287370564,
+      "trades_per_week": 0.67
+     },
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 15,
+    "avg_r": 0.2436,
+    "total_r": 3.65,
+    "win_rate": 0.733,
+    "trades_per_week": 0.67
+   },
+   "AVAX/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 34,
+      "win_rate": 0.47058823529411764,
+      "expectancy_r": -0.12426968675693695,
+      "profit_factor": 0.691530420597549,
+      "max_drawdown_r": 6.341133933140308,
+      "total_r": -4.2251693497358564,
+      "trades_per_week": 0.81
+     },
+     "1h": {
+      "n": 20,
+      "win_rate": 0.45,
+      "expectancy_r": -0.08996029401540737,
+      "profit_factor": 0.811568182248148,
+      "max_drawdown_r": 5.779005137675565,
+      "total_r": -1.7992058803081474,
+      "trades_per_week": 1.9
+     },
+     "15m": {
+      "n": 8,
+      "win_rate": 0.875,
+      "expectancy_r": 0.8119737768402873,
+      "profit_factor": 7.114538197653642,
+      "max_drawdown_r": 1.0623517271042573,
+      "total_r": 6.495790214722298,
+      "trades_per_week": 3.04
+     }
+    },
+    "trades": 62,
+    "avg_r": 0.0076,
+    "total_r": 0.47,
+    "win_rate": 0.516,
+    "trades_per_week": 5.75
+   },
+   "BARD/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "1h": {
+      "n": 3,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": -0.17049824087365786,
+      "profit_factor": 0.5080801581002575,
+      "max_drawdown_r": 1.0397928260946643,
+      "total_r": -0.5114947226209736,
+      "trades_per_week": 1.08
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 3,
+    "avg_r": -0.1705,
+    "total_r": -0.51,
+    "win_rate": 0.667,
+    "trades_per_week": 1.08
+   },
+   "BCH/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 25,
+      "win_rate": 0.44,
+      "expectancy_r": 0.13341646141577276,
+      "profit_factor": 1.3192764681121802,
+      "max_drawdown_r": 5.016421886736625,
+      "total_r": 3.335411535394319,
+      "trades_per_week": 0.59
+     },
+     "1h": {
+      "n": 20,
+      "win_rate": 0.35,
+      "expectancy_r": -0.24327636626702107,
+      "profit_factor": 0.5093237896658933,
+      "max_drawdown_r": 4.865527325340421,
+      "total_r": -4.865527325340421,
+      "trades_per_week": 1.9
+     },
+     "15m": {
+      "n": 23,
+      "win_rate": 0.6086956521739131,
+      "expectancy_r": 0.048632533123882646,
+      "profit_factor": 1.138661277561799,
+      "max_drawdown_r": 2.692666784757584,
+      "total_r": 1.1185482618493008,
+      "trades_per_week": 8.73
+     }
+    },
+    "trades": 68,
+    "avg_r": -0.0061,
+    "total_r": -0.41,
+    "win_rate": 0.471,
+    "trades_per_week": 11.22
+   },
+   "BIO/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 4,
+      "win_rate": 0.5,
+      "expectancy_r": -0.026509266236179635,
+      "profit_factor": 0.9080371281712991,
+      "max_drawdown_r": 1.153042122719194,
+      "total_r": -0.10603706494471854,
+      "trades_per_week": 1.06
+     },
+     "1h": {
+      "n": 6,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.6823170832397664,
+      "profit_factor": 12.811623632410628,
+      "max_drawdown_r": 0.32701061428126277,
+      "total_r": 4.093902499438598,
+      "trades_per_week": 0.63
+     },
+     "15m": {
+      "n": 12,
+      "win_rate": 0.5833333333333334,
+      "expectancy_r": 0.04444153898929041,
+      "profit_factor": 1.095680094412096,
+      "max_drawdown_r": 2.8779580286097843,
+      "total_r": 0.5332984678714849,
+      "trades_per_week": 4.56
+     }
+    },
+    "trades": 22,
+    "avg_r": 0.2055,
+    "total_r": 4.52,
+    "win_rate": 0.591,
+    "trades_per_week": 6.25
+   },
+   "BNB/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 25,
+      "win_rate": 0.4,
+      "expectancy_r": -0.22568325779224352,
+      "profit_factor": 0.6014984592877523,
+      "max_drawdown_r": 7.978091872040622,
+      "total_r": -5.642081444806088,
+      "trades_per_week": 0.59
+     },
+     "1h": {
+      "n": 8,
+      "win_rate": 0.375,
+      "expectancy_r": -0.5359951990539416,
+      "profit_factor": 0.22527835504565502,
+      "max_drawdown_r": 4.649391703984056,
+      "total_r": -4.287961592431532,
+      "trades_per_week": 0.76
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 33,
+    "avg_r": -0.3009,
+    "total_r": -9.93,
+    "win_rate": 0.394,
+    "trades_per_week": 1.35
+   },
+   "BTC/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 19,
+      "win_rate": 0.47368421052631576,
+      "expectancy_r": 0.03991787709530038,
+      "profit_factor": 1.0911480896351355,
+      "max_drawdown_r": 2.4443345228319844,
+      "total_r": 0.7584396648107072,
+      "trades_per_week": 0.45
+     },
+     "1h": {
+      "n": 30,
+      "win_rate": 0.43333333333333335,
+      "expectancy_r": -0.232586068654225,
+      "profit_factor": 0.6088864225867945,
+      "max_drawdown_r": 10.776544034451257,
+      "total_r": -6.97758205962675,
+      "trades_per_week": 2.85
+     },
+     "15m": {
+      "n": 15,
+      "win_rate": 0.5333333333333333,
+      "expectancy_r": 0.08469286494346343,
+      "profit_factor": 1.2607601165680602,
+      "max_drawdown_r": 3.487605942345626,
+      "total_r": 1.2703929741519513,
+      "trades_per_week": 5.69
+     }
+    },
+    "trades": 64,
+    "avg_r": -0.0773,
+    "total_r": -4.95,
+    "win_rate": 0.469,
+    "trades_per_week": 8.99
+   },
+   "DOGE/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 21,
+      "win_rate": 0.38095238095238093,
+      "expectancy_r": -0.36384315734483447,
+      "profit_factor": 0.348660039354209,
+      "max_drawdown_r": 9.515303362752961,
+      "total_r": -7.640706304241524,
+      "trades_per_week": 0.5
+     },
+     "1h": {
+      "n": 26,
+      "win_rate": 0.6153846153846154,
+      "expectancy_r": 0.24945543066665213,
+      "profit_factor": 1.7220351560794236,
+      "max_drawdown_r": 3.389997593350997,
+      "total_r": 6.485841197332955,
+      "trades_per_week": 2.47
+     },
+     "15m": {
+      "n": 11,
+      "win_rate": 0.45454545454545453,
+      "expectancy_r": 0.01241041982036859,
+      "profit_factor": 1.024955200132261,
+      "max_drawdown_r": 3.1290765760982833,
+      "total_r": 0.13651461802405448,
+      "trades_per_week": 4.18
+     }
+    },
+    "trades": 58,
+    "avg_r": -0.0176,
+    "total_r": -1.02,
+    "win_rate": 0.5,
+    "trades_per_week": 7.15
+   },
+   "DOT/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 24,
+      "win_rate": 0.5833333333333334,
+      "expectancy_r": 0.01094435979243046,
+      "profit_factor": 1.0290923797270688,
+      "max_drawdown_r": 3.1798785749231278,
+      "total_r": 0.26266463501833104,
+      "trades_per_week": 0.57
+     },
+     "1h": {
+      "n": 5,
+      "win_rate": 0.8,
+      "expectancy_r": 0.7062627040314435,
+      "profit_factor": 4.413563930127098,
+      "max_drawdown_r": 1.0344946198285312,
+      "total_r": 3.5313135201572177,
+      "trades_per_week": 0.47
+     },
+     "15m": {
+      "n": 11,
+      "win_rate": 0.6363636363636364,
+      "expectancy_r": 0.11720742133077879,
+      "profit_factor": 1.360195933550668,
+      "max_drawdown_r": 2.2742319362850956,
+      "total_r": 1.2892816346385667,
+      "trades_per_week": 4.18
+     }
+    },
+    "trades": 40,
+    "avg_r": 0.1271,
+    "total_r": 5.08,
+    "win_rate": 0.625,
+    "trades_per_week": 5.22
+   },
+   "ENA/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "1h": {
+      "n": 3,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.18265282302876176,
+      "profit_factor": 1.5144717141949195,
+      "max_drawdown_r": 1.065089593786061,
+      "total_r": 0.5479584690862853,
+      "trades_per_week": 0.28
+     },
+     "15m": {
+      "n": 12,
+      "win_rate": 0.5833333333333334,
+      "expectancy_r": 0.2474948926221087,
+      "profit_factor": 2.0558579183013213,
+      "max_drawdown_r": 1.4123162135726768,
+      "total_r": 2.9699387114653044,
+      "trades_per_week": 4.56
+     }
+    },
+    "trades": 15,
+    "avg_r": 0.2345,
+    "total_r": 3.52,
+    "win_rate": 0.6,
+    "trades_per_week": 4.84
+   },
+   "ERA/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "1h": {
+      "n": 3,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.29881621898185057,
+      "profit_factor": 1.8885936386309476,
+      "max_drawdown_r": 1.0088398318118799,
+      "total_r": 0.8964486569455516,
+      "trades_per_week": 0.97
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 3,
+    "avg_r": 0.2988,
+    "total_r": 0.9,
+    "win_rate": 0.667,
+    "trades_per_week": 0.97
+   },
+   "ETH/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 23,
+      "win_rate": 0.5217391304347826,
+      "expectancy_r": 0.07445740115731628,
+      "profit_factor": 1.1679441737491076,
+      "max_drawdown_r": 5.158659278182463,
+      "total_r": 1.7125202266182744,
+      "trades_per_week": 0.55
+     },
+     "1h": {
+      "n": 26,
+      "win_rate": 0.5384615384615384,
+      "expectancy_r": -0.07396135310782241,
+      "profit_factor": 0.8159667762996494,
+      "max_drawdown_r": 4.935960149241108,
+      "total_r": -1.9229951808033827,
+      "trades_per_week": 2.47
+     },
+     "15m": {
+      "n": 11,
+      "win_rate": 0.45454545454545453,
+      "expectancy_r": -0.32404757731252326,
+      "profit_factor": 0.3553405715103613,
+      "max_drawdown_r": 4.2377003878469095,
+      "total_r": -3.5645233504377556,
+      "trades_per_week": 4.18
+     }
+    },
+    "trades": 60,
+    "avg_r": -0.0629,
+    "total_r": -3.77,
+    "win_rate": 0.517,
+    "trades_per_week": 7.2
+   },
+   "GALA/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 9,
+      "win_rate": 0.7777777777777778,
+      "expectancy_r": 0.4886747231912197,
+      "profit_factor": 4.888114249155801,
+      "max_drawdown_r": 1.0312471482737475,
+      "total_r": 4.398072508720977,
+      "trades_per_week": 0.22
+     },
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "15m": {
+      "n": 25,
+      "win_rate": 0.64,
+      "expectancy_r": 0.061958522850123925,
+      "profit_factor": 1.1900823864086325,
+      "max_drawdown_r": 4.144869150473057,
+      "total_r": 1.5489630712530982,
+      "trades_per_week": 9.49
+     }
+    },
+    "trades": 34,
+    "avg_r": 0.1749,
+    "total_r": 5.95,
+    "win_rate": 0.676,
+    "trades_per_week": 9.71
+   },
+   "GRAM/USDT": {
+    "by_timeframe": {
+     "1h": {
+      "n": 1,
+      "win_rate": 1.0,
+      "expectancy_r": 0.4070219269573416,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.4070219269573416,
+      "trades_per_week": 1.66
+     },
+     "15m": {
+      "n": 3,
+      "win_rate": 1.0,
+      "expectancy_r": 0.8479969349792643,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 2.543990804937793,
+      "trades_per_week": 3.88
+     }
+    },
+    "trades": 4,
+    "avg_r": 0.7378,
+    "total_r": 2.95,
+    "win_rate": 1.0,
+    "trades_per_week": 5.54
+   },
+   "HBAR/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 26,
+      "win_rate": 0.6538461538461539,
+      "expectancy_r": 0.17819829430708725,
+      "profit_factor": 1.6249445311367217,
+      "max_drawdown_r": 3.1869491446786924,
+      "total_r": 4.633155651984269,
+      "trades_per_week": 0.62
+     },
+     "1h": {
+      "n": 9,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.26248480587762496,
+      "profit_factor": 1.980468728718785,
+      "max_drawdown_r": 2.225672474574826,
+      "total_r": 2.3623632528986245,
+      "trades_per_week": 0.85
+     },
+     "15m": {
+      "n": 27,
+      "win_rate": 0.5555555555555556,
+      "expectancy_r": -0.017668675062601998,
+      "profit_factor": 0.962681239955005,
+      "max_drawdown_r": 3.153817620910785,
+      "total_r": -0.47705422669025394,
+      "trades_per_week": 10.25
+     }
+    },
+    "trades": 62,
+    "avg_r": 0.1051,
+    "total_r": 6.52,
+    "win_rate": 0.613,
+    "trades_per_week": 11.72
+   },
+   "INJ/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 20,
+      "win_rate": 0.5,
+      "expectancy_r": -0.13560860837624358,
+      "profit_factor": 0.6897704875058263,
+      "max_drawdown_r": 5.836717843978292,
+      "total_r": -2.7121721675248716,
+      "trades_per_week": 0.47
+     },
+     "1h": {
+      "n": 4,
+      "win_rate": 0.5,
+      "expectancy_r": -0.3992368803951249,
+      "profit_factor": 0.23546119933983128,
+      "max_drawdown_r": 1.5969475215804996,
+      "total_r": -1.5969475215804996,
+      "trades_per_week": 0.38
+     },
+     "15m": {
+      "n": 26,
+      "win_rate": 0.38461538461538464,
+      "expectancy_r": -0.33632423145022144,
+      "profit_factor": 0.48254242510708717,
+      "max_drawdown_r": 10.407535791584701,
+      "total_r": -8.744430017705758,
+      "trades_per_week": 9.87
+     }
+    },
+    "trades": 50,
+    "avg_r": -0.2611,
+    "total_r": -13.05,
+    "win_rate": 0.44,
+    "trades_per_week": 10.72
+   },
+   "LINK/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 3,
+      "win_rate": 0.3333333333333333,
+      "expectancy_r": -0.5540997104241802,
+      "profit_factor": 0.22001516200852367,
+      "max_drawdown_r": 2.131194159559684,
+      "total_r": -1.6622991312725406,
+      "trades_per_week": 0.07
+     },
+     "1h": {
+      "n": 4,
+      "win_rate": 0.5,
+      "expectancy_r": -0.02572804717999999,
+      "profit_factor": 0.9505923501162706,
+      "max_drawdown_r": 1.044998512649259,
+      "total_r": -0.10291218871999996,
+      "trades_per_week": 0.38
+     },
+     "15m": {
+      "n": 7,
+      "win_rate": 0.42857142857142855,
+      "expectancy_r": -0.304699166743667,
+      "profit_factor": 0.5345074476385302,
+      "max_drawdown_r": 3.434685431182166,
+      "total_r": -2.1328941672056687,
+      "trades_per_week": 2.66
+     }
+    },
+    "trades": 14,
+    "avg_r": -0.2784,
+    "total_r": -3.9,
+    "win_rate": 0.429,
+    "trades_per_week": 3.11
+   },
+   "LTC/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 21,
+      "win_rate": 0.42857142857142855,
+      "expectancy_r": -0.14433428556590172,
+      "profit_factor": 0.693175309412371,
+      "max_drawdown_r": 5.110233906860244,
+      "total_r": -3.031019996883936,
+      "trades_per_week": 0.5
+     },
+     "1h": {
+      "n": 14,
+      "win_rate": 0.42857142857142855,
+      "expectancy_r": -0.0980561227497052,
+      "profit_factor": 0.7950412540515568,
+      "max_drawdown_r": 2.1457478527310756,
+      "total_r": -1.3727857184958727,
+      "trades_per_week": 1.33
+     },
+     "15m": {
+      "n": 7,
+      "win_rate": 0.42857142857142855,
+      "expectancy_r": -0.3153427821799188,
+      "profit_factor": 0.4603099376922285,
+      "max_drawdown_r": 4.090124368457627,
+      "total_r": -2.2073994752594315,
+      "trades_per_week": 2.66
+     }
+    },
+    "trades": 42,
+    "avg_r": -0.1574,
+    "total_r": -6.61,
+    "win_rate": 0.429,
+    "trades_per_week": 4.49
+   },
+   "MSTRB/USDT": {
+    "by_timeframe": {
+     "1h": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": 0.48424930850998377,
+      "profit_factor": 7.404200331997175,
+      "max_drawdown_r": 0.15122865725812443,
+      "total_r": 0.9684986170199675,
+      "trades_per_week": 2.55
+     },
+     "15m": {
+      "n": 5,
+      "win_rate": 0.8,
+      "expectancy_r": 0.8181643726954562,
+      "profit_factor": 4.657627397869232,
+      "max_drawdown_r": 1.118435919924596,
+      "total_r": 4.090821863477281,
+      "trades_per_week": 5.21
+     }
+    },
+    "trades": 7,
+    "avg_r": 0.7228,
+    "total_r": 5.06,
+    "win_rate": 0.714,
+    "trades_per_week": 7.76
+   },
+   "NEAR/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 19,
+      "win_rate": 0.3684210526315789,
+      "expectancy_r": -0.3512482375808968,
+      "profit_factor": 0.4091154772051057,
+      "max_drawdown_r": 7.138744549331025,
+      "total_r": -6.673716514037039,
+      "trades_per_week": 0.45
+     },
+     "1h": {
+      "n": 6,
+      "win_rate": 0.3333333333333333,
+      "expectancy_r": -0.32240233791136,
+      "profit_factor": 0.21426635324817622,
+      "max_drawdown_r": 2.24847806331962,
+      "total_r": -1.93441402746816,
+      "trades_per_week": 0.57
+     },
+     "15m": {
+      "n": 6,
+      "win_rate": 0.5,
+      "expectancy_r": 0.046079502115338754,
+      "profit_factor": 1.0848722270297857,
+      "max_drawdown_r": 3.257567550277711,
+      "total_r": 0.2764770126920325,
+      "trades_per_week": 2.28
+     }
+    },
+    "trades": 31,
+    "avg_r": -0.2688,
+    "total_r": -8.33,
+    "win_rate": 0.387,
+    "trades_per_week": 3.3
+   },
+   "NVDAB/USDT": {
+    "by_timeframe": {
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "15m": {
+      "n": 4,
+      "win_rate": 0.75,
+      "expectancy_r": 0.48404546901073636,
+      "profit_factor": 13.341432063712434,
+      "max_drawdown_r": 0.1568847007419754,
+      "total_r": 1.9361818760429454,
+      "trades_per_week": 4.06
+     }
+    },
+    "trades": 4,
+    "avg_r": 0.484,
+    "total_r": 1.94,
+    "win_rate": 0.75,
+    "trades_per_week": 4.06
+   },
+   "PAXG/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 18,
+      "win_rate": 0.4444444444444444,
+      "expectancy_r": -0.20053790583564587,
+      "profit_factor": 0.6576040715569751,
+      "max_drawdown_r": 8.287199859602985,
+      "total_r": -3.6096823050416256,
+      "trades_per_week": 0.43
+     },
+     "1h": {
+      "n": 25,
+      "win_rate": 0.44,
+      "expectancy_r": -0.1740345197558166,
+      "profit_factor": 0.6588013424114711,
+      "max_drawdown_r": 5.382070636347795,
+      "total_r": -4.350862993895415,
+      "trades_per_week": 2.37
+     },
+     "15m": {
+      "n": 12,
+      "win_rate": 0.5,
+      "expectancy_r": 0.03271887947178001,
+      "profit_factor": 1.099754207539424,
+      "max_drawdown_r": 2.6439376207901857,
+      "total_r": 0.3926265536613601,
+      "trades_per_week": 4.56
+     }
+    },
+    "trades": 55,
+    "avg_r": -0.1376,
+    "total_r": -7.57,
+    "win_rate": 0.455,
+    "trades_per_week": 7.36
+   },
+   "PEPE/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "1h": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": -0.3071026541180323,
+      "profit_factor": 0.40497154496429366,
+      "max_drawdown_r": 1.0322284640979187,
+      "total_r": -0.6142053082360646,
+      "trades_per_week": 0.19
+     },
+     "15m": {
+      "n": 1,
+      "win_rate": 1.0,
+      "expectancy_r": 1.2978792986117242,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 1.2978792986117242,
+      "trades_per_week": 0.38
+     }
+    },
+    "trades": 3,
+    "avg_r": 0.2279,
+    "total_r": 0.68,
+    "win_rate": 0.667,
+    "trades_per_week": 0.57
+   },
+   "SOL/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 19,
+      "win_rate": 0.5789473684210527,
+      "expectancy_r": 0.09956251901062407,
+      "profit_factor": 1.2611756604620104,
+      "max_drawdown_r": 5.374419170066311,
+      "total_r": 1.8916878612018575,
+      "trades_per_week": 0.45
+     },
+     "1h": {
+      "n": 20,
+      "win_rate": 0.65,
+      "expectancy_r": 0.19686669388004305,
+      "profit_factor": 1.5887040903942968,
+      "max_drawdown_r": 3.2174226315409813,
+      "total_r": 3.937333877600861,
+      "trades_per_week": 1.9
+     },
+     "15m": {
+      "n": 6,
+      "win_rate": 0.0,
+      "expectancy_r": -0.7499934988715867,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 4.499960993229521,
+      "total_r": -4.499960993229521,
+      "trades_per_week": 2.28
+     }
+    },
+    "trades": 45,
+    "avg_r": 0.0295,
+    "total_r": 1.33,
+    "win_rate": 0.533,
+    "trades_per_week": 4.63
+   },
+   "SPCXB/USDT": {
+    "by_timeframe": {
+     "1h": {
+      "n": 1,
+      "win_rate": 0.0,
+      "expectancy_r": -1.032397792358468,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 1.032397792358468,
+      "total_r": -1.032397792358468,
+      "trades_per_week": 1.16
+     },
+     "15m": {
+      "n": 3,
+      "win_rate": 0.3333333333333333,
+      "expectancy_r": -0.020026418168296395,
+      "profit_factor": 0.9466865563930178,
+      "max_drawdown_r": 1.0854462257369426,
+      "total_r": -0.060079254504889185,
+      "trades_per_week": 2.88
+     }
+    },
+    "trades": 4,
+    "avg_r": -0.2731,
+    "total_r": -1.09,
+    "win_rate": 0.25,
+    "trades_per_week": 4.04
+   },
+   "SUI/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 5,
+      "win_rate": 0.6,
+      "expectancy_r": -0.2684948964646488,
+      "profit_factor": 0.34383719230793397,
+      "max_drawdown_r": 2.04594723532892,
+      "total_r": -1.342474482323244,
+      "trades_per_week": 0.34
+     },
+     "1h": {
+      "n": 29,
+      "win_rate": 0.4827586206896552,
+      "expectancy_r": -0.12421804468775251,
+      "profit_factor": 0.7430636205469606,
+      "max_drawdown_r": 5.710877645605266,
+      "total_r": -3.6023232959448226,
+      "trades_per_week": 2.75
+     },
+     "15m": {
+      "n": 25,
+      "win_rate": 0.48,
+      "expectancy_r": -0.06930673292931828,
+      "profit_factor": 0.8288501629885305,
+      "max_drawdown_r": 5.48281915832454,
+      "total_r": -1.7326683232329572,
+      "trades_per_week": 9.49
+     }
+    },
+    "trades": 59,
+    "avg_r": -0.1132,
+    "total_r": -6.68,
+    "win_rate": 0.492,
+    "trades_per_week": 12.58
+   },
+   "TRX/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 33,
+      "win_rate": 0.5151515151515151,
+      "expectancy_r": -0.0466713409281137,
+      "profit_factor": 0.8998145283981592,
+      "max_drawdown_r": 4.347541525774306,
+      "total_r": -1.5401542506277521,
+      "trades_per_week": 0.78
+     },
+     "1h": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": -0.2987956229233579,
+      "profit_factor": 0.4945929624093257,
+      "max_drawdown_r": 1.1823959727499893,
+      "total_r": -0.5975912458467157,
+      "trades_per_week": 0.19
+     },
+     "15m": {
+      "n": 2,
+      "win_rate": 1.0,
+      "expectancy_r": 0.7461474176470765,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 1.492294835294153,
+      "trades_per_week": 0.76
+     }
+    },
+    "trades": 37,
+    "avg_r": -0.0174,
+    "total_r": -0.65,
+    "win_rate": 0.541,
+    "trades_per_week": 1.73
+   },
+   "U/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 0,
+    "avg_r": null,
+    "total_r": 0.0,
+    "win_rate": null,
+    "trades_per_week": 0.0
+   },
+   "UNI/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 23,
+      "win_rate": 0.4782608695652174,
+      "expectancy_r": -0.11987861049509037,
+      "profit_factor": 0.7518696331010752,
+      "max_drawdown_r": 5.319429854515213,
+      "total_r": -2.7572080413870785,
+      "trades_per_week": 0.55
+     },
+     "1h": {
+      "n": 10,
+      "win_rate": 0.3,
+      "expectancy_r": -0.4523801172841499,
+      "profit_factor": 0.23759895203888348,
+      "max_drawdown_r": 5.464284232798428,
+      "total_r": -4.523801172841499,
+      "trades_per_week": 0.95
+     },
+     "15m": {
+      "n": 41,
+      "win_rate": 0.36585365853658536,
+      "expectancy_r": -0.1747461111377511,
+      "profit_factor": 0.6495773919440176,
+      "max_drawdown_r": 9.98829456452473,
+      "total_r": -7.164590556647795,
+      "trades_per_week": 15.57
+     }
+    },
+    "trades": 74,
+    "avg_r": -0.1952,
+    "total_r": -14.45,
+    "win_rate": 0.392,
+    "trades_per_week": 17.07
+   },
+   "WLD/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 3,
+      "win_rate": 0.0,
+      "expectancy_r": -1.0137972479133095,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 3.0413917437399283,
+      "total_r": -3.0413917437399283,
+      "trades_per_week": 0.28
+     },
+     "1h": {
+      "n": 11,
+      "win_rate": 0.5454545454545454,
+      "expectancy_r": 0.08684310017832153,
+      "profit_factor": 1.240225358400406,
+      "max_drawdown_r": 2.952785901302481,
+      "total_r": 0.9552741019615368,
+      "trades_per_week": 1.04
+     },
+     "15m": {
+      "n": 20,
+      "win_rate": 0.5,
+      "expectancy_r": -0.144162416540471,
+      "profit_factor": 0.7013172526524383,
+      "max_drawdown_r": 6.352880055611499,
+      "total_r": -2.88324833080942,
+      "trades_per_week": 7.59
+     }
+    },
+    "trades": 34,
+    "avg_r": -0.1462,
+    "total_r": -4.97,
+    "win_rate": 0.471,
+    "trades_per_week": 8.91
+   },
+   "XAUT/USDT": {
+    "by_timeframe": {
+     "1h": {
+      "n": 5,
+      "win_rate": 0.4,
+      "expectancy_r": 0.04296334742234946,
+      "profit_factor": 1.0859888585309558,
+      "max_drawdown_r": 2.355494831009202,
+      "total_r": 0.2148167371117473,
+      "trades_per_week": 3.84
+     },
+     "15m": {
+      "n": 4,
+      "win_rate": 0.5,
+      "expectancy_r": -0.29435231604733375,
+      "profit_factor": 0.5345236185346187,
+      "max_drawdown_r": 2.5294715501626412,
+      "total_r": -1.177409264189335,
+      "trades_per_week": 2.72
+     }
+    },
+    "trades": 9,
+    "avg_r": -0.107,
+    "total_r": -0.96,
+    "win_rate": 0.444,
+    "trades_per_week": 6.56
+   },
+   "XLM/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 34,
+      "win_rate": 0.4117647058823529,
+      "expectancy_r": -0.3005162007954866,
+      "profit_factor": 0.47242540908183467,
+      "max_drawdown_r": 11.450832939631393,
+      "total_r": -10.217550827046544,
+      "trades_per_week": 0.81
+     },
+     "1h": {
+      "n": 8,
+      "win_rate": 0.125,
+      "expectancy_r": -0.601296487370899,
+      "profit_factor": 0.23757504967093523,
+      "max_drawdown_r": 4.810371898967192,
+      "total_r": -4.810371898967192,
+      "trades_per_week": 0.76
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 42,
+    "avg_r": -0.3578,
+    "total_r": -15.03,
+    "win_rate": 0.357,
+    "trades_per_week": 1.57
+   },
+   "XRP/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 21,
+      "win_rate": 0.5238095238095238,
+      "expectancy_r": 0.02955364248134746,
+      "profit_factor": 1.0662878720115696,
+      "max_drawdown_r": 4.902820635540564,
+      "total_r": 0.6206264921082967,
+      "trades_per_week": 0.5
+     },
+     "1h": {
+      "n": 35,
+      "win_rate": 0.6285714285714286,
+      "expectancy_r": 0.08032165597466606,
+      "profit_factor": 1.2096073314818412,
+      "max_drawdown_r": 5.015395458199947,
+      "total_r": 2.811257959113312,
+      "trades_per_week": 3.32
+     },
+     "15m": {
+      "n": 11,
+      "win_rate": 0.45454545454545453,
+      "expectancy_r": -0.2107571587580042,
+      "profit_factor": 0.6662584377846099,
+      "max_drawdown_r": 5.437924647013369,
+      "total_r": -2.318328746338046,
+      "trades_per_week": 4.18
+     }
+    },
+    "trades": 67,
+    "avg_r": 0.0166,
+    "total_r": 1.11,
+    "win_rate": 0.567,
+    "trades_per_week": 8.0
+   },
+   "ZEC/USDT": {
+    "by_timeframe": {
+     "4h": {
+      "n": 1,
+      "win_rate": 0.0,
+      "expectancy_r": -1.0166686423865074,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 1.0166686423865074,
+      "total_r": -1.0166686423865074,
+      "trades_per_week": 0.02
+     },
+     "1h": {
+      "n": 28,
+      "win_rate": 0.39285714285714285,
+      "expectancy_r": -0.149227036811567,
+      "profit_factor": 0.7173852416685663,
+      "max_drawdown_r": 6.6018805028884096,
+      "total_r": -4.178357030723876,
+      "trades_per_week": 2.66
+     },
+     "15m": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": -0.2716028279850248,
+      "profit_factor": 0.4715392277110967,
+      "max_drawdown_r": 1.027901567068606,
+      "total_r": -0.5432056559700496,
+      "trades_per_week": 0.76
+     }
+    },
+    "trades": 31,
+    "avg_r": -0.1851,
+    "total_r": -5.74,
+    "win_rate": 0.387,
+    "trades_per_week": 3.44
+   }
+  },
+  "skipped_series": [
+   "GRAM/USDT 4h: no model / too few out-of-sample bars",
+   "MSTRB/USDT 4h: no model / too few out-of-sample bars",
+   "NVDAB/USDT 4h: no model / too few out-of-sample bars",
+   "SPCXB/USDT 4h: no model / too few out-of-sample bars",
+   "XAUT/USDT 4h: no model / too few out-of-sample bars"
+  ],
+  "seconds": 66.3,
+  "overall": {
+   "n": 1250,
+   "win_rate": 0.5056,
+   "expectancy_r": -0.044047989288917413,
+   "profit_factor": 0.9005328011780612,
+   "max_drawdown_r": 129.0933792440832,
+   "total_r": -55.05998661114677,
+   "trades_per_week": 140.40057124155783
+  }
+ },
+ "candidates": {
+  "APT": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "APT/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 31819,
+    "1h": 20474,
+    "4h": 8926
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 17,
+      "win_rate": 0.6470588235294118,
+      "expectancy_r": 0.17556291631718246,
+      "profit_factor": 1.7490947835538098,
+      "max_drawdown_r": 1.210980123028114,
+      "total_r": 2.9845695773921017,
+      "trades_per_week": 0.65
+     },
+     "1h": {
+      "n": 2,
+      "win_rate": 1.0,
+      "expectancy_r": 0.3365867306966053,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.6731734613932105,
+      "trades_per_week": 0.19
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 19,
+    "avg_r": 0.1925,
+    "total_r": 3.66,
+    "win_rate": 0.684,
+    "trades_per_week": 0.84
+   },
+   "skipped_series": [],
+   "seconds": 320.8
+  },
+  "ARB": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "ARB/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 7993
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 6,
+      "win_rate": 0.5,
+      "expectancy_r": -0.012752789494070512,
+      "profit_factor": 0.9501043583264156,
+      "max_drawdown_r": 1.0124487831498006,
+      "total_r": -0.07651673696442307,
+      "trades_per_week": 0.32
+     },
+     "1h": {
+      "n": 5,
+      "win_rate": 0.2,
+      "expectancy_r": -0.5874731851797492,
+      "profit_factor": 0.2646127932679419,
+      "max_drawdown_r": 3.994311974710474,
+      "total_r": -2.9373659258987463,
+      "trades_per_week": 0.47
+     },
+     "15m": {
+      "n": 16,
+      "win_rate": 0.3125,
+      "expectancy_r": -0.2999414432016815,
+      "profit_factor": 0.5140298486478232,
+      "max_drawdown_r": 6.087661753870767,
+      "total_r": -4.799063091226904,
+      "trades_per_week": 6.07
+     }
+    },
+    "trades": 27,
+    "avg_r": -0.2894,
+    "total_r": -7.81,
+    "win_rate": 0.333,
+    "trades_per_week": 6.86
+   },
+   "skipped_series": [],
+   "seconds": 470.4
+  },
+  "ATOM": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "ATOM/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 12000
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 32,
+      "win_rate": 0.375,
+      "expectancy_r": -0.11325368927903477,
+      "profit_factor": 0.7834715760485454,
+      "max_drawdown_r": 9.32625197057446,
+      "total_r": -3.6241180569291127,
+      "trades_per_week": 0.76
+     },
+     "1h": {
+      "n": 1,
+      "win_rate": 0.0,
+      "expectancy_r": -1.0500049451549243,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 1.0500049451549243,
+      "total_r": -1.0500049451549243,
+      "trades_per_week": 0.09
+     },
+     "15m": {
+      "n": 13,
+      "win_rate": 0.6923076923076923,
+      "expectancy_r": 0.2770493096085635,
+      "profit_factor": 2.318077514358038,
+      "max_drawdown_r": 1.1421171623629705,
+      "total_r": 3.6016410249113253,
+      "trades_per_week": 4.94
+     }
+    },
+    "trades": 46,
+    "avg_r": -0.0233,
+    "total_r": -1.07,
+    "win_rate": 0.457,
+    "trades_per_week": 5.79
+   },
+   "skipped_series": [],
+   "seconds": 398.7
+  },
+  "BCH": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "BCH/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 31819,
+    "1h": 20474,
+    "4h": 12118
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 39,
+      "win_rate": 0.5384615384615384,
+      "expectancy_r": 0.05973885187307751,
+      "profit_factor": 1.1426420642388577,
+      "max_drawdown_r": 5.027371713419085,
+      "total_r": 2.329815223050023,
+      "trades_per_week": 0.93
+     },
+     "1h": {
+      "n": 15,
+      "win_rate": 0.5333333333333333,
+      "expectancy_r": -0.09820081260989663,
+      "profit_factor": 0.7557591917852933,
+      "max_drawdown_r": 2.2482940017593864,
+      "total_r": -1.4730121891484496,
+      "trades_per_week": 1.42
+     },
+     "15m": {
+      "n": 3,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.08057938543857872,
+      "profit_factor": 1.2211284717276414,
+      "max_drawdown_r": 1.0932023109782047,
+      "total_r": 0.24173815631573614,
+      "trades_per_week": 1.14
+     }
+    },
+    "trades": 57,
+    "avg_r": 0.0193,
+    "total_r": 1.1,
+    "win_rate": 0.544,
+    "trades_per_week": 3.49
+   },
+   "skipped_series": [],
+   "seconds": 323.0
+  },
+  "BONK": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "BONK/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 6392
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 6,
+      "win_rate": 0.5,
+      "expectancy_r": -0.2154664990944447,
+      "profit_factor": 0.3946238908529354,
+      "max_drawdown_r": 2.135530251413683,
+      "total_r": -1.2927989945666682,
+      "trades_per_week": 0.86
+     },
+     "1h": {
+      "n": 11,
+      "win_rate": 0.7272727272727273,
+      "expectancy_r": 0.22144575079459541,
+      "profit_factor": 1.7885842384654425,
+      "max_drawdown_r": 1.8291118758058886,
+      "total_r": 2.4359032587405496,
+      "trades_per_week": 1.04
+     },
+     "15m": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     }
+    },
+    "trades": 17,
+    "avg_r": 0.0672,
+    "total_r": 1.14,
+    "win_rate": 0.647,
+    "trades_per_week": 1.9
+   },
+   "skipped_series": [],
+   "seconds": 387.1
+  },
+  "ETC": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "ETC/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 12000
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 17,
+      "win_rate": 0.5882352941176471,
+      "expectancy_r": 0.36788584973707295,
+      "profit_factor": 2.7392189583381743,
+      "max_drawdown_r": 2.216235523275521,
+      "total_r": 6.25405944553024,
+      "trades_per_week": 0.4
+     },
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "15m": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": 0.031909914938817285,
+      "profit_factor": 1.0984800869972475,
+      "max_drawdown_r": 0.6480480655893237,
+      "total_r": 0.06381982987763457,
+      "trades_per_week": 0.76
+     }
+    },
+    "trades": 19,
+    "avg_r": 0.3325,
+    "total_r": 6.32,
+    "win_rate": 0.579,
+    "trades_per_week": 1.16
+   },
+   "skipped_series": [],
+   "seconds": 533.7
+  },
+  "FET": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "FET/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 12000
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 24,
+      "win_rate": 0.5416666666666666,
+      "expectancy_r": 0.0322250034363584,
+      "profit_factor": 1.100337432605303,
+      "max_drawdown_r": 3.095654110744386,
+      "total_r": 0.7734000824726017,
+      "trades_per_week": 0.57
+     },
+     "1h": {
+      "n": 13,
+      "win_rate": 0.46153846153846156,
+      "expectancy_r": -0.040972151721989904,
+      "profit_factor": 0.9073377869563298,
+      "max_drawdown_r": 2.4263832524567306,
+      "total_r": -0.5326379723858687,
+      "trades_per_week": 1.23
+     },
+     "15m": {
+      "n": 23,
+      "win_rate": 0.5652173913043478,
+      "expectancy_r": -0.02966958590318656,
+      "profit_factor": 0.9246242476943559,
+      "max_drawdown_r": 3.6667192997667253,
+      "total_r": -0.6824004757732909,
+      "trades_per_week": 8.73
+     }
+    },
+    "trades": 60,
+    "avg_r": -0.0074,
+    "total_r": -0.44,
+    "win_rate": 0.533,
+    "trades_per_week": 10.53
+   },
+   "skipped_series": [],
+   "seconds": 524.1
+  },
+  "FIL": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "FIL/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": false
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 12000
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 15,
+      "win_rate": 0.5333333333333333,
+      "expectancy_r": 0.02836879153797055,
+      "profit_factor": 1.0987973647523215,
+      "max_drawdown_r": 2.8777485613473464,
+      "total_r": 0.42553187306955825,
+      "trades_per_week": 0.36
+     },
+     "1h": {
+      "n": 3,
+      "win_rate": 0.3333333333333333,
+      "expectancy_r": -0.3088634950451094,
+      "profit_factor": 0.5551899240177549,
+      "max_drawdown_r": 1.0557153441017442,
+      "total_r": -0.9265904851353282,
+      "trades_per_week": 0.28
+     },
+     "15m": {
+      "n": 34,
+      "win_rate": 0.5588235294117647,
+      "expectancy_r": 0.1369583169780126,
+      "profit_factor": 1.405445959673311,
+      "max_drawdown_r": 4.385818046187936,
+      "total_r": 4.656582777252429,
+      "trades_per_week": 12.91
+     }
+    },
+    "trades": 52,
+    "avg_r": 0.0799,
+    "total_r": 4.16,
+    "win_rate": 0.538,
+    "trades_per_week": 13.55
+   },
+   "skipped_series": [],
+   "seconds": 549.4
+  },
+  "HBAR": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "HBAR/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 31818,
+    "1h": 20474,
+    "4h": 12118
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 26,
+      "win_rate": 0.6538461538461539,
+      "expectancy_r": 0.12796129108972257,
+      "profit_factor": 1.4031173825336083,
+      "max_drawdown_r": 4.503072808608901,
+      "total_r": 3.326993568332787,
+      "trades_per_week": 0.62
+     },
+     "1h": {
+      "n": 22,
+      "win_rate": 0.6363636363636364,
+      "expectancy_r": 0.20987918090143756,
+      "profit_factor": 1.7976644961064123,
+      "max_drawdown_r": 2.227429517611176,
+      "total_r": 4.617341979831626,
+      "trades_per_week": 2.09
+     },
+     "15m": {
+      "n": 33,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.23125832094992999,
+      "profit_factor": 1.8488881495052556,
+      "max_drawdown_r": 3.985932688657887,
+      "total_r": 7.63152459134769,
+      "trades_per_week": 12.53
+     }
+    },
+    "trades": 81,
+    "avg_r": 0.1923,
+    "total_r": 15.58,
+    "win_rate": 0.654,
+    "trades_per_week": 15.24
+   },
+   "skipped_series": [],
+   "seconds": 410.6
+  },
+  "INJ": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "INJ/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 31820,
+    "1h": 20475,
+    "4h": 12118
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 17,
+      "win_rate": 0.47058823529411764,
+      "expectancy_r": -0.062319666452895814,
+      "profit_factor": 0.8495201238039856,
+      "max_drawdown_r": 5.5173850822736465,
+      "total_r": -1.0594343296992288,
+      "trades_per_week": 0.4
+     },
+     "1h": {
+      "n": 3,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": -0.022308146915326232,
+      "profit_factor": 0.9346472465122739,
+      "max_drawdown_r": 1.0240492890410169,
+      "total_r": -0.0669244407459787,
+      "trades_per_week": 0.28
+     },
+     "15m": {
+      "n": 4,
+      "win_rate": 0.5,
+      "expectancy_r": -0.27324928810712834,
+      "profit_factor": 0.5088638489462057,
+      "max_drawdown_r": 1.2945998574712525,
+      "total_r": -1.0929971524285134,
+      "trades_per_week": 1.52
+     }
+    },
+    "trades": 24,
+    "avg_r": -0.0925,
+    "total_r": -2.22,
+    "win_rate": 0.5,
+    "trades_per_week": 2.2
+   },
+   "skipped_series": [],
+   "seconds": 436.4
+  },
+  "OP": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "OP/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 9764
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 12,
+      "win_rate": 0.5,
+      "expectancy_r": -0.23760514005888245,
+      "profit_factor": 0.4246263970795946,
+      "max_drawdown_r": 3.8647154820586604,
+      "total_r": -2.8512616807065894,
+      "trades_per_week": 0.4
+     },
+     "1h": {
+      "n": 1,
+      "win_rate": 0.0,
+      "expectancy_r": -0.07190637491217755,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 0.07190637491217755,
+      "total_r": -0.07190637491217755,
+      "trades_per_week": 0.09
+     },
+     "15m": {
+      "n": 6,
+      "win_rate": 0.0,
+      "expectancy_r": -0.9914013593971985,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 5.948408156383191,
+      "total_r": -5.948408156383191,
+      "trades_per_week": 2.28
+     }
+    },
+    "trades": 19,
+    "avg_r": -0.4669,
+    "total_r": -8.87,
+    "win_rate": 0.316,
+    "trades_per_week": 2.77
+   },
+   "skipped_series": [],
+   "seconds": 495.7
+  },
+  "RENDER": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "RENDER/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 5048
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 1,
+      "win_rate": 1.0,
+      "expectancy_r": 0.2806432463146309,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.2806432463146309,
+      "trades_per_week": 0.2
+     },
+     "1h": {
+      "n": 7,
+      "win_rate": 0.42857142857142855,
+      "expectancy_r": -0.12800338783038057,
+      "profit_factor": 0.7231245305166688,
+      "max_drawdown_r": 3.1215655240747333,
+      "total_r": -0.896023714812664,
+      "trades_per_week": 0.66
+     },
+     "15m": {
+      "n": 16,
+      "win_rate": 0.4375,
+      "expectancy_r": -0.1135327374161464,
+      "profit_factor": 0.7802714333573678,
+      "max_drawdown_r": 3.2368131645783595,
+      "total_r": -1.8165237986583425,
+      "trades_per_week": 6.07
+     }
+    },
+    "trades": 24,
+    "avg_r": -0.1013,
+    "total_r": -2.43,
+    "win_rate": 0.458,
+    "trades_per_week": 6.93
+   },
+   "skipped_series": [],
+   "seconds": 342.7
+  },
+  "SEI": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "SEI/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 7123
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "1h": {
+      "n": 8,
+      "win_rate": 0.75,
+      "expectancy_r": 0.39421913075521126,
+      "profit_factor": 5.537477686071423,
+      "max_drawdown_r": 0.6950454116221186,
+      "total_r": 3.15375304604169,
+      "trades_per_week": 0.76
+     },
+     "15m": {
+      "n": 14,
+      "win_rate": 0.5,
+      "expectancy_r": -0.13575452161669674,
+      "profit_factor": 0.7413856107778308,
+      "max_drawdown_r": 3.2636231469821624,
+      "total_r": -1.9005633026337545,
+      "trades_per_week": 5.32
+     }
+    },
+    "trades": 22,
+    "avg_r": 0.057,
+    "total_r": 1.25,
+    "win_rate": 0.591,
+    "trades_per_week": 6.08
+   },
+   "skipped_series": [],
+   "seconds": 344.9
+  },
+  "SHIB": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "SHIB/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 12000
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 37,
+      "win_rate": 0.5405405405405406,
+      "expectancy_r": 0.1368308246948385,
+      "profit_factor": 1.4841253631834077,
+      "max_drawdown_r": 3.1395697386951986,
+      "total_r": 5.062740513709025,
+      "trades_per_week": 0.88
+     },
+     "1h": {
+      "n": 1,
+      "win_rate": 0.0,
+      "expectancy_r": -1.0401184478850296,
+      "profit_factor": 0.0,
+      "max_drawdown_r": 1.0401184478850296,
+      "total_r": -1.0401184478850296,
+      "trades_per_week": 0.09
+     },
+     "15m": {
+      "n": 7,
+      "win_rate": 0.42857142857142855,
+      "expectancy_r": 0.02162089412114297,
+      "profit_factor": 1.055662256470978,
+      "max_drawdown_r": 1.6901524929539418,
+      "total_r": 0.1513462588480008,
+      "trades_per_week": 2.66
+     }
+    },
+    "trades": 45,
+    "avg_r": 0.0928,
+    "total_r": 4.17,
+    "win_rate": 0.511,
+    "trades_per_week": 3.63
+   },
+   "skipped_series": [],
+   "seconds": 446.5
+  },
+  "TAO": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "TAO/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 5683
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": -0.052230907088686926,
+      "profit_factor": 0.23980569460714787,
+      "max_drawdown_r": 0.13741462338814842,
+      "total_r": -0.10446181417737385,
+      "trades_per_week": 0.34
+     },
+     "1h": {
+      "n": 6,
+      "win_rate": 0.5,
+      "expectancy_r": 0.049289905354083806,
+      "profit_factor": 1.1335798776127792,
+      "max_drawdown_r": 2.1414042675707705,
+      "total_r": 0.2957394321245028,
+      "trades_per_week": 0.57
+     },
+     "15m": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": -0.020124632130128606,
+      "profit_factor": 0.9628904745778369,
+      "max_drawdown_r": 1.0846073562616625,
+      "total_r": -0.04024926426025721,
+      "trades_per_week": 0.76
+     }
+    },
+    "trades": 10,
+    "avg_r": 0.0151,
+    "total_r": 0.15,
+    "win_rate": 0.5,
+    "trades_per_week": 1.67
+   },
+   "skipped_series": [],
+   "seconds": 300.5
+  },
+  "TIA": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "TIA/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 6660
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 3,
+      "win_rate": 0.6666666666666666,
+      "expectancy_r": 0.48097614614968104,
+      "profit_factor": 28.40025001718776,
+      "max_drawdown_r": 0.052661141323306015,
+      "total_r": 1.442928438449043,
+      "trades_per_week": 0.43
+     },
+     "1h": {
+      "n": 31,
+      "win_rate": 0.4838709677419355,
+      "expectancy_r": -0.07344504481231678,
+      "profit_factor": 0.8484074659524742,
+      "max_drawdown_r": 7.026841684067908,
+      "total_r": -2.27679638918182,
+      "trades_per_week": 2.94
+     },
+     "15m": {
+      "n": 8,
+      "win_rate": 0.5,
+      "expectancy_r": -0.12907339443256305,
+      "profit_factor": 0.7618561506118781,
+      "max_drawdown_r": 3.2322220500888346,
+      "total_r": -1.0325871554605044,
+      "trades_per_week": 3.04
+     }
+    },
+    "trades": 42,
+    "avg_r": -0.0444,
+    "total_r": -1.87,
+    "win_rate": 0.5,
+    "trades_per_week": 6.41
+   },
+   "skipped_series": [],
+   "seconds": 328.7
+  },
+  "WIF": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "WIF/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 30000,
+    "1h": 20000,
+    "4h": 5905
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 5,
+      "win_rate": 0.6,
+      "expectancy_r": 0.434311771694636,
+      "profit_factor": 31.873239258493232,
+      "max_drawdown_r": 0.04880046695111916,
+      "total_r": 2.1715588584731798,
+      "trades_per_week": 0.84
+     },
+     "1h": {
+      "n": 0,
+      "win_rate": null,
+      "expectancy_r": null,
+      "profit_factor": null,
+      "max_drawdown_r": 0.0,
+      "total_r": 0.0,
+      "trades_per_week": 0.0
+     },
+     "15m": {
+      "n": 10,
+      "win_rate": 0.4,
+      "expectancy_r": -0.4180826176260151,
+      "profit_factor": 0.31124091972022094,
+      "max_drawdown_r": 5.173273455554799,
+      "total_r": -4.180826176260151,
+      "trades_per_week": 3.8
+     }
+    },
+    "trades": 15,
+    "avg_r": -0.134,
+    "total_r": -2.01,
+    "win_rate": 0.467,
+    "trades_per_week": 4.64
+   },
+   "skipped_series": [],
+   "seconds": 295.3
+  },
+  "WLD": {
+   "ok": true,
+   "command": "coin-candidate",
+   "symbol": "WLD/USDT",
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   },
+   "candles": {
+    "15m": 31818,
+    "1h": 20462,
+    "4h": 7256
+   },
+   "trained": {
+    "15m": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "1h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    },
+    "4h": {
+     "state": "done",
+     "message": "NO STATISTICALLY CONFIRMED EDGE"
+    }
+   },
+   "result": {
+    "by_timeframe": {
+     "4h": {
+      "n": 5,
+      "win_rate": 0.6,
+      "expectancy_r": -0.028655000700780087,
+      "profit_factor": 0.92931976512444,
+      "max_drawdown_r": 2.027087257932166,
+      "total_r": -0.14327500350390043,
+      "trades_per_week": 0.46
+     },
+     "1h": {
+      "n": 2,
+      "win_rate": 0.5,
+      "expectancy_r": -0.2198537701810756,
+      "profit_factor": 0.5726342467247605,
+      "max_drawdown_r": 1.028878746114603,
+      "total_r": -0.4397075403621512,
+      "trades_per_week": 0.19
+     },
+     "15m": {
+      "n": 32,
+      "win_rate": 0.65625,
+      "expectancy_r": 0.04959806130048887,
+      "profit_factor": 1.1346386377587379,
+      "max_drawdown_r": 4.0388020665775795,
+      "total_r": 1.5871379616156438,
+      "trades_per_week": 12.15
+     }
+    },
+    "trades": 39,
+    "avg_r": 0.0257,
+    "total_r": 1.0,
+    "win_rate": 0.641,
+    "trades_per_week": 12.8
+   },
+   "skipped_series": [],
+   "seconds": 280.1
+  }
+ }
+}
