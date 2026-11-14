@@ -473,6 +473,7 @@ export function seed(): Record<string, any> {
     "views/scalping": v(scalping()),
     "views/hesper": v(hesper()),
     "views/guardian": v(guardian()),
+    "views/market_turn": v(marketTurn()),
     ...leaderboard(),
     "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
     "users/u_member_self": undefined,
@@ -730,5 +731,32 @@ function guardian() {
       by_level: { TIGHTEN: agg(3, 1.18, -0.54, 2, 1), CLOSE: agg(1, 0, -1.43, 0, 1) }, pending: 4, skipped: 0 },
     config: { tighten_at: 50, close_at: 75, expires_min: 30, min_gap_atr: 0.2, fresh_m1_min: 3, persist_ticks: 3 },
     note: "Recommend-only: nothing changes unless the admin applies it. Shadow results are net R estimates (same fees on both sides, funding ignored), from the record's own exit rules.",
+  };
+}
+
+
+/** v2.22 market turn detector sample (admin only) */
+function marketTurn() {
+  const now = Date.now();
+  return {
+    generated_at: now - 12 * 60_000,
+    market: { state: "weakening", trend: "down", score: 38, btc_points: 45, btc_state: "weakening",
+      breadth: { trending: 18, turning: 3, weakening: 5 },
+      reasons: [{ code: "structure_4h", points: 30, text: "4h closed above the last swing high 69120" },
+                { code: "taker_flow", points: 15, text: "24h taker buy/sell 1.17 (OKX) against the downtrend" }] },
+    stablecoins: { usd: 2.31e11, chg_7d_pct: 0.42, day: now - 86_400_000 },
+    data: { at: now - 15 * 60_000, rows_total: 18240, supported: 22, errors: [] },
+    coins: [
+      { symbol: "SOL/USDT", state: "turning up", trend: "down", points: 60, reasons: [
+        { code: "structure_4h", points: 30, text: "4h closed above the last swing high 171.2" },
+        { code: "value_area", points: 15, text: "4h closed above the value-area high 170.4 (POC 163.9)" },
+        { code: "liquidations", points: 10, text: "short liquidations $4,120,000 in 24 h = 3.6x the daily average" }] },
+      { symbol: "BTC/USDT", state: "weakening", trend: "down", points: 45, reasons: [
+        { code: "structure_4h", points: 30, text: "4h closed above the last swing high 69120" },
+        { code: "taker_flow", points: 15, text: "24h taker buy/sell 1.17 (OKX) against the downtrend" }] },
+      { symbol: "ETH/USDT", state: "trend intact", trend: "down", points: 10, reasons: [
+        { code: "open_interest", points: 10, text: "price +2.1% with open interest +4.0% in 24 h (new positions behind the move)" }] },
+    ],
+    note: "Recommend-only context for the admin. It never changes a call; it is not proven to predict turns yet.",
   };
 }

@@ -33,6 +33,7 @@ from .services import hesper, scalp_backfill
 from .services import briefing, coin_reports
 from .services import leaderboard, referrals
 from .services import guardian
+from .services import market_data, turn_detector
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -1294,6 +1295,12 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # never blocks the tick (it catches its own errors; the step wrapper catches anything else)
     if guardian.ENABLED:
         detail["guardian"] = step("guardian", lambda: guardian.Guardian(rt, sink).run(analyses))
+    # v2.22 live market data (OKX, stablecoins -> SQLite only) and the admin-only market turn detector (recommend-only,
+    # never changes a call): hourly, each in its own step so a slow or failing source never stops the tick
+    if fetch_context and now_ms() - int(rt.db.get_setting("market_turn_at", 0) or 0) >= turn_detector.PUBLISH_EVERY_S * 1000 - 120_000:
+        detail["market_data"] = step("market_data", lambda: market_data.run(rt.db, rt.symbols()))
+        detail["market_turn"] = step("market_turn", lambda: turn_detector.publish(rt, sink, rt.symbols()))
+        rt.db.set_setting("market_turn_at", now_ms())
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
     detail["written_early"] = step("publish_early", sink.flush) or 0

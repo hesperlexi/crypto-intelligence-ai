@@ -689,3 +689,19 @@ Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance da
   on that coin/TF while the held one would still run). `held_signals` followed by `update_signal_outcomes(table=...)`;
   `hold.scoreboard` → `views/guardian.held` → Guardian page "Hold scoreboard"; public `track_record.withdrawn` {count,
   window_min} → Results line ("N calls were withdrawn ... not counted"). UI: `SignalAdjust` Hold button + `HoldModal`.
+## v2.22 live market data + market turn detector (admin, RECOMMEND-ONLY; owner, 14 Nov 2026, branch `market-data`)
+- `services/market_data.py` (worker step `market_data`, hourly with the detector, `BUDGET_S` 35 s, OKX 5 req / 2 s): OKX public
+  rubik statistics per watchlist coin OKX supports (`support-coin`, daily cache `mkt_okx_support`; BTC / ETH every run, the
+  rest rotate via `mkt_data_cursor`): open interest + volume, taker buy / sell, long / short account ratio (hourly, only
+  COMPLETED hours) -> SQLite `mkt_okx` (coin, kind, ts, value, `known_at`); recent liquidation orders -> `mkt_liq` (USD =
+  sz x ctVal x bkPx); DefiLlama total stablecoin supply (daily, completed days) -> `mkt_daily`. No Firestore writes.
+  ETF flows: no clean free JSON source -> not recorded. Status setting `mkt_data_status`.
+- `services/turn_detector.py` (worker step `market_turn`): per coin, established 4h trend (EMA50 +- 0.3 ATR + slope, judged
+  without the newest 3 bars; 4h and 1d must agree, else "range"); points for a turn against it: 4h swing break (<=30),
+  1d swing break (20), 200-bar volume-profile value-area break (15), OKX 24 h taker ratio against the trend (<=15), price
+  against the trend with OI +3 % (10), trend-side liquidations >= 3x the 7-day average (10), crowded funding z >= 2 (10).
+  >= 50 "turning up/down", 25-49 "weakening", else "trend intact". Market = 0.5 BTC points + 0.5 breadth. Never changes a
+  call; not proven to predict turns (test once weeks of OKX data exist - `known_at` makes that look-ahead free).
+- `views/market_turn` (admin only in the rules + rules test "market turn: ..."): min 1800 s, `core` = market + coin states,
+  skipped in lean mode -> <= ~48 writes/day, 0 engine reads. UI `components/MarketTurn.tsx`: Health ("Market turn" tile +
+  card `hc-turn`) and Trade Guardian (compact card). Seed `dev/seed.ts marketTurn()`. Tests `tests/test_market_turn.py`.
