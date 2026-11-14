@@ -11,12 +11,11 @@ import { useSymbols } from "./Pickers";
 import { CoinAvatar } from "./Polish";
 import { verdictOf } from "./TradeCall";
 import { useApi } from "../lib/api";
-import { OVERLAY_GROUPS, planLines, structureLines, structureMarkers } from "../lib/chartLevels";
-import { overlays as taOverlays } from "../lib/ta";
+import { ToolChips, useChartTools } from "./ChartTools";
 import { futuresTicker, listedPairs } from "../lib/binance";
 import { StreamState, useDepth, useMarketStream } from "../lib/stream";
 import { ProOnly, useIsPro } from "../lib/mode";
-import { base, slug, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
+import { base, fmtNum, fmtPctRaw, fmtPrice, fmtTime, isNum, tone } from "../lib/format";
 import { useFastTickers } from "../lib/live";
 import { useFocusTrap } from "./Shell";
 import * as SP from "../lib/paper";
@@ -26,9 +25,6 @@ import { Segmented, TabStrip } from "./kit";
 
 type Mkt = "spot" | "futures";
 const CHART_TFS = ["1m", "5m", "15m", "1h", "4h", "1d"] as const;
-const TOOLS_KEY = "cia-trade-chart-tools";
-const TOOL_NAMES = ["EMA", "VWAP", "Bollinger", "Structure", "Trade plan"] as const;
-const AN_TFS: string[] = ["15m", "1h", "4h", "12h", "1d", "3d"];
 const LEVS = [1, 2, 3, 5, 10, 20, 50];
 
 /** The live stream of the coin on screen (futures price on the Futures tab), shared by every panel. */
@@ -229,20 +225,10 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
   const st = useContext(StreamCtx);
   const candles = st?.candles ?? [];
   const [pro, setPro] = useState(false);
-  // chart tools (same as the coin page): EMA / VWAP / Bollinger from these candles, Structure and the AI trade plan from
-  // the engine's analysis of this coin (1m / 5m charts use the 15m analysis). Choices remembered on this device.
-  const [tools, setTools] = useState<string[]>(() => { try { const v = JSON.parse(localStorage.getItem(TOOLS_KEY) ?? "null"); if (Array.isArray(v)) return v; } catch { /* ignore */ } return ["EMA", "Structure", "Trade plan"]; });
-  const flip = (g: string) => setTools((cur) => { const n = cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g]; try { localStorage.setItem(TOOLS_KEY, JSON.stringify(n)); } catch { /* ignore */ } return n; });
-  const aTf = AN_TFS.includes(tf) ? tf : "15m";
-  const wantAn = !pro && (tools.includes("Structure") || tools.includes("Trade plan"));
-  const an = useApi<any>(wantAn ? `/analysis/${slug(symbol)}?timeframe=${aTf}` : null, 120000);
-  const ov = useMemo(() => (candles.length && tools.some((g) => OVERLAY_GROUPS[g]) ? taOverlays(candles as any, ["1m", "5m", "15m", "1h"].includes(tf)) : null), [candles, tf, tools]);
-  const show = useMemo(() => tools.flatMap((g) => OVERLAY_GROUPS[g] ?? []), [tools]);
-  const markers = useMemo(() => (tools.includes("Structure") ? structureMarkers(an.data) : []), [an.data, tools]);
+  const ct = useChartTools(symbol, tf, candles, !pro);
   const lines: PriceLine[] = useMemo(() => {
     const out: PriceLine[] = [];
-    if (tools.includes("Structure")) out.push(...structureLines(an.data));
-    if (tools.includes("Trade plan")) out.push(...planLines(an.data));
+    out.push(...ct.lines);
     for (const p of positions.filter((x) => x.symbol === symbol)) {
       if (market === "futures") {
         const s = p.side > 0 ? "Long" : "Short";
@@ -257,19 +243,12 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
       out.push({ price: o.price, title: `Limit ${market === "futures" ? (buy ? "long" : "short") : buy ? "buy" : "sell"}`, color: buy ? "--bull" : "--bear", dashed: true });
     }
     return out;
-  }, [positions, orders, symbol, market, an.data, tools]);
+  }, [positions, orders, symbol, market, ct.lines]);
   return (
     <section className="panel min-h-[360px] p-0">
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-2 py-1.5">
         <Segmented label="Chart timeframe" value={tf} onChange={setTf} options={CHART_TFS} className="!flex-nowrap" />
-        {!pro && (
-          <span className="flex flex-wrap items-center gap-1" role="group" aria-label="Chart tools">
-            {TOOL_NAMES.map((g) => (
-              <button key={g} type="button" className="chip text-xs" aria-pressed={tools.includes(g)} onClick={() => flip(g)}
-                title={g === "Trade plan" || g === "Structure" ? `From the ${aTf.toUpperCase()} AI analysis` : undefined}>{g}</button>
-            ))}
-          </span>
-        )}
+        {!pro && <ToolChips tools={ct.tools} flip={ct.flip} aTf={ct.aTf} />}
         <span className="ml-auto flex items-center gap-2">
           <span className="hidden text-xs text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your levels are on the chart"}</span>
           <Segmented label="Chart type" strong className="!flex-nowrap" value={pro ? "pro" : "ai"} onChange={(v) => setPro(v === "pro")} options={[["ai", "AI"], ["pro", "Pro"]] as const} />
@@ -277,7 +256,7 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
       </div>
       {pro ? <div className="p-1"><TVChart symbol={symbol} market={market} tf={tf} height={380} /></div>
         : st?.error ? <p className="p-4 text-sm text-bear">Chart unavailable: {st.error}</p>
-        : candles.length ? <CandleChart candles={candles} overlays={ov} show={show} markers={markers} lines={lines} liveCandle={st?.live ?? null} height={380} viewKey={`trade|${symbol}|${market}|${tf}`} />
+        : candles.length ? <CandleChart candles={candles} overlays={ct.overlays} show={ct.show} markers={ct.markers} lines={lines} liveCandle={st?.live ?? null} height={380} viewKey={`trade|${symbol}|${market}|${tf}`} />
         : <div className="skeleton m-3 h-[340px] rounded-lg" />}
     </section>
   );

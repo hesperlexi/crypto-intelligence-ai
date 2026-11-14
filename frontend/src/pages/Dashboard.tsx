@@ -57,17 +57,18 @@ export default function Dashboard() {
         <AiBriefCard b={briefing} loading={mc.loading} />
       </div>
 
-      {/* row 3: market status · open calls of the record · Trade Guardian (admin, only when its view exists) */}
-      <div className={`grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)] ${admin ? "2xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.5fr)_minmax(0,0.8fr)]" : ""}`}>
-        <GlobalStatusCard mc={mc.data} ctx={ctx.data} />
-        <ActiveSignalsCard track={track.data} loading={track.loading} />
-        {admin && <GuardianCard />}
-      </div>
-
-      {/* row 4: what happened lately · results since the restart (after fees) */}
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <RecentActivityCard track={track.data} briefing={briefing} />
-        <PerformanceCard track={track.data} loading={track.loading} />
+      {/* rows 3-4 as two balanced columns (owner, 14 Nov 2026: no big empty gaps on desktop):
+          left = market status · Trade Guardian (admin) · performance; right = open calls · recent activity */}
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
+        <div className="flex min-w-0 flex-col gap-4">
+          <GlobalStatusCard mc={mc.data} ctx={ctx.data} />
+          {admin && <GuardianCard />}
+          <PerformanceCard track={track.data} loading={track.loading} />
+        </div>
+        <div className="flex min-w-0 flex-col gap-4">
+          <ActiveSignalsCard track={track.data} loading={track.loading} />
+          <RecentActivityCard track={track.data} briefing={briefing} />
+        </div>
       </div>
 
       {/* everything Home had before v2.20, below the overview */}
@@ -77,7 +78,8 @@ export default function Dashboard() {
 
       <MyCoins rows={d?.rows} />
       <MoreDetail>
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid items-start gap-4 xl:grid-cols-3">
+        <div className="flex min-w-0 flex-col gap-4">
         <Card title="Market regime" right={<span className="text-xs text-mute">{(d?.regimes ?? []).length} coins</span>}>
           <div className="-mr-2 max-h-[34rem] space-y-3 overflow-y-auto pr-2">
             {(d?.regimes ?? []).map((r: any) => (
@@ -90,7 +92,25 @@ export default function Dashboard() {
             {!d?.regimes?.length && <Empty>No regimes yet: candles are still loading</Empty>}
           </div>
         </Card>
-        <TopSignals d={d} />
+        <Card title="Top risks">
+          {d?.risks?.length ? d.risks.map((r: any, i: number) => (
+            <div key={i} className="flex items-center justify-between gap-3 border-b border-line/50 px-2 py-2 text-sm last:border-0">
+              <span className="font-medium">{base(r.symbol)}</span><span className="text-right text-warn">{r.risk}</span>
+            </div>
+          )) : <Empty>No elevated risks flagged</Empty>}
+        </Card>
+        </div>
+        <div className="flex min-w-0 flex-col gap-4">
+          <TopSignals d={d} />
+          <Card title="Top opportunities">
+            {d?.opportunities?.length ? d.opportunities.map((o: any) => (
+              <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="grid min-h-[44px] grid-cols-[minmax(3rem,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] sm:grid-cols-[minmax(0,1fr)_auto_4.5rem_4.5rem]">
+                <span className="truncate font-medium">{base(o.symbol)}</span><SignalBadge signal={o.decision} />
+                <span className="text-mute sm:text-right">{o.grade ? <span className="text-xs">Grade {o.grade === "A" ? "A · strong" : o.grade === "B" ? "B · moderate" : o.grade}</span> : DASH}</span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-xs"> R:R</span></span>
+              </Link>
+            )) : <Empty>No setup passes every check right now.</Empty>}
+          </Card>
+        </div>
         <Card title="Sentiment & context" right={<span className="text-xs text-mute">Fear &amp; Greed index</span>}>
           {sentiment ? (
             <div className="space-y-2">
@@ -119,23 +139,6 @@ export default function Dashboard() {
         <HeatmapCard rows={d?.heatmap} />
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card title="Top opportunities">
-          {d?.opportunities?.length ? d.opportunities.map((o: any) => (
-            <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="grid min-h-[44px] grid-cols-[minmax(3rem,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] sm:grid-cols-[minmax(0,1fr)_auto_4.5rem_4.5rem]">
-              <span className="truncate font-medium">{base(o.symbol)}</span><SignalBadge signal={o.decision} />
-              <span className="text-mute sm:text-right">{o.grade ? <span className="text-xs">Grade {o.grade === "A" ? "A · strong" : o.grade === "B" ? "B · moderate" : o.grade}</span> : DASH}</span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-xs"> R:R</span></span>
-            </Link>
-          )) : <Empty>No setup passes every check right now.</Empty>}
-        </Card>
-        <Card title="Top risks">
-          {d?.risks?.length ? d.risks.map((r: any, i: number) => (
-            <div key={i} className="flex items-center justify-between gap-3 border-b border-line/50 px-2 py-2 text-sm last:border-0">
-              <span className="font-medium">{base(r.symbol)}</span><span className="text-right text-warn">{r.risk}</span>
-            </div>
-          )) : <Empty>No elevated risks flagged</Empty>}
-        </Card>
-      </div>
       </MoreDetail>
     </div>
   );
@@ -252,12 +255,12 @@ function ForecastCard({ rows }: { rows?: any[] }) {
 function HeatmapCard({ rows }: { rows?: any[] }) {
   const { tickers } = useLive();
   return (
-    <Card title="Market heatmap — 24h change">
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+    <Card title="Market heatmap — 24h change" className="card-fill">
+      <div className="grid h-full auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
         {(rows ?? []).map((h: any) => {
           const ch = tickers[h.symbol]?.change_pct ?? h.change_24h_pct;
           return (
-            <Link key={h.symbol} to={`/asset/${slug(h.symbol)}`} className="rounded-xl border border-glass/10 p-3 transition-colors hover:border-accent/50" style={{ background: heatColor(ch) }}>
+            <Link key={h.symbol} to={`/asset/${slug(h.symbol)}`} className="flex flex-col justify-between rounded-xl border border-glass/10 p-3 transition-colors hover:border-accent/50" style={{ background: heatColor(ch) }}>
               <div className="flex items-center justify-between"><span className="font-semibold">{base(h.symbol)}</span><span className="num text-sm font-semibold">{fmtPctRaw(ch)}</span></div>
               <div className="mt-1.5 flex flex-wrap gap-1 text-xs uppercase tracking-wide text-text/80">
                 {h.signal && <span className="rounded-full bg-ink/40 px-2 py-0.5">{h.signal}</span>}

@@ -25,6 +25,7 @@ import { isPending, liveOf, RecordSheet } from "./RecordDetails";
 import { AiTag, Empty, Info } from "./ui";
 
 const CandleChart = lazy(() => import("./CandleChart"));
+import { ToolChips, useChartTools } from "./ChartTools";
 const BTC = "BTC/USDT";
 const H1_LIMIT = 200;                 // 1h candles: sparkline (24), rolling volatility (7 days) and the 1H chart, one request
 
@@ -190,6 +191,7 @@ export function BtcChartCard() {
   const t = useTickerThrottled(BTC, 1000);
   const height = typeof window !== "undefined" && window.innerWidth < 640 ? 230 : 320;
   const pick = (v: keyof typeof CHART_TF) => { setTf(v); try { localStorage.setItem("cia-home-chart-tf", v); } catch { /* ignore */ } };
+  const ct = useChartTools(BTC, itf, (k.data ?? []) as Candle[]);
   return (
     <section className="panel min-w-0 p-3.5 sm:p-4">
       <CardHead icon={<Ico name="/results" size={16} />} title={<>BTC market chart <span className="font-normal text-mute">· perpetual</span></>}
@@ -199,18 +201,19 @@ export function BtcChartCard() {
         <span className={`num text-sm ${toneText(t?.change_pct)}`}>{fmtPctRaw(t?.change_pct)} <span className="text-mute">24h</span></span>
         <Link to={`/asset/${slug(BTC)}`} className="tap-h ml-auto inline-flex items-center text-xs font-medium text-accent hover:underline">Full chart &amp; AI view →</Link>
       </div>
+      <div className="mb-2"><ToolChips tools={ct.tools} flip={ct.flip} aTf={ct.aTf} /></div>
       <div style={{ height }} className="min-w-0">
         {k.data?.length ? (
           <Suspense fallback={<div className="skeleton h-full rounded-lg" />}>
-            <ChartBox candles={k.data} live={t?.last ?? null} height={height} viewKey={`home-btc-${itf}`} />
+            <ChartBox candles={k.data} live={t?.last ?? null} height={height} viewKey={`home-btc-${itf}`} ct={ct} />
           </Suspense>
         ) : k.error ? <Empty>Chart data could not be loaded ({k.error}).</Empty> : <div className="skeleton h-full rounded-lg" />}
       </div>
     </section>
   );
 }
-const ChartBox = memo(function ChartBox({ candles, live, height, viewKey }: { candles: Candle[]; live: number | null; height: number; viewKey: string }) {
-  return <CandleChart candles={candles} livePrice={live} height={height} viewKey={viewKey} />;
+const ChartBox = memo(function ChartBox({ candles, live, height, viewKey, ct }: { candles: Candle[]; live: number | null; height: number; viewKey: string; ct: ReturnType<typeof useChartTools> }) {
+  return <CandleChart candles={candles} livePrice={live} height={height} viewKey={viewKey} overlays={ct.overlays} show={ct.show} lines={ct.lines} markers={ct.markers} />;
 });
 
 /** First one or two sentences of the briefing (≤ ~220 characters) for the headline. */

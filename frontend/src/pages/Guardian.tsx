@@ -108,8 +108,9 @@ function StatusLine({ v }: { v: any }) {
         <Tile variant="strip" label="Errors" value={String(t.errors ?? 0)} valueClass={t.errors ? "text-bear" : ""}
           sub={`today · AI calls ${t.ai_calls ?? 0}`} />
       </div>
-      {s.last_error && (
-        <p className="break-words rounded-lg border border-bear/30 bg-bear/[0.06] px-3 py-2 text-xs text-bear">
+      {/* only a recent error matters; an old one-off (e.g. a data host refusing once) is not shown */}
+      {s.last_error && isNum(s.last_error.at) && Date.now() - s.last_error.at < 6 * 3_600_000 && (
+        <p className="break-words rounded-lg border border-warn/30 bg-warn/[0.06] px-3 py-2 text-xs text-warn">
           Last error {ago(s.last_error.at)} · {s.last_error.where}: {s.last_error.text}
         </p>
       )}

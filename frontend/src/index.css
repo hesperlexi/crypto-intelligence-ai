@@ -835,3 +835,7 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 @keyframes xeno-scan { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(360%); } }
 @keyframes xeno-blink { 50% { opacity: 0.35; } }
 @media (prefers-reduced-motion: reduce) { .xeno-sweep, .xeno-blink, .xeno-panel::after { animation: none; } .xeno-panel::after { display: none; } }
+
+/* v2.26 no empty card bottoms: a card in a stretched grid row lets its body fill the height (heatmap tiles grow). */
+.card-fill { display: flex; flex-direction: column; }
+.card-fill > .card-body { flex: 1 1 auto; }

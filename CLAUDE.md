@@ -753,3 +753,12 @@ UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian;
 - Trade page chart (`TradeTerminal.ChartPanel`, AI mode): chips EMA / VWAP / Bollinger (browser `lib/ta.overlays`) and
   Structure / Trade plan (engine analysis of the coin; 1m/5m use 15m) via shared `lib/chartLevels.ts`; choice in
   localStorage `cia-trade-chart-tools` (default EMA, Structure, Trade plan). The coin page (`Asset.tsx`) keeps its own set.
+
+## v2.26 chart tools everywhere + Overview layout (owner, 14 Nov 2026, branch `ui-v226`, frontend only)
+- `components/ChartTools.tsx` (`useChartTools(symbol, tf, candles, on, fixed?)` + `ToolChips`): EMA / VWAP / Bollinger
+  (browser `lib/ta`) and Structure / Trade plan (`lib/chartLevels`, engine analysis; 1m/5m → 15m, 1w → 3d; Replay passes
+  the as-of analysis as `fixed`). Choice shared by all charts (localStorage `cia-chart-tools`). Used by the Trade chart,
+  the Overview BTC chart and Replay; the coin page keeps its own toolbar.
+- Overview desktop: rows 3-4 are two stacked columns (status · Guardian · performance | open calls · activity);
+  "More market detail" columns: regime + top risks | top signals + opportunities | sentiment; heatmap fills its row
+  (`.card-fill`). Guardian page shows `last_error` only if < 6 h old (amber).

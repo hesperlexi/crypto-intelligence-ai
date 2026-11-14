@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { PageHeader } from "../components/kit";
-import CandleChart, { Candle, PriceLine } from "../components/CandleChart";
+import CandleChart, { Candle } from "../components/CandleChart";
+import { ToolChips, useChartTools } from "../components/ChartTools";
 import { SymbolSelect, TfTabs, useSymbols } from "../components/Pickers";
 import { Badge, Card, Check, Empty, ErrorBox, FlagList, Note, ProbBar, RegimeBadge, Row, SignalBadge, signalTone, Stat } from "../components/ui";
 import { api, useApi } from "../lib/api";
@@ -45,10 +46,7 @@ export default function Replay() {
   const a = res?.analysis;
   const fc = a?.forecast;
   const setup = a?.setup;
-  const lines: PriceLine[] = setup?.valid ? [
-    { price: setup.ideal_entry, title: "Entry", color: "--accent" }, { price: setup.stop, title: "Stop", color: "--bear" },
-    ...setup.targets.map((t: any) => ({ price: t.price, title: t.name, color: "--bull" })),
-  ] : [];
+  const ct = useChartTools(symbol, tf, known, true, a ?? null);
 
   return (
     <div className="space-y-4">
@@ -71,7 +69,8 @@ export default function Replay() {
       {res && a && (
         <>
           <Card title={`What was known at ${fmtTime(res.audit.as_of)}`} right={<div className="flex gap-2"><RegimeBadge regime={a.regime?.regime} /><SignalBadge signal={a.signal?.signal} /><Badge tone={signalTone(a.decision)}>{a.decision}</Badge></div>}>
-            <CandleChart candles={known} future={future} lines={lines} height={380} />
+            <div className="mb-2"><ToolChips tools={ct.tools} flip={ct.flip} aTf={tf} /></div>
+            <CandleChart candles={known} future={future} lines={ct.lines} overlays={ct.overlays} show={ct.show} markers={ct.markers} height={380} />
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
               <FlagList flags={a.flags} />
               {!revealed ? <button className="btn btn-primary" onClick={() => setRevealed(true)}>Reveal what happened next</button> : <Badge tone="accent">Future revealed (dimmed candles)</Badge>}
