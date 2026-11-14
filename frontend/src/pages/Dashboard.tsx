@@ -40,15 +40,16 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-5">
       <NewsBanner />
-      <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} />
-
-      {/* row 1: four figures with a small line each (phones: 2-up from 360 px, one column below) */}
-      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-        <BtcCard />
-        <MarketCapCard mc={mc.data} ctx={ctx.data} />
-        <VolatilityCard />
-        <SentimentCard status={status4} sentiment={sentiment} />
-      </div>
+      {/* v2.23 premium: one lead card - the market line, the actions and the four figures as a divided strip */}
+      <section className="panel panel-hero p-4 sm:p-6" aria-label="Market today">
+        <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} />
+        <div className="ov-strip mt-5 grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4">
+          <BtcCard />
+          <MarketCapCard mc={mc.data} ctx={ctx.data} />
+          <VolatilityCard />
+          <SentimentCard status={status4} sentiment={sentiment} />
+        </div>
+      </section>
 
       {/* row 2: BTC chart + AI market intelligence (the v2.16 briefing) */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
@@ -161,10 +162,10 @@ function OverviewHead({ rows, status, briefing }: { rows?: any[]; status?: any; 
   return (
     <section className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
       <div className="min-w-0 max-w-3xl">
-        <p className="text-xs text-mute">{greeting()}{first ? `, ${first}` : ""} · 4H chart</p>
-        <h1 className="font-display mt-0.5 text-xl font-semibold leading-tight tracking-tight sm:text-2xl">The market is <span className={moodCls}>{moodText}</span>.</h1>
+        <p className="text-sm text-mute">{greeting()}{first ? `, ${first}` : ""}</p>
+        <h1 className="font-display mt-1 text-2xl font-semibold leading-tight tracking-[-0.03em] sm:text-[2.125rem] sm:leading-[2.5rem]">The market is <span className={moodCls}>{moodText}</span>.</h1>
         <p className="mt-1 text-sm text-mute">
-          {r.length ? <><span className="font-medium text-bull">{buys} buy</span> · <span className="font-medium text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
+          {r.length ? <>On the 4H chart: <span className="font-medium text-bull">{buys} buy</span> · <span className="font-medium text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
           {briefing?.text && <>{" "}<button type="button" className="tap-h whitespace-nowrap font-medium text-accent hover:underline" aria-expanded={why} aria-controls="market-why" onClick={() => setWhy((v) => !v)}>{why ? "Hide why" : "Know why ›"}</button></>}
         </p>
         {why && briefing?.text && <BriefingPanel b={briefing} />}

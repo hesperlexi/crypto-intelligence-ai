@@ -733,3 +733,25 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 /* numbers that matter: champagne-ivory, tight */
 .figure { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-weight: 600; color: rgb(var(--text)); }
 @media (prefers-reduced-motion: reduce) { .panel-hero::before { animation: none; } }
+
+/* premium-d: Overview lead card - the four figures as cells of one strip (no card-in-card) */
+.ov-strip { border-top: 1px solid var(--hair); }
+.ov-strip > .ov-card, .ov-strip > a.ov-card {
+  background: transparent !important; background-image: none !important; border: 0 !important; border-radius: 0 !important;
+  box-shadow: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important;
+  padding: 1rem 0.25rem 0.25rem; border-top: 1px solid transparent;
+}
+@media (min-width: 360px) {
+  .ov-strip > .ov-card { padding-left: 1rem; padding-right: 1rem; }
+  .ov-strip > .ov-card:nth-child(odd) { padding-left: 0; }
+  .ov-strip > .ov-card:nth-child(even) { border-left: 1px solid var(--hair) !important; }
+  .ov-strip > .ov-card:nth-child(n+3) { border-top: 1px solid var(--hair) !important; }
+}
+@media (min-width: 1280px) {
+  .ov-strip > .ov-card:nth-child(n+3) { border-top: 1px solid transparent !important; }
+  .ov-strip > .ov-card:not(:first-child) { border-left: 1px solid var(--hair) !important; padding-left: 1.25rem; }
+  .ov-strip > .ov-card:nth-child(odd):not(:first-child) { padding-left: 1.25rem; }
+}
+[data-glass="on"] .btn-primary { background-image: var(--bullion); }
+/* premium-d: badges read in sentence case (the old tracked capitals were template chrome); text stays as written */
+.badge-caps { letter-spacing: 0.01em; }

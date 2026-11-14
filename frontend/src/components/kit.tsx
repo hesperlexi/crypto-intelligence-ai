@@ -25,7 +25,7 @@ const BADGE_TONES: Record<Tone, string> = {
 export function Badge({ tone = "mute", children, title, caps = false, className = "" }: { tone?: Tone; children: ReactNode; title?: string; caps?: boolean; className?: string }) {
   return (
     <span title={title}
-      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2 py-1 text-xs font-semibold leading-none ${caps ? "uppercase tracking-[0.04em]" : ""} ${BADGE_TONES[tone]} ${className}`}>
+      className={`inline-flex shrink-0 items-center whitespace-nowrap rounded-full border px-2 py-1 text-xs font-semibold leading-none ${caps ? "badge-caps" : ""} ${BADGE_TONES[tone]} ${className}`}>
       {children}
     </span>
   );

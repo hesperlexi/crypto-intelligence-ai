@@ -86,7 +86,7 @@ function StatCard({ icon, label, value, sub, spark, sparkLabel, info, to }: {
     <>
       <div className="flex items-center gap-2.5">
         {icon}
-        <span className="min-w-0 flex-1 text-xs font-semibold uppercase leading-tight tracking-[0.06em] text-mute sm:truncate">{label}</span>
+        <span className="min-w-0 flex-1 text-[0.8125rem] font-medium leading-tight text-mute sm:truncate">{label}</span>
         {info}
       </div>
       <div className="num mt-2.5 truncate text-xl font-semibold leading-tight tracking-tight sm:text-2xl">{value}</div>
@@ -163,7 +163,7 @@ export function SentimentCard({ status, sentiment }: { status: any; sentiment: a
     <section className="panel ov-card flex min-w-0 flex-col p-3.5 sm:p-4">
       <div className="flex items-center gap-2.5">
         <IconDisc name="/radar" />
-        <span className="min-w-0 flex-1 text-xs font-semibold uppercase leading-tight tracking-[0.06em] text-mute sm:truncate">Market sentiment</span>
+        <span className="min-w-0 flex-1 text-[0.8125rem] font-medium leading-tight text-mute sm:truncate">Market sentiment</span>
         <Info label="How the sentiment is read">Mood = share of the watchlist in a bullish or bearish 4H regime (60% needed), from the engine. Gauge = the Fear &amp; Greed index (alternative.me).</Info>
       </div>
       <div className="mt-2 flex min-w-0 flex-wrap items-end justify-between gap-x-2 gap-y-1">
