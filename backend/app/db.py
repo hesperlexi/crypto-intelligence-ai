@@ -26,6 +26,8 @@ MIGRATIONS: dict[str, list[tuple[str, str]]] = {
             ("return_net_pct", "DOUBLE PRECISION"), ("cost_pct", "DOUBLE PRECISION"), ("funding_pct", "DOUBLE PRECISION")]
     for table in ("signals", "shadow_signals", "scalp_signals")
 }
+# v2.22 Hesper open-ended runs: the $1,000 milestone time of a run
+MIGRATIONS["hesper_runs"] = [("goal_reached_at", "BIGINT")]
 
 
 def now_ms() -> int:

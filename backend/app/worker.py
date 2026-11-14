@@ -861,6 +861,22 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
             return adjust.apply(rt, p, str(job.get("by") or ""), sink)
         except adjust.AdjustError as exc:
             raise ValueError(str(exc)) from None
+    if kind == "hesper_new_run":
+        # v2.22: admin only (job creator's email): end the Hesper run now and start the next one at $100
+        if not job.get("_admin"):
+            raise PermissionError("only the admin can end a Hesper run")
+        want = p.get("run")
+        cur = (hesper.Hesper(rt).load() or {}).get("run")
+        if want is not None and cur is not None and int(want) != int(cur):
+            raise ValueError(f"run #{want} has already ended (run #{cur} is running now)")
+        res = hesper.Hesper(rt).stop_run(by=str(job.get("by") or ""))
+        if sink is not None:
+            try:
+                hv = hesper.view(rt)               # the new run number changes `core`, so it goes out at once
+                sink.view("hesper", hv, min_interval_s=900, core=hesper.core(hv))
+            except Exception:
+                pass
+        return res
     if kind == "guardian_dismiss":
         # v2.19: admin only (job creator's email), like adjust_signal; nothing about the call changes
         if not job.get("_admin"):
@@ -944,7 +960,7 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             result = run_job(rt, job, deadline, sink)
             sink.set(f"jobs/{jid}", {"status": "done", "json": dumps(result), "finished_at": now_ms()}, merge=True)
         except Exception as exc:
-            plain = job.get("type") in ("adjust_signal", "guardian_dismiss") and isinstance(exc, (PermissionError, ValueError))
+            plain = job.get("type") in ("adjust_signal", "guardian_dismiss", "hesper_new_run") and isinstance(exc, (PermissionError, ValueError))
             if not plain:
                 log.exception("job %s failed", jid)
             # adjust_signal refusals carry a plain-language reason for the admin (no exception class name)

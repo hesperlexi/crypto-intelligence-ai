@@ -72,7 +72,7 @@ const TITLES: [string, string, string][] = [
   ["/report", "Weekly report", "Owner: marketing summary of the week"],
   ["/achievements", "Achievements", "Owner: milestones of the record"],
   ["/health", "Health", "Owner: engine, data and quotas"],
-  ["/rich", "Hesper Challenge", "Owner: $100 → $1,000 demo challenge"],
+  ["/rich", "Hesper Challenge", "Owner: all-in demo from $100, runs until you stop it"],
   ["/guardian", "Trade Guardian", "Owner: recommendations on open calls"],
   ["/users", "Users", "Owner: members, payments and access"],
 ];

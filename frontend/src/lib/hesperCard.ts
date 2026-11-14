@@ -43,7 +43,7 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
 
   // scoreboard
   const tiles: [string, string, string][] = [
-    ["SUCCESSES", String(sc.successes ?? 0), C.bull],
+    ["REACHED $1,000", String(sc.milestones ?? sc.successes ?? 0), C.bull],
     ["FAILURES", String(sc.failures ?? 0), C.bear],
     ["RUNS", String(sc.runs ?? 0), C.text],
     ["BEST PEAK", usd(sc.best_peak?.peak ?? sc.all_time_peak, 0), C.gold],
