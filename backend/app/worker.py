@@ -279,16 +279,40 @@ def ensure_call_alerts(rt: Runtime, sink: BaseSink, users: dict[str, dict[str, A
     return made
 
 
-def hesper_members(rt: Runtime, sink: BaseSink) -> list[str]:
+def watch_status() -> dict[str, Any]:
+    """Scalar Health fields from the fast price watch's status file (app/watch.py), {} when it has not run."""
+    import json as _json
+    from pathlib import Path as _P
+    url = settings.database_url
+    try:
+        f = _P(url.replace("sqlite:///", "")).parent / "watch_status.json"
+        st = _json.loads(f.read_text()) if url.startswith("sqlite:///") and f.exists() else {}
+        return {"watch_last_at": st.get("at"), "watch_coins": st.get("coins"), "watch_priced": st.get("priced"),
+                "watch_sent_total": st.get("sent_total")} if st else {}
+    except Exception:
+        return {}
+
+
+HESPER_AUDIENCE_EVERY_S = 1800
+
+
+def hesper_members(rt: Runtime, sink: BaseSink, force: bool = False) -> list[str]:
     """v2.30: active members who see the Hesper challenge (config/hesper.visibility == 'members'), else none. One
-    Firestore read, only on a tick that has a challenge event to send."""
+    Firestore read at most every 30 min (or at once on a tick with a challenge event); kept in setting
+    `hesper_push_members` for the fast price watch (app/watch.py, v2.31)."""
+    now = now_ms()
+    if not force and now - int(rt.db.get_setting("hesper_push_members_at", 0) or 0) < HESPER_AUDIENCE_EVERY_S * 1000:
+        return list(rt.db.get_setting("hesper_push_members", None) or [])
     try:
         if ((sink.get("config/hesper") or {}).get("visibility") or "admin") != "members":
-            return []
-        now = now_ms()
-        return sorted(uid for uid, u in load_users(rt, sink)[0].items() if membership.is_active(u, now))
+            uids: list[str] = []
+        else:
+            uids = sorted(uid for uid, u in load_users(rt, sink)[0].items() if membership.is_active(u, now))
     except Exception:
-        return []
+        return list(rt.db.get_setting("hesper_push_members", None) or [])
+    rt.db.set_setting("hesper_push_members", uids)
+    rt.db.set_setting("hesper_push_members_at", now)
+    return uids
 
 
 ALERT_COOLDOWN_MIN_S, ALERT_COOLDOWN_MAX_S = 60, 365 * 86_400     # same range as the Firestore rules
@@ -1078,7 +1102,7 @@ def push_message(ev: dict[str, Any], owner: str | None = None) -> dict[str, str]
     title = PUSH_TITLES.get(ev.get("type"), (ev.get("type") or "Alert").replace("_", " ").title())
     sym = "" if ev.get("symbol") == alerts.ALL_SYMBOLS else ev.get("symbol", "")
     msg = {"title": f"{title} · {sym}" if sym else title, "body": ev.get("message", ""), "url": "/alerts",
-           "tag": ev.get("id", "")}
+           "tag": ev.get("tag") or ev.get("id", "")}
     if owner and owner != USER:
         msg["uid"] = owner            # only this member's devices; without it, the admins' devices
     return msg
@@ -1352,7 +1376,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["hesper"] = len(hesper_events)
     if hesper_events:            # v2.30: the admin (and members when the challenge is shown to them) get a push
         detail["hesper_push"] = step("hesper_push", lambda: sink.send_push(
-            hesper.push_messages(hesper_events, hesper_members(rt, sink))))
+            hesper.push_messages(hesper_events, hesper_members(rt, sink, force=True))))
+    else:                        # v2.31: keeps the fast watch's member list fresh (one read per 30 min at most)
+        step("hesper_audience", lambda: len(hesper_members(rt, sink)))
     # v2.19 Trade Guardian (admin, recommend-only): early warnings on open calls; never changes a call by itself and
     # never blocks the tick (it catches its own errors; the step wrapper catches anything else)
     if guardian.ENABLED:
@@ -1383,6 +1409,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "data_host": getattr(rt.provider, "host_used", None),
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
+    engine.update(watch_status())                # v2.31 fast price watch: last pass, coins priced, early pushes sent
     engine["firestore_writes_today"] = sink.writes_today()     # Firebase free plan: 20,000 a day (engine writes only)
     engine["firestore_write_budget"] = sink.DAILY_BUDGET
     engine["firestore_reads_today"] = sink.reads_today()       # free plan: 50,000 reads a day (engine reads only)

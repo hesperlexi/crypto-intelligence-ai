@@ -354,6 +354,7 @@ def lifecycle(db: Database, now: int | None = None) -> list[dict[str, Any]]:
                 e = _fire(db, rule, r["symbol"], EVENT_TYPE_OF[ev] if rule["type"] == "SIGNAL_UPDATES" else rule["type"],
                           call_message(r, ev), now, budget)
                 if e:
+                    e["tag"] = f"{r['id']}-{ev}"     # v2.31: same tag as the fast watch's early push (it replaces it)
                     fired.append(e)
         if not primed:            # a new rule: what already happened is marked as seen, never sent
             db.execute("UPDATE alerts SET last_state = 'primed' WHERE id = ?", (rule["id"],))

@@ -55,6 +55,29 @@ def merge_waiting() -> bool:
         return False
 
 
+WATCH_EVERY_S = 30      # v2.31 fast price watch (backend/app/watch.py): early TP / stop / entry pushes between candles
+
+
+def start_watch(stop_at: float) -> None:
+    """Runs `python -m app.watch` every WATCH_EVERY_S in a background thread, also while a tick runs (it only reads
+    the engine's database, read-only, and sends pushes). A failing or slow pass is skipped, never retried in a loop."""
+    import threading
+
+    def loop() -> None:
+        while time.time() < stop_at:
+            t = time.time()
+            try:
+                r = subprocess.run([sys.executable, "-m", "app.watch"], capture_output=True, text=True, timeout=90)
+                out = (r.stdout or "").strip()
+                if out:
+                    print(out[-500:], flush=True)
+            except Exception as exc:
+                print(f"watch: pass skipped ({type(exc).__name__})", flush=True)
+            time.sleep(max(1.0, WATCH_EVERY_S - (time.time() - t)))
+    if os.environ.get("FAST_WATCH", "1") != "0":
+        threading.Thread(target=loop, daemon=True).start()
+
+
 ENGINE_REF = "engine-ok"      # tag moved by deploy.yml only after the tests passed on main (v2.13)
 
 
@@ -138,6 +161,7 @@ def main() -> None:
         return
     written = int(open(count_file).read() or 0) if count_file and os.path.exists(count_file) else 0
     end = time.time() + a.minutes * 60
+    start_watch(end)
     n = 0
     while True:
         if merge_waiting():

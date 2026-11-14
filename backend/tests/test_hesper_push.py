@@ -36,9 +36,17 @@ class _Sink:
 
 
 def test_members_only_when_shown(monkeypatch):
+    from app.db import Database
+    from app.services.runtime import Runtime
+
+    class _P:
+        name = "test"
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
     users = {"m1": {"status": "active"}, "m2": {"status": "expired"}}
     monkeypatch.setattr(worker, "load_users", lambda rt, sink: (users, False))
     monkeypatch.setattr(worker.membership, "is_active", lambda u, now: u.get("status") == "active")
-    assert worker.hesper_members(None, _Sink("admin")) == []
-    assert worker.hesper_members(None, _Sink(None)) == []
-    assert worker.hesper_members(None, _Sink("members")) == ["m1"]
+    assert worker.hesper_members(rt, _Sink("admin"), force=True) == []
+    assert worker.hesper_members(rt, _Sink(None), force=True) == []
+    assert worker.hesper_members(rt, _Sink("members"), force=True) == ["m1"]
+    assert rt.db.get_setting("hesper_push_members") == ["m1"]
+    assert worker.hesper_members(rt, _Sink("admin")) == ["m1"]      # cached for 30 min (no read)

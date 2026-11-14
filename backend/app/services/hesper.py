@@ -571,12 +571,12 @@ def push_text(ev: dict[str, Any]) -> tuple[str, str] | None:
 def push_messages(events: list[dict[str, Any]], member_uids: list[str] | tuple[str, ...] = ()) -> list[dict[str, str]]:
     """Push messages for the admin (no uid) and, when given, each member (uid)."""
     out: list[dict[str, str]] = []
-    for i, ev in enumerate(events or []):
+    for ev in events or []:
         tb = push_text(ev)
         if not tb:
             continue
         base = {"title": tb[0], "body": tb[1], "url": PUSH_URL,
-                "tag": f"hesper-{ev.get('run')}-{ev.get('type')}-{_coin(ev.get('symbol'))}-{ev.get('tp') or ''}-{i}"}
+                "tag": f"hesper-{ev.get('run')}-{ev.get('type')}-{_coin(ev.get('symbol'))}-{ev.get('tp') or ''}"}
         out.append(dict(base))
         out += [{**base, "uid": uid, "url": MEMBER_URL} for uid in member_uids]
     return out

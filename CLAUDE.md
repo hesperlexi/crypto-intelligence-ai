@@ -809,3 +809,14 @@ starts with **"new"** (every published call; type `NEW_SIGNAL`, push title "New 
   `hesper.push_messages` (text `push_text`) → `sink.send_push` in the worker step `hesper_push`. Admin always (url `/rich`);
   active members too, one copy per uid (url `/results?tab=challenge`), only while `config/hesper.visibility == 'members'`
   (`worker.hesper_members`: one Firestore read, only on a tick with a challenge event). Tests `test_hesper_push.py`.
+
+## v2.31 fast price watch (owner, 14 Nov 2026: "why do notifications need to wait for engine? cant we do it same time?")
+`backend/app/watch.py`, run every 30 s by a background thread in `scripts/engine_loop.py` (also during ticks; env
+`FAST_WATCH=0` turns it off). Opens the SQLite file read-only, prices the open calls' and Hesper's coins from
+data-api.binance.vision (one batch request), and pushes at once when the price touches an entry (pending), TP1-3 or the
+stop in force (admin stop, break-even after TP1, TP1 after TP2) — text "price touched TP1 … Confirmed at the 15-minute
+candle close." Audience = owners of primed call rules wanting that event (skipped when `alert_marks` shows the engine
+already sent it); Hesper = admin + setting `hesper_push_members` (refreshed by the tick ≤ every 30 min). Already sent:
+`backend/data/watch_sent.json` (7 days); status `watch_status.json` → Health `engine.watch_*`. The engine's confirmed push
+uses the same tag (`<call id>-<event>`, `hesper-<run>-<type>-<coin>-<tp>`) so the phone replaces the early one. Never
+changes the record, bots, Hesper or Firestore. Tests `tests/test_watch.py`.
