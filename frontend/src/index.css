@@ -755,3 +755,5 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 [data-glass="on"] .btn-primary { background-image: var(--bullion); }
 /* premium-d: badges read in sentence case (the old tracked capitals were template chrome); text stays as written */
 .badge-caps { letter-spacing: 0.01em; }
+/* premium-d: strip tile labels in sentence case too */
+.metric-k { text-transform: none !important; letter-spacing: 0 !important; font-size: 0.8125rem; font-weight: 500; }

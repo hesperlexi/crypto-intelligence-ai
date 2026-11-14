@@ -59,8 +59,8 @@ export default function WinsToday() {
               )}
             </div>
             <dl className="num relative mt-4 grid grid-cols-2 border-t border-glass/[0.07] text-xs">
-              <div className="px-4 py-2.5"><dt className="text-xs uppercase tracking-wide text-mute">Entry</dt><dd className="mt-0.5 font-semibold text-text">{fmtPrice(w.entry)}</dd></div>
-              <div className="border-l border-glass/[0.07] px-4 py-2.5 text-right"><dt className="text-xs uppercase tracking-wide text-mute">{TARGET[w.status] ?? "Closed in profit"}</dt><dd className="mt-0.5 font-semibold text-bull">{isNum(w.target) ? fmtPrice(w.target) : "—"}</dd></div>
+              <div className="px-4 py-2.5"><dt className="text-[0.8125rem] font-medium text-mute">Entry</dt><dd className="mt-0.5 font-semibold text-text">{fmtPrice(w.entry)}</dd></div>
+              <div className="border-l border-glass/[0.07] px-4 py-2.5 text-right"><dt className="text-[0.8125rem] font-medium text-mute">{TARGET[w.status] ?? "Closed in profit"}</dt><dd className="mt-0.5 font-semibold text-bull">{isNum(w.target) ? fmtPrice(w.target) : "—"}</dd></div>
             </dl>
           </li>
           );
