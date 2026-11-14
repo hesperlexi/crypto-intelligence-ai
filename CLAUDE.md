@@ -855,3 +855,7 @@ lane = source, newest pulses; hover/focus shows the title, links open the story)
 wave; drawn 1:1 at the measured width (`useWidth`, ResizeObserver) so dots never stretch; the dish is its own square SVG
 (hidden < 360 px). `OrbitTrack` (top of the calendar card) = next 7 days, high-impact releases as red worlds (next one
 pulses), medium as amber, dark bands = the news-guard pause (45 min before → 30 min after). Lead headline `.news-lead` tint.
+- Layout (owner: "one is too long one is short"): headlines (lead + 9, "Show N more", footer pinned) | right stack =
+  calendar + `CoinConstellation` (coins mentioned as stars around the AI core, size = headlines, tap = filter; the coin
+  filter state lives in `News`, phones scroll to the headlines) + `NewsSpectrum` (headlines per hour, 24 h, busiest
+  hour gold; `flex-1` so both columns end level).

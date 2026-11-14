@@ -14,6 +14,14 @@ function newsHeads() {
     ["Sample headline: Gold-backed tokens see record weekly volume", ["GOLD"]],
     ["Sample headline: Avalanche foundation announces developer grants", ["AVAX"]],
     ["Sample headline: Exchange reserves of Bitcoin fall to a multi-year low", ["BTC"]],
+    ["Sample headline: Stablecoin supply reaches a new record", []],
+    ["Sample headline: Ethereum staking queue shortens ahead of upgrade", ["ETH"]],
+    ["Sample headline: Solana memecoin volumes cool after a busy week", ["SOL"]],
+    ["Sample headline: Bitcoin miners move coins to exchanges", ["BTC"]],
+    ["Sample headline: Chainlink adds new data feeds for tokenized funds", ["LINK"]],
+    ["Sample headline: Regulators publish draft rules for crypto custody", []],
+    ["Sample headline: Dogecoin open interest rises as price steadies", ["DOGE"]],
+    ["Sample headline: BNB Chain fees drop after network update", ["BNB"]],
   ];
   return t.map(([title, coins], i) => ({ title, coins, source: src[i % 3], url: "https://example.com/" + i, ts: NOW - (i * 1.7 + 0.3) * 3_600_000,
     summary: i % 2 ? null : "Sample summary text for the preview only. The live page shows the first lines the news site publishes with each story." }));

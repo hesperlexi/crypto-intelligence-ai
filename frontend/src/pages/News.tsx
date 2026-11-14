@@ -7,7 +7,7 @@ import { PageHeader } from "../components/kit";
 import NewsBanner, { countdown } from "../components/NewsBanner";
 import { AiTag, ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
-import { Intercept, OrbitTrack } from "../components/NewsViz";
+import { CoinConstellation, Intercept, NewsSpectrum, OrbitTrack } from "../components/NewsViz";
 import { ago, isNum } from "../lib/format";
 
 const IMPACT: Record<string, string> = { High: "bg-bear/15 text-bear border-bear/40", Medium: "bg-warn/15 text-warn border-warn/40" };
@@ -128,9 +128,9 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
   );
 }
 
-function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
+function Headlines({ heads, sources, coin, setCoin }: { heads: any[]; sources?: string; coin: string; setCoin: (c: string) => void }) {
   const [src, setSrc] = useState<string>("all");
-  const [coin, setCoin] = useState<string>("all");
+  const [more, setMore] = useState(false);
   const srcs = useMemo(() => Array.from(new Set(heads.map((h) => h.source).filter(Boolean))) as string[], [heads]);
   const coins = useMemo(() => {
     const c: Record<string, number> = {};
@@ -141,7 +141,7 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
   const [lead, ...rest] = list;
   const chip = (on: boolean) => `chip ${on ? "is-on" : ""}`;
   return (
-    <section className="panel self-start p-0">
+    <section id="news-heads" className="panel flex scroll-mt-20 flex-col p-0">
       <div className="card-head flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
         <h2 className="label">Crypto headlines</h2>
         {srcs.length > 1 && (
@@ -172,7 +172,7 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
         </a>
       )}
       <ul className="divide-y divide-glass/[0.06]">
-        {rest.slice(0, 30).map((h) => (
+        {rest.slice(0, more ? 30 : 9).map((h) => (
           <li key={h.url ?? h.title}>
             <a href={h.url} target="_blank" rel="noopener noreferrer" className="group grid grid-cols-[minmax(0,1fr)_auto] gap-3 px-4 py-2.5 hover:bg-glass/[0.03]">
               <div className="min-w-0">
@@ -188,7 +188,8 @@ function Headlines({ heads, sources }: { heads: any[]; sources?: string }) {
           </li>
         ))}
       </ul>
-      <p className="border-t border-glass/[0.06] px-4 py-2 text-xs text-mute">Context only. Sources: {sources ?? "public RSS feeds"}.</p>
+      {rest.length > 9 && <button type="button" className="border-t border-glass/[0.06] px-4 py-2.5 text-left text-sm text-accent hover:bg-glass/[0.03]" onClick={() => setMore(!more)}>{more ? "Show fewer" : `Show ${Math.min(30, rest.length) - 9} more headlines`}</button>}
+      <p className="mt-auto border-t border-glass/[0.06] px-4 py-2 text-xs text-mute">Context only. Sources: {sources ?? "public RSS feeds"}.</p>
     </section>
   );
 }
@@ -206,6 +207,7 @@ export default function News() {
   const v = useApi<any>("/news");
   const [now, setNow] = useState(Date.now());
   const [all, setAll] = useState(false);
+  const [coin, setCoin] = useState<string>("all");
   useEffect(() => { const id = window.setInterval(() => setNow(Date.now()), 30000); return () => window.clearInterval(id); }, []);
   if (v.loading && !v.data) return <Loading />;
   if (v.error) return <ErrorBox error={v.error} retry={v.reload} />;
@@ -229,9 +231,10 @@ export default function News() {
       <Overview d={d} now={now} heads={heads} />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,1fr)]">
-        <Headlines heads={heads} sources={d.sources?.headlines} />
+        <Headlines heads={heads} sources={d.sources?.headlines} coin={coin} setCoin={setCoin} />
 
-        <section className="panel self-start p-0">
+        <div className="flex flex-col gap-4">
+        <section className="panel p-0">
           <div className="card-head flex items-center justify-between border-b border-glass/[0.06] px-4 py-2.5">
             <h2 className="label">Economic calendar, in your local time</h2>
             <label className="flex items-center gap-2 text-xs text-mute"><input type="checkbox" checked={all} onChange={(e) => setAll(e.target.checked)} />show medium impact</label>
@@ -279,6 +282,9 @@ export default function News() {
           )}
           <p className="border-t border-glass/[0.06] px-4 py-2 text-xs text-mute">Source: {d.sources?.calendar ?? "economic calendar"}. Your local time.</p>
         </section>
+        <CoinConstellation heads={heads} coin={coin} onPick={(c) => { setCoin(c); if (c !== "all" && window.innerWidth < 1024) document.getElementById("news-heads")?.scrollIntoView({ behavior: "smooth", block: "start" }); }} />
+        <NewsSpectrum heads={heads} now={now} />
+        </div>
       </div>
     </div>
   );

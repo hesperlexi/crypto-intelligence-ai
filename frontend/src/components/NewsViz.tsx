@@ -129,7 +129,7 @@ export function OrbitTrack({ events, now }: { events: Ev[]; now: number }) {
         <path d={`M${X0} ${Y} Q ${(X0 + X1) / 2} ${Y - 30} ${X1} ${Y}`} fill="none" stroke="rgb(var(--ai) / 0.25)" strokeDasharray="3 6" />
         <line x1={X0} x2={X1} y1={Y} y2={Y} stroke="rgb(var(--text) / 0.12)" />
         {days.map((t) => <g key={t}><line x1={X(t)} x2={X(t)} y1={Y - 6} y2={Y + 6} stroke="rgb(var(--text) / 0.2)" />
-          <text x={X(t) + 3} y={HT - 4} fontSize="9" fill="rgb(var(--mute))">{new Date(t).toLocaleDateString(undefined, { weekday: "short" })}</text></g>)}
+          <text x={X(t) + 3} y={HT - 4} fontSize="10" fill="rgb(var(--mute))">{new Date(t).toLocaleDateString(undefined, { weekday: "short" })}</text></g>)}
         {list.filter((e) => e.impact === "High").map((e) => (
           <rect key={`b${e.id ?? e.ts}`} x={X(e.ts - 45 * 60_000)} y={Y - 13} width={Math.max(2, X(e.ts + 30 * 60_000) - X(e.ts - 45 * 60_000))} height="26" fill="rgb(var(--bear) / 0.16)" rx="2" />
         ))}
@@ -156,5 +156,97 @@ export function OrbitTrack({ events, now }: { events: Ev[]; now: number }) {
           : <>Red worlds: high-impact releases; the dark band around each is when new signals pause. Hover a world for details.</>}
       </div>
     </div>
+  );
+}
+
+/** Coins in the news as a constellation: each mentioned coin a star around the AI core (bigger = more headlines);
+ *  tapping one filters the headlines to it. */
+export function CoinConstellation({ heads, coin, onPick }: { heads: Head[]; coin: string; onPick: (c: string) => void }) {
+  const list = useMemo(() => {
+    const c: Record<string, number> = {};
+    for (const h of heads) for (const x of h.coins ?? []) c[x] = (c[x] ?? 0) + 1;
+    return Object.entries(c).sort((a, b) => b[1] - a[1]).slice(0, 12);
+  }, [heads]);
+  if (!list.length) return null;
+  const S = 300, C = S / 2, max = list[0][1];
+  const pos = list.map(([n, k], i) => {
+    const ring = i < 5 ? 78 : 122, per = i < 5 ? Math.min(5, list.length) : list.length - 5;
+    const a = ((i < 5 ? i : i - 5) / Math.max(1, per)) * Math.PI * 2 - Math.PI / 2 + (i < 5 ? 0 : Math.PI / Math.max(1, per));
+    return { n, k, x: C + Math.cos(a) * ring, y: C + Math.sin(a) * ring * 0.82, r: 5 + (k / max) * 9 };
+  });
+  return (
+    <section className="panel p-0">
+      <div className="card-head flex items-center justify-between border-b border-glass/[0.06] px-4 py-2.5">
+        <h2 className="label">Coins in the transmissions</h2>
+        {coin !== "all" && <button type="button" className="text-xs text-accent hover:underline" onClick={() => onPick("all")}>Show all coins</button>}
+      </div>
+      <svg viewBox={`0 0 ${S} ${S * 0.86}`} className="mx-auto block w-full max-w-[420px]" role="group" aria-label="Coins mentioned in the headlines">
+        <g transform={`translate(0 ${-S * 0.07})`}>
+          <ellipse cx={C} cy={C} rx="78" ry={78 * 0.82} fill="none" stroke="rgb(var(--ai) / 0.18)" strokeDasharray="2 6" />
+          <ellipse cx={C} cy={C} rx="122" ry={122 * 0.82} fill="none" stroke="rgb(var(--ai) / 0.12)" strokeDasharray="2 8" />
+          <circle cx={C} cy={C} r="26" fill="rgb(var(--ai) / 0.12)" className="ic-blink" />
+          <circle cx={C} cy={C} r="7" fill="rgb(var(--ai))" style={{ filter: "drop-shadow(0 0 8px rgb(var(--ai)))" }} />
+          {pos.map((p) => <line key={`l${p.n}`} x1={C} y1={C} x2={p.x} y2={p.y} stroke={`rgb(var(--ai) / ${coin === p.n ? 0.6 : 0.14})`} />)}
+          {pos.map((p) => {
+            const on = coin === p.n;
+            return (
+              <g key={p.n} role="button" tabIndex={0} aria-pressed={on} aria-label={`${p.n}: ${p.k} headline${p.k === 1 ? "" : "s"}`} className="cursor-pointer outline-none"
+                onClick={() => onPick(on ? "all" : p.n)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onPick(on ? "all" : p.n); } }}>
+                <circle cx={p.x} cy={p.y} r={p.r + 8} fill="transparent" />
+                <circle cx={p.x} cy={p.y} r={p.r} fill={`rgb(var(${on ? "--accent" : "--ai"}) / ${on ? 0.95 : 0.35})`} stroke={`rgb(var(${on ? "--accent" : "--ai"}))`}
+                  style={{ filter: `drop-shadow(0 0 ${on ? 10 : 5}px rgb(var(${on ? "--accent" : "--ai"})))` }} />
+                <text x={p.x} y={p.y + p.r + 12} textAnchor="middle" fontSize="11" fontWeight="600" fill="rgb(var(--text) / 0.85)">{p.n}</text>
+                <text x={p.x} y={p.y + 3.5} textAnchor="middle" fontSize="9" fontWeight="700" fill="rgb(var(--ink))">{p.k}</text>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+      <p className="px-4 pb-3 text-xs text-mute">Bigger star = more headlines. Tap a coin to read only its news.</p>
+    </section>
+  );
+}
+
+/** Headlines per hour over the last 24 h as a spectrum analyser; the busiest hour glows. */
+export function NewsSpectrum({ heads, now }: { heads: Head[]; now: number }) {
+  const bins = useMemo(() => {
+    const b = Array.from({ length: 24 }, () => ({ n: 0, src: {} as Record<string, number> }));
+    for (const h of heads) {
+      if (!isNum(h.ts)) continue;
+      const i = 23 - Math.floor((now - h.ts!) / H);
+      if (i >= 0 && i < 24) { b[i].n += 1; b[i].src[h.source ?? ""] = (b[i].src[h.source ?? ""] ?? 0) + 1; }
+    }
+    return b;
+  }, [heads, now]);
+  const max = Math.max(1, ...bins.map((b) => b.n));
+  const peak = bins.reduce((a, b, i) => (b.n >= bins[a].n ? i : a), 0);      // ties: the most recent hour
+  const total = bins.reduce((a, b) => a + b.n, 0);
+  const W = 240, HT = 90, bw = W / 24;
+  return (
+    <section className="panel flex flex-1 flex-col p-0">
+      <div className="card-head flex items-center justify-between border-b border-glass/[0.06] px-4 py-2.5">
+        <h2 className="label">News activity, hour by hour</h2>
+        <span className="num text-xs text-mute">{total} in 24 h</span>
+      </div>
+      <div className="flex flex-1 flex-col justify-end px-4 pb-3 pt-4">
+        <svg viewBox={`0 0 ${W} ${HT}`} preserveAspectRatio="none" className="block h-24 w-full" role="img" aria-label={`Busiest hour: ${bins[peak].n} headlines`}>
+          <defs>
+            <linearGradient id="spec-ai" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="rgb(var(--ai) / 0.7)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0.08)" /></linearGradient>
+            <linearGradient id="spec-hot" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="rgb(var(--accent))" /><stop offset="100%" stopColor="rgb(var(--accent) / 0.15)" /></linearGradient>
+          </defs>
+          {[0.25, 0.5, 0.75].map((f) => <line key={f} x1="0" x2={W} y1={HT * f} y2={HT * f} stroke="rgb(var(--text) / 0.05)" />)}
+          {bins.map((b, i) => {
+            const h = (b.n / max) * (HT - 6);
+            const hot = i === peak && b.n > 0;
+            return <g key={i}>
+              <rect x={i * bw + 2} y={HT - h} width={bw - 4} height={h} rx="1" fill={`url(#spec-${hot ? "hot" : "ai"})`} />
+              {b.n > 0 && <rect x={i * bw + 2} y={HT - h} width={bw - 4} height="1.5" fill={`rgb(var(${hot ? "--accent" : "--ai"}))`} />}
+            </g>;
+          })}
+        </svg>
+        <div className="num mt-1 flex justify-between text-xs text-mute"><span>24h ago</span><span>12h</span><span>now</span></div>
+        <p className="mt-2 text-xs text-mute">{total ? <>Busiest hour: <span className="text-text">{bins[peak].n} headline{bins[peak].n === 1 ? "" : "s"}</span>, {23 - peak === 0 ? "this hour" : `${23 - peak} h ago`}.</> : "Quiet: no headlines in the last 24 hours."}</p>
+      </div>
+    </section>
   );
 }
