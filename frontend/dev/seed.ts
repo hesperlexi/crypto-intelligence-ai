@@ -510,7 +510,7 @@ function botsView() {
       state: { cash: eq * 0.8, equity: eq, benchmark: start, started_at: NOW - 30 * H, updated_at: NOW - 3 * 60_000, fees_paid: trades * 3.1, funding_paid: trades * 0.4, liquidations: 0 },
       positions, pending: [],
       stats: { trades, return_pct: ret, equity: eq, benchmark_return_pct: 0.8, open_positions: open, win_rate: trades ? 0.56 : null, profit_factor: 1.2, max_drawdown_pct: -1.4, fees_paid: trades * 3.1, funding_paid: trades * 0.4, liquidations: 0, by_exit: {} },
-      trades: [], equity_curve: [{ ts: NOW - 30 * H, equity: start, benchmark: start }, { ts: NOW - 3 * 60_000, equity: eq, benchmark: start * 1.008 }] };
+      trades: [], equity_curve: Array.from({ length: 40 }, (_, k) => ({ ts: NOW - (30 - k * 0.75) * H, equity: start * (1 + (ret / 100) * (k / 39) + Math.sin(k * 0.7 + ret) * 0.004), benchmark: start * (1 + 0.008 * k / 39) })) };
   });
   const funding = Object.fromEntries(COINS.slice(0, 8).map(([s], i) => [s, { rate: 0.0001 * (1 + (i % 3)), source: "OKX" }]));
   return { bots, defaults: [], path_timeframe: "15m", funding, generated_at: NOW - 3 * 60_000 };

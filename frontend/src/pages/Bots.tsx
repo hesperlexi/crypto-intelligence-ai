@@ -2,7 +2,8 @@ import { useMemo, useState } from "react";
 import { botFacts, PositionGrid } from "../components/PositionInfo";
 import LineChart, { Series } from "../components/LineChart";
 import { Card, Empty, ErrorBox, Info, Loading, Note, Row, Stat } from "../components/ui";
-import { Badge } from "../components/kit";
+import { Badge, Tile } from "../components/kit";
+import { BotDrone, FleetOrbit, FleetPulse, type FleetBot } from "../components/Xeno";
 import { put, useApi } from "../lib/api";
 import { DASH, fmtNum, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
@@ -51,7 +52,14 @@ export default function Bots() {
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="section-title">Demo trading bots</h2>
+          <h2 className="section-title flex items-center gap-2">Demo trading bots <Info label="Bot rules">
+        <span className="block space-y-2">
+          <span className="block"><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. Half the position closes at TP1 (1:1), a quarter at TP2 (up to 1:2) and a quarter at TP3 (up to 1:3); the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></span>
+          {admin && <span className="block"><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></span>}
+          <span className="block"><span className="font-medium text-text">Futures bots</span> <span className="text-mute">trade the same calls as USDT perpetual futures with isolated margin: only the margin (position ÷ leverage) is set aside, futures fees (0.05%) apply, funding is paid or received every 8 hours, and a position is liquidated — losing its margin — if price reaches the liquidation price. With “safe leverage” on, a signal bot lowers its leverage so liquidation always sits well beyond the stop. Position size still comes from the stop, so leverage changes the margin used, not the risk per trade.</span></span>
+        </span>
+        <span className="mt-2 block">The engine runs every 5 minutes. Entries fill at the price available when it runs, plus spread, slippage and fees. Stops and targets are checked against every 15-minute candle, and when one candle touches both, the stop counts first. Only trades taken after a bot started are counted.</span>
+        </Info></h2>
         </div>
         {admin && <div className="flex flex-wrap gap-2">
           <button className="btn btn-sm" onClick={() => add("decision")}>Add signal bot</button>
@@ -67,16 +75,7 @@ export default function Bots() {
           </button>
         ))}
       </div>
-      <Card title="How the bots work">
-        <p className="text-sm text-mute"><Info label="Bot rules">
-        <span className="block space-y-2">
-          <span className="block"><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. Half the position closes at TP1 (1:1), a quarter at TP2 (up to 1:2) and a quarter at TP3 (up to 1:3); the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></span>
-          {admin && <span className="block"><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></span>}
-          <span className="block"><span className="font-medium text-text">Futures bots</span> <span className="text-mute">trade the same calls as USDT perpetual futures with isolated margin: only the margin (position ÷ leverage) is set aside, futures fees (0.05%) apply, funding is paid or received every 8 hours, and a position is liquidated — losing its margin — if price reaches the liquidation price. With “safe leverage” on, a signal bot lowers its leverage so liquidation always sits well beyond the stop. Position size still comes from the stop, so leverage changes the margin used, not the risk per trade.</span></span>
-        </span>
-        <span className="mt-2 block">The engine runs every 5 minutes. Entries fill at the price available when it runs, plus spread, slippage and fees. Stops and targets are checked against every 15-minute candle, and when one candle touches both, the stop counts first. Only trades taken after a bot started are counted.</span>
-        </Info></p>
-      </Card>
+      {shown.length > 0 && <FleetHero bots={shown} />}
       {msg && <p className="text-sm text-accent">{msg}</p>}
       {b.error && <ErrorBox error={b.error} retry={b.reload} />}
       {!b.data && b.loading && <Loading what="Loading bots" />}
@@ -111,7 +110,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
     return { ...p, px, u, lev, upct: px != null ? p.side * (px / p.entry - 1) * 100 * lev : null };
   });
   return (
-    <Card title={<span className="flex items-center gap-2"><span className="text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "Prediction tracker" : "Signal bot"}</Badge><Badge tone="mute">{String(bot.config.timeframe).toUpperCase()}</Badge>{fut ? <Badge tone="warn">Futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">Spot</Badge>}{!bot.config.enabled && <Badge tone="warn">Paused</Badge>}</span>}
+    <Card className="ai-card" title={<span className="flex items-center gap-2"><BotDrone on={bot.config.enabled} size={22} tone={(s.return_pct ?? 0) > 0 ? "bull" : (s.return_pct ?? 0) < 0 ? "bear" : "ai"} /><span className="text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "Prediction tracker" : "Signal bot"}</Badge><Badge tone="mute">{String(bot.config.timeframe).toUpperCase()}</Badge>{fut ? <Badge tone="warn">Futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">Spot</Badge>}{!bot.config.enabled && <Badge tone="warn">Paused</Badge>}</span>}
       right={!admin ? undefined : <div className="flex gap-1">
         <button className="btn px-2 py-0.5 text-xs" onClick={onToggle}>{bot.config.enabled ? "Pause" : "Resume"}</button>
         <button className="btn px-2 py-0.5 text-xs" onClick={onEdit}>{editing ? "Close" : "Settings"}</button>
@@ -275,5 +274,36 @@ function Editor({ cfg, onSave }: { cfg: any; onSave: (patch: any) => void }) {
         <span className="text-xs text-mute">Changing the market, timeframe or starting balance restarts the bot from scratch.</span>
       </div>
     </div>
+  );
+}
+
+/** v2.27 (owner, 14 Nov 2026): the fleet at a glance - every bot orbiting the AI core, and all their returns on one pulse. */
+function FleetHero({ bots }: { bots: any[] }) {
+  const fleet: FleetBot[] = bots.map((x) => ({ id: x.config.id, name: x.config.name, tf: String(x.config.timeframe), ret: Number(x.stats?.return_pct ?? 0),
+    open: Number(x.stats?.open_positions ?? 0), enabled: !!x.config.enabled, futures: x.config.market === "futures" }));
+  const curves = bots.map((x) => {
+    const s0 = Number(x.config.starting_balance) || (x.equity_curve?.[0]?.equity ?? 1);
+    return { name: x.config.name, pts: (x.equity_curve ?? []).filter((p: any) => isNum(p.equity)).map((p: any) => ({ ts: p.ts, v: (p.equity / s0 - 1) * 100 })) };
+  });
+  const tot = bots.reduce((a, x) => a + Number(x.stats?.trades ?? 0), 0);
+  const open = bots.reduce((a, x) => a + Number(x.stats?.open_positions ?? 0), 0);
+  const avg = bots.length ? bots.reduce((a, x) => a + Number(x.stats?.return_pct ?? 0), 0) / bots.length : 0;
+  const best = [...bots].sort((a, z) => Number(z.stats?.return_pct ?? 0) - Number(a.stats?.return_pct ?? 0))[0];
+  return (
+    <section className="xeno-panel grid gap-4 p-4 lg:grid-cols-[minmax(0,420px)_1fr] lg:items-center" aria-label="Bot fleet">
+      <FleetOrbit bots={fleet} />
+      <div className="min-w-0 space-y-3">
+        <div className="metric-strip">
+          <Tile variant="strip" label="Bots in orbit" value={String(bots.length)} sub={`${bots.filter((x) => x.config.enabled).length} active`} />
+          <Tile variant="strip" label="Average return" value={fmtPctRaw(avg)} valueClass={tone(avg)} sub="since each bot started" />
+          <Tile variant="strip" label="Trades" value={String(tot)} sub={`${open} open now`} />
+          <Tile variant="strip" label="Leading" value={best ? String(best.config.timeframe).toUpperCase() : "—"} valueClass="text-accent" sub={best ? fmtPctRaw(best.stats?.return_pct) : undefined} />
+        </div>
+        <div>
+          <div className="mb-1 flex items-baseline justify-between text-xs text-mute"><span>Fleet pulse · return of every bot</span><span>after fees</span></div>
+          <FleetPulse curves={curves} />
+        </div>
+      </div>
+    </section>
   );
 }

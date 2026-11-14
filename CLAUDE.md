@@ -771,3 +771,8 @@ UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian;
   titles a signal diamond; empty states a mini radar; skeletons AI-tinted; active sidebar key glows + blip; primary
   buttons an occasional glint. Welcome page: `Constellation` (coins network with pulses), `SignalWave` dividers, final
   card with `HoloOrbit label={false}` around the logo + `CyberHorizon`. All motion off under reduced motion.
+- Bots + Hesper visuals (owner, 14 Nov 2026, `Xeno.tsx`): Results → Demo bots opens with `FleetHero` (`Bots.tsx`):
+  `FleetOrbit` (each bot a `BotDrone` saucer on its timeframe ring around the AI core, green/red by return, satellites =
+  open positions), fleet tiles, `FleetPulse` (every bot's % return on one oscilloscope); bot cards are `ai-card` with a
+  drone in the title; "How the bots work" is an ⓘ beside the heading. Hesper run card: `Mission` (log-scale voyage from
+  the start world past 2x / 5x to the 10x world, craft at the live balance, liquidation black hole below).

@@ -3,6 +3,7 @@
 // with a chosen amount.
 // Data: views/hesper (backend services/hesper.py). Virtual money only.
 import { PageHeader } from "../components/kit";
+import { Mission } from "../components/Xeno";
 import { useMemo, useRef, useState } from "react";
 import { botFacts, PositionGrid } from "../components/PositionInfo";
 import { createPortal } from "react-dom";
@@ -105,7 +106,8 @@ function RunCard({ v, live }: { v: any; live: ReturnType<typeof useLiveRun> }) {
         <div className={`num text-4xl font-bold tracking-tight sm:text-5xl ${isNum(live.balance) && live.balance < start ? "text-bear" : "text-accent"} drop-shadow-[0_0_18px_rgb(var(--accent)/0.35)]`}>{usd(live.balance)}</div>
         <div className="num pb-1 text-sm text-mute">peak <span className="font-semibold text-text">{usd(isNum(live.balance) && isNum(cur.peak) ? Math.max(cur.peak, live.balance) : cur.peak)}</span></div>
       </div>
-      <div className="mt-4"><Progress bal={live.balance} start={start} goal={goal} /></div>
+      <div className="mx-auto mt-3 max-w-3xl"><Mission start={start} goal={goal} balance={live.balance} reached={!!cur.goal_reached_at} /></div>
+      <div className="mt-2"><Progress bal={live.balance} start={start} goal={goal} /></div>
       {cur.goal_reached_at && (
         <div className="mt-2 inline-flex items-center gap-1.5 rounded-full border border-bull/40 bg-bull/10 px-2.5 py-0.5 text-xs font-semibold text-bull">
           ✓ {usd(goal, 0)} reached {fmtDate(cur.goal_reached_at)}{isNum(live.balance) ? ` · ${(live.balance / start).toFixed(1)}x` : ""}

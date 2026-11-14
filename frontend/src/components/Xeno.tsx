@@ -223,3 +223,164 @@ export function SignalWave({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+/* ---------------------------------------------------------------- bots: the fleet */
+export type FleetBot = { id: string; name: string; tf: string; ret: number; open: number; enabled: boolean; futures: boolean };
+const FLEET_TFS = ["15m", "1h", "4h", "12h", "1d", "3d"];
+
+/** A small alien drone: a saucer with a glowing eye (green running / grey paused). */
+export function BotDrone({ on = true, size = 26, tone = "ai" }: { on?: boolean; size?: number; tone?: "ai" | "bull" | "bear" }) {
+  const c = `rgb(var(--${tone}))`;
+  return (
+    <svg width={size} height={size} viewBox="0 0 32 32" aria-hidden="true" className={on ? "bot-drone" : ""}>
+      <ellipse cx="16" cy="19" rx="13" ry="4.2" fill="rgb(var(--raised))" stroke={c} strokeOpacity="0.7" />
+      <path d="M8 18.5c0-5 3.6-9 8-9s8 4 8 9" fill="rgb(var(--panel))" stroke={c} strokeOpacity="0.8" />
+      <circle cx="16" cy="14.5" r="2.6" fill={on ? c : "rgb(var(--mute))"} className={on ? "xeno-blip" : ""} />
+      {[8, 16, 24].map((x) => <circle key={x} cx={x} cy="19.4" r="1" fill={on ? "rgb(var(--accent))" : "rgb(var(--mute))"} />)}
+      {on && <path d="M12 23.5 10 29M20 23.5 22 29" stroke={c} strokeOpacity="0.35" strokeWidth="2" strokeLinecap="round" />}
+    </svg>
+  );
+}
+
+/** Every bot as a craft orbiting the AI core: ring = timeframe, colour = return, satellites = open positions. */
+export function FleetOrbit({ bots }: { bots: FleetBot[] }) {
+  const [hover, setHover] = useState<FleetBot | null>(null);
+  const rings = FLEET_TFS.filter((t) => bots.some((b) => b.tf === t));
+  const C = 210, R0 = 62, R1 = 186;
+  const ringR = (tf: string) => (rings.length <= 1 ? (R0 + R1) / 2 : R0 + ((R1 - R0) * rings.indexOf(tf)) / (rings.length - 1));
+  const placed = bots.map((b) => {
+    const same = bots.filter((x) => x.tf === b.tf);
+    const k = same.indexOf(b);
+    const a = -Math.PI / 2 + (rings.indexOf(b.tf) * 0.9) + (2 * Math.PI * k) / Math.max(1, same.length);
+    return { b, a, r: ringR(b.tf) };
+  });
+  return (
+    <figure className="mx-auto w-full max-w-[460px]">
+      <svg viewBox="0 0 420 420" className="w-full" role="img" aria-label={`${bots.length} demo bots around the AI core`}>
+        <defs>
+          <radialGradient id="fl-core"><stop offset="0%" stopColor="rgb(var(--ai) / 0.65)" /><stop offset="45%" stopColor="rgb(var(--ai) / 0.15)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0)" /></radialGradient>
+          <filter id="fl-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+          <linearGradient id="fl-sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgb(var(--ai) / 0)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0.22)" /></linearGradient>
+        </defs>
+        <circle cx={C} cy={C} r="205" fill="url(#fl-core)" opacity="0.5" />
+        {rings.map((t, i) => (
+          <g key={t}>
+            <circle cx={C} cy={C} r={ringR(t)} fill="none" stroke="rgb(var(--ai) / 0.22)" strokeDasharray={i % 2 ? "2 6" : "1 3"} />
+            <text x={C} y={C - ringR(t) - 3} textAnchor="middle" fontSize="9" fill="rgb(var(--mute))">{t.toUpperCase()}</text>
+          </g>
+        ))}
+        <g className="xeno-sweep" style={{ transformOrigin: `${C}px ${C}px`, animationDuration: "10s" }}>
+          <path d={`M${C} ${C} L${C + 200} ${C} A200 200 0 0 0 ${C + 200 * Math.cos(-0.4)} ${C + 200 * Math.sin(-0.4)} Z`} fill="url(#fl-sw)" />
+        </g>
+        {placed.map(({ b, a, r }) => (
+          <g key={b.id}>
+            <line x1={C} y1={C} x2={C + r * Math.cos(a)} y2={C + r * Math.sin(a)} stroke={b.ret >= 0 ? "rgb(var(--bull) / 0.18)" : "rgb(var(--bear) / 0.18)"} strokeDasharray="2 4" />
+            <g transform={`translate(${C + r * Math.cos(a) - 17} ${C + r * Math.sin(a) - 17})`} onMouseEnter={() => setHover(b)} onMouseLeave={() => setHover(null)}
+              onFocus={() => setHover(b)} onBlur={() => setHover(null)} tabIndex={0} filter="url(#fl-glow)" style={{ cursor: "default" }}>
+              <BotDrone on={b.enabled} size={34} tone={b.ret > 0 ? "bull" : b.ret < 0 ? "bear" : "ai"} />
+              {Array.from({ length: Math.min(4, b.open) }, (_, k) => (
+                <circle key={k} cx={17 + 22 * Math.cos(k * 1.6)} cy={17 + 22 * Math.sin(k * 1.6)} r="2.4" fill="rgb(var(--accent))" className="xeno-blip" />
+              ))}
+              <title>{`${b.name}: ${b.ret >= 0 ? "+" : ""}${b.ret.toFixed(2)}% · ${b.open} open`}</title>
+            </g>
+          </g>
+        ))}
+        <circle cx={C} cy={C} r="34" fill="rgb(var(--panel) / 0.9)" stroke="rgb(var(--ai) / 0.6)" filter="url(#fl-glow)" />
+        <text x={C} y={C - 2} textAnchor="middle" fontSize="13" fontWeight="700" fill="rgb(var(--ai))">AI</text>
+        <text x={C} y={C + 12} textAnchor="middle" fontSize="8" fill="rgb(var(--mute))">core</text>
+      </svg>
+      <figcaption className="h-5 text-center text-xs text-mute">
+        {hover ? <><span className="font-semibold text-text">{hover.name}</span> · <span className={hover.ret >= 0 ? "text-bull" : "text-bear"}>{hover.ret >= 0 ? "+" : ""}{hover.ret.toFixed(2)}%</span> · {hover.open} open{hover.enabled ? "" : " · paused"}</>
+          : "Point at a bot"}
+      </figcaption>
+    </figure>
+  );
+}
+
+/** All bots' equity as % return, on one oscilloscope. */
+export function FleetPulse({ curves }: { curves: { name: string; pts: { ts: number; v: number }[] }[] }) {
+  const all = curves.flatMap((c) => c.pts);
+  if (all.length < 2) return <p className="text-sm text-mute">Not enough history yet.</p>;
+  const W = 600, H = 200, P = 8;
+  const t0 = Math.min(...all.map((p) => p.ts)), t1 = Math.max(...all.map((p) => p.ts)) || t0 + 1;
+  const lo = Math.min(0, ...all.map((p) => p.v)), hi = Math.max(0, ...all.map((p) => p.v)), span = hi - lo || 1;
+  const x = (t: number) => P + ((W - 2 * P) * (t - t0)) / (t1 - t0 || 1);
+  const y = (v: number) => P + (H - 2 * P) * (1 - (v - lo) / span);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Return of every bot over time">
+      <defs>
+        <pattern id="fp-grid" width="30" height="20" patternUnits="userSpaceOnUse"><path d="M30 0H0V20" fill="none" stroke="rgb(var(--ai) / 0.10)" /></pattern>
+        <filter id="fp-glow" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <rect width={W} height={H} fill="url(#fp-grid)" rx="8" />
+      <line x1={P} x2={W - P} y1={y(0)} y2={y(0)} stroke="rgb(var(--mute) / 0.5)" strokeDasharray="3 4" />
+      <g filter="url(#fp-glow)">
+        {curves.map((c) => {
+          if (c.pts.length < 2) return null;
+          const last = c.pts[c.pts.length - 1].v;
+          const d = c.pts.map((p, i) => `${i ? "L" : "M"}${x(p.ts).toFixed(1)} ${y(p.v).toFixed(1)}`).join(" ");
+          return <path key={c.name} d={d} fill="none" stroke={last >= 0 ? "rgb(var(--bull) / 0.85)" : "rgb(var(--bear) / 0.85)"} strokeWidth="1.6"><title>{`${c.name}: ${last >= 0 ? "+" : ""}${last.toFixed(2)}%`}</title></path>;
+        })}
+      </g>
+      <text x={W - P} y={y(hi) + 10} textAnchor="end" fontSize="10" fill="rgb(var(--mute))">{`+${hi.toFixed(1)}%`}</text>
+      <text x={W - P} y={y(lo) - 4} textAnchor="end" fontSize="10" fill="rgb(var(--mute))">{`${lo.toFixed(1)}%`}</text>
+    </svg>
+  );
+}
+
+/* ---------------------------------------------------------------- Hesper: the mission */
+/** The run as a voyage: a craft travelling a curved route from the start to the 10x world, on a log scale; a black hole
+ *  (liquidation) waits below. */
+export function Mission({ start, goal, balance, reached }: { start: number; goal: number; balance: number | null; reached?: boolean }) {
+  const W = 640, H = 230;
+  const L = Math.log;
+  const p = balance && balance > 0 ? Math.max(-0.35, Math.min(1.15, (L(balance) - L(start)) / (L(goal) - L(start)))) : 0;
+  const bez = (t: number) => {          // quadratic curve from (60,170) via (320,10) to (580,80)
+    const x0 = 60, y0 = 170, cx = 320, cy = 10, x1 = 580, y1 = 80;
+    return [(1 - t) ** 2 * x0 + 2 * (1 - t) * t * cx + t * t * x1, (1 - t) ** 2 * y0 + 2 * (1 - t) * t * cy + t * t * y1];
+  };
+  const tPos = Math.max(0, Math.min(1, p));
+  const [sx, sy] = bez(tPos);
+  const below = p < 0;
+  const marks = [2, 5].map((m) => ({ m, t: L(m) / L(goal / start), xy: bez(L(m) / L(goal / start)) })).filter((x) => x.t < 1);
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Run progress: ${balance ? (balance / start).toFixed(2) : "?"}x of ${(goal / start).toFixed(0)}x`}>
+      <defs>
+        <radialGradient id="ms-goal"><stop offset="0%" stopColor="rgb(var(--accent) / 0.95)" /><stop offset="55%" stopColor="rgb(var(--accent) / 0.35)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
+        <radialGradient id="ms-home"><stop offset="0%" stopColor="rgb(var(--ai) / 0.9)" /><stop offset="60%" stopColor="rgb(var(--ai) / 0.25)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0)" /></radialGradient>
+        <radialGradient id="ms-hole"><stop offset="0%" stopColor="rgb(0 0 0 / 1)" /><stop offset="45%" stopColor="rgb(0 0 0 / 0.9)" /><stop offset="70%" stopColor="rgb(var(--bear) / 0.35)" /><stop offset="100%" stopColor="rgb(var(--bear) / 0)" /></radialGradient>
+        <filter id="ms-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      <path d="M60 170 Q320 10 580 80" fill="none" stroke="rgb(var(--ai) / 0.25)" strokeDasharray="3 6" />
+      <path d={`M60 170 Q320 10 580 80`} fill="none" stroke="rgb(var(--accent) / 0.85)" strokeWidth="2" filter="url(#ms-glow)"
+        pathLength={1} strokeDasharray={`${tPos} 1`} />
+      {/* black hole: liquidation */}
+      <g className="ms-hole">
+        <ellipse cx="120" cy="212" rx="60" ry="14" fill="url(#ms-hole)" />
+        <ellipse cx="120" cy="212" rx="40" ry="8" fill="none" stroke="rgb(var(--bear) / 0.5)" strokeDasharray="2 4" />
+      </g>
+      <text x="120" y="229" textAnchor="middle" fontSize="9" fill="rgb(var(--bear) / 0.8)">liquidation</text>
+      {/* home world */}
+      <circle cx="60" cy="170" r="22" fill="url(#ms-home)" />
+      <circle cx="60" cy="170" r="9" fill="rgb(var(--ai))" />
+      <text x="60" y="203" textAnchor="middle" fontSize="10" fill="rgb(var(--mute))">{`$${Math.round(start).toLocaleString()}`}</text>
+      {marks.map(({ m, xy }) => (
+        <g key={m}><circle cx={xy[0]} cy={xy[1]} r="5" fill="rgb(var(--panel))" stroke="rgb(var(--ai) / 0.7)" /><text x={xy[0]} y={xy[1] - 10} textAnchor="middle" fontSize="10" fill="rgb(var(--mute))">{`${m}x`}</text></g>
+      ))}
+      {/* goal world */}
+      <circle cx="580" cy="80" r="34" fill="url(#ms-goal)" className={reached ? "xeno-blink" : ""} />
+      <circle cx="580" cy="80" r="14" fill="rgb(var(--accent))" />
+      <ellipse cx="580" cy="80" rx="26" ry="6" fill="none" stroke="rgb(var(--accent) / 0.6)" transform="rotate(-18 580 80)" />
+      <text x="580" y="128" textAnchor="middle" fontSize="11" fontWeight="600" fill="rgb(var(--accent))">{`$${Math.round(goal).toLocaleString()} · 10x`}</text>
+      {/* the craft */}
+      <g transform={`translate(${below ? 60 + (1 + p / 0.35) * 0 : sx} ${below ? 170 + (-p / 0.35) * 30 : sy})`} filter="url(#ms-glow)">
+        <g className="ms-craft">
+          <ellipse cx="0" cy="2" rx="12" ry="4" fill="rgb(var(--raised))" stroke="rgb(var(--ai))" />
+          <path d="M-7 1.5c0-4.4 3.1-7.5 7-7.5s7 3.1 7 7.5" fill="rgb(var(--panel))" stroke="rgb(var(--ai))" />
+          <circle cx="0" cy="-2" r="2.2" fill={below ? "rgb(var(--bear))" : "rgb(var(--bull))"} />
+        </g>
+      </g>
+      <text x={W - 8} y="16" textAnchor="end" fontSize="11" fill="rgb(var(--mute))">{balance ? `${(balance / start).toFixed(2)}x of 10x` : ""}</text>
+    </svg>
+  );
+}
