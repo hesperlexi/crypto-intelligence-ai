@@ -841,3 +841,9 @@ Tests `tests/test_retire_v232.py`.
   `research-coins.yml` (matrix, one job per candidate + baseline, read-only state copy): listings (Binance spot / USD-M
   futures via data.binance.vision daily files, MEXC spot / futures APIs), candles, `training.train_one` on 15m/1h/4h,
   `research_engine.evaluate` test split (net R). Results `research-results/results/coins-*.json`.
+- Study results 14 Nov (`results/coins-20261114*.json`, aggregates in `backend/app/assets/coin_study.json`, read by
+  `coin_scorecard.load_study`): current coins −0.044R/trade on the test split (1250 trades). Candidates (fresh models):
+  HBAR +0.19R (81 trades), SHIB +0.09 (45) = "add" (≥0.05R, ≥30 trades, Binance + MEXC futures); ETC +0.33 / APT +0.19 /
+  BONK +0.07 / SEI +0.06 (<30 trades) = "promising"; FIL +0.08 no MEXC futures; OP −0.47, ARB −0.29 avoid. Watchlist
+  coins with a past test ≤ −0.15R over ≥30 trades (and no positive live record) are also suggested for removal
+  (UNI −0.20R/74, ZEC −0.19/31, NEAR −0.27/31, LTC −0.16/42, XLM). Re-run `research-coins.yml` and refresh the JSON to update.

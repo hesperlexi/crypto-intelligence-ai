@@ -457,15 +457,22 @@ export function seed(): Record<string, any> {
       sentiment: { latest: { market: { score: 0.28, ts: NOW - 0.4 * H, source: "headlines", headlines: 18 }, BTC: { score: 0.41, ts: NOW - 0.4 * H }, ETH: { score: 0.12, ts: NOW - 0.4 * H }, alts: { score: -0.18, ts: NOW - 0.4 * H } },
         series: Array.from({ length: 48 }, (_, i) => ({ ts: NOW - (47 - i) * H, score: Math.round((0.25 * Math.sin(i / 6) + i / 120) * 100) / 100 })) } }),
     "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {}, scorecard: {
-      since: Date.now() - 10 * 864e5, days: 10, counts: {}, suggest_remove: ["GALA/USDT", "BARD/USDT"],
+      since: Date.now() - 10 * 864e5, days: 10, counts: {}, suggest_remove: ["GALA/USDT", "BARD/USDT", "UNI/USDT"],
       labels: { best: "Best results", working: "Making money", early: "Too early to judge", losing: "Losing after fees", quiet: "No signals" },
       method: "From the real record only, after fees (sample data in preview).",
+      study: { stamp: "x", method: "Sample study in preview.", baseline: { expectancy_r: -0.044 }, candidates: [
+        { symbol: "HBAR/USDT", trades: 81, avg_r: 0.19, win_rate: 0.65, trades_per_week: 15.2, listings: { binance_futures: true, mexc_futures: true }, verdict: "add" },
+        { symbol: "SHIB/USDT", trades: 45, avg_r: 0.09, win_rate: 0.51, trades_per_week: 3.6, listings: { binance_futures: true, mexc_futures: true }, verdict: "add" },
+        { symbol: "ETC/USDT", trades: 19, avg_r: 0.33, win_rate: 0.58, trades_per_week: 1.2, listings: { binance_futures: true, mexc_futures: true }, verdict: "promising" },
+        { symbol: "FIL/USDT", trades: 52, avg_r: 0.08, win_rate: 0.54, trades_per_week: 13.5, listings: { binance_futures: true, mexc_futures: false }, verdict: "no_mexc" },
+        { symbol: "OP/USDT", trades: 19, avg_r: -0.47, win_rate: 0.32, trades_per_week: 2.8, listings: { binance_futures: true, mexc_futures: true }, verdict: "avoid" } ] },
       coins: [
         { symbol: "ETH/USDT", pinned: false, calls: 9, closed: 7, wins: 5, win_rate: 0.71, avg_net_pct: 0.62, total_net_pct: 4.3, open: 1, blocked: 4, last_call_at: Date.now() - 3 * 36e5, category: "best", suggest_remove: false, why: null, watched_days: 10 },
         { symbol: "SOL/USDT", pinned: false, calls: 6, closed: 5, wins: 3, win_rate: 0.6, avg_net_pct: 0.41, total_net_pct: 2.1, open: 0, blocked: 2, last_call_at: Date.now() - 20 * 36e5, category: "best", suggest_remove: false, why: null, watched_days: 10 },
         { symbol: "LINK/USDT", pinned: false, calls: 5, closed: 4, wins: 1, win_rate: 0.25, avg_net_pct: 0.12, total_net_pct: 0.5, open: 0, blocked: 1, last_call_at: Date.now() - 50 * 36e5, category: "working", suggest_remove: false, why: null, watched_days: 10 },
         { symbol: "BTC/USDT", pinned: true, calls: 2, closed: 1, wins: 1, win_rate: 1, avg_net_pct: 0.8, total_net_pct: 0.8, open: 1, blocked: 3, last_call_at: Date.now() - 6 * 36e5, category: "early", suggest_remove: false, why: null, watched_days: 10 },
         { symbol: "DOGE/USDT", pinned: false, calls: 6, closed: 5, wins: 1, win_rate: 0.2, avg_net_pct: -0.55, total_net_pct: -2.8, open: 0, blocked: 0, last_call_at: Date.now() - 30 * 36e5, category: "losing", suggest_remove: false, why: null, watched_days: 10 },
+        { symbol: "UNI/USDT", pinned: false, calls: 3, closed: 2, wins: 0, win_rate: 0, avg_net_pct: -0.4, total_net_pct: -0.8, open: 0, blocked: 2, last_call_at: Date.now() - 40 * 36e5, category: "early", suggest_remove: true, why: "past test: -0.20R per trade over 74 trades (losing after fees)", watched_days: 10, past_test: { avg_r: -0.2, trades: 74, win_rate: 0.39 } },
         { symbol: "GALA/USDT", pinned: false, calls: 0, closed: 0, wins: 0, win_rate: null, avg_net_pct: null, total_net_pct: null, open: 0, blocked: 5, last_call_at: null, category: "quiet", suggest_remove: true, why: "no public signal in 10 days", watched_days: 10 },
         { symbol: "BARD/USDT", pinned: false, calls: 0, closed: 0, wins: 0, win_rate: null, avg_net_pct: null, total_net_pct: null, open: 0, blocked: 0, last_call_at: null, category: "quiet", suggest_remove: true, why: "no public signal in 10 days", watched_days: 10 },
       ] } }),

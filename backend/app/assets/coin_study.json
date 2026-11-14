@@ -1,0 +1,492 @@
+{
+ "stamp": "20261114T153221Z",
+ "method": "Models trained on each coin's past candles (15m, 1h, 4h); the last 30% of history, never seen in training, replayed with the app's live rules and 0.15% fees. Result in R (1R = the planned risk of a trade).",
+ "baseline_overall": {
+  "n": 1250,
+  "win_rate": 0.5056,
+  "expectancy_r": -0.044047989288917413
+ },
+ "watchlist": {
+  "AAVE/USDT": {
+   "symbol": "AAVE/USDT",
+   "trades": 65,
+   "avg_r": 0.043,
+   "win_rate": 0.538,
+   "trades_per_week": 9.79
+  },
+  "ADA/USDT": {
+   "symbol": "ADA/USDT",
+   "trades": 34,
+   "avg_r": 0.2377,
+   "win_rate": 0.647,
+   "trades_per_week": 2.3
+  },
+  "APT/USDT": {
+   "symbol": "APT/USDT",
+   "trades": 15,
+   "avg_r": 0.2436,
+   "win_rate": 0.733,
+   "trades_per_week": 0.67
+  },
+  "AVAX/USDT": {
+   "symbol": "AVAX/USDT",
+   "trades": 62,
+   "avg_r": 0.0076,
+   "win_rate": 0.516,
+   "trades_per_week": 5.75
+  },
+  "BARD/USDT": {
+   "symbol": "BARD/USDT",
+   "trades": 3,
+   "avg_r": -0.1705,
+   "win_rate": 0.667,
+   "trades_per_week": 1.08
+  },
+  "BCH/USDT": {
+   "symbol": "BCH/USDT",
+   "trades": 68,
+   "avg_r": -0.0061,
+   "win_rate": 0.471,
+   "trades_per_week": 11.22
+  },
+  "BIO/USDT": {
+   "symbol": "BIO/USDT",
+   "trades": 22,
+   "avg_r": 0.2055,
+   "win_rate": 0.591,
+   "trades_per_week": 6.25
+  },
+  "BNB/USDT": {
+   "symbol": "BNB/USDT",
+   "trades": 33,
+   "avg_r": -0.3009,
+   "win_rate": 0.394,
+   "trades_per_week": 1.35
+  },
+  "BTC/USDT": {
+   "symbol": "BTC/USDT",
+   "trades": 64,
+   "avg_r": -0.0773,
+   "win_rate": 0.469,
+   "trades_per_week": 8.99
+  },
+  "DOGE/USDT": {
+   "symbol": "DOGE/USDT",
+   "trades": 58,
+   "avg_r": -0.0176,
+   "win_rate": 0.5,
+   "trades_per_week": 7.15
+  },
+  "DOT/USDT": {
+   "symbol": "DOT/USDT",
+   "trades": 40,
+   "avg_r": 0.1271,
+   "win_rate": 0.625,
+   "trades_per_week": 5.22
+  },
+  "ENA/USDT": {
+   "symbol": "ENA/USDT",
+   "trades": 15,
+   "avg_r": 0.2345,
+   "win_rate": 0.6,
+   "trades_per_week": 4.84
+  },
+  "ERA/USDT": {
+   "symbol": "ERA/USDT",
+   "trades": 3,
+   "avg_r": 0.2988,
+   "win_rate": 0.667,
+   "trades_per_week": 0.97
+  },
+  "ETH/USDT": {
+   "symbol": "ETH/USDT",
+   "trades": 60,
+   "avg_r": -0.0629,
+   "win_rate": 0.517,
+   "trades_per_week": 7.2
+  },
+  "GALA/USDT": {
+   "symbol": "GALA/USDT",
+   "trades": 34,
+   "avg_r": 0.1749,
+   "win_rate": 0.676,
+   "trades_per_week": 9.71
+  },
+  "GRAM/USDT": {
+   "symbol": "GRAM/USDT",
+   "trades": 4,
+   "avg_r": 0.7378,
+   "win_rate": 1.0,
+   "trades_per_week": 5.54
+  },
+  "HBAR/USDT": {
+   "symbol": "HBAR/USDT",
+   "trades": 62,
+   "avg_r": 0.1051,
+   "win_rate": 0.613,
+   "trades_per_week": 11.72
+  },
+  "INJ/USDT": {
+   "symbol": "INJ/USDT",
+   "trades": 50,
+   "avg_r": -0.2611,
+   "win_rate": 0.44,
+   "trades_per_week": 10.72
+  },
+  "LINK/USDT": {
+   "symbol": "LINK/USDT",
+   "trades": 14,
+   "avg_r": -0.2784,
+   "win_rate": 0.429,
+   "trades_per_week": 3.11
+  },
+  "LTC/USDT": {
+   "symbol": "LTC/USDT",
+   "trades": 42,
+   "avg_r": -0.1574,
+   "win_rate": 0.429,
+   "trades_per_week": 4.49
+  },
+  "MSTRB/USDT": {
+   "symbol": "MSTRB/USDT",
+   "trades": 7,
+   "avg_r": 0.7228,
+   "win_rate": 0.714,
+   "trades_per_week": 7.76
+  },
+  "NEAR/USDT": {
+   "symbol": "NEAR/USDT",
+   "trades": 31,
+   "avg_r": -0.2688,
+   "win_rate": 0.387,
+   "trades_per_week": 3.3
+  },
+  "NVDAB/USDT": {
+   "symbol": "NVDAB/USDT",
+   "trades": 4,
+   "avg_r": 0.484,
+   "win_rate": 0.75,
+   "trades_per_week": 4.06
+  },
+  "PAXG/USDT": {
+   "symbol": "PAXG/USDT",
+   "trades": 55,
+   "avg_r": -0.1376,
+   "win_rate": 0.455,
+   "trades_per_week": 7.36
+  },
+  "PEPE/USDT": {
+   "symbol": "PEPE/USDT",
+   "trades": 3,
+   "avg_r": 0.2279,
+   "win_rate": 0.667,
+   "trades_per_week": 0.57
+  },
+  "SOL/USDT": {
+   "symbol": "SOL/USDT",
+   "trades": 45,
+   "avg_r": 0.0295,
+   "win_rate": 0.533,
+   "trades_per_week": 4.63
+  },
+  "SPCXB/USDT": {
+   "symbol": "SPCXB/USDT",
+   "trades": 4,
+   "avg_r": -0.2731,
+   "win_rate": 0.25,
+   "trades_per_week": 4.04
+  },
+  "SUI/USDT": {
+   "symbol": "SUI/USDT",
+   "trades": 59,
+   "avg_r": -0.1132,
+   "win_rate": 0.492,
+   "trades_per_week": 12.58
+  },
+  "TRX/USDT": {
+   "symbol": "TRX/USDT",
+   "trades": 37,
+   "avg_r": -0.0174,
+   "win_rate": 0.541,
+   "trades_per_week": 1.73
+  },
+  "UNI/USDT": {
+   "symbol": "UNI/USDT",
+   "trades": 74,
+   "avg_r": -0.1952,
+   "win_rate": 0.392,
+   "trades_per_week": 17.07
+  },
+  "WLD/USDT": {
+   "symbol": "WLD/USDT",
+   "trades": 34,
+   "avg_r": -0.1462,
+   "win_rate": 0.471,
+   "trades_per_week": 8.91
+  },
+  "XAUT/USDT": {
+   "symbol": "XAUT/USDT",
+   "trades": 9,
+   "avg_r": -0.107,
+   "win_rate": 0.444,
+   "trades_per_week": 6.56
+  },
+  "XLM/USDT": {
+   "symbol": "XLM/USDT",
+   "trades": 42,
+   "avg_r": -0.3578,
+   "win_rate": 0.357,
+   "trades_per_week": 1.57
+  },
+  "XRP/USDT": {
+   "symbol": "XRP/USDT",
+   "trades": 67,
+   "avg_r": 0.0166,
+   "win_rate": 0.567,
+   "trades_per_week": 8.0
+  },
+  "ZEC/USDT": {
+   "symbol": "ZEC/USDT",
+   "trades": 31,
+   "avg_r": -0.1851,
+   "win_rate": 0.387,
+   "trades_per_week": 3.44
+  }
+ },
+ "candidates": [
+  {
+   "symbol": "ETC/USDT",
+   "trades": 19,
+   "avg_r": 0.3325,
+   "win_rate": 0.579,
+   "trades_per_week": 1.16,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "APT/USDT",
+   "trades": 19,
+   "avg_r": 0.1925,
+   "win_rate": 0.684,
+   "trades_per_week": 0.84,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "HBAR/USDT",
+   "trades": 81,
+   "avg_r": 0.1923,
+   "win_rate": 0.654,
+   "trades_per_week": 15.24,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "SHIB/USDT",
+   "trades": 45,
+   "avg_r": 0.0928,
+   "win_rate": 0.511,
+   "trades_per_week": 3.63,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "FIL/USDT",
+   "trades": 52,
+   "avg_r": 0.0799,
+   "win_rate": 0.538,
+   "trades_per_week": 13.55,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": false
+   }
+  },
+  {
+   "symbol": "BONK/USDT",
+   "trades": 17,
+   "avg_r": 0.0672,
+   "win_rate": 0.647,
+   "trades_per_week": 1.9,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "SEI/USDT",
+   "trades": 22,
+   "avg_r": 0.057,
+   "win_rate": 0.591,
+   "trades_per_week": 6.08,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "WLD/USDT",
+   "trades": 39,
+   "avg_r": 0.0257,
+   "win_rate": 0.641,
+   "trades_per_week": 12.8,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "BCH/USDT",
+   "trades": 57,
+   "avg_r": 0.0193,
+   "win_rate": 0.544,
+   "trades_per_week": 3.49,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "TAO/USDT",
+   "trades": 10,
+   "avg_r": 0.0151,
+   "win_rate": 0.5,
+   "trades_per_week": 1.67,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "FET/USDT",
+   "trades": 60,
+   "avg_r": -0.0074,
+   "win_rate": 0.533,
+   "trades_per_week": 10.53,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "ATOM/USDT",
+   "trades": 46,
+   "avg_r": -0.0233,
+   "win_rate": 0.457,
+   "trades_per_week": 5.79,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "TIA/USDT",
+   "trades": 42,
+   "avg_r": -0.0444,
+   "win_rate": 0.5,
+   "trades_per_week": 6.41,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "INJ/USDT",
+   "trades": 24,
+   "avg_r": -0.0925,
+   "win_rate": 0.5,
+   "trades_per_week": 2.2,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "RENDER/USDT",
+   "trades": 24,
+   "avg_r": -0.1013,
+   "win_rate": 0.458,
+   "trades_per_week": 6.93,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "WIF/USDT",
+   "trades": 15,
+   "avg_r": -0.134,
+   "win_rate": 0.467,
+   "trades_per_week": 4.64,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "ARB/USDT",
+   "trades": 27,
+   "avg_r": -0.2894,
+   "win_rate": 0.333,
+   "trades_per_week": 6.86,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  },
+  {
+   "symbol": "OP/USDT",
+   "trades": 19,
+   "avg_r": -0.4669,
+   "win_rate": 0.316,
+   "trades_per_week": 2.77,
+   "listings": {
+    "binance_spot": true,
+    "binance_futures": true,
+    "mexc_spot": true,
+    "mexc_futures": true
+   }
+  }
+ ]
+}

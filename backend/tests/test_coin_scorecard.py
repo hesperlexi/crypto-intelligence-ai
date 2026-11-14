@@ -54,3 +54,20 @@ def test_outside_the_record_is_ignored():
     _sig(rt.db, "ETH/USDT", 1.0)
     out = CS.build(rt, [{"symbol": "ETH/USDT", "pinned": 0, "added_at": 0}], NOW)
     assert out["coins"][0]["calls"] == 0
+
+
+def test_study_verdicts_and_bad_past_test(monkeypatch):
+    rt = _rt()
+    monkeypatch.setattr(CS, "load_study", lambda: {"stamp": "x", "watchlist": {
+        "UNI/USDT": {"avg_r": -0.2, "trades": 74, "win_rate": 0.39}},
+        "candidates": [{"symbol": "HBAR/USDT", "avg_r": 0.19, "trades": 81, "win_rate": 0.65, "trades_per_week": 15,
+                        "listings": {"binance_futures": True, "mexc_futures": True}},
+                       {"symbol": "FIL/USDT", "avg_r": 0.08, "trades": 52, "listings": {"binance_futures": True, "mexc_futures": False}},
+                       {"symbol": "ETC/USDT", "avg_r": 0.33, "trades": 19, "listings": {"binance_futures": True, "mexc_futures": True}},
+                       {"symbol": "OP/USDT", "avg_r": -0.47, "trades": 19, "listings": {}}]})
+    _sig(rt.db, "UNI/USDT", -0.1)
+    out = CS.build(rt, [{"symbol": "UNI/USDT", "pinned": 0, "added_at": 0}], NOW)
+    uni = out["coins"][0]
+    assert uni["suggest_remove"] and "past test" in uni["why"] and uni["past_test"]["trades"] == 74
+    v = {c["symbol"]: c["verdict"] for c in out["study"]["candidates"]}
+    assert v == {"HBAR/USDT": "add", "FIL/USDT": "no_mexc", "ETC/USDT": "promising", "OP/USDT": "avoid"}
