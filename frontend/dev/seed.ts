@@ -474,6 +474,7 @@ export function seed(): Record<string, any> {
     "views/hesper": v(hesper()),
     "views/guardian": v(guardian()),
     "views/market_turn": v(marketTurn()),
+    "views/perf_lab": v(perfLab()),
     ...leaderboard(),
     "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
     "users/u_member_self": undefined,
@@ -785,5 +786,44 @@ function marketTurn() {
         { code: "open_interest", points: 10, text: "price +2.1% with open interest +4.0% in 24 h (new positions behind the move)" }] },
     ],
     note: "Recommend-only context for the admin. It never changes a call; it is not proven to predict turns yet.",
+  };
+}
+
+// v2.25 Performance Lab sample (deterministic pseudo-random calls)
+function perfLab() {
+  const H = 3_600_000;
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  const tfs = ["15m", "1h", "4h", "1d"], coins = ["BTC", "ETH", "SOL", "XRP", "AVAX", "DOGE", "LINK"];
+  const dots: any[] = [];
+  for (let i = 0; i < 64; i++) {
+    const tf = tfs[Math.floor(rnd() * 4)];
+    const win = rnd() < (tf === "4h" ? 0.62 : tf === "1h" ? 0.45 : 0.55);
+    const r = win ? +(0.4 + rnd() * 2.2).toFixed(2) : +(-0.3 - rnd() * 0.85).toFixed(2);
+    dots.push({ t: NOW - (64 - i) * 5 * H, tf, side: rnd() < 0.75 ? "S" : "L", r, coin: coins[Math.floor(rnd() * coins.length)], g: rnd() < 0.7 ? "A" : "B", a: rnd() < 0.15 ? 1 : 0 });
+  }
+  const st = (v: number[]) => {
+    if (!v.length) return { n: 0 };
+    let c = 0, p = 0, dd = 0; for (const x of v) { c += x; p = Math.max(p, c); dd = Math.max(dd, p - c); }
+    const g = v.filter((x) => x > 0).reduce((a, b) => a + b, 0), l = -v.filter((x) => x < 0).reduce((a, b) => a + b, 0);
+    return { n: v.length, win_rate: v.filter((x) => x > 0).length / v.length, avg_r: c / v.length, total_r: +c.toFixed(2), profit_factor: l ? +(g / l).toFixed(2) : null, max_dd_r: +dd.toFixed(2), best_r: Math.max(...v), worst_r: Math.min(...v) };
+  };
+  const grp = (fn: (d: any) => string) => { const m: Record<string, number[]> = {}; dots.forEach((d) => (m[fn(d)] ??= []).push(d.r)); return Object.entries(m).map(([key, v]) => ({ key, ...st(v) })); };
+  let c = 0, p = 0;
+  const curve = dots.map((d) => { c += d.r; p = Math.max(p, c); return { t: d.t, r: +c.toFixed(3), dd: +(p - c).toFixed(3) }; });
+  const edges = [-1e9, -1.5, -1, -0.75, -0.5, -0.25, 0, 0.25, 0.5, 0.75, 1, 1.5, 2, 3, 1e9];
+  const histogram = edges.slice(0, -1).map((a, i) => ({ lo: a < -1e8 ? null : a, hi: edges[i + 1] > 1e8 ? null : edges[i + 1], n: dots.filter((d) => d.r >= a && d.r < edges[i + 1]).length }));
+  const WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], SS = ["Asia", "Europe", "US", "Late"];
+  const heat = WD.map((wd, i) => ({ wd, cells: SS.map((s, j) => ({ s, ...st(dots.filter((_, k) => k % 7 === i && Math.floor(k / 7) % 4 === j).map((d) => d.r)) })) }));
+  const all = dots.map((d) => d.r);
+  return {
+    generated_at: NOW - 25 * 60_000, since: NOW - 14 * 24 * H, calls: 71, open: 5, missed: 2, overall: st(all),
+    no_admin: st(all.map((x, i) => (dots[i].a ? x * 0.6 : x))), admin: { touched: dots.filter((d) => d.a).length, stored: st([]), without: st([]) },
+    by_tf: grp((d) => d.tf), by_side: grp((d) => (d.side === "L" ? "LONG" : "SHORT")), by_grade: grp((d) => d.g), by_coin: grp((d) => d.coin),
+    by_session: grp((d) => SS[Math.floor(d.t / H) % 4]), by_entry: grp(() => "market"), by_runner: grp((d) => (d.r > 2 ? "let it run" : "standard")),
+    heat, histogram, streaks: { wins: 6, losses: 4, current: 2 }, curve, dots,
+    losers: { n: all.filter((x) => x < 0).length, reached_profit: { "0.3": 14, "0.5": 9, "0.75": 5, "1.0": 2 } },
+    hold_h: { median: 9.5, max: 71 }, exits: { stop: 18, target: 30, breakeven: 9, time_limit: 4, admin_close: 3 },
+    proof: { rejected: { n: 31, closed: 24, total_r: -6.4, avg_r: -0.27, verdict: "saving money" }, calibration: { warnings: [] } },
   };
 }

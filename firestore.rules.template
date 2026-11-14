@@ -201,7 +201,7 @@ service cloud.firestore {
     }
     // engine output; per-member alert views are private to that member
     // wins_today is public (the sign-in page shows it); scalping as above; hesper as above;
-    // health_errors (raw engine error texts, v2.13) and guardian (v2.19 Trade Guardian recommendations) and market_turn (v2.22 market turn detector) are admin only;
+    // health_errors (raw engine error texts, v2.13) and guardian (v2.19 Trade Guardian recommendations) and market_turn (v2.22 market turn detector) and perf_lab (v2.25 Performance Lab) are admin only;
     // everything else is for members
     match /views/{id} {
       allow read: if id == 'wins_today'
@@ -210,7 +210,8 @@ service cloud.firestore {
         || (id == 'health_errors' && isAdmin())
         || (id == 'guardian' && isAdmin())
         || (id == 'market_turn' && isAdmin())
-        || (id != 'scalping' && id != 'hesper' && id != 'health_errors' && id != 'guardian' && id != 'market_turn' && allowed()
+        || (id == 'perf_lab' && isAdmin())
+        || (id != 'scalping' && id != 'hesper' && id != 'health_errors' && id != 'guardian' && id != 'market_turn' && id != 'perf_lab' && allowed()
             && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
       allow write: if false;
     }

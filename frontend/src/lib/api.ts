@@ -149,6 +149,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "hesper": return p[1] === "config" ? rawDoc(["config", "hesper"]) : view("hesper");
     // v2.19 Trade Guardian: admin-only recommendations (views/guardian; the rules refuse everyone else)
     case "guardian": return view("guardian");
+    case "perf-lab": return view("perf_lab");
     // v2.16 practice leaderboard: views/leaderboard (members), admin/leaderboard (admin: uids, flags, winners as JSON),
     // owner/leaderboard (admin: prizes awarded, members excluded)
     case "leaderboard":

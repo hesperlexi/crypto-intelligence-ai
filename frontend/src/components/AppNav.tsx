@@ -39,6 +39,7 @@ const ICON: Record<string, string> = {
   "/health": "M3 12h4l3-7 4 14 3-7h4",
   "/rich": "M5 21V4M5 4h11l-2 4 2 4H5",
   "/guardian": "M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10zM9 12l2 2 4-4",
+  "/lab": "M9 3h6M10 3v6L4.5 19A1.5 1.5 0 0 0 5.8 21h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3M7 15h10",
   "/users": "M16 21v-2a4 4 0 00-4-4H6a4 4 0 00-4 4v2M9 11a4 4 0 100-8 4 4 0 000 8zM17 11l2 2 4-4",
   tools: "M14.7 6.3a1 1 0 000 1.4l1.6 1.6a1 1 0 001.4 0l3.8-3.8a6 6 0 01-7.9 7.9l-6.9 6.9a2.1 2.1 0 01-3-3l6.9-6.9a6 6 0 017.9-7.9z",
   help: "M12 22a10 10 0 100-20 10 10 0 000 20zM9.1 9a3 3 0 015.8 1c0 2-3 3-3 3M12 17h.01",
@@ -74,6 +75,7 @@ const TITLES: [string, string, string][] = [
   ["/health", "Health", "Engine and data"],
   ["/rich", "Hesper Challenge", "All-in demo run"],
   ["/guardian", "Trade Guardian", "Open-call warnings"],
+  ["/lab", "Performance Lab", "What works, what does not"],
   ["/users", "Users", "Members and payments"],
 ];
 export function pageTitle(path: string): [string, string] {

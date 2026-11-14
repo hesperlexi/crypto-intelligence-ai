@@ -60,6 +60,7 @@ const Signals = page(() => import("./pages/Signals"));
 const Users = page(() => import("./pages/Users"));
 const Rich = page(() => import("./pages/Rich"));
 const Guardian = page(() => import("./pages/Guardian"));
+const Lab = page(() => import("./pages/Lab"));
 const Community = page(() => import("./pages/Community"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
@@ -81,7 +82,7 @@ const NAV = [
   ["/settings", "Settings"],
 ] as const;
 // owner-only tools: marketing material and system health
-const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Hesper Challenge"], ["/guardian", "Trade Guardian"]] as const;
+const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Hesper Challenge"], ["/guardian", "Trade Guardian"], ["/lab", "Performance Lab"]] as const;
 // research tools (also reachable from Results → Tools): one "Tools" menu on desktop, one group in the phone More sheet
 const TOOLS_NAV = [["/scanner", "Scanner"], ["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);
@@ -389,6 +390,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/health" element={<AdminOnly><Health /></AdminOnly>} />
             <Route path="/rich" element={<AdminOnly><Rich /></AdminOnly>} />
             <Route path="/guardian" element={<AdminOnly><Guardian /></AdminOnly>} />
+            <Route path="/lab" element={<AdminOnly><Lab /></AdminOnly>} />
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="/community" element={<Community />} />

@@ -739,3 +739,17 @@ few, warnings). `tp1_check`: record calls now store payload `expect` {p_tp, expe
 `checks()` cached hourly in setting `proof_checks`, published as `views/guardian.checks` (no new docs, no reads).
 UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian; Health tile "AI check". Tests
 `tests/test_proof_checks.py`.
+
+## v2.25 Performance Lab + Trade chart tools (owner, 14 Nov 2026, branch `lab-v225`)
+- `services/perf_lab.py` (worker step `perf_lab`, every 2 h, setting `perf_lab_at`, skipped in lean mode) → ONE admin-only
+  doc `views/perf_lab` (rules + rules test): record since `record_clause` in net R; calls with admin adjustments re-followed
+  with the live rules only (`no_admin`, `admin`); splits by tf / side / grade / coin / session / entry / runner; weekday ×
+  session `heat`; R `histogram`; `curve` (R + drawdown); `streaks`; losers in profit first; hold times; exits; `dots`
+  (last 300 closed calls for the orbit); `proof` (proof_checks summary). 0 reads, ≤12 writes/day. Tests `tests/test_perf_lab.py`.
+- Page `/lab` (`pages/Lab.tsx`, Admin menu "Performance Lab"): "observatory" look (`.xeno-panel`, `.xeno-sweep` in
+  `index.css`, motion off under reduced motion): Orbit (each closed call a glowing dot on its timeframe ring, warn outline =
+  admin changed), Pulse (equity), Spectrum (R histogram), "Where it works" split bars, Hive (hex weekday × session),
+  Specimens. Seed `dev/seed.ts perfLab()`.
+- Trade page chart (`TradeTerminal.ChartPanel`, AI mode): chips EMA / VWAP / Bollinger (browser `lib/ta.overlays`) and
+  Structure / Trade plan (engine analysis of the coin; 1m/5m use 15m) via shared `lib/chartLevels.ts`; choice in
+  localStorage `cia-trade-chart-tools` (default EMA, Structure, Trade plan). The coin page (`Asset.tsx`) keeps its own set.

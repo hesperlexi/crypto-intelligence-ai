@@ -809,3 +809,29 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 @media (max-width: 639px) { .statement-facts > div:nth-child(3) { border-left: 0; } .statement-facts > div:nth-child(n+3) { border-top: 1px solid rgb(var(--glass) / 0.07); } }
 .rich-facts > div + div { border-left: 1px solid rgb(var(--glass) / 0.07); }
 @media (max-width: 1023px) { .rich-facts > div { border-top: 1px solid rgb(var(--glass) / 0.07); } .rich-facts > div + div { border-left: 0; } }
+
+/* v2.25 Performance Lab "observatory" (pages/Lab.tsx): faint scanning grid, bioluminescent edges, orbit sweep. Scoped. */
+.xeno-panel {
+  position: relative; overflow: hidden; border-radius: var(--r-card, 12px);
+  border: 1px solid rgb(var(--ai) / 0.22);
+  background:
+    radial-gradient(120% 80% at 0% 0%, rgb(var(--ai) / 0.10), transparent 55%),
+    radial-gradient(90% 70% at 100% 100%, rgb(var(--accent) / 0.06), transparent 60%),
+    repeating-linear-gradient(0deg, rgb(var(--ai) / 0.035) 0 1px, transparent 1px 26px),
+    repeating-linear-gradient(90deg, rgb(var(--ai) / 0.035) 0 1px, transparent 1px 26px),
+    rgb(var(--panel) / var(--panel-a, 1));
+  box-shadow: inset 0 1px 0 rgb(var(--ai) / 0.18), 0 0 0 1px rgb(var(--ink) / 0.2), 0 10px 40px -20px rgb(var(--ai) / 0.45);
+}
+.xeno-panel::after {           /* one slow scan line across each panel */
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(180deg, transparent 0%, rgb(var(--ai) / 0.07) 50%, transparent 100%);
+  height: 30%; transform: translateY(-100%); animation: xeno-scan 9s ease-in-out infinite;
+}
+.xeno-sweep { animation: xeno-spin 7s linear infinite; }
+.xeno-blink { animation: xeno-blink 1.6s ease-in-out infinite; }
+.xeno-ring-key { display: inline-block; width: 0.6rem; height: 0.6rem; margin-right: 0.35rem; border-radius: 9999px;
+  border: 1px dashed rgb(var(--ai) / 0.7); vertical-align: -1px; }
+@keyframes xeno-spin { to { transform: rotate(360deg); } }
+@keyframes xeno-scan { 0% { transform: translateY(-100%); } 60%, 100% { transform: translateY(360%); } }
+@keyframes xeno-blink { 50% { opacity: 0.35; } }
+@media (prefers-reduced-motion: reduce) { .xeno-sweep, .xeno-blink, .xeno-panel::after { animation: none; } .xeno-panel::after { display: none; } }

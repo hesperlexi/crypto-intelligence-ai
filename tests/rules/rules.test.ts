@@ -605,6 +605,15 @@ async function main() {
     await assertFails(setDoc(doc(admin(), "views", "market_turn"), { json: "{}" }));
   });
 
+  // ---------------------------------------------------------------- views/perf_lab (v2.25 Performance Lab, admin only)
+  await test("perf lab: only the admin reads views/perf_lab; nobody writes it", async () => {
+    await seed({ ...member, "views/perf_lab": { json: "{}", updated_at: NOW() } });
+    await assertSucceeds(readView(admin(), "perf_lab"));
+    await assertFails(readView(as("m1", "m1@example.com"), "perf_lab"));
+    await assertFails(readView(env.unauthenticatedContext().firestore() as unknown as Firestore, "perf_lab"));
+    await assertFails(setDoc(doc(admin(), "views", "perf_lab"), { json: "{}" }));
+  });
+
   // ---------------------------------------------------------------- views/guardian (v2.19 Trade Guardian, admin only)
   const guardDocs = { "views/guardian": { json: "{}", updated_at: NOW() }, "views/signals": { json: "{}", updated_at: NOW() } };
   await test("guardian: admin reads views/guardian", async () => {
