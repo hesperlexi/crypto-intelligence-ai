@@ -3,6 +3,7 @@ import { SITE_HOST } from "../lib/brand";
 import { useEffect, useState } from "react";
 import { SymbolSelect, TfTabs, useMeta, useSymbols } from "../components/Pickers";
 import { AppearancePanel } from "../components/AppearancePanel";
+import { PageHeader } from "../components/kit";
 import { Logo } from "../components/Logo";
 import { Card, ErrorBox, Loading, Note, Row } from "../components/ui";
 import { checkForUpdate } from "../lib/updater";
@@ -29,14 +30,26 @@ export default function Settings() {
   return <AdminSettings />;
 }
 
+/** Members: three plain groups - your membership, this device, help - instead of one long stack of equal cards. */
 function MemberSettings() {
   return (
-    <div className="space-y-4">
+    <div className="space-y-8">
       <PageHead />
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <div className="space-y-4"><MembershipCard /><InviteCard /><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /><AboutCard /></div>
-        <div className="space-y-4"><NotificationsCard /><AndroidCard /><ManualCard /><ContactCard /></div>
-      </div>
+      <section aria-label="Your membership" className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+        <MembershipCard />
+        <InviteCard />
+      </section>
+      <section aria-labelledby="set-device" className="space-y-3">
+        <h2 id="set-device" className="section-title">This device</h2>
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          <div className="space-y-4"><NotificationsCard /><AndroidCard /></div>
+          <div className="space-y-4"><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /></div>
+        </div>
+      </section>
+      <section aria-labelledby="set-help" className="space-y-3">
+        <h2 id="set-help" className="section-title">Help</h2>
+        <div className="grid items-start gap-4 lg:grid-cols-3"><ManualCard /><ContactCard /><AboutCard /></div>
+      </section>
     </div>
   );
 }
@@ -151,12 +164,7 @@ function AdminSettings() {
 }
 
 function PageHead() {
-  return (
-    <div>
-      <h1 className="page-title">Settings</h1>
-      <p className="page-sub">Saved on this device unless noted.</p>
-    </div>
-  );
+  return <PageHeader title="Settings" sub="Your membership, notifications and how the app looks. Saved on this device unless noted." />;
 }
 
 function ManualCard() {

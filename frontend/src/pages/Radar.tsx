@@ -1,5 +1,6 @@
 // Opportunity radar: coins outside the app's list that are outperforming the market, with the screen's own record.
 import { useState } from "react";
+import { PageHeader } from "../components/kit";
 import { Link } from "react-router-dom";
 import { saveMine } from "../components/MyCoins";
 import { CoinAvatar } from "../components/Polish";
@@ -70,10 +71,7 @@ export default function Radar() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="page-title">Radar · coins to watch</h1>
-        <p className="text-sm text-mute">Coins beating the market, updated hourly. Ideas, not trade signals.</p>
-      </div>
+      <PageHeader title="Radar" sub="Coins beating the market right now, updated hourly. Ideas to watch, not trade signals." />
       {msg && <div role="status" className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">{msg}</div>}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {/* UI v2.15: shared Tile; a figure that does not exist yet says so in words instead of a bare dash */}
@@ -94,7 +92,7 @@ export default function Radar() {
           <div className="card-head border-b border-glass/[0.06] px-4 py-2.5"><h2 className="label">Radar picks and how they did after 7 days</h2></div>
           <div className="overflow-x-auto">
             <table className="w-full min-w-[480px] text-sm">
-              <thead><tr className="text-left text-xs uppercase tracking-wide text-mute"><th className="px-4 py-2">Coin</th><th>Picked</th><th>Price then</th><th>7 days later</th><th className="pr-4 text-right">vs BTC</th></tr></thead>
+              <thead><tr className="text-left text-xs text-mute"><th className="px-4 py-2">Coin</th><th>Picked</th><th>Price then</th><th>7 days later</th><th className="pr-4 text-right">vs BTC</th></tr></thead>
               <tbody className="divide-y divide-glass/[0.06]">
                 {live.recent.map((r: any, i: number) => {
                   const ex = isNum(r.ret_7d) && isNum(r.btc_ret_7d) ? r.ret_7d - r.btc_ret_7d : null;

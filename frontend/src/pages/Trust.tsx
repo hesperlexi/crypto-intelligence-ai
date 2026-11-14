@@ -102,10 +102,10 @@ export function TrustContent({ kind }: { kind: TrustKind }) {
   const [title, Body] = PAGES[kind];
   useEffect(() => { document.title = `${title} · ${BRAND.name}`; return () => { document.title = BRAND.name; }; }, [title]);
   return (
-    <article className="panel mx-auto max-w-3xl p-5 text-sm leading-relaxed text-mute sm:p-8">
-      <h1 className="text-2xl font-semibold tracking-tight text-text">{title}</h1>
-      <p className="mt-1 text-xs">Last updated {LAST_UPDATED}</p>
-      <div className="mt-5">
+    <article className="panel panel-hero mx-auto max-w-3xl p-6 text-[15px] leading-[1.7] text-mute sm:p-10">
+      <h1 className="font-display text-3xl font-semibold tracking-[-0.025em] text-text">{title}</h1>
+      <p className="mt-2 text-xs">Last updated {LAST_UPDATED}</p>
+      <div className="trust-body mt-6 max-w-[68ch]">
         <Body />
       </div>
       <nav aria-label="Other pages" className="mt-10 flex flex-wrap gap-x-4 gap-y-1 border-t border-glass/[0.06] pt-4 text-xs">
@@ -123,7 +123,7 @@ export default function TrustPage({ kind }: { kind: TrustKind }) {
         <div className="mx-auto flex max-w-4xl items-center justify-between gap-3 px-4 py-3">
           <Link to="/" className="flex items-center gap-2.5">
             <AnimatedLogo size={34} />
-            <span className="font-display text-[15px] font-bold">Crypto Intelligence <span className="text-accent">AI</span></span>
+            <span className="font-display text-[15px] font-semibold tracking-tight">Crypto Intelligence <span className="text-accent">AI</span></span>
           </Link>
           <Link to="/" className="btn px-3 py-1.5 text-sm">Home</Link>
         </div>

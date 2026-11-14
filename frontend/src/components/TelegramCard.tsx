@@ -70,7 +70,7 @@ export default function TelegramCard() {
         {msg && <p className="text-xs text-accent">{msg}</p>}
         {drafts.length > 0 && (
           <div className="space-y-3 border-t border-line pt-3">
-            <div className="text-xs font-semibold uppercase tracking-wide text-mute">Waiting for your approval ({drafts.length})</div>
+            <div className="text-sm font-medium text-text">Waiting for your approval ({drafts.length})</div>
             {drafts.map((d) => (
               <div key={d.id} className="rounded-lg border border-line p-2">
                 <div className="mb-1 flex items-center justify-between text-xs text-mute"><span className="font-semibold text-text">{KIND[d.kind] ?? d.kind}</span><span>{ago(d.created_at)}</span></div>

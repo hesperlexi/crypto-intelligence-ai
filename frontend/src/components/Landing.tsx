@@ -93,168 +93,186 @@ export default function Landing({ error }: { error: string | null }) {
     </button>
   );
 
+  const btc = px["BTC/USDT"];
   return (
     <div className="landing-bg min-h-full text-text">
       <header className="glass-bar sticky top-0 z-30 border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <AnimatedLogo size={36} />
-            <span className="font-display text-[15px] font-bold sm:text-base">Crypto Intelligence <span className="text-accent">AI</span></span>
+            <AnimatedLogo size={34} />
+            <span className="font-display text-[15px] font-semibold tracking-tight sm:text-base">Crypto Intelligence <span className="text-accent">AI</span></span>
           </div>
-          <div className="flex items-center gap-2">
-            <a href="#wins" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Wins</a>
-            <span className="hidden px-2 text-sm sm:inline"><TelegramLink variant="link" /></span>
-            <a href="#pricing" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Pricing</a>
-            <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="hidden px-2 text-sm text-mute hover:text-text sm:inline">Manual</a>
-            <button className="btn px-3 py-1.5 text-sm" onClick={() => setDialog("signin")} disabled={busy}>Sign in</button>
-          </div>
+          <nav className="flex items-center gap-1 sm:gap-2" aria-label="Site">
+            <a href="#wins" className="hidden px-2 text-sm text-mute hover:text-text md:inline">Results</a>
+            <a href="#pricing" className="hidden px-2 text-sm text-mute hover:text-text md:inline">Membership</a>
+            <span className="hidden px-2 text-sm md:inline"><TelegramLink variant="link" /></span>
+            <a href={`/manual.pdf?v=${BUILD_ID}`} target="_blank" rel="noopener" className="hidden px-2 text-sm text-mute hover:text-text lg:inline">Manual</a>
+            <button className="btn px-4 py-1.5 text-sm" onClick={() => setDialog("signin")} disabled={busy}>Sign in</button>
+          </nav>
         </div>
       </header>
 
       <main className="mx-auto max-w-6xl px-4">
-        {/* hero */}
-        <section className="grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+        {/* hero: the members' entrance - the product itself on the right, a live ticket */}
+        <section className="grid items-center gap-10 pb-10 pt-10 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14">
           <div>
-            <HeroLogo size={104} title="Crypto Intelligence AI logo" className="mb-6" />
-            <span className="flex w-fit items-center gap-2 rounded-full border border-accent/40 bg-accent/10 px-3 py-1 text-xs font-semibold tracking-wider text-accent">
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-bull" /> AI · SPOT · FUTURES
-            </span>
-            <h1 className="font-display mt-5 text-[42px] font-extrabold leading-[1.02] tracking-tight sm:text-6xl">
-              Know the setup<br /><span className="text-gradient">before</span> you trade.
-            </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-mute">
-              AI trade plans and phone alerts. Practise with virtual money first.
+            <p className="flex items-center gap-2 text-sm text-mute">
+              <span className="h-1.5 w-1.5 rounded-full bg-bull" aria-hidden="true" />
+              AI trade plans for spot and futures, updated every few minutes
             </p>
-            <div className="mt-7 flex flex-wrap items-center gap-3">
+            <h1 className="font-display mt-4 text-[40px] font-semibold leading-[1.04] tracking-[-0.035em] sm:text-[64px]">
+              Know the setup before you trade.
+            </h1>
+            <p className="mt-5 max-w-lg text-lg leading-relaxed text-mute">
+              Entry, stop-loss and three targets on every call, a phone alert the moment it appears, and a practice account to try it with virtual money first.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center gap-3">
               {cta(true)}
               {emailCta(true)}
-              {SHOW_APP_DEMO && <button className="btn px-5 py-3 text-base" onClick={() => setDemo("demo")}>▶ App demo (70 s)</button>}
-              <button className="btn px-5 py-3 text-base" onClick={() => setDemo("story")}>▶ Why traders use it (45 s)</button>
-              <TelegramLink label="Free signals on Telegram" />
             </div>
             {err && <p className="mt-3 text-sm text-bear">{err}</p>}
-            <p className="mt-3 text-sm text-mute">Already have an account? <button className="text-accent hover:underline" onClick={() => setDialog("signin")}>Sign in</button> · <button className="text-accent hover:underline" onClick={() => setDialog("reset")}>Forgot password?</button></p>
-            <p className="mt-3 text-xs text-mute">No exchange keys · never places real orders · from {(plans[plans.length - 1].price / 12).toFixed(2)} USDT/month</p>
+            <p className="mt-4 text-sm text-mute">Already a member? <button className="text-accent hover:underline" onClick={() => setDialog("signin")}>Sign in</button> or <button className="text-accent hover:underline" onClick={() => setDialog("reset")}>reset your password</button>.</p>
+            <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
+              {SHOW_APP_DEMO && <button className="text-mute hover:text-text" onClick={() => setDemo("demo")}>▶ Watch the app (70 s)</button>}
+              <button className="text-mute hover:text-text" onClick={() => setDemo("story")}>▶ Why traders use it (45 s)</button>
+              <TelegramLink label="Free signals on Telegram" />
+            </div>
           </div>
 
-          {/* product preview */}
+          {/* the live ticket */}
           <div className="relative">
-            <div className="float-slow panel glow-ring relative overflow-hidden p-5">
-              <div className="flex items-center justify-between">
-                <span className="text-xs tracking-[0.14em] text-mute">TRADE SIGNAL · EXAMPLE</span>
-                <span className="rounded-md bg-bull px-2.5 py-1 text-xs font-bold text-ink">▲ LONG</span>
+            <div className="panel panel-hero relative p-6 sm:p-7">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <CoinAvatar symbol="BTC/USDT" size={42} />
+                  <div>
+                    <div className="font-display text-lg font-semibold tracking-tight">Bitcoin <span className="text-mute">· 4H</span></div>
+                    <div className="text-xs text-mute">Example of a trade card</div>
+                  </div>
+                </div>
+                <span className="rounded-md bg-bull/15 px-2.5 py-1 text-xs font-semibold text-bull ring-1 ring-bull/30">Long</span>
               </div>
-              <div className="mt-3 flex items-center gap-3">
-                <CoinAvatar symbol="BTC/USDT" size={40} />
-                <div>
-                  <div className="font-display text-xl font-bold">BTC/USDT · 4H</div>
-                  <div className="num text-sm text-mute">{px["BTC/USDT"]?.last ? `$${fmtPrice(px["BTC/USDT"].last)} live` : "live price"}</div>
+              <div className="mt-6">
+                <div className="text-xs text-mute">Live price</div>
+                <div className="num mt-1 flex items-baseline gap-3">
+                  <span className="font-display text-[32px] font-semibold leading-none tracking-[-0.03em] sm:text-[40px]">{btc?.last ? `$${fmtPrice(btc.last)}` : "—"}</span>
+                  {btc?.change_pct != null && <span className={`text-sm ${btc.change_pct >= 0 ? "text-bull" : "text-bear"}`}>{fmtPctRaw(btc.change_pct)} 24h</span>}
                 </div>
               </div>
-              <svg aria-hidden="true" viewBox="0 0 300 90" className="mt-4 h-24 w-full" preserveAspectRatio="none">
-                <defs><linearGradient id="lf" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="rgb(var(--bull))" stopOpacity="0.35" /><stop offset="1" stopColor="rgb(var(--bull))" stopOpacity="0" /></linearGradient></defs>
-                <line x1="0" y1="62" x2="300" y2="62" stroke="rgb(var(--accent))" strokeDasharray="4 4" strokeWidth="1.2" />
-                <line x1="0" y1="84" x2="300" y2="84" stroke="rgb(var(--bear))" strokeDasharray="4 4" strokeWidth="1.2" />
-                <line x1="0" y1="14" x2="300" y2="14" stroke="rgb(var(--bull))" strokeDasharray="4 4" strokeWidth="1.2" />
+              <svg aria-hidden="true" viewBox="0 0 300 90" className="mt-5 h-20 w-full" preserveAspectRatio="none">
+                <defs><linearGradient id="lf" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="rgb(var(--accent))" stopOpacity="0.28" /><stop offset="1" stopColor="rgb(var(--accent))" stopOpacity="0" /></linearGradient></defs>
+                <line x1="0" y1="14" x2="300" y2="14" stroke="rgb(var(--bull))" strokeDasharray="3 5" strokeWidth="1" />
+                <line x1="0" y1="62" x2="300" y2="62" stroke="rgb(var(--text) / 0.45)" strokeDasharray="3 5" strokeWidth="1" />
+                <line x1="0" y1="84" x2="300" y2="84" stroke="rgb(var(--bear))" strokeDasharray="3 5" strokeWidth="1" />
                 <path d="M0 70 L20 74 L40 66 L60 72 L80 64 L100 68 L120 58 L140 62 L160 50 L180 54 L200 40 L220 44 L240 30 L260 34 L280 22 L300 18 V90 H0Z" fill="url(#lf)" />
-                <path d="M0 70 L20 74 L40 66 L60 72 L80 64 L100 68 L120 58 L140 62 L160 50 L180 54 L200 40 L220 44 L240 30 L260 34 L280 22 L300 18" fill="none" stroke="rgb(var(--bull))" strokeWidth="2.2" />
+                <path d="M0 70 L20 74 L40 66 L60 72 L80 64 L100 68 L120 58 L140 62 L160 50 L180 54 L200 40 L220 44 L240 30 L260 34 L280 22 L300 18" fill="none" stroke="rgb(var(--accent))" strokeWidth="1.8" />
               </svg>
-              <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-sm">
-                <dt className="text-mute">Entry</dt><dd className="text-right font-medium">entry zone</dd>
-                <dt className="text-mute">Stop-loss</dt><dd className="text-right font-medium text-bear">placed for you</dd>
-                <dt className="text-mute">Targets</dt><dd className="text-right font-medium text-bull">TP1 · TP2 · TP3</dd>
-                <dt className="text-mute">Leverage</dt><dd className="text-right font-medium">safe maximum shown</dd>
+              <dl className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-glass/10 bg-glass/10 text-sm">
+                {([["Entry", "zone on the card", ""], ["Stop-loss", "set for you", "text-bear"], ["Targets", "TP1 · TP2 · TP3", "text-bull"]] as const).map(([k, v, c]) => (
+                  <div key={k} className="bg-panel/80 px-3 py-2.5">
+                    <dt className="text-xs text-mute">{k}</dt>
+                    <dd className={`mt-0.5 font-medium ${c}`}>{v}</dd>
+                  </div>
+                ))}
               </dl>
-              <div className="mt-4 flex items-center gap-2 rounded-lg border border-glass/10 bg-ink/50 px-3 py-2 text-xs text-mute">
-                <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgb(var(--accent))" strokeWidth="2"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" /></svg>
-                Pushed to your phone the moment the setup appears
-              </div>
+              <p className="mt-4 text-xs text-mute">Members get the real levels, the suggested leverage and an alert the moment a call opens.</p>
             </div>
           </div>
         </section>
 
-        {/* live prices */}
-        <section aria-label="Live prices" className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 lg:grid-cols-6">
+        {/* live market ribbon: one crystal strip, not six cards */}
+        <section aria-label="Live prices" className="panel grid grid-cols-2 divide-glass/10 overflow-hidden p-0 sm:grid-cols-3 lg:grid-cols-6 [&>*]:border-glass/10 max-lg:[&>*]:border-b lg:divide-x">
           {COINS.map((s) => {
             const t = px[s];
             return (
-              <div key={s} className="coin-tile p-3">
-                <div className="flex items-center gap-2"><CoinAvatar symbol={s} size={24} /><span className="font-semibold">{base(s)}</span></div>
-                <div className="num mt-2 truncate text-base font-semibold min-[360px]:text-lg">{t?.last != null ? fmtPrice(t.last) : "—"}</div>
+              <div key={s} className="min-w-0 px-4 py-3.5">
+                <div className="flex items-center gap-2 text-sm"><CoinAvatar symbol={s} size={20} /><span className="font-medium">{base(s)}</span></div>
+                <div className="num mt-1.5 truncate text-lg font-semibold tracking-tight">{t?.last != null ? fmtPrice(t.last) : "—"}</div>
                 <div className={`num text-xs ${t?.change_pct == null ? "text-mute" : t.change_pct >= 0 ? "text-bull" : "text-bear"}`}>{t?.change_pct != null ? `${fmtPctRaw(t.change_pct)} 24h` : "live"}</div>
               </div>
             );
           })}
         </section>
 
-        {/* features */}
-        <section className="py-16">
-          <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Everything you need to trade with a plan</h2>
-          <p className="mx-auto mt-3 max-w-2xl text-center text-mute">Android, iPhone and the web.</p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {FEATURES.map(([d, t, p]) => (
-              <div key={t} className="panel p-5 transition-transform hover:-translate-y-1">
-                <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent ring-1 ring-accent/30"><Icon d={d} /></div>
-                <h3 className="font-display mt-4 text-lg font-semibold">{t}</h3>
-                <p className="mt-1.5 text-sm leading-relaxed text-mute">{p}</p>
-              </div>
-            ))}
+        {/* what members get: a quiet two-column list, not a card grid */}
+        <section className="grid gap-10 py-20 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+          <div>
+            <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">A plan for every trade, before you place it.</h2>
+            <p className="mt-4 max-w-md text-mute">On Android, iPhone and the web. The app never places real orders and never asks for exchange keys.</p>
           </div>
+          <ul className="divide-y divide-glass/10 border-y border-glass/10">
+            {FEATURES.map(([d, t, p]) => (
+              <li key={t} className="flex items-start gap-4 py-4">
+                <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-accent ring-1 ring-accent/25"><Icon d={d} /></span>
+                <div>
+                  <h3 className="font-medium">{t}</h3>
+                  <p className="mt-0.5 text-sm leading-relaxed text-mute">{p}</p>
+                </div>
+              </li>
+            ))}
+          </ul>
         </section>
 
         {/* wins of the day */}
         <WinsToday />
 
-        {/* how it works */}
-        <section id="how" className="scroll-mt-20 py-8">
-          <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Start in three steps</h2>
-          <ol className="mt-10 grid gap-4 md:grid-cols-3">
-            {[["Sign in", "Google or email."],
-              ["Choose a plan", "Pay with Binance or MEXC and upload the receipt."],
-              ["Get signals", "Follow coins, set alerts, practise."]].map(([t, p], i) => (
-              <li key={t} className="panel relative p-5">
-                <span className="font-display text-5xl font-extrabold text-accent/25">0{i + 1}</span>
+        {/* how to start: a real sequence, so numbered */}
+        <section id="how" className="scroll-mt-20 py-16">
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Start in three steps</h2>
+          <ol className="mt-8 grid gap-6 md:grid-cols-3">
+            {[["Sign in", "With Google or your email."],
+              ["Choose a plan", "Pay in USDT with Binance or MEXC and upload the receipt."],
+              ["Get the calls", "Follow coins, set alerts and practise with virtual money."]].map(([t, p], i) => (
+              <li key={t} className="border-t border-glass/15 pt-4">
+                <span className="num text-sm text-accent">Step {i + 1}</span>
                 <h3 className="font-display mt-1 text-lg font-semibold">{t}</h3>
-                <p className="mt-1.5 text-sm text-mute">{p}</p>
+                <p className="mt-1 text-sm text-mute">{p}</p>
               </li>
             ))}
           </ol>
         </section>
 
-        {/* pricing */}
+        {/* membership */}
         <section id="pricing" className="scroll-mt-20 py-16">
-          <h2 className="font-display text-center text-3xl font-bold tracking-tight sm:text-4xl">Simple pricing</h2>
-          <p className="mt-3 text-center text-mute">Every plan includes every feature.</p>
-          <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Membership</h2>
+              <p className="mt-2 text-mute">Every plan includes every feature. Paid in USDT.</p>
+            </div>
+            <p className="text-sm text-mute">Renewing early adds to your remaining days.</p>
+          </div>
+          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {plans.map((p) => {
               const best = p.months === 12;
               const save = p.months > 1 ? Math.round((1 - p.price / (monthly * p.months)) * 100) : 0;
               return (
-                <div key={p.months} className={`panel relative flex flex-col p-5 ${best ? "glow-ring" : ""}`}>
-                  {best && <span className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-accent px-3 py-0.5 text-xs font-bold text-ink">BEST VALUE</span>}
-                  <div className="text-sm text-mute">{p.label}</div>
-                  <div className="font-display mt-1 text-4xl font-extrabold">{p.price} <span className="text-lg font-semibold text-mute">USDT</span></div>
-                  <div className="num mt-1 text-sm text-mute">{(p.price / p.months).toFixed(2)} USDT / month{save ? <span className="ml-2 text-bull">save {save}%</span> : null}</div>
-                  <ul className="mt-4 flex-1 space-y-1.5 text-sm text-mute">
-                    <li>✓ All signals & AI forecasts</li><li>✓ Futures & phone alerts</li><li>✓ Paper trading & demo bots</li>
-                  </ul>
-                  <button className={`btn mt-5 w-full ${best ? "btn-primary" : ""}`} onClick={() => setDialog("signup")} disabled={busy}>Choose {p.label}</button>
+                <div key={p.months} className={`panel relative flex flex-col p-5 ${best ? "panel-hero" : ""}`}>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className={best ? "font-medium text-accent" : "text-mute"}>{p.label}</span>
+                    {best && <span className="text-xs text-accent">Best value</span>}
+                  </div>
+                  <div className="num mt-3 flex items-baseline gap-1.5">
+                    <span className="font-display text-4xl font-semibold tracking-tight">{p.price}</span>
+                    <span className="text-sm text-mute">USDT</span>
+                  </div>
+                  <div className="num mt-1 text-sm text-mute">{(p.price / p.months).toFixed(2)} a month{save ? <span className="ml-2 text-bull">save {save}%</span> : null}</div>
+                  <button className={`btn mt-6 w-full ${best ? "btn-primary" : ""}`} onClick={() => setDialog("signup")} disabled={busy}>Choose {p.label.toLowerCase()}</button>
                 </div>
               );
             })}
           </div>
-          <p className="mt-4 text-center text-xs text-mute">USDT only, via Binance or MEXC. Early renewals add to your remaining days.</p>
+          <p className="mt-4 text-sm text-mute">Included in every plan: all signals and AI forecasts, futures calls, phone alerts, practice trading and the demo bots.</p>
         </section>
 
-        {/* questions */}
-        <section className="mx-auto max-w-3xl pb-12">
-          <h2 className="font-display text-center text-2xl font-bold">Good to know</h2>
-          <div className="mt-6 space-y-3">
+        {/* questions: one list */}
+        <section className="mx-auto max-w-3xl pb-16">
+          <h2 className="font-display text-2xl font-semibold tracking-tight">Good to know</h2>
+          <div className="mt-6 divide-y divide-glass/10 border-y border-glass/10">
             {[["Does it trade for me?", "No. It gives plans and alerts; you trade on your own exchange. No exchange keys."],
-              ["How accurate is it?", "Results shows every model's real hit rate on unseen data, losses included."],
-              ["Which devices?", "Android app, iPhone (add to Home Screen) and any browser."]].map(([q, a]) => (
-              <details key={q} className="panel group p-4">
-                <summary className="flex cursor-pointer list-none items-center justify-between font-medium">{q}<span className="text-accent transition-transform group-open:rotate-45">+</span></summary>
+              ["How accurate is it?", "Results shows every call since the record started, losses included, after fees."],
+              ["Which devices?", "The Android app, iPhone (add to Home Screen) and any browser."]].map(([q, a]) => (
+              <details key={q} className="group py-4">
+                <summary className="flex cursor-pointer list-none items-center justify-between font-medium">{q}<span className="text-accent transition-transform group-open:rotate-45" aria-hidden="true">+</span></summary>
                 <p className="mt-2 text-sm leading-relaxed text-mute">{a}</p>
               </details>
             ))}
@@ -262,10 +280,11 @@ export default function Landing({ error }: { error: string | null }) {
         </section>
 
         {/* final call */}
-        <section className="hero mb-12 rounded-2xl p-8 text-center sm:p-12">
-          <h2 className="font-display text-3xl font-bold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>
-          <p className="mx-auto mt-3 max-w-xl text-mute">Analysis only, not financial advice.</p>
-          <div className="mt-6 flex flex-wrap justify-center gap-3">{cta(true)}{emailCta(true)}</div>
+        <section className="panel panel-hero mb-12 p-8 text-center sm:p-12">
+          <HeroLogo size={64} title="Crypto Intelligence AI logo" className="mx-auto mb-5" />
+          <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>
+          <p className="mx-auto mt-3 max-w-xl text-mute">Analysis only, not financial advice. Crypto is risky.</p>
+          <div className="mt-7 flex flex-wrap justify-center gap-3">{cta(true)}{emailCta(true)}</div>
           <p className="mt-6 flex flex-wrap justify-center gap-x-4 gap-y-1 text-sm text-mute">
             {TRUST_LINKS.map(([to, label]) => <Link key={to} to={to} className="tap-h inline-flex items-center hover:text-text hover:underline">{label}</Link>)}
           </p>

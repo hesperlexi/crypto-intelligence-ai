@@ -757,3 +757,12 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .badge-caps { letter-spacing: 0.01em; }
 /* premium-d: strip tile labels in sentence case too */
 .metric-k { text-transform: none !important; letter-spacing: 0 !important; font-size: 0.8125rem; font-weight: 500; }
+/* ---- premium-a (sign-in, settings, alerts, community, news, radar, trust) ---- */
+/* legal / about pages: readable headings inside the long text */
+.trust-body h2 { color: rgb(var(--text)); font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 600; font-size: 1.125rem; letter-spacing: -0.015em; margin-top: 1.75rem; margin-bottom: 0.5rem; }
+.trust-body p + p { margin-top: 0.75rem; }
+/* landing: a warmer, deeper light behind the hero ticket so the frosted card has something to catch */
+.landing-bg { background-image:
+  radial-gradient(900px 520px at 78% 8%, rgb(var(--accent) / 0.10), transparent 62%),
+  radial-gradient(1100px 600px at 10% -10%, var(--glow1), transparent 65%),
+  radial-gradient(900px 700px at 90% 100%, rgb(var(--ai) / 0.05), transparent 60%); }

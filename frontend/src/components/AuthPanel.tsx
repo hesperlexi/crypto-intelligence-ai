@@ -70,7 +70,7 @@ export function AuthForms({ initial = "signin", onDone }: { initial?: AuthMode; 
       {mode !== "reset" && (
         <>
           <button type="button" className="btn btn-primary w-full py-2.5" onClick={google} disabled={!!busy}><GoogleIcon />{busy === "google" ? "Opening Google…" : "Continue with Google"}</button>
-          <div className="my-4 flex items-center gap-3 text-xs uppercase tracking-wider text-mute"><span className="h-px flex-1 bg-glass/10" />or with email<span className="h-px flex-1 bg-glass/10" /></div>
+          <div className="my-4 flex items-center gap-3 text-xs text-mute"><span className="h-px flex-1 bg-glass/10" />or with email<span className="h-px flex-1 bg-glass/10" /></div>
           <div className="mb-4 flex gap-4 border-b border-glass/[0.08]" role="tablist">{tab("signin", "Sign in")}{tab("signup", "Create account")}</div>
         </>
       )}
@@ -115,11 +115,11 @@ export function AuthDialog({ mode, onClose }: { mode: AuthMode; onClose: () => v
       <div className="absolute inset-0 bg-ink/70 backdrop-blur-sm" />
       <div ref={ref} role="dialog" aria-modal="true" aria-label={mode === "signup" ? "Create an account" : "Sign in"} onClick={(e) => e.stopPropagation()}
         className="relative w-full max-w-md">
-        <div className="panel animate-in max-h-[92dvh] overflow-y-auto rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:p-6">
+        <div className="panel panel-hero animate-in max-h-[92dvh] overflow-y-auto rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:p-7">
           <div className="mb-4 flex items-start justify-between gap-3">
             <div>
-              <h2 className="font-display text-xl font-bold">Welcome to Crypto Intelligence <span className="text-accent">AI</span></h2>
-              <p className="mt-1 text-sm text-mute">Sign in or create a free account.</p>
+              <h2 className="font-display text-xl font-semibold tracking-tight">Members' entrance</h2>
+              <p className="mt-1 text-sm text-mute">Sign in, or create a free account to see the plans.</p>
             </div>
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close" onClick={close}>✕</button>
           </div>
@@ -135,7 +135,7 @@ export function AuthDialog({ mode, onClose }: { mode: AuthMode; onClose: () => v
 function CenterCard({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-full items-start justify-center px-3 py-8 sm:items-center sm:px-4">
-      <div className="panel w-full max-w-md p-6 text-center sm:p-7">
+      <div className="panel panel-hero w-full max-w-md p-6 text-center sm:p-8">
         <HeroLogo size={88} title="Crypto Intelligence AI logo" className="mx-auto mb-4" />
         {children}
         <p className="mt-6 text-xs text-mute">{COPYRIGHT} · v{APP_VERSION} · <a className="hover:text-text" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a></p>

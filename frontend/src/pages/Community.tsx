@@ -2,6 +2,7 @@
 // Stored in Firestore posts/{id}; the rules check the author, the username, the length and a 30-second pace
 // (post_meta/{uid}). Links are shown as plain text on purpose (no clickable links between members).
 import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, orderBy, query, startAfter, writeBatch } from "firebase/firestore";
+import { PageHeader } from "../components/kit";
 import { FormEvent, memo, useEffect, useMemo, useState } from "react";
 import { Empty } from "../components/ui";
 import { UsernameForm } from "../components/AuthPanel";
@@ -97,7 +98,7 @@ function Composer({ uid, username, admin }: { uid: string; username: string; adm
   );
 }
 
-const AdminBadge = () => <span className="ml-1.5 rounded border border-accent/60 bg-accent/15 px-1.5 py-0.5 align-middle text-xs font-bold uppercase tracking-wide text-accent" title="App owner">Admin</span>;
+const AdminBadge = () => <span className="ml-1.5 rounded border border-accent/60 bg-accent/15 px-1.5 py-0.5 align-middle text-xs font-semibold text-accent" title="App owner">Admin</span>;
 
 const PostItem = memo(function PostItem({ p, canDelete, onDeleted, badge }: { p: Post; canDelete: boolean; onDeleted: (id: string) => void; badge?: string[] }) {
   const [busy, setBusy] = useState(false);
@@ -135,10 +136,7 @@ export default function Community() {
   useEffect(() => { const t = window.setInterval(() => tick((n) => n + 1), 60_000); return () => window.clearInterval(t); }, []);   // "time ago"
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <div>
-        <h1 className="page-title">Community</h1>
-        <p className="page-sub">Be kind, no spam. Not financial advice.</p>
-      </div>
+      <PageHeader title="Community" sub="Talk trades with other members. Be kind, no spam, and remember it isn't financial advice." />
       {s && s.username ? <Composer uid={s.uid} username={s.username} admin={admin} />
         : s && auth.currentUser ? (
           <div className="panel p-3 sm:p-4">
