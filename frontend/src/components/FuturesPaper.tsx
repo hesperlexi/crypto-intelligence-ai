@@ -120,7 +120,7 @@ export default function FuturesPaper() {
               Open virtual {side > 0 ? "LONG" : "SHORT"} {L}x
             </button>
             {msg && <p className={`text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
-            <Note>Virtual money. 0.05% fee each way; funding every 8 h.</Note>
+            
             <div className="flex items-end gap-2 border-t border-glass/[0.06] pt-3">
               <label className="flex-1 text-xs text-mute">Starting balance<input className="input mt-1" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} /></label>
               <button className="btn" onClick={reset}>Reset account</button>
@@ -196,12 +196,11 @@ function Positions({ d, busy, act }: { d: any; busy: boolean; act: (fn: () => Pr
               <div className="num mt-1 text-xs text-mute">
                 long ${fmtNum(h.long, 0)} · short ${fmtNum(h.short, 0)} · net {h.net >= 0 ? "long" : "short"} ${fmtNum(Math.abs(h.net), 0)} · margin ${fmtNum(h.margin, 0)}
               </div>
-              <div className="mt-1 text-xs text-mute">While both sides are open, price moves mostly cancel out; fees and funding still apply to each side.</div>
             </div>
           ))}
         </div>
       )}
-      {!rows.length ? <Empty>No open futures positions. Use the order form, or tap “Paper trade this” on the Futures page.</Empty> : (<>
+      {!rows.length ? <Empty>No open futures positions.</Empty> : (<>
         <div className="space-y-3 sm:hidden">
           {rows.map((p: any) => (
             <div key={p.key} className="tile p-3">

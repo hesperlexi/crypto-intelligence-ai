@@ -142,7 +142,7 @@ export default function Health() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="System health" sub={d?.generated_at ? `Engine, data, budget and safeguards. Report from ${ago(d.generated_at)}.` : "Engine, data, budget and safeguards."}
+      <PageHeader title="System health" sub={d?.generated_at ? `Updated ${ago(d.generated_at)}` : undefined}
         actions={d?.status ? <Badge tone={toneOf(d.status)}>● {d.status}</Badge> : undefined} />
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
       {viewError && <ErrorBox error={`The engine could not publish the health report: ${viewError}`} retry={h.reload} />}
@@ -397,7 +397,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
                   ))}
                 </ul>
               ) : <p className="text-sm text-mute">No coin or timeframe is paused.</p>}
-              <Note>Pauses after a losing run; resumes by itself.</Note>
+              
             </div>
             <div className="border-t border-glass/[0.06] pt-4">
               <div className="mb-2 flex items-center justify-between gap-2"><Caps>Fail-safe checks</Caps><Badge tone={fc.length ? "warn" : "bull"}>{fc.length ? `${fc.length} not working` : "all working"}</Badge></div>
@@ -411,7 +411,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
                   ))}
                 </ul>
               ) : <p className="text-sm text-mute">Every required check ran in the last 24 h.</p>}
-              <Note>A check that cannot run blocks new calls (no trade).</Note>
+              
             </div>
           </div>
         </Card>
@@ -437,7 +437,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
               sub={reads != null ? `limit ${fmtNum(rLimit, 0)}/day · ${rPct.toFixed(1)}% used` : "after the next update"} />
             <div className="mt-2"><Bar pct={rPct} tone={reads != null && reads >= rLimit * 0.5 ? "bg-warn" : "bg-accent"} label="reads used" /></div>
           </div>
-          <div className="mt-3"><Note>Counts only the engine's own writes and reads.</Note></div>
+          
         </Section>
 
         <Section id="hc-engine" title="Engine & configuration" open={!!open["hc-engine"]} onToggle={toggle} right={<Badge tone={LEVEL_TONE[engineLevel]}>{failed.length ? `${failed.length} failed` : `${e.ticks ?? 0} cycles`}</Badge>}>

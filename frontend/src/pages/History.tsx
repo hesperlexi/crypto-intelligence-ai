@@ -22,7 +22,6 @@ export default function History() {
     <div className="space-y-4">
       <div>
         <h2 className="section-title">Signal log</h2>
-        <p className="page-sub">Every published call with its outcome. Filter by coin, timeframe or result.</p>
       </div>
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
       {sum && (

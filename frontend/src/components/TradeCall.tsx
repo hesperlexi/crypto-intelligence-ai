@@ -291,7 +291,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </Link>
           <button className="btn px-3" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
         </div>
-        {!compact && <p className="text-xs text-mute">A probability, not a promise: always use the stop-loss.</p>}
+        {!compact && <p className="text-xs text-mute">Always use the stop-loss.</p>}
       </div>
     </section>
   );

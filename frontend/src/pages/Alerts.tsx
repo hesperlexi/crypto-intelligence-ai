@@ -113,7 +113,7 @@ export default function Alerts() {
 
   return (
     <div className="space-y-5">
-      <PageHeader title="Alerts" sub="Get a phone notification when a call opens, hits a target or closes, or when the market turns." />
+      <PageHeader title="Alerts" />
 
       <div className={`panel panel-hero flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm ${perm === "granted" ? "" : "border-warn/40"}`}>
         <span>

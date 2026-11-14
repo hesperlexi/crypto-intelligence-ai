@@ -272,9 +272,6 @@ export function RecordSheet({ x, onClose, scalp = false }: { x: any; onClose: ()
                   </div>
                   {!pending && <LiveRoi x={x} size="md" plain={scalp} />}
                 </div>
-                <p className="mt-2 text-xs text-mute">{pending
-                  ? "Pullback entry: counts only once price reaches the entry."
-                  : "Live price; not a result until it closes. Before fees."}</p>
               </div>
             ) : (
               <div className={`flex items-center justify-between gap-3 rounded-xl border px-3 py-2.5 ${isNum(x.return_pct) ? (x.return_pct > 0 ? "border-bull/35 bg-bull/[0.07]" : "border-bear/35 bg-bear/[0.07]") : "border-glass/[0.1]"}`}>

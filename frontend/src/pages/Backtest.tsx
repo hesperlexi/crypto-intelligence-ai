@@ -56,7 +56,7 @@ export default function Backtest() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Backtesting" sub="Test a strategy on past candles, net of fees, spread and slippage. Results arrive within about 5 minutes, under Previous runs." />
+      <PageHeader title="Backtesting" />
       <Card title="Inputs" className="panel-hero">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <SymbolSelect value={f.symbol} onChange={(v) => up("symbol", v)} symbols={symbols.length ? symbols : [f.symbol]} />
@@ -77,7 +77,7 @@ export default function Backtest() {
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={f.allow_short} onChange={(e) => up("allow_short", e.target.checked)} />Allow short positions</label>
           <button className="btn btn-primary self-end" disabled={busy} onClick={run}>{busy ? "Queued — waiting for the engine…" : "Run backtest"}</button>
         </div>
-        {f.strategy === "ai_ensemble" && <Note>AI strategy: unseen data only; the period is clipped to it.</Note>}
+        
       </Card>
       {err && <ErrorBox error={err} />}
 

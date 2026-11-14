@@ -253,7 +253,6 @@ export function AiBriefCard({ b, loading }: { b: any; loading: boolean }) {
               <p className="text-sm leading-relaxed text-text/90">{b.text}</p>
             </div>
           )}
-          <p className="mt-auto border-t border-glass/[0.06] pt-3 text-xs text-mute">{b.note ?? "From the engine's own numbers. Context, not advice."}</p>
         </>
       )}
     </section>
@@ -373,7 +372,7 @@ export function ActiveSignalsCard({ track, loading }: { track: any; loading: boo
       <CardHead icon={<Ico name="/signals" size={16} />} title={<>Active signals <span className="num font-normal text-mute">· {rows.length}</span></>}
         right={<span className="flex items-center gap-2"><Info label="How live % and status are worked out">Live % = price move since the recorded entry, no leverage, before fees (after a target, the part already closed counts at its target). Status = where the price sits between the stop now in force and the next target: Healthy from halfway, Watch 25–50%, At risk under 25%.</Info><ViewAll to="/results?tab=track" /></span>} />
       {!track && loading ? <div className="space-y-2">{[0, 1, 2].map((i) => <div key={i} className="skeleton h-8 rounded" />)}</div>
-        : !shown.length ? <Empty>No open calls right now. Waiting for a setup that passes every check is normal.</Empty> : (
+        : !shown.length ? <Empty>No open calls right now.</Empty> : (
         <>
           <div className="hidden overflow-x-auto sm:block">
             <table className="grid-table ov-table w-full whitespace-nowrap text-sm">

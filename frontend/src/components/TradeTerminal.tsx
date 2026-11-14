@@ -138,7 +138,6 @@ export default function TradeTerminal() {
         </div>
       </section>
       {d && detail && <PositionDrawer market={market} d={d} id={detail} act={act} onPair={showPair} onClose={() => setDetail(null)} />}
-      <p className="text-xs text-mute">Practice account, virtual USDT. Fees: spot 0.1%, futures 0.05% market / 0.02% limit.</p>
     </div>
     </StreamCtx.Provider>
   );
@@ -429,7 +428,6 @@ function FutPositions({ rows, act, hedges, onOpen, onPair }: { rows: any[]; act:
     <div className="space-y-2">
       {hedges?.map((h: any) => <div key={h.symbol} className="rounded-lg border border-accent/30 bg-accent/[0.06] px-3 py-2 text-xs">{h.symbol} hedged · combined P&L <span className={tone(h.pnl)}>${fmtNum(h.pnl)}</span> · net {h.net >= 0 ? "long" : "short"} ${fmtNum(Math.abs(h.net), 0)}</div>)}
       {rows.map((p) => <FutPositionRow key={p.key} p={p} act={act} editing={edit === p.key} setEdit={setEdit} onOpen={onOpen} onPair={onPair} />)}
-      <p className="text-xs text-mute">Tap a position for details.</p>
     </div>
   );
 }
@@ -478,7 +476,6 @@ function SpotHoldings({ rows, act, onOpen, onPair }: { rows: any[]; act: Act; on
   return (
     <div className="space-y-2">
       {rows.map((p) => <SpotHoldingRow key={p.symbol} p={p} act={act} onOpen={onOpen} onPair={onPair} />)}
-      <p className="text-xs text-mute">Tap a coin for its details. Tap the pair name to show it on the chart.</p>
     </div>
   );
 }

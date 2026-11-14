@@ -121,7 +121,7 @@ export default function Users() {
   return (
     <RefNames.Provider value={byId}>
     <div className="space-y-4">
-      <PageHeader title="Users & memberships" sub="Payments, memberships and who is online." actions={
+      <PageHeader title="Users & memberships" actions={
         <div className="flex items-center gap-2 text-xs text-mute">
           <span className="num rounded-md border border-glass/10 px-2 py-1"><span className="font-semibold text-text">{all.length}</span> accounts</span>
           <span className="num rounded-md border border-glass/10 px-2 py-1"><span className="font-semibold text-accent">{income}</span> USDT received</span>
@@ -226,7 +226,6 @@ export default function Users() {
           <span className="block text-xs text-mute">Deleted when you accept or reject. <span className="num">{checkedProofs}</span> older checked screenshot{checkedProofs === 1 ? "" : "s"} still stored.</span></div>
         <button type="button" className="btn btn-sm btn-danger shrink-0" disabled={!checkedProofs} onClick={bulkDelete}>Delete all checked screenshots</button>
       </section>
-      <Note>Check the payment arrived (Binance → Pay → History, or MEXC → Wallets → History) before approving. <Info label="Membership rules">Approving adds the months after the current end date, so early renewals never lose days. When a membership ends, that person is locked out until they renew; their paper accounts and alerts are kept. People approved before memberships existed have no end date until you give them a plan.</Info></Note>
       {proofUser && <ProofViewer u={proofUser} cfg={cfg} act={act} onClose={() => setProofOf(null)} onAsk={setAsk} />}
       {ask && <ConfirmSheet {...ask} onClose={() => setAsk(null)} />}
     </div>
@@ -367,7 +366,7 @@ function RewardsCard({ all }: { all: any[] }) {
   const paid = all.filter((u) => u.referral_reward).length;
   return (
     <Card title="Referrals & prizes" right={<span className="num text-xs text-mute">{referred} invited · {paid} paid · {rows.length} free month{rows.length === 1 ? "" : "s"}</span>}>
-      {!rows.length ? <Empty>No free months given yet. A referrer gets 1 when their friend's first paid payment is approved.</Empty> : (
+      {!rows.length ? <Empty>No free months given yet.</Empty> : (
         <ul className="divide-y divide-glass/[0.06] text-sm">
           {rows.slice(0, 30).map(({ u, h }, i) => (
             <li key={i} className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-0.5 py-2">
@@ -754,7 +753,6 @@ function ProofViewer({ u, cfg, act, onClose, onAsk }: { u: any; cfg: MembershipC
                 {p.status === "submitted" ? <button type="button" className="btn btn-sm btn-danger" onClick={a.reject}>Reject proof…</button> : <span />}
               </div>
               {a.mismatch && <p className="text-xs text-warn">The proof is for {p.amount} {p.currency}; the current price of this plan is ${a.price}.</p>}
-              {p.status === "submitted" && (p.proof != null || p.has_proof) && <p className="text-xs text-mute">The screenshot is deleted after you accept or reject (the payment details stay).</p>}
             </div>
             {(p.proof != null || p.has_proof) && (
               <div className="border-t border-glass/[0.08] pt-3">

@@ -58,7 +58,6 @@ export default function Accuracy() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="section-title">Forecast accuracy</h2>
-          <p className="page-sub">Scored on data the models never trained on, and on live predictions.</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <SymbolSelect value={symbol} onChange={(v) => set("symbol", slug(v))} symbols={symbols.length ? symbols : [symbol]} />
@@ -137,7 +136,7 @@ export default function Accuracy() {
                   <Stat label="Higher-timeframe context" value={m.uses_htf ? `on (${String(m.uses_htf).toUpperCase()})` : m.htf_gate ? "tested · off" : "off"}
                     sub={m.uses_htf ? "it improved accuracy on unseen data" : m.htf_gate ? "it did not improve accuracy on unseen data; re-tested monthly" : "tested at the next nightly training"} />
                 </div>
-                <Note>Right = the next bar moves the called way. Unseen data only.</Note>
+                
               </>) : <Empty>{m.selective.reason ?? "Not enough out-of-sample calls to set a confident-call threshold."}</Empty>}
             </Card>
           )}
@@ -160,7 +159,7 @@ export default function Accuracy() {
                 </tbody>
               </table>
             </div>
-            <Note>{m.selection_note} {!m.has_skill && "No model beat the baseline; equal weights used."}</Note>
+            {!m.has_skill && <Note>No model beat the baseline.</Note>}
             {Object.keys(m.failures ?? {}).length > 0 && <p className="mt-2 text-xs text-warn">Models that failed and were left out: {Object.entries(m.failures).map(([k, v]) => `${k} (${v})`).join("; ")}</p>}
             <p className="mt-2 text-xs text-mute">Not installed / disabled: {(m.libraries ?? []).filter((l: any) => !l.available).map((l: any) => `${l.label}: ${l.reason}`).join(" · ") || "none"}</p>
           </Card>
@@ -175,7 +174,7 @@ export default function Accuracy() {
                     <td className={`num text-right ${Math.abs(b.accuracy - b.mean_confidence) > 0.07 ? "text-warn" : "text-mute"}`}>{fmtPct(b.accuracy - b.mean_confidence, 1)}</td></tr>
                 ))}</tbody>
               </table></div>
-              <Note>Well calibrated = right about as often as it says.</Note>
+              
             </Card>
           </div>
 
@@ -256,7 +255,7 @@ function LiveCard({ perf }: { perf: any }) {
           </div>
           <div className="mt-3">{["7d", "30d", "90d"].map((k) => <Row key={k} k={`${k} accuracy`} v={`${fmtProb(l.rolling[k].accuracy, 1)}  (n=${l.rolling[k].n})`} />)}</div>
           {isNum(l.brier) ? (<><Row k="Live Brier" v={fmtNum(l.brier, 4)} /><Row k="Live calibration" v={`${l.calibration} (ECE ${fmtNum(l.ece, 3)})`} /><Row k="Directional (up/down calls)" v={`${fmtProb(l.directional?.accuracy, 1)} (n=${l.directional?.n})`} /></>) : <Note>{l.note}</Note>}
-          <Note>Live predictions only, never back-filled.</Note>
+          
         </>
       )}
     </Card>

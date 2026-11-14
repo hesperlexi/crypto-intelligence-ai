@@ -75,7 +75,6 @@ export function MarketTurnCard({ v, compact = false }: { v: MarketTurnView; comp
         <p className="text-xs text-mute">Live OKX data: {v.data.supported ?? 0} coins available · {fmtNum(v.data.rows_total ?? 0, 0)} hourly rows recorded
           {v.data.at ? ` · last read ${ago(v.data.at)}` : ""}{v.data.errors?.length ? ` · ${v.data.errors.length} source problem(s)` : ""}</p>
       )}
-      <p className="text-xs text-mute">{v.note ?? "Recommend-only context. It never changes a call."}</p>
     </section>
   );
 }
