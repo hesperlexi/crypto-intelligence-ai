@@ -10,9 +10,13 @@ ever talks to an exchange's trading API.
 * Exits are the bots' own (`BotEngine._manage_decision`, shared rules in engine/manage.py): 50 / 25 / 25 at TP1-3,
   break-even after TP1, TP1 after TP2, runner when the call has one, the call's own time limit, admin stop / TP1
   changes and "Close now" on the call, reversal on a grade-A opposite call (never on 15m), followed on 15m candles.
-* A run ends only by itself: FAIL on a liquidation ("liquidated") or when the balance is below `MIN_BALANCE`
-  ("busted"); SUCCESS when the realised balance reaches `GOAL` ($1,000). The next run starts at once at $100.
-  Never reset by hand. Every run and trade is kept (`hesper_runs`, `hesper_trades`); a finished run is never changed.
+* v2.22 (owner, 14 Nov 2026): a run is OPEN-ENDED. It ends by itself only as a FAIL - a liquidation ("liquidated") or a
+  balance below `MIN_BALANCE` ("busted") - or when the admin presses "End run & start new" (job `hesper_new_run`,
+  `stop_run`): any open position closes at the engine's price, a pending order is cancelled, the run is STOPPED
+  ("stopped") with its final balance, and the next run starts at once at $100. `GOAL` ($1,000) is only a milestone:
+  the first time the balance reaches it, `goal_reached_at` is stored on the run and it keeps trading. Runs that ended
+  SUCCESS / "goal" before v2.22 keep that result. Every run and trade is kept (`hesper_runs`, `hesper_trades`); a
+  finished run is never changed.
 
 Isolation: Hesper has its own tables and its own state (setting `hesper_state`); it is not a row of `bots`, so the
 bots report, the Results "Demo bots" list, the track record, auto-trade, Telegram, achievements, the weekly report,
@@ -116,22 +120,25 @@ class Hesper(BotEngine):
                 state = self.load() or state
             events += self._enter(state, now)
         state["equity"] = self.equity(state)
+        hit = self._milestone(state, now)
+        if hit:
+            events.append(hit)
         state["updated_at"] = now
         self.save(state)
         return events
 
-    def _check_end(self, state: dict[str, Any], now: int) -> dict[str, Any] | None:
-        """Flat: has the run ended? Liquidation or a balance below MIN_BALANCE -> FAIL; >= GOAL -> SUCCESS."""
-        cash = float(state["cash"])
-        if state.get("end") == "liquidated":
-            result, reason = "FAIL", "liquidated"
-        elif cash >= GOAL - 1e-9:
-            result, reason = "SUCCESS", "goal"
-        elif cash < MIN_BALANCE:
-            result, reason = "FAIL", "busted"
-        else:
+    def _milestone(self, state: dict[str, Any], now: int) -> dict[str, Any] | None:
+        """v2.22: the first time the run's balance (equity at the engine's price) reaches GOAL, note it once."""
+        if state.get("goal_reached_at") or float(state.get("equity", state["cash"])) < GOAL - 1e-9:
             return None
-        at = int(state.get("end_at") or now)
+        state["goal_reached_at"] = int(now)
+        self.db.execute("UPDATE hesper_runs SET goal_reached_at = ? WHERE run = ? AND result = 'RUNNING' "
+                        "AND goal_reached_at IS NULL", (int(now), state["run"]))
+        return {"bot": BOT_ID, "type": "goal_reached", "run": state["run"], "balance": float(state["equity"])}
+
+    def _finish(self, state: dict[str, Any], now: int, result: str, reason: str, at: int) -> None:
+        """Close the run's row (result / reason / balance) and start the next run at $100."""
+        cash = float(state["cash"])
         self.db.execute("UPDATE hesper_runs SET ended_at = ?, result = ?, reason = ?, end_balance = ?, peak = ?, "
                         "trades = ?, wins = ? WHERE run = ? AND result = 'RUNNING'",
                         (at, result, reason, cash, max(float(state["peak"]), cash), state["trades"], state["wins"],
@@ -140,6 +147,40 @@ class Hesper(BotEngine):
         nxt["taken"] = list(state.get("taken") or [])[-50:]       # a call is never taken twice, even across runs
         self._insert_run(nxt)
         self.save(nxt)
+
+    def stop_run(self, now: int | None = None, by: str = "") -> dict[str, Any]:
+        """v2.22 admin "End run & start new": close any open position at the engine's price, cancel a pending order,
+        end the run as STOPPED ("stopped") with its final balance and start the next run at $100 at once."""
+        now = now_ms() if now is None else now
+        state = self.load()
+        if state is None:
+            raise ValueError("the Hesper challenge has not started yet")
+        closed = []
+        for pos in list(state.get("positions") or []):
+            px = self._price(pos["symbol"]) or pos["entry"]
+            if pos["qty_open"] > 0:
+                self._reduce(state, pos, pos["qty_open"], float(px), False)
+            closed.append(self._close_trade(BOT_ID, state, pos, now, "stopped by admin"))
+        for o in list(state.get("pending") or []):
+            state["cash"] = state.get("cash", 0.0) + o.get("reserved", 0.0)
+        state["pending"] = []
+        state["trade_cfg"] = None
+        run, cash = int(state["run"]), float(state["cash"])
+        self._finish(state, now, "STOPPED", "stopped", int(now))
+        return {"stopped_run": run, "final_balance": round(cash, 2), "multiple": round(cash / START_BALANCE, 3),
+                "closed_trades": len(closed), "next_run": run + 1, "by": by}
+
+    def _check_end(self, state: dict[str, Any], now: int) -> dict[str, Any] | None:
+        """Flat: has the run ended by itself? Liquidation or a balance below MIN_BALANCE -> FAIL. (v2.22: reaching
+        GOAL no longer ends a run - see `_milestone`; the admin ends a run with `stop_run`.)"""
+        cash = float(state["cash"])
+        if state.get("end") == "liquidated":
+            result, reason = "FAIL", "liquidated"
+        elif cash < MIN_BALANCE:
+            result, reason = "FAIL", "busted"
+        else:
+            return None
+        self._finish(state, now, result, reason, int(state.get("end_at") or now))
         return {"bot": BOT_ID, "type": "run_end", "run": state["run"], "result": result, "reason": reason,
                 "balance": cash}
 
@@ -337,11 +378,15 @@ def view(rt: Any) -> dict[str, Any]:
     done = [r for r in runs if r["result"] != "RUNNING"]
     succ = [r for r in done if r["result"] == "SUCCESS"]
     fails = [r for r in done if r["result"] == "FAIL"]
+    stopped = [r for r in done if r["result"] == "STOPPED"]
+    # v2.22: a run "made it" when it reached the $1,000 milestone (old SUCCESS runs, or goal_reached_at on newer ones)
+    reached = [r for r in runs if r["result"] == "SUCCESS" or r.get("goal_reached_at")]
     all_trades = db.query("SELECT * FROM hesper_trades ORDER BY closed_at DESC, id DESC")
     best_run = max(runs, key=lambda r: r["peak"]) if runs else None
     fastest = min(succ, key=lambda r: (r["ended_at"] - r["started_at"], r["trades"])) if succ else None
     fewest = min(succ, key=lambda r: (r["trades"], r["ended_at"] - r["started_at"])) if succ else None
-    score = {"successes": len(succ), "failures": len(fails),
+    score = {"successes": len(succ), "failures": len(fails), "stopped": len(stopped), "milestones": len(reached),
+             "best_end": max([float(r["end_balance"] or 0) for r in stopped + succ] or [0.0]) or None,
              "liquidations": sum(1 for r in fails if r["reason"] == "liquidated"),
              "busted": sum(1 for r in fails if r["reason"] == "busted"), "runs": len(runs), "finished": len(done),
              "best_peak": {"run": best_run["run"], "peak": best_run["peak"]} if best_run else None,
@@ -358,7 +403,8 @@ def view(rt: Any) -> dict[str, Any]:
         pend = (st.get("pending") or [None])[0]
         current = {"run": st["run"], "started_at": st["started_at"], "cash": st["cash"],
                    "balance": st.get("equity", st["cash"]), "peak": st.get("peak"), "trades": st.get("trades", 0),
-                   "wins": st.get("wins", 0), "updated_at": st.get("updated_at"), "open": None, "pending": None}
+                   "wins": st.get("wins", 0), "updated_at": st.get("updated_at"), "open": None, "pending": None,
+                   "goal_reached_at": st.get("goal_reached_at")}
         if pos:
             i = pos.get("info") or {}
             current["open"] = {"id": pos["id"], "symbol": pos["symbol"], "timeframe": i.get("timeframe"), "side": pos["side"],
@@ -388,8 +434,9 @@ def view(rt: Any) -> dict[str, Any]:
             pts = [pts[int(i * step)] for i in range(CURVE_POINTS - 1)] + [pts[-1]]
         curves[str(r["run"])] = pts
     return {**base, "current": current, "score": score,
+            "open_ended": True,
             "runs": [{k: r.get(k) for k in ("run", "started_at", "ended_at", "result", "reason", "start_balance",
-                                              "end_balance", "peak", "trades", "wins", "best_trade")}
+                                              "end_balance", "peak", "trades", "wins", "best_trade", "goal_reached_at")}
                      for r in runs[:VIEW_RUNS]],
             "trades": [_trade_row(t) for t in all_trades[:VIEW_TRADES]], "curves": curves,
             "label": "Demo · virtual money · not financial advice"}
@@ -401,4 +448,4 @@ def core(v: dict[str, Any]) -> Any:
     o = c.get("open") or {}
     p = c.get("pending") or {}
     return [c.get("run"), c.get("trades"), (v.get("score") or {}).get("trades"), o.get("id"), o.get("tp_hit"),
-            o.get("stop"), p.get("id")]
+            o.get("stop"), p.get("id"), c.get("goal_reached_at")]

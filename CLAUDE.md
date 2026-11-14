@@ -288,6 +288,17 @@ Seal pill and VerifyBox deleted (`components/SealProof.tsx` gone). `signal_proof
   mode); rules: admin only. Page `/rich` (`pages/Rich.tsx`, Admin menu "Road to Rich"), share PNG `lib/hesperCard.ts`.
   Tests `tests/test_hesper.py`; preview data `dev/seed.ts` `hesper()`.
 
+- **Open-ended runs (owner, 14 Nov 2026, branch `hesper-open`):** a run no longer ends at $1,000. `GOAL` is a milestone:
+  the first time the run's balance (equity at the engine's price) reaches it, `goal_reached_at` is stored on the state and
+  on `hesper_runs` (column added by `db.MIGRATIONS`), event `goal_reached`, and the run keeps trading. Runs still end by
+  themselves only as FAIL (liquidated / busted). Admin "End run & start new" on `/rich` (confirm sheet, `EndRun`) = job
+  `hesper_new_run` {run} (admin only; refused when that run already ended) → `Hesper.stop_run`: open position closed at
+  the engine's price (`_reduce` + `_close_trade`, exit reason "stopped by admin"), pending order refunded, run result
+  STOPPED / reason "stopped" with its final balance, next run at $100 at once (`_finish`; taken calls carried over), then
+  `views/hesper` re-published (core changes → at once). Old SUCCESS / "goal" runs keep their result. View: `open_ended`,
+  `current.goal_reached_at`, runs `goal_reached_at`, score `stopped`, `milestones` (SUCCESS or goal_reached_at), `best_end`.
+  UI: subline "$100 start · runs until stopped or liquidated · $1,000 milestone", milestone badge on the run card,
+  "Stopped · Nx" + "$1k ✓" tags in Runs, tile "Reached $1,000"; share card tile "REACHED $1,000". No extra Firestore writes.
 - **Members view (owner, 2 Nov 2026):** admin switch "Who can see it" on `/rich` writes `config/hesper.visibility`
   ('admin' default when missing | 'members'; rules like `config/scalping`). When 'members', active members (approved,
   not expired; never pending/expired/signed-out) read `views/hesper` and get a Results tab "Hesper Challenge"

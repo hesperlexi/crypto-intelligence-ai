@@ -610,6 +610,8 @@ function hesper() {
     ["FAIL", "busted", [[-57, "l"], [29, "w1"], [-62, "l"], [-60, "l"], [8, "t"], [-59, "l"], [-61, "l"], [-63, "l"]]],
     ["SUCCESS", "goal", [[66, "w3"], [48, "w3"], [-52, "l"], [73, "w3"], [39, "w2"], [55, "w3"], [62, "w3"]]],
     ["FAIL", "liquidated", [[31, "w2"], [-54, "l"], [-100, "liq"]]],
+    // v2.22: open-ended run that passed $1,000 and was ended by the admin
+    ["STOPPED", "stopped", [[68, "w3"], [57, "w3"], [-40, "l"], [72, "w3"], [61, "w3"], [49, "w3"], [-35, "l"], [44, "w2"], [30, "w2"]]],
     ["RUNNING", null, [[46, "w3"], [-51, "l"], [58, "w3"], [27, "be"], [36, "w2"]]],
   ];
   const runs: any[] = [], trades: any[] = [], curves: Record<string, number[][]> = {};
@@ -638,8 +640,9 @@ function hesper() {
       pts.push([closed, bal]); t = closed; k += 1;
     }
     t += 3 * H;
+    const hit = pts.find((p) => p[1] >= 1000);
     runs.push({ run, started_at: start, ended_at: result === "RUNNING" ? null : t - 3 * H, result, reason, start_balance: 100, end_balance: result === "RUNNING" ? null : bal,
-      peak, trades: pts.length - 1, wins, best_trade: best });
+      peak, trades: pts.length - 1, wins, best_trade: best, goal_reached_at: result === "STOPPED" && hit ? hit[0] : null });
     curves[String(run)] = pts;
   });
   const done = runs.filter((r) => r.result !== "RUNNING"), succ = done.filter((r) => r.result === "SUCCESS"), fails = done.filter((r) => r.result === "FAIL");
@@ -654,7 +657,8 @@ function hesper() {
       open: { id: "hopen", symbol: "SOL/USDT", timeframe: "4h", side: 1, entry, stop: entry, stop0: entry * 0.975, targets: [entry * 1.025, entry * 1.044, entry * 1.06], tp_hit: 1,
         leverage: lev, qty, qty_open: qty / 2, margin, coll: entry / lev, liq: entry * (1 - 1 / lev + 0.005), realized: margin * 0.5 * 0.025 * lev, opened_at: NOW - 7 * H,
         signal_id: "s-sol", confidence: 0.64, horizon_bars: 100, run_target: null, balance_before: cash }, pending: null },
-    score: { successes: succ.length, failures: fails.length, liquidations: fails.filter((r) => r.reason === "liquidated").length, busted: fails.filter((r) => r.reason === "busted").length,
+    score: { successes: succ.length, failures: fails.length, stopped: done.filter((r) => r.result === "STOPPED").length,
+      milestones: runs.filter((r) => r.result === "SUCCESS" || r.goal_reached_at).length, liquidations: fails.filter((r) => r.reason === "liquidated").length, busted: fails.filter((r) => r.reason === "busted").length,
       runs: runs.length, finished: done.length, best_peak: { run: bestRun.run, peak: bestRun.peak }, all_time_peak: bestRun.peak,
       avg_trades_per_run: done.reduce((a, r) => a + r.trades, 0) / done.length, fastest_success: { run: fastest.run, ms: fastest.ended_at - fastest.started_at, trades: fastest.trades },
       fewest_trades_success: { run: fastest.run, trades: fastest.trades }, trades: trades.length, wins: trades.filter((x) => x.pnl > 0).length, streak: { kind: "win", n: 3 } },

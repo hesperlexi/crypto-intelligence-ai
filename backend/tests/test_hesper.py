@@ -143,7 +143,7 @@ def test_pullback_call_waits_as_a_limit_and_counts_as_the_one_trade(quiet):
     assert len(st["positions"]) == 1 and st["positions"][0]["entry"] == 100.0 and not st["pending"]
 
 
-def test_target_exits_follow_the_bots_rules_and_success_starts_a_new_run(quiet):
+def test_target_exits_follow_the_bots_rules_and_1000_is_a_milestone_not_an_end(quiet):
     rt = _rt()
     _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
     _call(rt.db, "w", stop=98.0, tps=(102.0, 103.5, 105.0))
@@ -164,13 +164,52 @@ def test_target_exits_follow_the_bots_rules_and_success_starts_a_new_run(quiet):
     assert t["pnl"] == pytest.approx(pos["qty"] * (0.5 * 2 + 0.25 * 3.5 + 0.25 * 5))
     assert t["roi_pct"] == pytest.approx(t["pnl"] / t["margin"] * 100)
     assert t["balance_after"] >= H.GOAL and t["balance_before"] == 700.0
-    assert any(e["type"] == "run_end" and e["result"] == "SUCCESS" for e in ev)
+    # v2.22: the run does NOT end at $1,000 - the milestone is noted once and the run keeps going
+    assert not any(e["type"] == "run_end" for e in ev)
+    assert [e for e in ev if e["type"] == "goal_reached"][0]["run"] == 1
     r1 = rt.db.one("SELECT * FROM hesper_runs WHERE run = 1")
-    assert r1["result"] == "SUCCESS" and r1["reason"] == "goal" and r1["end_balance"] == pytest.approx(t["balance_after"])
+    assert r1["result"] == "RUNNING" and r1["goal_reached_at"] == NOW + 4 * STEP
     assert r1["trades"] == 1 and r1["peak"] == pytest.approx(t["balance_after"]) and json.loads(r1["best_trade"])["id"] == t["id"]
     st = _state(rt)
-    assert st["run"] == 2 and st["cash"] == H.START_BALANCE and st["trades"] == 0 and not st["positions"]
+    assert st["run"] == 1 and st["cash"] == pytest.approx(t["balance_after"]) and st["goal_reached_at"] == NOW + 4 * STEP
+    ev2 = H.Hesper(rt).run(NOW + 5 * STEP)                       # noted only once
+    assert not any(e["type"] == "goal_reached" for e in ev2)
+    v = H.view(rt)
+    assert v["open_ended"] and v["current"]["goal_reached_at"] and v["score"]["milestones"] == 1
+
+
+def test_admin_stop_closes_the_trade_at_the_engine_price_and_starts_a_new_run(quiet, monkeypatch):
+    rt = _rt()
+    _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
+    _call(rt.db, "s", stop=98.0, tps=(102.0, 103.5, 105.0))
+    H.Hesper(rt).run(NOW)
+    pos = _state(rt)["positions"][0]
+    monkeypatch.setattr(rt, "live_price", lambda s: 101.0)
+    res = H.Hesper(rt).stop_run(NOW + STEP, by="boss@example.com")
+    assert res["stopped_run"] == 1 and res["next_run"] == 2 and res["closed_trades"] == 1
+    t = rt.db.one("SELECT * FROM hesper_trades")
+    assert t["exit_reason"] == "stopped by admin" and t["exit"] == pytest.approx(101.0, rel=2e-3) and t["pnl"] > 0
+    r1 = rt.db.one("SELECT * FROM hesper_runs WHERE run = 1")
+    assert r1["result"] == "STOPPED" and r1["reason"] == "stopped" and r1["end_balance"] == pytest.approx(res["final_balance"], abs=0.01)
+    assert res["multiple"] == pytest.approx(res["final_balance"] / H.START_BALANCE, abs=1e-3)
+    st = _state(rt)
+    assert st["run"] == 2 and st["cash"] == H.START_BALANCE and not st["positions"] and not st["pending"]
+    assert "s" in st["taken"]                                  # the stopped call is never taken again
     assert rt.db.one("SELECT result FROM hesper_runs WHERE run = 2")["result"] == "RUNNING"
+    assert H.view(rt)["score"]["stopped"] == 1
+
+
+def test_stop_job_is_admin_only(quiet):
+    from app import worker
+    rt = _rt()
+    H.Hesper(rt).start(NOW)
+    with pytest.raises(PermissionError):
+        worker.run_job(rt, {"type": "hesper_new_run", "params": {}}, 0)
+    out = worker.run_job(rt, {"type": "hesper_new_run", "params": {}, "_admin": True, "by": "boss@example.com"}, 0)
+    assert out["stopped_run"] == 1 and _state(rt)["run"] == 2
+    with pytest.raises(ValueError):                           # a second click for the run that already ended
+        worker.run_job(rt, {"type": "hesper_new_run", "params": {"run": 1}, "_admin": True}, 0)
+    assert _state(rt)["run"] == 2
 
 
 def test_breakeven_after_tp1(quiet):

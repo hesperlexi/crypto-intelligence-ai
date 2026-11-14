@@ -413,8 +413,8 @@ CREATE TABLE IF NOT EXISTS hesper_runs (
   run INTEGER PRIMARY KEY,
   started_at BIGINT NOT NULL,
   ended_at BIGINT,
-  result TEXT NOT NULL DEFAULT 'RUNNING',   -- RUNNING | SUCCESS | FAIL
-  reason TEXT,                              -- goal | liquidated | busted
+  result TEXT NOT NULL DEFAULT 'RUNNING',   -- RUNNING | SUCCESS (old goal end) | FAIL | STOPPED (v2.22, by the admin)
+  reason TEXT,                              -- goal | liquidated | busted | stopped
   start_balance DOUBLE PRECISION NOT NULL,
   end_balance DOUBLE PRECISION,
   peak DOUBLE PRECISION NOT NULL,
