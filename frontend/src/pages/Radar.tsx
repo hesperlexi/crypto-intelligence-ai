@@ -83,11 +83,11 @@ export default function Radar() {
       </div>
       <CoinScorecard card={d.scorecard} admin={admin} />
       <h2 className="label">New coins worth a look</h2>
-      <ul className="grid gap-3 md:grid-cols-2">{(d.picks ?? []).map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
+      <ul className="grid gap-3 md:grid-cols-2 md:[&>li:last-child:nth-child(odd)]:col-span-2">{(d.picks ?? []).map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
       {(d.extended ?? []).length > 0 && (
         <section>
           <h2 className="label mb-2">Hot but already extended: wait for a pullback</h2>
-          <ul className="grid gap-3 md:grid-cols-3">{d.extended.map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
+          <ul className="grid gap-3 md:grid-cols-3 md:[&>li:last-child:nth-child(3n+1)]:col-span-3 md:[&>li:last-child:nth-child(3n+2)]:col-span-2">{d.extended.map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
         </section>
       )}
       {(live.recent ?? []).length > 0 && (
