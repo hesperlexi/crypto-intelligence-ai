@@ -2,9 +2,13 @@ Use the app as a second opinion and a practice ground: let it find setups, check
 
 ## 1. Getting started
 
-**The menu:** Home · Signals · Trade · Results · News · Radar · **Tools** · Community · Alerts · Settings. **Tools** holds Scanner, Backtest and Replay (also under **Results → Tools**). **Results** holds the track record, the demo bots, the accuracy report and the signal log.
+**The menu:** Overview (home) · Signals · Trade · Results · News · Radar · **Tools** · Community · Alerts · Settings. On a computer the menu sits in a sidebar on the left (it can be folded to icons); on tablets it is a bar along the top. **Tools** holds Scanner, Backtest and Replay (also under **Results → Tools**). **Results** holds the track record, the demo bots, the accuracy report and the signal log.
 
 **On phones** the bottom bar has Home, Signals, Trade, Results and **More**. More is grouped: **Markets** (News, Radar), **Tools** (Scanner, Backtest, Replay) and **Account** (Alerts, Community, Settings), plus the **Beginner / Pro** view switch, **Contact support** and **Download Android app (APK)**. A dot on More, and a number next to **Alerts**, means you have unread alerts.
+
+**Overview (the home page)** shows the market at a glance: the BTC price, total market cap, BTC volatility and market mood; a live BTC chart; the AI market briefing with a radar of every coin (green blips lean up, red lean down, further out = stronger); the open signals with their live status (Healthy, Watch, At risk, Waiting); recent activity; and the record's performance since the restart.
+
+![The Overview page](img/overview.jpg)
 
 **Beginner or Pro view:** Beginner is simpler and hides the advanced numbers; Pro shows everything. Switch in the header, the More menu or **Settings → View mode**.
 
@@ -95,7 +99,9 @@ If a call reaches neither the stop nor its last target within its time limit, th
 
 **All** lists every coin and timeframe with a trade call in one list. Each row shows the coin, timeframe, grade, call, **Ready** (price is in the entry zone now) or **Wait for entry**, strength (strong / moderate), entry / stop / TP1 and the live result. **Strongest (grade)** sorts grade A first. Tap a row to open that coin on its timeframe. Tick **Show waits** to also see coins with no trade.
 
-**Filters and Sort:** search a coin, filter by direction, grade and status (open / closed). **Sort:** Ready first (default), Strongest, Newest, Coin A–Z, and Timeframe (All only).
+**Filters and Sort:** search a coin, filter by direction, grade and status: **Active** (default: running and waiting calls), **Running**, **Waiting entry**, **Closed** or **All**. On a phone, tap **Filters**. **Sort:** Ready first (default), Strongest, Newest, Coin A–Z, and Timeframe (All only).
+
+![The Signals page](img/signals.jpg)
 
 **The card:**
 
@@ -113,6 +119,15 @@ If a call reaches neither the stop nor its last target within its time limit, th
 Buttons: **Practise this trade** opens it in Trade with stop and target filled in, the bell sets an alert, **Copy** copies the plan as text. The **All coins** list shows every coin's call with entry, stop and TP1.
 
 **Radar: coins to watch.** Every hour the engine screens all liquid Binance coins that are not in the app yet and ranks them by how strongly they outperform the market (against BTC over 7 and 30 days, trend, volume surge, breakouts). Coins that already went parabolic are shown apart with "wait for a pullback". Press **+ Add** to add a coin to your list. The Radar keeps its own record: every pick is scored 7 days later against BTC.
+
+### Chart tools
+
+Every live chart (the coin page, Trade, the Overview BTC chart and Replay) has the same buttons above it; tap to switch each on or off, and the app remembers your choice:
+
+- **EMA:** the 9, 21, 50 and 200 moving averages. **VWAP:** the volume-weighted average price. **Bollinger:** the Bollinger bands.
+- **Structure:** support, resistance, liquidity and supply / demand levels, plus break-of-structure markers, from the AI's analysis.
+- **Trade plan:** the AI's entry, stop and targets for that coin (on 1m / 5m charts, from the 15M analysis).
+- **VRVP:** a volume profile of the candles on screen, with its busiest price (POC) and value area.
 
 ### Reading the full coin page
 
@@ -168,6 +183,8 @@ Alerts let the app watch the market for you. Open **Alerts → New alert**:
 6. **Cooldown:** minutes before the same alert can fire again (e.g. 240 for 4H).
 7. Press **Create alert**.
 
+**My signals (set up for you):** every member gets one alert called **My signals**: a notification for every coin and timeframe when a call's entry fills, when it reaches TP1, TP2 or TP3, and when it closes. Switch it off or delete it like any other alert; it is never added back. **Market mood change** (a quick-start button) tells you when the 4H market mood flips between bullish and bearish.
+
 When it fires, you get a notification with the side, entry, stop loss, take profit and grade, and it is listed under **Fired alerts**. The engine checks every 5 minutes, so allow a few minutes of delay and check the price before entering.
 
 **The Alerts menu item shows a number** when you have unread alerts.
@@ -221,7 +238,7 @@ Open **Trade** (bottom bar on phones). It works like Binance or MEXC, with virtu
 
 **Spot:** choose **Buy** or **Sell**, enter the total (USDT) or the amount of coins, and press the button.
 
-**Below the chart:** **Positions** (live profit, ROE, liquidation; edit **TP / SL**, **Close 50%**, **Close all**), **Open orders** (cancel any time, the funds come back), **Order history**, and **Assets**. The newest position is always at the top.
+**Below the chart:** **Positions** (shown like an exchange: PNL in USDT, ROI, **Realized PNL** from parts already closed, size, margin, leverage, entry, mark and liquidation price, TP / SL; edit **TP / SL**, **Close 50%**, **Close all**), **Open orders** (cancel any time, the funds come back), **Order history**, and **Assets**. The newest position is always at the top.
 
 **Your practice money (Assets):**
 
@@ -262,11 +279,17 @@ Open **Community** (on phones under **More**). It is a shared wall where members
 
 **Results → Demo bots** runs automatic demo traders with virtual money around the clock, so you can see what following the app would really have earned.
 
+At the top, the **bot fleet** shows every bot as a small craft orbiting the AI core: one ring per timeframe, green when the bot is up, red when it is down, gold dots for its open trades. Next to it, the **fleet pulse** draws every bot's return over time on one chart. Each bot's card shows its open positions like an exchange (PNL, ROI, margin, leverage, liquidation price and every target).
+
+![The bot fleet](img/fleet.jpg)
+
 - **Futures signal bots:** one per timeframe (15M, 1H, 4H, 12H, 1D, 3D). They take exactly the public calls on the Signals page, with the same entry, stop and targets: half closes at TP1 (1:1), a quarter at TP2 and a quarter at TP3. After TP1 the stop moves to break-even, after TP2 to TP1. Fees, funding and liquidation are included.
 - **Size and exposure:** bots put a bit more on stronger calls and hold at most 3 trades in the same direction, because many coins moving together is really one bet.
 - **Trade filter:** a second AI model checks each signal against which past setups really reached their targets. It is used only where it proved better on unseen data; filtered signals become WAIT.
 
-**Hesper Challenge** (only when the owner turns it on): a separate **Results** tab showing a demo challenge with virtual money: start at $100, aim for $1,000, all-in on fresh grade-A calls. It is not a trading plan.
+**Hesper Challenge** (only when the owner turns it on): a separate **Results** tab showing a demo challenge with virtual money: all-in on fresh grade-A calls, with **10x the starting amount** as the milestone. The owner chooses the starting amount and decides when a run ends; a liquidation ends it too. The run is drawn as a voyage: the craft flies from the starting planet past 2x and 5x towards the 10x planet, with liquidation as a black hole below. You see the open trade in full (margin, leverage, entry, liquidation and every target). It is not a trading plan.
+
+![The Hesper Challenge](img/hesper.jpg)
 
 **How to judge a bot:**
 
@@ -279,7 +302,7 @@ Open **Community** (on phones under **More**). It is a shared wall where members
 
 **Results → Track record** lists every published trade signal and its real result. How it counts:
 
-- **Fresh start 3 Nov 2026:** the record counts from then.
+- **Fresh start 4 Nov 2026:** the record counts from then.
 - **Real entry price:** the market price when the call was published (pullback calls: once the price trades through their limit).
 - **After fees:** every result includes trading costs (fees, slippage, spread) and the funding paid or received.
 - **Win or loss is judged after fees:** a trade is a win only if it made money after fees.
@@ -287,7 +310,9 @@ Open **Community** (on phones under **More**). It is a shared wall where members
 - **ROI on margin** = result × the card's leverage (15M: 10–50x). Leverage magnifies losses.
 - Wins and losses alike, never edited.
 
-Tap a row for details: levels hit, time limit and time left, **Open chart** and **Practise this trade**. The **Tested on unseen data** tab (Pro view) shows how each coin's AI scored on past data it never saw; that is a simulation, not live results.
+**Live signals** can be filtered: **Running**, **Waiting entry**, **Closed** or **All**. If the owner withdraws a call within 15 minutes of publishing it, it is not counted; the page says how many were withdrawn, so nothing disappears silently.
+
+Tap a row for details: levels hit, time limit and time left, **Position (example)** (what the trade looks like with an example margin you choose, at the card's leverage), **Open chart** and **Practise this trade**. The **Tested on unseen data** tab (Pro view) shows how each coin's AI scored on past data it never saw; that is a simulation, not live results.
 
 **Results → Signal log** lists every signal the engine logged. Filter by **coin**, **timeframe**, **side**, **grade**, **status** (Open, TP1, TP2, TP3 / Won, Stopped, Break-even, Expired, Not filled, Void, Not traded), **date** (24h, 7 days, 30 days, All, or your own dates) and **sort** (newest, oldest, best or worst result). **Clear all** resets. The filters stay in the page address, so you can share that exact view. On a phone, tap **Filters**.
 
@@ -324,7 +349,33 @@ Tap a row for details: levels hit, time limit and time left, **Open chart** and 
 9. **Be extra careful around big news:** models trained on normal markets can be wrong in sudden shocks.
 10. **Expect losing streaks.** At 55% accuracy, five losses in a row will happen regularly.
 
-## 15. Troubleshooting
+## 15. Behind the scenes: how the AI is watched
+
+The owner runs a set of private control rooms that check, around the clock, whether the signals and the AI still deserve your trust. You don't need to do anything with them; this is what they do for you. *The screens below are examples with sample data, not results.*
+
+**Trade Guardian: early warnings on open calls.** Every few minutes it checks each open call against fast moves, Bitcoin shocks, volatility, the distance to the stop and whether the AI's own view has flipped. When the risk score passes a line, it proposes **Tighten stop** or **Close now**, with the reasons and a short AI explanation. Nothing changes by itself: the owner decides, and every applied change reaches you as a notification and shows in the record.
+
+![Trade Guardian (example)](img/guardian.jpg)
+
+**Filter check: do the safety filters pay for themselves?** When a filter blocks a call (bigger trend, volume wall, news guard, grade A only and others), the blocked call is still followed to the end in private. The table shows what those calls would have made after fees, so a filter that blocks winners can be found and fixed.
+
+![Filter check (example)](img/filter-check.jpg)
+
+**AI check: is the AI still as good live as in training?** Every live forecast is scored when the candle closes. Each timeframe shows its skill this week against the month before, and how far the AI's stated chances are from what happened. A **Drifting** warning means the market changed and the models need attention.
+
+![AI check (example)](img/ai-check.jpg)
+
+**Performance Lab: what works and what doesn't.** Every closed call is a glowing dot orbiting on its timeframe's ring. The Lab splits the record by timeframe, side, grade, coin and trading session, and compares the record as published with the engine's own rules alone, so any decision taken by hand is measured too.
+
+![Performance Lab (example)](img/lab.jpg)
+
+**Market turn detector and system health.** One screen watches whether established trends are weakening or turning (swing breaks, volume profile, taker buying and selling, open interest, liquidations, funding). Another shows that the engine, the data sources, the news calendar, the nightly training and every safety check are running.
+
+![Market turn detector (example)](img/market-turn.jpg)
+
+![System health (example)](img/health.jpg)
+
+## 16. Troubleshooting
 
 | Problem | Fix |
 | --- | --- |
@@ -333,6 +384,7 @@ Tap a row for details: levels hit, time limit and time left, **Open chart** and 
 | The app says my membership has ended | Renew on the same screen; your data is kept. |
 | Header shows **RECONNECTING** instead of **LIVE** | It reconnects on its own within seconds. If it stays, check your internet, then reload. |
 | "Insufficient data" or no forecast | Wait for the next engine run (about 5 minutes). |
+| A coin shows WAIT with a reason such as "bigger trend", "volume wall ahead", "stop too tight for fees" or "too many same-side calls" | These checks block calls that tested worse on past data: against the bigger trend, straight into a heavy-volume level, a stop so tight that fees eat the target (1H / 4H), or more than 8 open calls on the same side. Respect WAIT. |
 | A 15M card says WAIT, "stop too wide" | The stop is too wide for the 10x minimum, so there is no trade. Respect WAIT. |
 | The app looks old after an update | Close and reopen the app, or **Settings → About → Check for updates**. The version is shown at the bottom. |
 | The home-screen icon did not change | Phones cache icons; remove and re-add the app, or reinstall the newest APK. |

@@ -35,6 +35,16 @@ HEAD_MM = float(os.environ.get("HEAD_MM", "22"))
 
 body = markdown.markdown(SRC.read_text(encoding="utf-8"), extensions=["tables", "sane_lists"])
 body = body.replace("<li>☐ ", "<li>")
+# screenshots: embedded as data URIs (the PDF is built from a temporary file elsewhere), each in a captioned figure
+def _img(m):
+    src, alt = m.group(2), m.group(1)
+    path = SRC.parent / src
+    if not path.exists():
+        return m.group(0)
+    mime = "image/jpeg" if path.suffix.lower() in (".jpg", ".jpeg") else "image/png"
+    data = base64.b64encode(path.read_bytes()).decode()
+    return f'<figure class="shot"><img src="data:{mime};base64,{data}" alt="{alt}"><figcaption>{alt}</figcaption></figure>'
+body = re.sub(r'<p><img alt="([^"]*)" src="([^"]+)" ?/?></p>', _img, body)
 body = re.sub(r"<ul>(\s*<li><strong>Install the app)", r'<ul class="check">\1', body)
 logo = base64.b64encode(LOGO.read_bytes()).decode()
 date = dt.date.today().strftime("%B %Y")
@@ -76,7 +86,7 @@ body { font-family: Inter, "DejaVu Sans", Arial, sans-serif; font-size: 10.6pt; 
 .toc { padding: 6mm 22mm 0; page-break-after: always; }
 .toc h2 { margin-top: 0; }
 .toc ol { list-style: none; padding: 0; margin: 8mm 0 0; columns: 1; }
-.toc li { counter-increment: t; padding: 2.1mm 4mm; margin-bottom: 1.4mm; border-radius: 3mm;
+.toc li { counter-increment: t; padding: 1.5mm 4mm; margin-bottom: 1mm; border-radius: 3mm;
   background: linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.015)); border: 1px solid rgba(255,255,255,.07);
   font-size: 11pt; color: #eaecef; }
 .lead { margin: 4mm 0 2mm; break-inside: avoid; padding: 5mm 6mm; border-radius: 3mm; border: 1px solid rgba(240,185,11,.35);
@@ -116,6 +126,11 @@ th { text-align: left; background: rgba(240,185,11,.16); color: #f0b90b; font-we
 td { padding: 2.4mm 3mm; border-top: 1px solid rgba(255,255,255,.07); vertical-align: top; color: #d5d9de; }
 tr { break-inside: avoid; }
 tr:nth-child(even) td { background: rgba(255,255,255,.025); }
+/* screenshots */
+.shot { margin: 3mm 0 6mm; break-inside: avoid; }
+.shot img { display: block; width: 100%; max-height: 150mm; object-fit: contain; object-position: left top; border-radius: 3mm;
+  border: 1px solid rgba(240,185,11,.35); box-shadow: 0 0 0 1px rgba(92,242,223,.12), 0 6mm 16mm rgba(0,0,0,.45); }
+.shot figcaption { margin-top: 1.6mm; font-size: 8.4pt; color: #848e9c; }
 """
 
 html = f"""<!doctype html><html><head><meta charset="utf-8"><style>{CSS}</style></head><body>

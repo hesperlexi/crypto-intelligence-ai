@@ -789,3 +789,9 @@ UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian;
   off under reduced motion). `HeroLogo` (welcome hero + final card, sign-in, access, error / 404) and `LogoSpinner`
   (boot loader "Waking up the AI…" + `.boot-bar`) use it; header / static logos use the still images. Hesper `Mission`
   craft = the round artwork.
+- Manual v2.29 (owner, 14 Nov 2026): updated for Overview, chart tools, Signals status filter, exchange-style positions,
+  My signals alert, bot fleet, Hesper (open-ended, 10x milestone), withdrawn calls, the new WAIT reasons, record start
+  4 Nov; new section 15 "Behind the scenes" with screenshots of the admin tools (Trade Guardian, Filter check, AI check,
+  Performance Lab, Market turn, Health; captioned "examples with sample data, not results"; no admin instructions).
+  Screenshots `docs/manual/img/*.jpg` (preview seed data, 1600 px JPEG); `build_manual.py` embeds `![alt](img/x.jpg)` as
+  captioned figures (`.shot`).
