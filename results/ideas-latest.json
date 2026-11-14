@@ -1,0 +1,646 @@
+{
+ "ok": true,
+ "command": "ideas",
+ "method": "Engine ideas (owner, 14 Nov 2026) - read-only replay (python -m app.research ideas).\n\nSame calls and method as research_early: the models' walk-forward out-of-sample calls of every series through the live\ndecision rules (current grading), honest entry (market; v2.5 pullback limit for BUY ON PULLBACK), the record's exits,\n0.15 % round trip + funding, one call at a time per series. Each variant is chosen on the first 70 % of every series\n(tune) and judged on the untouched last 30 % (test). A refused call never blocks its series (live: NO TRADE).\n  1. BTC trend filter      skip (or keep only grade A) calls against BTC's 4h / 1d trend (close vs EMA, closed bars only).\n  2. Exposure cap          portfolio level: refuse a call while N calls of the same side are open (per timeframe / all).\n  3. Volume profile        profile of the coin's last 200 bars (50 bins, typical price): (a) skip a long with POC / VAH\n                           just above within k ATR (a short with POC / VAL just below); (b) TP2 / TP3 capped at the next\n                           profile level beyond TP1.\n  4. Fee filter            skip calls whose stop distance is below X % of the price.\nAggregates only (public results branch).",
+ "self_check": {
+  "series": 166,
+  "baseline_equal": 166
+ },
+ "idea1_btc_trend": {
+  "chosen_on_tune": "against 4h EMA50: grade A only",
+  "tune": {
+   "n": 3145,
+   "expectancy_r": -0.022215831528225496,
+   "total_r": -69.86879015626918,
+   "win_rate": 0.5116057233704292,
+   "max_drawdown_r": 104.39048019042309
+  },
+  "tune_baseline": {
+   "n": 4196,
+   "expectancy_r": -0.05241476761281328,
+   "total_r": -219.93236490336452,
+   "win_rate": 0.4952335557673975,
+   "max_drawdown_r": 229.30021360587457
+  },
+  "test": {
+   "n": 1228,
+   "expectancy_r": -0.0384214860161096,
+   "total_r": -47.181584827782586,
+   "win_rate": 0.511400651465798,
+   "max_drawdown_r": 136.2525192032623
+  },
+  "test_baseline": {
+   "n": 1574,
+   "expectancy_r": -0.020521719998571716,
+   "total_r": -32.30118727775188,
+   "win_rate": 0.5146124523506989,
+   "max_drawdown_r": 134.282389915123
+  },
+  "test_by_tf": {
+   "15m": {
+    "chosen": -0.006116418476856994,
+    "baseline": -0.005675931649733219,
+    "n": 311,
+    "n_base": 359
+   },
+   "1h": {
+    "chosen": -0.07983799081453107,
+    "baseline": -0.048673477619627745,
+    "n": 306,
+    "n_base": 388
+   },
+   "4h": {
+    "chosen": -0.041900511280811424,
+    "baseline": -0.0577285513677351,
+    "n": 387,
+    "n_base": 499
+   },
+   "12h": {
+    "chosen": 0.08800123117650492,
+    "baseline": 0.09364127544330259,
+    "n": 140,
+    "n_base": 206
+   },
+   "1d": {
+    "chosen": -0.2188162903521982,
+    "baseline": 0.01736404897852873,
+    "n": 73,
+    "n_base": 105
+   },
+   "3d": {
+    "chosen": -0.08909443595997658,
+    "baseline": -0.21676466180283077,
+    "n": 11,
+    "n_base": 17
+   }
+  },
+  "all_test": {
+   "baseline": {
+    "n": 1574,
+    "expectancy_r": -0.020521719998571716,
+    "total_r": -32.30118727775188,
+    "win_rate": 0.5146124523506989,
+    "max_drawdown_r": 134.282389915123
+   },
+   "against 4h EMA50: skip": {
+    "n": 1199,
+    "expectancy_r": -0.03710980653308203,
+    "total_r": -44.49465803316536,
+    "win_rate": 0.5104253544620517,
+    "max_drawdown_r": 135.30831046417308
+   },
+   "against 4h EMA200: skip": {
+    "n": 1126,
+    "expectancy_r": 0.011442120993884934,
+    "total_r": 12.883828239114436,
+    "win_rate": 0.5301953818827708,
+    "max_drawdown_r": 88.2288643311366
+   },
+   "against 1d EMA50: skip": {
+    "n": 1066,
+    "expectancy_r": 0.00711325635291474,
+    "total_r": 7.582731272207113,
+    "win_rate": 0.5309568480300187,
+    "max_drawdown_r": 86.34491674501494
+   },
+   "against 1d EMA200: skip": {
+    "n": 1014,
+    "expectancy_r": 0.024492372262691325,
+    "total_r": 24.835265474369002,
+    "win_rate": 0.5374753451676528,
+    "max_drawdown_r": 87.20034122988211
+   },
+   "against 4h EMA50: grade A only": {
+    "n": 1228,
+    "expectancy_r": -0.0384214860161096,
+    "total_r": -47.181584827782586,
+    "win_rate": 0.511400651465798,
+    "max_drawdown_r": 136.2525192032623
+   },
+   "against 1d EMA50: grade A only": {
+    "n": 1126,
+    "expectancy_r": 0.00034935798912062455,
+    "total_r": 0.39337709574982327,
+    "win_rate": 0.5284191829484902,
+    "max_drawdown_r": 94.85893577080628
+   },
+   "against both 4h+1d EMA50: skip": {
+    "n": 1376,
+    "expectancy_r": -0.018489849906934138,
+    "total_r": -25.442033471941375,
+    "win_rate": 0.5210755813953488,
+    "max_drawdown_r": 124.31632243519086
+   }
+  }
+ },
+ "idea3a_vp_filter": {
+  "chosen_on_tune": "VP filter k=0.5 ATR",
+  "tune": {
+   "n": 3958,
+   "expectancy_r": -0.03936942588483484,
+   "total_r": -155.82418765217628,
+   "win_rate": 0.501010611419909,
+   "max_drawdown_r": 169.1569357783374
+  },
+  "tune_baseline": {
+   "n": 4196,
+   "expectancy_r": -0.05241476761281328,
+   "total_r": -219.93236490336452,
+   "win_rate": 0.4952335557673975,
+   "max_drawdown_r": 229.30021360587457
+  },
+  "test": {
+   "n": 1493,
+   "expectancy_r": -0.012569721084221856,
+   "total_r": -18.76659357874323,
+   "win_rate": 0.5197588747488279,
+   "max_drawdown_r": 111.61421873449788
+  },
+  "test_baseline": {
+   "n": 1574,
+   "expectancy_r": -0.020521719998571716,
+   "total_r": -32.30118727775188,
+   "win_rate": 0.5146124523506989,
+   "max_drawdown_r": 134.282389915123
+  },
+  "test_by_tf": {
+   "15m": {
+    "chosen": -0.015255426081393927,
+    "baseline": -0.005675931649733219,
+    "n": 339,
+    "n_base": 359
+   },
+   "1h": {
+    "chosen": -0.046988577115046705,
+    "baseline": -0.048673477619627745,
+    "n": 362,
+    "n_base": 388
+   },
+   "4h": {
+    "chosen": -0.04017623799508325,
+    "baseline": -0.0577285513677351,
+    "n": 477,
+    "n_base": 499
+   },
+   "12h": {
+    "chosen": 0.11355794750107037,
+    "baseline": 0.09364127544330259,
+    "n": 199,
+    "n_base": 206
+   },
+   "1d": {
+    "chosen": 0.02681980839309541,
+    "baseline": 0.01736404897852873,
+    "n": 100,
+    "n_base": 105
+   },
+   "3d": {
+    "chosen": -0.16881788061697645,
+    "baseline": -0.21676466180283077,
+    "n": 16,
+    "n_base": 17
+   }
+  },
+  "all_test": {
+   "baseline": {
+    "n": 1574,
+    "expectancy_r": -0.020521719998571716,
+    "total_r": -32.30118727775188,
+    "win_rate": 0.5146124523506989,
+    "max_drawdown_r": 134.282389915123
+   },
+   "VP filter k=0.5 ATR": {
+    "n": 1493,
+    "expectancy_r": -0.012569721084221856,
+    "total_r": -18.76659357874323,
+    "win_rate": 0.5197588747488279,
+    "max_drawdown_r": 111.61421873449788
+   },
+   "VP filter k=1.0 ATR": {
+    "n": 1368,
+    "expectancy_r": -0.025806966861129706,
+    "total_r": -35.30393066602544,
+    "win_rate": 0.5116959064327485,
+    "max_drawdown_r": 118.71100599724173
+   },
+   "VP filter k=1.5 ATR": {
+    "n": 1251,
+    "expectancy_r": -0.028394489347453204,
+    "total_r": -35.52150617366396,
+    "win_rate": 0.5051958433253397,
+    "max_drawdown_r": 107.40943302348589
+   }
+  }
+ },
+ "idea3b_vp_target_cap": {
+  "chosen_on_tune": "VP target cap",
+  "tune": {
+   "n": 4231,
+   "expectancy_r": -0.05176228857928741,
+   "total_r": -219.00624297896505,
+   "win_rate": 0.4956275112266604,
+   "max_drawdown_r": 226.64173440487482
+  },
+  "tune_baseline": {
+   "n": 4196,
+   "expectancy_r": -0.05241476761281328,
+   "total_r": -219.93236490336452,
+   "win_rate": 0.4952335557673975,
+   "max_drawdown_r": 229.30021360587457
+  },
+  "test": {
+   "n": 1583,
+   "expectancy_r": -0.019395855819168265,
+   "total_r": -30.703639761743364,
+   "win_rate": 0.5161086544535691,
+   "max_drawdown_r": 128.75507426272162
+  },
+  "test_baseline": {
+   "n": 1574,
+   "expectancy_r": -0.020521719998571716,
+   "total_r": -32.30118727775188,
+   "win_rate": 0.5146124523506989,
+   "max_drawdown_r": 134.282389915123
+  },
+  "test_by_tf": {
+   "15m": {
+    "chosen": -0.007935011107141633,
+    "baseline": -0.005675931649733219,
+    "n": 363,
+    "n_base": 359
+   },
+   "1h": {
+    "chosen": -0.04343966358278751,
+    "baseline": -0.048673477619627745,
+    "n": 390,
+    "n_base": 388
+   },
+   "4h": {
+    "chosen": -0.05216888669845074,
+    "baseline": -0.0577285513677351,
+    "n": 501,
+    "n_base": 499
+   },
+   "12h": {
+    "chosen": 0.08320976846522396,
+    "baseline": 0.09364127544330259,
+    "n": 206,
+    "n_base": 206
+   },
+   "1d": {
+    "chosen": 0.01696827594501867,
+    "baseline": 0.01736404897852873,
+    "n": 106,
+    "n_base": 105
+   },
+   "3d": {
+    "chosen": -0.21676466180283077,
+    "baseline": -0.21676466180283077,
+    "n": 17,
+    "n_base": 17
+   }
+  },
+  "all_test": {
+   "baseline": {
+    "n": 1574,
+    "expectancy_r": -0.020521719998571716,
+    "total_r": -32.30118727775188,
+    "win_rate": 0.5146124523506989,
+    "max_drawdown_r": 134.282389915123
+   },
+   "VP target cap": {
+    "n": 1583,
+    "expectancy_r": -0.019395855819168265,
+    "total_r": -30.703639761743364,
+    "win_rate": 0.5161086544535691,
+    "max_drawdown_r": 128.75507426272162
+   }
+  }
+ },
+ "idea4_fee_filter": {
+  "chosen_on_tune": "fee filter 1.5%",
+  "tune": {
+   "n": 3606,
+   "expectancy_r": -0.033181541659640074,
+   "total_r": -119.6526392246621,
+   "win_rate": 0.49889073765945646,
+   "max_drawdown_r": 125.27129523253595
+  },
+  "tune_baseline": {
+   "n": 4196,
+   "expectancy_r": -0.05241476761281328,
+   "total_r": -219.93236490336452,
+   "win_rate": 0.4952335557673975,
+   "max_drawdown_r": 229.30021360587457
+  },
+  "test": {
+   "n": 1299,
+   "expectancy_r": -0.01463509276050757,
+   "total_r": -19.010985495899334,
+   "win_rate": 0.5142417244033872,
+   "max_drawdown_r": 96.87969954203221
+  },
+  "test_baseline": {
+   "n": 1574,
+   "expectancy_r": -0.020521719998571716,
+   "total_r": -32.30118727775188,
+   "win_rate": 0.5146124523506989,
+   "max_drawdown_r": 134.282389915123
+  },
+  "test_by_tf": {
+   "15m": {
+    "chosen": -0.005300281162548765,
+    "baseline": -0.005675931649733219,
+    "n": 184,
+    "n_base": 359
+   },
+   "1h": {
+    "chosen": -0.03969056354399905,
+    "baseline": -0.048673477619627745,
+    "n": 308,
+    "n_base": 388
+   },
+   "4h": {
+    "chosen": -0.04851642760721583,
+    "baseline": -0.0577285513677351,
+    "n": 479,
+    "n_base": 499
+   },
+   "12h": {
+    "chosen": 0.09364127544330259,
+    "baseline": 0.09364127544330259,
+    "n": 206,
+    "n_base": 206
+   },
+   "1d": {
+    "chosen": 0.01736404897852873,
+    "baseline": 0.01736404897852873,
+    "n": 105,
+    "n_base": 105
+   },
+   "3d": {
+    "chosen": -0.21676466180283077,
+    "baseline": -0.21676466180283077,
+    "n": 17,
+    "n_base": 17
+   }
+  },
+  "all_test": {
+   "baseline": {
+    "n": 1574,
+    "expectancy_r": -0.020521719998571716,
+    "total_r": -32.30118727775188,
+    "win_rate": 0.5146124523506989,
+    "max_drawdown_r": 134.282389915123
+   },
+   "fee filter 0.6%": {
+    "n": 1563,
+    "expectancy_r": -0.021994285615261944,
+    "total_r": -34.37706841665442,
+    "win_rate": 0.5137555982085733,
+    "max_drawdown_r": 131.03889892305128
+   },
+   "fee filter 0.8%": {
+    "n": 1521,
+    "expectancy_r": -0.020204473821807272,
+    "total_r": -30.73100468296886,
+    "win_rate": 0.5134779750164365,
+    "max_drawdown_r": 126.25619102972797
+   },
+   "fee filter 1.0%": {
+    "n": 1470,
+    "expectancy_r": -0.013796359392721745,
+    "total_r": -20.280648307300964,
+    "win_rate": 0.5163265306122449,
+    "max_drawdown_r": 114.89753350940191
+   },
+   "fee filter 1.5%": {
+    "n": 1299,
+    "expectancy_r": -0.01463509276050757,
+    "total_r": -19.010985495899334,
+    "win_rate": 0.5142417244033872,
+    "max_drawdown_r": 96.87969954203221
+   }
+  },
+  "per_tf_choice": {
+   "15m": {
+    "chosen": "fee filter 1.5%",
+    "test_r": -0.005300281162548765,
+    "test_n": 184,
+    "baseline_r": -0.005675931649733219,
+    "baseline_n": 359
+   },
+   "1h": {
+    "chosen": "fee filter 1.5%",
+    "test_r": -0.03969056354399905,
+    "test_n": 308,
+    "baseline_r": -0.048673477619627745,
+    "baseline_n": 388
+   },
+   "4h": {
+    "chosen": "fee filter 1.5%",
+    "test_r": -0.04851642760721583,
+    "test_n": 479,
+    "baseline_r": -0.0577285513677351,
+    "baseline_n": 499
+   },
+   "12h": {
+    "chosen": "baseline",
+    "test_r": 0.09364127544330259,
+    "test_n": 206,
+    "baseline_r": 0.09364127544330259,
+    "baseline_n": 206
+   },
+   "1d": {
+    "chosen": "baseline",
+    "test_r": 0.01736404897852873,
+    "test_n": 105,
+    "baseline_r": 0.01736404897852873,
+    "baseline_n": 105
+   },
+   "3d": {
+    "chosen": "baseline",
+    "test_r": -0.21676466180283077,
+    "test_n": 17,
+    "baseline_r": -0.21676466180283077,
+    "baseline_n": 17
+   }
+  }
+ },
+ "idea2_exposure_cap": {
+  "tune": {
+   "no cap": {
+    "n": 4196,
+    "avg_r": -0.0524,
+    "total_r": -219.93,
+    "win_rate": 0.495,
+    "max_dd_r": 229.64
+   },
+   "global 3 same side": {
+    "n": 1761,
+    "avg_r": -0.0521,
+    "total_r": -91.72,
+    "win_rate": 0.503,
+    "max_dd_r": 100.78
+   },
+   "per timeframe 3 same side": {
+    "n": 2826,
+    "avg_r": -0.0479,
+    "total_r": -135.4,
+    "win_rate": 0.501,
+    "max_dd_r": 143.86
+   },
+   "global 5 same side": {
+    "n": 2501,
+    "avg_r": -0.0533,
+    "total_r": -133.28,
+    "win_rate": 0.502,
+    "max_dd_r": 146.25
+   },
+   "per timeframe 5 same side": {
+    "n": 3622,
+    "avg_r": -0.0521,
+    "total_r": -188.68,
+    "win_rate": 0.496,
+    "max_dd_r": 199.42
+   },
+   "global 8 same side": {
+    "n": 3260,
+    "avg_r": -0.0453,
+    "total_r": -147.82,
+    "win_rate": 0.502,
+    "max_dd_r": 178.46
+   },
+   "per timeframe 8 same side": {
+    "n": 4111,
+    "avg_r": -0.0527,
+    "total_r": -216.64,
+    "win_rate": 0.495,
+    "max_dd_r": 228.84
+   }
+  },
+  "test": {
+   "no cap": {
+    "n": 1574,
+    "avg_r": -0.0205,
+    "total_r": -32.3,
+    "win_rate": 0.515,
+    "max_dd_r": 130.15
+   },
+   "global 3 same side": {
+    "n": 339,
+    "avg_r": 0.0581,
+    "total_r": 19.69,
+    "win_rate": 0.555,
+    "max_dd_r": 13.34
+   },
+   "per timeframe 3 same side": {
+    "n": 1061,
+    "avg_r": -0.0316,
+    "total_r": -33.5,
+    "win_rate": 0.511,
+    "max_dd_r": 81.25
+   },
+   "global 5 same side": {
+    "n": 603,
+    "avg_r": 0.0284,
+    "total_r": 17.12,
+    "win_rate": 0.539,
+    "max_dd_r": 28.69
+   },
+   "per timeframe 5 same side": {
+    "n": 1350,
+    "avg_r": -0.0169,
+    "total_r": -22.86,
+    "win_rate": 0.518,
+    "max_dd_r": 96.53
+   },
+   "global 8 same side": {
+    "n": 862,
+    "avg_r": 0.0225,
+    "total_r": 19.38,
+    "win_rate": 0.536,
+    "max_dd_r": 46.69
+   },
+   "per timeframe 8 same side": {
+    "n": 1528,
+    "avg_r": -0.018,
+    "total_r": -27.57,
+    "win_rate": 0.516,
+    "max_dd_r": 121.97
+   }
+  },
+  "chosen_on_tune": "global 8 same side",
+  "test_chosen": {
+   "n": 862,
+   "avg_r": 0.0225,
+   "total_r": 19.38,
+   "win_rate": 0.536,
+   "max_dd_r": 46.69
+  },
+  "test_no_cap": {
+   "n": 1574,
+   "avg_r": -0.0205,
+   "total_r": -32.3,
+   "win_rate": 0.515,
+   "max_dd_r": 130.15
+  }
+ },
+ "skipped": [
+  "AAVE/USDT 3d: no model / too few out-of-sample bars",
+  "APT/USDT 3d: no model / too few out-of-sample bars",
+  "AVAX/USDT 3d: span too short to split",
+  "BARD/USDT 3d: no model / too few out-of-sample bars",
+  "BIO/USDT 3d: no model / too few out-of-sample bars",
+  "DOT/USDT 3d: span too short to split",
+  "ENA/USDT 3d: no model / too few out-of-sample bars",
+  "ERA/USDT 3d: no model / too few out-of-sample bars",
+  "GALA/USDT 3d: no model / too few out-of-sample bars",
+  "GRAM/USDT 3d: no model / too few out-of-sample bars",
+  "INJ/USDT 3d: no model / too few out-of-sample bars",
+  "MSTRB/USDT 3d: no model / too few out-of-sample bars",
+  "NEAR/USDT 3d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 3d: no model / too few out-of-sample bars",
+  "PAXG/USDT 3d: span too short to split",
+  "PEPE/USDT 3d: no model / too few out-of-sample bars",
+  "SOL/USDT 3d: span too short to split",
+  "SPCXB/USDT 3d: no model / too few out-of-sample bars",
+  "SUI/USDT 3d: no model / too few out-of-sample bars",
+  "U/USDT 3d: no model / too few out-of-sample bars",
+  "UNI/USDT 3d: span too short to split",
+  "WLD/USDT 3d: no model / too few out-of-sample bars",
+  "XAUT/USDT 3d: no model / too few out-of-sample bars",
+  "BARD/USDT 1d: no model / too few out-of-sample bars",
+  "BIO/USDT 1d: no model / too few out-of-sample bars",
+  "ENA/USDT 1d: no model / too few out-of-sample bars",
+  "ERA/USDT 1d: no model / too few out-of-sample bars",
+  "GRAM/USDT 1d: no model / too few out-of-sample bars",
+  "MSTRB/USDT 1d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 1d: no model / too few out-of-sample bars",
+  "PEPE/USDT 1d: no model / too few out-of-sample bars",
+  "SPCXB/USDT 1d: no model / too few out-of-sample bars",
+  "SUI/USDT 1d: no model / too few out-of-sample bars",
+  "U/USDT 1d: no model / too few out-of-sample bars",
+  "WLD/USDT 1d: no model / too few out-of-sample bars",
+  "XAUT/USDT 1d: no model / too few out-of-sample bars",
+  "BARD/USDT 12h: no model / too few out-of-sample bars",
+  "BIO/USDT 12h: no model / too few out-of-sample bars",
+  "ERA/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 12h: no model / too few out-of-sample bars",
+  "MSTRB/USDT 12h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 12h: no model / too few out-of-sample bars",
+  "SPCXB/USDT 12h: no model / too few out-of-sample bars",
+  "U/USDT 12h: no model / too few out-of-sample bars",
+  "XAUT/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 4h: no model / too few out-of-sample bars",
+  "MSTRB/USDT 4h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 4h: no model / too few out-of-sample bars",
+  "SPCXB/USDT 4h: no model / too few out-of-sample bars",
+  "XAUT/USDT 4h: no model / too few out-of-sample bars"
+ ],
+ "seconds": 72.1,
+ "costs": {
+  "round_trip_pct": 0.15,
+  "funding": "0.01% per 8 h (longs pay), over the hold"
+ }
+}
