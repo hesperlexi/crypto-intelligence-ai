@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-14T09:10:40.431Z",
-  "sha": "5bfaaa4225e8efb671032c5582b4e9dd23bd9215",
-  "total": 141,
-  "passed": 141,
+  "at": "2026-11-14T09:28:10.193Z",
+  "sha": "3ea09d427cef9b5f9b6caf054fbde49db91ba72f",
+  "total": 142,
+  "passed": 142,
   "failed": 0,
   "results": [
     {
@@ -443,6 +443,10 @@
     },
     {
       "name": "market turn: only the admin reads views/market_turn; nobody writes it",
+      "ok": true
+    },
+    {
+      "name": "perf lab: only the admin reads views/perf_lab; nobody writes it",
       "ok": true
     },
     {
