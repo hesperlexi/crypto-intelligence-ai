@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-14T07:06:43.346Z",
-  "sha": "ccaa10e86bacdbcad13d58d88bbdb4ae4cd401c4",
-  "total": 140,
-  "passed": 140,
+  "at": "2026-11-14T07:42:27.325Z",
+  "sha": "e9cf1fd25f8e83dbac8ad0ab3ee30d7dded13b82",
+  "total": 141,
+  "passed": 141,
   "failed": 0,
   "results": [
     {
@@ -439,6 +439,10 @@
     },
     {
       "name": "admin/migrations: members cannot read or write it",
+      "ok": true
+    },
+    {
+      "name": "market turn: only the admin reads views/market_turn; nobody writes it",
       "ok": true
     },
     {
