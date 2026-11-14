@@ -6,6 +6,7 @@
 //   Chip       one standalone toggle / filter pill (News sources, coin filters)
 // Type scale: 12 / 14 / 16 / 20 / 28 px (text-xs / sm / base / xl / 2xl). Nothing below 12 px on phones.
 // Touch: every control is at least 44 px tall on phones and touch screens (index.css), compact on desktop.
+import { AiGlyph } from "./Xeno";
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 
@@ -101,7 +102,7 @@ export function PageHeader({ title, sub, actions, className = "" }: { title: Rea
   return (
     <header className={`page-head flex flex-wrap items-end justify-between gap-x-4 gap-y-3 ${className}`}>
       <div className="min-w-0">
-        <h1 className="page-title">{title}</h1>
+        <h1 className="page-title"><AiGlyph /><span className="min-w-0">{title}</span></h1>
         {sub && <p className="page-sub">{sub}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}

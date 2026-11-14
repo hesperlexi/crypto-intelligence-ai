@@ -766,3 +766,8 @@ UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian;
   z -1, mounted in `main.tsx`, fainter on light / glass off), `MarketRadar` (4H watchlist as radar blips inside the
   Overview "Market intelligence" card, `.ai-scan`), welcome page `HoloOrbit` behind the example ticket + `CyberHorizon`
   grid floor. Overview stacks end level (`.ov-stack`: last card fills). Motion off under reduced motion.
+- v2.27 alien touches on every page (shared hooks, `index.css` "v2.27"): `PageHeader` title gets `AiGlyph` (orbit icon);
+  header underline = beam with travelling glint; `.panel-hero` HUD corner brackets; `.ai-card` aura + scan line; card
+  titles a signal diamond; empty states a mini radar; skeletons AI-tinted; active sidebar key glows + blip; primary
+  buttons an occasional glint. Welcome page: `Constellation` (coins network with pulses), `SignalWave` dividers, final
+  card with `HoloOrbit label={false}` around the logo + `CyberHorizon`. All motion off under reduced motion.

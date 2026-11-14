@@ -865,3 +865,67 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .hz-scan { animation: hz-scan 7s ease-in-out infinite; }
 @keyframes hz-scan { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.9; } }
 @media (prefers-reduced-motion: reduce) { .hz-scan { animation: none; } }
+
+/* ===== v2.27 alien touches everywhere (owner, 14 Nov 2026). Shared hooks, so every page gets them. ===== */
+/* page headers: orbit glyph before the title; the underline is a beam with a travelling glint */
+.page-title { display: flex; align-items: center; gap: 0.6rem; }
+.ai-glyph { flex: none; filter: drop-shadow(0 0 6px rgb(var(--ai) / 0.45)); }
+.ai-glyph-orbit { animation: xeno-spin 6s linear infinite; }
+.ai-glyph-core { animation: xeno-blink 2.8s ease-in-out infinite; }
+.page-head::after { background: linear-gradient(90deg, rgb(var(--accent) / 0.8), rgb(var(--ai) / 0.7) 55%, transparent); }
+.page-head::before { content: ""; position: absolute; left: 0; bottom: -1px; width: 70px; height: 3px; border-radius: 3px; pointer-events: none;
+  background: radial-gradient(closest-side, rgb(var(--ai) / 0.95), transparent); animation: beam-glint 5.5s ease-in-out infinite; }
+@keyframes beam-glint { 0% { transform: translateX(0); opacity: 0; } 15% { opacity: 1; } 70% { transform: translateX(min(360px, 60vw)); opacity: 0.9; } 85%, 100% { transform: translateX(min(400px, 66vw)); opacity: 0; } }
+
+/* lead cards: HUD corner brackets, like a targeting display */
+.panel-hero::after {
+  content: ""; position: absolute; inset: 6px; pointer-events: none; border-radius: calc(var(--r-card, 12px) - 4px);
+  --hb: rgb(var(--ai) / 0.55); --hl: 14px;
+  background:
+    linear-gradient(var(--hb), var(--hb)) top left / var(--hl) 1px no-repeat, linear-gradient(var(--hb), var(--hb)) top left / 1px var(--hl) no-repeat,
+    linear-gradient(var(--hb), var(--hb)) top right / var(--hl) 1px no-repeat, linear-gradient(var(--hb), var(--hb)) top right / 1px var(--hl) no-repeat,
+    linear-gradient(var(--hb), var(--hb)) bottom left / var(--hl) 1px no-repeat, linear-gradient(var(--hb), var(--hb)) bottom left / 1px var(--hl) no-repeat,
+    linear-gradient(var(--hb), var(--hb)) bottom right / var(--hl) 1px no-repeat, linear-gradient(var(--hb), var(--hb)) bottom right / 1px var(--hl) no-repeat;
+}
+
+/* AI cards everywhere: soft cyan-violet aura and the slow scan line */
+.ai-card { position: relative; overflow: hidden; box-shadow: 0 0 0 1px rgb(var(--ai) / 0.16), 0 12px 40px -24px rgb(var(--ai) / 0.6); }
+.ai-card::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 40%; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgb(var(--ai) / 0.05), transparent); transform: translateY(-100%); animation: xeno-scan 12s ease-in-out infinite; }
+
+/* card titles: a tiny signal diamond */
+.card-head .label::before { content: ""; display: inline-block; width: 5px; height: 5px; margin-right: 0.5rem; vertical-align: 2px;
+  transform: rotate(45deg); background: rgb(var(--ai) / 0.75); box-shadow: 0 0 6px rgb(var(--ai) / 0.7); }
+
+/* empty states: a quiet radar ring with a sweep instead of a dash */
+.empty-state::before { width: 34px; height: 34px; border-radius: 9999px; background:
+  conic-gradient(from 0deg, rgb(var(--ai) / 0.35), transparent 25%), radial-gradient(closest-side, transparent 64%, rgb(var(--ai) / 0.35) 66%, transparent 70%),
+  radial-gradient(closest-side, rgb(var(--ai) / 0.7) 10%, transparent 14%);
+  animation: xeno-spin 4s linear infinite; }
+
+/* loading: an AI-tinted scan instead of a grey shimmer */
+.skeleton { background: linear-gradient(90deg, rgb(var(--glass) / 0.04) 25%, rgb(var(--ai) / 0.10) 37%, rgb(var(--glass) / 0.04) 63%); background-size: 400% 100%; }
+
+/* sidebar: the active section glows like a lit console key */
+.side-link[aria-current="page"] { box-shadow: inset 0 0 0 1px rgb(var(--accent) / 0.18), 0 0 18px -8px rgb(var(--accent) / 0.6); }
+.side-link[aria-current="page"]::after { content: ""; position: absolute; right: 0.6rem; top: 50%; width: 5px; height: 5px; margin-top: -2.5px; border-radius: 9999px;
+  background: rgb(var(--ai)); box-shadow: 0 0 8px rgb(var(--ai)); animation: xeno-blink 2.2s ease-in-out infinite; }
+
+/* primary buttons: a light glint passes now and then */
+.btn-primary { position: relative; overflow: hidden; }
+.btn-primary::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgb(255 255 255 / 0.35), transparent); animation: btn-glint 7s ease-in-out infinite; }
+@keyframes btn-glint { 0%, 70% { left: -60%; } 90%, 100% { left: 130%; } }
+
+/* welcome page pieces */
+.cn-pulse { animation: cn-pulse 4.5s linear infinite; }
+@keyframes cn-pulse { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -406; } }
+.wave-glint { animation: wave-glint 6s linear infinite; }
+@keyframes wave-glint { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -1460; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-glyph-orbit, .ai-glyph-core, .page-head::before, .ai-card::after, .empty-state::before, .side-link[aria-current="page"]::after,
+  .btn-primary::after, .cn-pulse, .wave-glint { animation: none; }
+  .page-head::before, .btn-primary::after { display: none; }
+}
+[data-glass="on"] .panel.ai-card, .panel.ai-card { box-shadow: 2px 0 0 0 rgb(var(--ai) / 0.75) inset, 0 0 0 1px rgb(var(--ai) / 0.14), 0 14px 42px -26px rgb(var(--ai) / 0.65); }

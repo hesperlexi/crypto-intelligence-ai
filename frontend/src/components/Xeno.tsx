@@ -92,7 +92,7 @@ export function MarketRadar({ rows, size = 260 }: { rows?: RadarRow[]; size?: nu
 }
 
 /** Welcome page: a holographic planet with orbiting rings, scanning sweep and signal blips. */
-export function HoloOrbit({ className = "" }: { className?: string }) {
+export function HoloOrbit({ className = "", label = true }: { className?: string; label?: boolean }) {
   const blips = useMemo(() => { const r = rng(5); return Array.from({ length: 14 }, (_, i) => ({ a: (i / 14) * Math.PI * 2 + r() * 0.3, k: 0.45 + r() * 0.5, up: r() > 0.42 })); }, []);
   const C = 200;
   return (
@@ -128,7 +128,7 @@ export function HoloOrbit({ className = "" }: { className?: string }) {
             fill={b.up ? "rgb(var(--bull))" : "rgb(var(--bear))"} className="xeno-blip" style={{ animationDelay: `${(i % 7) * 0.4}s` }} />
         ))}
       </g>
-      <text x={C} y={C + 6} textAnchor="middle" fontSize="22" fontWeight="700" letterSpacing="3" fill="rgb(var(--text) / 0.9)">AI</text>
+      {label && <text x={C} y={C + 6} textAnchor="middle" fontSize="22" fontWeight="700" letterSpacing="3" fill="rgb(var(--text) / 0.9)">AI</text>}
     </svg>
   );
 }
@@ -152,6 +152,74 @@ export function CyberHorizon({ className = "" }: { className?: string }) {
         {rows.map((y) => <line key={y} x1="0" x2={W} y1={y} y2={y} />)}
       </g>
       <line className="hz-scan" x1="0" x2={W} y1={vy} y2={vy} stroke="rgb(var(--accent) / 0.5)" strokeWidth="1" />
+    </svg>
+  );
+}
+
+/** A small orbiting glyph beside page titles: a core with one satellite. */
+export function AiGlyph({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" className="ai-glyph" aria-hidden="true">
+      <circle cx="12" cy="12" r="10" fill="none" stroke="rgb(var(--ai) / 0.35)" strokeDasharray="1.5 2.5" />
+      <circle cx="12" cy="12" r="3.4" fill="rgb(var(--ai) / 0.9)" className="ai-glyph-core" />
+      <g className="ai-glyph-orbit" style={{ transformOrigin: "12px 12px" }}><circle cx="22" cy="12" r="1.8" fill="rgb(var(--accent))" /></g>
+    </svg>
+  );
+}
+
+/** Welcome page: the watchlist as a constellation the AI watches, with pulses running along the links. */
+export function Constellation({ className = "" }: { className?: string }) {
+  const nodes = useMemo(() => {
+    const r = rng(23);
+    const names = ["BTC", "ETH", "SOL", "XRP", "BNB", "DOGE", "AVAX", "LINK", "ADA", "SUI", "LTC", "DOT", "NEAR", "AAVE"];
+    return names.map((n, i) => ({ n, x: 40 + r() * 520, y: 30 + r() * 220, up: r() > 0.4, big: i < 4 }));
+  }, []);
+  const links = useMemo(() => {
+    const out: [number, number][] = [];
+    nodes.forEach((a, i) => {
+      const near = nodes.map((b, j) => ({ j, d: Math.hypot(a.x - b.x, a.y - b.y) })).filter((x) => x.j !== i).sort((p, q) => p.d - q.d).slice(0, 2);
+      near.forEach(({ j }) => { if (!out.some(([p, q]) => (p === j && q === i))) out.push([i, j]); });
+    });
+    return out;
+  }, [nodes]);
+  return (
+    <svg viewBox="0 0 600 280" className={className} role="img" aria-label="The AI watches every coin and how they move together">
+      <defs>
+        <filter id="cn-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+      </defs>
+      {links.map(([i, j], k) => {
+        const a = nodes[i], b = nodes[j];
+        return (
+          <g key={k}>
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="rgb(var(--ai) / 0.22)" />
+            <line x1={a.x} y1={a.y} x2={b.x} y2={b.y} stroke="rgb(var(--ai) / 0.9)" strokeWidth="1.4" strokeDasharray="6 400" className="cn-pulse" style={{ animationDelay: `${(k % 9) * 0.55}s` }} />
+          </g>
+        );
+      })}
+      <g filter="url(#cn-glow)">
+        {nodes.map((p) => (
+          <g key={p.n}>
+            <circle cx={p.x} cy={p.y} r={p.big ? 6 : 4} fill={p.up ? "rgb(var(--bull))" : "rgb(var(--bear))"} className="xeno-blip" />
+            <circle cx={p.x} cy={p.y} r={p.big ? 11 : 8} fill="none" stroke="rgb(var(--ai) / 0.35)" />
+          </g>
+        ))}
+      </g>
+      {nodes.map((p) => <text key={p.n} x={p.x} y={p.y - (p.big ? 15 : 12)} textAnchor="middle" fontSize="10" fill="rgb(var(--text) / 0.75)" letterSpacing="0.5">{p.n}</text>)}
+    </svg>
+  );
+}
+
+/** A thin "signal" divider: an oscilloscope wave with a travelling glint. */
+export function SignalWave({ className = "" }: { className?: string }) {
+  const d = useMemo(() => {
+    let p = "M0 20";
+    for (let x = 0; x <= 1200; x += 10) p += ` L${x} ${(20 + Math.sin(x / 38) * 7 * Math.sin(x / 260) + (x % 170 < 10 ? -9 : 0)).toFixed(1)}`;
+    return p;
+  }, []);
+  return (
+    <svg viewBox="0 0 1200 40" preserveAspectRatio="none" className={className} aria-hidden="true">
+      <path d={d} fill="none" stroke="rgb(var(--ai) / 0.28)" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      <path d={d} fill="none" stroke="rgb(var(--accent) / 0.9)" strokeWidth="1.6" vectorEffect="non-scaling-stroke" strokeDasharray="60 1400" className="wave-glint" />
     </svg>
   );
 }

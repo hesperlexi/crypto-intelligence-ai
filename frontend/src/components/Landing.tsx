@@ -1,6 +1,6 @@
 // What signed-out visitors see: a short, honest sales page with live prices, features, pricing and sign-in.
 import { signInWithPopup } from "firebase/auth";
-import { CyberHorizon, HoloOrbit } from "./Xeno";
+import { Constellation, CyberHorizon, HoloOrbit, SignalWave } from "./Xeno";
 import { useEffect, useState } from "react";
 import { tickers as restTickers } from "../lib/binance";
 import { raceSocket } from "../lib/ws";
@@ -197,11 +197,14 @@ export default function Landing({ error }: { error: string | null }) {
           })}
         </section>
 
+        <SignalWave className="h-8 w-full" />
+
         {/* what members get: a quiet two-column list, not a card grid */}
         <section className="grid gap-10 py-20 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
           <div>
             <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">A plan for every trade, before you place it.</h2>
             <p className="mt-4 max-w-md text-mute">On Android, iPhone and the web. The app never places real orders and never asks for exchange keys.</p>
+            <Constellation className="mt-8 w-full max-w-lg" />
           </div>
           <ul className="divide-y divide-glass/10 border-y border-glass/10">
             {FEATURES.map(([d, t, p]) => (
@@ -218,6 +221,8 @@ export default function Landing({ error }: { error: string | null }) {
 
         {/* wins of the day */}
         <WinsToday />
+
+        <SignalWave className="h-8 w-full" />
 
         {/* how to start: a real sequence, so numbered */}
         <section id="how" className="scroll-mt-20 py-16">
@@ -283,8 +288,12 @@ export default function Landing({ error }: { error: string | null }) {
         </section>
 
         {/* final call */}
-        <section className="panel panel-hero mb-12 p-8 text-center sm:p-12">
-          <HeroLogo size={64} title="Crypto Intelligence AI logo" className="mx-auto mb-5" />
+        <section className="panel panel-hero relative isolate mb-12 overflow-hidden p-8 text-center sm:p-12">
+          <CyberHorizon className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[70%] w-full opacity-60" />
+          <div className="relative mx-auto mb-5 h-28 w-28">
+            <HoloOrbit label={false} className="pointer-events-none absolute -inset-10 h-[calc(100%+5rem)] w-[calc(100%+5rem)] opacity-70" />
+            <HeroLogo size={64} title="Crypto Intelligence AI logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+          </div>
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>
           <p className="mx-auto mt-3 max-w-xl text-mute">Analysis only, not financial advice. Crypto is risky.</p>
           <div className="mt-7 flex flex-wrap justify-center gap-3">{cta(true)}{emailCta(true)}</div>
