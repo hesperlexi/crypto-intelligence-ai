@@ -13,7 +13,6 @@
   "PEPE/USDT",
   "ENA/USDT",
   "GALA/USDT",
-  "NVDAB/USDT",
   "ZEC/USDT",
   "SPCXB/USDT",
   "MSTRB/USDT",
@@ -21,15 +20,53 @@
   "U/USDT",
   "UNI/USDT",
   "LINK/USDT",
-  "ADA/USDT",
   "SUI/USDT",
   "DOT/USDT",
-  "NEAR/USDT"
+  "NEAR/USDT",
+  "ADA/USDT",
+  "BARD/USDT"
  ],
  "views": {
   "15m": {
    "rows": 25,
-   "updated": 1793806562229,
+   "updated": 1794658782372,
+   "with_plan": 18,
+   "grades": {
+    "None": 18
+   },
+   "statuses": [
+    "OK"
+   ],
+   "gold_row": true
+  },
+  "1h": {
+   "rows": 25,
+   "updated": 1794658782375,
+   "with_plan": 23,
+   "grades": {
+    "None": 23
+   },
+   "statuses": [
+    "OK"
+   ],
+   "gold_row": true
+  },
+  "4h": {
+   "rows": 25,
+   "updated": 1794658782379,
+   "with_plan": 23,
+   "grades": {
+    "B": 1,
+    "None": 22
+   },
+   "statuses": [
+    "OK"
+   ],
+   "gold_row": true
+  },
+  "12h": {
+   "rows": 25,
+   "updated": 1794658536954,
    "with_plan": 21,
    "grades": {
     "None": 21
@@ -39,9 +76,9 @@
    ],
    "gold_row": true
   },
-  "1h": {
+  "1d": {
    "rows": 25,
-   "updated": 1793806562233,
+   "updated": 1794658536957,
    "with_plan": 20,
    "grades": {
     "None": 20
@@ -51,48 +88,12 @@
    ],
    "gold_row": true
   },
-  "4h": {
-   "rows": 25,
-   "updated": 1793806562236,
-   "with_plan": 14,
-   "grades": {
-    "None": 14
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "12h": {
-   "rows": 25,
-   "updated": 1793805546404,
-   "with_plan": 19,
-   "grades": {
-    "None": 19
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "1d": {
-   "rows": 25,
-   "updated": 1793805546409,
-   "with_plan": 22,
-   "grades": {
-    "None": 22
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
   "3d": {
    "rows": 25,
-   "updated": 1793805546412,
-   "with_plan": 11,
+   "updated": 1794658536960,
+   "with_plan": 15,
    "grades": {
-    "None": 11
+    "None": 15
    },
    "statuses": [
     "INSUFFICIENT DATA",
@@ -103,68 +104,80 @@
  },
  "view_sizes_kb": [
   [
+   "bots",
+   383.6
+  ],
+  [
    "signals",
-   248.9
-  ],
-  [
-   "performance",
-   66.2
-  ],
-  [
-   "health",
-   53.3
+   247.0
   ],
   [
    "track_record",
-   47.6
+   120.2
   ],
   [
-   "dashboard_15m",
-   45.6
+   "performance",
+   67.5
+  ],
+  [
+   "health",
+   53.2
+  ],
+  [
+   "futures_4h",
+   52.3
+  ],
+  [
+   "futures_1h",
+   48.5
+  ],
+  [
+   "guardian",
+   47.9
+  ],
+  [
+   "futures_12h",
+   46.9
   ],
   [
    "dashboard_1w",
    44.8
   ],
   [
-   "bots",
-   44.7
-  ],
-  [
-   "dashboard_4h",
-   44.2
-  ],
-  [
-   "futures_15m",
-   44.2
-  ],
-  [
    "dashboard_12h",
-   44.0
-  ],
-  [
-   "dashboard_1h",
-   44.0
-  ],
-  [
-   "futures_1d",
-   43.6
+   43.8
   ],
   [
    "dashboard_1d",
-   43.3
+   43.7
+  ],
+  [
+   "dashboard_4h",
+   43.7
+  ],
+  [
+   "dashboard_15m",
+   43.5
+  ],
+  [
+   "dashboard_1h",
+   43.4
+  ],
+  [
+   "futures_15m",
+   43.4
   ],
   [
    "models_XLMUSDT_1d",
    42.9
   ],
   [
-   "futures_1h",
-   42.5
-  ],
-  [
    "models_HBARUSDT_12h",
    42.4
+  ],
+  [
+   "futures_1d",
+   42.2
   ],
   [
    "models_XLMUSDT_12h",
@@ -175,51 +188,39 @@
    42.0
   ],
   [
-   "futures_12h",
-   41.5
-  ],
-  [
    "dashboard_3d",
-   40.7
+   41.3
   ],
   [
    "models_HBARUSDT_1d",
    40.5
   ],
   [
+   "decisions_recent",
+   40.1
+  ],
+  [
    "models_INJUSDT_12h",
    39.0
-  ],
-  [
-   "models_ADAUSDT_1d",
-   38.4
-  ],
-  [
-   "models_BTCUSDT_1d",
-   38.3
-  ],
-  [
-   "models_XLMUSDT_4h",
-   38.3
   ]
  ],
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1793806316286,
-   "last_tick_finished": 1793806473139,
-   "last_tick_seconds": 156.9,
+   "last_tick_started": 1794658582617,
+   "last_tick_finished": 1794658708753,
+   "last_tick_seconds": 126.1,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 5,
-   "ticks": 2559,
-   "firestore_writes_today": 5292,
+   "ticks": 5359,
+   "firestore_writes_today": 2823,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 3044,
+   "firestore_reads_today": 1728,
    "firestore_read_limit": 50000,
-   "firestore_members_active": 5,
-   "firestore_member_reserve": 300,
-   "firestore_engine_budget": 14700,
+   "firestore_members_active": 4,
+   "firestore_member_reserve": 240,
+   "firestore_engine_budget": 14760,
    "firestore_free_limit": 20000,
    "firestore_lean": false
   },
@@ -291,11 +292,6 @@
     "message": ""
    },
    {
-    "symbol": "NVDAB/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
     "symbol": "ZEC/USDT",
     "state": "active",
     "message": ""
@@ -347,6 +343,11 @@
    },
    {
     "symbol": "NEAR/USDT",
+    "state": "active",
+    "message": ""
+   },
+   {
+    "symbol": "BARD/USDT",
     "state": "active",
     "message": ""
    }
@@ -354,127 +355,127 @@
   "series_15m": [
    {
     "symbol": "BTC/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "LTC/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 30860,
+    "candles": 31807,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 30860,
+    "candles": 31807,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 30860,
+    "candles": 31807,
     "status": "OK"
    },
    {
     "symbol": "PAXG/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 30861,
+    "candles": 31808,
     "status": "OK"
    },
    {
     "symbol": "GALA/USDT",
-    "candles": 30467,
-    "status": "OK"
-   },
-   {
-    "symbol": "NVDAB/USDT",
-    "candles": 14007,
+    "candles": 31414,
     "status": "OK"
    },
    {
     "symbol": "ZEC/USDT",
-    "candles": 30858,
+    "candles": 31805,
     "status": "OK"
    },
    {
     "symbol": "MSTRB/USDT",
-    "candles": 12873,
+    "candles": 13820,
     "status": "OK"
    },
    {
     "symbol": "UNI/USDT",
-    "candles": 30860,
+    "candles": 31807,
     "status": "OK"
    },
    {
     "symbol": "SPCXB/USDT",
-    "candles": 13915,
+    "candles": 14862,
     "status": "OK"
    },
    {
     "symbol": "TRX/USDT",
-    "candles": 30859,
+    "candles": 31806,
     "status": "OK"
    },
    {
     "symbol": "U/USDT",
-    "candles": 28351,
+    "candles": 29298,
     "status": "OK"
    },
    {
     "symbol": "ADA/USDT",
-    "candles": 30862,
+    "candles": 31809,
     "status": "OK"
    },
    {
     "symbol": "DOT/USDT",
-    "candles": 30861,
+    "candles": 31808,
     "status": "OK"
    },
    {
     "symbol": "SUI/USDT",
-    "candles": 30860,
+    "candles": 31807,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 30860,
+    "candles": 31807,
     "status": "OK"
    },
    {
     "symbol": "NEAR/USDT",
-    "candles": 30862,
+    "candles": 31809,
+    "status": "OK"
+   },
+   {
+    "symbol": "BARD/USDT",
+    "candles": 30082,
     "status": "OK"
    }
   ]
@@ -482,56 +483,55 @@
  "model_age_h": {
   "15m": {
    "n": 25,
-   "fresh_12h": 0,
-   "max": 214.0,
+   "fresh_12h": 24,
+   "max": 20.4,
    "missing": 0
   },
   "1h": {
    "n": 25,
-   "fresh_12h": 0,
-   "max": 180.5,
+   "fresh_12h": 24,
+   "max": 20.4,
    "missing": 0
   },
   "4h": {
    "n": 25,
-   "fresh_12h": 0,
-   "max": 180.4,
+   "fresh_12h": 24,
+   "max": 20.4,
    "missing": 0
   },
   "12h": {
    "n": 25,
-   "fresh_12h": 0,
-   "max": 180.4,
-   "missing": 3
+   "fresh_12h": 22,
+   "max": 20.4,
+   "missing": 2
   },
   "1d": {
    "n": 25,
-   "fresh_12h": 0,
-   "max": 180.3,
-   "missing": 4
+   "fresh_12h": 21,
+   "max": 20.4,
+   "missing": 3
   },
   "3d": {
    "n": 25,
-   "fresh_12h": 0,
-   "max": 180.3,
+   "fresh_12h": 20,
+   "max": 9.2,
    "missing": 5
   }
  },
  "last_train": {
-  "started_at": 1793762808652,
-  "finished_at": 1793762946012,
+  "started_at": 1794626463158,
+  "finished_at": 1794626561859,
   "detail": {
    "shards": 15,
-   "imported": 88,
+   "imported": 135,
    "skipped": 0,
-   "pruned_files": 73,
+   "pruned_files": 111,
    "failed": [],
    "derivs": {
     "funding": {
      "calls": 0,
      "rows": 0,
      "unsupported": [
-      "NVDAB/USDT",
       "MSTRB/USDT",
       "SPCXB/USDT",
       "U/USDT"
@@ -539,94 +539,94 @@
      "errors": []
     },
     "crowd": {
-     "files": 150,
-     "rows": 12384,
+     "files": 21,
+     "rows": 0,
      "missing": [],
      "errors": []
     }
    },
    "series_policy": {
-    "series": 126,
+    "series": 124,
     "skipped": [],
     "errors": [],
     "entry": {
-     "3d": "confirm:0.25",
+     "3d": "old:0.0",
      "1d": "old:0.0",
-     "12h": "confirm:0.25",
-     "4h": "market:0.0",
-     "1h": "confirm:0.1",
-     "15m": "confirm:0.1"
+     "12h": "confirm:0.1",
+     "4h": "old:0.0",
+     "1h": "old:0.0",
+     "15m": "old:0.0"
     },
     "filters": {
      "3d": {
       "enabled": false,
-      "reason": "only 270 trades to learn from",
-      "n": 270
+      "reason": "only 247 trades to learn from",
+      "n": 247
      },
      "1d": {
-      "enabled": true,
-      "keep_fraction": 0.8,
-      "n": 1128,
-      "exam": {
-       "n": 282,
-       "kept": 190,
-       "avg_r_all": 0.14548530607986185,
-       "avg_r_kept": 0.17603800800694822
-      },
-      "threshold": 0.3637510197589956,
-      "reason": "kept trades earned +0.18R vs +0.15R for all, on unseen trades"
-     },
-     "12h": {
       "enabled": false,
       "keep_fraction": 0.5,
-      "n": 2335,
+      "n": 1252,
       "exam": {
-       "n": 584,
-       "kept": 242,
-       "avg_r_all": 0.11604132820945162,
-       "avg_r_kept": 0.14489443171738
+       "n": 313,
+       "kept": 110,
+       "avg_r_all": 0.13198688871493788,
+       "avg_r_kept": 0.11223750933614428
       },
       "reason": "the filter did not improve results on unseen trades"
      },
+     "12h": {
+      "enabled": true,
+      "keep_fraction": 0.4,
+      "n": 2307,
+      "exam": {
+       "n": 577,
+       "kept": 192,
+       "avg_r_all": 0.16693118606868673,
+       "avg_r_kept": 0.2546632298633135
+      },
+      "threshold": 0.5638028507768643,
+      "reason": "kept trades earned +0.25R vs +0.17R for all, on unseen trades"
+     },
      "4h": {
       "enabled": true,
-      "keep_fraction": 0.8,
-      "n": 6680,
+      "keep_fraction": 0.7,
+      "n": 5232,
       "exam": {
-       "n": 1670,
-       "kept": 1289,
-       "avg_r_all": 0.06004804154145208,
-       "avg_r_kept": 0.12747307575419953
+       "n": 1308,
+       "kept": 761,
+       "avg_r_all": -0.034110884684383266,
+       "avg_r_kept": 0.06261631670067953
       },
-      "threshold": 0.4531529034088394,
-      "reason": "kept trades earned +0.13R vs +0.06R for all, on unseen trades"
+      "threshold": 0.47556456614936016,
+      "reason": "kept trades earned +0.06R vs -0.03R for all, on unseen trades"
      },
      "1h": {
       "enabled": false,
       "keep_fraction": 0.8,
-      "n": 3672,
+      "n": 3540,
       "exam": {
-       "n": 918,
-       "kept": 743,
-       "avg_r_all": -0.06793561013875093,
-       "avg_r_kept": -0.09220468809192088
+       "n": 885,
+       "kept": 792,
+       "avg_r_all": -0.06635835269751017,
+       "avg_r_kept": -0.07353386664792859
       },
       "reason": "the filter did not improve results on unseen trades"
      },
      "15m": {
       "enabled": false,
       "keep_fraction": 0.8,
-      "n": 2063,
+      "n": 2518,
       "exam": {
-       "n": 516,
-       "kept": 428,
-       "avg_r_all": -0.18666854175916545,
-       "avg_r_kept": -0.19351726309416967
+       "n": 630,
+       "kept": 543,
+       "avg_r_all": 0.21014521208064302,
+       "avg_r_kept": 0.21371571113849458
       },
       "reason": "the filter did not improve results on unseen trades"
      }
     },
-    "seconds": 79.7
+    "seconds": 81.4
    }
   }
  },
@@ -638,62 +638,137 @@
  },
  "track_record": {
   "record_since": 1793784369962,
-  "live_signals": 3,
-  "updated": 1793806562222
+  "live_signals": 57,
+  "updated": 1794658782325
  },
  "record_live": {
   "summary": {
-   "closed": 1,
-   "win_rate": 1.0,
-   "avg_return_pct": 2.124779159751698,
-   "total_return_pct": 2.124779159751698,
-   "best_pct": 2.124779159751698,
-   "worst_pct": 2.124779159751698,
-   "profit_factor": null,
+   "closed": 50,
+   "win_rate": 0.86,
+   "avg_return_pct": 2.077193113257754,
+   "total_return_pct": 103.8596556628877,
+   "best_pct": 13.373052316368465,
+   "worst_pct": -8.665056714589753,
+   "profit_factor": 5.3166983796942215,
    "net": true,
-   "avg_gross_return_pct": 2.2744666597516976,
-   "total_gross_return_pct": 2.2744666597516976,
-   "gross_win_rate": 1.0,
-   "avg_roi_pct": 57.36903731329584,
-   "total_roi_pct": 57.36903731329584,
-   "best_roi_pct": 57.36903731329584,
-   "worst_roi_pct": 57.36903731329584
+   "avg_gross_return_pct": 2.2244667322077545,
+   "total_gross_return_pct": 111.22333661038772,
+   "gross_win_rate": 0.86,
+   "avg_roi_pct": 20.007705506554853,
+   "total_roi_pct": 1000.3852753277426,
+   "best_roi_pct": 167.02756289433256,
+   "worst_roi_pct": -60.29000321988293
   },
   "by_timeframe": {
+   "12h": {
+    "closed": 14,
+    "win_rate": 0.9285714285714286,
+    "avg_return_pct": 1.7055747489502657,
+    "total_return_pct": 23.87804648530372,
+    "best_pct": 6.492573808598374,
+    "worst_pct": -6.698889246653659,
+    "profit_factor": 4.564478468909107,
+    "net": true,
+    "avg_gross_return_pct": 1.8648419807359804,
+    "total_gross_return_pct": 26.107787730303727,
+    "gross_win_rate": 0.9285714285714286,
+    "avg_roi_pct": 5.706002969946504,
+    "total_roi_pct": 79.88404157925106,
+    "best_roi_pct": 45.44801666018862,
+    "worst_roi_pct": -60.29000321988293
+   },
    "15m": {
-    "closed": 1,
+    "closed": 10,
+    "win_rate": 0.8,
+    "avg_return_pct": 1.333960295842926,
+    "total_return_pct": 13.339602958429259,
+    "best_pct": 5.061441299828259,
+    "worst_pct": -1.759421468315731,
+    "profit_factor": 5.1130716626915635,
+    "net": true,
+    "avg_gross_return_pct": 1.4813584918429261,
+    "total_gross_return_pct": 14.81358491842926,
+    "gross_win_rate": 0.8,
+    "avg_roi_pct": 40.49383825929787,
+    "total_roi_pct": 404.93838259297866,
+    "best_roi_pct": 167.02756289433256,
+    "worst_roi_pct": -49.26380111284047
+   },
+   "1d": {
+    "closed": 2,
     "win_rate": 1.0,
-    "avg_return_pct": 2.124779159751698,
-    "total_return_pct": 2.124779159751698,
-    "best_pct": 2.124779159751698,
-    "worst_pct": 2.124779159751698,
+    "avg_return_pct": 7.733742210124529,
+    "total_return_pct": 15.467484420249058,
+    "best_pct": 13.373052316368465,
+    "worst_pct": 2.0944321038805933,
     "profit_factor": null,
     "net": true,
-    "avg_gross_return_pct": 2.2744666597516976,
-    "total_gross_return_pct": 2.2744666597516976,
+    "avg_gross_return_pct": 7.86081167512453,
+    "total_gross_return_pct": 15.72162335024906,
     "gross_win_rate": 1.0,
-    "avg_roi_pct": 57.36903731329584,
-    "total_roi_pct": 57.36903731329584,
-    "best_roi_pct": 57.36903731329584,
-    "worst_roi_pct": 57.36903731329584
+    "avg_roi_pct": 23.201226630373586,
+    "total_roi_pct": 46.40245326074717,
+    "best_roi_pct": 40.119156949105395,
+    "worst_roi_pct": 6.28329631164178
+   },
+   "1h": {
+    "closed": 9,
+    "win_rate": 0.6666666666666666,
+    "avg_return_pct": 1.3603056510552625,
+    "total_return_pct": 12.242750859497363,
+    "best_pct": 5.132125973541208,
+    "worst_pct": -2.527859148102766,
+    "profit_factor": 3.245219688678319,
+    "net": true,
+    "avg_gross_return_pct": 1.5034910521663738,
+    "total_gross_return_pct": 13.531419469497363,
+    "gross_win_rate": 0.6666666666666666,
+    "avg_roi_pct": 13.603056510552626,
+    "total_roi_pct": 122.42750859497363,
+    "best_roi_pct": 51.32125973541208,
+    "worst_roi_pct": -25.27859148102766
+   },
+   "4h": {
+    "closed": 15,
+    "win_rate": 0.9333333333333333,
+    "avg_return_pct": 2.5954513959605534,
+    "total_return_pct": 38.9317709394083,
+    "best_pct": 9.244910080506738,
+    "worst_pct": -8.665056714589753,
+    "profit_factor": 5.492962045344388,
+    "net": true,
+    "avg_gross_return_pct": 2.7365947427938875,
+    "total_gross_return_pct": 41.04892114190831,
+    "gross_win_rate": 0.9333333333333333,
+    "avg_roi_pct": 23.115525953319473,
+    "total_roi_pct": 346.7328892997921,
+    "best_roi_pct": 73.9592806440539,
+    "worst_roi_pct": -43.32528357294876
    }
   },
   "signals_by_status": {
-   "OPEN": 2,
-   "TP2": 1
+   "EXPIRED": 23,
+   "NOT_FILLED": 1,
+   "OPEN": 6,
+   "STOPPED": 7,
+   "TP1": 5,
+   "TP2": 9,
+   "TP3": 6
   },
   "signals_by_timeframe": {
-   "12h": 1,
-   "15m": 1,
-   "4h": 1
+   "12h": 15,
+   "15m": 11,
+   "1d": 2,
+   "1h": 9,
+   "4h": 20
   }
  },
  "counts": {
-  "paper": 4,
+  "paper": 6,
   "paper_trades": 0,
-  "paper_futures_trades": 36,
+  "paper_futures_trades": 106,
   "auto_paper_state": 4,
-  "jobs": 30
+  "jobs": 42
  },
  "bots": [
   {
@@ -724,10 +799,10 @@
  "telegram": {
   "has_token": true,
   "has_channel": true,
-  "post_weekly": true,
   "enabled": true,
-  "post_teaser": true,
   "post_wins": true,
+  "post_teaser": true,
+  "post_weekly": true,
   "keys": [
    "channel",
    "enabled",
@@ -739,50 +814,44 @@
  },
  "telegram_status": {
   "ok": true,
-  "checked_at": 1793803016559,
+  "checked_at": 1794655248160,
   "last_sent": [
-   "win"
+   "briefing (waiting for approval)"
   ],
-  "last_post_at": 1793799613495,
+  "last_post_at": 1794575650681,
   "updated_at": null,
   "errors": 0
  },
  "telegram_drafts": {
-  "n": 1,
-  "items": [
-   {
-    "kind": "briefing",
-    "created_at": 1793797247950,
-    "at": null
-   }
-  ]
+  "n": 0,
+  "items": []
  },
- "push_tokens": 7,
+ "push_tokens": 5,
  "telegram_post_jobs": [
   {
-   "status": "queued",
-   "created_at": 1793806534225,
+   "status": "done",
+   "created_at": 1794575469406,
    "error": ""
   },
   {
-   "status": "failed",
-   "created_at": 1793806113000,
-   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+   "status": "done",
+   "created_at": 1794554488973,
+   "error": ""
   },
   {
-   "status": "failed",
-   "created_at": 1793805257456,
-   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+   "status": "done",
+   "created_at": 1794554487157,
+   "error": ""
   },
   {
-   "status": "failed",
-   "created_at": 1793804887179,
-   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+   "status": "done",
+   "created_at": 1794549426654,
+   "error": ""
   },
   {
-   "status": "failed",
-   "created_at": 1793803590636,
-   "error": "RuntimeError: Bad Request: can't parse entities: Can't find end tag corresponding to start tag \"i\""
+   "status": "done",
+   "created_at": 1794549424363,
+   "error": ""
   }
  ]
 }
