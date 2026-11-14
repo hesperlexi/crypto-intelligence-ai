@@ -7,7 +7,7 @@ import { RoiFigure } from "../components/SignalExtras";
 import { useApi } from "../lib/api";
 import { base, isNum } from "../lib/format";
 import { SITE_HOST } from "../lib/brand";
-import { backdrop, C, cap, chip, fontsReady, footer, glowText, header, M, panel, sidePill, text, wrap, font } from "../lib/cardCanvas";
+import { backdrop, C, cap, chip, fontsReady, footer, glowText, header, M, orbitRings, panel, sidePill, text, wrap, font } from "../lib/cardCanvas";
 import { roiOf } from "../lib/roi";
 
 const SITE = SITE_HOST;
@@ -32,6 +32,7 @@ async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
   const hh = story ? 320 : 224;
   panel(g, M, y, W - 2 * M, hh, { r: 32, stroke: (head ?? 0) >= 0 ? "rgba(14,203,129,0.45)" : "rgba(246,70,93,0.45)", fill: (head ?? 0) >= 0 ? "rgba(14,203,129,0.06)" : "rgba(246,70,93,0.06)" });
   text(g, roiTot ? "TOTAL ROI ON MARGIN · ALL CLOSED SIGNALS" : "TOTAL PRICE MOVE · ALL CLOSED SIGNALS", W / 2, y + (story ? 64 : 48), { weight: 800, px: 22, color: C.gold, align: "center" });
+  orbitRings(g, W / 2, y + hh / 2 + 8, (W - 2 * M) * 0.44, hh * 0.44, col);
   glowText(g, sp(head, 2), W / 2, y + (story ? 216 : 160), col, { weight: 800, px: story ? 150 : 120, align: "center", maxW: W - 2 * M - 64, blur: 44 });
   text(g, `${roiTot ? `price ${sp(r.total_return_pct, 2)} · ` : ""}${r.closed} closed signals, wins and losses, equal margin, before fees`,
     W / 2, y + hh - 32, { weight: 500, px: 20, color: C.mute, align: "center", maxW: W - 2 * M - 48 });

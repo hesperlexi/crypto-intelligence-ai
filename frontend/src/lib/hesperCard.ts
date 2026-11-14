@@ -1,6 +1,6 @@
 // Admin share image of Road to Rich (views/hesper), drawn in the browser with the share-card kit (lib/cardCanvas.ts:
 // black + gold, logo, glowing hero number). Nothing is uploaded or posted: the admin downloads the PNG.
-import { backdrop, C, fontsReady, footer, glowText, header, M, panel, text } from "./cardCanvas";
+import { backdrop, C, fontsReady, footer, glowText, header, M, orbitRings, panel, text } from "./cardCanvas";
 import { isNum } from "./format";
 
 export const usd = (v: unknown, d = 2) => (isNum(v) ? `$${v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d })}` : "—");
@@ -18,7 +18,7 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
   const cur = v.current ?? {};
   const sc = v.score ?? {};
   const goal = v.goal ?? 1000, start = v.start ?? 100;
-  let y = await header(g, `Hesper Challenge · run #${cur.run ?? "—"}`) + 40;
+  let y = await header(g, `Hesper Challenge · run #${cur.run ?? "—"}`, undefined, "AI  ·  DEMO CHALLENGE") + 40;
 
   // hero: the run's balance and the way to $1,000
   const bal = isNum(balance) ? balance : cur.balance;
@@ -26,6 +26,7 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
   const hh = 300;
   panel(g, M, y, W - 2 * M, hh, { r: 32, stroke: "rgba(240,185,11,0.5)", fill: "rgba(240,185,11,0.05)" });
   text(g, `RUN #${cur.run ?? "—"} · BALANCE`, W / 2, y + 52, { weight: 800, px: 22, color: C.gold, align: "center" });
+  orbitRings(g, W / 2, y + 138, (W - 2 * M) * 0.4, 66, up ? C.gold : C.bear);
   glowText(g, usd(bal), W / 2, y + 170, up ? C.gold : C.bear, { weight: 800, px: 120, align: "center", maxW: W - 2 * M - 64, blur: 44 });
   const bx = M + 48, bw = W - 2 * M - 96, by = y + 214, bh = 18;
   g.fillStyle = "rgba(255,255,255,0.08)"; g.beginPath(); g.roundRect(bx, by, bw, bh, bh / 2); g.fill();

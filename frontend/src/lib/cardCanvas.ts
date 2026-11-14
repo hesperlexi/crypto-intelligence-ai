@@ -1,12 +1,14 @@
 // Shared drawing kit for the downloadable share images (Weekly report, Achievements). Same look as the Telegram
-// cards (backend/app/services/cards.py): black + gold, radial gold glow, the real logo top-left, glowing hero
-// numbers. Every text line is drawn on an alphabetic baseline and measured, so columns and rows line up exactly;
+// cards (backend/app/services/cards.py): black + gold, radial gold glow, enhanced in v2.35 with gold dust stars, one faint
+// gold orbit with a satellite, gold HUD corner brackets and panels with a gold top light (the real logo top-left, glowing hero the real logo top-left, glowing hero
+// numbers). Every text line is drawn on an alphabetic baseline and measured, so columns and rows line up exactly;
 // long values are shrunk to fit their box. Layout uses an 8 px grid.
 import { SITE_HOST } from "./brand";
 
 export const C = {
   gold: "#f0b90b", goldSoft: "rgba(240,185,11,0.6)", bull: "#0ecb81", bear: "#f6465d", text: "#f2f2f0", mute: "#9a958a",
   dim: "#6f6a60", line: "rgba(240,185,11,0.16)", panel: "rgba(255,255,255,0.035)", panelHi: "rgba(240,185,11,0.08)", ink: "#08080a",
+  ai: "#ffd66b",
 };
 export const M = 72;                                                  // outer margin
 
@@ -68,9 +70,25 @@ export function rrect(g: G, x: number, y: number, w: number, h: number, r: numbe
 }
 
 export function panel(g: G, x: number, y: number, w: number, h: number, o: { r?: number; fill?: string; stroke?: string; lw?: number } = {}) {
-  rrect(g, x, y, w, h, o.r ?? 24);
+  const r = o.r ?? 24;
+  rrect(g, x, y, w, h, r);
   g.fillStyle = o.fill ?? C.panel; g.fill();
   g.strokeStyle = o.stroke ?? C.line; g.lineWidth = o.lw ?? 2; g.stroke();
+  if (!o.fill) {                                   // glass: a thin cyan light along the top edge
+    const lg = g.createLinearGradient(x + r, 0, x + w - r, 0);
+    lg.addColorStop(0, "rgba(240,185,11,0)"); lg.addColorStop(0.5, "rgba(240,185,11,0.45)"); lg.addColorStop(1, "rgba(240,185,11,0)");
+    g.fillStyle = lg; g.fillRect(x + r, y + 1, w - 2 * r, 1.5);
+  }
+}
+
+/** Orbit rings with two satellites around a hero figure (centre cx, cy; radii rx, ry), in the figure's colour. */
+export function orbitRings(g: G, cx: number, cy: number, rx: number, ry: number, color: string) {
+  g.save();
+  g.strokeStyle = color; g.lineWidth = 1.5;
+  [[1, 0.55], [0.82, 0.32]].forEach(([k, a]) => { g.globalAlpha = a; g.beginPath(); g.ellipse(cx, cy, rx * k, ry * k, 0, 0, Math.PI * 2); g.stroke(); });
+  g.globalAlpha = 1; g.fillStyle = color; g.shadowColor = color; g.shadowBlur = 14;
+  [[-0.65, 1], [2.6, 0.82]].forEach(([a, k]) => { g.beginPath(); g.arc(cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k, 4, 0, Math.PI * 2); g.fill(); });
+  g.restore();
 }
 
 /** Pill with its text centred. align "right": x is the right edge. Returns the far edge (left edge for right-aligned). */
@@ -98,19 +116,43 @@ function radial(g: G, cx: number, cy: number, r: number, rgba: string) {
   g.fillStyle = gr; g.fillRect(0, 0, g.canvas.width, g.canvas.height);
 }
 
-/** Warm-black gradient, gold glows, double gold frame. */
+/** Warm-black gradient and gold glows (the house look), plus gold dust stars, one faint tilted gold orbit with a
+ *  satellite, and gold HUD corner brackets. */
 export function backdrop(g: G, W: number, H: number) {
   const bg = g.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, "#14110b"); bg.addColorStop(1, "#040406");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
   radial(g, W * 0.12, 70, W * 0.62, "rgba(240,185,11,0.16)");
   radial(g, W * 0.88, H * 0.55, W * 0.7, "rgba(240,185,11,0.09)");
-  rrect(g, 16, 16, W - 32, H - 32, 36); g.strokeStyle = "rgba(199,160,64,0.85)"; g.lineWidth = 3; g.stroke();
-  rrect(g, 26, 26, W - 52, H - 52, 30); g.strokeStyle = "rgba(240,185,11,0.14)"; g.lineWidth = 1.5; g.stroke();
+  let s = 7;
+  const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
+  for (let i = 0; i < Math.round((W * H) / 4200); i++) {
+    const x = 20 + rnd() * (W - 40), y = 20 + rnd() * (H - 40), r = [0.6, 0.8, 1, 1, 1.4][Math.floor(rnd() * 5)];
+    const big = rnd() < 0.05;
+    g.save();
+    g.globalAlpha = 0.25 + rnd() * 0.5;
+    g.fillStyle = big ? "#ffecb4" : "#cdb27a";
+    if (big) { g.shadowColor = "#f0b90b"; g.shadowBlur = 8; g.globalAlpha = 0.95; }
+    g.beginPath(); g.arc(x, y, big ? 1.8 : r, 0, Math.PI * 2); g.fill();
+    g.restore();
+  }
+  g.save();
+  g.translate(W * 0.72, H * 0.5); g.rotate(-0.24);
+  g.strokeStyle = "rgba(240,185,11,0.14)"; g.lineWidth = 2;
+  g.beginPath(); g.ellipse(0, 0, W * 0.55, H * 0.22, 0, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = "#ffd66b"; g.shadowColor = "#f0b90b"; g.shadowBlur = 16;
+  g.beginPath(); g.arc(Math.cos(3.6) * W * 0.55, Math.sin(3.6) * H * 0.22, 4, 0, Math.PI * 2); g.fill();
+  g.restore();
+  const L = 64, o = 18;
+  g.strokeStyle = C.gold; g.lineWidth = 4; g.lineCap = "square";
+  for (const [x, y, dx, dy] of [[o, o, 1, 1], [W - o, o, -1, 1], [o, H - o, 1, -1], [W - o, H - o, -1, -1]]) {
+    g.beginPath(); g.moveTo(x + dx * L, y); g.lineTo(x, y); g.lineTo(x, y + dy * L); g.stroke();
+  }
+  rrect(g, o + 12, o + 12, W - 2 * o - 24, H - 2 * o - 24, 30); g.strokeStyle = "rgba(240,185,11,0.16)"; g.lineWidth = 1.5; g.stroke();
 }
 
 /** Logo + brand name + gold subtitle, top-left. Returns the y below the header. */
-export async function header(g: G, subtitle: string, top = 64): Promise<number> {
+export async function header(g: G, subtitle: string, top = 64, tagText = "AI  ·  REAL RECORD"): Promise<number> {
   const logo = await loadImg("/brand/logo-192.png");
   const s = 80;
   if (logo) {
@@ -121,14 +163,23 @@ export async function header(g: G, subtitle: string, top = 64): Promise<number> 
     g.save(); rrect(g, M, top, s, s, 20); g.clip(); g.drawImage(logo, M, top, s, s); g.restore();
   }
   const tx = M + (logo ? s + 24 : 0);
-  text(g, "CRYPTO INTELLIGENCE AI", tx, top + 36, { weight: 800, px: 30, maxW: g.canvas.width - tx - M });
-  text(g, subtitle, tx, top + 70, { weight: 600, px: 22, color: C.gold, maxW: g.canvas.width - tx - M });
+  text(g, "CRYPTO INTELLIGENCE AI", tx, top + 36, { weight: 800, px: 30, maxW: g.canvas.width - tx - M - 300 });
+  // "AI · REAL RECORD" transmission tag, top right
+  const tag = tagText, W = g.canvas.width;
+  g.font = font(800, 17);
+  const tw = g.measureText(tag).width + 52;
+  rrect(g, W - M - tw, top + 6, tw, 36, 18); g.fillStyle = C.panelHi; g.fill();
+  g.strokeStyle = C.goldSoft; g.lineWidth = 1.5; g.stroke();
+  g.save(); g.fillStyle = C.ai; g.shadowColor = C.ai; g.shadowBlur = 10; g.beginPath(); g.arc(W - M - tw + 20, top + 24, 5, 0, Math.PI * 2); g.fill(); g.restore();
+  text(g, tag, W - M - tw + 34, top + 24 + 6, { weight: 800, px: 17, color: C.ai });
+  text(g, subtitle, tx, top + 70, { weight: 600, px: 22, color: C.gold, maxW: W - tx - M - tw - 24 });
   return top + s;
 }
 
 /** Hairline, site in gold left, note right, small disclaimer lines below. `top` = y of the hairline. */
 export function footer(g: G, W: number, top: number, note: string, small: string[]) {
-  g.fillStyle = C.line; g.fillRect(M, top, W - 2 * M, 2);
+  g.fillStyle = C.line; g.fillRect(M, top, W - 2 * M, 1.5);
+  g.fillStyle = C.gold; g.fillRect(M, top, 200, 2);
   text(g, SITE_HOST, M, top + 44, { weight: 800, px: 26, color: C.gold });
   g.font = font(800, 26);
   const siteW = g.measureText(SITE_HOST).width;

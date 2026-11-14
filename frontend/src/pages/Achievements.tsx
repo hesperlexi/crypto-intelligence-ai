@@ -27,6 +27,20 @@ function medal(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, i
   const asc = m.actualBoundingBoxAscent, desc = m.actualBoundingBoxDescent;
   g.fillStyle = C.gold; g.fillText(icon, cx, cy + (asc - desc) / 2);
   g.textAlign = "left";
+  // v2.35: the logo's language around the medal - a gold tick ring and a tilted light-gold orbit with a satellite
+  g.save();
+  g.strokeStyle = "rgba(240,185,11,0.75)"; g.lineCap = "round";
+  for (let k = 0; k < 48; k++) {
+    const a = (k / 48) * Math.PI * 2, r0 = r * 1.14, r1 = r * (k % 4 === 0 ? 1.24 : 1.2);
+    g.lineWidth = k % 4 === 0 ? 3 : 2;
+    g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke();
+  }
+  g.translate(cx, cy); g.rotate(-0.38);
+  g.strokeStyle = "rgba(255,214,107,0.7)"; g.lineWidth = 2.5;
+  g.beginPath(); g.ellipse(0, 0, r * 1.75, r * 0.5, 0, 0, Math.PI * 2); g.stroke();
+  g.fillStyle = "#fff1c4"; g.shadowColor = C.gold; g.shadowBlur = 18;
+  g.beginPath(); g.arc(Math.cos(-0.5) * r * 1.75, Math.sin(-0.5) * r * 0.5, 7, 0, Math.PI * 2); g.fill();
+  g.restore();
 }
 
 const valueColor = (a: any) => (isNum(a.roi_pct) && a.roi_pct < 0 ? C.bear : C.bull);
