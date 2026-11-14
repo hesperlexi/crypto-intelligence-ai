@@ -1,5 +1,6 @@
 // What signed-out visitors see: a short, honest sales page with live prices, features, pricing and sign-in.
 import { signInWithPopup } from "firebase/auth";
+import { CyberHorizon, HoloOrbit } from "./Xeno";
 import { useEffect, useState } from "react";
 import { tickers as restTickers } from "../lib/binance";
 import { raceSocket } from "../lib/ws";
@@ -95,7 +96,7 @@ export default function Landing({ error }: { error: string | null }) {
 
   const btc = px["BTC/USDT"];
   return (
-    <div className="landing-bg min-h-full text-text">
+    <div className="landing-bg min-h-full overflow-x-clip text-text">
       <header className="glass-bar sticky top-0 z-30 border-b">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
           <div className="flex items-center gap-2.5">
@@ -114,7 +115,8 @@ export default function Landing({ error }: { error: string | null }) {
 
       <main className="mx-auto max-w-6xl px-4">
         {/* hero: the members' entrance - the product itself on the right, a live ticket */}
-        <section className="grid items-center gap-10 pb-10 pt-10 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14">
+        <section className="relative isolate grid items-center gap-10 pb-10 pt-10 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14">
+          <CyberHorizon className="pointer-events-none absolute -bottom-24 left-1/2 -z-20 h-[46%] w-screen max-w-none -translate-x-1/2 opacity-60" />
           <div>
             <p className="flex items-center gap-2 text-sm text-mute">
               <span className="h-1.5 w-1.5 rounded-full bg-bull" aria-hidden="true" />
@@ -139,8 +141,9 @@ export default function Landing({ error }: { error: string | null }) {
             </div>
           </div>
 
-          {/* the live ticket */}
-          <div className="relative">
+          {/* the live ticket, floating in front of a holographic orbit */}
+          <div className="relative isolate">
+            <HoloOrbit className="pointer-events-none absolute left-1/2 top-1/2 -z-10 w-[135%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-90" />
             <div className="panel panel-hero relative p-6 sm:p-7">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">

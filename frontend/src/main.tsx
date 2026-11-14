@@ -6,12 +6,14 @@ import { AppearanceProvider } from "./lib/appearance";
 import { ModeProvider } from "./lib/mode";
 import { startUpdater } from "./lib/updater";
 import "./index.css";
+import { CosmicBackdrop } from "./components/Xeno";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
     <AppearanceProvider>
       <ModeProvider>
         <BrowserRouter>
+          <CosmicBackdrop />
           <App />
         </BrowserRouter>
       </ModeProvider>

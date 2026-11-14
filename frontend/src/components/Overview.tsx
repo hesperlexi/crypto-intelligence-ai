@@ -26,6 +26,7 @@ import { AiTag, Empty, Info } from "./ui";
 
 const CandleChart = lazy(() => import("./CandleChart"));
 import { ToolChips, useChartTools } from "./ChartTools";
+import { MarketRadar } from "./Xeno";
 const BTC = "BTC/USDT";
 const H1_LIMIT = 200;                 // 1h candles: sparkline (24), rolling volatility (7 days) and the 1H chart, one request
 
@@ -225,13 +226,13 @@ function headline(text: string): string {
   return out;
 }
 
-export function AiBriefCard({ b, loading }: { b: any; loading: boolean }) {
+export function AiBriefCard({ b, loading, rows }: { b: any; loading: boolean; rows?: any[] }) {
   const [open, setOpen] = useState(false);
   const mood = b?.mood;
   const tone: Tone = mood === "BULL" ? "bull" : mood === "BEAR" ? "bear" : "warn";
   const bullets: string[] = b?.bullets ?? [];
   return (
-    <section className="panel ai-card flex min-w-0 flex-col p-3.5 sm:p-4">
+    <section className="panel ai-card ai-scan flex min-w-0 flex-col p-3.5 sm:p-4">
       <CardHead ai title="Market intelligence" right={b?.text ? (
         <button type="button" className="tap-h inline-flex items-center text-xs font-medium text-accent hover:underline" aria-expanded={open} aria-controls="ov-brief-more" onClick={() => setOpen((v) => !v)}>
           {open ? "Hide details" : "View details →"}
@@ -257,6 +258,11 @@ export function AiBriefCard({ b, loading }: { b: any; loading: boolean }) {
             </div>
           )}
         </>
+      )}
+      {(rows ?? []).length > 0 && (
+        <div className="mt-auto flex flex-1 items-end justify-center border-t border-glass/[0.06] pt-3">
+          <MarketRadar rows={rows} size={240} />
+        </div>
       )}
     </section>
   );

@@ -54,18 +54,18 @@ export default function Dashboard() {
       {/* row 2: BTC chart + AI market intelligence (the v2.16 briefing) */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <BtcChartCard />
-        <AiBriefCard b={briefing} loading={mc.loading} />
+        <AiBriefCard b={briefing} loading={mc.loading} rows={dash4.data?.rows} />
       </div>
 
       {/* rows 3-4 as two balanced columns (owner, 14 Nov 2026: no big empty gaps on desktop):
           left = market status · Trade Guardian (admin) · performance; right = open calls · recent activity */}
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
-        <div className="flex min-w-0 flex-col gap-4">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
+        <div className="ov-stack flex min-w-0 flex-col gap-4">
           <GlobalStatusCard mc={mc.data} ctx={ctx.data} />
           {admin && <GuardianCard />}
           <PerformanceCard track={track.data} loading={track.loading} />
         </div>
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="ov-stack flex min-w-0 flex-col gap-4">
           <ActiveSignalsCard track={track.data} loading={track.loading} />
           <RecentActivityCard track={track.data} briefing={briefing} />
         </div>
@@ -78,8 +78,8 @@ export default function Dashboard() {
 
       <MyCoins rows={d?.rows} />
       <MoreDetail>
-      <div className="grid items-start gap-4 xl:grid-cols-3">
-        <div className="flex min-w-0 flex-col gap-4">
+      <div className="grid gap-4 xl:grid-cols-3">
+        <div className="ov-stack flex min-w-0 flex-col gap-4">
         <Card title="Market regime" right={<span className="text-xs text-mute">{(d?.regimes ?? []).length} coins</span>}>
           <div className="-mr-2 max-h-[34rem] space-y-3 overflow-y-auto pr-2">
             {(d?.regimes ?? []).map((r: any) => (
@@ -100,7 +100,7 @@ export default function Dashboard() {
           )) : <Empty>No elevated risks flagged</Empty>}
         </Card>
         </div>
-        <div className="flex min-w-0 flex-col gap-4">
+        <div className="ov-stack flex min-w-0 flex-col gap-4">
           <TopSignals d={d} />
           <Card title="Top opportunities">
             {d?.opportunities?.length ? d.opportunities.map((o: any) => (

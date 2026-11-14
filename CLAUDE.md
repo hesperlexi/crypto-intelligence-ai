@@ -762,3 +762,7 @@ UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian;
 - Overview desktop: rows 3-4 are two stacked columns (status · Guardian · performance | open calls · activity);
   "More market detail" columns: regime + top risks | top signals + opportunities | sentiment; heatmap fills its row
   (`.card-fill`). Guardian page shows `last_error` only if < 6 h old (amber).
+- Observatory look (owner, 14 Nov 2026, `components/Xeno.tsx`): `CosmicBackdrop` (fixed starfield + nebula + slow orbit,
+  z -1, mounted in `main.tsx`, fainter on light / glass off), `MarketRadar` (4H watchlist as radar blips inside the
+  Overview "Market intelligence" card, `.ai-scan`), welcome page `HoloOrbit` behind the example ticket + `CyberHorizon`
+  grid floor. Overview stacks end level (`.ov-stack`: last card fills). Motion off under reduced motion.

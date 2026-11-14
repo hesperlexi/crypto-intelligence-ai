@@ -839,3 +839,29 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 /* v2.26 no empty card bottoms: a card in a stretched grid row lets its body fill the height (heatmap tiles grow). */
 .card-fill { display: flex; flex-direction: column; }
 .card-fill > .card-body { flex: 1 1 auto; }
+
+/* v2.26 observatory touches (components/Xeno.tsx): cosmic backdrop behind every page, radar blips, welcome orbit */
+.cosmos { position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: 0.9; }
+[data-theme="light"] .cosmos { opacity: 0.35; }
+[data-glass="off"] .cosmos { opacity: 0.5; }
+.cosmos-orbit { animation: xeno-spin 160s linear infinite; }
+.cosmos-twinkle { animation: cosmos-twinkle 4.5s ease-in-out infinite; }
+.xeno-blip { animation: xeno-blink 2.4s ease-in-out infinite; }
+.holo-tilt { animation: xeno-spin 26s linear infinite; }
+.holo-tilt2 { animation: xeno-spin 38s linear infinite reverse; }
+@keyframes cosmos-twinkle { 0%, 100% { opacity: 0.25; } 50% { opacity: 1; } }
+/* AI cards get a faint scan line and a cyan-violet edge glow */
+.ai-scan { position: relative; overflow: hidden; }
+.ai-scan::after { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 40%; pointer-events: none;
+  background: linear-gradient(180deg, transparent, rgb(var(--ai) / 0.06), transparent); transform: translateY(-100%);
+  animation: xeno-scan 11s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) {
+  .cosmos-orbit, .cosmos-twinkle, .xeno-blip, .holo-tilt, .holo-tilt2, .ai-scan::after { animation: none; }
+}
+/* stacked columns end level with their neighbours: the last card takes the rest of the height */
+.ov-stack > :last-child { flex: 1 1 auto; }
+.ov-stack > .panel:last-child:not(.card-fill) { display: flex; flex-direction: column; }
+.ov-stack > .panel:last-child > .card-body { flex: 1 1 auto; }
+.hz-scan { animation: hz-scan 7s ease-in-out infinite; }
+@keyframes hz-scan { 0%, 100% { opacity: 0.15; } 50% { opacity: 0.9; } }
+@media (prefers-reduced-motion: reduce) { .hz-scan { animation: none; } }
