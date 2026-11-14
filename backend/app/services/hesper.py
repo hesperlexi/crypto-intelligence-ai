@@ -29,6 +29,7 @@ from typing import Any
 from ..data.base import tf_ms
 from ..db import dumps, loads, new_id, now_ms
 from ..engine import futures as F
+from ..pricefmt import fmt_price
 from . import analysis
 from . import tracking
 from .bots import BotEngine
@@ -128,7 +129,18 @@ class Hesper(BotEngine):
         self._funding(state, now)
         cfg = state.get("trade_cfg")
         if cfg and (state["positions"] or state["pending"]):
+            before = {q["id"]: int(q.get("tp_hit") or 0) for q in state["positions"]}
             events += self._manage_decision(cfg, state, now)
+            for e in events:                   # v2.30: the run and the cash after a close, for the notification
+                e.setdefault("run", state["run"])
+                if e.get("type") in ("close", "liquidated"):
+                    e.setdefault("balance", float(state["cash"]))
+            # v2.30: a target reached on a trade that is still open (a close reports its own targets)
+            for q in state["positions"]:
+                for n in range(before.get(q["id"], 0) + 1, int(q.get("tp_hit") or 0) + 1):
+                    if q["id"] in before:
+                        events.append({"bot": BOT_ID, "type": "tp", "symbol": q["symbol"], "tp": n,
+                                       "side": q.get("side"), "run": state["run"]})
         if not state["positions"] and not state["pending"]:
             state["trade_cfg"] = None
             ended = self._check_end(state, now)
@@ -136,6 +148,8 @@ class Hesper(BotEngine):
                 events.append(ended)
                 state = self.load() or state
             events += self._enter(state, now)
+        for e in events:
+            e.setdefault("run", state["run"])
         state["equity"] = self.equity(state)
         hit = self._milestone(state, now)
         if hit:
@@ -500,3 +514,69 @@ def core(v: dict[str, Any]) -> Any:
     p = c.get("pending") or {}
     return [c.get("run"), c.get("trades"), (v.get("score") or {}).get("trades"), o.get("id"), o.get("tp_hit"),
             o.get("stop"), p.get("id"), c.get("goal_reached_at"), v.get("idle")]
+
+
+# ---- v2.30 notifications (owner, 14 Nov 2026: "also for hesper challenge - very important") --------------------
+# Every challenge event becomes a push: trade opened / limit placed / limit filled / limit expired / TP hit / trade
+# closed (with P/L and balance) / liquidated / run ended / goal reached. Sent to the admin's devices; also to each active
+# member when the admin shows the challenge to members (config/hesper.visibility == 'members', read only when there is
+# something to send). Notification text only: nothing here changes a trade.
+PUSH_URL, MEMBER_URL = "/rich", "/results?tab=challenge"      # admin page / members' Results tab
+REASONS = {"stop": "stop loss", "breakeven stop": "break-even stop", "trailing stop": "stop at TP1, profit kept",
+           "time exit": "time limit", "time stop": "time limit", "runner target": "runner target"}
+
+
+def _coin(sym: Any) -> str:
+    s = str(sym or "")
+    return "GOLD" if s.startswith("PAXG") else s.split("/")[0]
+
+
+def _usd(v: Any) -> str:
+    try:
+        return f"${float(v):,.2f}"
+    except (TypeError, ValueError):
+        return "-"
+
+
+def push_text(ev: dict[str, Any]) -> tuple[str, str] | None:
+    """(title, body) of one challenge event, or None for an event that is not worth a notification."""
+    t, coin, run = ev.get("type"), _coin(ev.get("symbol")), ev.get("run")
+    head = f"Hesper Challenge · run #{run}" if run else "Hesper Challenge"
+    side = "LONG" if (ev.get("side") or 0) > 0 else "SHORT"
+    if t == "open":
+        lev = f", {float(ev['leverage']):g}x" if ev.get("leverage") else ""
+        return head, f"{coin} {side} opened at {fmt_price(ev.get('price'))}{lev}."
+    if t == "limit":
+        return head, f"{coin}: entry order placed at {fmt_price(ev.get('price'))}, waiting for the price."
+    if t == "fill":
+        return head, f"{coin}: entry filled at {fmt_price(ev.get('price'))}, the trade is live."
+    if t == "expired":
+        return head, f"{coin}: entry order cancelled" + (f" ({ev['reason']})." if ev.get("reason") else ", price never reached it.")
+    if t == "tp":
+        extra = " Stop moved to break-even." if ev.get("tp") == 1 else (" Stop moved to TP1." if ev.get("tp") == 2 else "")
+        return head, f"{coin} {side}: TP{ev.get('tp')} hit, part of the trade closed in profit.{extra}"
+    if t in ("close", "liquidated"):
+        pnl = float(ev.get("pnl") or 0)
+        why = "liquidated" if t == "liquidated" else REASONS.get(str(ev.get("reason") or ""), str(ev.get("reason") or ""))
+        bal = f" Balance {_usd(ev['balance'])}." if ev.get("balance") is not None else ""
+        return head, f"{coin} closed {'+' if pnl >= 0 else '-'}{_usd(abs(pnl))}" + (f" ({why})." if why else ".") + bal
+    if t == "run_end":
+        why = {"liquidated": "liquidated", "busted": "balance too low to trade"}.get(ev.get("reason"), ev.get("reason") or "ended")
+        return head, f"Run ended: {why}. Final balance {_usd(ev.get('balance'))}. The next run starts now."
+    if t == "goal_reached":
+        return head, f"Goal reached! Balance {_usd(ev.get('balance'))}. The run keeps going."
+    return None
+
+
+def push_messages(events: list[dict[str, Any]], member_uids: list[str] | tuple[str, ...] = ()) -> list[dict[str, str]]:
+    """Push messages for the admin (no uid) and, when given, each member (uid)."""
+    out: list[dict[str, str]] = []
+    for i, ev in enumerate(events or []):
+        tb = push_text(ev)
+        if not tb:
+            continue
+        base = {"title": tb[0], "body": tb[1], "url": PUSH_URL,
+                "tag": f"hesper-{ev.get('run')}-{ev.get('type')}-{_coin(ev.get('symbol'))}-{ev.get('tp') or ''}-{i}"}
+        out.append(dict(base))
+        out += [{**base, "uid": uid, "url": MEMBER_URL} for uid in member_uids]
+    return out

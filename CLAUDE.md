@@ -804,3 +804,8 @@ starts with **"new"** (every published call; type `NEW_SIGNAL`, push title "New 
 `worker.ensure_call_alerts` adds "new" to the existing auto "My signals" rules once (flag `auto_call_new_v230`, in
 `MIGRATION_FLAGS`; local table updated too); `AUTO_CALL_EVENTS` includes it for new members. Alerts page: event chip
 "New signal". Tests in `tests/test_growth_v216.py`.
+- Hesper Challenge pushes (owner: "very important"): `Hesper.run` events (open, limit, fill, expired, new `tp` for a target
+  hit on a still-open trade, close / liquidated with `pnl` + `balance`, run_end, goal_reached; each carries `run`) →
+  `hesper.push_messages` (text `push_text`) → `sink.send_push` in the worker step `hesper_push`. Admin always (url `/rich`);
+  active members too, one copy per uid (url `/results?tab=challenge`), only while `config/hesper.visibility == 'members'`
+  (`worker.hesper_members`: one Firestore read, only on a tick with a challenge event). Tests `test_hesper_push.py`.

@@ -279,6 +279,18 @@ def ensure_call_alerts(rt: Runtime, sink: BaseSink, users: dict[str, dict[str, A
     return made
 
 
+def hesper_members(rt: Runtime, sink: BaseSink) -> list[str]:
+    """v2.30: active members who see the Hesper challenge (config/hesper.visibility == 'members'), else none. One
+    Firestore read, only on a tick that has a challenge event to send."""
+    try:
+        if ((sink.get("config/hesper") or {}).get("visibility") or "admin") != "members":
+            return []
+        now = now_ms()
+        return sorted(uid for uid, u in load_users(rt, sink)[0].items() if membership.is_active(u, now))
+    except Exception:
+        return []
+
+
 ALERT_COOLDOWN_MIN_S, ALERT_COOLDOWN_MAX_S = 60, 365 * 86_400     # same range as the Firestore rules
 _SYMBOL_RE = __import__("re").compile(r"^[A-Za-z0-9]{1,20}([/_-]?[A-Za-z0-9]{2,10})?$")
 
@@ -1336,7 +1348,11 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["sentiment"] = step("news_sentiment", lambda: sentiment.collect(rt.db, getattr(rt, "headlines", None)))
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # Road to Rich (admin, 2 Nov 2026): Hesper's all-in demo runs - its own step and tables, after the bots
-    detail["hesper"] = len(step("hesper", lambda: hesper.Hesper(rt).run(started)) or [])
+    hesper_events = step("hesper", lambda: hesper.Hesper(rt).run(started)) or []
+    detail["hesper"] = len(hesper_events)
+    if hesper_events:            # v2.30: the admin (and members when the challenge is shown to them) get a push
+        detail["hesper_push"] = step("hesper_push", lambda: sink.send_push(
+            hesper.push_messages(hesper_events, hesper_members(rt, sink))))
     # v2.19 Trade Guardian (admin, recommend-only): early warnings on open calls; never changes a call by itself and
     # never blocks the tick (it catches its own errors; the step wrapper catches anything else)
     if guardian.ENABLED:

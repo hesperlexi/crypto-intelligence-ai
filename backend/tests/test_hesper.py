@@ -396,3 +396,19 @@ def test_hesper_is_not_a_bot_and_stays_off_lists():
     assert H.BOT_ID not in {b["id"] for b in B.DEFAULT_BOTS + B.DEMO_BOTS + [B.FUTURES_3D]}
     assert H.Hesper(_rt()).bots() == []
     assert H.Hesper(_rt()).report()["bots"] == []
+
+
+def test_v230_tp_hit_and_close_events_for_notifications(quiet):
+    rt = _rt()
+    _put(rt, "BTC/USDT", NOW - 8 * STEP, [100.0] * 8)
+    _call(rt.db, "tpev")
+    ev = H.Hesper(rt).run(NOW)
+    assert [e["type"] for e in ev] == ["open"] and ev[0]["run"] == 1
+    _put(rt, "BTC/USDT", NOW, [(100, 102.2, 99.9, 102)])           # TP1, trade still open
+    ev = H.Hesper(rt).run(NOW + 2 * STEP)
+    assert [(e["type"], e.get("tp")) for e in ev] == [("tp", 1)]
+    _put(rt, "BTC/USDT", NOW + STEP, [(102, 102.1, 99.5, 99.8)])   # back to break-even: closed
+    ev = H.Hesper(rt).run(NOW + 3 * STEP)
+    close = [e for e in ev if e["type"] == "close"][0]
+    assert close["run"] == 1 and close["balance"] == pytest.approx(_state(rt)["cash"]) and close["pnl"] > 0
+    assert "break-even stop" in H.push_text(close)[1]
