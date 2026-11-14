@@ -1,0 +1,458 @@
+{
+ "ok": true,
+ "command": "rank",
+ "method": "Best-opportunities ranking test (owner, 14 Nov 2026) - read-only replay (python -m app.research rank).\n\nSame calls and method as research_ideas: the models' walk-forward out-of-sample calls of every series through the live\ndecision rules, honest entry, the record's exits, 0.15 % round trip + funding, one call at a time per series; first 70 %\nof each series = tune, last 30 % = untouched test.\n\nQuestion: can a score known AT THE CALL say which calls will pay best, so a \"best opportunities\" list ranks them?\nCandidate features (all from data before the decision): AI lean |margin|, directional confidence, grade, technical score\nin the trade's direction, regime score in the trade's direction, higher-timeframe agreement, BTC technical score in the\ntrade's direction, volatility state, stop distance in %.\n  * per feature: Spearman correlation with the trade's net R on tune and on test (same sign on both = stable);\n  * composite = sum of the z-scored features, each signed by its TUNE correlation, only features with |rho| >= 0.03 on\n    tune (z from tune means / stds) - nothing is fitted on the test;\n  * test: average R by composite quintile (Q5 = best ranked), top 40 % vs all, and a portfolio that each UTC day takes\n    only the top-ranked calls (at most 3 a day) vs every call.\nAggregates only (public results branch).",
+ "trades": {
+  "tune": 4196,
+  "test": 1575
+ },
+ "features": {
+  "lean": {
+   "rho_tune": -0.0105,
+   "rho_test": -0.0264,
+   "stable": false
+  },
+  "confidence": {
+   "rho_tune": -0.0106,
+   "rho_test": -0.0344,
+   "stable": true
+  },
+  "grade_a": {
+   "rho_tune": 0.0237,
+   "rho_test": 0.0214,
+   "stable": false
+  },
+  "tech": {
+   "rho_tune": 0.0621,
+   "rho_test": 0.0277,
+   "stable": false
+  },
+  "regime": {
+   "rho_tune": 0.0412,
+   "rho_test": 0.051,
+   "stable": true
+  },
+  "htf_agree": {
+   "rho_tune": 0.0132,
+   "rho_test": 0.0339,
+   "stable": true
+  },
+  "btc_tech": {
+   "rho_tune": 0.0407,
+   "rho_test": -0.0125,
+   "stable": false
+  },
+  "vol_state": {
+   "rho_tune": 0.0262,
+   "rho_test": -0.0045,
+   "stable": false
+  },
+  "stop_pct": {
+   "rho_tune": 0.1384,
+   "rho_test": 0.1198,
+   "stable": true
+  }
+ },
+ "composite_uses": {
+  "tech": 1.0,
+  "regime": 1.0,
+  "btc_tech": 1.0,
+  "stop_pct": 1.0
+ },
+ "tune": {
+  "rho": 0.079,
+  "quintiles": [
+   {
+    "q": 1,
+    "n": 839,
+    "avg_r": -0.1236,
+    "total_r": -103.67,
+    "win_rate": 0.467,
+    "max_dd_r": 110.25
+   },
+   {
+    "q": 2,
+    "n": 839,
+    "avg_r": -0.0112,
+    "total_r": -9.36,
+    "win_rate": 0.52,
+    "max_dd_r": 22.16
+   },
+   {
+    "q": 3,
+    "n": 839,
+    "avg_r": -0.0757,
+    "total_r": -63.52,
+    "win_rate": 0.487,
+    "max_dd_r": 84.63
+   },
+   {
+    "q": 4,
+    "n": 839,
+    "avg_r": -0.0258,
+    "total_r": -21.68,
+    "win_rate": 0.495,
+    "max_dd_r": 44.88
+   },
+   {
+    "q": 5,
+    "n": 840,
+    "avg_r": -0.0258,
+    "total_r": -21.7,
+    "win_rate": 0.507,
+    "max_dd_r": 26.3
+   }
+  ],
+  "all": {
+   "n": 4196,
+   "avg_r": -0.0524,
+   "total_r": -219.93,
+   "win_rate": 0.495,
+   "max_dd_r": 230.38
+  },
+  "top40": {
+   "n": 1679,
+   "avg_r": -0.0258,
+   "total_r": -43.38,
+   "win_rate": 0.501,
+   "max_dd_r": 60.73
+  },
+  "bottom60": {
+   "n": 2517,
+   "avg_r": -0.0701,
+   "total_r": -176.55,
+   "win_rate": 0.491,
+   "max_dd_r": 179.97
+  },
+  "by_tf": {
+   "15m": {
+    "all": {
+     "n": 814,
+     "avg_r": -0.0947,
+     "total_r": -77.05,
+     "win_rate": 0.489,
+     "max_dd_r": 84.04
+    },
+    "top40": {
+     "n": 177,
+     "avg_r": -0.1504,
+     "total_r": -26.61,
+     "win_rate": 0.441,
+     "max_dd_r": 31.98
+    },
+    "rho": 0.04228882074172184
+   },
+   "1h": {
+    "all": {
+     "n": 1093,
+     "avg_r": -0.0992,
+     "total_r": -108.44,
+     "win_rate": 0.471,
+     "max_dd_r": 118.54
+    },
+    "top40": {
+     "n": 296,
+     "avg_r": -0.042,
+     "total_r": -12.42,
+     "win_rate": 0.49,
+     "max_dd_r": 17.35
+    },
+    "rho": 0.055989613033691106
+   },
+   "4h": {
+    "all": {
+     "n": 1274,
+     "avg_r": 0.0044,
+     "total_r": 5.6,
+     "win_rate": 0.516,
+     "max_dd_r": 23.91
+    },
+    "top40": {
+     "n": 590,
+     "avg_r": 0.0191,
+     "total_r": 11.26,
+     "win_rate": 0.517,
+     "max_dd_r": 17.8
+    },
+    "rho": 0.06086176763290972
+   },
+   "12h": {
+    "all": {
+     "n": 599,
+     "avg_r": -0.0584,
+     "total_r": -35.01,
+     "win_rate": 0.487,
+     "max_dd_r": 42.38
+    },
+    "top40": {
+     "n": 349,
+     "avg_r": -0.0312,
+     "total_r": -10.9,
+     "win_rate": 0.499,
+     "max_dd_r": 16.84
+    },
+    "rho": 0.004536462729639459
+   },
+   "1d": {
+    "all": {
+     "n": 362,
+     "avg_r": 0.0122,
+     "total_r": 4.41,
+     "win_rate": 0.53,
+     "max_dd_r": 10.44
+    },
+    "top40": {
+     "n": 216,
+     "avg_r": 0.0145,
+     "total_r": 3.14,
+     "win_rate": 0.542,
+     "max_dd_r": 10.16
+    },
+    "rho": 0.02346406369989964
+   },
+   "3d": {
+    "all": {
+     "n": 54,
+     "avg_r": -0.1749,
+     "total_r": -9.44,
+     "win_rate": 0.426,
+     "max_dd_r": 12.9
+    },
+    "top40": {
+     "n": 51,
+     "avg_r": -0.1537,
+     "total_r": -7.84,
+     "win_rate": 0.431,
+     "max_dd_r": 12.3
+    },
+    "rho": 0.04532113588717361
+   }
+  },
+  "daily_top3": {
+   "n": 2608,
+   "avg_r": -0.0564,
+   "total_r": -147.19,
+   "win_rate": 0.489,
+   "max_dd_r": 148.53
+  }
+ },
+ "test": {
+  "rho": 0.0467,
+  "quintiles": [
+   {
+    "q": 1,
+    "n": 315,
+    "avg_r": -0.0081,
+    "total_r": -2.56,
+    "win_rate": 0.521,
+    "max_dd_r": 25.11
+   },
+   {
+    "q": 2,
+    "n": 315,
+    "avg_r": -0.0306,
+    "total_r": -9.64,
+    "win_rate": 0.495,
+    "max_dd_r": 22.0
+   },
+   {
+    "q": 3,
+    "n": 315,
+    "avg_r": 0.0288,
+    "total_r": 9.06,
+    "win_rate": 0.54,
+    "max_dd_r": 23.19
+   },
+   {
+    "q": 4,
+    "n": 315,
+    "avg_r": -0.0969,
+    "total_r": -30.52,
+    "win_rate": 0.495,
+    "max_dd_r": 35.28
+   },
+   {
+    "q": 5,
+    "n": 315,
+    "avg_r": 0.0042,
+    "total_r": 1.33,
+    "win_rate": 0.521,
+    "max_dd_r": 27.91
+   }
+  ],
+  "all": {
+   "n": 1575,
+   "avg_r": -0.0205,
+   "total_r": -32.34,
+   "win_rate": 0.514,
+   "max_dd_r": 63.82
+  },
+  "top40": {
+   "n": 630,
+   "avg_r": -0.0463,
+   "total_r": -29.19,
+   "win_rate": 0.508,
+   "max_dd_r": 41.59
+  },
+  "bottom60": {
+   "n": 945,
+   "avg_r": -0.0033,
+   "total_r": -3.15,
+   "win_rate": 0.519,
+   "max_dd_r": 46.51
+  },
+  "by_tf": {
+   "15m": {
+    "all": {
+     "n": 360,
+     "avg_r": -0.0058,
+     "total_r": -2.07,
+     "win_rate": 0.522,
+     "max_dd_r": 28.82
+    },
+    "top40": {
+     "n": 91,
+     "avg_r": -0.0484,
+     "total_r": -4.4,
+     "win_rate": 0.495,
+     "max_dd_r": 12.82
+    },
+    "rho": 0.09639117585783841
+   },
+   "1h": {
+    "all": {
+     "n": 388,
+     "avg_r": -0.0487,
+     "total_r": -18.89,
+     "win_rate": 0.503,
+     "max_dd_r": 27.26
+    },
+    "top40": {
+     "n": 132,
+     "avg_r": -0.1766,
+     "total_r": -23.32,
+     "win_rate": 0.455,
+     "max_dd_r": 29.57
+    },
+    "rho": -0.06239659854008899
+   },
+   "4h": {
+    "all": {
+     "n": 499,
+     "avg_r": -0.0577,
+     "total_r": -28.81,
+     "win_rate": 0.499,
+     "max_dd_r": 42.1
+    },
+    "top40": {
+     "n": 236,
+     "avg_r": -0.0411,
+     "total_r": -9.7,
+     "win_rate": 0.513,
+     "max_dd_r": 16.95
+    },
+    "rho": 0.06390805707801143
+   },
+   "12h": {
+    "all": {
+     "n": 206,
+     "avg_r": 0.0936,
+     "total_r": 19.29,
+     "win_rate": 0.558,
+     "max_dd_r": 13.48
+    },
+    "top40": {
+     "n": 99,
+     "avg_r": 0.1247,
+     "total_r": 12.34,
+     "win_rate": 0.576,
+     "max_dd_r": 7.4
+    },
+    "rho": 0.10404788133993624
+   },
+   "1d": {
+    "all": {
+     "n": 105,
+     "avg_r": 0.0174,
+     "total_r": 1.82,
+     "win_rate": 0.524,
+     "max_dd_r": 10.5
+    },
+    "top40": {
+     "n": 60,
+     "avg_r": -0.0043,
+     "total_r": -0.26,
+     "win_rate": 0.533,
+     "max_dd_r": 5.34
+    },
+    "rho": 0.08015757827078582
+   }
+  },
+  "daily_top3": {
+   "n": 781,
+   "avg_r": -0.0087,
+   "total_r": -6.79,
+   "win_rate": 0.525,
+   "max_dd_r": 52.82
+  }
+ },
+ "verdict": "the ranking separates better calls from worse on unseen data",
+ "ranking_works": true,
+ "skipped": [
+  "AAVE/USDT 3d: no model / too few out-of-sample bars",
+  "APT/USDT 3d: no model / too few out-of-sample bars",
+  "AVAX/USDT 3d: span too short to split",
+  "BARD/USDT 3d: no model / too few out-of-sample bars",
+  "BIO/USDT 3d: no model / too few out-of-sample bars",
+  "DOT/USDT 3d: span too short to split",
+  "ENA/USDT 3d: no model / too few out-of-sample bars",
+  "ERA/USDT 3d: no model / too few out-of-sample bars",
+  "GALA/USDT 3d: no model / too few out-of-sample bars",
+  "GRAM/USDT 3d: no model / too few out-of-sample bars",
+  "INJ/USDT 3d: no model / too few out-of-sample bars",
+  "MSTRB/USDT 3d: no model / too few out-of-sample bars",
+  "NEAR/USDT 3d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 3d: no model / too few out-of-sample bars",
+  "PAXG/USDT 3d: span too short to split",
+  "PEPE/USDT 3d: no model / too few out-of-sample bars",
+  "SOL/USDT 3d: span too short to split",
+  "SPCXB/USDT 3d: no model / too few out-of-sample bars",
+  "SUI/USDT 3d: no model / too few out-of-sample bars",
+  "U/USDT 3d: no model / too few out-of-sample bars",
+  "UNI/USDT 3d: span too short to split",
+  "WLD/USDT 3d: no model / too few out-of-sample bars",
+  "XAUT/USDT 3d: no model / too few out-of-sample bars",
+  "BARD/USDT 1d: no model / too few out-of-sample bars",
+  "BIO/USDT 1d: no model / too few out-of-sample bars",
+  "ENA/USDT 1d: no model / too few out-of-sample bars",
+  "ERA/USDT 1d: no model / too few out-of-sample bars",
+  "GRAM/USDT 1d: no model / too few out-of-sample bars",
+  "MSTRB/USDT 1d: no model / too few out-of-sample bars",
+  "NVDAB/USDT 1d: no model / too few out-of-sample bars",
+  "PEPE/USDT 1d: no model / too few out-of-sample bars",
+  "SPCXB/USDT 1d: no model / too few out-of-sample bars",
+  "SUI/USDT 1d: no model / too few out-of-sample bars",
+  "U/USDT 1d: no model / too few out-of-sample bars",
+  "WLD/USDT 1d: no model / too few out-of-sample bars",
+  "XAUT/USDT 1d: no model / too few out-of-sample bars",
+  "BARD/USDT 12h: no model / too few out-of-sample bars",
+  "BIO/USDT 12h: no model / too few out-of-sample bars",
+  "ERA/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 12h: no model / too few out-of-sample bars",
+  "MSTRB/USDT 12h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 12h: no model / too few out-of-sample bars",
+  "SPCXB/USDT 12h: no model / too few out-of-sample bars",
+  "U/USDT 12h: no model / too few out-of-sample bars",
+  "XAUT/USDT 12h: no model / too few out-of-sample bars",
+  "GRAM/USDT 4h: no model / too few out-of-sample bars",
+  "MSTRB/USDT 4h: no model / too few out-of-sample bars",
+  "NVDAB/USDT 4h: no model / too few out-of-sample bars",
+  "SPCXB/USDT 4h: no model / too few out-of-sample bars",
+  "XAUT/USDT 4h: no model / too few out-of-sample bars"
+ ],
+ "seconds": 82.8,
+ "costs": {
+  "round_trip_pct": 0.15,
+  "funding": "0.01% per 8 h (longs pay), over the hold"
+ }
+}
