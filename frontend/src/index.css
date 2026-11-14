@@ -688,3 +688,48 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.4); background: rgb(var(--ink)
 .nav-sheet .more-grid .nav-link { white-space: normal; line-height: 1.25; gap: 0.25rem; overflow-wrap: break-word; }
 /* below 360 px a segmented control's buttons may be narrower (36 px, still 44 px tall) so six timeframes fit one row */
 @media (max-width: 359px) { .seg > button { min-width: 36px; padding-left: 0.4rem; padding-right: 0.4rem; } }
+
+
+/* =====================================================================================================
+   v2.23 PREMIUM PASS (owner, 14 Nov 2026) - "bullion & crystal": a private trading desk, not a dashboard kit.
+   Ivory type on warm graphite, frosted crystal cards, gold used like metal (sparingly, on the one thing that matters
+   on each page). Labels in quiet sentence case (no tracked capitals), larger calm page titles, airier tables.
+   One memorable device: the gold-leaf edge - a thin gold line catching light along the top of a page's lead card
+   (.panel-hero) and under the page header. Everything else stays quiet.
+   ===================================================================================================== */
+:root, [data-theme] {
+  --gold-leaf: linear-gradient(90deg, transparent 0%, rgb(var(--accent) / 0.0) 4%, rgb(var(--accent-2) / 0.85) 28%, rgb(var(--accent) / 0.55) 62%, transparent 100%);
+  --bullion: linear-gradient(180deg, rgb(var(--accent-2)) 0%, rgb(var(--primary)) 55%, rgb(var(--primary) / 0.92) 100%);
+}
+/* labels: sentence case, medium weight - the generic tracked-caps eyebrow is gone */
+.label { text-transform: none; letter-spacing: 0; font-size: 0.8125rem; font-weight: 500; color: rgb(var(--mute)); }
+.card-head .label { color: rgb(var(--text) / 0.86); font-weight: 600; font-size: 0.875rem; }
+/* page header: a calm, larger title */
+.page-title { font-weight: 600; letter-spacing: -0.028em; }
+@media (min-width: 640px) { .page-title { font-size: 1.875rem; line-height: 2.25rem; } }
+.page-sub { color: rgb(var(--mute)); max-width: 62ch; }
+/* lead card of a page: crystal + gold-leaf edge */
+.panel-hero { position: relative; overflow: hidden; }
+.panel-hero::before {
+  content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--gold-leaf); pointer-events: none;
+}
+[data-glass="on"] .panel-hero { background-image: var(--crystal-sheen), radial-gradient(120% 90% at 0% 0%, rgb(var(--accent) / 0.07), transparent 55%); }
+/* gold leaf under a page header (PageHeader in kit.tsx) */
+.page-head { position: relative; padding-bottom: 1rem; margin-bottom: 0.25rem; }
+.page-head::after { content: ""; position: absolute; left: 0; bottom: 0; width: min(420px, 70%); height: 1px; background: var(--gold-leaf); opacity: 0.7; }
+/* bullion primary button: metal, not flat paint */
+.btn-primary { background: var(--bullion); box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.35), inset 0 -1px 0 0 rgb(0 0 0 / 0.12), 0 6px 18px -8px rgb(var(--primary) / 0.55); }
+.btn-primary:hover { background: var(--bullion); filter: brightness(1.06); }
+.btn { border-radius: 10px; }
+/* tables: sentence-case headers, more air, quiet hairlines */
+table.grid-table th { text-transform: none; letter-spacing: 0; font-weight: 500; font-size: 0.8125rem; padding-top: 0.7rem; padding-bottom: 0.7rem;
+  background: rgb(var(--panel) / 0.92); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid var(--hair-strong); }
+table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
+/* segmented controls and chips: frosted track, gold-lit selection */
+.seg { background: rgb(var(--ink) / 0.4); border-color: var(--crystal-edge, var(--hair)); }
+.seg > button[aria-pressed="true"], .seg > button[aria-selected="true"], .seg > button[aria-checked="true"] {
+  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.07), 0 0 0 1px rgb(var(--accent) / 0.28);
+}
+/* numbers that matter: champagne-ivory, tight */
+.figure { font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-weight: 600; color: rgb(var(--text)); }
+@media (prefers-reduced-motion: reduce) { .panel-hero::before { animation: none; } }

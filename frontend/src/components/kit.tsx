@@ -94,3 +94,17 @@ export function TabStrip<T extends string>({ value, options, onChange, label, cl
     </div>
   );
 }
+
+/** v2.23 premium page header: calm title, one-line subtitle, actions on the right, gold-leaf line underneath.
+ *  Every page starts with it so the app reads as one product. */
+export function PageHeader({ title, sub, actions, className = "" }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode; className?: string }) {
+  return (
+    <header className={`page-head flex flex-wrap items-end justify-between gap-x-4 gap-y-3 ${className}`}>
+      <div className="min-w-0">
+        <h1 className="page-title">{title}</h1>
+        {sub && <p className="page-sub">{sub}</p>}
+      </div>
+      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+    </header>
+  );
+}
