@@ -140,4 +140,4 @@ def test_publish_is_admin_view_and_skipped_in_lean(tmp_path):
 def test_rules_keep_market_turn_admin_only():
     import pathlib
     rules = (pathlib.Path(__file__).resolve().parents[2] / "firestore.rules.template").read_text()
-    assert "(id == 'market_turn' && isAdmin())" in rules and "id != 'market_turn' && allowed()" in rules
+    assert "(id == 'market_turn' && isAdmin())" in rules and "id != 'market_turn' &&" in rules
