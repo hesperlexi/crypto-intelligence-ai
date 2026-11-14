@@ -847,3 +847,11 @@ Tests `tests/test_retire_v232.py`.
   BONK +0.07 / SEI +0.06 (<30 trades) = "promising"; FIL +0.08 no MEXC futures; OP −0.47, ARB −0.29 avoid. Watchlist
   coins with a past test ≤ −0.15R over ≥30 trades (and no positive live record) are also suggested for removal
   (UNI −0.20R/74, ZEC −0.19/31, NEAR −0.27/31, LTC −0.16/42, XLM). Re-run `research-coins.yml` and refresh the JSON to update.
+
+## v2.34 News visuals (owner, 14 Nov 2026, branch `news-v234`, frontend only)
+`components/NewsViz.tsx` (real data, observatory look, `index.css` "v2.34", motion off under reduced motion):
+`Intercept` (top of News) = every headline of the last 24 h as a glowing packet arriving at a receiver dish (x = time,
+lane = source, newest pulses; hover/focus shows the title, links open the story), the news-mood series as the carrier
+wave; drawn 1:1 at the measured width (`useWidth`, ResizeObserver) so dots never stretch; the dish is its own square SVG
+(hidden < 360 px). `OrbitTrack` (top of the calendar card) = next 7 days, high-impact releases as red worlds (next one
+pulses), medium as amber, dark bands = the news-guard pause (45 min before → 30 min after). Lead headline `.news-lead` tint.

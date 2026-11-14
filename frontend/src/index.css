@@ -952,3 +952,19 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .boot-bar > span { display: block; width: 40%; height: 100%; background: linear-gradient(90deg, rgb(92 242 223 / 0), #5CF2DF, rgb(var(--accent))); animation: boot-bar 1.6s ease-in-out infinite; }
 @keyframes boot-bar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
 @media (prefers-reduced-motion: reduce) { .boot-bar > span { animation: none; transform: translateX(75%); } }
+
+/* v2.34 News: deep-space receiver + release orbit (components/NewsViz.tsx) */
+.intercept { background-image: radial-gradient(60% 120% at 8% 50%, rgb(var(--ai) / 0.10), transparent 60%),
+  radial-gradient(40% 80% at 95% 0%, rgb(var(--accent) / 0.06), transparent 70%); }
+.intercept-led { display: inline-block; width: 0.5rem; height: 0.5rem; border-radius: 9999px; background: rgb(var(--ai));
+  box-shadow: 0 0 8px rgb(var(--ai)); animation: xeno-blink 1.4s ease-in-out infinite; }
+.ic-ring { transform-box: fill-box; transform-origin: center; animation: ic-ring 3.3s ease-out infinite; }
+.ic-blink { animation: xeno-blink 1.8s ease-in-out infinite; }
+.ic-new { transform-box: fill-box; transform-origin: center; animation: ic-new 1.6s ease-in-out infinite; }
+@keyframes ic-ring { 0% { transform: scale(0.6); opacity: 0.9; } 100% { transform: scale(3.2); opacity: 0; } }
+@keyframes ic-new { 50% { transform: scale(1.6); } }
+.intercept-read { min-height: 2.25rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.news-lead { position: relative; }
+.news-lead::before { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgb(var(--ai) / 0.10), transparent 45%); }
+@media (prefers-reduced-motion: reduce) { .intercept-led, .ic-ring, .ic-blink, .ic-new { animation: none; } }
