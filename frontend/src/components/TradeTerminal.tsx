@@ -154,7 +154,7 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
   const goldOk = useGoldListed();
   const list = market === "futures" && goldOk && !symbols.includes(GOLD) ? [...symbols, GOLD] : symbols;
   return (
-    <div className="panel flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-2.5 sm:px-4">
+    <div className="panel panel-hero flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-3 sm:px-4">
       <div className="relative">
         <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-glass/[0.05]">
           <CoinAvatar symbol={symbol} size={30} />
@@ -210,7 +210,7 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
   const cls = vd.tone === "bull" ? "border-bull/40 bg-bull/[0.07]" : vd.tone === "bear" ? "border-bear/40 bg-bear/[0.07]" : "border-glass/10 bg-glass/[0.03]";
   return (
     <div className={`flex flex-wrap items-center gap-x-4 gap-y-2 rounded-xl border px-3 py-2 text-sm ${cls}`}>
-      <span className="text-xs uppercase tracking-wide text-mute">AI call · 4H</span>
+      <span className="text-xs font-medium text-mute">AI call, 4H</span>
       <span className={`font-bold ${vd.tone === "bull" ? "text-bull" : vd.tone === "bear" ? "text-bear" : "text-mute"}`}>{vd.label}</span>
       {usable ? (
         <span className="num text-xs text-mute">entry <span className="text-accent">{fmtPrice(p.entry)}</span> · stop <span className="text-bear">{fmtPrice(p.stop)}</span> · TP1 <span className="text-bull">{fmtPrice(p.targets?.[0]?.price)}</span>{market === "futures" ? ` · ${p.suggested_leverage}x` : ""}</span>
@@ -276,7 +276,7 @@ function OrderBook({ symbol, market }: { symbol: string; market: Mkt }) {
   );
   return (
     <section className="panel hidden p-0 lg:block">
-      <div className="grid grid-cols-2 border-b border-glass/[0.06] px-2 py-2 text-xs uppercase tracking-wide text-mute"><span>Price</span><span className="text-right">Amount</span></div>
+      <div className="grid grid-cols-2 border-b border-glass/[0.06] px-2 py-2 text-xs font-medium text-mute"><span>Price</span><span className="text-right">Amount</span></div>
       {!ob ? <div className="skeleton m-2 h-80 rounded" /> : (
         <>
           {asks.map((x) => row(x, "a"))}
@@ -334,7 +334,7 @@ function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d:
   const estLiq = (side: number) => (price && market === "futures" ? PF.liqPrice(price, side, lev, symbol) : null);
 
   return (
-    <section className="panel p-3">
+    <section className="panel order-ticket p-3">
       {market === "futures" && (
         <div className="mb-3 flex items-center gap-2">
           <span className="rounded-md border border-glass/10 px-2 py-1 text-xs">Isolated</span>
@@ -569,7 +569,7 @@ function Assets({ d, market, act }: { d: any; market: Mkt; act: (fn: () => Promi
   return (
     <div className="space-y-4">
       <dl className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        {items.map(([k, v, c]) => <div key={k} className="rounded-xl border border-glass/[0.08] bg-ink/30 px-3 py-2"><dt className="text-xs uppercase tracking-wide text-mute">{k}</dt><dd className={`num mt-0.5 font-semibold ${c ?? ""}`}>{v}</dd></div>)}
+        {items.map(([k, v, c]) => <div key={k} className="rounded-xl border border-glass/[0.08] bg-ink/30 px-3 py-2"><dt className="text-xs font-medium text-mute">{k}</dt><dd className={`num mt-0.5 font-semibold ${c ?? ""}`}>{v}</dd></div>)}
       </dl>
       <AddFunds d={d} market={market} act={act} />
       <div className="flex flex-wrap items-end gap-2">

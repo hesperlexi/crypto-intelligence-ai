@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { PageHeader } from "../components/kit";
 import { useSearchParams } from "react-router-dom";
 import TradeTerminal from "../components/TradeTerminal";
 import { SymbolSelect, useSymbols } from "../components/Pickers";
@@ -10,10 +11,8 @@ import { useLive } from "../lib/live";
 export default function Paper() {
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3">
-        <h1 className="page-title">Trade</h1>
-        <Badge tone="warn">Practice account · virtual USDT</Badge>
-      </div>
+      <PageHeader title="Trade" sub="Practise with virtual USDT on live prices. Nothing here is a real order."
+        actions={<Badge tone="warn">Practice account</Badge>} />
       <TradeTerminal />
     </div>
   );

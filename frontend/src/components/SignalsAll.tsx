@@ -130,7 +130,7 @@ export function AllList({ rows, market, px, onOpen }: { rows: any[]; market: Mar
                   <span className="tf-chip num">{String(r.timeframe).toUpperCase()}</span>
                   {vv.tone !== "wait" && (r.grade === "A" || r.grade === "B") && <span className={`grade-mini ${r.grade === "A" ? "is-a" : ""}`}>{r.grade}</span>}
                 </div>
-                <span className={`all-call text-xs font-extrabold tracking-wide ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
+                <span className={`all-call text-xs ${TXT[vv.tone]}`}>{vv.tone === "bull" ? "▲ " : vv.tone === "bear" ? "▼ " : ""}{vv.label}</span>
                 {/* phone: ready · grade strength · status, then the levels */}
                 <div className="col-span-full flex min-w-0 flex-wrap items-center gap-x-1.5 text-xs lg:hidden">
                   {ready}{strength !== "—" && <><span className="text-mute/50" aria-hidden="true">·</span><span className="text-mute">{strength}</span></>}

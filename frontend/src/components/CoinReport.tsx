@@ -45,8 +45,8 @@ export default function CoinReport({ symbol }: { symbol: string }) {
           </p>
         )}
         <ul className="space-y-1.5 text-sm">
-          <li className="flex gap-2"><span className="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-warn">Main risk</span><span>{r.risk}</span></li>
-          {r.invalidation?.text && <li className="flex gap-2"><span className="w-24 shrink-0 text-xs font-semibold uppercase tracking-wide text-mute">Invalidation</span><span>{r.invalidation.text}</span></li>}
+          <li className="flex gap-2"><span className="w-24 shrink-0 text-xs font-medium text-warn">Main risk</span><span>{r.risk}</span></li>
+          {r.invalidation?.text && <li className="flex gap-2"><span className="w-24 shrink-0 text-xs font-medium text-mute">Invalidation</span><span>{r.invalidation.text}</span></li>}
         </ul>
         <p className="text-xs text-mute">
           {r.ai?.text ? `AI line ${ago(r.ai.at)} · ` : ""}From the engine's analysis. Context, not advice.

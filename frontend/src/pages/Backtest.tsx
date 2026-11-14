@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { PageHeader } from "../components/kit";
 import LineChart, { Series } from "../components/LineChart";
 import { SymbolSelect, useMeta } from "../components/Pickers";
 import { Badge, Card, Empty, ErrorBox, Note, Row, Stat } from "../components/ui";
@@ -55,12 +56,8 @@ export default function Backtest() {
 
   return (
     <div className="space-y-4">
-      <div>
-        <h1 className="page-title">Backtesting</h1>
-        <p className="text-sm text-mute">Net of fees, spread and slippage.</p>
-        <p className="text-xs text-mute">Results arrive within about 5 minutes, under Previous runs.</p>
-      </div>
-      <Card title="Inputs">
+      <PageHeader title="Backtesting" sub="Test a strategy on past candles, net of fees, spread and slippage. Results arrive within about 5 minutes, under Previous runs." />
+      <Card title="Inputs" className="panel-hero">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <SymbolSelect value={f.symbol} onChange={(v) => up("symbol", v)} symbols={symbols.length ? symbols : [f.symbol]} />
           <label className="text-xs text-mute">Timeframe<select className="input mt-1" value={f.timeframe} onChange={(e) => up("timeframe", e.target.value)}>{TFS.map((t) => <option key={t}>{t}</option>)}</select></label>
