@@ -323,3 +323,85 @@ def run(db_url: str, budget_s: float, symbols: list[str] | None = None, tfs: lis
     out.update({"skipped": skipped, "seconds": round(time.time() - t0, 1),
                 "costs": {"round_trip_pct": settings.research_cost_pct, "funding": "0.01% per 8 h (longs pay), over the hold"}})
     return out
+
+
+def run_combo(db_url: str, budget_s: float, symbols: list[str] | None = None, tfs: list[str] | None = None) -> dict[str, Any]:
+    """Combination fixed in advance (no new tuning): volume-profile filter 0.5 ATR + fee filter 1.5 % (15m / 1h / 4h only)
+    + global same-side cap 8; each single and pair vs the baseline, tune and test."""
+    from . import research_engine as RE
+    from . import research_v213 as V
+    from .db import Database
+    from .ml import series_policy as SP
+    from .services.runtime import Runtime
+
+    class _Prov:
+        name = "binance"
+
+    db = Database(db_url)
+    rt = Runtime(db, _Prov())
+    ex = db.one("SELECT exchange, COUNT(*) AS n FROM market_data GROUP BY exchange ORDER BY n DESC LIMIT 1")
+    if ex:
+        _Prov.name = ex["exchange"]
+    t0 = time.time()
+    syms = symbols or [r["symbol"] for r in db.query("SELECT DISTINCT symbol FROM model_versions WHERE active = 1 ORDER BY symbol")]
+    news = RE._news_fn(rt.db)
+    frames: dict = {}
+    base_sets = ("baseline", "vp", "fee", "vp+fee")
+    res = {p: {k: [] for k in base_sets} for p in ("tune", "test")}
+    skipped, check = [], {"series": 0, "baseline_equal": 0}
+    for s, tf in [(s, tf) for tf in RE.TF_ORDER if tf in (tfs or MODEL_TIMEFRAMES) for s in syms]:
+        if time.time() > t0 + budget_s:
+            skipped.append(f"{s} {tf}: time budget")
+            continue
+        try:
+            b = RE.build(rt, s, tf, frames)
+        except Exception as exc:
+            skipped.append(f"{s} {tf}: {type(exc).__name__}")
+            continue
+        if b is None:
+            skipped.append(f"{s} {tf}: no model")
+            continue
+        ctx, paths = b
+        tune, test, _ = RE._split(ctx)
+        if tune.sum() < 150 or test.sum() < 30:
+            skipped.append(f"{s} {tf}: span too short")
+            continue
+        d = SP.decide(ctx, tune, require_edge=False)
+        side = d["side"]
+        prof = Profiles(rt, s, tf)
+        vp = np.ones(ctx.n, bool)
+        fee = np.ones(ctx.n, bool)
+        for j in np.flatnonzero(d["trade"]):
+            p = prof.at(int(ctx.ts[j]))
+            if p is not None:
+                px, atr = float(ctx.close[j]), float(ctx.atr[j])
+                lv = (p["poc"], p["vah"]) if side[j] > 0 else (p["poc"], p["val"])
+                if any(0 < side[j] * (L - px) <= 0.5 * atr for L in lv):
+                    vp[j] = False
+            pl = d["plan"][j]
+            if tf in ("15m", "1h", "4h") and pl and pl.get("stop") and \
+                    abs(float(ctx.close[j]) - float(pl["stop"])) / float(ctx.close[j]) * 100 < 1.5:
+                fee[j] = False
+        keeps = {"baseline": None, "vp": vp, "fee": fee, "vp+fee": vp & fee}
+        for part, mask in (("tune", tune), ("test", test)):
+            for name, k in keeps.items():
+                dd = d if k is None else _masked(d, k)
+                tr = V._with_funding(ctx, dd, SP.run_series(ctx, paths, mask, dd, entry_mode="old", news=news))
+                res[part][name] += [{**t, "side": int(side[t["j"]]), "tf": tf} for t in tr]
+            if part == "test":
+                ref = V._with_funding(ctx, d, SP.run_series(ctx, paths, mask, d, entry_mode="old", news=news))
+                mine = [t for t in res[part]["baseline"] if t["tf"] == tf][-len(ref):] if ref else []
+                check["series"] += 1
+                check["baseline_equal"] += int(len(ref) == len(mine) and all(abs(a["r"] - b_["r"]) < 1e-12 for a, b_ in zip(ref, mine)))
+    out: dict[str, Any] = {"method": run_combo.__doc__.strip(), "self_check": check}
+    for part in ("tune", "test"):
+        r = res[part]
+        rows = {"baseline": r["baseline"], "VP": r["vp"], "fee": r["fee"], "cap8": _cap(r["baseline"], 8, False),
+                "VP + fee": r["vp+fee"], "VP + cap8": _cap(r["vp"], 8, False), "fee + cap8": _cap(r["fee"], 8, False),
+                "VP + fee + cap8": _cap(r["vp+fee"], 8, False)}
+        out[part] = {k: _curve(v) for k, v in rows.items()}
+        out[f"{part}_by_tf_full"] = {tf: {"combo": _curve([t for t in rows["VP + fee + cap8"] if t["tf"] == tf]),
+                                          "baseline": _curve([t for t in rows["baseline"] if t["tf"] == tf])}
+                                     for tf in MODEL_TIMEFRAMES}
+    out.update({"skipped": skipped, "seconds": round(time.time() - t0, 1)})
+    return out
