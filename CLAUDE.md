@@ -828,3 +828,16 @@ only): live calls → NO TRADE "COIN BEING REMOVED" (in `proof_checks.SKIP_FLAGS
 pending, no bot position/order, no Hesper trade/order); flag `retire_bstocks_v232` (in `MIGRATION_FLAGS`) when all are
 gone — afterwards the gate is off, so the admin may re-add them. MEXC's "MSTR" is a different product (other price).
 Tests `tests/test_retire_v232.py`.
+
+## v2.33 coin scorecard + coin study (owner, 14 Nov 2026, branch `coins-v233`)
+- `services/coin_scorecard.py` → `views/radar.scorecard` (built in the hourly radar step): each watchlist coin from the real
+  record (`record_clause`, net, last 30 days or since the record start; per coin from `added_at`): calls, closed, wins, avg /
+  total net %, open, blocked (`rejected_signals`). Category best / working (≥3 closed, avg > 0; best = win rate ≥ 50 %),
+  losing (≥4 closed, avg < 0), quiet (no public call, ≥7 days watched), early. `suggest_remove` = quiet, or losing with
+  win rate < 40 % over ≥6 closed; never pinned coins. Nothing removed automatically. UI `components/CoinScorecard.tsx` on
+  Radar ("Your coins: how their signals did"; admin "Suggested to remove" with an inline confirm → `DELETE /watchlist/:x`).
+  Tests `tests/test_coin_scorecard.py`; seed `views/radar.scorecard`.
+- Coin study `app/research_coins.py` (`python -m app.research coin-candidate --symbols X/USDT` | `coin-baseline`), workflow
+  `research-coins.yml` (matrix, one job per candidate + baseline, read-only state copy): listings (Binance spot / USD-M
+  futures via data.binance.vision daily files, MEXC spot / futures APIs), candles, `training.train_one` on 15m/1h/4h,
+  `research_engine.evaluate` test split (net R). Results `research-results/results/coins-*.json`.

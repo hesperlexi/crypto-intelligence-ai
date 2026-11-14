@@ -35,6 +35,7 @@ from .services import leaderboard, referrals
 from .services import guardian
 from .services import market_data, turn_detector
 from .services import perf_lab
+from .services import coin_scorecard
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
 from .services.runtime import USER, Runtime
@@ -1460,6 +1461,10 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     if fetch_context and hasattr(rt.provider, "_get_sync") and now_ms() - int(rt.db.get_setting("radar_at", 0) or 0) > 55 * 60_000:
         def run_radar():
             r = radar.scan(rt.db, rt.provider, rt.symbols())
+            try:                 # v2.33 coin scorecard (record only; suggestions, nothing removed automatically)
+                r["scorecard"] = coin_scorecard.build(rt, rt.watchlist())
+            except Exception as exc:
+                rt.record_error("coin scorecard", exc)
             rt.db.set_setting("radar_at", now_ms())
             sink.view("radar", r)
             return {"screened": r["screened"], "picks": [p["symbol"] for p in r["picks"][:5]]}

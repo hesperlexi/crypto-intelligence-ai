@@ -9,6 +9,7 @@ import { post, useApi } from "../lib/api";
 import { ago, base, fmtNum, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { useLimits } from "../lib/limits";
 import { useIsAdmin } from "../lib/session";
+import CoinScorecard from "../components/CoinScorecard";
 
 const pct = (v: unknown, d = 0) => (isNum(v) ? `${v > 0 ? "+" : ""}${(v * 100).toFixed(d)}%` : "—");
 const tone = (v: unknown) => (isNum(v) ? (v > 0 ? "text-bull" : v < 0 ? "text-bear" : "") : "text-mute");
@@ -80,6 +81,8 @@ export default function Radar() {
         <Tile variant="box" className="panel" label="Past check: beat BTC" value={isNum(h.beat_btc_rate) ? `${Math.round(h.beat_btc_rate * 100)}%` : <Waiting />} sub="of test days" />
         <Tile variant="box" className="panel" label="Live record" value={isNum(live.beat_btc_rate) ? `${Math.round(live.beat_btc_rate * 100)}%` : <Waiting />} sub={live.evaluated ? `${live.evaluated} picks scored after 7 days` : `${live.picks ?? 0} picks logged · first scores in 7 days`} />
       </div>
+      <CoinScorecard card={d.scorecard} admin={admin} />
+      <h2 className="label">New coins worth a look</h2>
       <ul className="grid gap-3 md:grid-cols-2">{(d.picks ?? []).map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
       {(d.extended ?? []).length > 0 && (
         <section>
