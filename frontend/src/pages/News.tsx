@@ -7,7 +7,7 @@ import { PageHeader } from "../components/kit";
 import NewsBanner, { countdown } from "../components/NewsBanner";
 import { AiTag, ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
-import { CoinConstellation, Intercept, NewsSpectrum, OrbitTrack } from "../components/NewsViz";
+import { CoinConstellation, Intercept, NewsSpectrum, OrbitTrack, ReleaseDial, SignalBeacon } from "../components/NewsViz";
 import { ago, isNum } from "../lib/format";
 
 const IMPACT: Record<string, string> = { High: "bg-bear/15 text-bear border-bear/40", Medium: "bg-warn/15 text-warn border-warn/40" };
@@ -64,7 +64,7 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
   const day = heads.filter((h) => h.ts && now - h.ts <= 24 * 3_600_000).length;
   const week = (d.calendar ?? []).filter((e: any) => e.impact === "High" && e.ts > now && e.ts - now <= 7 * 86_400_000).length;
   return (
-    <section className="panel grid overflow-hidden p-0 md:grid-cols-2 xl:grid-cols-[1.3fr_1fr_1fr_1fr]">
+    <section className="panel grid overflow-hidden p-0 md:grid-cols-2 xl:grid-cols-[1.15fr_1.1fr_1.1fr_1fr]">
       <div className="ai-card border-b border-glass/[0.06] p-4 md:border-r xl:border-b-0">
         <div className="label flex items-center gap-1.5"><AiTag />News mood</div>
         {m ? (
@@ -82,25 +82,36 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
       <div className="border-b border-glass/[0.06] p-4 xl:border-b-0 xl:border-r">
         <div className="label">Next high-impact release</div>
         {nh ? (
-          <>
-            <div className="mt-1 font-display text-lg font-semibold leading-tight">{nh.title}</div>
-            <div className="num mt-1 text-2xl font-semibold text-accent">{countdown(nh.ts, now)}</div>
-            <div className="text-xs text-mute">{dayKey(nh.ts)} · {hhmm(nh.ts)}</div>
-          </>
+          <div className="mt-1 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <div className="font-display text-lg font-semibold leading-tight">{nh.title}</div>
+              <div className="num mt-1 text-sm font-semibold text-accent">{countdown(nh.ts, now)}</div>
+              <div className="text-xs text-mute">{dayKey(nh.ts)} · {hhmm(nh.ts)}</div>
+            </div>
+            <ReleaseDial ts={nh.ts} now={now} size={92} />
+          </div>
         ) : <p className="mt-2 text-sm text-mute">None scheduled in the next days.</p>}
       </div>
       <div className="border-b border-glass/[0.06] p-4 md:border-b-0 md:border-r">
         <div className="label">New signals</div>
-        {risk ? (
-          <>
-            <div className="mt-1 flex items-center gap-2 font-display text-lg font-semibold text-bear"><span className="h-2 w-2 animate-pulse rounded-full bg-bear" />Paused for the news</div>
-            <p className="mt-1 text-xs text-mute">{risk.reason ?? risk.title}</p>
-          </>
-        ) : (
-          <>
-            <div className="mt-1 flex items-center gap-2 font-display text-lg font-semibold text-bull"><span className="h-2 w-2 rounded-full bg-bull" />Running normally</div>
-          </>
-        )}
+        <div className="mt-1 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            {risk ? (
+              <>
+                <div className="font-display text-lg font-semibold leading-tight text-bear">Paused for the news</div>
+                {isNum(risk.ts) && <div className="num mt-1 text-sm">Resumes {countdown(risk.ts + 30 * 60_000, now)}</div>}
+                {risk.title && <p className="mt-1 text-xs text-mute">{risk.title}</p>}
+              </>
+            ) : (
+              <>
+                <div className="font-display text-lg font-semibold leading-tight text-bull">Running normally</div>
+                {nh && <div className="num mt-1 text-sm text-mute">Next pause <span className="text-text">{countdown(nh.ts - 45 * 60_000, now)}</span></div>}
+                <p className="mt-1 text-xs text-mute">around major US data</p>
+              </>
+            )}
+          </div>
+          <SignalBeacon paused={!!risk} size={92} />
+        </div>
       </div>
       <div className="p-4">
         <div className="label">News flow</div>

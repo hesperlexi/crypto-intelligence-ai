@@ -968,3 +968,5 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .news-lead::before { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: linear-gradient(90deg, rgb(var(--ai) / 0.10), transparent 45%); }
 @media (prefers-reduced-motion: reduce) { .intercept-led, .ic-ring, .ic-blink, .ic-new { animation: none; } }
+.beacon-sweep { animation: xeno-spin 4s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .beacon-sweep { animation: none; } }

@@ -250,3 +250,64 @@ export function NewsSpectrum({ heads, now }: { heads: Head[]; now: number }) {
     </section>
   );
 }
+
+const short = (ms: number) => {
+  const m = Math.max(0, Math.round(ms / 60000));
+  if (m < 60) return `${m}m`;
+  const h = Math.floor(m / 60);
+  return h < 24 ? `${h}h ${m % 60}m` : `${Math.floor(h / 24)}d ${h % 24}h`;
+};
+
+/** v2.36 Next release as a dial: the full ring is the next 7 days, "now" at the top; the release is a red world on
+ *  the ring, the gold arc the time still to wait, the dark arc the window in which new signals pause. */
+export function ReleaseDial({ ts, now, size = 112 }: { ts: number; now: number; size?: number }) {
+  const span = 7 * 24 * H, R = 40, C = 50;
+  const ang = (t: number) => (Math.max(0, Math.min(span, t - now)) / span) * Math.PI * 2 - Math.PI / 2;
+  const pt = (a: number, r = R) => [C + Math.cos(a) * r, C + Math.sin(a) * r];
+  const arc = (a0: number, a1: number, r = R) => {
+    const [x0, y0] = pt(a0, r), [x1, y1] = pt(a1, r);
+    return `M${x0} ${y0} A${r} ${r} 0 ${a1 - a0 > Math.PI ? 1 : 0} 1 ${x1} ${y1}`;
+  };
+  const a = ang(ts), [px, py] = pt(a);
+  const ticks = Array.from({ length: 7 }, (_, i) => -Math.PI / 2 + (i / 7) * Math.PI * 2);
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} className="shrink-0" role="img" aria-label={`Release in ${short(ts - now)}`}>
+      <circle cx={C} cy={C} r={R} fill="none" stroke="rgb(var(--text) / 0.08)" strokeWidth="6" />
+      {ticks.map((t, i) => { const [x0, y0] = pt(t, R + 5), [x1, y1] = pt(t, R + 8); return <line key={i} x1={x0} y1={y0} x2={x1} y2={y1} stroke="rgb(var(--accent) / 0.6)" strokeWidth="1.2" />; })}
+      {ts > now && <path d={arc(-Math.PI / 2, a)} fill="none" stroke="rgb(var(--accent))" strokeWidth="6" strokeLinecap="round" style={{ filter: "drop-shadow(0 0 4px rgb(var(--accent) / 0.8))" }} />}
+      <path d={arc(ang(ts - 45 * 60_000), Math.max(ang(ts + 30 * 60_000), ang(ts - 45 * 60_000) + 0.08))} fill="none" stroke="rgb(var(--bear) / 0.45)" strokeWidth="10" />
+      <circle cx={px} cy={py} r="9" fill="none" stroke="rgb(var(--bear) / 0.5)" className="ic-ring" />
+      <circle cx={px} cy={py} r="5" fill="rgb(var(--bear))" style={{ filter: "drop-shadow(0 0 5px rgb(var(--bear)))" }} />
+      <circle cx={C} cy={C - R} r="3.5" fill="rgb(var(--text))" />
+      <text x={C} y={C + 2} textAnchor="middle" fontSize="13" fontWeight="700" fill="rgb(var(--accent))">{short(ts - now)}</text>
+      <text x={C} y={C + 15} textAnchor="middle" fontSize="7.5" fill="rgb(var(--mute))">to go</text>
+    </svg>
+  );
+}
+
+/** v2.36 New-signal status as a radar: running = the gold sweep turns and a blip shows; paused = the sweep stops and
+ *  red rings pulse out from the centre. */
+export function SignalBeacon({ paused, size = 112 }: { paused: boolean; size?: number }) {
+  const tone = paused ? "--bear" : "--bull";
+  return (
+    <svg viewBox="0 0 100 100" width={size} height={size} className="shrink-0" role="img" aria-label={paused ? "New signals paused" : "New signals running"}>
+      <defs>
+        <radialGradient id="bc-core"><stop offset="0%" stopColor={`rgb(var(${tone}) / 0.35)`} /><stop offset="100%" stopColor={`rgb(var(${tone}) / 0)`} /></radialGradient>
+        <linearGradient id="bc-sweep" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgb(var(--accent) / 0)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0.55)" /></linearGradient>
+      </defs>
+      <circle cx="50" cy="50" r="44" fill="url(#bc-core)" />
+      {[44, 30, 16].map((r) => <circle key={r} cx="50" cy="50" r={r} fill="none" stroke={`rgb(var(${tone}) / 0.3)`} strokeDasharray={r === 44 ? "2 4" : undefined} />)}
+      <line x1="6" y1="50" x2="94" y2="50" stroke="rgb(var(--text) / 0.08)" /><line x1="50" y1="6" x2="50" y2="94" stroke="rgb(var(--text) / 0.08)" />
+      {paused ? (
+        [0, 1, 2].map((i) => <circle key={i} cx="50" cy="50" r="12" fill="none" stroke="rgb(var(--bear) / 0.7)" className="ic-ring" style={{ animationDelay: `${i * 1.1}s` }} />)
+      ) : (
+        <g className="beacon-sweep" style={{ transformOrigin: "50px 50px" }}>
+          <path d="M50 50 L94 50 A44 44 0 0 0 81 19 Z" fill="url(#bc-sweep)" />
+          <line x1="50" y1="50" x2="94" y2="50" stroke="rgb(var(--accent))" strokeWidth="1.5" />
+        </g>
+      )}
+      {!paused && <circle cx="68" cy="34" r="3" fill="rgb(var(--bull))" className="ic-blink" style={{ filter: "drop-shadow(0 0 4px rgb(var(--bull)))" }} />}
+      <circle cx="50" cy="50" r="5" fill={`rgb(var(${tone}))`} style={{ filter: `drop-shadow(0 0 6px rgb(var(${tone})))` }} />
+    </svg>
+  );
+}

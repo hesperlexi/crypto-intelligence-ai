@@ -859,3 +859,8 @@ pulses), medium as amber, dark bands = the news-guard pause (45 min before → 3
   calendar + `CoinConstellation` (coins mentioned as stars around the AI core, size = headlines, tap = filter; the coin
   filter state lives in `News`, phones scroll to the headlines) + `NewsSpectrum` (headlines per hour, 24 h, busiest
   hour gold; `flex-1` so both columns end level).
+- v2.36 (owner): News overview cells get visuals: `ReleaseDial` (full ring = next 7 days, now at the top, gold arc = time
+  to wait, red world = the release, dark arc = the signal-pause window, countdown inside) and `SignalBeacon` (running =
+  gold radar sweep + green blip; paused = red rings pulse, "Resumes in …" from `risk_now.ts` + 30 min; else "Next pause
+  in …" = next high-impact − 45 min). Share cards v2.35 (`cards.py`, `cardCanvas.ts`): gold-black kept, gold dust stars,
+  faint gold orbit, gold HUD corners, orbit rings round the hero, context tag (`_base(title, tag)`, `header(…, tagText)`).
