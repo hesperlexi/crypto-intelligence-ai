@@ -219,7 +219,7 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "ideas", "combo"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "ideas", "combo", "rank"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
@@ -244,7 +244,10 @@ def main(argv: list[str] | None = None) -> int:
             src.close()
             dst.close()
             a.db = f"sqlite:///{tmp}"
-        if a.command == "combo":
+        if a.command == "rank":
+            from . import research_rank
+            out = {"ok": True, "command": a.command, **research_rank.run(a.db, a.budget)}
+        elif a.command == "combo":
             from . import research_ideas
             out = {"ok": True, "command": a.command, **research_ideas.run_combo(a.db, a.budget)}
         elif a.command == "ideas":
