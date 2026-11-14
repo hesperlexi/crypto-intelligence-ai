@@ -864,3 +864,11 @@ pulses), medium as amber, dark bands = the news-guard pause (45 min before → 3
   gold radar sweep + green blip; paused = red rings pulse, "Resumes in …" from `risk_now.ts` + 30 min; else "Next pause
   in …" = next high-impact − 45 min). Share cards v2.35 (`cards.py`, `cardCanvas.ts`): gold-black kept, gold dust stars,
   faint gold orbit, gold HUD corners, orbit rings round the hero, context tag (`_base(title, tag)`, `header(…, tagText)`).
+
+## v2.37 premium share images (owner, 14 Nov 2026: "a premium look that attracts users")
+`frontend/src/lib/luxCard.ts` (weekly report post + story, achievement badge + poster, Hesper card; Telegram cards keep
+`cards.py`): warm black with a diagonal gold light, fine gold grain, the round logo artwork as a faint sepia watermark,
+gold-foil frame with diamonds, brand line with spaced name + site and a foil-outlined tag, Sora figures filled with a
+metallic gold gradient (`foil`; losses stay plain red), left-aligned editorial layout, `curveChart` (week's running total /
+Hesper balance, log), `statRow` hairline stats, ledger rows with hairlines, `luxFooter` foil CTA. `views.weekly_report`
+adds `curve` (running total in closing order, ROI when every trade has one, else price; ≤61 points) + `curve_basis`.

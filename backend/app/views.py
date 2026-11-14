@@ -436,6 +436,16 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
         trades.append({"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
                        "grade": p.get("grade"), "entry": r["entry"], "status": r["status"], **tracking.result_fields(r),
                        **tracking.margin_fields(r, p), "created_at": r["created_at"], "closed_at": r["closed_at"]})
+    # v2.37 share image: the week's running total in closing order (ROI on margin when every trade has one, else price)
+    by_close = sorted(trades, key=lambda t: t.get("closed_at") or 0)
+    use_roi = bool(by_close) and all(t.get("roi_pct") is not None for t in by_close)
+    run, curve = 0.0, [0.0]
+    for t in by_close:
+        run += float(t["roi_pct"] if use_roi else t["return_pct"])
+        curve.append(round(run, 2))
+    if len(curve) > 61:
+        step = (len(curve) - 1) / 60
+        curve = [curve[round(i * step)] for i in range(61)]
     # best first by the headline number (ROI on margin; the price return where no leverage is known)
     trades.sort(key=lambda t: t["roi_pct"] if t.get("roi_pct") is not None else t["return_pct"], reverse=True)
     rets = np.array([t["return_pct"] for t in trades], float)
@@ -469,6 +479,7 @@ def weekly_report(rt: Runtime, start: int, bot_report: dict[str, Any] | None = N
             "avg_return_pct": float(rets.mean()) if len(rets) else None,
             **roi_summary(trades),
             "best": trades[:5], "worst": trades[-1] if trades else None,
+            "curve": curve if len(curve) > 1 else None, "curve_basis": "roi" if use_roi else "price",
             "best_coin": max(by_coin.items(), key=lambda kv: kv[1])[0] if by_coin else None,
             "scorecard_bots": bots, "radar_best": radar_best,
             "basis": "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, "

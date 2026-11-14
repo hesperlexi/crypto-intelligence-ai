@@ -200,6 +200,7 @@ function weekly() {
     total_return_pct: tot, total_roi_pct: totRoi, avg_return_pct: tot / (wins + losses), avg_roi_pct: totRoi / (wins + losses),
     best, worst: t("ETH/USDT", "4h", "SHORT", "STOPPED", -1.62, 10), scorecard_bots: [{ name: "Futures signals A+B · 4H", week_return_pct: 2.4, total_return_pct: 3.4 }],
     radar_best: { symbol: "SUI/USDT", ret_7d_pct: 14.2, vs_btc_pct: 9.8 },
+    curve: [0, 31.2, 54.3, 38.1, 55.0, 62.1, 46.0, 53.1, 70.2, 58.0, totRoi].slice(0, wins + losses + 1), curve_basis: "roi",
     basis: "Signals that closed this week; each return assumes equal size, half closed at target 1 and a quarter at targets 2 and 3, before fees. ROI is on margin at the leverage each signal card suggested (price return x leverage); losses are multiplied the same way." });
   return { reports: [mk(start, last.slice(0, 2), false, 2, 1, 3.81, 38.1), mk(start - wk, last, true, 7, 3, 6.92, 64.8)] };
 }

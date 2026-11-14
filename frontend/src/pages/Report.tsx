@@ -7,7 +7,7 @@ import { RoiFigure } from "../components/SignalExtras";
 import { useApi } from "../lib/api";
 import { base, isNum } from "../lib/format";
 import { SITE_HOST } from "../lib/brand";
-import { backdrop, C, cap, chip, fontsReady, footer, glowText, header, M, orbitRings, panel, sidePill, text, wrap, font } from "../lib/cardCanvas";
+import { curveChart, figure, foil, inter, L, luxBackground, luxBrand, luxFooter, luxReady, sora, statRow, txt, wrapLines } from "../lib/luxCard";
 import { roiOf } from "../lib/roi";
 
 const SITE = SITE_HOST;
@@ -18,91 +18,86 @@ const sp = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)
 const STATUS: Record<string, string> = { TP3: "All targets", TP2: "Target 2", TP1: "Target 1", STOPPED: "Stopped", EXPIRED: "Time limit" };
 
 async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
-  const W = 1080, H = story ? 1920 : 1080;
+  // v2.37 premium layout (lib/luxCard.ts): editorial, left-aligned, metallic gold figures, hairlines instead of boxes
+  const W = 1080, H = story ? 1920 : 1080, M = 84;
   cv.width = W; cv.height = H;
   const g = cv.getContext("2d")!;
-  await fontsReady();
-  backdrop(g, W, H);
-  let y = await header(g, `Weekly results · ${range(r)}`, story ? 120 : 64) + (story ? 72 : 40);
+  await luxReady();
+  await luxBackground(g, W, H);
+  let y = await luxBrand(g, W, M, story ? 110 : 72, "WEEKLY REPORT");
   const roiTot = isNum(r.total_roi_pct);
   const head = roiTot ? r.total_roi_pct : r.total_return_pct;
-  const col = (head ?? 0) >= 0 ? C.bull : C.bear;
+  const good = (head ?? 0) >= 0;
 
-  // hero: total ROI on margin (else the price move, labelled)
-  const hh = story ? 320 : 224;
-  panel(g, M, y, W - 2 * M, hh, { r: 32, stroke: (head ?? 0) >= 0 ? "rgba(14,203,129,0.45)" : "rgba(246,70,93,0.45)", fill: (head ?? 0) >= 0 ? "rgba(14,203,129,0.06)" : "rgba(246,70,93,0.06)" });
-  text(g, roiTot ? "TOTAL ROI ON MARGIN · ALL CLOSED SIGNALS" : "TOTAL PRICE MOVE · ALL CLOSED SIGNALS", W / 2, y + (story ? 64 : 48), { weight: 800, px: 22, color: C.gold, align: "center" });
-  orbitRings(g, W / 2, y + hh / 2 + 8, (W - 2 * M) * 0.44, hh * 0.44, col);
-  glowText(g, sp(head, 2), W / 2, y + (story ? 216 : 160), col, { weight: 800, px: story ? 150 : 120, align: "center", maxW: W - 2 * M - 64, blur: 44 });
-  text(g, `${roiTot ? `price ${sp(r.total_return_pct, 2)} · ` : ""}${r.closed} closed signals, wins and losses, equal margin, before fees`,
-    W / 2, y + hh - 32, { weight: 500, px: 20, color: C.mute, align: "center", maxW: W - 2 * M - 48 });
-  y += hh + 24;
+  y += story ? 120 : 64;
+  txt(g, `Week of ${range(r)}`, M, y, { f: sora, w: 600, px: story ? 34 : 26, color: L.soft });
+  y += story ? 56 : 36;
+  txt(g, roiTot ? "Total ROI on margin, every closed signal" : "Total price move, every closed signal", M, y, { w: 500, px: story ? 26 : 21, color: L.mute });
+  y += story ? 176 : 120;
+  figure(g, sp(head, 2), M - 6, y, story ? 190 : 128, good, { maxW: W - 2 * M });
+  y += story ? 64 : 42;
+  txt(g, `${roiTot ? `price ${sp(r.total_return_pct, 2)}  ·  ` : ""}${r.closed} closed, wins and losses  ·  equal margin, before fees`, M, y,
+    { w: 500, px: story ? 24 : 19, color: L.mute, maxW: W - 2 * M });
 
-  // three KPI tiles, values centred on one baseline
-  const kp: [string, string, string][] = [["WIN RATE", isNum(r.win_rate) ? `${Math.round(r.win_rate * 100)}%` : "—", C.text],
-    ["WINS · LOSSES", `${r.wins} · ${r.losses}`, C.text], ["SIGNALS ISSUED", String(r.issued ?? r.closed), C.text]];
-  const kw = (W - 2 * M - 2 * 24) / 3, kh = story ? 152 : 112;
-  kp.forEach(([k, v, c], i) => {
-    const x = M + i * (kw + 24);
-    panel(g, x, y, kw, kh, { r: 24 });
-    text(g, k, x + kw / 2, y + (story ? 48 : 40), { weight: 700, px: 17, color: C.mute, align: "center", maxW: kw - 32 });
-    text(g, v, x + kw / 2, y + kh - (story ? 36 : 24), { weight: 800, px: story ? 56 : 44, color: c, align: "center", maxW: kw - 40 });
-  });
-  y += kh + (story ? 64 : 40);
+  // the week's running total, trade by trade
+  if (Array.isArray(r.curve) && r.curve.length > 1) {
+    y += story ? 48 : 22;
+    const ch = story ? 200 : 100;
+    curveChart(g, M, y, W - 2 * M, ch, r.curve, (r.curve[r.curve.length - 1] ?? 0) >= 0);
+    y += ch;
+  }
 
-  const fy = H - (story ? 200 : 152);                                   // footer hairline
-  const bot = (r.scorecard_bots ?? []).find((b: any) => isNum(b.week_return_pct));
-  const tail = (bot ? 48 : 0) + (story && r.radar_best ? 48 : 0);
-  const cta = story ? 400 : 0;
-  const rowH = story ? 88 : 80;
-  text(g, "TOP SIGNALS THIS WEEK", M, y, { weight: 800, px: 20, color: C.gold });
-  y += 20;
-  const room = Math.floor((fy - 24 - tail - cta - y) / rowH);
+  y += story ? 130 : 76;
+  statRow(g, M, y, W - 2 * M, [
+    [`win rate`, isNum(r.win_rate) ? `${Math.round(r.win_rate * 100)}%` : "—"],
+    [`wins · losses`, `${r.wins} · ${r.losses}`],
+    [`signals issued`, String(r.issued ?? r.closed)],
+  ], story ? 64 : 44);
+  y += story ? 110 : 92;
+
+  // top signals: a ledger with hairlines
+  const fy = H - (story ? 190 : 150);
+  const rowH = story ? 84 : 56;
+  const cta = story ? 440 : 0;          // CTA block (300) + its gap + the bot line
+  const room = Math.floor((fy - 20 - cta - y - 20) / rowH);
   const best = (r.best ?? []).filter((t: any) => t.return_pct > 0).slice(0, Math.max(0, Math.min(story ? 5 : 3, room)));
-  if (!best.length) { text(g, "No winning signals closed this week.", M, y + 48, { weight: 500, px: 24, color: C.mute }); y += rowH; }
-  const xr = W - M - 28;                                                 // right edge inside the rows
-  for (const [k, t] of best.entries()) {
-    const top = y + k * rowH, mid = top + (rowH - 10) / 2;
-    panel(g, M, top, W - 2 * M, rowH - 10, { r: 18, fill: k % 2 ? "rgba(255,255,255,0.02)" : C.panel });
-    g.font = font(800, 32);
-    text(g, base(t.symbol), M + 28, mid + cap(g) / 2, { weight: 800, px: 32, maxW: 180 });
-    sidePill(g, M + 220, mid - 16, t.side, { h: 32, px: 15, minW: 92 });
-    chip(g, M + 324, mid - 16, String(t.timeframe).toUpperCase(), { h: 32, px: 15, minW: 68 });
-    g.font = font(500, 19);
-    text(g, STATUS[t.status] ?? t.status, M + 408, mid + cap(g) / 2, { weight: 500, px: 19, color: C.mute });
-    const ro = roiOf(t)!;
-    if (ro.leverage) chip(g, xr, mid - 15, `${ro.leverage}x`, { h: 30, px: 14, minW: 56, align: "right" });
-    g.font = font(800, 34);
-    const vy = mid + cap(g) / 2 - (ro.onMargin ? 8 : 0);
-    text(g, sp(ro.value, 2), xr - 72, vy, { weight: 800, px: 34, color: C.bull, align: "right" });
-    if (ro.onMargin) text(g, `price ${sp(ro.price, 2)}`, xr - 72, vy + 24, { weight: 500, px: 15, color: C.mute, align: "right" });
-    else text(g, "price move", xr - 72, vy + 22, { weight: 500, px: 15, color: C.mute, align: "right" });
-  }
-  y += Math.max(1, best.length) * rowH + 8;
-  if (bot) {
-    y += 32;
-    const w0 = text(g, "Scorecard bot (all app signals, virtual money) this week:", M, y, { weight: 500, px: 21, color: C.mute });
-    text(g, sp(bot.week_return_pct), M + w0 + 12, y, { weight: 800, px: 22, color: bot.week_return_pct >= 0 ? C.bull : C.bear });
-    y += 16;
-  }
-  if (story && r.radar_best) {
-    y += 32;
-    text(g, `Radar pick ${base(r.radar_best.symbol)}: ${sp(r.radar_best.ret_7d_pct)} in 7 days`, M, y, { weight: 500, px: 21, color: C.mute });
-    y += 16;
-  }
-  if (story) {
-    const cy = fy - 48 - 360;
-    panel(g, M, cy, W - 2 * M, 360, { r: 28, fill: "rgba(240,185,11,0.07)", stroke: "rgba(240,185,11,0.5)" });
-    text(g, "Get the next signals", M + 40, cy + 76, { weight: 800, px: 44, color: C.gold });
-    ["AI long / short calls with entry, stop-loss & targets", "Alerts on your phone · demo trading · weekly reports", "Full results, losses included, for members"].forEach((t, k) => {
-      text(g, "✓", M + 40, cy + 148 + k * 56, { weight: 800, px: 28, color: C.gold });
-      text(g, t, M + 84, cy + 148 + k * 56, { weight: 500, px: 28, maxW: W - 2 * M - 124 });
+  if (best.length) {
+    txt(g, "Top signals", M, y, { f: sora, w: 700, px: story ? 30 : 24, color: L.text });
+    y += 18;
+    best.forEach((t: any, k: number) => {
+      const top = y + k * rowH, mid = top + rowH / 2 + 8;
+      g.fillStyle = L.hair; g.fillRect(M, top, W - 2 * M, 1);
+      txt(g, `0${k + 1}`, M, mid, { f: sora, w: 700, px: story ? 24 : 20, color: L.soft });
+      txt(g, base(t.symbol), M + 60, mid, { f: sora, w: 700, px: story ? 34 : 28, color: L.text, maxW: 170 });
+      txt(g, `${t.side} · ${String(t.timeframe).toUpperCase()} · ${STATUS[t.status] ?? t.status}`, M + 250, mid,
+        { w: 600, px: story ? 21 : 18, color: t.side === "LONG" ? L.bull : L.bear, maxW: 330 });
+      const ro = roiOf(t)!;
+      figure(g, sp(ro.value, 1), W - M, mid, story ? 36 : 30, true, { align: "right" });
+      if (ro.onMargin) txt(g, `${ro.leverage}x · price ${sp(ro.price, 2)}`, W - M - (story ? 160 : 136), mid, { w: 500, px: story ? 18 : 15, color: L.mute, align: "right" });
     });
-    text(g, `${SITE} · from 15 USDT/month`, M + 40, cy + 324, { weight: 800, px: 32, color: C.gold });
+    y += best.length * rowH;
+  } else {
+    txt(g, "No winning signals closed this week. Every loss is still counted above.", M, y, { w: 500, px: 22, color: L.mute, maxW: W - 2 * M });
+    y += rowH;
   }
-  g.font = font(500, 17);
-  footer(g, W, fy, "Past results don't guarantee future results",
-    wrap(g, `ROI on margin = price move × the leverage each signal card suggested; losses grow the same way. Equal margin per signal, before fees. Analysis only, not financial advice.`, W - 2 * M, 2));
+
+  if (story) {
+    const bot = (r.scorecard_bots ?? []).find((b: any) => isNum(b.week_return_pct));
+    const cy = fy - 50 - 300;
+    if (bot) txt(g, `Scorecard bot (all app signals, virtual money) this week: ${sp(bot.week_return_pct)}`, M, cy - 40, { w: 500, px: 22, color: L.mute, maxW: W - 2 * M });
+    g.save();
+    g.strokeStyle = foil(g, M, cy, W - M, cy + 300); g.lineWidth = 2;
+    g.beginPath(); g.roundRect(M, cy, W - 2 * M, 300, 28); g.stroke();
+    g.fillStyle = "rgba(240,185,11,0.05)"; g.fill();
+    g.restore();
+    txt(g, "Get the next signals live", M + 44, cy + 78, { f: sora, w: 800, px: 44, color: foil(g, M, cy, W - M, cy + 80) });
+    ["Long and short calls with entry, stop and three targets", "Phone alerts, demo trading, weekly reports", "Every result public, losses included"].forEach((t, k) =>
+      txt(g, `—  ${t}`, M + 44, cy + 140 + k * 46, { w: 500, px: 26, color: L.text, maxW: W - 2 * M - 88 }));
+  }
+
+  luxFooter(g, W, M, fy, `${SITE}  ·  from 15 USDT a month`, wrapLines(g,
+    "ROI on margin = price move × the leverage each signal card suggested; losses grow the same way. Equal margin per signal, before fees. Not financial advice; past results don't guarantee future results.",
+    inter(500, 16), W - 2 * M, 2));
 }
 
 function roiLine(t: any): string {
