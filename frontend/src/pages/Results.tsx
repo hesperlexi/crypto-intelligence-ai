@@ -29,7 +29,7 @@ export default function Results() {
   const go = (k: Tab) => { const p = new URLSearchParams(params); p.set("tab", k); setParams(p, { replace: true }); };
   return (
     <div className="space-y-4">
-      <PageHeader title="Results" sub="Every signal since the restart, wins and losses alike, after fees. Nothing is edited." />
+      <PageHeader title="Results" />
       <TabStrip label="Results" value={tab} options={tabs} onChange={go} className="-mx-3 px-3 sm:mx-0 sm:px-0" />
       {tab === "track" && <TrackRecord />}
       {tab === "bots" && <Bots />}

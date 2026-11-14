@@ -142,7 +142,7 @@ export default function Report() {
   const cap = useMemo(() => (r ? caption(r) : ""), [r]);
   if (v.loading && !v.data) return <Loading />;
   if (v.error) return <ErrorBox error={v.error} retry={v.reload} />;
-  if (!r) return <p className="text-sm text-mute">The first weekly report appears once signals have been published.</p>;
+  if (!r) return <p className="text-sm text-mute">No weekly report yet.</p>;
   const download = () => {
     const a = document.createElement("a");
     a.download = `crypto-intelligence-weekly-${new Date(r.week_start).toISOString().slice(0, 10)}${story ? "-story" : ""}.png`;
@@ -153,7 +153,7 @@ export default function Report() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Weekly report" sub="Ready to post: the best signals plus full totals, wins and losses." />
+      <PageHeader title="Weekly report" />
       <div className="flex flex-wrap items-center gap-2">
         <select className="input w-auto" value={idx} onChange={(e) => setI(Number(e.target.value))} aria-label="Week">
           {reports.map((x, k) => <option key={x.week_start} value={k}>{range(x)}{x.complete ? "" : " (so far)"}</option>)}

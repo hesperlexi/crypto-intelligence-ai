@@ -133,9 +133,9 @@ export default function Achievements() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Achievements" sub="Real milestones from the track record. Download to share."
+      <PageHeader title="Achievements"
         actions={<button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>} />
-      {!list.length && <p className="panel p-4 text-sm text-mute">Achievements appear as soon as the first signals have closed.</p>}
+      {!list.length && <p className="panel p-4 text-sm text-mute">No achievements yet.</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((a) => (
           <li key={a.id} className={`panel flex flex-col items-center p-5 text-center ${a.unlocked ? "border-accent/40" : "opacity-60"}`}>

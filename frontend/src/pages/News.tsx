@@ -98,7 +98,6 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
         ) : (
           <>
             <div className="mt-1 flex items-center gap-2 font-display text-lg font-semibold text-bull"><span className="h-2 w-2 rounded-full bg-bull" />Running normally</div>
-            <p className="mt-1 text-xs text-mute">No new entries from 45 min before to 30 min after.</p>
           </>
         )}
       </div>
@@ -223,7 +222,7 @@ export default function News() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="News and calendar" sub="What is moving crypto now, and the US releases that can move it next." />
+      <PageHeader title="News and calendar" />
       <NewsBanner hours={24} />
       <Overview d={d} now={now} heads={heads} />
 
@@ -278,7 +277,6 @@ export default function News() {
           <p className="border-t border-glass/[0.06] px-4 py-2 text-xs text-mute">Source: {d.sources?.calendar ?? "economic calendar"}. Your local time.</p>
         </section>
       </div>
-      <p className="text-xs text-mute">News mood is context only; it never changes a signal. Not financial advice.</p>
     </div>
   );
 }

@@ -52,7 +52,6 @@ export default function Bots() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="section-title">Demo trading bots</h2>
-          <p className="page-sub">Virtual money. Each bot takes the app's calls with their entry, stop and targets, fees included.</p>
         </div>
         {admin && <div className="flex flex-wrap gap-2">
           <button className="btn btn-sm" onClick={() => add("decision")}>Add signal bot</button>
@@ -69,7 +68,7 @@ export default function Bots() {
         ))}
       </div>
       <Card title="How the bots work">
-        <p className="text-sm text-mute">Virtual money. Bots trade the app's calls with their entry, stop and targets, fees included. <Info label="Bot rules">
+        <p className="text-sm text-mute"><Info label="Bot rules">
         <span className="block space-y-2">
           <span className="block"><span className="font-medium text-text">Signal bots</span> <span className="text-mute">trade only the engine's final decisions (BUY, BUY ON PULLBACK, SELL) using the trade plan's entry, stop and three targets. Half the position closes at TP1 (1:1), a quarter at TP2 (up to 1:2) and a quarter at TP3 (up to 1:3); the stop moves to break-even after TP1 and trails to TP1 after TP2. Grade A+B bots also take the moderate (grade B) calls, so you can compare. They show what following the signals would have earned.</span></span>
           {admin && <span className="block"><span className="font-medium text-text">Prediction trackers</span> <span className="text-mute">take every model call (UP → long, DOWN → short) and hold it for exactly one bar, with no other filter. They show how often the raw predictions are right and what they pay. Only you see them.</span></span>}
@@ -139,7 +138,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
           <Stat label="Long / short P&L" value={s.trades ? <span><span className={tone(s.long_pnl)}>${fmtNum(s.long_pnl, 0)}</span> / <span className={tone(s.short_pnl)}>${fmtNum(s.short_pnl, 0)}</span></span> : DASH} />
         </div>
       )}
-      {s.note && <Note>{s.note}</Note>}
+      
       {bot.equity_curve.length > 1 && <div className="mt-4"><LineChart series={series} height={220} /></div>}
 
       <div className="mt-4 grid gap-6 2xl:grid-cols-2 2xl:[&_.table-wrap]:mx-0">
@@ -204,7 +203,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
               <Row k="Exits" v={Object.entries(s.by_exit ?? {}).map(([k, v]) => `${k} ${v}`).join(" · ")} />
             </div>
           )}
-          {s.trades > 0 && s.trades < 30 && <Note>Under 30 trades: figures can still move a lot.</Note>}
+          
         </div>
       </div>
 

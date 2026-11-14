@@ -57,27 +57,27 @@ export function Ico({ name, size = 18, className = "" }: { name: string; size?: 
 
 /* ---- page titles for the desktop top bar (one short line each) ------------------------------------------------ */
 const TITLES: [string, string, string][] = [
-  ["/asset/", "Coin", "Chart, AI view and the coin's report"],
-  ["/signals", "Signals", "Trade calls per timeframe, with entry, stop and targets"],
-  ["/paper", "Trade", "Practice trading with virtual money"],
-  ["/results", "Results", "Every call since the restart, wins and losses alike"],
-  ["/news", "News", "Headlines and the US economic calendar"],
-  ["/radar", "Radar", "Coins outside the app that beat the market"],
-  ["/community", "Community", "Talk with other members"],
-  ["/alerts", "Alerts", "Your alert rules and what fired"],
-  ["/settings", "Settings", "Account, notifications and appearance"],
-  ["/scanner", "Scanner", "Every coin on one board"],
-  ["/backtest", "Backtest", "Test a strategy on past data"],
-  ["/replay", "Replay", "Step through past candles"],
-  ["/report", "Weekly report", "Owner: marketing summary of the week"],
-  ["/achievements", "Achievements", "Owner: milestones of the record"],
-  ["/health", "Health", "Owner: engine, data and quotas"],
-  ["/rich", "Hesper Challenge", "Owner: all-in demo from $100, runs until you stop it"],
-  ["/guardian", "Trade Guardian", "Owner: recommendations on open calls"],
-  ["/users", "Users", "Owner: members, payments and access"],
+  ["/asset/", "Coin", "Chart and AI view"],
+  ["/signals", "Signals", "Live trade calls"],
+  ["/paper", "Trade", "Practice account"],
+  ["/results", "Results", "Track record"],
+  ["/news", "News", "Headlines and calendar"],
+  ["/radar", "Radar", "Coins beating the market"],
+  ["/community", "Community", "Members' chat"],
+  ["/alerts", "Alerts", "Your alerts"],
+  ["/settings", "Settings", "Account and app"],
+  ["/scanner", "Scanner", "All coins"],
+  ["/backtest", "Backtest", "Past-data tests"],
+  ["/replay", "Replay", "Past candles"],
+  ["/report", "Weekly report", "Week summary"],
+  ["/achievements", "Achievements", "Record milestones"],
+  ["/health", "Health", "Engine and data"],
+  ["/rich", "Hesper Challenge", "All-in demo run"],
+  ["/guardian", "Trade Guardian", "Open-call warnings"],
+  ["/users", "Users", "Members and payments"],
 ];
 export function pageTitle(path: string): [string, string] {
-  if (path === "/" || path === "") return ["Overview", "Market, signals and results at a glance"];
+  if (path === "/" || path === "") return ["Overview", "Market today"];
   const hit = TITLES.find(([p]) => path.startsWith(p));
   return hit ? [hit[1], hit[2]] : ["Crypto Intelligence AI", "Analysis and demo trading only"];
 }

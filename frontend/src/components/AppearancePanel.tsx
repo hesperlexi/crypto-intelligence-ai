@@ -116,7 +116,6 @@ export function AppearancePanel() {
         <Choice label="Page width" k="width" options={[["contained", "Centered"], ["wide", "Full width"]]} />
         <Choice label="Glass effect" k="glass" options={[[true, "On"], [false, "Off (faster)"]]} />
       </div>
-      <p className="text-xs text-mute">Saved on this device.</p>
     </div>
   );
 }

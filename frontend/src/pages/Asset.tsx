@@ -165,7 +165,7 @@ export default function Asset() {
                   </tbody>
                 </table>
               </div>
-              <Note>One bar ahead, per timeframe.</Note>
+              
             </Card>
             <MtfCard mtf={a.mtf} />
           </div>
@@ -319,7 +319,7 @@ function MtfCard({ mtf }: { mtf: any }) {
       </div>
       <div className="mt-3"><Meter value={mtf?.alignment} tone={mtf?.alignment < 0.5 ? "warn" : "accent"} /></div>
       {mtf?.conflict && <div className="mt-2"><Badge tone="warn">{mtf.conflict_note}</Badge></div>}
-      <Note>Share of timeframes pointing {mtf?.dominant_label ?? DASH}.</Note>
+      
     </Card>
   );
 }
@@ -357,7 +357,7 @@ function SetupCard({ setup, decision }: { setup: any; decision: string }) {
               ))}
             </tbody>
           </table></div>
-          <Note>Target odds are historical rates within {setup.horizon_bars} bars, not promises.</Note>
+          
         </div>
       )}
     </Card>
@@ -376,7 +376,7 @@ function WhyCard({ sig, explanation }: { sig: any; explanation: any }) {
           </div>
         ))}
       </div>
-      {sig.weights_note && <Note>{sig.weights_note}</Note>}
+      
       <div className="mt-4 grid gap-4 sm:grid-cols-2">
         <div><div className="label mb-1">Reasons</div>{sig.reasons.length ? sig.reasons.map((r: string) => <Check key={r} ok>{r}</Check>) : <span className="text-sm text-mute">None</span>}</div>
         <div><div className="label mb-1">Warnings</div>{sig.warnings.length ? sig.warnings.map((r: string) => <div key={r} className="flex gap-2 text-sm"><span className="text-warn" aria-hidden>!</span><span>{r}</span></div>) : <span className="text-sm text-mute">None</span>}</div>
@@ -387,7 +387,7 @@ function WhyCard({ sig, explanation }: { sig: any; explanation: any }) {
           <div><div className="label mb-1">Model: pushing down</div>{explanation.negative.slice(0, 6).map((f: any) => <Row key={f.feature} k={f.label} v={`${(f.contribution * 100).toFixed(1)} pp`} className="text-bear" />)}</div>
         </div>
       )}
-      {explanation && <Note>Model factors: {explanation.method}.</Note>}
+      
     </Card>
   );
 }
@@ -432,7 +432,7 @@ function RiskCard({ a, tf }: { a: any; tf: string }) {
             </>
           )}
           {(r.notes ?? []).map((n: string) => <Note key={n}>{n}</Note>)}
-          <Note>Based on the stop distance and your limits.</Note>
+          
         </>
       )}
     </Card>

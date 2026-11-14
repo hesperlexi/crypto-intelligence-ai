@@ -62,7 +62,7 @@ export default function Scanner() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Scanner" sub="Every coin on the watchlist ranked by its current setup." actions={<TfTabs value={tf} onChange={setTf} />} />
+      <PageHeader title="Scanner" actions={<TfTabs value={tf} onChange={setTf} />} />
       {admin && <Card title="Watchlist">
         <div className="flex flex-wrap items-center gap-2">
           <input className="input w-56" placeholder="Search a coin, e.g. PEPE" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} aria-label="Search cryptocurrency" />

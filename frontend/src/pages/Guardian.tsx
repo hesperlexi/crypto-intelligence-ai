@@ -58,7 +58,7 @@ export default function Guardian() {
   const hist: GuardianRec[] = v?.history ?? [];
   return (
     <div className="space-y-4">
-      <PageHeader title="Trade Guardian" sub="Early warnings on open calls. Recommend-only: nothing changes until you apply it." />
+      <PageHeader title="Trade Guardian" />
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}
       {!v && !q.error && <div className="skeleton h-64 rounded-xl" />}
       {v && (
@@ -68,7 +68,7 @@ export default function Guardian() {
           <section aria-label="Live recommendations" className="space-y-3">
             <h2 className="label">Live recommendations{live.length ? <span className="num ml-1.5 text-accent">{live.length}</span> : null}</h2>
             {live.length ? live.map((r) => <RecCard key={r.id} r={r} />) : (
-              <Empty>No warnings right now. Open calls are checked every engine run (about every 5 minutes).</Empty>
+              <Empty>No warnings right now.</Empty>
             )}
           </section>
           <Scoreboard sb={v.scoreboard} />
@@ -291,7 +291,7 @@ function Scoreboard({ sb }: { sb?: any }) {
     <section aria-label="Shadow scoreboard" className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="label">Shadow scoreboard</h2>
-        <span className="text-xs text-mute">What each warning would have changed, applied or not (net R, after fees)</span>
+        <span className="text-xs text-mute">Net R, after fees</span>
       </div>
       <div className="metric-strip">
         <Tile variant="strip" label="Net effect" value={r2(sb.net_r)} valueClass={rTone(sb.net_r)} sub={`${sb.n ?? 0} judged · ${sb.pending ?? 0} waiting`} />
@@ -299,7 +299,7 @@ function Scoreboard({ sb }: { sb?: any }) {
         <Tile variant="strip" label="Cost" value={r2(sb.cost_r)} valueClass={sb.cost_r < 0 ? "text-bear" : ""} sub={`${sb.hurt ?? 0} hurt`} />
         <Tile variant="strip" label="Applied" value={line(sb.applied)} sub={`not applied: ${line(sb.not_applied)}`} />
       </div>
-      <p className="text-xs text-mute">Tighten {line(sb.by_level?.TIGHTEN)} · Close {line(sb.by_level?.CLOSE)}. A positive number means the warning would have helped. Judge it after a few weeks; small samples mislead.</p>
+      <p className="text-xs text-mute">Tighten {line(sb.by_level?.TIGHTEN)} · Close {line(sb.by_level?.CLOSE)}.</p>
     </section>
   );
 }
@@ -311,7 +311,7 @@ function HeldBoard({ h }: { h?: any }) {
     <section aria-label="Hold scoreboard" className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="label">Hold scoreboard</h2>
-        <span className="text-xs text-mute">Calls you withdrew, followed privately with the normal rules (net R, after fees)</span>
+        <span className="text-xs text-mute">Net R, after fees</span>
       </div>
       <div className="metric-strip">
         <Tile variant="strip" label="Held" value={String(h.n)} sub={`${h.closed} finished · ${h.open} still running`} />
@@ -326,7 +326,6 @@ function HeldBoard({ h }: { h?: any }) {
           </li>
         ))}
       </ul>
-      <p className="text-xs text-mute">A positive total means the held calls would have made money, so holding cost you that much; negative means holding saved it.</p>
     </section>
   );
 }

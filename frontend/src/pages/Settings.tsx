@@ -154,7 +154,7 @@ function AdminSettings() {
               <p className="text-sm">Out-of-sample direction accuracy <span className="num">{fmtProb(opt.test_accuracy, 1)}</span> vs base rate <span className="num">{fmtProb(opt.test_base_rate, 1)}</span> on {opt.test_rows} later bars.</p>
               <div className="mt-2 grid gap-x-8 sm:grid-cols-2">{["trend", "momentum", "volume", "structure", "volatility"].map((k) => <Row key={k} k={k} v={`${Number(weights[k]).toFixed(2)} → ${opt.weights[k].toFixed(2)}`} />)}</div>
               <button className="btn mt-2" onClick={() => setWeights(Object.fromEntries(Object.entries(opt.weights).map(([k, v]) => [k, Number((v as number).toFixed(3))])))}>Load suggestion into the form</button>
-              <Note>Only use it if accuracy beats the base rate.</Note>
+              
             </div>
           ) : <p className="mt-3 text-sm text-warn">{opt.reason}</p>)}
         </div>
@@ -164,7 +164,7 @@ function AdminSettings() {
 }
 
 function PageHead() {
-  return <PageHeader title="Settings" sub="Your membership, notifications and how the app looks. Saved on this device unless noted." />;
+  return <PageHeader title="Settings" />;
 }
 
 function ManualCard() {
@@ -230,7 +230,6 @@ function NotificationsCard() {
         <ChromeWarning className="mt-3" />
         {!hasKey && admin && (
           <div className="mt-4 border-t border-glass/[0.06] pt-3">
-            <p className="text-xs text-mute">Firebase console → Project settings → Cloud Messaging → Web Push certificates → Generate key pair, then paste it here.</p>
             <div className="mt-2 flex gap-2">
               <input className="input" placeholder="Paste the Web Push key (starts with B…)" value={key} onChange={(e) => setKey(e.target.value)} />
               <button className="btn" disabled={busy || !key.trim()} onClick={() => act(async () => { await push.saveVapidKey(key); setHasKey(true); return "Key saved. Now press “Turn on notifications” on each device."; })}>Save</button>
@@ -264,7 +263,6 @@ function ViewModeCard() {
           ? "Beginner: simpler view, advanced numbers hidden."
           : "Pro: every number and statistic."}
       </p>
-      <p className="mt-1 text-xs text-mute">Saved on this device.</p>
     </Card>
   );
 }

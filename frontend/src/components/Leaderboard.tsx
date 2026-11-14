@@ -34,7 +34,7 @@ export default function Leaderboard() {
       </div>
 
       <p className="text-xs text-mute">
-        {v.rules} <Info label="How the leaderboard works">
+        <Info label="How the leaderboard works">
           Futures practice account only. Return = (equity now − equity at the month's start − money added) ÷ (equity at the
           start + money added), so Add funds never counts as profit. Open trades count at the current price. Updated about
           once an hour; the month ends at midnight Dubai time. Only usernames are shown: set one in Community to take part.

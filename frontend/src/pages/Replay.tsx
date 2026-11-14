@@ -52,7 +52,7 @@ export default function Replay() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Replay market" sub="Pick a past moment: see the forecast made with only the data known then, and what happened next." />
+      <PageHeader title="Replay market" />
       <Card title="Choose a moment" className="panel-hero">
         <div className="flex flex-wrap items-end gap-3">
           <SymbolSelect value={symbol} onChange={setSymbol} symbols={symbols.length ? symbols : [symbol]} />
@@ -64,7 +64,7 @@ export default function Replay() {
           <button className="btn btn-primary" disabled={busy || !when} onClick={run}>{busy ? "Queued — waiting for the engine…" : "Replay"}</button>
         </div>
         {range.data && !range.data.available && <p className="mt-2 text-sm text-warn">{range.data.reason}</p>}
-        {range.data?.available && <Note>Replayable range: {fmtTime(range.data.earliest)} to {fmtTime(range.data.latest)}. Results arrive within about 5 minutes.</Note>}
+        {range.data?.available && <Note>Range: {fmtTime(range.data.earliest)} to {fmtTime(range.data.latest)}</Note>}
       </Card>
       {err && <ErrorBox error={err} />}
 
@@ -114,7 +114,7 @@ export default function Replay() {
                       <Check ok={!res.reveal.setup_check.stop_hit}>Stop {res.reveal.setup_check.stop_hit ? "was hit" : "not hit"}</Check>
                     </div>
                   )}
-                  <Note>One replay is an anecdote, not evidence.</Note>
+                  
                 </>
               )}
             </Card>

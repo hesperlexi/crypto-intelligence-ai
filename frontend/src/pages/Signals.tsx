@@ -157,10 +157,10 @@ export default function Signals() {
 
       {!all && v.error && <ErrorBox error={v.error} retry={v.reload} />}
       {!all && !v.data && v.loading && <Loading what="Loading signals" />}
-      {!all && v.data === null && !v.loading && <Empty>Signals appear after the next engine run (within about 5 minutes).</Empty>}
+      {!all && v.data === null && !v.loading && <Empty>No signals yet.</Empty>}
       {boardsErr && <ErrorBox error={boardsErr.error ?? ""} retry={boardsErr.reload} />}
       {boardsLoading && <Loading what="Loading all timeframes" />}
-      {boardsEmpty && !boardsErr && <Empty>Signals appear after the next engine run (within about 5 minutes).</Empty>}
+      {boardsEmpty && !boardsErr && <Empty>No signals yet.</Empty>}
       {all && !boardsLoading && !boardsEmpty && allRows.length === 0 && <Empty>No trade calls right now.{waits ? "" : " Tick “Show waits” to see every coin."}</Empty>}
 
       {all && rows.length > 0 && <AllList rows={rows} market={market} px={px} onOpen={openOne} />}
@@ -229,7 +229,7 @@ export default function Signals() {
           </div>
         </>
       )}
-      <p className="pt-2 text-xs text-mute">Analysis only, not financial advice. Spot calls are buy-only.</p>
+      <p className="pt-2 text-xs text-mute">Spot calls are buy-only.</p>
     </div>
   );
 }

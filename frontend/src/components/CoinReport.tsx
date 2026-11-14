@@ -49,8 +49,7 @@ export default function CoinReport({ symbol }: { symbol: string }) {
           {r.invalidation?.text && <li className="flex gap-2"><span className="w-24 shrink-0 text-xs font-medium text-mute">Invalidation</span><span>{r.invalidation.text}</span></li>}
         </ul>
         <p className="text-xs text-mute">
-          {r.ai?.text ? `AI line ${ago(r.ai.at)} · ` : ""}From the engine's analysis. Context, not advice.
-          <Info label="How this report is made">Trend = 4H and 1D regimes. AI lean comes from the coin's 4H and 12H models; "weak" means below the model's proven threshold. Levels are the nearest 4H support and resistance zones. Updated at most hourly.</Info>
+          {r.ai?.text ? `AI line ${ago(r.ai.at)} · ` : ""}<Info label="How this report is made">Trend = 4H and 1D regimes. AI lean comes from the coin's 4H and 12H models; "weak" means below the model's proven threshold. Levels are the nearest 4H support and resistance zones. Updated at most hourly.</Info>
         </p>
       </div>
     </Card>

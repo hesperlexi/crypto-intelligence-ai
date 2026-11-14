@@ -64,14 +64,14 @@ export default function Radar() {
     } catch (e: any) { setMsg(e.message); }
   };
   if (v.loading && !v.data) return <Loading />;
-  if (v.error) return /not published/i.test(v.error) ? <Empty>The radar runs once an hour; the first scan appears after the next engine run.</Empty> : <ErrorBox error={v.error} retry={v.reload} />;
+  if (v.error) return /not published/i.test(v.error) ? <Empty>No scan yet.</Empty> : <ErrorBox error={v.error} retry={v.reload} />;
   const d = v.data ?? {};
   const h = d.historical ?? {}, live = d.live ?? {};
 
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Radar" sub="Coins beating the market right now, updated hourly. Ideas to watch, not trade signals." />
+      <PageHeader title="Radar" />
       {msg && <div role="status" className="rounded-lg border border-accent/40 bg-accent/10 px-3 py-2 text-sm">{msg}</div>}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {/* UI v2.15: shared Tile; a figure that does not exist yet says so in words instead of a bare dash */}
@@ -104,7 +104,7 @@ export default function Radar() {
           </div>
         </section>
       )}
-      <p className="text-xs text-mute">Added coins appear on the <Link to="/" className="text-accent hover:underline">dashboard</Link> and in Signals. {(d.method || h.note) && <Info label="How the radar works">{d.method} {h.note}</Info>}</p>
+      <p className="text-xs text-mute">{(d.method || h.note) && <Info label="How the radar works">{d.method} {h.note}</Info>}</p>
     </div>
   );
 }

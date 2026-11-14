@@ -113,7 +113,7 @@ export default function Dashboard() {
       {/* directly below the Fear & Greed row: dominance, altcoin season, market pulse, top headline */}
       <MarketInsights />
 
-      <SectionHead title="Models & forecasts" sub="Context, not advice." />
+      <SectionHead title="Models & forecasts" />
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <ForecastCard rows={d?.forecast_table} />
         <HeatmapCard rows={d?.heatmap} />
@@ -126,7 +126,7 @@ export default function Dashboard() {
               <span className="truncate font-medium">{base(o.symbol)}</span><SignalBadge signal={o.decision} />
               <span className="text-mute sm:text-right">{o.grade ? <span className="text-xs">Grade {o.grade === "A" ? "A · strong" : o.grade === "B" ? "B · moderate" : o.grade}</span> : DASH}</span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-xs"> R:R</span></span>
             </Link>
-          )) : <Empty>No setup currently passes every check (grade, model agreement, risk/reward). That is a valid outcome.</Empty>}
+          )) : <Empty>No setup passes every check right now.</Empty>}
         </Card>
         <Card title="Top risks">
           {d?.risks?.length ? d.risks.map((r: any, i: number) => (

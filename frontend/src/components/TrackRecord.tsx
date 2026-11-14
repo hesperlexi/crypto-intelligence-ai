@@ -238,7 +238,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           )}
           {tab === "bots" && (
             <div className="overflow-x-auto">
-              <p className="px-4 pt-3 text-xs text-mute">Virtual money. <b className="text-accent">Scorecard</b> bots take exactly the Signals-page calls, fees included.</p>
+              <p className="px-4 pt-3 text-xs text-mute"><b className="text-accent">Scorecard</b> bots take exactly the Signals-page calls, fees included.</p>
               <table className="grid-table mt-2 min-w-[600px]">
                 <thead><tr><th>Bot (virtual money)</th><th className="text-right">Trades</th><th className="text-right">Win rate</th><th className="text-right">Return</th><th className="text-right">Buy &amp; hold</th><th className="text-right">Max drop</th></tr></thead>
                 <tbody>

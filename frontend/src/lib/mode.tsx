@@ -31,7 +31,9 @@ export function ProOnly({ children }: { children: ReactNode }) {
 
 /** A short plain-language explanation: shown in Beginner mode only. */
 export function Explain({ children, className = "" }: { children: ReactNode; className?: string }) {
-  return useIsPro() ? null : <p className={`text-xs leading-snug text-mute ${className}`}>{children}</p>;
+  // v2.23 (owner, 14 Nov 2026): no guide text on any page
+  void children; void className;
+  return null;
 }
 
 /** Plain-language glossary used next to trade-plan numbers in Beginner mode. */

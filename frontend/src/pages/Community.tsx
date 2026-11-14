@@ -136,7 +136,7 @@ export default function Community() {
   useEffect(() => { const t = window.setInterval(() => tick((n) => n + 1), 60_000); return () => window.clearInterval(t); }, []);   // "time ago"
   return (
     <div className="mx-auto max-w-2xl space-y-4">
-      <PageHeader title="Community" sub="Talk trades with other members. Be kind, no spam, and remember it isn't financial advice." />
+      <PageHeader title="Community" />
       {s && s.username ? <Composer uid={s.uid} username={s.username} admin={admin} />
         : s && auth.currentUser ? (
           <div className="panel p-3 sm:p-4">

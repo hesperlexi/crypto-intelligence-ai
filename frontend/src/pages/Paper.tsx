@@ -11,7 +11,7 @@ import { useLive } from "../lib/live";
 export default function Paper() {
   return (
     <div className="space-y-3">
-      <PageHeader title="Trade" sub="Practise with virtual USDT on live prices. Nothing here is a real order."
+      <PageHeader title="Trade"
         actions={<Badge tone="warn">Practice account</Badge>} />
       <TradeTerminal />
     </div>
@@ -90,7 +90,7 @@ function SpotPaper() {
                 </div>
                 {held && <button className="btn w-full" onClick={() => order("SELL", held.qty)}>Close whole {symbol} position</button>}
                 {msg && <p className={`text-sm ${msg.ok ? "text-accent" : "text-bear"}`}>{msg.text}</p>}
-                <Note>Virtual money. Spot: you can't sell more than you hold.</Note>
+                
                 <div className="flex items-end gap-2 border-t border-line pt-3">
                   <label className="flex-1 text-xs text-mute">Starting balance<input className="input mt-1" inputMode="decimal" value={balance} onChange={(e) => setBalance(e.target.value)} /></label>
                   <button className="btn" onClick={reset}>Reset account</button>
