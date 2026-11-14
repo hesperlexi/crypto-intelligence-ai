@@ -242,7 +242,7 @@ def load_users(rt: Runtime, sink: BaseSink, force: bool = False) -> tuple[dict[s
 # (every coin, every timeframe: entry, TP1-3, close) once, as an ordinary alert document they can switch off or delete
 # on the Alerts page. Done once per person (settings `auto_call_alerts`), so a deleted rule is never re-added; anyone
 # who already has an every-coin call rule is left alone. One Firestore write per person, once.
-AUTO_CALL_EVENTS = ["entry", "tp1", "tp2", "tp3", "closed"]
+AUTO_CALL_EVENTS = ["new", "entry", "tp1", "tp2", "tp3", "closed"]
 OWNER_KEY = "__owner__"
 
 
@@ -265,6 +265,17 @@ def ensure_call_alerts(rt: Runtime, sink: BaseSink, users: dict[str, dict[str, A
         done[key] = now
     if made or len(done) != len(rt.db.get_setting("auto_call_alerts", None) or {}):
         rt.db.set_setting("auto_call_alerts", done)
+    # v2.30 (owner, 14 Nov 2026): the "My signals" rules made before "new" existed get it once (the person can switch it
+    # off again on the Alerts page; it is never re-added after this one-time update)
+    if not rt.db.get_setting("auto_call_new_v230", False):
+        for aid, a in remote.items():
+            if isinstance(a, dict) and a.get("auto") and a.get("type") == "SIGNAL_UPDATES":
+                ev = (a.get("params") or {}).get("events")
+                if isinstance(ev, list) and "new" not in ev:
+                    params = {**(a.get("params") or {}), "events": ["new", *ev]}
+                    sink.set(f"alerts/{aid}", {"params": params}, merge=True)
+                    rt.db.execute("UPDATE alerts SET params = ? WHERE id = ?", (dumps(params), aid))
+        rt.db.set_setting("auto_call_new_v230", True)
     return made
 
 
@@ -306,7 +317,7 @@ def alert_row(a: Any, inactive: set[str] | frozenset = frozenset()) -> tuple | N
 # and on a database that looks brand new (no signals and no migration flag at all) every historical migration is marked
 # done instead of run. A NEW migration must add its flag here.
 MIGRATION_FLAGS = (
-    "drop_inline_proofs_v1", "testing_v24", "testing_v24b", "watchlist_majors_v2", "gold_paxg_v21", "support_email_v23",
+    "auto_call_new_v230", "drop_inline_proofs_v1", "testing_v24", "testing_v24b", "watchlist_majors_v2", "gold_paxg_v21", "support_email_v23",
     "fresh_start_v23", "pause_15m_v26", "tf_policy_v28", "demo_1d3d_v210", "scalping_v1", "public_15m_v211",
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
@@ -1044,7 +1055,7 @@ def train_until(rt: Runtime, pairs: list[tuple[str, str]], fast: bool, deadline:
 
 # ---- publishing -------------------------------------------------------------------------------------------
 
-PUSH_TITLES = {"TRADE_SETUP": "Trade signal", "BUY_SIGNAL": "Buy signal", "SELL_SIGNAL": "Sell signal",
+PUSH_TITLES = {"NEW_SIGNAL": "New signal", "TRADE_SETUP": "Trade signal", "BUY_SIGNAL": "Buy signal", "SELL_SIGNAL": "Sell signal",
                # v2.16 call events and market mood
                "ENTRY_REACHED": "Entry reached", "TARGET_REACHED": "TP1 hit", "TP2_REACHED": "TP2 hit",
                "TP3_REACHED": "TP3 hit", "SIGNAL_CLOSED": "Signal closed", "STOP_REACHED": "Stop hit",

@@ -16,7 +16,8 @@ const NEEDS: Record<string, { key: string; label: string; placeholder: string }>
 const LABEL: Record<string, string> = {
   TRADE_SETUP: "Trade signal — entry, stop-loss & take-profits",
   // v2.16 smarter alerts (events of the public calls; one alert per call per event)
-  SIGNAL_UPDATES: "My signals — entry, TP1–TP3 and stop / early close",
+  SIGNAL_UPDATES: "My signals — new signal, entry, TP1–TP3 and stop / early close",
+  NEW_SIGNAL: "New signal published",
   ENTRY_REACHED: "Entry reached (a pullback call filled)",
   TARGET_REACHED: "TP1 reached",
   TP2_REACHED: "TP2 reached",
@@ -38,9 +39,9 @@ const EVENT_TFS = ["all", ...TRADE_TFS] as const;
 // event alerts work on every coin (ALL/USDT) or one coin, every timeframe ("all") or one
 const EVENT_TYPES = new Set(["SIGNAL_UPDATES", "ENTRY_REACHED", "TP2_REACHED", "TP3_REACHED", "SIGNAL_CLOSED"]);
 const ALL = "ALL/USDT";
-const EVENTS = [["entry", "Entry"], ["tp1", "TP1"], ["tp2", "TP2"], ["tp3", "TP3"], ["closed", "Stop / closed"]] as const;
+const EVENTS = [["new", "New signal"], ["entry", "Entry"], ["tp1", "TP1"], ["tp2", "TP2"], ["tp3", "TP3"], ["closed", "Stop / closed"]] as const;
 const PRESETS = [
-  { key: "signals", label: "My signals: entry / TP / SL", type: "SIGNAL_UPDATES", symbol: ALL, tf: "all", hint: "Every public call: entry filled, each target, stop or early close." },
+  { key: "signals", label: "My signals: new / entry / TP / SL", type: "SIGNAL_UPDATES", symbol: ALL, tf: "all", hint: "Every public call: when it is published, entry filled, each target, stop or early close." },
   { key: "mood", label: "Market mood change", type: "MOOD_CHANGE", symbol: ALL, tf: "4h", hint: "When the watchlist's 4H mood flips between bullish and bearish." },
 ] as const;
 const coinLabel = (s: string) => (s === ALL ? "All coins" : s);

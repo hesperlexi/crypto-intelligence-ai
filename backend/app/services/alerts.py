@@ -199,13 +199,16 @@ def evaluate(db: Database, a: dict[str, Any], now: int | None = None) -> list[di
 # (alert_marks), a member gets at most MAX_EVENTS_PER_DAY of these a day (Firestore free plan: each event can change
 # the member's alerts document once), and a new rule never fires for events that had already happened ("primed").
 EVENT_TYPES = ("ENTRY_REACHED", "TP2_REACHED", "TP3_REACHED", "SIGNAL_CLOSED", "SIGNAL_UPDATES", "MOOD_CHANGE")
-CALL_EVENTS = ("entry", "tp1", "tp2", "tp3", "closed")
+# v2.30 (owner, 14 Nov 2026: "no notification when the signal was generated"): "new" = the call was published. Since
+# v2.13 most calls are entered at the market price when published, so "entry" (a limit filled LATER) never fired for them.
+CALL_EVENTS = ("new", "entry", "tp1", "tp2", "tp3", "closed")
 TYPE_EVENTS = {"ENTRY_REACHED": ("entry",), "TP2_REACHED": ("tp2",), "TP3_REACHED": ("tp3",), "SIGNAL_CLOSED": ("closed",)}
-EVENT_TYPE_OF = {"entry": "ENTRY_REACHED", "tp1": "TARGET_REACHED", "tp2": "TP2_REACHED", "tp3": "TP3_REACHED",
+EVENT_TYPE_OF = {"new": "NEW_SIGNAL", "entry": "ENTRY_REACHED", "tp1": "TARGET_REACHED", "tp2": "TP2_REACHED", "tp3": "TP3_REACHED",
                  "closed": "SIGNAL_CLOSED"}
 ALL_SYMBOLS = "ALL/USDT"            # "every coin" (the rules' symbol pattern needs a pair)
 ALL_TFS = "all"
 MAX_EVENTS_PER_DAY = 30
+NEW_PRIMED_FLAG = "call_new_primed_v230"
 SCAN_DAYS = 3                       # calls followed for events: every open one and those closed in the last 3 days
 MOOD_TF = "4h"
 MOOD_SHARE = 0.6                    # same 60 % rule as the Home page's market mood (scanner.dashboard)
@@ -232,7 +235,7 @@ def _px(v: Any) -> str:
 def call_events(r: dict[str, Any]) -> list[str]:
     """Events a call has reached so far: entry (a pending limit / confirmation filled after publication), tp1-3, closed
     (any end that is not take-profit 3: stop, break-even after TP1, time limit, admin close, entry never reached)."""
-    out = []
+    out = ["new"]
     if r.get("fill_status") == "FILLED" and r.get("filled_at") and int(r["filled_at"]) > int(r.get("created_at") or 0):
         out.append("entry")
     for i in (1, 2, 3):
@@ -248,6 +251,13 @@ def call_message(r: dict[str, Any], ev: str) -> str:
     from .tracking import result_fields
     side = "LONG" if int(r.get("side") or 0) > 0 else "SHORT"
     head = f"{_coin(r['symbol'])} {str(r['timeframe']).upper()} {side}"
+    if ev == "new":
+        p = loads(r.get("payload"), {}) if isinstance(r.get("payload"), str) else (r.get("payload") or {})
+        grade = f", grade {p.get('grade')}" if isinstance(p, dict) and p.get("grade") else ""
+        tps = " · ".join(f"TP{i} {_px(r.get(f'tp{i}'))}" for i in (1, 2, 3) if r.get(f"tp{i}") is not None)
+        if r.get("fill_status") == "PENDING":
+            return f"New signal: {head}{grade}. Waiting for entry at {_px(r.get('entry'))}. Stop {_px(r.get('stop'))} · {tps}"
+        return f"New signal: {head}{grade}. Entered at {_px(r.get('entry'))}, the trade is live. Stop {_px(r.get('stop'))} · {tps}"
     if ev == "entry":
         return f"{head}: entry reached at {_px(r.get('entry'))}, the trade is live. Stop {_px(r.get('stop'))} · TP1 {_px(r.get('tp1'))}"
     if ev in ("tp1", "tp2", "tp3"):
@@ -323,6 +333,13 @@ def lifecycle(db: Database, now: int | None = None) -> list[dict[str, Any]]:
     # every open call (a 3D call can run for 90 days) and the calls closed in the last SCAN_DAYS days
     calls = db.query("SELECT * FROM signals WHERE side != 0 AND status != 'INFO' AND (status = 'OPEN' OR closed_at >= ?) "
                      "ORDER BY created_at", (now - SCAN_DAYS * DAY_MS,))
+    if not db.get_setting(NEW_PRIMED_FLAG, False):
+        # v2.30: rules that existed before "new" was added must not announce the calls that are already running
+        for rule in rules:
+            for r in calls:
+                if _matches(rule, r):
+                    _mark(db, rule["id"], f"{r['id']}:new", now)
+        db.set_setting(NEW_PRIMED_FLAG, True)
     fired: list[dict[str, Any]] = []
     budget: dict[str, int] = {}
     for rule in rules:

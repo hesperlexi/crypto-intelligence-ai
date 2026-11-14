@@ -103,7 +103,9 @@ def test_call_events_fire_once_per_call_and_new_rules_are_primed():
     _alert(rt, "a1", "SIGNAL_UPDATES")
     assert alerts.lifecycle(rt.db, now) == []                     # primed: what already happened is not sent
     _sig(rt, "p", now - H, symbol="ETH/USDT", fill="PENDING", filled=None)
-    assert alerts.lifecycle(rt.db, now + 1) == []
+    evs = alerts.lifecycle(rt.db, now + 1)                        # v2.30: a newly published call is announced
+    assert [e["type"] for e in evs] == ["NEW_SIGNAL"] and "New signal: ETH 4H LONG" in evs[0]["message"] \
+        and "Waiting for entry" in evs[0]["message"]
     rt.db.execute("UPDATE signals SET fill_status = 'FILLED', filled_at = ? WHERE id = 'p'", (now,))
     evs = alerts.lifecycle(rt.db, now + 2)
     assert [e["type"] for e in evs] == ["ENTRY_REACHED"] and "ETH 4H LONG: entry reached" in evs[0]["message"]
@@ -452,3 +454,16 @@ def test_funnel_cards_draw():
     b = {"text": "The market is mixed. " * 12, "bullets": ["Mood (4H): 3 bullish", "Open calls: 1 long · 0 short"],
          "at": ms(2026, 11, 3, 12), "mood": "BULL", "source": "ai"}
     assert cards.briefing_card(b)[:4] == b"\x89PNG"
+
+
+def test_v230_new_signal_event_and_existing_calls_not_announced():
+    rt = _rt()
+    now = ms(2026, 11, 14, 12)
+    _alert(rt, "a1", "SIGNAL_UPDATES")
+    rt.db.execute("UPDATE alerts SET last_state = 'primed' WHERE id = 'a1'")      # a rule from before v2.30
+    _sig(rt, "running", now - 5 * H)
+    assert alerts.lifecycle(rt.db, now) == []                     # calls already running are not announced
+    _sig(rt, "fresh", now - 60_000, symbol="SOL/USDT")
+    evs = alerts.lifecycle(rt.db, now + 1)
+    assert [e["type"] for e in evs] == ["NEW_SIGNAL"] and "the trade is live" in evs[0]["message"]
+    assert alerts.lifecycle(rt.db, now + 2) == []                 # once

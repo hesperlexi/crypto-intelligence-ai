@@ -795,3 +795,12 @@ UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian;
   Performance Lab, Market turn, Health; captioned "examples with sample data, not results"; no admin instructions).
   Screenshots `docs/manual/img/*.jpg` (preview seed data, 1600 px JPEG); `build_manual.py` embeds `![alt](img/x.jpg)` as
   captioned figures (`.shot`).
+
+## v2.30 "new signal" notification (owner, 14 Nov 2026: no notification when a signal was generated / a trade taken)
+Cause: "My signals" (SIGNAL_UPDATES) knew only entry / TP / closed, and "entry" fires only when a pending limit fills
+LATER; since v2.13 most calls are entered at the market price at publication, so nothing fired. `alerts.CALL_EVENTS` now
+starts with **"new"** (every published call; type `NEW_SIGNAL`, push title "New signal"; message with grade, entry or
+"waiting for entry", stop, TP1-3). One-time: `alerts.NEW_PRIMED_FLAG` marks calls already running as seen (no burst);
+`worker.ensure_call_alerts` adds "new" to the existing auto "My signals" rules once (flag `auto_call_new_v230`, in
+`MIGRATION_FLAGS`; local table updated too); `AUTO_CALL_EVENTS` includes it for new members. Alerts page: event chip
+"New signal". Tests in `tests/test_growth_v216.py`.
