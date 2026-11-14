@@ -665,3 +665,21 @@ Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance da
 - Results "let it run" (owner, 5 Nov 2026): `views.live_fields` adds `runner` {on, rr, target} for AI runner calls;
   `RecordDetails` shows "Let it run · 1:4", stop at TP2 after TP3 (`stopNow`), next target = final 1:rr (`liveOf`), the
   sheet's level notes ("nothing closes") and the final target row; runner rows' live figure = whole position (no 50/25/25).
+
+## v2.22 (14 Nov 2026, owner-approved)
+- **UI** (branch `ui-v222`, live): `components/PositionInfo.tsx` (`PositionGrid` Binance-style block: PNL (USDT), ROI,
+  Realized PNL, Size, Margin, Leverage, Entry, Mark, Liq., TP/SL with "All targets"; `botFacts`) on Demo bots positions and
+  the Hesper open trade; record sheet "Position (example)" (`RecordDetails.signalFacts`, example margin localStorage
+  `cia-ref-margin`, default 100 USDT at the card's leverage; closed targets booked at their price, before fees);
+  practice futures positions get `realized` (closes of that position − open fee − funding, `paperFutures.subscribe`).
+  Signals page status filter (URL `status`): Active (default, hides closed) / Running / Waiting entry / Closed / All.
+  VRVP on every `CandleChart` (`lib/vrvp.ts` series primitive, 48 rows over the visible candles, POC / VAH / VAL; switch
+  remembered in localStorage `cia-vrvp`). No engine writes.
+- **Engine combination** (branch `engine-v222`, `services/combo_gates.py`, live calls only in `analysis.analyze`): volume
+  profile filter (POC/VAH just above a long or POC/VAL just below a short within 0.5 ATR, last 200 bars, flag "VOLUME
+  WALL AHEAD"), fee filter (1h/4h stop < 1.5 %, "STOP TOO TIGHT FOR FEES"; 15m left out), same-side cap 8 running calls
+  (all coins/TFs, filled only, "TOO MANY SAME-SIDE CALLS"). Env `VP_FILTER`, `FEE_FILTER_TFS`, `FEE_MIN_STOP_PCT`,
+  `SAME_SIDE_CAP` (0 = off). Proof: `research_ideas.py` on branch `engine-ideas`, `research-results/results/combo-latest.json`
+  (test −0.021R → +0.013R, max DD 130R → 31R, ~half the calls). Record not restarted. Tests `tests/test_combo_gates.py`.
+- Live review: `python -m app.research review` (`research_review.py`, branch `review-nov14`): record as stored and
+  re-assessed without admin decisions, by TF/side/coin/session, bots, Hesper, Guardian.

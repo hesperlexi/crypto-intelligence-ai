@@ -419,6 +419,23 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         decision, grade, why = "NO TRADE", None, lev_why
         flags.append("STOP TOO WIDE")
 
+    # v2.22 combination (owner-approved 14 Nov 2026, services/combo_gates.py): volume profile, fee and same-side cap,
+    # live calls only (research replays and rebuilds keep measuring every call)
+    if decision in TRADE_DECISIONS and live and bundle is None and as_of is None and setup and setup.get("valid"):
+        from . import combo_gates as CG
+        nside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
+        try:
+            atr_now = float(fr.ind["atr"].iloc[-1])
+        except Exception:
+            atr_now = 0.0
+        for flag, reason in (("VOLUME WALL AHEAD", CG.vp_block(fr.df, nside, float(price), atr_now)),
+                             ("STOP TOO TIGHT FOR FEES", CG.fee_block(timeframe, float(price), setup.get("stop"))),
+                             ("TOO MANY SAME-SIDE CALLS", CG.cap_block(rt.db, nside))):
+            if reason:
+                decision, grade, why = "NO TRADE", None, reason
+                flags.append(flag)
+                break
+
     # paused timeframes (v2.6): live calls only, so research replays still measure every timeframe
     if decision in TRADE_DECISIONS and timeframe in PAUSED_TFS and live and bundle is None and as_of is None:
         decision, grade = "NO TRADE", None
