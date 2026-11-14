@@ -776,3 +776,16 @@ UI `components/ProofChecks.tsx` (`FilterBoard`, `ModelCheck`) on Trade Guardian;
   open positions), fleet tiles, `FleetPulse` (every bot's % return on one oscilloscope); bot cards are `ai-card` with a
   drone in the title; "How the bots work" is an ⓘ beside the heading. Hesper run card: `Mission` (log-scale voyage from
   the start world past 2x / 5x to the 10x world, craft at the live balance, liquidation black hole below).
+
+## v2.28 logo (owner, 14 Nov 2026: "A original with the effects of C")
+- `frontend/brand-source/make_logo.py` → `logo.svg` + `art.png` (the original artwork, cropped inside its frame, made
+  round) set in a space tile: cyan core glow, gold ring + gold tick ring, dashed cyan ring, tilted cyan orbit + satellite,
+  stars, violet nebula, gold rim. `render_logo_assets.cjs` (Playwright) rasterises it into `public/brand/logo-{96,192,384}`
+  (.png palette + .webp via Pillow), `public/brand/logo-art-{192,384}.webp` (the round artwork), `public/icons/*`
+  (maskable / Apple = full-bleed), `public/favicon.png`, `public/brand/og-image.png`, `backend/app/assets/logo.png`
+  (Telegram cards); the manual and the APK use `icons/icon-512.png`.
+- `components/Logo.tsx`: `LiveLogo` = the same layers drawn live (tick ring turns, dashed ring counter-turns, core pulses,
+  radar sweep inside the artwork, satellite runs its orbit via SVG animateMotion, stars twinkle; `.logox-*` in index.css,
+  off under reduced motion). `HeroLogo` (welcome hero + final card, sign-in, access, error / 404) and `LogoSpinner`
+  (boot loader "Waking up the AI…" + `.boot-bar`) use it; header / static logos use the still images. Hesper `Mission`
+  craft = the round artwork.

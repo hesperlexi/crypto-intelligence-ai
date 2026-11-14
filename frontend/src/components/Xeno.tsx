@@ -375,9 +375,9 @@ export function Mission({ start, goal, balance, reached }: { start: number; goal
       {/* the craft */}
       <g transform={`translate(${below ? 60 + (1 + p / 0.35) * 0 : sx} ${below ? 170 + (-p / 0.35) * 30 : sy})`} filter="url(#ms-glow)">
         <g className="ms-craft">
-          <ellipse cx="0" cy="2" rx="12" ry="4" fill="rgb(var(--raised))" stroke="rgb(var(--ai))" />
-          <path d="M-7 1.5c0-4.4 3.1-7.5 7-7.5s7 3.1 7 7.5" fill="rgb(var(--panel))" stroke="rgb(var(--ai))" />
-          <circle cx="0" cy="-2" r="2.2" fill={below ? "rgb(var(--bear))" : "rgb(var(--bull))"} />
+          <circle r="17" fill="none" stroke="rgb(var(--ai) / 0.7)" strokeDasharray="2 3" />
+          <image href="/brand/logo-art-192.webp" x="-14" y="-14" width="28" height="28" />
+          <circle r="14" fill="none" stroke={below ? "rgb(var(--bear))" : "rgb(var(--accent))"} strokeWidth="1.6" />
         </g>
       </g>
       <text x={W - 8} y="16" textAnchor="end" fontSize="11" fill="rgb(var(--mute))">{balance ? `${(balance / start).toFixed(2)}x of 10x` : ""}</text>

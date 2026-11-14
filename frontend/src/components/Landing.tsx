@@ -118,6 +118,7 @@ export default function Landing({ error }: { error: string | null }) {
         <section className="relative isolate grid items-center gap-10 pb-10 pt-10 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14">
           <CyberHorizon className="pointer-events-none absolute -bottom-24 left-1/2 -z-20 h-[46%] w-screen max-w-none -translate-x-1/2 opacity-60" />
           <div>
+            <HeroLogo size={112} title="Crypto Intelligence AI logo" className="mb-5" />
             <p className="flex items-center gap-2 text-sm text-mute">
               <span className="h-1.5 w-1.5 rounded-full bg-bull" aria-hidden="true" />
               AI trade plans for spot and futures, updated every few minutes
@@ -292,7 +293,7 @@ export default function Landing({ error }: { error: string | null }) {
           <CyberHorizon className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[70%] w-full opacity-60" />
           <div className="relative mx-auto mb-5 h-28 w-28">
             <HoloOrbit label={false} className="pointer-events-none absolute -inset-10 h-[calc(100%+5rem)] w-[calc(100%+5rem)] opacity-70" />
-            <HeroLogo size={64} title="Crypto Intelligence AI logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <HeroLogo size={96} title="Crypto Intelligence AI logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>
           <p className="mx-auto mt-3 max-w-xl text-mute">Analysis only, not financial advice. Crypto is risky.</p>

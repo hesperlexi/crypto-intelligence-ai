@@ -936,3 +936,19 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .ms-craft { animation: drone-bob 2.6s ease-in-out infinite; }
 .ms-hole { animation: xeno-blink 3.5s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .fleet-orbit, .bot-drone, .ms-craft, .ms-hole { animation: none; } }
+
+/* v2.28 live logo (components/Logo.tsx LiveLogo): the original artwork with the alien-eye concept's motion */
+.logox { position: relative; display: inline-block; flex: none; filter: drop-shadow(0 0 18px rgb(247 201 72 / 0.28)); }
+.logox svg { display: block; overflow: visible; }
+.logox-spin { transform-origin: 256px 256px; animation: xeno-spin 40s linear infinite; }
+.logox-spinr { transform-origin: 256px 256px; animation: xeno-spin 24s linear infinite reverse; }
+.logox-sweep { transform-origin: 256px 256px; animation: xeno-spin 6s linear infinite; }
+.logox-pulse { transform-origin: 256px 256px; animation: logox-pulse 3.4s ease-in-out infinite; }
+.logox-tw { animation: cosmos-twinkle 3.6s ease-in-out infinite; }
+@keyframes logox-pulse { 50% { opacity: 0.55; transform: scale(1.04); } }
+@media (prefers-reduced-motion: reduce) { .logox-spin, .logox-spinr, .logox-sweep, .logox-pulse, .logox-tw { animation: none; } .logox-sweep { display: none; } }
+/* boot loader bar (Shell.BootLoader) */
+.boot-bar { width: 200px; height: 3px; border-radius: 3px; overflow: hidden; background: rgb(var(--glass) / 0.08); }
+.boot-bar > span { display: block; width: 40%; height: 100%; background: linear-gradient(90deg, rgb(92 242 223 / 0), #5CF2DF, rgb(var(--accent))); animation: boot-bar 1.6s ease-in-out infinite; }
+@keyframes boot-bar { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+@media (prefers-reduced-motion: reduce) { .boot-bar > span { animation: none; transform: translateX(75%); } }

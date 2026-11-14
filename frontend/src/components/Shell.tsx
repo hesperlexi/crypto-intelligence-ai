@@ -62,7 +62,13 @@ export function RouteSkeleton() {
 
 /** Full-screen loader before the session is known. */
 export function BootLoader() {
-  return <div className="flex min-h-full items-center justify-center py-20"><LogoSpinner size={84} /></div>;
+  return (
+    <div className="flex min-h-full flex-col items-center justify-center gap-5 py-20">
+      <LogoSpinner size={132} label="Waking up the AI" />
+      <div className="font-display text-base font-semibold tracking-tight text-text/90">Waking up the AI…</div>
+      <div className="boot-bar" aria-hidden="true"><span /></div>
+    </div>
+  );
 }
 
 /** Owner-only pages: members are sent home (same rule as Users). */
