@@ -1,0 +1,41 @@
+{
+ "path": "/results?tab=bots",
+ "runs": [
+  {
+   "screen": "fold cover",
+   "ms": 19338,
+   "canvases": 0,
+   "nodes": 2520,
+   "heap_mb": 28,
+   "error_box": false,
+   "loading": false,
+   "bot_cards": 6,
+   "text_head": "Results\nTrack record\nDemo bots\nAccuracy\nSignal log\nLeaderboard\nTools\nHesper Challenge\nDemo trading bots\nⓘ\nAll bots\nSpot\nFutures\n#M\n#H\n#H\n#H\n#D\n#D\nAI\ncore\nPoint at a bot\nBots in orbit\n#\n# active\nAverage return\n#\nsince each bot started\nTrades\n#\n# open now\nLeading\n#M\n#\nFleet pulse · return of every bot\nafter fees\n#\n#\nFutures signal bot #H · grade A\nSignal bot\n#H\nFutures #x max\nEquity\n#\nstarted # · No",
+   "errors": []
+  },
+  {
+   "screen": "fold inner",
+   "ms": 19171,
+   "canvases": 0,
+   "nodes": 2520,
+   "heap_mb": 31,
+   "error_box": false,
+   "loading": false,
+   "bot_cards": 6,
+   "text_head": "Results\nTrack record\nDemo bots\nAccuracy\nSignal log\nLeaderboard\nTools\nHesper Challenge\nDemo trading bots\nⓘ\nAll bots\nSpot\nFutures\n#M\n#H\n#H\n#H\n#D\n#D\nAI\ncore\nPoint at a bot\nBots in orbit\n#\n# active\nAverage return\n#\nsince each bot started\nTrades\n#\n# open now\nLeading\n#M\n#\nFleet pulse · return of every bot\nafter fees\n#\n#\nFutures signal bot #H · grade A\nSignal bot\n#H\nFutures #x max\nEquity\n#\nstarted # · No",
+   "errors": []
+  },
+  {
+   "screen": "phone",
+   "ms": 19132,
+   "canvases": 0,
+   "nodes": 2520,
+   "heap_mb": 29,
+   "error_box": false,
+   "loading": false,
+   "bot_cards": 6,
+   "text_head": "Results\nTrack record\nDemo bots\nAccuracy\nSignal log\nLeaderboard\nTools\nHesper Challenge\nDemo trading bots\nⓘ\nAll bots\nSpot\nFutures\n#M\n#H\n#H\n#H\n#D\n#D\nAI\ncore\nPoint at a bot\nBots in orbit\n#\n# active\nAverage return\n#\nsince each bot started\nTrades\n#\n# open now\nLeading\n#M\n#\nFleet pulse · return of every bot\nafter fees\n#\n#\nFutures signal bot #H · grade A\nSignal bot\n#H\nFutures #x max\nEquity\n#\nstarted # · No",
+   "errors": []
+  }
+ ]
+}
