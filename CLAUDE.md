@@ -908,3 +908,10 @@ note removed. Other guards unchanged.
   Live exits unchanged. Owner-approved trial: bot `futures-test-tp08-15m` (`bots.TEST_TP08_15M`, grade A, TP1 at
   `tp1_r` 0.8R from its own entry, otherwise = the 15m signal bot), added once (flag `test_tp08_v240`; env
   `TEST_BOT_TP08=0` skips it - tests/conftest.py does). Compare its book with `futures-signal-ab-15m` after ~2 weeks.
+
+## v2.41 lively profit / loss lines (owner, 15 Nov 2026)
+Every P/L curve is green above its baseline and red below, with a soft matching glow fill (`components/PnlGradients.tsx`,
+userSpaceOnUse gradients split at the baseline, no SVG filters): Demo bots `FleetPulse` (+ end dots and latest % per
+bot, lines draw in once: `.fp-live .fp-line` in index.css) and each bot's equity (`LineChart` series `baseline` =
+lightweight-charts baseline series, dotted "start" line, end marker), Track record `Curve`, Overview performance
+`Sparkline split={0}`, Hesper `BalanceCurve` (baseline = run start), Lab `Pulse` (filter removed), Backtest strategy line.

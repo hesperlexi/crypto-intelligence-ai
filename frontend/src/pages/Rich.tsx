@@ -2,6 +2,7 @@
 // liquidated / too small to trade; 10x the start is a milestone. v2.23: after a stop the admin starts the next run
 // with a chosen amount.
 // Data: views/hesper (backend services/hesper.py). Virtual money only.
+import { PnlGradients } from "../components/PnlGradients";
 import { PageHeader } from "../components/kit";
 import { Mission } from "../components/Xeno";
 import { useMemo, useRef, useState } from "react";
@@ -141,11 +142,11 @@ function BalanceCurve({ pts, start, goal, liveBal }: { pts: number[][]; start: n
   return (
     <div className="relative">
       <svg viewBox={`0 0 ${w} ${h}`} className="h-44 w-full sm:h-52" preserveAspectRatio="none" role="img" aria-label="Balance curve of the run">
-        <defs><linearGradient id="rich-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor="rgb(var(--accent))" stopOpacity="0.25" /><stop offset="1" stopColor="rgb(var(--accent))" stopOpacity="0" /></linearGradient></defs>
+        <defs><PnlGradients id="rich" y0={y(start)} top={0} bottom={h} /></defs>
         <line x1="0" x2={w} y1={y(goal)} y2={y(goal)} stroke="rgb(var(--accent))" strokeOpacity="0.5" strokeDasharray="5 5" vectorEffect="non-scaling-stroke" />
         <line x1="0" x2={w} y1={y(start)} y2={y(start)} stroke="currentColor" className="text-glass/25" strokeDasharray="3 5" vectorEffect="non-scaling-stroke" />
-        <path d={`${d}L${w},${h}L0,${h}Z`} fill="url(#rich-fill)" />
-        <path d={d} fill="none" stroke="rgb(var(--accent))" strokeWidth="2.2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+        <path d={`${d}L${w},${y(start).toFixed(1)}L0,${y(start).toFixed(1)}Z`} fill="url(#rich-f)" />
+        <path d={d} fill="none" stroke="url(#rich-s)" strokeWidth="2.8" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
       </svg>
       {mark(goal, "text-accent", usd(goal, 0))}
       {mark(start, "text-mute", usd(start, 0))}

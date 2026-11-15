@@ -2,6 +2,7 @@
 // Data: views/perf_lab (backend services/perf_lab.py, every 2 h, admin only in the rules). Display only.
 // Look: an "observatory" - every closed call is a glowing body orbiting on its timeframe's ring, the equity curve is a
 // pulse on an oscilloscope grid, the R distribution a spectrum, weekday x session a hex hive. Colours from theme tokens.
+import { PnlGradients } from "../components/PnlGradients";
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Badge, PageHeader, Segmented, Tile } from "../components/kit";
@@ -156,15 +157,16 @@ function Pulse({ curve }: { curve: { t: number; r: number; dd: number }[] }) {
   const last = curve[curve.length - 1].r;
   const maxDd = Math.max(...curve.map((c) => c.dd)) || 1;
   return (
-    <svg viewBox={`0 0 ${W} ${H + 40}`} className="w-full" role="img" aria-label={`Equity ${r2(last)}`}>
+    <svg viewBox={`0 0 ${W} ${H + 40}`} className="fp-live w-full" role="img" aria-label={`Equity ${r2(last)}`}>
       <defs>
-        <filter id="pglow" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="3" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
+        <PnlGradients id="pl" y0={y(0)} top={P} bottom={H - P} />
         <pattern id="pgrid" width="30" height="22" patternUnits="userSpaceOnUse"><path d="M30 0H0V22" fill="none" stroke="rgb(var(--ai) / 0.10)" /></pattern>
       </defs>
       <rect x="0" y="0" width={W} height={H} fill="url(#pgrid)" rx="8" />
       <line x1={P} x2={W - P} y1={y(0)} y2={y(0)} stroke="rgb(var(--mute) / 0.5)" strokeDasharray="3 4" />
-      <path d={`${line} L${x(curve.length - 1)} ${y(0)} L${x(0)} ${y(0)} Z`} fill={col(last, 0.10)} />
-      <path d={line} fill="none" stroke={col(last)} strokeWidth="2" filter="url(#pglow)" />
+      <path d={`${line} L${x(curve.length - 1)} ${y(0)} L${x(0)} ${y(0)} Z`} fill="url(#pl-f)" />
+      <path d={line} className="fp-line" pathLength={1} fill="none" stroke="url(#pl-s)" strokeWidth="2.4" strokeLinejoin="round" />
+      <circle cx={x(curve.length - 1)} cy={y(last)} r="8" fill={col(last, 0.22)} />
       <circle cx={x(curve.length - 1)} cy={y(last)} r="4" fill={col(last)} className="xeno-blink" />
       {curve.map((c, i) => c.dd > 0 && <rect key={i} x={x(i) - 1} width="2" y={H + 8} height={(c.dd / maxDd) * 28} fill="rgb(var(--bear) / 0.55)" />)}
       <text x={W - P} y={H + 36} textAnchor="end" fontSize="10" className="fill-mute">drawdown below · deepest {r2(-maxDd)}</text>

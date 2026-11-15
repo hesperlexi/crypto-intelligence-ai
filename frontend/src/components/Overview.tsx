@@ -11,6 +11,7 @@
 //   Trade Guardian (admin only)    views/guardian when it exists, otherwise nothing is rendered
 // Components are defined at the top level (never inside a render) and the price-driven parts subscribe on their own,
 // so a price tick re-renders a table row, not the page.
+import { PnlGradients } from "./PnlGradients";
 import { lazy, memo, ReactNode, Suspense, useId, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApi } from "../lib/api";
@@ -35,13 +36,25 @@ const arrow = (v: number | null | undefined) => (!isNum(v) ? "" : v >= 0 ? "▲ 
 
 /* ---- small building blocks ------------------------------------------------------------------------------------ */
 /** A tiny area line (SVG): no axes, colour from a theme token. */
-export const Sparkline = memo(function Sparkline({ values, tone = "--accent", className = "h-10 w-full", label }: { values: number[]; tone?: string; className?: string; label?: string }) {
+export const Sparkline = memo(function Sparkline({ values, tone = "--accent", className = "h-10 w-full", label, split }: { values: number[]; tone?: string; className?: string; label?: string; split?: number }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, "");
   const v = values.filter(isNum);
   if (v.length < 2) return <div className={className} aria-hidden="true" />;
-  const min = Math.min(...v), max = Math.max(...v), span = max - min || 1;
-  const pts = v.map((y, i) => `${((i / (v.length - 1)) * 100).toFixed(2)} ${(30 - ((y - min) / span) * 27).toFixed(2)}`);
+  const min = Math.min(...v, ...(split != null ? [split] : [])), max = Math.max(...v, ...(split != null ? [split] : [])), span = max - min || 1;
+  const Y = (y: number) => 30 - ((y - min) / span) * 27;
+  const pts = v.map((y, i) => `${((i / (v.length - 1)) * 100).toFixed(2)} ${Y(y).toFixed(2)}`);
   const line = `M${pts.join(" L")}`;
+  if (split != null) {
+    const z = Y(split);
+    return (
+      <svg viewBox="0 0 100 32" preserveAspectRatio="none" className={className} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
+        <defs><PnlGradients id={`sp${id}`} y0={z} top={0} bottom={32} /></defs>
+        <line x1="0" x2="100" y1={z} y2={z} stroke="rgb(var(--text) / 0.25)" strokeDasharray="2 3" vectorEffect="non-scaling-stroke" />
+        <path d={`${line} L100 ${z} L0 ${z} Z`} fill={`url(#sp${id}-f)`} />
+        <path d={line} fill="none" stroke={`url(#sp${id}-s)`} strokeWidth="2.2" vectorEffect="non-scaling-stroke" strokeLinejoin="round" strokeLinecap="round" />
+      </svg>
+    );
+  }
   return (
     <svg viewBox="0 0 100 32" preserveAspectRatio="none" className={className} role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
       <defs><linearGradient id={`sg${id}`} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={`rgb(var(${tone}))`} stopOpacity="0.26" /><stop offset="1" stopColor={`rgb(var(${tone}))`} stopOpacity="0" /></linearGradient></defs>
@@ -508,7 +521,7 @@ export function PerformanceCard({ track, loading }: { track: any; loading: boole
             {tile("Profit factor", isNum(pf) && n ? pf.toFixed(2) : win === "7d" ? <span className="text-sm font-normal text-mute">all-time only</span> : DASH)}
           </div>
           {win === "all" && curve.length > 2 && (
-            <div className="mt-3"><Sparkline values={curve} tone={curve[curve.length - 1] >= 0 ? "--bull" : "--bear"} className="h-14 w-full" label="Cumulative net return of closed calls" />
+            <div className="mt-3"><Sparkline values={curve} split={0} className="h-14 w-full" label="Cumulative net return of closed calls" />
               <div className="mt-0.5 text-xs text-mute">Cumulative net return, closed calls in order</div></div>
           )}
           <p className={`mt-3 text-xs ${n < 30 ? "text-warn" : "text-mute"}`}>

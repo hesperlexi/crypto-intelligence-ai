@@ -1,4 +1,5 @@
 // Public track record: every trade signal since launch with its real outcome, the models' results on past data
+import { PnlGradients } from "./PnlGradients";
 // they never trained on (a labelled simulation), and the demo bots. Readable without an account.
 import { Segmented, TabStrip } from "./kit";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
@@ -24,13 +25,12 @@ export function Curve({ pts, roi, id = "tr-fill", label = "Cumulative result of 
   const w = 600, h = 120, ys = pts.map(val), lo = Math.min(0, ...ys), hi = Math.max(0, ...ys);
   const x = (i: number) => (i / (pts.length - 1)) * w, y = (v: number) => h - ((v - lo) / (hi - lo || 1)) * h;
   const d = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(val(p)).toFixed(1)}`).join("");
-  const up = ys[ys.length - 1] >= 0;
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="h-28 w-full" preserveAspectRatio="none" role="img" aria-label={label}>
-      <defs><linearGradient id={id} x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0.22" /><stop offset="1" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0" /></linearGradient></defs>
-      <line x1="0" x2={w} y1={y(0)} y2={y(0)} stroke="currentColor" className="text-glass/20" strokeDasharray="4 4" />
-      <path d={`${d}L${w},${y(0).toFixed(1)}L0,${y(0).toFixed(1)}Z`} fill={`url(#${id})`} />
-      <path d={d} fill="none" stroke={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <defs><PnlGradients id={id} y0={y(0)} top={0} bottom={h} /></defs>
+      <line x1="0" x2={w} y1={y(0)} y2={y(0)} stroke="currentColor" className="text-glass/30" strokeDasharray="4 4" vectorEffect="non-scaling-stroke" />
+      <path d={`${d}L${w},${y(0).toFixed(1)}L0,${y(0).toFixed(1)}Z`} fill={`url(#${id}-f)`} />
+      <path d={d} fill="none" stroke={`url(#${id}-s)`} strokeWidth="2.6" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
     </svg>
   );
 }
