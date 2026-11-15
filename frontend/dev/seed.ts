@@ -28,6 +28,9 @@ function newsHeads() {
 }
 const H = 3_600_000, D = 86_400_000;
 const v = (o: any) => ({ json: JSON.stringify(o), updated_at: NOW });
+// ui-probe.yml drops real views into dev/live/<name>.json (never committed) to test a page with live data
+const LIVE = import.meta.glob("./live/*.json", { eager: true, import: "default" }) as Record<string, any>;
+const liveView = (name: string): any | null => LIVE[`./live/${name}.json`] ?? null;
 
 const COINS: [string, number, number][] = [
   ["BTC/USDT", 68420.5, 1.84], ["ETH/USDT", 2468.12, -0.92], ["BNB/USDT", 587.3, 0.41], ["XRP/USDT", 0.5234, 2.71],
@@ -492,7 +495,7 @@ export function seed(): Record<string, any> {
     ...alertsFor("owner"),
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
     "views/health": v(health()),
-    "views/bots": v(botsView()),
+    "views/bots": v(liveView("bots") ?? botsView()),
     "owner/telegram_status": { ok: true, checked_at: NOW - 6 * 60_000, errors: [], last_post_at: NOW - 2 * H, last_sent: ["win"] },
     "views/health_errors": v({ generated_at: NOW, recent_errors: [{ ts: NOW - 2 * H, where: "engine news_publish", error: "TimeoutError: calendar feed did not answer" }], exchange_last_error: null, market_data_last_error: null, model_messages: [] }),
     "views/settings": v({ risk_profile: { portfolio: 10000, risk_per_trade_pct: 1, max_daily_loss_pct: 3, max_exposure_pct: 50, max_position_pct: 20, target_annual_vol_pct: 40 }, signal_weights: { trend: 0.3, momentum: 0.2, volume: 0.1, structure: 0.15, volatility: 0.05, ml: 0.15, htf: 0.05 } }),

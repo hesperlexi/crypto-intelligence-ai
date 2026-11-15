@@ -1,0 +1,39 @@
+name: UI probe (a page with live data at phone sizes, read-only)
+# v2.39: loads a page of the preview build with the real views copied in (on the runner only) at Z Fold / phone sizes and
+# reports JS errors, crashes and render counts to reports/ui-probe.json. No data leaves the job.
+on:
+  workflow_dispatch:
+    inputs:
+      path: { description: "page path", default: "/results?tab=bots" }
+      views: { description: "views to copy (space separated)", default: "bots" }
+  push:
+    branches: [guard15-v239]
+    paths: [".github/workflows/ui-probe.yml", "scripts/ui_probe.cjs"]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: pip install --quiet firebase-admin
+      - env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: python scripts/ui_probe_fetch.py ${{ github.event.inputs.views || 'bots' }}
+      - working-directory: frontend
+        run: npm ci && npm i --no-save playwright@1.48.2 && npx playwright install --with-deps chromium
+      - working-directory: frontend
+        run: |
+          (npx vite --config dev/vite.preview.config.ts --port 5197 > /tmp/vite.log 2>&1 &)
+          sleep 12
+          cp ../scripts/ui_probe.cjs ./ui_probe.cjs
+          node ui_probe.cjs "${{ github.event.inputs.path || '/results?tab=bots' }}" || true
+      - run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/ui-probe.json reports/ui-probe.json && git add reports && git commit -qm "UI probe" && (for i in 1 2 3 4 5; do git pull -q --rebase origin reports && git push -q origin reports && break; sleep $((i*4)); done)
