@@ -216,7 +216,7 @@ def round_trip() -> float:
 
 def decide(ctx: Context, ref: np.ndarray, conf_b: float | np.ndarray | None = None,
            weights: dict[str, float] | None = None, stop_mode: str = "current",
-           require_edge: bool | None = None, edge_rule: str | None = None) -> dict[str, np.ndarray]:
+           require_edge: bool | None = None, edge_rule: str | None = None, htf_check: bool = True) -> dict[str, np.ndarray]:
     """Decision of the live pipeline on every row. `ref`: boolean mask of the rows whose outcomes may be used as the
     reference for the directional policy / confidence (rows before the split when proving; all rows in production).
     Returns arrays: trade (bool), side, grade ('A' / 'B' / ''), confidence, decision ('BUY' / 'BUY ON PULLBACK' /
@@ -315,8 +315,9 @@ def decide(ctx: Context, ref: np.ndarray, conf_b: float | np.ndarray | None = No
             col = Dh[:, j]
             used = col[np.isfinite(col)][:2]
             against[j] = int((used == -side[j]).sum())
-    reason = np.where((reason == "") & (against >= 2), "bigger_trend", reason)
-    grade = np.where((against == 1) & (grade == "A"), "B", grade)
+    if htf_check:                     # research only can switch it off (v2.39 guard study); live always checks
+        reason = np.where((reason == "") & (against >= 2), "bigger_trend", reason)
+        grade = np.where((against == 1) & (grade == "A"), "B", grade)
     plans: list[dict | None] = [None] * n
     rt = round_trip()
     for j in np.flatnonzero(reason == ""):
