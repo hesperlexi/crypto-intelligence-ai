@@ -754,6 +754,25 @@ class BotEngine:
         return events
 
     # ---- reporting --------------------------------------------------------------------------------------
+    PUBLISH_TRADES, PUBLISH_CURVE = 60, 300
+
+    @classmethod
+    def slim(cls, rep: dict[str, Any]) -> dict[str, Any]:
+        """v2.38: the published `views/bots` (was ~390 KB: 300 trades and 600 curve points per bot, too heavy for
+        low-memory phones): the latest PUBLISH_TRADES trades and at most PUBLISH_CURVE curve points per bot. Stats are
+        computed on everything before this, so no figure changes; the engine keeps using the full report."""
+        out = dict(rep)
+        bots = []
+        for b in rep.get("bots") or []:
+            curve = b.get("equity_curve") or []
+            step = max(1, -(-len(curve) // cls.PUBLISH_CURVE))
+            c = curve[::step]
+            if curve and c[-1] is not curve[-1]:
+                c = c + [curve[-1]]
+            bots.append({**b, "trades": (b.get("trades") or [])[: cls.PUBLISH_TRADES], "equity_curve": c})
+        out["bots"] = bots
+        return out
+
     def report(self) -> dict[str, Any]:
         out = []
         for cfg, state in self.bots():

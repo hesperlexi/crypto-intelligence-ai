@@ -970,3 +970,12 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 @media (prefers-reduced-motion: reduce) { .intercept-led, .ic-ring, .ic-blink, .ic-new { animation: none; } }
 .beacon-sweep { animation: xeno-spin 4s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .beacon-sweep { animation: none; } }
+
+/* v2.38 premium achievement tiles (Achievements page) */
+.foil-text { background: linear-gradient(100deg, #9c6f0a, #f0b90b 28%, #fff1c4 50%, #e7ae17 70%, #8f650a);
+  -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 0 10px rgba(240,185,11,0.25)); }
+.lux-tile { position: relative; overflow: hidden; }
+.lux-tile::before { content: ""; position: absolute; left: 12%; right: 12%; top: 0; height: 2px; pointer-events: none;
+  background: linear-gradient(90deg, transparent, #f0b90b 30%, #fff1c4 50%, #f0b90b 70%, transparent); opacity: 0.8; }
+.lux-tile::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: radial-gradient(60% 45% at 50% 0%, rgba(240,185,11,0.10), transparent 70%); }

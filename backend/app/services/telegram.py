@@ -99,12 +99,19 @@ def send_photo(cfg: dict[str, Any], png: bytes | None, caption: str, session: An
     return body
 
 
-def add_draft(sink, kind: str, caption: str, png: bytes | None, now: int) -> str:
-    """Keep a card for the owner to approve (newest first, at most MAX_DRAFTS)."""
+def add_draft(sink, kind: str, caption: str, png: bytes | None, now: int, card: tuple | None = None) -> str:
+    """Keep a card for the owner to approve (newest first, at most MAX_DRAFTS). v2.38: the card's recipe (`card`, the
+    drawing function and its data) is kept too, so a card posted later is drawn again in the current design."""
     import base64
+    import json
     did = f"{kind}-{now}-{abs(hash(caption)) % 10_000:04d}"
     item = {"id": did, "kind": kind, "caption": caption, "created_at": now,
             "png": base64.b64encode(png).decode() if png else None}
+    if card:
+        try:
+            item["card"] = json.loads(json.dumps(list(card), default=str))
+        except Exception:
+            pass
 
     def put(cur):
         items = [x for x in ((cur or {}).get("items") or []) if x.get("id") != did]
@@ -122,7 +129,10 @@ def post_draft(sink, draft_id: str, session: Any = None) -> dict[str, Any]:
     item = next((x for x in items if x.get("id") == draft_id), None)
     if not item:
         return {"sent": False, "reason": "this card is no longer waiting (already posted or skipped)"}
-    send_photo(cfg, base64.b64decode(item["png"]) if item.get("png") else None, item["caption"], session)
+    png = _card(*item["card"]) if item.get("card") else None          # v2.38: redrawn in the current design
+    if png is None and item.get("png"):
+        png = base64.b64decode(item["png"])
+    send_photo(cfg, png, item["caption"], session)
     sink.transact(DRAFTS, lambda cur: ({"items": [x for x in ((cur or {}).get("items") or []) if x.get("id") != draft_id],
                                         "updated_at": now_ms()}, None))
     prev = sink.get("owner/telegram_status") or {}
@@ -258,7 +268,7 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
             png = _card(*card) if card else None
             draft = cfg["approve_first"] and not direct
             if draft:
-                add_draft(sink, kind, text, png, now)
+                add_draft(sink, kind, text, png, now, card)
             else:
                 send_photo(cfg, png, text, session)
             db.set_setting(marker, value)

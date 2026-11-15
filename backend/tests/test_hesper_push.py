@@ -50,3 +50,38 @@ def test_members_only_when_shown(monkeypatch):
     assert worker.hesper_members(rt, _Sink("members"), force=True) == ["m1"]
     assert rt.db.get_setting("hesper_push_members") == ["m1"]
     assert worker.hesper_members(rt, _Sink("admin")) == ["m1"]      # cached for 30 min (no read)
+
+
+def test_v238_published_bot_report_is_slim():
+    from app.services.bots import BotEngine
+    rep = {"bots": [{"trades": list(range(300)), "equity_curve": [{"ts": i} for i in range(1000)], "stats": {"trades": 300}}], "x": 1}
+    s = BotEngine.slim(rep)
+    b = s["bots"][0]
+    assert len(b["trades"]) == 60 and b["trades"][0] == 0 and len(b["equity_curve"]) <= 301
+    assert b["equity_curve"][-1] == {"ts": 999} and b["stats"] == {"trades": 300} and s["x"] == 1
+    assert len(rep["bots"][0]["trades"]) == 300            # the engine's own report is untouched
+
+
+def test_v238_draft_keeps_card_recipe_and_redraws(monkeypatch):
+    from app.services import telegram as T
+    store = {}
+
+    class S:
+        def transact(self, path, fn):
+            doc, ret = fn(store.get(path))
+            store[path] = doc
+            return ret
+
+        def get(self, path):
+            return store.get(path)
+
+        def set(self, path, doc, merge=False):
+            store[path] = doc
+    sink = S()
+    did = T.add_draft(sink, "win", "caption", b"OLD", 1, ("result_card", {"symbol": "SOL/USDT"}))
+    assert store[T.DRAFTS]["items"][0]["card"] == ["result_card", {"symbol": "SOL/USDT"}]
+    sent = {}
+    monkeypatch.setattr(T, "config", lambda s: {"token": "t", "channel": "c"})
+    monkeypatch.setattr(T, "_card", lambda name, *a: b"NEW")
+    monkeypatch.setattr(T, "send_photo", lambda cfg, png, cap, session=None: sent.update(png=png))
+    assert T.post_draft(sink, did)["sent"] and sent["png"] == b"NEW"

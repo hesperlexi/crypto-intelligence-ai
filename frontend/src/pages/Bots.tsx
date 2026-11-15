@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { botFacts, PositionGrid } from "../components/PositionInfo";
 import LineChart, { Series } from "../components/LineChart";
+import LazyMount from "../components/LazyMount";
 import { Card, Empty, ErrorBox, Info, Loading, Note, Row, Stat } from "../components/ui";
 import { Badge, Tile } from "../components/kit";
 import { BotDrone, FleetOrbit, FleetPulse, type FleetBot } from "../components/Xeno";
@@ -138,7 +139,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
         </div>
       )}
       
-      {bot.equity_curve.length > 1 && <div className="mt-4"><LineChart series={series} height={220} /></div>}
+      {bot.equity_curve.length > 1 && <div className="mt-4"><LazyMount height={220}><LineChart series={series} height={220} /></LazyMount></div>}
 
       <div className="mt-4 grid gap-6 2xl:grid-cols-2 2xl:[&_.table-wrap]:mx-0">
         <div className="min-w-0">

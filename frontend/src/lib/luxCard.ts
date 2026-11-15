@@ -9,6 +9,15 @@ export const L = {
   line: "rgba(240,185,11,0.18)", hair: "rgba(245,241,230,0.10)",
 };
 type G = CanvasRenderingContext2D;
+
+// v2.38: older phones (Chrome < 99, Safari < 16) have no canvas roundRect, which stopped the share images there
+if (typeof CanvasRenderingContext2D !== "undefined" && !(CanvasRenderingContext2D.prototype as any).roundRect) {
+  (CanvasRenderingContext2D.prototype as any).roundRect = function (this: G, x: number, y: number, w: number, h: number, r: number) {
+    const rr = Math.max(0, Math.min(r, w / 2, h / 2));
+    this.moveTo(x + rr, y); this.arcTo(x + w, y, x + w, y + h, rr); this.arcTo(x + w, y + h, x, y + h, rr);
+    this.arcTo(x, y + h, x, y, rr); this.arcTo(x, y, x + w, y, rr); this.closePath();
+  };
+}
 export const sora = (w: number, px: number) => `${w} ${px}px Sora, Inter, system-ui, sans-serif`;
 export const inter = (w: number, px: number) => `${w} ${px}px Inter, system-ui, -apple-system, "Segoe UI", sans-serif`;
 

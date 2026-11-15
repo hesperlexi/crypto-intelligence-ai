@@ -872,3 +872,14 @@ gold-foil frame with diamonds, brand line with spaced name + site and a foil-out
 metallic gold gradient (`foil`; losses stay plain red), left-aligned editorial layout, `curveChart` (week's running total /
 Hesper balance, log), `statRow` hairline stats, ledger rows with hairlines, `luxFooter` foil CTA. `views.weekly_report`
 adds `curve` (running total in closing order, ROI when every trade has one, else price; ≤61 points) + `curve_basis`.
+
+## v2.38 fixes (owner, 15 Nov 2026: demo bots not loading on some phones; Telegram + achievement cards still old)
+- Demo bots: each bot's equity chart mounts only near the screen (`components/LazyMount.tsx`, IntersectionObserver) - the
+  page created ~40 canvases at once and blanked low-memory phones; `views/bots` is published slimmed
+  (`BotEngine.slim`: latest 60 trades, ≤300 curve points per bot; was ~390 KB). Stats unchanged (computed on everything).
+- Telegram cards (`cards.py`) now use the premium look of the website's share images (`_background`, `_frame`, Sora
+  `assets/fonts/Sora.ttf` (OFL) via `_s`, `_foil_text`, spaced brand line, foil tag, gain figures in foil, losses red,
+  `assets/logo-art.png` watermark). Drafts keep their recipe (`add_draft(..., card)` → item `card`), and `post_draft`
+  redraws the card in the current design when the owner posts it (old drafts without a recipe post their stored image).
+- Achievements page tiles: SVG `Medal` (foil ring, tick ring, orbit) + `.foil-text` values + `.lux-tile`.
+- `luxCard.ts` polyfills canvas `roundRect` (Chrome < 99 / Safari < 16 could not draw the share images).

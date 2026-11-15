@@ -1165,7 +1165,7 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
         # near the day's write limit: only what members act on (signals, results, bots, futures boards, status)
         bot_report = BotEngine(rt).report()
         sink.view("signals", views.signals(rt))
-        sink.view("bots", bot_report)
+        sink.view("bots", BotEngine.slim(bot_report))
         sink.view("track_record", views.track_record(rt, bot_report))
         sink.view("wins_today", views.wins_today(rt))
         for tf in views.FUTURES_TIMEFRAMES:
@@ -1189,7 +1189,7 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
     sink.view("replay_ranges", views.replay_ranges(rt))
     sink.view("cross_asset_1d", scanner.cross_asset(rt, "1d"))
     bot_report = BotEngine(rt).report()
-    sink.view("bots", bot_report)
+    sink.view("bots", BotEngine.slim(bot_report))
     sink.view("track_record", views.track_record(rt, bot_report))
     sink.view("weekly_report", views.weekly_reports(rt, bot_report))
     sink.view("wins_today", views.wins_today(rt))

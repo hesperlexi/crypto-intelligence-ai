@@ -110,6 +110,28 @@ async function drawPoster(cv: HTMLCanvasElement, list: any[]) {
     inter(500, 16), W - 2 * M, 2));
 }
 
+/** v2.38 the on-page medal (same design as the image): foil ring, tick ring, tilted orbit with a satellite. */
+function Medal({ icon, on }: { icon: string; on: boolean }) {
+  const id = `m${icon.charCodeAt(0)}`;
+  const ticks = Array.from({ length: 40 }, (_, k) => (k / 40) * Math.PI * 2);
+  return (
+    <svg viewBox="-60 -60 120 120" className={`h-24 w-24 ${on ? "" : "opacity-40 grayscale"}`} aria-hidden="true">
+      <defs>
+        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0" stopColor="#9c6f0a" /><stop offset=".3" stopColor="#f0b90b" /><stop offset=".5" stopColor="#fff1c4" /><stop offset=".72" stopColor="#e7ae17" /><stop offset="1" stopColor="#8f650a" />
+        </linearGradient>
+        <radialGradient id={`${id}i`} cx=".5" cy=".35" r=".7"><stop offset="0" stopColor="#2a2213" /><stop offset="1" stopColor="#0b0a08" /></radialGradient>
+      </defs>
+      {ticks.map((a, k) => <line key={k} x1={Math.cos(a) * 41} y1={Math.sin(a) * 41} x2={Math.cos(a) * (k % 4 ? 44 : 46)} y2={Math.sin(a) * (k % 4 ? 44 : 46)} stroke="#f0b90b" strokeOpacity=".7" strokeWidth={k % 4 ? 1 : 1.6} />)}
+      <circle r="36" fill={`url(#${id})`} style={{ filter: on ? "drop-shadow(0 0 8px rgba(240,185,11,.45))" : undefined }} />
+      <circle r="30" fill={`url(#${id}i)`} stroke="rgba(240,185,11,.35)" />
+      <text y="9" textAnchor="middle" fontSize="26" fontWeight="800" fill={`url(#${id})`}>{icon}</text>
+      <g transform="rotate(-22)"><ellipse rx="56" ry="15" fill="none" stroke="#ffd66b" strokeOpacity=".55" strokeWidth="1.2" />
+        <circle cx="48" cy="-8" r="2.6" fill="#fff1c4" style={{ filter: "drop-shadow(0 0 3px #f0b90b)" }} /></g>
+    </svg>
+  );
+}
+
 export default function Achievements() {
   const v = useApi<any>("/track-record");
   const [busy, setBusy] = useState<string | null>(null);
@@ -127,11 +149,12 @@ export default function Achievements() {
       {!list.length && <p className="panel p-4 text-sm text-mute">No achievements yet.</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((a) => (
-          <li key={a.id} className={`panel flex flex-col items-center p-5 text-center ${a.unlocked ? "border-accent/40" : "opacity-60"}`}>
-            <span className={`flex h-16 w-16 items-center justify-center rounded-full border-4 text-2xl font-extrabold ${a.unlocked ? "border-accent bg-accent/10 text-accent" : "border-glass/20 text-mute"}`}>{iconOf(a.id)}</span>
-            <div className="mt-3 font-semibold">{a.title}</div>
+          <li key={a.id} className={`panel lux-tile flex flex-col items-center p-5 text-center ${a.unlocked ? "" : "opacity-70"}`}>
+            <Medal icon={iconOf(a.id)} on={a.unlocked} />
+            <div className="mt-1 text-xs font-semibold tracking-wide text-accent/80">{a.unlocked ? "Unlocked" : "Locked"}</div>
+            <div className="mt-1 font-display text-lg font-semibold">{a.title}</div>
             <div className="mt-1 flex items-center justify-center gap-1.5">
-              <span className={`num text-2xl font-extrabold tracking-tight ${a.unlocked ? (isNum(a.roi_pct) && a.roi_pct < 0 ? "text-bear" : "text-bull drop-shadow-[0_0_12px_rgba(14,203,129,0.35)]") : "text-mute"}`}>{String(a.value).replace(/ ROI$/, "")}</span>
+              <span className={`font-display text-3xl font-extrabold tracking-tight ${a.unlocked ? (isNum(a.roi_pct) && a.roi_pct < 0 ? "text-bear" : "foil-text") : "text-mute"}`}>{String(a.value).replace(/ ROI$/, "")}</span>
               {/ ROI$/.test(String(a.value)) && <span className="text-xs font-bold text-accent">ROI</span>}
               {isNum(a.leverage) && <LevChip lev={a.leverage} />}
             </div>

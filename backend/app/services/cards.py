@@ -1,6 +1,8 @@
 """Image cards for the Telegram channel: every post is a branded 1200x675 picture with the app logo.
 
-v2.35 (owner, 14 Nov 2026: enhance, same gold-black theme): gold dust starfield, one faint gold orbit with a satellite,
+v2.38 premium (owner, 15 Nov 2026: "the new cards are not generating for telegram"): the website's share-image look -
+warm black with a diagonal gold beam, grain, sepia logo watermark, vignette, gold-foil frame with diamonds, spaced Sora
+brand line, foil-outlined kind tag, gain figures in gold foil (losses plain red), hairline panels. Before that, v2.35: gold dust starfield, one faint gold orbit with a satellite,
 gold HUD corner brackets, panels with a gold top light, the result inside two orbit rings with satellites, a context
 tag ("AI · REAL RECORD" / "FREE SIGNAL" / "BRIEFING"). Base v2.6 design: black + gold, radial gold glow, the real logo top-left, a glowing hero number (ROI on margin at the
 signal card's suggested leverage; the price move beside it), aligned label/value grids on an 8 px grid. All text
@@ -50,6 +52,65 @@ def _f(weight: str, size: int) -> ImageFont.FreeTypeFont:
         except OSError:
             _fonts[key] = ImageFont.load_default(size)
     return _fonts[key]
+
+
+_sora_cache: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}
+
+
+def _s(weight: str, size: int) -> ImageFont.FreeTypeFont:
+    """v2.38 Sora (variable font, SIL OFL; the website's display face) for brand, titles and big figures."""
+    key = (weight, size)
+    if key not in _sora_cache:
+        try:
+            f = ImageFont.truetype(str(ASSETS / "fonts" / "Sora.ttf"), size)
+            f.set_variation_by_name(weight)
+            _sora_cache[key] = f
+        except Exception:
+            _sora_cache[key] = _f("ExtraBold" if weight in ("ExtraBold", "Bold") else "SemiBold", size)
+    return _sora_cache[key]
+
+
+FOIL = ((0.0, (156, 111, 10)), (0.28, (240, 185, 11)), (0.5, (255, 241, 196)), (0.7, (231, 174, 23)), (1.0, (143, 101, 10)))
+
+
+def _foil_img(w: int, h: int, diag: bool = True) -> Image.Image:
+    """Metallic gold gradient (the website's foil) of size w x h."""
+    import numpy as np
+    xs = np.linspace(0, 1, w)[None, :] * (0.75 if diag else 1.0)
+    ys = np.linspace(0, 1, h)[:, None] * (0.25 if diag else 0.0)
+    t = np.clip(xs + ys, 0, 1)
+    out = np.zeros((h, w, 3), float)
+    stops = FOIL
+    for (t0, c0), (t1, c1) in zip(stops[:-1], stops[1:]):
+        m = (t >= t0) & (t <= t1)
+        k = ((t - t0) / (t1 - t0))[m]
+        for ch in range(3):
+            out[..., ch][m] = c0[ch] + (c1[ch] - c0[ch]) * k
+    return Image.fromarray(out.astype("uint8"), "RGB")
+
+
+def _foil_text(img: Image.Image, xy, text: str, font: ImageFont.FreeTypeFont, anchor: str = "ls", glow: bool = True) -> int:
+    """Text filled with gold foil (and a soft gold glow). Returns the text width."""
+    mask = Image.new("L", img.size, 0)
+    md = ImageDraw.Draw(mask)
+    md.text(xy, text, font=font, fill=255, anchor=anchor)
+    box = mask.getbbox()
+    if not box:
+        return 0
+    if glow:
+        _glow(img, lambda m: m.text(xy, text, font=font, fill=255, anchor=anchor), GOLD, max(5, font.size // 9), 0.55)
+    x0, y0, x1, y1 = box
+    img.paste(_foil_img(x1 - x0, y1 - y0), (x0, y0), mask.crop(box))
+    return x1 - x0
+
+
+def _spaced(d: ImageDraw.ImageDraw, xy, text: str, font, fill, track: float) -> int:
+    """Letter-spaced capitals (the brand line)."""
+    x, y = xy
+    for ch in text:
+        d.text((x, y), ch, font=font, fill=fill, anchor="ls")
+        x += d.textlength(ch, font=font) + track
+    return int(x - xy[0])
 
 
 def coin(sym: str) -> str:
@@ -126,10 +187,11 @@ def _radial(img: Image.Image, cx: int, cy: int, rx: int, ry: int, color, alpha: 
 
 
 def _panel(d: ImageDraw.ImageDraw, box, fill=PANEL, outline=LINE, r: int = 24, width: int = 2) -> None:
-    """Glass panel: dark violet fill, hairline edge and a thin cyan light along the top (v2.35)."""
-    d.rounded_rectangle(box, radius=r, fill=fill, outline=outline, width=width)
+    """v2.38 premium panel: near-black glass, a hairline gold edge and a short foil accent on the top edge."""
+    d.rounded_rectangle(box, radius=r, fill=fill, outline=outline, width=1)
     x0, y0, x1, _ = box
-    d.line([(x0 + r, y0 + 1), (x1 - r, y0 + 1)], fill=(120, 96, 40), width=1)
+    cx = (x0 + x1) // 2
+    d.line([(cx - 40, y0), (cx + 40, y0)], fill=(240, 200, 90), width=2)
 
 
 def _pill(d: ImageDraw.ImageDraw, x: int, y: int, text: str, fg, bg, size: int = 20, h: int = 40,
@@ -153,97 +215,99 @@ def _chip(d, x, y, text, size: int = 20, h: int = 40, align: str = "left", w: in
     return _pill(d, x, y, text, GOLD, PANEL_HI, size, h, outline=GOLD_SOFT, align=align, w=w)
 
 
-def _stars(img: Image.Image, seed: int = 7) -> None:
-    """A fixed starfield (same sky on every card), a few bright stars with a soft halo."""
-    import random
-    r = random.Random(seed)
+def _background(img: Image.Image) -> None:
+    """v2.38 premium background (same as the website's share images): warm black, a diagonal beam of gold light, a gold
+    glow top right, the round logo artwork as a faint sepia watermark, fine gold grain and a vignette."""
+    import numpy as np
+    yy, xx = np.mgrid[0:H, 0:W].astype(float)
+    t = np.clip((xx * 0.3 + yy) / (W * 0.3 + H), 0, 1)
+    base = np.stack([21 - 16 * t, 18 - 13 * t, 12 - 7 * t], -1)
+    # diagonal beam from the top left
+    ang = 0.62
+    dist = np.abs((xx - W * 0.15) * np.cos(ang) + (yy + H * 0.05) * np.sin(ang) - 0) * 0
+    u = (xx - W * 0.15) * np.cos(ang) - (yy + H * 0.05) * np.sin(ang)
+    beam = np.exp(-(u / (W * 0.10)) ** 2) * 0.075
+    glow = np.clip(1 - np.hypot(xx - W * 0.85, yy - H * 0.12) / (W * 0.6), 0, 1) ** 2 * 0.10
+    gold = np.array([240, 185, 11], float)
+    arr = base + (beam + glow)[..., None] * gold
+    vig = np.clip((np.hypot(xx - W / 2, yy - H / 2) - min(W, H) * 0.35) / (max(W, H) * 0.75), 0, 1) * 0.55
+    arr = arr * (1 - vig[..., None])
+    rng = np.random.default_rng(3)
+    grain = (rng.random((H, W)) < 1 / 260)
+    arr[grain] = arr[grain] * 0.9 + gold * 0.08
+    img.paste(Image.fromarray(np.clip(arr, 0, 255).astype("uint8"), "RGB"))
+    try:
+        art = Image.open(ASSETS / "logo-art.png").convert("RGBA")
+        s_ = int(W * 0.62)
+        art = art.resize((s_, s_), Image.LANCZOS).rotate(10, resample=Image.BICUBIC)
+        g = art.convert("L")
+        sep = Image.merge("RGB", (g.point(lambda v: min(255, int(v * 1.0))), g.point(lambda v: int(v * 0.82)), g.point(lambda v: int(v * 0.55))))
+        mask = Image.new("L", (s_, s_), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, s_ - 1, s_ - 1), fill=12)
+        img.paste(sep, (W - int(s_ * 0.62), H - int(s_ * 0.70)), mask)
+    except OSError:
+        pass
+    del dist
+
+
+def _frame(img: Image.Image) -> None:
+    """Gold-foil frame with a faint inner line and small diamonds top and bottom centre."""
+    o = 22
+    mask = Image.new("L", img.size, 0)
+    ImageDraw.Draw(mask).rounded_rectangle((o, o, W - 1 - o, H - 1 - o), radius=24, outline=255, width=3)
+    img.paste(_foil_img(W, H), (0, 0), mask)
     d = ImageDraw.Draw(img)
-    big = []
-    for _ in range(170):
-        x, y = r.uniform(20, W - 20), r.uniform(20, H - 20)
-        s_ = r.choice((0.6, 0.8, 1.0, 1.0, 1.4))
-        a = int(r.uniform(50, 160))
-        d.ellipse((x - s_, y - s_, x + s_, y + s_), fill=(a, int(a * 0.86), int(a * 0.6)))   # warm gold dust
-        if r.random() < 0.05:
-            big.append((x, y))
-    for x, y in big:
-        _glow(img, lambda m, x=x, y=y: m.ellipse((x - 3, y - 3, x + 3, y + 3), fill=200), GOLD, 5, 1.0)
-        ImageDraw.Draw(img).ellipse((x - 1.6, y - 1.6, x + 1.6, y + 1.6), fill=(255, 236, 180))
+    d.rounded_rectangle((o + 9, o + 9, W - 1 - o - 9, H - 1 - o - 9), radius=18, outline=(60, 48, 20), width=1)
+    dm = Image.new("L", img.size, 0)
+    dd = ImageDraw.Draw(dm)
+    for x, y in ((W // 2, o + 1), (W // 2, H - 1 - o)):
+        dd.polygon([(x, y - 7), (x + 7, y), (x, y + 7), (x - 7, y)], fill=255)
+    img.paste(_foil_img(W, H), (0, 0), dm)
 
 
-def _orbit(img: Image.Image) -> None:
-    """One tilted cyan orbit across the sky with a satellite (the logo's orbit, drawn large and faint)."""
-    import math
-    layer = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    ld = ImageDraw.Draw(layer)
-    cx, cy, rx, ry, tilt = W * 0.72, H * 0.52, 640, 170, math.radians(-14)
-    pts = []
-    for k in range(361):
-        t = math.radians(k)
-        x, y = rx * math.cos(t), ry * math.sin(t)
-        pts.append((cx + x * math.cos(tilt) - y * math.sin(tilt), cy + x * math.sin(tilt) + y * math.cos(tilt)))
-    ld.line(pts, fill=GOLD + (38,), width=2)
-    sx, sy = pts[208]
-    img.paste(Image.alpha_composite(img.convert("RGBA"), layer).convert("RGB"))
-    _glow(img, lambda m: m.ellipse((sx - 6, sy - 6, sx + 6, sy + 6), fill=255), GOLD, 8, 1.4)
-    ImageDraw.Draw(img).ellipse((sx - 3, sy - 3, sx + 3, sy + 3), fill=AI)
-
-
-def _hud(d: ImageDraw.ImageDraw) -> None:
-    """HUD frame: gold corner brackets and a faint cyan line between them (replaces the gold double border)."""
-    L, o = 46, 14
-    for (x, y, dx, dy) in ((o, o, 1, 1), (W - 1 - o, o, -1, 1), (o, H - 1 - o, 1, -1), (W - 1 - o, H - 1 - o, -1, -1)):
-        d.line([(x, y), (x + dx * L, y)], fill=GOLD, width=3)
-        d.line([(x, y), (x, y + dy * L)], fill=GOLD, width=3)
-    d.rounded_rectangle((o + 8, o + 8, W - 1 - o - 8, H - 1 - o - 8), radius=26, outline=(70, 56, 26), width=1)
-
-
-def _base(title: str, tag: str = "AI  ·  REAL RECORD") -> tuple[Image.Image, ImageDraw.ImageDraw]:
+def _base(title: str, tag: str = "REAL RECORD") -> tuple[Image.Image, ImageDraw.ImageDraw]:
     img = Image.new("RGB", (W, H), BG_BOT)
-    d = ImageDraw.Draw(img)
-    for y in range(H):                                   # vertical gradient, deep space
-        t = y / (H - 1)
-        d.line([(0, y), (W, y)], fill=tuple(int(a + (b - a) * t) for a, b in zip(BG_TOP, BG_BOT)))
-    _radial(img, 150, 60, 520, 360, GOLD, 34)            # gold glow behind the logo
-    _radial(img, W - 220, H // 2 + 20, 560, 420, GOLD, 22)
-    _stars(img)
-    _orbit(img)
-    d = ImageDraw.Draw(img)
-    _hud(d)
-    ls = 64
+    _background(img)
+    _frame(img)
+    ls = 60
     try:
         logo = Image.open(ASSETS / "logo.png").convert("RGBA").resize((ls, ls), Image.LANCZOS)
         mask = Image.new("L", logo.size, 0)
-        ImageDraw.Draw(mask).rounded_rectangle((0, 0, ls - 1, ls - 1), radius=16, fill=255)
+        ImageDraw.Draw(mask).rounded_rectangle((0, 0, ls - 1, ls - 1), radius=14, fill=255)
         logo.putalpha(Image.composite(logo.getchannel("A"), Image.new("L", logo.size, 0), mask))
-        _glow(img, lambda m: m.rounded_rectangle((M, 40, M + ls, 40 + ls), radius=16, fill=150), GOLD, 14, 0.8)
-        img.paste(logo, (M, 40), logo)
+        _glow(img, lambda m: m.rounded_rectangle((M, 44, M + ls, 44 + ls), radius=14, fill=150), GOLD, 14, 0.8)
+        img.paste(logo, (M, 44), logo)
     except OSError:
         pass
     d = ImageDraw.Draw(img)
     tx = M + ls + 20
-    d.text((tx, 66), "CRYPTO INTELLIGENCE AI", font=_f("ExtraBold", 26), fill=WHITE, anchor="ls")
-    d.text((tx, 96), title, font=_fit(d, title, "SemiBold", 20, 620), fill=GOLD, anchor="ls")
-    # a small "AI · live record" transmission tag, top right
-    tf = _f("Bold", 15)
-    tw = _tw(d, tag, tf) + 44
-    d.rounded_rectangle((W - M - tw, 46, W - M, 78), radius=16, fill=PANEL_HI, outline=GOLD_SOFT, width=1)
-    _glow(img, lambda m: m.ellipse((W - M - tw + 12, 56, W - M - tw + 24, 68), fill=255), GOLD, 5, 1.2)
+    _spaced(d, (tx, 70), "CRYPTO INTELLIGENCE AI", _s("Bold", 19), WHITE, 4)
+    d.text((tx, 98), title, font=_fit(d, title, "SemiBold", 19, 560), fill=GOLD_SOFT, anchor="ls")
+    # the card's kind, in a foil-outlined pill (spaced capitals)
+    tag = tag.replace("AI  ·  ", "").strip()
+    tf = _s("Bold", 14)
+    tw = int(sum(d.textlength(ch, font=tf) + 3 for ch in tag)) + 40
+    pm = Image.new("L", img.size, 0)
+    ImageDraw.Draw(pm).rounded_rectangle((W - M - tw, 52, W - M, 88), radius=18, outline=255, width=2)
+    img.paste(_foil_img(W, H), (0, 0), pm)
     d = ImageDraw.Draw(img)
-    d.ellipse((W - M - tw + 14, 58, W - M - tw + 22, 66), fill=AI)
-    d.text((W - M - tw + 32, 62 + _cap(tf) / 2), tag, font=tf, fill=AI, anchor="ls")
+    _spaced(d, (W - M - tw + 20, 75), tag, tf, GOLD, 3)
     return img, d
 
 
-def _footer(d: ImageDraw.ImageDraw, note: str = "Analysis only, not financial advice") -> None:
-    y = 584
-    d.line([(M, y), (W - M, y)], fill=LINE, width=1)
-    d.line([(M, y), (M + 160, y)], fill=AI, width=2)
-    d.text((M, y + 36), SITE_TEXT, font=_f("Bold", 22), fill=GOLD, anchor="ls")
-    fn = _fit(d, note, "Medium", 18, W - 2 * M - 360)
-    d.text((W - M, y + 36), note, font=fn, fill=MUTED, anchor="rs")
-    small = _fit(d, brand.FOOTER, "Medium", 14, W - 2 * M)
-    d.text((M, y + 62), brand.FOOTER, font=small, fill=(110, 106, 98), anchor="ls")
+def _footer(d: ImageDraw.ImageDraw, note: str = "Analysis only, not financial advice", img: Image.Image | None = None) -> None:
+    y = 578
+    d.line([(M, y), (W - M, y)], fill=(70, 58, 26), width=1)
+    d.line([(M, y), (M + 170, y)], fill=GOLD, width=3)
+    if img is not None:
+        _foil_text(img, (M, y + 38), SITE_TEXT, _s("Bold", 23), glow=False)
+        d = ImageDraw.Draw(img)
+    else:
+        d.text((M, y + 38), SITE_TEXT, font=_s("Bold", 23), fill=GOLD, anchor="ls")
+    fn = _fit(d, note, "Medium", 18, W - 2 * M - 380)
+    d.text((W - M, y + 38), note, font=fn, fill=MUTED, anchor="rs")
+    small = _fit(d, brand.FOOTER, "Medium", 13, W - 2 * M)
+    d.text((M, y + 62), brand.FOOTER, font=small, fill=(110, 104, 92), anchor="ls")
 
 
 def _rows(d: ImageDraw.ImageDraw, box, rows: list[tuple[str, str, Any]], label_size: int = 18,
@@ -266,46 +330,41 @@ def _rows(d: ImageDraw.ImageDraw, box, rows: list[tuple[str, str, Any]], label_s
 
 def _hero(img: Image.Image, box, value: float, lev: int | None, price: float, sub: str | None = None,
           label: str | None = None) -> None:
-    """The big glowing result: ROI on margin (or the price move, labelled, when there is no leverage)."""
+    """v2.38 the big result: a gold-foil figure for a gain (plain red for a loss, never dressed up) in a hairline box
+    with foil corner marks; ROI on margin (or the price move, labelled, when there is no leverage)."""
     d = ImageDraw.Draw(img)
     x0, y0, x1, y1 = box
-    col = GREEN if value > 0 else RED
+    good = value > 0
+    col = GOLD if good else RED
     cx = (x0 + x1) // 2
-    d.rounded_rectangle(box, radius=28, fill=(12, 11, 8))
-    _radial(img, cx, (y0 + y1) // 2 - 10, (x1 - x0) // 2, (y1 - y0) // 2, col, 52)
+    d.rounded_rectangle(box, radius=26, fill=(13, 12, 9), outline=(70, 58, 26), width=1)
+    _radial(img, cx, (y0 + y1) // 2, (x1 - x0) // 2, (y1 - y0) // 2, col, 30 if good else 36)
     d = ImageDraw.Draw(img)
-    cy = (y0 + y1) // 2 - 6                                  # v2.35: orbit rings around the result
-    for rx, ry, a in (((x1 - x0) * 0.47, (y1 - y0) * 0.42, 70), ((x1 - x0) * 0.40, (y1 - y0) * 0.33, 40)):
-        d.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), outline=tuple(int(c * a / 100) for c in col), width=1)
-    import math
-    for ang, rr in ((-38, 0.47), (150, 0.40)):
-        rx_, ry_ = (x1 - x0) * rr, (y1 - y0) * (0.42 if rr == 0.47 else 0.33)
-        sx, sy = cx + rx_ * math.cos(math.radians(ang)), cy + ry_ * math.sin(math.radians(ang))
-        _glow(img, lambda m, sx=sx, sy=sy: m.ellipse((sx - 5, sy - 5, sx + 5, sy + 5), fill=255), col, 6, 1.4)
-        ImageDraw.Draw(img).ellipse((sx - 2.5, sy - 2.5, sx + 2.5, sy + 2.5), fill=col)
-    d = ImageDraw.Draw(img)
-    d.rounded_rectangle(box, radius=28, outline=tuple(int(c * 0.6) for c in col), width=2)
     for (hx, hy, dx, dy) in ((x0, y0, 1, 1), (x1, y0, -1, 1), (x0, y1, 1, -1), (x1, y1, -1, -1)):
-        d.line([(hx + dx * 10, hy), (hx + dx * 34, hy)], fill=col, width=3)
-        d.line([(hx, hy + dy * 10), (hx, hy + dy * 34)], fill=col, width=3)
-    lab = label or ("ROI ON MARGIN" if lev else "PRICE MOVE")
-    labf = _f("Bold", 20)
+        d.line([(hx + dx * 14, hy), (hx + dx * 40, hy)], fill=GOLD, width=3)
+        d.line([(hx, hy + dy * 14), (hx, hy + dy * 40)], fill=GOLD, width=3)
+    lab = label or ("ROI on margin" if lev else "Price move")
+    labf = _f("SemiBold", 21)
     big = pct(value)
-    fb = _fit(d, big, "ExtraBold", 124, (x1 - x0) - 64)
+    fb = _s("ExtraBold", 112)
+    while fb.size > 40 and d.textlength(big, font=fb) > (x1 - x0) - 64:
+        fb = _s("ExtraBold", fb.size - 6)
     subf = _fit(d, sub, "Medium", 17, (x1 - x0) - 48) if sub else None
-    # vertical stack, centred in the box: label · number · (chip + price) · note
-    parts = [_cap(labf), 32, _cap(fb)] + ([32, 40] if lev else []) + ([28, _cap(subf)] if sub else [])
+    parts = [_cap(labf), 34, _cap(fb)] + ([32, 40] if lev else []) + ([28, _cap(subf)] if sub else [])
     y = y0 + ((y1 - y0) - sum(parts)) / 2
-    d.text((cx, y + _cap(labf)), lab, font=labf, fill=GOLD, anchor="ms")
-    base = y + _cap(labf) + 32 + _cap(fb)
-    _glow(img, lambda m: m.text((cx, base), big, font=fb, fill=255, anchor="ms"), col, 18, 1.6)
+    d.text((cx, y + _cap(labf)), lab, font=labf, fill=GOLD_SOFT, anchor="ms")
+    base = y + _cap(labf) + 34 + _cap(fb)
+    if good:
+        _foil_text(img, (cx, base), big, fb, anchor="ms")
+    else:
+        _glow(img, lambda m: m.text((cx, base), big, font=fb, fill=255, anchor="ms"), RED, 16, 1.2)
+        ImageDraw.Draw(img).text((cx, base), big, font=fb, fill=RED, anchor="ms")
     d = ImageDraw.Draw(img)
-    d.text((cx, base), big, font=fb, fill=col, anchor="ms")
     y = base
     if lev:
         y += 32
         lf = _f("Bold", 20)
-        chip = f"{lev}x MARGIN"
+        chip = f"{lev}x margin"
         mv = f"{pct(price)} after fees"
         mf = _f("Medium", 22)
         tot = _tw(d, chip, lf) + 36 + 16 + _tw(d, mv, mf)
@@ -358,7 +417,7 @@ def result_card(w: dict[str, Any]) -> bytes:
     _rows(d, (M, 304, M + lw, 552), rows)
     _hero(img, (616, 144, W - M, 552), val, lev, price, "half at TP1, a quarter at TP2 and TP3 · after fees")
     d = ImageDraw.Draw(img)
-    _footer(d)
+    _footer(d, img=img)
     return _png(img)
 
 
@@ -382,11 +441,10 @@ def wins_card(wins: list[dict[str, Any]], period: str = "today", closed: int | N
     best = max((result(x)[0] for x in wins), default=0.0)
     lev_any = any(result(x)[1] for x in wins)
     d.text((W - M, 160), "BEST ROI ON MARGIN" if lev_any else "BEST PRICE MOVE", font=_f("Bold", 18), fill=GOLD, anchor="rs")
-    bf = _f("ExtraBold", 56)
+    bf = _s("ExtraBold", 56)
     bt = pct(best)
-    _glow(img, lambda m: m.text((W - M, 224), bt, font=bf, fill=255, anchor="rs"), GREEN, 14, 1.4)
+    _foil_text(img, (W - M, 224), bt, bf, anchor="rs")
     d = ImageDraw.Draw(img)
-    d.text((W - M, 224), bt, font=bf, fill=GREEN, anchor="rs")
     # table: COIN | SIDE | TF | RESULT | PRICE | ROI (right edge)
     x0, x1 = M, W - M
     cols = {"coin": x0 + 28, "side": x0 + 228, "tf": x0 + 360, "res": x0 + 470, "price": x1 - 300, "roi": x1 - 28}
@@ -420,7 +478,7 @@ def wins_card(wins: list[dict[str, Any]], period: str = "today", closed: int | N
             d.text((cols["roi"] - 30, mid + _cap(hf) / 2), "price", font=hf, fill=MUTED, anchor="ms")
     if n > len(rows):
         d.text((x1 - 28, 292 + 5 * rh + 22), f"+ {n - len(rows)} more in the app", font=_f("Medium", 16), fill=MUTED, anchor="rs")
-    _footer(d)
+    _footer(d, img=img)
     return _png(img)
 
 
@@ -459,7 +517,7 @@ def weekly_card(r: dict[str, Any]) -> bytes:
             d.text((bx + cw - 24, 496), vt, font=_fit(d, vt, "ExtraBold", 30, 180), fill=GREEN, anchor="rs")
             d.text((bx + cw - 24, 532), f"{lev}x · {pct(price)} after fees" if lev else "after fees", font=_f("Medium", 16),
                    fill=MUTED, anchor="rs")
-    _footer(d, "Past results don't guarantee future results")
+    _footer(d, "Past results don't guarantee future results", img=img)
     return _png(img)
 
 
@@ -498,7 +556,7 @@ def teaser_card(s: dict[str, Any], mins: int) -> bytes:
         d.text((bx + 20, 468), v, font=_f("Bold", size), fill=c, anchor="ls")
     d.text((M, 552), "Members get every signal the moment it appears, with phone alerts.", font=_f("Medium", 20),
            fill=MUTED, anchor="ls")
-    _footer(d, "Not financial advice · prices may have moved")
+    _footer(d, "Not financial advice · prices may have moved", img=img)
     return _png(img)
 
 
@@ -546,7 +604,7 @@ def week7_card(r: dict[str, Any], now: int) -> bytes:
             d.text((bx + cw - 24, 470), v, font=_f("ExtraBold", 28), fill=GREEN if x["return_pct"] > 0 else RED, anchor="rs")
     note = r.get("sample_note") or "Equal size per signal · price move after a 0.15% round trip and funding · no leverage"
     d.text((M, 548), note, font=_fit(d, note, "Medium", 19, W - 2 * M), fill=GOLD_SOFT if r.get("sample_note") else MUTED, anchor="ls")
-    _footer(d, "Past results don't guarantee future results")
+    _footer(d, "Past results don't guarantee future results", img=img)
     return _png(img)
 
 
@@ -569,5 +627,5 @@ def briefing_card(b: dict[str, Any]) -> bytes:
     for t in (b.get("bullets") or [])[: max(0, (566 - y) // 30)]:
         d.text((M, y), "•  " + t, font=_fit(d, "•  " + t, "SemiBold", 19, W - 2 * M), fill=GOLD_SOFT, anchor="ls")
         y += 30
-    _footer(d, "Context, not advice")
+    _footer(d, "Context, not advice", img=img)
     return _png(img)
