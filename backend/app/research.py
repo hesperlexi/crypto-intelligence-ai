@@ -219,7 +219,7 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15", "exits"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
@@ -244,7 +244,10 @@ def main(argv: list[str] | None = None) -> int:
             src.close()
             dst.close()
             a.db = f"sqlite:///{tmp}"
-        if a.command == "guard15":
+        if a.command == "exits":
+            from . import research_exits
+            out = {"ok": True, "command": a.command, **research_exits.run(a.db, a.budget)}
+        elif a.command == "guard15":
             from . import research_guard15
             out = {"ok": True, "command": a.command, **research_guard15.run(a.db, a.budget)}
         elif a.command in ("coin-candidate", "coin-baseline"):
