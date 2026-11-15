@@ -300,28 +300,63 @@ export function FleetOrbit({ bots }: { bots: FleetBot[] }) {
 export function FleetPulse({ curves }: { curves: { name: string; pts: { ts: number; v: number }[] }[] }) {
   const all = curves.flatMap((c) => c.pts);
   if (all.length < 2) return <p className="text-sm text-mute">Not enough history yet.</p>;
-  const W = 600, H = 200, P = 8;
+  const W = 600, H = 200, P = 8, R = 44;           // R: room on the right for the end labels
   const t0 = Math.min(...all.map((p) => p.ts)), t1 = Math.max(...all.map((p) => p.ts)) || t0 + 1;
   const lo = Math.min(0, ...all.map((p) => p.v)), hi = Math.max(0, ...all.map((p) => p.v)), span = hi - lo || 1;
-  const x = (t: number) => P + ((W - 2 * P) * (t - t0)) / (t1 - t0 || 1);
+  const x = (t: number) => P + ((W - P - R) * (t - t0)) / (t1 - t0 || 1);
   const y = (v: number) => P + (H - 2 * P) * (1 - (v - lo) / span);
+  const z = y(0), zf = Math.max(0, Math.min(1, (z - P) / (H - 2 * P)));
+  // v2.41 (owner: "more lively, red and green"): every line is green above 0 % and red below (one gradient split at
+  // the zero line), with a soft glow fill towards 0 %, a bright end dot and the bot's latest return. No SVG filters
+  // (Z Fold GPU, v2.39); the lines draw in once on load, off under reduced motion.
+  const ends = curves.filter((c) => c.pts.length > 1).map((c) => {
+    const l = c.pts[c.pts.length - 1];
+    return { name: c.name, v: l.v, cx: x(l.ts), cy: y(l.v) };
+  }).sort((a, b) => a.cy - b.cy);
+  for (let i = 1; i < ends.length; i++) ends[i] = { ...ends[i], ly: Math.max(ends[i].cy, ((ends[i - 1] as any).ly ?? ends[i - 1].cy) + 11) } as any;
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Return of every bot over time">
+    <svg viewBox={`0 0 ${W} ${H}`} className="fp-live w-full" role="img" aria-label="Return of every bot over time">
       <defs>
-        <pattern id="fp-grid" width="30" height="20" patternUnits="userSpaceOnUse"><path d="M30 0H0V20" fill="none" stroke="rgb(var(--ai) / 0.10)" /></pattern>
+        <pattern id="fp-grid" width="30" height="20" patternUnits="userSpaceOnUse"><path d="M30 0H0V20" fill="none" stroke="rgb(var(--ai) / 0.08)" /></pattern>
+        <linearGradient id="fp-stroke" gradientUnits="userSpaceOnUse" x1="0" y1={P} x2="0" y2={H - P}>
+          <stop offset="0" stopColor="rgb(var(--bull))" /><stop offset={zf} stopColor="rgb(var(--bull))" />
+          <stop offset={zf} stopColor="rgb(var(--bear))" /><stop offset="1" stopColor="rgb(var(--bear))" />
+        </linearGradient>
+        <linearGradient id="fp-fill" gradientUnits="userSpaceOnUse" x1="0" y1={P} x2="0" y2={H - P}>
+          <stop offset="0" stopColor="rgb(var(--bull) / 0.30)" /><stop offset={zf} stopColor="rgb(var(--bull) / 0.02)" />
+          <stop offset={zf} stopColor="rgb(var(--bear) / 0.02)" /><stop offset="1" stopColor="rgb(var(--bear) / 0.30)" />
+        </linearGradient>
       </defs>
       <rect width={W} height={H} fill="url(#fp-grid)" rx="8" />
-      <line x1={P} x2={W - P} y1={y(0)} y2={y(0)} stroke="rgb(var(--mute) / 0.5)" strokeDasharray="3 4" />
-      <g>
-        {curves.map((c) => {
-          if (c.pts.length < 2) return null;
-          const last = c.pts[c.pts.length - 1].v;
-          const d = c.pts.map((p, i) => `${i ? "L" : "M"}${x(p.ts).toFixed(1)} ${y(p.v).toFixed(1)}`).join(" ");
-          return <path key={c.name} d={d} fill="none" stroke={last >= 0 ? "rgb(var(--bull) / 0.85)" : "rgb(var(--bear) / 0.85)"} strokeWidth="1.6"><title>{`${c.name}: ${last >= 0 ? "+" : ""}${last.toFixed(2)}%`}</title></path>;
-        })}
-      </g>
-      <text x={W - P} y={y(hi) + 10} textAnchor="end" fontSize="10" fill="rgb(var(--mute))">{`+${hi.toFixed(1)}%`}</text>
-      <text x={W - P} y={y(lo) - 4} textAnchor="end" fontSize="10" fill="rgb(var(--mute))">{`${lo.toFixed(1)}%`}</text>
+      <rect x={P} y={P} width={W - P - R} height={Math.max(0, z - P)} fill="rgb(var(--bull) / 0.035)" />
+      <rect x={P} y={z} width={W - P - R} height={Math.max(0, H - P - z)} fill="rgb(var(--bear) / 0.035)" />
+      <line x1={P} x2={W - R} y1={z} y2={z} stroke="rgb(var(--text) / 0.35)" strokeDasharray="3 4" />
+      <text x={P + 2} y={z - 4} fontSize="9" fill="rgb(var(--mute))">0%</text>
+      {curves.map((c) => {
+        if (c.pts.length < 2) return null;
+        const pts = c.pts.map((p) => `${x(p.ts).toFixed(1)} ${y(p.v).toFixed(1)}`);
+        const d = "M" + pts.join(" L");
+        const area = `${d} L${x(c.pts[c.pts.length - 1].ts).toFixed(1)} ${z.toFixed(1)} L${x(c.pts[0].ts).toFixed(1)} ${z.toFixed(1)}Z`;
+        const last = c.pts[c.pts.length - 1].v;
+        return (
+          <g key={c.name}>
+            <path d={area} fill="url(#fp-fill)" />
+            <path d={d} className="fp-line" pathLength={1} fill="none" stroke="url(#fp-stroke)" strokeWidth="2.2" strokeLinejoin="round" strokeLinecap="round">
+              <title>{`${c.name}: ${last >= 0 ? "+" : ""}${last.toFixed(2)}%`}</title>
+            </path>
+          </g>
+        );
+      })}
+      {ends.map((e: any) => {
+        const col = e.v >= 0 ? "--bull" : "--bear";
+        return (
+          <g key={e.name}>
+            <circle cx={e.cx} cy={e.cy} r="6" fill={`rgb(var(${col}) / 0.22)`} />
+            <circle cx={e.cx} cy={e.cy} r="2.8" fill={`rgb(var(${col}))`} />
+            <text x={W - R + 6} y={(e.ly ?? e.cy) + 3} fontSize="10" fontWeight="600" fill={`rgb(var(${col}))`}>{`${e.v >= 0 ? "+" : ""}${e.v.toFixed(1)}%`}</text>
+          </g>
+        );
+      })}
     </svg>
   );
 }
