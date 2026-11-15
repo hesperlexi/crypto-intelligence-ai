@@ -1,0 +1,204 @@
+{
+ "ok": true,
+ "command": "guard15",
+ "live": {
+  "since": 1793784369962,
+  "published_15m": {
+   "n": 12,
+   "win_rate": 0.75,
+   "avg_r": 0.7884,
+   "total_r": 9.46
+  },
+  "published_15m_open_or_unfilled": 0,
+  "rejected_by_filter": {
+   "FILTERED": {
+    "blocked": 8,
+    "closed": 6,
+    "win_rate": 0.5,
+    "avg_r": -0.2323,
+    "total_r": -1.39
+   },
+   "GRADE A ONLY": {
+    "blocked": 12,
+    "closed": 9,
+    "win_rate": 0.889,
+    "avg_r": 0.7393,
+    "total_r": 6.65
+   },
+   "TARGET TOO SMALL FOR COSTS": {
+    "blocked": 2,
+    "closed": 1,
+    "win_rate": 1.0,
+    "avg_r": 1.3622,
+    "total_r": 1.36
+   },
+   "TOO MANY SAME-SIDE CALLS": {
+    "blocked": 3,
+    "closed": 3,
+    "win_rate": 0.333,
+    "avg_r": -0.4417,
+    "total_r": -1.32
+   },
+   "VOLUME WALL AHEAD": {
+    "blocked": 1,
+    "closed": 1,
+    "win_rate": 1.0,
+    "avg_r": 0.3904,
+    "total_r": 0.39
+   }
+  },
+  "rejected_all_15m": {
+   "blocked": 26,
+   "n": 20,
+   "win_rate": 0.7,
+   "avg_r": 0.2844,
+   "total_r": 5.69
+  }
+ },
+ "replay": {
+  "variants": {
+   "live": {
+    "all_15m": {
+     "n": 9,
+     "avg_r": 0.0961,
+     "total_r": 0.87,
+     "win_rate": 0.556,
+     "max_dd_r": 2.67
+    },
+    "blocked_by_this_guard_15m": {
+     "n": 0
+    },
+    "all_timeframes": {
+     "n": 567,
+     "avg_r": -0.0065,
+     "total_r": -3.67,
+     "win_rate": 0.519,
+     "max_dd_r": 37.52
+    }
+   },
+   "no_grade_rule": {
+    "all_15m": {
+     "n": 91,
+     "avg_r": 0.0642,
+     "total_r": 5.84,
+     "win_rate": 0.549,
+     "max_dd_r": 13.74
+    },
+    "blocked_by_this_guard_15m": {
+     "n": 87,
+     "avg_r": 0.0875,
+     "total_r": 7.61,
+     "win_rate": 0.563,
+     "max_dd_r": 11.63
+    },
+    "all_timeframes": {
+     "n": 721,
+     "avg_r": 0.0185,
+     "total_r": 13.35,
+     "win_rate": 0.535,
+     "max_dd_r": 28.24
+    }
+   },
+   "no_bigger_trend": {
+    "all_15m": {
+     "n": 10,
+     "avg_r": 0.0458,
+     "total_r": 0.46,
+     "win_rate": 0.5,
+     "max_dd_r": 3.08
+    },
+    "blocked_by_this_guard_15m": {
+     "n": 1,
+     "avg_r": -0.4077,
+     "total_r": -0.41,
+     "win_rate": 0.0,
+     "max_dd_r": 0.41
+    },
+    "all_timeframes": {
+     "n": 607,
+     "avg_r": -0.0305,
+     "total_r": -18.53,
+     "win_rate": 0.507,
+     "max_dd_r": 48.81
+    }
+   },
+   "no_vp": {
+    "all_15m": {
+     "n": 9,
+     "avg_r": -0.0344,
+     "total_r": -0.31,
+     "win_rate": 0.444,
+     "max_dd_r": 3.2
+    },
+    "blocked_by_this_guard_15m": {
+     "n": 1,
+     "avg_r": -0.6424,
+     "total_r": -0.64,
+     "win_rate": 0.0,
+     "max_dd_r": 0.64
+    },
+    "all_timeframes": {
+     "n": 569,
+     "avg_r": 0.0049,
+     "total_r": 2.76,
+     "win_rate": 0.52,
+     "max_dd_r": 39.07
+    }
+   },
+   "no_guards": {
+    "all_15m": {
+     "n": 385,
+     "avg_r": -0.0018,
+     "total_r": -0.68,
+     "win_rate": 0.522,
+     "max_dd_r": 44.53
+    },
+    "blocked_by_this_guard_15m": {
+     "n": 378,
+     "avg_r": -0.0018,
+     "total_r": -0.7,
+     "win_rate": 0.524,
+     "max_dd_r": 42.95
+    },
+    "all_timeframes": {
+     "n": 1826,
+     "avg_r": -0.0086,
+     "total_r": -15.75,
+     "win_rate": 0.519,
+     "max_dd_r": 132.96
+    }
+   },
+   "no_cap": {
+    "all_15m": {
+     "n": 18,
+     "avg_r": 0.1391,
+     "total_r": 2.5,
+     "win_rate": 0.556,
+     "max_dd_r": 2.34
+    },
+    "blocked_by_this_guard_15m": {
+     "n": 9,
+     "avg_r": 0.182,
+     "total_r": 1.64,
+     "win_rate": 0.556,
+     "max_dd_r": 1.07
+    },
+    "all_timeframes": {
+     "n": 833,
+     "avg_r": 0.0074,
+     "total_r": 6.15,
+     "win_rate": 0.52,
+     "max_dd_r": 65.23
+    }
+   }
+  },
+  "skipped": [],
+  "skipped_n": 0,
+  "seconds": 96.7,
+  "notes": [
+   "live = grade A only (15m/1h/1d/3d) + bigger-trend check + VP wall 0.5 ATR + same-side cap 8 (all TFs)",
+   "each other variant removes one guard; 'blocked_by_this_guard_15m' = the 15m calls it adds back",
+   "no_cap = live without the cap; no_guards = none of them (grades A and B, no cap)"
+  ]
+ }
+}
