@@ -6,7 +6,7 @@ from app.services.bots import DEMO_15M, demo_view
 
 
 def test_defaults():
-    assert analysis.PAUSED_TFS == () and analysis.A_ONLY_TFS == ("15m", "1h", "1d", "3d") and analysis.DEMO_ONLY_TFS == ()
+    assert analysis.PAUSED_TFS == () and analysis.A_ONLY_TFS == ("1h", "1d", "3d") and analysis.DEMO_ONLY_TFS == ()
     assert (T.horizon_for("1h"), T.horizon_for("4h"), T.horizon_for("12h"), T.horizon_for("15m")) == (200, 100, 30, 250)
     assert (T.horizon_for("1d"), T.horizon_for("3d")) == (30, 30)
 

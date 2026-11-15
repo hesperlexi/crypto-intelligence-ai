@@ -47,7 +47,7 @@ def _tfs(name: str, default: str) -> tuple[str, ...]:
 
 PAUSED_TFS = _tfs("PAUSED_TFS", "")      # v2.10 (1 Nov 2026): 1d / 3d moved to demo-only
 # v2.11 (2 Nov 2026): 15m public, grade A only; v2.12 (2 Nov 2026): 1d / 3d public too, grade A only
-A_ONLY_TFS = _tfs("A_ONLY_TFS", "15m,1h,1d,3d")
+A_ONLY_TFS = _tfs("A_ONLY_TFS", "1h,1d,3d")
 # demo-only timeframes: the public decision is NO TRADE ("DEMO BOTS ONLY"); the call the demo bots may take is in `demo`
 DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "")      # v2.12: none (1d / 3d were demo-only in v2.10 - v2.11)
 

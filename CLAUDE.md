@@ -896,3 +896,8 @@ adds `curve` (running total in closing order, ROI when every trade has one, else
   +0.74R; FILTERED (AI trade filter) −0.23R; same-side cap −0.44R; costs / VP 1 each. Replay test split: allowing grade B
   on 15m adds 87 calls at +0.088R (56 % won), all timeframes −0.0065R → +0.0185R, drawdown 37R → 28R; bigger-trend / VP
   blocked 1 call each (both losers); cap blocked 9 (+0.18R) but drawdown 37R → 65R without it.
+
+## v2.40 15m grades A+B (owner, 15 Nov 2026, after the guard15 study)
+`analysis.A_ONLY_TFS` "1h,1d,3d": 15m grade-B calls are public and counted (record not restarted; 15m leverage policy
+B = 75 %). The 15m bot `futures-signal-ab-15m` stays grade A (`worker._policy_bot` keeps 15m bots at A). Signals 15m tab
+note removed. Other guards unchanged.

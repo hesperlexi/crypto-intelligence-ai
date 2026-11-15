@@ -185,7 +185,8 @@ def _policy_bot(b: dict[str, Any]) -> dict[str, Any]:
     tf = b.get("timeframe")
     if b.get("mode") == "decision" and tf in ("15m", "1h", "4h"):
         b = {**b, "max_hold_bars": _HOLD[tf]}
-    if b.get("mode") == "decision" and tf in A_ONLY_TFS:
+    # v2.40: 15m signals are public for grades A+B, but the 15m bot stays grade A (owner unchanged)
+    if b.get("mode") == "decision" and (tf in A_ONLY_TFS or tf == "15m"):
         b = {**b, "grades": "A", "name": str(b.get("name") or "").replace("grades A+B", "grade A")}
     return b
 
