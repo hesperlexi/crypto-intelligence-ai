@@ -979,3 +979,11 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
   background: linear-gradient(90deg, transparent, #f0b90b 30%, #fff1c4 50%, #f0b90b 70%, transparent); opacity: 0.8; }
 .lux-tile::after { content: ""; position: absolute; inset: 0; pointer-events: none;
   background: radial-gradient(60% 45% at 50% 0%, rgba(240,185,11,0.10), transparent 70%); }
+
+/* v2.39 Demo bots on big phone screens (Z Fold 4): no frosted-glass blur, no animated scan lines and no moving orbit on
+   this long page - many blurred, animated layers at a high pixel count stalled the page on some phones */
+.fx-lite .panel { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgb(var(--panel) / 0.94) !important; }
+.fx-lite .ai-card::after { display: none; }
+@media (pointer: coarse) {
+  .fx-lite .xeno-sweep, .fx-lite .xeno-blip, .fx-lite .bot-drone, .fx-lite .wave-glint { animation: none !important; }
+}

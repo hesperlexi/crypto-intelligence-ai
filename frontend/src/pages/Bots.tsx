@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { Component, type ReactNode, useMemo, useState } from "react";
 import { botFacts, PositionGrid } from "../components/PositionInfo";
 import LineChart, { Series } from "../components/LineChart";
 import LazyMount from "../components/LazyMount";
@@ -50,7 +50,7 @@ export default function Bots() {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="fx-lite space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
           <h2 className="section-title flex items-center gap-2">Demo trading bots <Info label="Bot rules">
@@ -76,15 +76,15 @@ export default function Bots() {
           </button>
         ))}
       </div>
-      {shown.length > 0 && <FleetHero bots={shown} />}
+      {shown.length > 0 && <SafePart><FleetHero bots={shown} /></SafePart>}
       {msg && <p className="text-sm text-accent">{msg}</p>}
       {b.error && <ErrorBox error={b.error} retry={b.reload} />}
       {!b.data && b.loading && <Loading what="Loading bots" />}
       {shown.map((bot: any) => (
-        <BotCard key={bot.config.id} bot={bot} cfg={cfgList.find((c) => c.id === bot.config.id) ?? bot.config}
+        <SafePart key={bot.config.id}><BotCard bot={bot} cfg={cfgList.find((c) => c.id === bot.config.id) ?? bot.config}
           admin={admin} editing={editing === bot.config.id} onEdit={() => setEditing(editing === bot.config.id ? null : bot.config.id)}
           onSave={(patch: any) => update(bot.config.id, patch, "Saved.")} onToggle={() => update(bot.config.id, { enabled: !bot.config.enabled }, bot.config.enabled ? "Paused." : "Resumed.")}
-          onReset={() => reset(bot.config.id)} onDelete={() => remove(bot.config.id)} />
+          onReset={() => reset(bot.config.id)} onDelete={() => remove(bot.config.id)} /></SafePart>
       ))}
       {cfgList.filter((c) => !(b.data?.bots ?? []).some((x: any) => x.config.id === c.id)).map((c) => (
         <Card key={c.id} title={c.name}><Empty>Starting soon.</Empty></Card>
@@ -279,6 +279,13 @@ function Editor({ cfg, onSave }: { cfg: any; onSave: (patch: any) => void }) {
 }
 
 /** v2.27 (owner, 14 Nov 2026): the fleet at a glance - every bot orbiting the AI core, and all their returns on one pulse. */
+/** v2.39: a drawing that fails on some phone never takes the whole Demo bots page down with it. */
+class SafePart extends Component<{ children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() { return this.state.failed ? null : this.props.children; }
+}
+
 function FleetHero({ bots }: { bots: any[] }) {
   const fleet: FleetBot[] = bots.map((x) => ({ id: x.config.id, name: x.config.name, tf: String(x.config.timeframe), ret: Number(x.stats?.return_pct ?? 0),
     open: Number(x.stats?.open_positions ?? 0), enabled: !!x.config.enabled, futures: x.config.market === "futures" }));

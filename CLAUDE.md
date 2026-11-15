@@ -883,3 +883,16 @@ adds `curve` (running total in closing order, ROI when every trade has one, else
   redraws the card in the current design when the owner posts it (old drafts without a recipe post their stored image).
 - Achievements page tiles: SVG `Medal` (foil ring, tick ring, orbit) + `.foil-text` values + `.lux-tile`.
 - `luxCard.ts` polyfills canvas `roundRect` (Chrome < 99 / Safari < 16 could not draw the share images).
+
+## v2.39 (owner, 15 Nov 2026)
+- Demo bots on Z Fold 4 still not loading: the live data renders fine (UI probe `ui-probe.yml` + `scripts/ui_probe*.{py,cjs}`:
+  real views copied into `frontend/dev/live/*.json` on the runner only (gitignored; `seed.ts liveView`), Playwright at
+  Fold / phone sizes, errors only → `reports/ui-probe.json`). Cause taken as GPU load: the page is wrapped in `.fx-lite`
+  (no backdrop blur, no scan line, no orbit / blip / glint animation on touch screens), the fleet SVG blur filters
+  (`fl-glow`, `fp-glow`) are gone, and the fleet picture + each bot card sit in `SafePart` error boundaries.
+- Guard study `python -m app.research guard15` (`research_guard15.py`, workflow `research-guard15.yml`, results
+  `research-results/results/guard15-*.json`; `series_policy.decide(htf_check=False)` research switch). 15 Nov: live since
+  the record start 15m published 12 closed +0.79R avg; blocked 26 (20 closed) +0.28R: GRADE A ONLY 9 closed, 89 % won,
+  +0.74R; FILTERED (AI trade filter) −0.23R; same-side cap −0.44R; costs / VP 1 each. Replay test split: allowing grade B
+  on 15m adds 87 calls at +0.088R (56 % won), all timeframes −0.0065R → +0.0185R, drawdown 37R → 28R; bigger-trend / VP
+  blocked 1 call each (both losers); cap blocked 9 (+0.18R) but drawdown 37R → 65R without it.

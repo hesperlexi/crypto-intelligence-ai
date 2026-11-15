@@ -259,7 +259,6 @@ export function FleetOrbit({ bots }: { bots: FleetBot[] }) {
       <svg viewBox="0 0 420 420" className="w-full" role="img" aria-label={`${bots.length} demo bots around the AI core`}>
         <defs>
           <radialGradient id="fl-core"><stop offset="0%" stopColor="rgb(var(--ai) / 0.65)" /><stop offset="45%" stopColor="rgb(var(--ai) / 0.15)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0)" /></radialGradient>
-          <filter id="fl-glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.6" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           <linearGradient id="fl-sw" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stopColor="rgb(var(--ai) / 0)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0.22)" /></linearGradient>
         </defs>
         <circle cx={C} cy={C} r="205" fill="url(#fl-core)" opacity="0.5" />
@@ -276,7 +275,7 @@ export function FleetOrbit({ bots }: { bots: FleetBot[] }) {
           <g key={b.id}>
             <line x1={C} y1={C} x2={C + r * Math.cos(a)} y2={C + r * Math.sin(a)} stroke={b.ret >= 0 ? "rgb(var(--bull) / 0.18)" : "rgb(var(--bear) / 0.18)"} strokeDasharray="2 4" />
             <g transform={`translate(${C + r * Math.cos(a) - 17} ${C + r * Math.sin(a) - 17})`} onMouseEnter={() => setHover(b)} onMouseLeave={() => setHover(null)}
-              onFocus={() => setHover(b)} onBlur={() => setHover(null)} tabIndex={0} filter="url(#fl-glow)" style={{ cursor: "default" }}>
+              onFocus={() => setHover(b)} onBlur={() => setHover(null)} tabIndex={0} style={{ cursor: "default" }}>
               <BotDrone on={b.enabled} size={34} tone={b.ret > 0 ? "bull" : b.ret < 0 ? "bear" : "ai"} />
               {Array.from({ length: Math.min(4, b.open) }, (_, k) => (
                 <circle key={k} cx={17 + 22 * Math.cos(k * 1.6)} cy={17 + 22 * Math.sin(k * 1.6)} r="2.4" fill="rgb(var(--accent))" className="xeno-blip" />
@@ -285,7 +284,7 @@ export function FleetOrbit({ bots }: { bots: FleetBot[] }) {
             </g>
           </g>
         ))}
-        <circle cx={C} cy={C} r="34" fill="rgb(var(--panel) / 0.9)" stroke="rgb(var(--ai) / 0.6)" filter="url(#fl-glow)" />
+        <circle cx={C} cy={C} r="34" fill="rgb(var(--panel) / 0.9)" stroke="rgb(var(--ai) / 0.6)" />
         <text x={C} y={C - 2} textAnchor="middle" fontSize="13" fontWeight="700" fill="rgb(var(--ai))">AI</text>
         <text x={C} y={C + 12} textAnchor="middle" fontSize="8" fill="rgb(var(--mute))">core</text>
       </svg>
@@ -310,11 +309,10 @@ export function FleetPulse({ curves }: { curves: { name: string; pts: { ts: numb
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Return of every bot over time">
       <defs>
         <pattern id="fp-grid" width="30" height="20" patternUnits="userSpaceOnUse"><path d="M30 0H0V20" fill="none" stroke="rgb(var(--ai) / 0.10)" /></pattern>
-        <filter id="fp-glow" x="-5%" y="-20%" width="110%" height="140%"><feGaussianBlur stdDeviation="2.2" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
       </defs>
       <rect width={W} height={H} fill="url(#fp-grid)" rx="8" />
       <line x1={P} x2={W - P} y1={y(0)} y2={y(0)} stroke="rgb(var(--mute) / 0.5)" strokeDasharray="3 4" />
-      <g filter="url(#fp-glow)">
+      <g>
         {curves.map((c) => {
           if (c.pts.length < 2) return null;
           const last = c.pts[c.pts.length - 1].v;
