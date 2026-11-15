@@ -390,7 +390,7 @@ MIGRATION_FLAGS = (
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
-    "coins_growth_v216",
+    "coins_growth_v216", "test_tp08_v240",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -795,6 +795,18 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/bots", {**doc, "bots": keep, "defaults_added": seen, "updated_at": now_ms()})
                 notes["public_1d3d_v212"] = {"removed": sorted(demo_ids & {b.get("id") for b in doc["bots"]}), "added": added}
         rt.db.set_setting("public_1d3d_v212", True)
+    # v2.40 (owner, 15 Nov 2026): add the 15m TP1-0.8R test bot once (removing it later sticks)
+    if not rt.db.get_setting("test_tp08_v240", False) and os.environ.get("TEST_BOT_TP08", "1") != "0":
+        from .services.bots import TEST_TP08_15M
+        doc = sink.get("config/bots") or {}
+        if isinstance(doc.get("bots"), list):
+            if not any(b.get("id") == TEST_TP08_15M["id"] for b in doc["bots"]):
+                like = next((b for b in doc["bots"] if b.get("id") == "futures-signal-ab-15m"), {})
+                nb = {**{k: like[k] for k in ("market", "leverage", "safe_leverage", "max_same_side") if k in like},
+                      **TEST_TP08_15M}
+                sink.set("config/bots", {**doc, "bots": doc["bots"] + [nb], "updated_at": now_ms()})
+                notes["test_tp08_v240"] = [nb["id"]]
+        rt.db.set_setting("test_tp08_v240", True)
     # v2.14 fresh restart (owner decision, 3 Nov 2026: "delete permanently", wins and losses alike): the record, bot
     # books, Hesper and their side tables are deleted and restart now (app/fresh_restart_v214.py). It also replaces the
     # v2.13 honest-record restart (flag honest_record_v213 is set by it, so the record restarts once, not twice).

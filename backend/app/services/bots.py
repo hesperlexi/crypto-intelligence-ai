@@ -81,6 +81,14 @@ def _demo_bot(tf: str) -> dict[str, Any]:
 
 DEMO_BOTS = [DEMO_15M, _demo_bot("1d"), _demo_bot("3d")]
 
+# v2.40 (owner, 15 Nov 2026): exit test - the 15m signal bot's twin with TP1 at 0.8R instead of 1R (the exit study's
+# only candidate, research_exits.py). Same calls, grade, leverage and other exits; compare the two books after ~2 weeks.
+TEST_TP08_15M = {"id": "futures-test-tp08-15m", "name": "Test bot 15M · grade A · TP1 0.8R", "enabled": True,
+                 "mode": "decision", "timeframe": "15m", "symbols": "all", "starting_balance": 10_000.0,
+                 "risk_per_trade_pct": 1.0, "max_position_pct": 20.0, "max_open_positions": 6, "allow_short": True,
+                 "pending_bars": 6, "max_hold_bars": 250, "reset_token": "v240", "grades": "A", "tp1_r": 0.8,
+                 "leverage": 20.0, **_FUT}
+
 
 def _sig_bot(tf: str, futures: bool) -> dict[str, Any]:
     base = {"id": f"{'futures-' if futures else ''}signal-ab-{tf}",
@@ -113,7 +121,7 @@ FIELDS = {"name": str, "enabled": bool, "mode": str, "timeframe": str, "symbols"
           "max_open_positions": int, "allow_short": bool, "pending_bars": int, "max_hold_bars": int,
           "position_pct": float, "min_probability": float, "reset_token": str, "market": str, "leverage": float,
           "safe_leverage": bool, "confident_only": bool, "grades": str, "edge_sizing": bool, "max_same_side": int,
-          "demo_only": bool, "tp1_only": bool}
+          "demo_only": bool, "tp1_only": bool, "tp1_r": float}
 
 
 def clean_config(raw: dict[str, Any]) -> dict[str, Any]:
@@ -640,6 +648,12 @@ class BotEngine:
             eq = self.equity(state)
             entry = float(setup["ideal_entry"]) if a["decision"] == "BUY ON PULLBACK" else px
             risk_per_unit = abs(entry - stop)
+            if cfg.get("tp1_r") and len(targets) > 1:
+                # v2.40 test bot: TP1 at tp1_r x the risk from its own entry (the exit study's best 15m candidate)
+                t1 = entry + side * float(cfg["tp1_r"]) * risk_per_unit
+                if side * (targets[1] - t1) > 0 and side * (t1 - px) > 0:
+                    targets = [t1] + targets[1:]
+                    info["tp1_r"] = float(cfg["tp1_r"])
             fut = cfg.get("market") == "futures"
             lev = 1.0
             if fut:

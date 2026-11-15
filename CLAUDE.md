@@ -901,3 +901,10 @@ adds `curve` (running total in closing order, ROI when every trade has one, else
 `analysis.A_ONLY_TFS` "1h,1d,3d": 15m grade-B calls are public and counted (record not restarted; 15m leverage policy
 B = 75 %). The 15m bot `futures-signal-ab-15m` stays grade A (`worker._policy_bot` keeps 15m bots at A). Signals 15m tab
 note removed. Other guards unchanged.
+- Exit study `python -m app.research exits` (`research_exits.py`, workflow `research-exits.yml` on branch `exits-v240`,
+  results `research-results/results/exits-*.json`, 15 Nov): early break-even at +0.5R / +0.7R, lock +0.3R at +0.7R,
+  close on give-back, TP1 0.7R / 0.8R vs the live exits on the same out-of-sample calls (15m/1h/4h). None beat the live
+  exits overall on both halves; 4h worse with nearly all; 15m TP1 0.8R slightly better (+0.005R vs −0.028R test; small).
+  Live exits unchanged. Owner-approved trial: bot `futures-test-tp08-15m` (`bots.TEST_TP08_15M`, grade A, TP1 at
+  `tp1_r` 0.8R from its own entry, otherwise = the 15m signal bot), added once (flag `test_tp08_v240`; env
+  `TEST_BOT_TP08=0` skips it - tests/conftest.py does). Compare its book with `futures-signal-ab-15m` after ~2 weeks.
