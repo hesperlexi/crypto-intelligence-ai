@@ -999,3 +999,12 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   `binance.searchFuturesOnly` (USDⓈ-M perps with no spot pair) + `components/FutOnlyHits.tsx` under both search boxes:
   "Futures only … open in Trade ›" → `/paper?market=futures&symbol=X/USDT`. Trade pair menu: search box, futures-only
   pairs (`FUT_ONLY`) also on the Spot tab (tap switches to Futures), shown even when the listing check fails.
+- v2.49 MSTR/USDT AI signals (owner, 17 Nov 2026: "we want to have it on signals"): MSTR has no Binance spot pair and
+  Binance futures is blocked on the runners, so `data/futures_only.py` (`FUT_ONLY` {"MSTR/USDT": "MSTRSTOCK_USDT"},
+  `MexcFutures`) serves its candles / ticker / book / trades from MEXC futures public REST inside `BinancePublicProvider`
+  (same shapes; 12h / 3d built from 4h / 1d, epoch-aligned; empty windows before listing skipped). `search_markets`
+  lists it; `watch.py` prices it from MEXC. Added once to the watchlist (flag `mstr_v249`, env `ADD_MSTR=0` in tests).
+  Signals only where its nightly models prove an edge, like every coin; no crowd/funding features (not on Hyperliquid).
+  Frontend: `binance.isFutOnly` (`FUT_ONLY_PAIRS`) routes charts / book to USDⓈ-M futures and keeps it out of spot
+  batches and streams; Asset page streams futures; Trade "learning" note until its first analysis. Probe
+  `mstr-probe.yml` → `reports/mstr-probe.json`. Prices can differ from Binance MSTRUSDT by a few cents.
