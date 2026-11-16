@@ -78,6 +78,8 @@ VOL_SPIKE = ((4.0, 15), (2.5, 10))                     # realised-vol ratio -> p
 FLIP_PTS, GRADE_LOST_PTS = 25, 8
 FUNDING_Z, FUNDING_PTS = 3.0, 5
 TIGHTEN_AT, CLOSE_AT = 50, 75
+# v2.42 (owner, 16 Nov 2026: "let the trade guardian be a bit lenient with 15m only"): 15m calls need a stronger case
+TF_BANDS = {"15m": (int(os.environ.get("GUARDIAN_15M_TIGHTEN_AT", "65")), int(os.environ.get("GUARDIAN_15M_CLOSE_AT", "90")))}
 
 STRUCT_BARS = 15                    # proposed stop: beyond the 15-minute 1m extreme ...
 STRUCT_BUF_ATR = 0.1                # ... by 0.1 ATR, or 1 ATR from the price - whichever is tighter
@@ -131,8 +133,9 @@ def coin(sym: str) -> str:
     return "GOLD" if b == "PAXG" else b
 
 
-def band_of(sev: int) -> str | None:
-    return "CLOSE" if sev >= CLOSE_AT else "TIGHTEN" if sev >= TIGHTEN_AT else None
+def band_of(sev: int, timeframe: str | None = None) -> str | None:
+    t, c = TF_BANDS.get(str(timeframe or ""), (TIGHTEN_AT, CLOSE_AT))
+    return "CLOSE" if sev >= c else "TIGHTEN" if sev >= t else None
 
 
 def _day(now: int) -> str:
@@ -324,7 +327,7 @@ def assess(call: dict[str, Any], rows: list[tuple], atr: float, stop_if: float, 
     reasons.sort(key=lambda r: -r["points"])
     sev = int(min(100, sum(r["points"] for r in reasons)))
     facts["severity"] = sev
-    return {"severity": sev, "band": band_of(sev), "reasons": reasons, "facts": facts, "price": price,
+    return {"severity": sev, "band": band_of(sev, call.get("timeframe")), "reasons": reasons, "facts": facts, "price": price,
             "r_now": r_now, "risk": risk}
 
 
@@ -791,7 +794,7 @@ class Guardian:
                 "status": {"last_check": st.get("last_check"), "watched": st.get("watched") or {"coins": [], "calls": 0},
                            "today": st.get("today") or {}, "day": st.get("day"), "last_error": st.get("last_error")},
                 "live": live, "history": hist, "scoreboard": scoreboard(rows), "held": _held(self.db), "checks": _checks(self.db, self.now),
-                "config": {"tighten_at": TIGHTEN_AT, "close_at": CLOSE_AT, "expires_min": EXPIRES_MS // MIN,
+                "config": {"tighten_at": TIGHTEN_AT, "close_at": CLOSE_AT, "tf_bands": TF_BANDS, "expires_min": EXPIRES_MS // MIN,
                            "min_gap_atr": MIN_GAP_ATR, "fresh_m1_min": FRESH_M1_MS // MIN, "persist_ticks": PERSIST_TICKS},
                 "note": "Recommend-only: nothing changes unless the admin applies it. Shadow results are net R estimates "
                         "(same fees on both sides, funding ignored), from the record's own exit rules."}

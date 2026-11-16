@@ -15,9 +15,10 @@ import { AllList, isSort, SIG_TFS, SortKey, SortMenu, SORTS, sortRows } from "..
 
 const TFS = SIG_TFS;
 const TF_OPTIONS = [...SIG_TFS, "all"] as const;
-// Timeframe policy (v2.12): mirrors backend/app/services/analysis.py A_ONLY_TFS ("1h,1d,3d"; 15m grades A+B since v2.40), DEMO_ONLY_TFS ("")
+// Timeframe policy (v2.12): mirrors backend/app/services/analysis.py A_ONLY_TFS ("15m,1h,1d,3d"; v2.42), DEMO_ONLY_TFS ("")
 // and PAUSED_TFS (""). The engine does not publish these lists, so they are kept here; change both together.
 const TF_NOTES: Partial<Record<string, readonly [string, string]>> = {
+  "15m": ["grade A", "15M: grade A calls only"],
   "1h": ["grade A", "1H: grade A calls only"],
   "1d": ["grade A", "1D: grade A calls only"],
   "3d": ["grade A", "3D: grade A calls only"],

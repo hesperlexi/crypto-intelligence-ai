@@ -646,3 +646,9 @@ def test_telegram_dm_never_goes_to_the_public_channel(monkeypatch):
     monkeypatch.setattr(telegram, "send", lambda cfg, text, session=None: (sent.append(cfg["channel"]), {"ok": True})[1])
     assert G.telegram_dm(None, "@public", "x")["ok"] is False and sent == []
     assert G.telegram_dm(None, "12345", "x")["ok"] and sent == ["12345"]
+
+
+def test_guardian_lenient_on_15m_v242():
+    from app.services import guardian as G
+    assert G.band_of(60, "1h") == "TIGHTEN" and G.band_of(60, "15m") is None
+    assert G.band_of(80, "4h") == "CLOSE" and G.band_of(80, "15m") == "TIGHTEN" and G.band_of(92, "15m") == "CLOSE"

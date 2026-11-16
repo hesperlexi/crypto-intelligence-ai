@@ -915,3 +915,9 @@ userSpaceOnUse gradients split at the baseline, no SVG filters): Demo bots `Flee
 bot, lines draw in once: `.fp-live .fp-line` in index.css) and each bot's equity (`LineChart` series `baseline` =
 lightweight-charts baseline series, dotted "start" line, end marker), Track record `Curve`, Overview performance
 `Sparkline split={0}`, Hesper `BalanceCurve` (baseline = run start), Lab `Pulse` (filter removed), Backtest strategy line.
+
+## v2.42 15m back to grade A + lenient Guardian on 15m (owner, 16 Nov 2026)
+15m grade B (v2.40) lost live → `analysis.A_ONLY_TFS` "15m,1h,1d,3d" again. 15m grade-B calls already published stay in
+the record (ground rule: never delete / hide losing trades; owner asked to remove them - declined, options offered).
+Trade Guardian on 15m only: TIGHTEN ≥ 65, CLOSE ≥ 90 (`guardian.TF_BANDS`, env `GUARDIAN_15M_TIGHTEN_AT/_CLOSE_AT`);
+other timeframes 50 / 75.
