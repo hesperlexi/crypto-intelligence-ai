@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useMarkVisited } from "../components/Premium";
 import { PageHeader } from "../components/kit";
 import { useSearchParams } from "react-router-dom";
 import TradeTerminal from "../components/TradeTerminal";
@@ -9,6 +10,7 @@ import { fmtNum, fmtPctRaw, fmtPrice, fmtTime, tone } from "../lib/format";
 import { useLive } from "../lib/live";
 
 export default function Paper() {
+  useMarkVisited("paper");
   return (
     <div className="space-y-3">
       <PageHeader title="Trade"

@@ -10,6 +10,8 @@ import { Badge, Tile } from "./kit";
 import { AdjustButton, AdjustHistory, adjustedPlan, UpdatedBadge } from "./SignalAdjust";
 import { Explain, PLAIN, useIsPro } from "../lib/mode";
 import { useIsAdmin } from "../lib/session";
+import { TradeProgress, WhyChips } from "./Premium";
+import ShareSignal from "./ShareSignal";
 
 export type Market = "spot" | "futures";
 type Tone = "bull" | "bear" | "wait";
@@ -186,6 +188,15 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
               {status && <span className={`flex items-center gap-1.5 ${status.ok ? "text-bull" : "text-warn"}`}><span aria-hidden="true">{status.ok ? "●" : "◐"}</span>{status.text}</span>}
             </div>
           )}
+          {active && plan && (
+            <div className="mt-3 space-y-2">
+              <WhyChips r={r} />
+              {isNum(plan.entry) && isNum(plan.stop) && (plan.targets?.length ?? 0) > 0 && (
+                <TradeProgress side={side} entry={plan.entry} stop={plan.stop} targets={(plan.targets ?? []).map((t: any) => t.price)} px={px}
+                  hits={({ TP1: 1, TP2: 2, TP3: 3 } as Record<string, number>)[call?.status === "OPEN" ? "" : String(call?.status ?? "")] ?? (isNum(call?.tp_hits) ? call.tp_hits : 0)} />
+              )}
+            </div>
+          )}
           {v.tone === "wait" && (
             <p className="mt-1.5 text-sm text-mute">
               Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}.
@@ -284,12 +295,13 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
         )}
         {!pro && v.tone !== "wait" && r.grade && <Explain>{PLAIN.grade}</Explain>}
 
-        <div className="grid grid-cols-[1fr_auto_auto] gap-2 pt-1">
+        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 pt-1">
           <button className={`btn ${active ? "btn-primary" : ""}`} onClick={paper}>{active ? "Practise this trade" : "Paper trade"}</button>
           <Link className="btn px-3" to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=${market}`} aria-label="Set an alert" title="Alert me when a setup appears">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg>
           </Link>
           <button className="btn px-3" onClick={copy} aria-label="Copy the plan" title="Copy the plan as text">{copied ? "Copied" : "Copy"}</button>
+          <ShareSignal r={r} market={market} plan={active ? plan : null} label={v.label} />
         </div>
         {!compact && <p className="text-xs text-mute">Always use the stop-loss.</p>}
       </div>

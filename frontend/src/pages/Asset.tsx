@@ -11,6 +11,7 @@ const ASSET_TFS = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"] as const;
 import { Badge, Card, Check, Empty, ErrorBox, FlagList, Loading, Meter, Note, ProbBar, RegimeBadge, Row, ScoreBar, SignalBadge, signalTone, Stat } from "../components/ui";
 import TradeCall, { Market } from "../components/TradeCall";
 import CoinReport from "../components/CoinReport";
+import CoinPassport from "../components/CoinPassport";
 import { post, useApi } from "../lib/api";
 import { DASH, fmtCompact, fmtNum, fmtPct, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, slug, tone } from "../lib/format";
 import { useTicker } from "../lib/live";
@@ -109,6 +110,7 @@ export default function Asset() {
       </div>
 
       {an.error && <ErrorBox error={an.error} retry={an.reload} />}
+      <CoinPassport symbol={symbol} analysis={a} />
       <CoinReport symbol={symbol} />
       <AssetCall symbol={symbol} tf={tf} />
       {a && !ok && <Card title="Insufficient data"><Empty>{a.reason ?? "Not enough closed candles for this timeframe yet."} The system does not predict without data.</Empty></Card>}

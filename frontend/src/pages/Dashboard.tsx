@@ -3,6 +3,7 @@ import MarketInsights from "../components/MarketInsights";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
+import { FirstWeekGuide, TodayPulse } from "../components/TodayPulse";
 import { BriefingPanel } from "../components/Polish";
 import { ActiveSignalsCard, AiBriefCard, BtcCard, BtcChartCard, GlobalStatusCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
 import { useIsAdmin, useSession } from "../lib/session";
@@ -43,6 +44,7 @@ export default function Dashboard() {
       {/* v2.23 premium: one lead card - the market line, the actions and the four figures as a divided strip */}
       <section className="panel panel-hero p-4 sm:p-6" aria-label="Market today">
         <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} />
+        <TodayPulse track={track.data} />
         <div className="ov-strip mt-5 grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4">
           <BtcCard />
           <MarketCapCard mc={mc.data} ctx={ctx.data} />
@@ -51,6 +53,7 @@ export default function Dashboard() {
         </div>
       </section>
 
+      <FirstWeekGuide />
       {/* row 2: BTC chart + AI market intelligence (the v2.16 briefing) */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <BtcChartCard />

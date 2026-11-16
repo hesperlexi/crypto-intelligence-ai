@@ -937,3 +937,17 @@ other timeframes 50 / 75.
   → close 1 h / 4 h later; verdict bullish / bearish ≥ ±0.3 %, else calm; "moved against the usual reading" note).
   Calendar rows `after`, view `last_high` (≤ 12 h). UI `News.ImpactNote`: Overview "Just out" block, released High items
   stay in the list 12 h ("out N ago"). Tests `tests/test_news_after_v243.py`.
+
+## v2.44 premium upgrade (owner, 16 Nov 2026, branch `premium-v244`; frontend only, real data, no new Firestore docs)
+`components/Premium.tsx` (+ CSS "v2.44" in index.css): `TradeProgress` (signal card: stop → entry → TP1-3 track, live
+price dot, filled won / lost part, R from entry), `WhyChips` (grade / trend / AI lean / reward from the card's own row),
+`ProofWall` (Track record: Dubai-day calendar of green / red days from the record rows, monthly bars, best / worst week,
+trust strip), `Ring`, `Burst` (CSS gold burst), `ResultTicker` (latest closed calls, wins and losses), `FirstWeek` +
+`markVisited / wasVisited / useMarkVisited` (localStorage `cia-fw-*`, guide hidden key `cia-firstweek-<uid>`).
+`components/ShareSignal.tsx`: signal share image 1080×1350 (luxCard kit) = teaser only (coin, side, TF, grade, move since
+entry) - never entry / stop / targets; phone share sheet or download. `components/CoinPassport.tsx` (coin page): our
+record on the coin (`views/radar.scorecard`), AI lean strip on the six `/futures` boards, nearest support / resistance
+ladder. `components/TodayPulse.tsx` (Home hero): open-signal health ring (`Overview.healthOf`), closed today, ticker;
+`FirstWeekGuide` (members, first 14 days from `approved_at`/`requested_at`: alerts, signals, practice, Telegram).
+`components/PlanCards.tsx` (Landing + Membership): foil "Best value" card, savings from the monthly price, included list.
+Landing: trust strip, FAQ +3 (payment, renewing early, free Telegram). Trade page: practice win toast + burst + win streak.

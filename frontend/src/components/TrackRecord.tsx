@@ -1,5 +1,6 @@
 // Public track record: every trade signal since launch with its real outcome, the models' results on past data
 import { PnlGradients } from "./PnlGradients";
+import { ProofWall } from "./Premium";
 // they never trained on (a labelled simulation), and the demo bots. Readable without an account.
 import { Segmented, TabStrip } from "./kit";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
@@ -144,6 +145,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           </dl>
         </section>
       )}
+      {!compact && !fresh && <ProofWall rows={sigs} since={d.record_since} />}
       {!compact && d.last_7d && <Last7 r={d.last_7d} />}
       {d.excluded_tests?.map((x: any) => (
         <p key={`${x.timeframe}${x.grade}`} className="px-1 text-xs text-mute">

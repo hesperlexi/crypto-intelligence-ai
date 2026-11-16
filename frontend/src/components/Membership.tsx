@@ -1,4 +1,5 @@
 import { useState } from "react";
+import PlanCards from "./PlanCards";
 import { compressImage, daysLeft, fmtDate, PayMethod, Plan, planLabel, submitPayment, supportLink, useMembershipConfig, useMyRecord } from "../lib/membership";
 import { BinanceLogo, MexcLogo } from "./PayLogos";
 import { Badge, Card } from "./ui";
@@ -13,7 +14,6 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
   const plan: Plan = cfg.plans.find((p) => p.months === months) ?? cfg.plans[0];
-  const monthly = cfg.plans.find((p) => p.months === 1)?.price;
   const pay = record?.payment;
   const [again, setAgain] = useState(false);
   const [method, setMethod] = useState<PayMethod>(record?.payment?.method ?? "binance");
@@ -64,21 +64,7 @@ export function PaymentPanel({ record, compact = false }: { record: any; compact
         </div>
       )}
       <div className="text-sm font-medium text-text"><span className="num text-accent">1</span>  Choose a plan</div>
-      <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
-        {cfg.plans.map((p) => {
-          const on = p.months === plan.months;
-          const save = monthly && p.months > 1 ? Math.round((1 - p.price / (monthly * p.months)) * 100) : 0;
-          return (
-            <button key={p.months} type="button" onClick={() => setMonths(p.months)} aria-pressed={on}
-              className={`relative rounded-xl border p-3 text-left transition ${on ? "border-accent bg-accent/[0.12] shadow-[0_0_0_1px_rgb(var(--accent)/0.6),0_8px_24px_rgb(var(--accent)/0.15)]" : "border-glass/10 bg-glass/[0.03] hover:border-accent/40"}`}>
-              <div className="text-xs text-mute">{p.label}</div>
-              <div className="num mt-0.5 text-xl font-semibold">{p.price} <span className="text-sm font-medium text-mute">USDT</span></div>
-              <div className="num text-xs text-mute">{(p.price / p.months).toFixed(2)} USDT / month</div>
-              {save > 0 && <span className="absolute right-2 top-2 rounded-full bg-bull/15 px-1.5 py-0.5 text-xs font-semibold text-bull">−{save}%</span>}
-            </button>
-          );
-        })}
-      </div>
+      <div className="mt-3"><PlanCards plans={cfg.plans} selected={plan.months} onPick={setMonths} compact /></div>
 
       <div className="mt-6 text-sm font-medium text-text"><span className="num text-accent">2</span>  Choose how to pay</div>
       <p className="mt-2 rounded-lg border border-warn/40 bg-warn/10 px-3 py-2 text-xs text-warn">Pay in <b>USDT only</b>. Other coins can't be credited.</p>

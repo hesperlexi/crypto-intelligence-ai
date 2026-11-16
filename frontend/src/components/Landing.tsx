@@ -1,4 +1,5 @@
 // What signed-out visitors see: a short, honest sales page with live prices, features, pricing and sign-in.
+import PlanCards from "./PlanCards";
 import { signInWithPopup } from "firebase/auth";
 import { Constellation, CyberHorizon, HoloOrbit, SignalWave } from "./Xeno";
 import { useEffect, useState } from "react";
@@ -80,7 +81,6 @@ export default function Landing({ error }: { error: string | null }) {
   };
   const cfg = useMembershipConfig();
   const plans = cfg.plans;
-  const monthly = plans[0].price;
   const cta = (big = false) => (
     <button className={`btn btn-primary ${big ? "px-6 py-3 text-base" : "px-4 py-2 text-sm"}`} onClick={signIn} disabled={busy}>
       <GoogleIcon />
@@ -198,6 +198,10 @@ export default function Landing({ error }: { error: string | null }) {
           })}
         </section>
 
+        <div className="trust-strip mt-4 justify-center text-center">
+          <span>✓ Every result shown, losses included</span><span>✓ Results after fees</span><span>✓ Never places real orders</span><span>✓ No exchange keys needed</span>
+        </div>
+
         <SignalWave className="h-8 w-full" />
 
         {/* what members get: a quiet two-column list, not a card grid */}
@@ -250,27 +254,8 @@ export default function Landing({ error }: { error: string | null }) {
             </div>
             <p className="text-sm text-mute">Renewing early adds to your remaining days.</p>
           </div>
-          <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {plans.map((p) => {
-              const best = p.months === 12;
-              const save = p.months > 1 ? Math.round((1 - p.price / (monthly * p.months)) * 100) : 0;
-              return (
-                <div key={p.months} className={`panel relative flex flex-col p-5 ${best ? "panel-hero" : ""}`}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className={best ? "font-medium text-accent" : "text-mute"}>{p.label}</span>
-                    {best && <span className="text-xs text-accent">Best value</span>}
-                  </div>
-                  <div className="num mt-3 flex items-baseline gap-1.5">
-                    <span className="font-display text-4xl font-semibold tracking-tight">{p.price}</span>
-                    <span className="text-sm text-mute">USDT</span>
-                  </div>
-                  <div className="num mt-1 text-sm text-mute">{(p.price / p.months).toFixed(2)} a month{save ? <span className="ml-2 text-bull">save {save}%</span> : null}</div>
-                  <button className={`btn mt-6 w-full ${best ? "btn-primary" : ""}`} onClick={() => setDialog("signup")} disabled={busy}>Choose {p.label.toLowerCase()}</button>
-                </div>
-              );
-            })}
-          </div>
-          <p className="mt-4 text-sm text-mute">Included in every plan: all signals and AI forecasts, futures calls, phone alerts, practice trading and the demo bots.</p>
+          <div className="mt-8"><PlanCards plans={plans} onPick={() => setDialog("signup")} cta={(p) => `Choose ${p.label.toLowerCase()}`} disabled={busy} /></div>
+          <p className="mt-4 text-sm text-mute">Not sure yet? Join the free Telegram channel for a daily call and the results.</p>
         </section>
 
         {/* questions: one list */}
@@ -279,7 +264,10 @@ export default function Landing({ error }: { error: string | null }) {
           <div className="mt-6 divide-y divide-glass/10 border-y border-glass/10">
             {[["Does it trade for me?", "No. It gives plans and alerts; you trade on your own exchange. No exchange keys."],
               ["How accurate is it?", "Results shows every call since the record started, losses included, after fees."],
-              ["Which devices?", "The Android app, iPhone (add to Home Screen) and any browser."]].map(([q, a]) => (
+              ["Which devices?", "The Android app, iPhone (add to Home Screen) and any browser."],
+              ["How do I pay?", "In USDT through Binance Pay (QR) or a MEXC transfer. Upload the receipt and we approve it."],
+              ["What if I renew early?", "The new period is added to the days you have left."],
+              ["Can I see it before paying?", "Yes: the free Telegram channel posts a daily call and the results, wins and losses."]].map(([q, a]) => (
               <details key={q} className="group py-4">
                 <summary className="flex cursor-pointer list-none items-center justify-between font-medium">{q}<span className="text-accent transition-transform group-open:rotate-45" aria-hidden="true">+</span></summary>
                 <p className="mt-2 text-sm leading-relaxed text-mute">{a}</p>

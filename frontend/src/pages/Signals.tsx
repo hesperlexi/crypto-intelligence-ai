@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { useMarkVisited } from "../components/Premium";
 import { PageHeader } from "../components/kit";
 import { useSearchParams } from "react-router-dom";
 import { TfTabs, useSymbols } from "../components/Pickers";
@@ -50,6 +51,7 @@ const stMatch = (r: any, st: St) => { const c = callState(r); return st === "all
 
 /** Pick a coin, pick spot or futures: one clear call with entry, stop and targets. */
 export default function Signals() {
+  useMarkVisited("signals");
   const [params, setParams] = useSearchParams();
   const tfParam = params.get("timeframe");
   const tf: string = tfParam && (TF_OPTIONS as readonly string[]).includes(tfParam) ? tfParam : "4h";

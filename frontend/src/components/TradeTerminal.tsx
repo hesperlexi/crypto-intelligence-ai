@@ -1,6 +1,7 @@
 // Exchange-style paper trading (Binance / MEXC layout): pair bar, live candle chart with your levels,
 // order book, order form (limit / market, leverage, size %, TP/SL) and positions / orders / history / assets.
 // Virtual money only: nothing is ever sent to an exchange.
+import { Burst } from "./Premium";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -107,6 +108,24 @@ export default function TradeTerminal() {
   }, [setParams]);
   const positions: any[] = d?.positions ?? [];
   const orders: any[] = d?.orders ?? [];
+  // v2.44 small celebration: a practice trade just closed in profit (not on the first load)
+  const [cheer, setCheer] = useState<{ n: number; text: string } | null>(null);
+  const lastClosed = useRef<number | null>(null);
+  useEffect(() => {
+    if (!d || market !== "futures") return;
+    const n = Number(d.closed ?? 0);
+    const prev = lastClosed.current;
+    lastClosed.current = n;
+    if (prev == null || n <= prev) return;
+    const closes = (d.trades ?? []).filter((t: any) => t.type === "CLOSE").sort((a: any, b: any) => (b.created_at ?? 0) - (a.created_at ?? 0));
+    const t = closes[0];
+    if (!t || !(Number(t.realized_pnl) > 0)) return;
+    let streak = 0;
+    for (const c of closes) { if (Number(c.realized_pnl) > 0) streak += 1; else break; }
+    setCheer({ n: Date.now(), text: `+${Number(t.realized_pnl).toFixed(2)} USDT on ${String(t.symbol).split("/")[0]}${streak >= 2 ? ` · ${streak} wins in a row` : ""}` });
+    const id = window.setTimeout(() => setCheer(null), 3500);
+    return () => window.clearTimeout(id);
+  }, [d, market]);
   const [tf, setTf] = useState<string>("15m");
   const pro = useIsPro();
   const stream = useMarketStream(symbol, market, tf);
@@ -118,6 +137,9 @@ export default function TradeTerminal() {
         onMarket={(m) => setQ({ market: m, symbol: m === "spot" && isGold(symbol) ? (symbols[0] ?? "BTC/USDT") : symbol })} /></div>
       <SignalStrip symbol={symbol} market={market} />
       {market === "futures" && <AutoTrade />}
+      {cheer && (
+        <div role="status" className="cheer-toast"><Burst fire={cheer.n} /><span className="text-accent" aria-hidden="true">✦</span> Practice win: <b className="num text-bull">{cheer.text}</b></div>
+      )}
       {msg && <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-bull/40 bg-bull/10 text-bull" : "border-bear/40 bg-bear/10 text-bear"}`}>{msg.text}</div>}
       {err && <div className="rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">{err}</div>}
 
