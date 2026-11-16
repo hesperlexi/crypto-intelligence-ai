@@ -663,7 +663,11 @@ dev/vite.preview.config.ts --port 5193`, `/?preview=admin|member|pending|signedo
 
 ## Ideas not done yet
 Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance daily metrics
-(OI, long/short, taker) as features · iPhone App Store ($99/yr, owner decision) · real-money auto-trading (only after a proven record and a VARA check).
+(OI, long/short, taker) as features · iPhone App Store ($99/yr, owner decision) · real-money auto-trading (only after a proven record and a VARA check) ·
+MetaTrader 5 link (owner, 16 Nov 2026: noted, NOT now - after testing / launch, only if members ask): view-only MT5
+indicator that reads a small signal feed and draws entry / stop / TP1-3 / grade on the member's chart, never trades
+(mind free-plan reads); MT5 auto-trading EA or MQL5 copy-trading = real orders → same rule as real-money auto-trading.
+Broker crypto CFDs have other prices / spreads than Binance, so levels and results would not match the record.
 
 ## v2.21 notifications (4 Nov 2026, branch `notify-fix`)
 - Telegram: `post_each_win` now every win after fees (TP1/TP2/TP3, net > 0); new `post_news` (default on): the
