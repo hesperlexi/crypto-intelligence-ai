@@ -1,6 +1,6 @@
 // Public track record: every trade signal since launch with its real outcome, the models' results on past data
 import { PnlGradients } from "./PnlGradients";
-import { ProofWall } from "./Premium";
+import ResultsBoard from "./ResultsBoard";
 // they never trained on (a labelled simulation), and the demo bots. Readable without an account.
 import { Segmented, TabStrip } from "./kit";
 import { AdjustHistory, UpdatedBadge } from "./SignalAdjust";
@@ -121,6 +121,8 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
             {sigs.length ? ` ${sigs.filter((x) => x.status === "OPEN").length} open now.` : ""}
           </p>
         </div>
+      ) : !compact ? (
+        <ResultsBoard d={d} sigs={sigs} roi={roi} admin={admin} avgTested={avgTested} proven={edge.length} />
       ) : (
         /* the statement: one lead figure, the curve beside it, the supporting facts underneath */
         <section className="panel panel-hero p-0" aria-label="Track record statement">
@@ -145,8 +147,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
           </dl>
         </section>
       )}
-      {!compact && !fresh && <ProofWall rows={sigs} since={d.record_since} />}
-      {!compact && d.last_7d && <Last7 r={d.last_7d} />}
+      {!compact && fresh && d.last_7d && <Last7 r={d.last_7d} />}
       {d.excluded_tests?.map((x: any) => (
         <p key={`${x.timeframe}${x.grade}`} className="px-1 text-xs text-mute">
           {x.timeframe.toUpperCase()} grade {x.grade} was tested {fmtDate(x.from)}–{fmtDate(x.to)} and stopped; its {x.calls} call{x.calls === 1 ? "" : "s"} ({x.wins} won, {x.losses} lost{isNum(x.total_net_pct) ? `, ${x.total_net_pct > 0 ? "+" : ""}${x.total_net_pct.toFixed(1)}% in total after fees` : ""}{x.open ? `, ${x.open} still open` : ""}) are not counted. They stay in the Signal log.
