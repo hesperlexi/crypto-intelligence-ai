@@ -995,3 +995,7 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   bearing fixed per coin (hash); dot size = volume surge; CSS conic sweep `.scope-sweep` (6 s) with afterglow, each blip
   `.scope-ping` delayed by its bearing so it lights as the sweep passes; 3° tick ring + bearings; readout (contacts,
   sweep, last scan) + contact list (BRG / VOL / 30d / 7d) → scrolls to the pick card (`#pick-<SYM>`). No extra data.
+- v2.48 MSTR findable (owner, 17 Nov 2026): coin searches (Home "My coins", Scanner) are spot-only, so MSTR never showed.
+  `binance.searchFuturesOnly` (USDⓈ-M perps with no spot pair) + `components/FutOnlyHits.tsx` under both search boxes:
+  "Futures only … open in Trade ›" → `/paper?market=futures&symbol=X/USDT`. Trade pair menu: search box, futures-only
+  pairs (`FUT_ONLY`) also on the Spot tab (tap switches to Futures), shown even when the listing check fails.

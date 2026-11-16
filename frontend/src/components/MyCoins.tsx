@@ -1,4 +1,5 @@
 import { doc, setDoc } from "firebase/firestore";
+import FutOnlyHits from "./FutOnlyHits";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, del, post, put, useApi } from "../lib/api";
@@ -62,9 +63,10 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
                   + {s}
                 </button>
               ))}
-              {!results.length && <span className="text-sm text-mute">No USDT market found on Binance</span>}
+              {!results.length && <span className="text-sm text-mute">No spot USDT market found on Binance</span>}
             </div>
           )}
+          {results && <FutOnlyHits query={query.trim()} />}
           <p className="text-xs text-mute">
             {admin ? "Tracked for everyone. ★ pins, ✕ removes."
               : full ? `${MY_COIN_LIMIT} of ${MY_COIN_LIMIT} coins. Remove one with ✕ to add another.`

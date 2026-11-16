@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import FutOnlyHits from "../components/FutOnlyHits";
 import { PageHeader } from "../components/kit";
 import { Link } from "react-router-dom";
 import { TfTabs } from "../components/Pickers";
@@ -68,8 +69,9 @@ export default function Scanner() {
           <input className="input w-56" placeholder="Search a coin, e.g. PEPE" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={(e) => e.key === "Enter" && search()} aria-label="Search cryptocurrency" />
           <button className="btn" onClick={search}>Search</button>
           {results?.map((s) => <button key={s} className="btn btn-primary px-2 py-1 text-xs" onClick={() => act(() => post("/watchlist", { symbol: s }), `${s} added. History is downloading; models train afterwards.`)}>+ {s}</button>)}
-          {results && !results.length && <span className="text-sm text-mute">No USDT market found on this exchange</span>}
+          {results && !results.length && <span className="text-sm text-mute">No spot USDT market found on this exchange</span>}
         </div>
+        {results && <FutOnlyHits query={query.trim()} />}
         {msg && <p className="mt-2 text-sm text-accent">{msg}</p>}
       </Card>}
       <Card title="Universe" right={

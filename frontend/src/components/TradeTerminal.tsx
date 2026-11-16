@@ -41,7 +41,7 @@ const isGold = (s: string) => s in FUT_ONLY;            // any futures-only pair
 
 function useFutOnlyListed(): string[] {
   const [ok, setOk] = useState<string[]>([]);
-  useEffect(() => { let live = true; listedPairs().then((l) => { if (live) setOk(Object.keys(FUT_ONLY).filter((s) => l.fut.has(s.replace("/", "")))); }).catch(() => {}); return () => { live = false; }; }, []);
+  useEffect(() => { let live = true; listedPairs().then((l) => { if (live) setOk(Object.keys(FUT_ONLY).filter((s) => !l.fut.size || l.fut.has(s.replace("/", "")))); }).catch(() => {}); return () => { live = false; }; }, []);
   return ok;
 }
 
@@ -141,7 +141,7 @@ export default function TradeTerminal() {
   return (
     <StreamCtx.Provider value={stream}>
     <div className="space-y-3">
-      <div ref={chartRef} className="scroll-mt-20 md:scroll-mt-32"><PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })}
+      <div ref={chartRef} className="scroll-mt-20 md:scroll-mt-32"><PairBar symbol={symbol} symbols={symbols} market={market} onSymbol={(s) => setQ({ symbol: s })} onFutures={(s) => setQ({ market: "futures", symbol: s })}
         onMarket={(m) => setQ({ market: m, symbol: m === "spot" && isGold(symbol) ? (symbols[0] ?? "BTC/USDT") : symbol })} /></div>
       <SignalStrip symbol={symbol} market={market} />
       {market === "futures" && <AutoTrade />}
@@ -178,14 +178,17 @@ export default function TradeTerminal() {
 }
 
 /* ---------------------------------------------------------------- pair bar */
-function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: string; symbols: string[]; market: Mkt; onSymbol: (s: string) => void; onMarket: (m: Mkt) => void }) {
+function PairBar({ symbol, symbols, market, onSymbol, onMarket, onFutures }: { symbol: string; symbols: string[]; market: Mkt; onSymbol: (s: string) => void; onMarket: (m: Mkt) => void; onFutures?: (s: string) => void }) {
   const tickers = useMktTickers(market);
   const t = useTicker(symbol, market);
   const last = useLastPrice(symbol);
   const st = useContext(StreamCtx);
   const [open, setOpen] = useState(false);
   const extra = useFutOnlyListed();
-  const list = market === "futures" ? [...symbols, ...extra.filter((x) => !symbols.includes(x))] : symbols;
+  // v2.48: futures-only pairs (gold, MSTR) are listed on both tabs - on Spot they switch to Futures - and the menu can be searched
+  const [q, setQ] = useState("");
+  const all = [...symbols, ...extra.filter((x) => !symbols.includes(x))];
+  const list = all.filter((s) => !q || s.toLowerCase().includes(q.trim().toLowerCase()) || (FUT_ONLY[s] ?? "").toLowerCase().includes(q.trim().toLowerCase()));
   return (
     <div className="panel panel-hero flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-3 sm:px-4">
       <div className="relative">
@@ -196,12 +199,15 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
           <span className="text-mute" aria-hidden="true">▾</span>
         </button>
         {open && (
-          <div className="panel absolute left-0 top-full z-40 mt-1 max-h-80 w-64 overflow-y-auto p-1">
+          <div className="panel absolute left-0 top-full z-40 mt-1 max-h-96 w-72 overflow-y-auto p-1">
+            <input className="input mb-1 h-10 w-full text-sm" placeholder="Search pair (e.g. MSTR, GOLD)" value={q} onChange={(e) => setQ(e.target.value)} autoFocus aria-label="Search pair" />
+            {!list.length && <p className="px-2 py-3 text-sm text-mute">No pair matches.</p>}
             {list.map((s) => {
               const x = tickers[s];
+              const futOnly = isGold(s) && market === "spot";
               return (
-                <button key={s} onClick={() => { onSymbol(s); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-glass/[0.06] ${s === symbol ? "bg-accent/10" : ""}`}>
-                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-xs font-bold text-accent">{FUT_ONLY[s]}</span>}</span>
+                <button key={s} onClick={() => { if (futOnly && onFutures) onFutures(s); else onSymbol(s); setOpen(false); setQ(""); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-glass/[0.06] ${s === symbol ? "bg-accent/10" : ""}`}>
+                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-xs font-bold text-accent">{FUT_ONLY[s]}</span>}{futOnly && <span className="text-xs text-mute">futures</span>}</span>
                   <span className="num text-right text-xs"><span className="block">{fmtPrice(x?.last)}</span><span className={tone(x?.change_pct)}>{fmtPctRaw(x?.change_pct)}</span></span>
                 </button>
               );

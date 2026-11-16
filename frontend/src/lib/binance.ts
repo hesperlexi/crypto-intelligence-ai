@@ -116,6 +116,16 @@ export async function search(q: string) {
     .slice(0, 20).map((s) => `${s.slice(0, -4)}/USDT`);
 }
 
+/** v2.48: USDⓈ-M perpetuals with no Binance spot market (stock perps such as MSTR, gold XAUT): chart + practice only. */
+export async function searchFuturesOnly(q: string): Promise<string[]> {
+  const Q = q.toUpperCase().replace(/[/-]/g, "").replace(/USDT$/, "");
+  if (!Q) return [];
+  const l = await listedPairs();
+  return [...l.fut].filter((s) => s.endsWith("USDT") && !l.spot.has(s) && s.slice(0, -4).includes(Q))
+    .sort((a, b) => Number(!a.startsWith(Q)) - Number(!b.startsWith(Q)) || a.length - b.length)
+    .slice(0, 8).map((s) => `${s.slice(0, -4)}/USDT`);
+}
+
 /** Port of the engine's order-book analytics (imbalance within 1% of mid, spread, large orders). */
 export function bookMetrics(bids: [number, number][], asks: [number, number][], depthPct = 1, wallMult = 5) {
   if (!bids.length || !asks.length) return null;
