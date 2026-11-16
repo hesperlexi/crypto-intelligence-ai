@@ -183,25 +183,34 @@ export const Sidebar = memo(function Sidebar({ groups, counts, collapsed, onTogg
 });
 
 /* ---- top bar pieces -------------------------------------------------------------------------------------------- */
-/** Price feed status with a ticking clock. Only this small chip re-renders every second. */
-export function LiveChip() {
+/** Price feed status with a ticking clock. Only this small chip re-renders every second.
+ *  v2.49 premium top bar (owner, 17 Nov 2026): one "market clock" capsule - live state, the time with the seconds in
+ *  gold, today's date and the engine's last run underneath. `compact` (phones): dot + time only. */
+export function LiveChip({ compact = false }: { compact?: boolean }) {
   const { connected, feed } = useLive();
   const health = useApi<any>("/system/health");
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => { const t = window.setInterval(() => setNow(Date.now()), 1000); return () => window.clearInterval(t); }, []);
   const status: string = feed?.status ?? (connected ? "LIVE" : "…");
   const live = status.startsWith("LIVE");
+  const tone = live ? "bull" : status === "OFFLINE" ? "bear" : "warn";
   const lastRun = health.data?.engine?.last_tick_finished;
   const late = lastRun && now - lastRun > 45 * 60_000;
-  const time = new Date(now).toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", second: "2-digit" });
+  const d = new Date(now);
+  const hm = d.toLocaleTimeString(undefined, { hour: "2-digit", minute: "2-digit", hour12: false });
+  const sec = String(d.getSeconds()).padStart(2, "0");
+  const day = d.toLocaleDateString(undefined, { weekday: "short", day: "numeric", month: "short" });
   return (
-    <div className="flex items-center gap-2 text-xs" title={`Prices: ${status}${feed?.transport ? ` (${feed.transport})` : ""} · engine ${lastRun ? ago(lastRun) : "not run yet"}`}>
-      <span className={`inline-flex items-center gap-1.5 font-semibold ${live ? "text-bull" : status === "OFFLINE" ? "text-bear" : "text-warn"}`}>
-        <span className={`h-2 w-2 rounded-full ${live ? "live-dot bg-bull" : status === "OFFLINE" ? "bg-bear" : "bg-warn"}`} aria-hidden="true" />
-        {live ? "Live" : status}
+    <div className={`tb-clock ${compact ? "is-compact" : ""}`} role="status"
+      title={`Prices: ${status}${feed?.transport ? ` (${feed.transport})` : ""} · engine ${lastRun ? ago(lastRun) : "not run yet"}`}>
+      <span className={`tb-live text-${tone}`}>
+        <span className={`h-2 w-2 rounded-full bg-${tone} ${live ? "live-dot" : ""}`} aria-hidden="true" />
+        {!compact && (live ? "Live" : status)}
       </span>
-      <span className="num text-mute">{time}</span>
-      <span className={`num hidden text-mute xl:inline ${late ? "text-warn" : ""}`}>· engine {lastRun ? ago(lastRun) : "—"}</span>
+      <span className="tb-time">
+        <span className="num tb-hm">{hm}<span className="tb-sec">:{sec}</span></span>
+        {!compact && <span className={`tb-sub num ${late ? "text-warn" : ""}`}>{day} · engine {lastRun ? ago(lastRun) : "—"}</span>}
+      </span>
     </div>
   );
 }
@@ -227,7 +236,10 @@ function MemberLine() {
   const rec = useMyRecord();
   if (!rec) return <>Member</>;
   if (rec.status === "approved" && !rec.expires_at) return <>Member</>;
-  if (rec.status === "approved") return <>Member · until {fmtDate(rec.expires_at)}</>;
+  if (rec.status === "approved") {
+    const days = Math.max(0, Math.ceil((rec.expires_at - Date.now()) / 86_400_000));
+    return <span title={`Membership until ${fmtDate(rec.expires_at)}`}>Member · {days} day{days === 1 ? "" : "s"} left</span>;
+  }
   return <>{rec.status ?? "Member"}</>;
 }
 
@@ -248,11 +260,11 @@ export function ProfileMenu({ user, admin, username, extra }: { user: User; admi
   return (
     <div className="relative" ref={ref}>
       <button type="button" onClick={() => setOpen((v) => !v)} aria-haspopup="menu" aria-expanded={open}
-        className="flex items-center gap-2.5 rounded-lg py-1 pl-1 pr-2 text-left hover:bg-glass/[0.05]">
-        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-accent/40 bg-accent/10 text-xs font-bold text-accent" aria-hidden="true">{initials(user.displayName ?? "", user.email ?? "")}</span>
-        <span className="hidden min-w-0 max-w-[11rem] xl:block">
-          <span className="block truncate text-sm font-medium leading-tight">{name}</span>
-          <span className="block truncate text-xs leading-tight text-mute">{admin ? "Owner" : <MemberLine />}</span>
+        className="tb-profile flex items-center gap-2.5 rounded-full py-1 pl-1 pr-2.5 text-left">
+        <span className="tb-avatar" aria-hidden="true"><span>{initials(user.displayName ?? "", user.email ?? "")}</span></span>
+        <span className="hidden min-w-0 max-w-[12rem] xl:block">
+          <span className="block truncate text-sm font-semibold leading-tight">{name}</span>
+          <span className="tb-plan block truncate">{admin ? "Owner" : <MemberLine />}</span>
         </span>
         <Ico name="chevron" size={14} className={`text-mute transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -282,7 +294,7 @@ export function PageTitle() {
   const icon = loc.pathname === "/" ? "/" : (Object.keys(ICON).find((k) => k !== "/" && k.startsWith("/") && loc.pathname.startsWith(k)) ?? "/");
   return (
     <div className="flex min-w-0 items-center gap-3">
-      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-accent/25 bg-accent/[0.08] text-accent"><Ico name={icon} size={20} /></span>
+      <span className="tb-icon"><Ico name={icon} size={20} /></span>
       <div className="min-w-0">
         <div className="font-display truncate text-xl font-semibold leading-tight tracking-tight">{title}</div>
         <div className="truncate text-xs text-mute">{sub}</div>

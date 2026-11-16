@@ -12,7 +12,7 @@ import { useIsAdmin } from "../lib/session";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"];
 
-const SCORECARD = ["futures-signal-ab-1h", "futures-signal-ab-4h"];
+const SCORECARD = ["15m", "1h", "4h", "12h", "1d", "3d"].map((tf) => `futures-signal-ab-${tf}`);   // every public timeframe (v2.49)
 
 export default function Bots() {
   const admin = useIsAdmin();

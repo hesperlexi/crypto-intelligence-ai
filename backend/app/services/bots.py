@@ -113,9 +113,10 @@ def size_multiplier(grade: str | None, filter_score: float | None = None, filter
     return float(np.clip(m, 0.5, 1.5))
 
 
-# the bots that take exactly the calls members see on the Signals page (futures, grades A+B, every coin):
-# the app's own scorecard, shown first on the public track record
-SCORECARD_IDS = ("futures-signal-ab-1h", "futures-signal-ab-4h")
+# the bots that take exactly the calls members see on the Signals page (futures, every coin, the grades each timeframe
+# publishes): the app's own scorecard, shown first on the public track record. v2.49 (owner, 17 Nov 2026): every public
+# timeframe, not only the 1h / 4h of Oct 2026 (15m / 12h / 1d / 3d calls went public later and their bots lacked the badge)
+SCORECARD_IDS = tuple(f"futures-signal-ab-{tf}" for tf in ("15m", "1h", "4h", "12h", "1d", "3d"))
 FIELDS = {"name": str, "enabled": bool, "mode": str, "timeframe": str, "symbols": (str, list),
           "starting_balance": float, "risk_per_trade_pct": float, "max_position_pct": float,
           "max_open_positions": int, "allow_short": bool, "pending_bars": int, "max_hold_bars": int,

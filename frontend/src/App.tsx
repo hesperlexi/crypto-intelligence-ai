@@ -141,20 +141,11 @@ function NavMenu({ label, items, pending = 0 }: { label: string; items: (readonl
 const PRIMARY: [string, string, string][] = [["/", "Home", "home"], ["/signals", "Signals", "signals"], ["/paper", "Trade", "trade"], ["/results", "Results", "results"]];
 
 function StatusPill({ user }: { user: User }) {
-  const { connected, feed } = useLive();
-  const health = useApi<any>("/system/health");
-  const eng = health.data?.engine;
-  const status: string = feed?.status ?? (connected ? "LIVE" : "…");
-  const tone = status.startsWith("LIVE") ? "bull" : status === "OFFLINE" ? "bear" : "warn";
-  const lastRun = eng?.last_tick_finished;
-  const late = lastRun && Date.now() - lastRun > 45 * 60_000;
+  // phones / tablets: the same market clock as the computer top bar (v2.49), compact below 640 px
   return (
-    <div className="flex items-center gap-3 text-xs text-mute">
-      <span className="hidden sm:inline">Prices</span>
-      <Badge tone={tone} title={feed?.transport ?? ""}>● {status}</Badge>
-      <span className={`num hidden md:inline ${late ? "text-warn" : ""}`} title="The prediction engine runs on a schedule">
-        engine {lastRun ? ago(lastRun) : "not run yet"}
-      </span>
+    <div className="flex items-center gap-2 text-xs text-mute">
+      <span className="sm:hidden"><LiveChip compact /></span>
+      <span className="hidden sm:inline"><LiveChip /></span>
       <button className="hidden text-mute hover:text-text lg:inline" onClick={() => signOut(auth)} title={user.email ?? ""}>Sign out</button>
     </div>
   );
@@ -320,11 +311,11 @@ function Shell({ user }: { user: User }) {
       {side && <Sidebar groups={sideGroups} counts={sideCounts} collapsed={collapsed} onToggle={toggleSide} />}
       <div className="flex min-w-0 flex-1 flex-col">
         {side && (
-          <header className="glass-bar sticky top-0 z-40 hidden border-b lg:block">
+          <header className="glass-bar tb-premium sticky top-0 z-40 hidden border-b lg:block">
             <div className={`mx-auto flex ${width} items-center justify-between gap-4 px-5 py-2.5`}>
               <PageTitle />
               <div className="flex shrink-0 items-center gap-2.5">
-                <Badge tone="mute" title="This application never places real orders">Analysis only</Badge>
+                <span className="tb-safe" title="This application never places real orders">Analysis only</span>
                 <ModeSwitch className="hidden xl:inline-flex" />
                 <InstallButton compact />
                 <AppearanceButton />
@@ -336,7 +327,7 @@ function Shell({ user }: { user: User }) {
             </div>
           </header>
         )}
-        <header className={`glass-bar safe-top sticky top-0 z-40 border-b ${side ? "lg:hidden" : ""}`}>
+        <header className={`glass-bar tb-premium safe-top sticky top-0 z-40 border-b ${side ? "lg:hidden" : ""}`}>
           <div className={`mx-auto flex ${width} items-center justify-between gap-3 px-3 py-2.5 sm:px-4`}>
             <div className="flex min-w-0 items-center gap-2.5">
               {brand()}
