@@ -1,75 +1,75 @@
 {
- "at": 1794860019,
- "detail_MSTR_USDT": {
-  "http": 200,
-  "body": "{\"success\":true,\"code\":0,\"data\":{\"symbol\":\"MSTRSTOCK_USDT\",\"displayName\":\"MSTR_USDT\u6c38\u7eed\",\"displayNameEn\":\"MSTR_USDT PERPETUAL\",\"positionOpenType\":3,\"baseCoin\":\"MSTRSTOCK\",\"quoteCoin\":\"USDT\",\"baseCoinName\":\"MSTR\",\"quoteCoinName\":\"USDT\",\"futureType\":1,\"settleCoin\":\"USDT\",\"contractSize\":0.01,\"minLeverage\":1,\"maxLeverage\":100,\"countryConfigContractMaxLeverage\":0,\"priceScale\":2,\"volScale\":0,\"amountScale\""
+ "at": 1794860376,
+ "15m": {
+  "written": 31000,
+  "rows": 31000,
+  "want": 30000,
+  "secs": 6.9,
+  "first": "2026-01-08 08:15",
+  "last_close": 104.02
  },
- "kline_MSTR_USDT": {
-  "http": 200,
-  "body": "{\"success\":false,\"code\":1001,\"message\":\"Contract does not exist\"}"
+ "1h": {
+  "written": 11351,
+  "rows": 11351,
+  "want": 20000,
+  "secs": 3.7,
+  "first": "2025-09-11 13:00",
+  "last_close": 104.02
  },
- "ticker_MSTR_USDT": {
-  "http": 200,
-  "body": "{\"success\":false,\"code\":1001,\"message\":\"Contract does not exist\"}"
+ "4h": {
+  "written": 3588,
+  "rows": 3588,
+  "want": 12000,
+  "secs": 2.3,
+  "first": "2025-09-11 12:00",
+  "last_close": 104.01
  },
- "detail_MSTRSTOCK_USDT": {
-  "http": 200,
-  "body": "{\"success\":true,\"code\":0,\"data\":{\"symbol\":\"MSTRSTOCK_USDT\",\"displayName\":\"MSTR_USDT\u6c38\u7eed\",\"displayNameEn\":\"MSTR_USDT PERPETUAL\",\"positionOpenType\":3,\"baseCoin\":\"MSTRSTOCK\",\"quoteCoin\":\"USDT\",\"baseCoinName\":\"MSTR\",\"quoteCoinName\":\"USDT\",\"futureType\":1,\"settleCoin\":\"USDT\",\"contractSize\":0.01,\"minLeverage\":1,\"maxLeverage\":100,\"countryConfigContractMaxLeverage\":0,\"priceScale\":2,\"volScale\":0,\"amountScale\""
+ "12h": {
+  "written": 1190,
+  "rows": 1190,
+  "want": 5000,
+  "secs": 2.8,
+  "first": "2025-09-11 12:00",
+  "last_close": 104.01
  },
- "kline_MSTRSTOCK_USDT": {
-  "http": 200,
-  "body": "{\"success\":true,\"code\":0,\"data\":{\"time\":[1794772800,1794773700,1794774600,1794775500,1794776400,1794777300,1794778200,1794779100,1794780000,1794780900,1794781800,1794782700,1794783600,1794784500,1794785400,1794786300,1794787200,1794788100,1794789000,1794789900,1794790800,1794791700,1794792600,1794793500,1794794400,1794795300,1794796200,1794797100,1794798000,1794798900,1794799800,1794800700,1794801"
+ "1d": {
+  "written": 1431,
+  "rows": 1431,
+  "want": 3000,
+  "secs": 1.0,
+  "first": "2025-09-11 00:00",
+  "last_close": 104.01
  },
- "ticker_MSTRSTOCK_USDT": {
-  "http": 200,
-  "body": "{\"success\":true,\"code\":0,\"data\":{\"contractId\":1486,\"symbol\":\"MSTRSTOCK_USDT\",\"lastPrice\":104.02,\"bid1\":104.01,\"ask1\":104.02,\"volume24\":13427628,\"amount24\":13904234.1102,\"holdVol\":9327528,\"lower24Price\":99.94,\"high24Price\":105.86,\"riseFallRate\":-0.001,\"riseFallValue\":-0.11,\"indexPrice\":103.94,\"fairPrice\":104.01,\"fundingRate\":0,\"maxBidPrice\":124.72,\"minAskPrice\":83.15,\"timestamp\":1794860019072,\"rise"
+ "3d": {
+  "written": 275,
+  "rows": 275,
+  "want": 1200,
+  "secs": 0.7,
+  "first": "2025-09-12 00:00",
+  "last_close": 104.02
  },
- "mexc_kline_price_MSTR": {
-  "http": 200,
-  "body": "{\"success\":false,\"code\":1001,\"message\":\"Contract does not exist\"}"
+ "1w": {
+  "written": 462,
+  "rows": 462,
+  "want": 600,
+  "secs": 0.2,
+  "first": "2025-09-08 00:00",
+  "last_close": 104.02
  },
- "s3_listing": {
-  "http": 200,
-  "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Name>data.binance.vision</Name><Prefix>data/futures/um/monthly/klines/MSTRUSDT/15m/</Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>false</IsTruncated><Contents><Key>data/futures/um/monthly/klines/MSTRUSDT/15m/MSTRUSDT-15m-2026-02.zip</Key><LastModified>202"
+ "ticker": {
+  "last": 104.01,
+  "change_pct": -0.11
  },
- "s3_daily_listing": {
-  "http": 200,
-  "body": "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<ListBucketResult xmlns=\"http://s3.amazonaws.com/doc/2006-03-01/\"><Name>data.binance.vision</Name><Prefix>data/futures/um/daily/klines/MSTRUSDT/15m/MSTRUSDT-15m-2026-0</Prefix><Marker></Marker><MaxKeys>1000</MaxKeys><Delimiter>/</Delimiter><IsTruncated>false</IsTruncated><Contents><Key>data/futures/um/daily/klines/MSTRUSDT/15m/MSTRUSDT-15m-2026-02-09.zip</Key"
+ "book": {
+  "bids": 200,
+  "asks": 200
  },
- "arch_yesterday": {
-  "http": 200,
-  "body": ""
+ "trades": {
+  "n": 100
  },
- "hl_MSTR": {
-  "http": 500,
-  "body": "null"
- },
- "hl_xyz:MSTR": {
-  "http": 200,
-  "body": "[{\"t\":1794852000000,\"T\":1794852899999,\"s\":\"xyz:MSTR\",\"i\":\"15m\",\"o\":\"102.8\",\"c\":\"103.06\",\"h\":\"103.24\",\"l\":\"102.72\",\"v\":\"772.394\",\"n\":52},{\"t\":1794852900000,\"T\":1794853799999,\"s\":\"xyz:MSTR\",\"i\":\"15m\",\"o\":\"103.29\",\"c\":\"103.08\",\"h\":\"103.49\",\"l\":\"103.08\",\"v\":\"381.016\",\"n\":49},{\"t\":1794853800000,\"T\":1794854699999,\"s\":\"xyz:MSTR\",\"i\":\"15m\",\"o\":\"102.96\",\"c\":\"103.01\",\"h\":\"103.01\",\"l\":\"102.49\",\"v\":\"460.601\","
- },
- "hl_km:MSTR": {
-  "http": 500,
-  "body": "null"
- },
- "hl_flx:MSTR": {
-  "http": 500,
-  "body": "null"
- },
- "bitget": {
-  "http": 200,
-  "body": "{\"code\":\"00000\",\"msg\":\"success\",\"requestTime\":1794860023679,\"data\":[[\"1794857400000\",\"103.77\",\"103.8\",\"102.94\",\"103.05\",\"2911.67\",\"300659.5909\"],[\"1794858300000\",\"103.05\",\"104.24\",\"102.97\",\"104.19\",\"1187.89\",\"123167.8127\"],[\"1794859200000\",\"104.19\",\"104.2\",\"103.79\",\"103.99\",\"1788.27\",\"185984.4577\"]]}"
- },
- "bybit": {
-  "http": 403,
-  "body": "{\n    error:The Amazon CloudFront distribution is configured to block access from your country\n}"
- },
- "okx": {
-  "http": 200,
-  "body": "{\"code\":\"0\",\"data\":[[\"1794859200000\",\"104.21\",\"104.21\",\"103.81\",\"104.01\",\"3642.23\",\"3642.23\",\"378926.6439\",\"0\"],[\"1794858300000\",\"103.04\",\"104.26\",\"102.98\",\"104.22\",\"1796.84\",\"1796.84\",\"186516.859\",\"1\"],[\"1794857400000\",\"103.81\",\"103.82\",\"102.95\",\"103.06\",\"1118.61\",\"1118.61\",\"115431.4916\",\"1\"]],\"msg\":\"\"}"
- },
- "gate": {
-  "http": 200,
-  "body": "[{\"o\":\"103.69\",\"v\":30681,\"t\":1794857400,\"c\":\"103.03\",\"l\":\"102.88\",\"h\":\"103.73\",\"sum\":\"31655.8105\"},{\"o\":\"102.97\",\"v\":33759,\"t\":1794858300,\"c\":\"104.14\",\"l\":\"102.89\",\"h\":\"104.21\",\"sum\":\"35008.8709\"},{\"o\":\"104.11\",\"v\":55813,\"t\":1794859200,\"c\":\"103.93\",\"l\":\"103.76\",\"h\":\"104.15\",\"sum\":\"58025.2081\"}]"
- }
+ "search": [
+  "MSTR/USDT",
+  "MSTRB/USDT",
+  "HMSTR/USDT"
+ ]
 }
