@@ -11,6 +11,8 @@ import { CoinAvatar } from "../components/Polish";
 import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
 import { useKlines } from "../lib/klines";
+import LazyMount from "../components/LazyMount";
+import { CoinCompare, HeatGlobe, SignalJourneys } from "../components/CommandPlus";
 import { useLive, useTicker } from "../lib/live";
 import { ago, base, fmtCompact, fmtPrice, isNum, slug } from "../lib/format";
 
@@ -311,6 +313,7 @@ export default function Command() {
   const mc = useApi<any>("/market-context");
   const ctx = useApi<any>("/context", 600000);
   const health = useApi<any>("/system/health");
+  const news = useApi<any>("/news", 300_000);
   const { connected } = useLive();
   const rows: any[] = (dash.data?.rows ?? []).filter((r: any) => r.status === "OK");
   const open = useMemo(() => new Set<string>((track.data?.live?.signals ?? []).filter((x: any) => x.status === "OPEN").map((x: any) => x.symbol)), [track.data]);
@@ -354,6 +357,20 @@ export default function Command() {
           <div className="mt-3"><Mission health={health.data} connected={connected} /></div>
         </section>
       </div>
+      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+        <section className="cc-panel p-4 sm:p-5" aria-label="Live signal journeys">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signal journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
+          <div className="mt-3"><SignalJourneys track={track.data} /></div>
+        </section>
+        <section className="cc-panel p-4 sm:p-5" aria-label="Market heat globe">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
+          <div className="mt-3"><HeatGlobe news={news.data} /></div>
+        </section>
+      </div>
+      <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
+        <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Coin vs coin</h2><span className="text-xs text-mute">pick up to 3</span></div>
+        <div className="mt-3"><LazyMount height={320}><CoinCompare rows={rows} /></LazyMount></div>
+      </section>
       <section id="cc-scan" className="cc-panel cc-scan scroll-mt-20 p-4 sm:p-6" aria-label={`Deep-space scan of ${name(focus)}`}>
         <Scan symbol={focus} row={row} f4={f4} />
       </section>

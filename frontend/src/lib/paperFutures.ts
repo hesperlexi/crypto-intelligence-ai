@@ -35,7 +35,7 @@ export const MMR_TIERS: Record<string, number> = {
   BTC: 0.004, ETH: 0.004, BNB: 0.005, SOL: 0.005, XRP: 0.005, LTC: 0.005, ADA: 0.005, LINK: 0.005, DOT: 0.005,
   AVAX: 0.01, AAVE: 0.01, TRX: 0.01, BCH: 0.01, ATOM: 0.01, NEAR: 0.01, TON: 0.01, GRAM: 0.01,
   DOGE: 0.02, SHIB: 0.02, PEPE: 0.02, "1000PEPE": 0.02, "1000SHIB": 0.02, WIF: 0.02, BONK: 0.02, "1000BONK": 0.02,
-  FLOKI: 0.02, "1000FLOKI": 0.02, TRUMP: 0.025, PAXG: 0.02, XAUT: 0.02, GOLD: 0.02,
+  FLOKI: 0.02, "1000FLOKI": 0.02, TRUMP: 0.025, PAXG: 0.02, XAUT: 0.02, GOLD: 0.02, MSTR: 0.025,
 };
 export const mmrOf = (symbol?: string) => (symbol ? MMR_TIERS[symbol.toUpperCase().split("/")[0].replace("USDT", "")] ?? MMR : MMR);
 const ADVERSE = (2 + 0.5) / 1e4;       // slippage + half spread

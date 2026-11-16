@@ -965,3 +965,17 @@ free limit, error count - from `views/health`, never simulated), Deep-space scan
 trend / volatility, ticker volume + spread, analysis 4H levels, 4H call, AI note → `/asset`). CSS "v2.45" (`.cc-*`).
 Concept canvas (sample data) = Design artifact "Command Centre concept". Ideas: AI chat for members (Cloudflare Worker
 free + separate Gemini key, reads only on-page data, member sign-in check, daily cap) - owner: later.
+
+## v2.46 (owner, 16 Nov 2026)
+- Practice-win toast (`TradeTerminal`): own 2.8 s timer (was reset by price updates and never closed), `cheer-life`
+  pop / hold / float-away animation, bigger `Burst big`, tap to close.
+- MSTR/USDT: Binance USDⓈ-M stock perpetual (Strategy) added like gold - `TradeTerminal.FUT_ONLY` {XAUT GOLD, MSTR STOCK},
+  shown on the Futures tab when `listedPairs().fut` has it: live chart, order book, demo trading; no AI signals (engine is
+  spot-only); `paperFutures.MMR_TIERS.MSTR` 2.5 %.
+- `components/CommandPlus.tsx` on Command Centre: `SignalJourneys` (OPEN record calls: stop → entry → TP1-3 track,
+  targets lit when hit, stop in force mark, live craft, R), `HeatGlobe` (sun-lit globe, Tokyo / Dubai / London / New York
+  stock sessions lit while open, BTC last-hour volume vs 48 h from public klines, next US release from views/news),
+  `CoinCompare` (up to 3 coins: 7-day lines from public klines, trend / AI lean / volatility / RSI from dashboard_4h,
+  our record from views/radar - read only once the panel is used). Trade page: `PracticeBadges` (first win, 10 trades,
+  5-win streak, +10 % account, 20 trades without liquidation) from the practice account already open. Firebase: + views/news
+  on Command Centre (1 read), + views/radar only on use; everything else already loaded or public Binance data.

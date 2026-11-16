@@ -1,6 +1,7 @@
 // Exchange-style paper trading (Binance / MEXC layout): pair bar, live candle chart with your levels,
 // order book, order form (limit / market, leverage, size %, TP/SL) and positions / orders / history / assets.
 // Virtual money only: nothing is ever sent to an exchange.
+import { PracticeBadges } from "./CommandPlus";
 import { Burst } from "./Premium";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -33,11 +34,14 @@ const StreamCtx = createContext<StreamState | null>(null);
 // Gold: Binance lists Tether Gold (XAUT) only as a USDⓈ-M perpetual, so it is offered on the Futures tab
 // (live chart, order book and demo trading; no AI signals, the engine reads spot data).
 export const GOLD = "XAUT/USDT";
-const isGold = (s: string) => s === GOLD;
+// v2.46 (owner, 16 Nov 2026): Strategy (MicroStrategy) stock perpetual, MSTRUSDT on Binance USDⓈ-M (also on MEXC) -
+// futures only, like gold: live chart, order book and demo trading, no AI signals (the engine reads spot data).
+const FUT_ONLY: Record<string, string> = { [GOLD]: "GOLD", "MSTR/USDT": "STOCK" };
+const isGold = (s: string) => s in FUT_ONLY;            // any futures-only pair (name kept: used across this file)
 
-function useGoldListed(): boolean {
-  const [ok, setOk] = useState(false);
-  useEffect(() => { let live = true; listedPairs().then((l) => { if (live) setOk(l.fut.has("XAUTUSDT")); }).catch(() => {}); return () => { live = false; }; }, []);
+function useFutOnlyListed(): string[] {
+  const [ok, setOk] = useState<string[]>([]);
+  useEffect(() => { let live = true; listedPairs().then((l) => { if (live) setOk(Object.keys(FUT_ONLY).filter((s) => l.fut.has(s.replace("/", "")))); }).catch(() => {}); return () => { live = false; }; }, []);
   return ok;
 }
 
@@ -155,6 +159,7 @@ export default function TradeTerminal() {
         <OrderForm symbol={symbol} market={market} d={d} act={act} />
       </div>
 
+      {market === "futures" && <PracticeBadges d={d} />}
       <section className="panel p-0">
         <TabStrip label="Your trades" value={tab} onChange={setTab} className="px-2 pt-2"
           options={[["positions", `${market === "futures" ? "Positions" : "Holdings"} (${positions.length})`], ["orders", `Open orders (${orders.length})`], ["history", "Order history"], ["assets", "Assets"]] as const} />
@@ -179,15 +184,15 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
   const last = useLastPrice(symbol);
   const st = useContext(StreamCtx);
   const [open, setOpen] = useState(false);
-  const goldOk = useGoldListed();
-  const list = market === "futures" && goldOk && !symbols.includes(GOLD) ? [...symbols, GOLD] : symbols;
+  const extra = useFutOnlyListed();
+  const list = market === "futures" ? [...symbols, ...extra.filter((x) => !symbols.includes(x))] : symbols;
   return (
     <div className="panel panel-hero flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-3 sm:px-4">
       <div className="relative">
         <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-glass/[0.05]">
           <CoinAvatar symbol={symbol} size={30} />
           <span className="text-left"><span className="font-display block text-lg font-bold leading-none">{base(symbol)}<span className="text-mute">/USDT</span></span>
-            <span className="text-xs text-mute">{isGold(symbol) ? "Gold · Perpetual · USDT-M" : market === "futures" ? "Perpetual · USDT-M" : "Spot"}</span></span>
+            <span className="text-xs text-mute">{FUT_ONLY[symbol] === "GOLD" ? "Gold · Perpetual · USDT-M" : FUT_ONLY[symbol] === "STOCK" ? "Stock · Perpetual · USDT-M" : market === "futures" ? "Perpetual · USDT-M" : "Spot"}</span></span>
           <span className="text-mute" aria-hidden="true">▾</span>
         </button>
         {open && (
@@ -196,7 +201,7 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket }: { symbol: stri
               const x = tickers[s];
               return (
                 <button key={s} onClick={() => { onSymbol(s); setOpen(false); }} className={`flex w-full items-center justify-between gap-2 rounded-lg px-2 py-2 text-sm hover:bg-glass/[0.06] ${s === symbol ? "bg-accent/10" : ""}`}>
-                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-xs font-bold text-accent">GOLD</span>}</span>
+                  <span className="flex items-center gap-2"><CoinAvatar symbol={s} size={20} />{base(s)}<span className="text-mute">/USDT</span>{isGold(s) && <span className="rounded bg-accent/15 px-1 text-xs font-bold text-accent">{FUT_ONLY[s]}</span>}</span>
                   <span className="num text-right text-xs"><span className="block">{fmtPrice(x?.last)}</span><span className={tone(x?.change_pct)}>{fmtPctRaw(x?.change_pct)}</span></span>
                 </button>
               );
@@ -224,7 +229,7 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
   const v = useApi<any>("/futures?timeframe=4h");
   const [params, setParams] = useSearchParams();
   const r = (v.data?.rows ?? []).find((x: any) => x.symbol === symbol);
-  if (isGold(symbol)) return <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">Gold (XAUT) is for live charts and demo trading. The AI does not make signals for it.</div>;
+  if (isGold(symbol)) return <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">{FUT_ONLY[symbol] === "STOCK" ? "MSTR (Strategy stock perpetual) is for live charts and demo trading. The AI does not make signals for it." : "Gold (XAUT) is for live charts and demo trading. The AI does not make signals for it."}</div>;
   if (!r) return null;
   const vd = verdictOf(r, market);
   const p = r.plan;

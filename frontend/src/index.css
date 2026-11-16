@@ -1155,3 +1155,23 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .cc-orbit { animation: xeno-spin 160s linear infinite; }
 .cc-ring { animation: xeno-spin 24s linear infinite; }
 @media (prefers-reduced-motion: reduce) { .cc-sweep, .cc-orbit, .cc-ring { animation: none; } }
+/* v2.46 command centre additions + practice badges */
+.journey { padding: 10px 12px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.08); background: rgb(var(--glass) / 0.025); }
+.journey-track { position: relative; height: 22px; margin-top: 8px; }
+.journey-track::before { content: ""; position: absolute; left: 0; right: 0; top: 10px; height: 2px;
+  background: linear-gradient(90deg, rgb(var(--bear) / 0.6), rgb(var(--accent) / 0.6) 30%, rgb(var(--bull) / 0.6)); border-radius: 2px; }
+.j-mark { position: absolute; top: 5px; width: 12px; height: 12px; margin-left: -6px; border-radius: 9999px; border: 2px solid rgb(var(--panel)); }
+.j-stop { background: rgb(var(--bear)); margin-left: 0; }
+.j-stopnow { background: rgb(var(--warn)); width: 3px; height: 16px; top: 3px; margin-left: -1.5px; border: 0; border-radius: 2px; }
+.j-entry { background: rgb(var(--accent)); }
+.j-tp { background: rgb(var(--panel)); border: 2px solid rgb(var(--bull) / 0.7); }
+.j-tp:last-of-type { margin-left: -12px; }
+.j-tp.is-hit { background: rgb(var(--bull)); box-shadow: 0 0 0 4px rgb(var(--bull) / 0.2); }
+.j-craft { position: absolute; top: 1px; width: 20px; height: 20px; margin-left: -10px; border-radius: 9999px; background: rgb(var(--bull));
+  border: 3px solid rgb(var(--ink)); box-shadow: 0 0 0 5px rgb(var(--bull) / 0.2); transition: left .8s var(--ease-out, ease-out); }
+.j-craft.is-down { background: rgb(var(--bear)); box-shadow: 0 0 0 5px rgb(var(--bear) / 0.2); }
+.hg-spin { animation: xeno-spin 60s linear infinite; }
+.hg-pulse { animation: xeno-blink 2s ease-in-out infinite; }
+.badge-cell { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.08); }
+.badge-cell.is-done { border-color: rgb(var(--accent) / 0.5); background: linear-gradient(135deg, rgb(var(--accent) / 0.10), transparent 70%); }
+@media (prefers-reduced-motion: reduce) { .hg-spin, .hg-pulse { animation: none; } .j-craft { transition: none; } }
