@@ -1,0 +1,46 @@
+{
+ "at": 1794859913,
+ "mexc_detail_MSTR_USDT": {
+  "http": 200,
+  "ok": true,
+  "name": "MSTR_USDT PERPETUAL"
+ },
+ "mexc_detail_MSTRSTOCK_USDT": {
+  "http": 200,
+  "ok": true,
+  "name": "MSTR_USDT PERPETUAL"
+ },
+ "mexc_detail_MSTRX_USDT": {
+  "http": 200,
+  "ok": false,
+  "name": null
+ },
+ "mexc_kline_15m_recent": {
+  "http": 200,
+  "n": 0,
+  "last": null,
+  "last_close": null
+ },
+ "mexc_daily": {
+  "http": 200,
+  "n": 0,
+  "first": null
+ },
+ "mexc_15m_400d_ago": {
+  "http": 200,
+  "n": 0
+ },
+ "mexc_ticker": {
+  "http": 200,
+  "last": null
+ },
+ "binance_fapi": {
+  "http": 451,
+  "n": 0,
+  "last_close": null
+ },
+ "binance_archive_daily": {
+  "http": 200,
+  "day": "2026-11-14"
+ }
+}
