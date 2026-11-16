@@ -235,8 +235,9 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
   const v = useApi<any>("/futures?timeframe=4h");
   const [params, setParams] = useSearchParams();
   const r = (v.data?.rows ?? []).find((x: any) => x.symbol === symbol);
-  if (isGold(symbol)) return <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">{FUT_ONLY[symbol] === "STOCK" ? "MSTR (Strategy stock perpetual) is for live charts and demo trading. The AI does not make signals for it." : "Gold (XAUT) is for live charts and demo trading. The AI does not make signals for it."}</div>;
-  if (!r) return null;
+  if (FUT_ONLY[symbol] === "GOLD") return <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">Gold (XAUT) is for live charts and demo trading. The AI does not make signals for it.</div>;
+  // v2.49: MSTR has AI signals (engine candles from MEXC futures); until its first analysis is out, say so
+  if (!r) return FUT_ONLY[symbol] === "STOCK" ? <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">MSTR (Strategy stock perpetual): the AI is learning this coin. Signals appear here once its first analysis is published.</div> : null;
   const vd = verdictOf(r, market);
   const p = r.plan;
   const usable = vd.tone !== "wait" && p && (market === "futures" || p.side === "LONG");

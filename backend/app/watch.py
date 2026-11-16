@@ -209,6 +209,18 @@ def fetch_prices(symbols: list[str]) -> dict[str, float]:
     syms = sorted(set(symbols))
     if not syms:
         return {}
+    from .data.futures_only import FUT_ONLY, MEXC     # v2.49 futures-only coins (MSTR/USDT): MEXC futures last price
+    fut: dict[str, float] = {}
+    for s in [x for x in syms if x.upper() in FUT_ONLY]:
+        try:
+            with urllib.request.urlopen(urllib.request.Request(f"{MEXC}/ticker?symbol={FUT_ONLY[s.upper()]}",
+                                                               headers={"User-Agent": "cia-watch"}), timeout=8) as r:
+                fut[s] = float(json.load(r)["data"]["lastPrice"])
+        except Exception:
+            pass
+    syms = [x for x in syms if x.upper() not in FUT_ONLY]
+    if not syms:
+        return fut
 
     def get(url: str) -> Any:
         with urllib.request.urlopen(urllib.request.Request(url, headers={"User-Agent": "cia-watch"}), timeout=8) as r:
@@ -223,7 +235,7 @@ def fetch_prices(symbols: list[str]) -> dict[str, float]:
                 rows.append(get(f"{PRICE_URL}?symbol={pr}"))
             except Exception:
                 pass
-    return {by_pair[r["symbol"]]: float(r["price"]) for r in rows if r.get("symbol") in by_pair}
+    return {**{by_pair[r["symbol"]]: float(r["price"]) for r in rows if r.get("symbol") in by_pair}, **fut}
 
 
 def watched_symbols(db: Any) -> list[str]:

@@ -16,6 +16,7 @@ from typing import Any
 import requests
 
 from ..redact import redact
+from .futures_only import FUT_ONLY, MexcFutures, is_fut_only
 
 log = logging.getLogger(__name__)
 
@@ -41,6 +42,7 @@ class BinancePublicProvider:
         self.last_ok_ms: int | None = None
         self.host_used: str | None = None
         self._symbols: list[str] | None = None
+        self.fut = MexcFutures(timeout=timeout)       # v2.49 futures-only coins (MSTR/USDT), see futures_only.py
 
     # -- transport --------------------------------------------------------------------------------------
     def _get_sync(self, path: str, params: dict[str, Any] | None = None) -> Any:
@@ -78,6 +80,8 @@ class BinancePublicProvider:
                           limit: int = 1000) -> list[list[float]]:
         if timeframe not in INTERVALS:
             raise ValueError(f"unsupported timeframe {timeframe}")
+        if is_fut_only(symbol):
+            return await self.fut.fetch_ohlcv(symbol, timeframe, since=since, limit=limit)
         params: dict[str, Any] = {"symbol": to_binance(symbol), "interval": timeframe, "limit": min(int(limit), 1000)}
         if since is not None:
             params["startTime"] = int(since)
@@ -96,12 +100,23 @@ class BinancePublicProvider:
                 "quote_volume": float(t["quoteVolume"]), "ts": int(t.get("closeTime") or time.time() * 1000)}
 
     async def fetch_ticker(self, symbol: str) -> dict[str, Any]:
+        if is_fut_only(symbol):
+            return await self.fut.fetch_ticker(symbol)
         t = await self._get("/api/v3/ticker/24hr", {"symbol": to_binance(symbol)})
         return self._ticker(symbol, t)
 
     async def fetch_tickers(self, symbols: list[str]) -> dict[str, dict[str, Any]]:
         if not symbols:
             return {}
+        fut = [s for s in symbols if is_fut_only(s)]
+        if fut:
+            out = await self.fetch_tickers([s for s in symbols if not is_fut_only(s)])
+            for s in fut:
+                try:
+                    out[s] = await self.fut.fetch_ticker(s)
+                except Exception:
+                    continue
+            return out
         by = {to_binance(s): s for s in symbols}
         try:
             rows = await self._get("/api/v3/ticker/24hr", {"symbols": json.dumps(list(by), separators=(",", ":"))})
@@ -116,12 +131,16 @@ class BinancePublicProvider:
         return {by[r["symbol"]]: self._ticker(by[r["symbol"]], r) for r in rows if r["symbol"] in by}
 
     async def fetch_order_book(self, symbol: str, limit: int = 100) -> dict[str, Any]:
+        if is_fut_only(symbol):
+            return await self.fut.fetch_order_book(symbol, limit)
         lim = min([x for x in (5, 10, 20, 50, 100, 500, 1000) if x >= limit] or [1000])
         ob = await self._get("/api/v3/depth", {"symbol": to_binance(symbol), "limit": lim})
         return {"bids": [[float(p), float(q)] for p, q in ob.get("bids", [])],
                 "asks": [[float(p), float(q)] for p, q in ob.get("asks", [])], "timestamp": None}
 
     async def fetch_trades(self, symbol: str, limit: int = 200) -> list[dict[str, Any]]:
+        if is_fut_only(symbol):
+            return await self.fut.fetch_trades(symbol, limit)
         rows = await self._get("/api/v3/trades", {"symbol": to_binance(symbol), "limit": min(limit, 1000)})
         return [{"ts": r["time"], "price": float(r["price"]), "amount": float(r["qty"]),
                  "side": "sell" if r.get("isBuyerMaker") else "buy"} for r in rows]
@@ -135,6 +154,7 @@ class BinancePublicProvider:
     async def search_markets(self, query: str, limit: int = 20) -> list[str]:
         q = query.upper().replace("/", "").replace("-", "")
         hits = [s for s in await self._all_symbols() if q in s]
+        hits += [to_binance(f) for f in FUT_ONLY if q in to_binance(f) and to_binance(f) not in hits]
         hits.sort(key=lambda s: (not s.startswith(q), len(s)))
         return [f"{s[:-4]}/USDT" for s in hits[:limit]]
 

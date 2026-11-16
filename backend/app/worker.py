@@ -109,6 +109,7 @@ MAJOR_COINS = ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "SOL/USDT", "DOGE
 # coins the exchange renamed: the old pair stops trading, the new one continues the same asset
 # (Binance: Toncoin TON -> Gram GRAM, trading as GRAM/USDT from 2026-07-02)
 RENAMED = {"TON/USDT": "GRAM/USDT"}
+MSTR = "MSTR/USDT"           # v2.49 Strategy Inc. stock perpetual (futures only, data/futures_only.py)
 GOLD = "PAXG/USDT"           # gold (tracks XAU/USD); added to the watchlist once in v2.1
 MEMBER_COIN_LIMIT = 5        # default: coins one member can add for themselves (admin can change: config/limits)
 MEMBER_COINS_MAX = 25        # default: all members together, on top of the admin's list (keeps the engine within its time)
@@ -390,7 +391,7 @@ MIGRATION_FLAGS = (
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
-    "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242",
+    "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -603,6 +604,15 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/watchlist", doc)
                 notes["coins_growth_v216"] = grown
             rt.db.set_setting("coins_growth_v216", True)
+        if not rt.db.get_setting("mstr_v249", False) and os.environ.get("ADD_MSTR", "1") != "0":
+            # v2.49 (owner, 17 Nov 2026: "we want to have it on signals"): MSTR/USDT once, candles from MEXC futures
+            # (data/futures_only.py). Signals start only where its nightly models prove an edge, like every coin.
+            have = {norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]}
+            if MSTR not in have:
+                doc = {**doc, "symbols": list(doc["symbols"]) + [{"symbol": MSTR, "pinned": False}], "updated_at": now_ms()}
+                sink.set("config/watchlist", doc)
+                notes["mstr_v249"] = MSTR
+            rt.db.set_setting("mstr_v249", True)
         # renamed coins: rewrite the watchlist once so the website shows the new name too
         names = [norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]]
         if any(n in RENAMED for n in names):

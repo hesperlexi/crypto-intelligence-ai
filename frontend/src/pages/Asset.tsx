@@ -1,3 +1,4 @@
+import { isFutOnly } from "../lib/binance";
 import { useEffect, useMemo, useState } from "react";
 import { CoinAvatar } from "../components/Polish";
 import { useIsAdmin } from "../lib/session";
@@ -38,7 +39,7 @@ export default function Asset() {
   const tk = useTicker(symbol);
   const an = useApi<any>(`/analysis/${s}?timeframe=${tf}`, 60000);
   const oh = useApi<any>(`/market/${s}/ohlcv?timeframe=${tf}&limit=500`);
-  const live = useMarketStream(symbol, "spot", tf);          // every trade moves the forming candle, no polling delay
+  const live = useMarketStream(symbol, isFutOnly(symbol) ? "futures" : "spot", tf);          // every trade moves the forming candle, no polling delay
   const a = an.data;
   const ok = a?.status === "OK";
   const price = tk?.last ?? a?.price;

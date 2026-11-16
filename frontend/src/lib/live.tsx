@@ -1,6 +1,6 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { bsym, futures24h, listedPairs, tickers as restTickers, toTicker } from "./binance";
+import { bsym, futures24h, isFutOnly, listedPairs, tickers as restTickers, toTicker } from "./binance";
 
 /** Phones and slow devices: prices once a second per coin instead of every trade (saves CPU, battery and data).
  *  Set localStorage "cia-live-full" = "1" to force full speed. */
@@ -121,7 +121,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     return () => { window.removeEventListener("online", on); window.removeEventListener("offline", off); };
   }, []);
   useEffect(() => {
-    const syms = key ? key.split(",") : [];
+    const syms = (key ? key.split(",") : []).filter((s) => !isFutOnly(s));    // futures-only coins: futures layer below
     if (!syms.length) return;
     let race: Race | null = null;
     let closed = false, attempt = 0, timer = 0, lastFrame = 0, lastRest = 0, busy = false;

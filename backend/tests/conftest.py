@@ -3,3 +3,4 @@ bot migration is off in tests unless a test turns it on (tests/test_tp08_v240.py
 import os
 
 os.environ.setdefault("TEST_BOT_TP08", "0")
+os.environ.setdefault("ADD_MSTR", "0")          # v2.49 one-time MSTR watchlist addition: tests/test_futures_only_v249.py

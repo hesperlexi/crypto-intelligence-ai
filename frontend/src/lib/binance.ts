@@ -7,6 +7,9 @@ const TF_MS: Record<string, number> = { "1m": 6e4, "5m": 3e5, "15m": 9e5, "30m":
 let good = 0;
 
 export const bsym = (symbol: string) => symbol.replace("/", "").toUpperCase();
+/** v2.49: coins with signals but no Binance spot market (MSTR stock perpetual): charts / book / prices from USDⓈ-M futures. */
+export const FUT_ONLY_PAIRS = new Set(["MSTRUSDT"]);
+export const isFutOnly = (symbol: string) => FUT_ONLY_PAIRS.has(bsym(symbol));
 
 async function get<T = any>(path: string, hosts = REST): Promise<T> {
   let last: unknown = null;
@@ -27,6 +30,10 @@ async function get<T = any>(path: string, hosts = REST): Promise<T> {
 }
 
 export async function klines(symbol: string, tf: string, limit = 500): Promise<Candle[]> {
+  if (isFutOnly(symbol)) {
+    const rows = await get<any[]>(`/fapi/v1/klines?symbol=${bsym(symbol)}&interval=${tf}&limit=${Math.min(limit, 1500)}`, [FUTURES]);
+    return rows.map((r) => [r[0], +r[1], +r[2], +r[3], +r[4], +r[5]] as Candle);
+  }
   const rows = await get<any[]>(`/api/v3/klines?symbol=${bsym(symbol)}&interval=${tf}&limit=${Math.min(limit, 1000)}`);
   return rows.map((r) => [r[0], +r[1], +r[2], +r[3], +r[4], +r[5]] as Candle);
 }
@@ -92,6 +99,7 @@ export async function ohlcv(symbol: string, tf: string, limit = 500) {
 }
 
 export async function tickers(symbols: string[]) {
+  symbols = symbols.filter((s) => !isFutOnly(s));      // one unknown spot pair fails the whole batch
   if (!symbols.length) return {};
   const rows = await get<any[]>(`/api/v3/ticker/24hr?symbols=${encodeURIComponent(JSON.stringify(symbols.map(bsym)))}`);
   const by = Object.fromEntries(symbols.map((s) => [bsym(s), s]));
@@ -144,9 +152,11 @@ export function bookMetrics(bids: [number, number][], asks: [number, number][], 
 
 export async function orderbook(symbol: string, market: "spot" | "futures" = "spot") {
   let ob: any;
+  if (isFutOnly(symbol)) market = "futures";
   if (market === "futures") {
     try { ob = await get<any>(`/fapi/v1/depth?symbol=${bsym(symbol)}&limit=500`, [FUTURES]); } catch { /* spot below */ }
   }
+  if (!ob && isFutOnly(symbol)) return { symbol, available: false, reason: "futures order book not reachable" };
   ob ??= await get<any>(`/api/v3/depth?symbol=${bsym(symbol)}&limit=500`);
   const bids = ob.bids.map((x: string[]) => [+x[0], +x[1]]) as [number, number][];
   const asks = ob.asks.map((x: string[]) => [+x[0], +x[1]]) as [number, number][];
