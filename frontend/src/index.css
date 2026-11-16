@@ -1129,3 +1129,19 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
   animation: cheer-in .35s var(--ease-out, ease-out); }
 @keyframes cheer-in { from { opacity: 0; transform: translate(-50%, -8px); } }
 @media (prefers-reduced-motion: reduce) { .cheer-toast { animation: none; } }
+
+/* ===================== v2.45 Command Centre (pages/Command.tsx) ===================== */
+.cc-panel { position: relative; border-radius: 20px; border: 1px solid rgb(var(--accent) / 0.22);
+  background: radial-gradient(120% 90% at 0% 0%, rgb(var(--accent) / 0.07), transparent 55%), rgb(var(--panel) / 0.92); overflow: hidden; }
+.cc-scan { border-color: rgb(var(--accent) / 0.38); background: linear-gradient(120deg, rgb(var(--accent) / 0.10), rgb(var(--panel) / 0.94) 38%); }
+.cc-cell { padding: 10px 12px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.08); background: rgb(var(--glass) / 0.03); min-width: 0; }
+.cc-row { display: flex; align-items: center; gap: 12px; padding: 9px 12px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.07); background: rgb(var(--glass) / 0.025); }
+.cc-planet { cursor: pointer; outline: none; }
+.cc-planet:hover circle:last-of-type, .cc-planet:focus-visible circle { filter: brightness(1.15); }
+.cc-planet:focus-visible text { text-decoration: underline; }
+.cc-structure { position: relative; height: 10px; border-radius: 9999px; background: linear-gradient(90deg, rgb(var(--bull) / 0.55), rgb(var(--glass) / 0.08) 50%, rgb(var(--bear) / 0.55)); }
+.cc-structure span { position: absolute; top: -5px; width: 20px; height: 20px; margin-left: -10px; border-radius: 9999px; background: rgb(var(--accent)); border: 3px solid rgb(var(--ink)); }
+.cc-sweep { animation: xeno-spin 8s linear infinite; will-change: transform; }
+.cc-orbit { animation: xeno-spin 160s linear infinite; }
+.cc-ring { animation: xeno-spin 24s linear infinite; }
+@media (prefers-reduced-motion: reduce) { .cc-sweep, .cc-orbit, .cc-ring { animation: none; } }

@@ -61,6 +61,7 @@ const Users = page(() => import("./pages/Users"));
 const Rich = page(() => import("./pages/Rich"));
 const Guardian = page(() => import("./pages/Guardian"));
 const Lab = page(() => import("./pages/Lab"));
+const Command = page(() => import("./pages/Command"));
 const Community = page(() => import("./pages/Community"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
@@ -87,10 +88,12 @@ const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements
 const TOOLS_NAV = [["/scanner", "Scanner"], ["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);
 // the Tools menu sits after Radar in the second group
-const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
+// v2.45: Command Centre sits with the market pages (an extra page; nothing else moves)
+const COMMAND = ["/command", "Command Centre"] as const;
+const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [COMMAND, NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
 // phone More sheet (v2.15): grouped instead of one flat grid
 const MORE_GROUPS: [string, (readonly [string, string])[]][] = [
-  ["Markets", [NAV[3], NAV[4]]],
+  ["Markets", [COMMAND, NAV[3], NAV[4]]],
   ["Tools", [...TOOLS_NAV]],
   ["Account", [NAV[7], NAV[6], NAV[8]]],
 ];
@@ -294,7 +297,7 @@ function Shell({ user }: { user: User }) {
   // live-price snapshot, the sidebar only when these change.
   const sideGroups = useMemo<NavGroup[]>(() => [
     { title: "", items: [NAV[0], NAV[1], NAV[2], NAV[5]] },
-    { title: "Markets", items: [NAV[3], NAV[4]] },
+    { title: "Markets", items: [COMMAND, NAV[3], NAV[4]] },
     { title: "Tools", items: [...TOOLS_NAV], fold: true },
     { title: "Account", items: [NAV[6], NAV[7], NAV[8]] },
     ...(admin ? [{ title: "Admin", items: [...ADMIN_NAV, ["/users", "Users"] as const] }] : []),
@@ -374,6 +377,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/scanner" element={<Scanner />} />
             <Route path="/futures" element={<Navigate to="/signals?market=futures" replace />} />
             <Route path="/news" element={<News />} />
+            <Route path="/command" element={<Command />} />
             <Route path="/results" element={<Results />} />
             <Route path="/track" element={<Navigate to="/results?tab=track" replace />} />
             <Route path="/radar" element={<Radar />} />

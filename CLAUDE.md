@@ -951,3 +951,17 @@ ladder. `components/TodayPulse.tsx` (Home hero): open-signal health ring (`Overv
 `FirstWeekGuide` (members, first 14 days from `approved_at`/`requested_at`: alerts, signals, practice, Telegram).
 `components/PlanCards.tsx` (Landing + Membership): foil "Best value" card, savings from the monthly price, included list.
 Landing: trust strip, FAQ +3 (payment, renewing early, free Telegram). Trade page: practice win toast + burst + win streak.
+
+## v2.45 Command Centre (owner, 16 Nov 2026; an extra page, nothing else changed)
+`pages/Command.tsx`, route `/command`, nav "Command Centre" in the Markets group (`App.COMMAND`, sidebar / More / top bar;
+icon + title in `AppNav`). Real data only: Crypto galaxy (watchlist from `views/dashboard_4h`: orbit tier = 24h volume
+rank, planet size = volume, colour = live 24h change, gold dashed ring = OPEN record call; phones use a tighter
+geometry `useNarrow`), Opportunity radar (six `/futures` boards: slice = timeframe, distance = grade + |AI lean|, max 5
+per slice, unlabeled grey = AI leaning without a call; no confidence shown), Intelligence core (4H mood, coin trend /
+regime, AI up/down, 4H call + grade, decision_basis / news / flags, engine age from `views/health`), Market universe
+(BTC hub, 5 largest coins: line width = 7-day hourly-return correlation from public Binance klines in the browser,
+7-day change; breadth, alt strength), Mission control (live prices socket, engine age, models, market feed, writes vs
+free limit, error count - from `views/health`, never simulated), Deep-space scan (picked coin: dashboard row RSI / ADX /
+trend / volatility, ticker volume + spread, analysis 4H levels, 4H call, AI note → `/asset`). CSS "v2.45" (`.cc-*`).
+Concept canvas (sample data) = Design artifact "Command Centre concept". Ideas: AI chat for members (Cloudflare Worker
+free + separate Gemini key, reads only on-page data, member sign-in check, daily cap) - owner: later.
