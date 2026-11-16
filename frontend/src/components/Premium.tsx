@@ -180,18 +180,19 @@ export function Ring({ value, size = 84, stroke = 8, tone = "--accent", children
 
 /* ------------------------------------------------------------------ small celebration */
 /** A short gold burst (CSS only, ~0.9 s). `fire` changes -> one burst. Nothing under reduced motion. */
-export function Burst({ fire }: { fire: number }) {
+export function Burst({ fire, big = false }: { fire: number; big?: boolean }) {
   const [on, setOn] = useState(0);
   useEffect(() => {
     if (!fire) return;
     setOn(fire);
-    const t = window.setTimeout(() => setOn(0), 1000);
+    const t = window.setTimeout(() => setOn(0), 1300);
     return () => window.clearTimeout(t);
   }, [fire]);
   if (!on) return null;
+  const n = big ? 18 : 12;
   return (
     <span className="burst" aria-hidden="true" key={on}>
-      {Array.from({ length: 12 }, (_, i) => <i key={i} style={{ ["--a" as any]: `${i * 30}deg`, ["--d" as any]: `${46 + (i % 3) * 14}px` }} />)}
+      {Array.from({ length: n }, (_, i) => <i key={i} style={{ ["--a" as any]: `${(i * 360) / n}deg`, ["--d" as any]: `${(big ? 70 : 46) + (i % 3) * (big ? 22 : 14)}px` }} />)}
     </span>
   );
 }

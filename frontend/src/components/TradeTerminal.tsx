@@ -123,9 +123,13 @@ export default function TradeTerminal() {
     let streak = 0;
     for (const c of closes) { if (Number(c.realized_pnl) > 0) streak += 1; else break; }
     setCheer({ n: Date.now(), text: `+${Number(t.realized_pnl).toFixed(2)} USDT on ${String(t.symbol).split("/")[0]}${streak >= 2 ? ` · ${streak} wins in a row` : ""}` });
-    const id = window.setTimeout(() => setCheer(null), 3500);
-    return () => window.clearTimeout(id);
   }, [d, market]);
+  // v2.46: the toast plays its celebration and goes away by itself (its own timer, not reset by price updates)
+  useEffect(() => {
+    if (!cheer) return;
+    const id = window.setTimeout(() => setCheer(null), 2800);
+    return () => window.clearTimeout(id);
+  }, [cheer]);
   const [tf, setTf] = useState<string>("15m");
   const pro = useIsPro();
   const stream = useMarketStream(symbol, market, tf);
@@ -138,7 +142,9 @@ export default function TradeTerminal() {
       <SignalStrip symbol={symbol} market={market} />
       {market === "futures" && <AutoTrade />}
       {cheer && (
-        <div role="status" className="cheer-toast"><Burst fire={cheer.n} /><span className="text-accent" aria-hidden="true">✦</span> Practice win: <b className="num text-bull">{cheer.text}</b></div>
+        <button type="button" key={cheer.n} className="cheer-toast" onClick={() => setCheer(null)} aria-label={`Practice win ${cheer.text}. Tap to close`}>
+          <Burst fire={cheer.n} big /><span className="cheer-star" aria-hidden="true">✦</span> Practice win <b className="num text-bull">{cheer.text}</b>
+        </button>
       )}
       {msg && <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-bull/40 bg-bull/10 text-bull" : "border-bear/40 bg-bear/10 text-bear"}`}>{msg.text}</div>}
       {err && <div className="rounded-lg border border-bear/40 bg-bear/10 px-3 py-2 text-sm text-bear">{err}</div>}

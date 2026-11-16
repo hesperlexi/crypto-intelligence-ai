@@ -1124,11 +1124,21 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
   color: rgb(var(--bull)); background: rgb(var(--bull) / 0.12); }
 .plan-save.is-none { color: rgb(var(--mute)); background: rgb(var(--glass) / 0.06); }
 .cheer-toast { position: fixed; left: 50%; top: 76px; z-index: 60; transform: translateX(-50%); display: flex; align-items: center; gap: 8px;
-  padding: 10px 16px; border-radius: 9999px; font-size: 14px; white-space: nowrap; max-width: calc(100vw - 32px); overflow: hidden; text-overflow: ellipsis;
-  background: rgb(var(--panel)); border: 1px solid rgb(var(--accent) / 0.55); box-shadow: 0 12px 34px rgb(0 0 0 / 0.45), 0 0 0 4px rgb(var(--accent) / 0.12);
-  animation: cheer-in .35s var(--ease-out, ease-out); }
-@keyframes cheer-in { from { opacity: 0; transform: translate(-50%, -8px); } }
-@media (prefers-reduced-motion: reduce) { .cheer-toast { animation: none; } }
+  padding: 10px 18px; border-radius: 9999px; font-size: 14px; white-space: nowrap; max-width: calc(100vw - 32px); overflow: visible; color: rgb(var(--text));
+  background: rgb(var(--panel)); border: 1px solid rgb(var(--accent) / 0.6); box-shadow: 0 12px 34px rgb(0 0 0 / 0.45), 0 0 0 4px rgb(var(--accent) / 0.12);
+  animation: cheer-life 2.8s var(--ease-out, ease-out) forwards; cursor: pointer; }
+.cheer-star { color: rgb(var(--accent)); display: inline-block; animation: cheer-spin 1s ease-out; }
+/* pop in with a gold flash, hold, then float up and fade away */
+@keyframes cheer-life {
+  0% { opacity: 0; transform: translate(-50%, 10px) scale(.85); }
+  12% { opacity: 1; transform: translate(-50%, 0) scale(1.06); box-shadow: 0 12px 34px rgb(0 0 0 / .45), 0 0 0 10px rgb(var(--accent) / .25); }
+  22% { transform: translate(-50%, 0) scale(1); }
+  78% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -18px) scale(.96); }
+}
+@keyframes cheer-spin { from { transform: rotate(-180deg) scale(.3); } to { transform: rotate(0) scale(1); } }
+@media (prefers-reduced-motion: reduce) { .cheer-toast { animation: cheer-fade 2.8s linear forwards; } .cheer-star { animation: none; } }
+@keyframes cheer-fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
 
 /* ===================== v2.45 Command Centre (pages/Command.tsx) ===================== */
 .cc-panel { position: relative; border-radius: 20px; border: 1px solid rgb(var(--accent) / 0.22);
