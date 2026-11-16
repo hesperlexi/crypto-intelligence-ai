@@ -1013,3 +1013,8 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   "Member · N days left"). Results Proof wall: the day calendar is replaced by `DailyBars` (Premium.tsx: last 14-30 Dubai
   days, green/red day bars + gold running total, hover/tap details). `bots.SCORECARD_IDS` / `Bots.tsx SCORECARD` = all
   public timeframes (15m, 1h, 4h, 12h, 1d, 3d), not only 1h / 4h.
+- v2.51 (owner, 17 Nov 2026): Results track record redesigned (`components/ResultsBoard.tsx`, no line/bar charts: period
+  switch all / last 7 days, win-rate ring + won/lost/open, facts incl. best/worst week; "How the signals ended" stacked
+  bar + outcome table; "Recent form" tiles of the last 20 closed + month totals). `ProofWall` / `Curve` no longer on the
+  page (compact hero unchanged). Light theme "Ivory" is now cream (ink 240 235 223, panel 250 246 237, no pure white).
+  Alternate row shading: `main table tbody tr:nth-child(even)`, `main .divide-y > *:nth-child(even)`, `.zebra`.
