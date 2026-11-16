@@ -985,3 +985,13 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   universe = solar system: BTC gold sun (7-day % inside), 5 biggest coins on elliptic orbits - closer orbit + thicker
   flowing beam (`.un-flow`) = higher 7-day hourly correlation with BTC (% shown), planet size = 7-day move.
 
+
+## v2.47 (owner, 16 Nov 2026)
+- Command Centre timeframe switch (`cc-tfbar`, Segmented 15M-3D, remembered `cia-cc-tf`): galaxy (`views/dashboard_<tf>`,
+  ring = OPEN record call on that timeframe), AI core, breadth, deep-space scan (analysis + call of that timeframe) follow
+  it; the radar keeps all six slices and outlines the chosen one. 1 read per switch (the dashboard view).
+- Radar page `components/RadarScope.tsx` (top of /radar, real radar look, gold phosphor): views/radar picks (gold) +
+  extended (amber) as contacts; BTC centre; range = 7-day outperformance vs BTC (sqrt scale, rings +5/+15/+30/+50 %);
+  bearing fixed per coin (hash); dot size = volume surge; CSS conic sweep `.scope-sweep` (6 s) with afterglow, each blip
+  `.scope-ping` delayed by its bearing so it lights as the sweep passes; 3° tick ring + bearings; readout (contacts,
+  sweep, last scan) + contact list (BRG / VOL / 30d / 7d) → scrolls to the pick card (`#pick-<SYM>`). No extra data.

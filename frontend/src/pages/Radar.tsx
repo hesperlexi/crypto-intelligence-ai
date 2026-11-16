@@ -10,6 +10,7 @@ import { ago, base, fmtNum, fmtPrice, fmtTime, isNum } from "../lib/format";
 import { useLimits } from "../lib/limits";
 import { useIsAdmin } from "../lib/session";
 import CoinScorecard from "../components/CoinScorecard";
+import RadarScope from "../components/RadarScope";
 
 const pct = (v: unknown, d = 0) => (isNum(v) ? `${v > 0 ? "+" : ""}${(v * 100).toFixed(d)}%` : "—");
 const tone = (v: unknown) => (isNum(v) ? (v > 0 ? "text-bull" : v < 0 ? "text-bear" : "") : "text-mute");
@@ -21,7 +22,7 @@ const Waiting = () => <span className="text-base font-normal text-mute">Not yet<
  *  every data refresh - that made the logos blink. */
 function PickCard({ p, following, onAdd }: { p: any; following: boolean; onAdd: (s: string) => void }) {
   return (
-    <li className="panel p-4">
+    <li className="panel p-4 scroll-mt-24" id={`pick-${p.symbol.replace("/", "-")}`}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <span className="font-display w-6 text-center text-lg font-bold text-accent/70">{p.rank}</span>
@@ -81,6 +82,8 @@ export default function Radar() {
         <Tile variant="box" className="panel" label="Past check: beat BTC" value={isNum(h.beat_btc_rate) ? `${Math.round(h.beat_btc_rate * 100)}%` : <Waiting />} sub="of test days" />
         <Tile variant="box" className="panel" label="Live record" value={isNum(live.beat_btc_rate) ? `${Math.round(live.beat_btc_rate * 100)}%` : <Waiting />} sub={live.evaluated ? `${live.evaluated} picks scored after 7 days` : `${live.picks ?? 0} picks logged · first scores in 7 days`} />
       </div>
+      <RadarScope picks={d.picks ?? []} extended={d.extended ?? []} updated={d.generated_at}
+        onPick={(s) => document.getElementById(`pick-${s.replace("/", "-")}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} />
       <CoinScorecard card={d.scorecard} admin={admin} />
       <h2 className="label">New coins worth a look</h2>
       <ul className="grid gap-3 md:grid-cols-2 md:[&>li:last-child:nth-child(odd)]:col-span-2">{(d.picks ?? []).map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
