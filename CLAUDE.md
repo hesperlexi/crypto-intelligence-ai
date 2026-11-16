@@ -1008,3 +1008,8 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   Frontend: `binance.isFutOnly` (`FUT_ONLY_PAIRS`) routes charts / book to USDⓈ-M futures and keeps it out of spot
   batches and streams; Asset page streams futures; Trade "learning" note until its first analysis. Probe
   `mstr-probe.yml` → `reports/mstr-probe.json`. Prices can differ from Binance MSTRUSDT by a few cents.
+- v2.50 (owner, 17 Nov 2026): premium top bar (`tb-*` in index.css: gold hairline `.tb-premium`, `LiveChip` = market
+  clock capsule with gold seconds + date + engine age, `compact` on phones via `StatusPill`; ringed avatar `.tb-avatar`,
+  "Member · N days left"). Results Proof wall: the day calendar is replaced by `DailyBars` (Premium.tsx: last 14-30 Dubai
+  days, green/red day bars + gold running total, hover/tap details). `bots.SCORECARD_IDS` / `Bots.tsx SCORECARD` = all
+  public timeframes (15m, 1h, 4h, 12h, 1d, 3d), not only 1h / 4h.
