@@ -979,3 +979,9 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   our record from views/radar - read only once the panel is used). Trade page: `PracticeBadges` (first win, 10 trades,
   5-win streak, +10 % account, 20 trades without liquidation) from the practice account already open. Firebase: + views/news
   on Command Centre (1 read), + views/radar only on use; everything else already loaded or public Binance data.
+- Command Centre redesign (owner: "match the concept, more attractive"): Opportunity radar = live calls only (3 strongest
+  per timeframe drawn on the slice centre line, label outside the dot with a panel-colour outline `.rd-label`, lit slice
+  where a timeframe has calls, 5° instrument tick ring, gold centre, top 4 calls as chips `.rd-chip` below). Market
+  universe = solar system: BTC gold sun (7-day % inside), 5 biggest coins on elliptic orbits - closer orbit + thicker
+  flowing beam (`.un-flow`) = higher 7-day hourly correlation with BTC (% shown), planet size = 7-day move.
+

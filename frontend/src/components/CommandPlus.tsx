@@ -86,7 +86,7 @@ export function HeatGlobe({ news }: { news: any }) {
   const next = news?.next_high && news.next_high.ts > Date.now() ? news.next_high : null;
   const nightX = C + R * Math.sin(((sunLon + 180 - view) * Math.PI) / 180);
   return (
-    <div className="grid items-center gap-4 sm:grid-cols-[220px_minmax(0,1fr)]">
+    <div className="grid items-center gap-4 sm:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[200px_minmax(0,1fr)]">
       <svg viewBox="0 0 220 220" className="mx-auto w-full max-w-[220px]" role="img" aria-label={`World markets now: ${openNow.length ? openNow.map((c) => c[0]).join(", ") + " open" : "main stock markets closed"}; crypto trades 24/7`}>
         <defs>
           <radialGradient id="hg-sea" cx="38%" cy="32%"><stop offset="0%" stopColor="#3a3226" /><stop offset="100%" stopColor="#14110d" /></radialGradient>

@@ -1175,3 +1175,11 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .badge-cell { display: flex; gap: 10px; align-items: center; padding: 8px 10px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.08); }
 .badge-cell.is-done { border-color: rgb(var(--accent) / 0.5); background: linear-gradient(135deg, rgb(var(--accent) / 0.10), transparent 70%); }
 @media (prefers-reduced-motion: reduce) { .hg-spin, .hg-pulse { animation: none; } .j-craft { transition: none; } }
+/* v2.46 radar + universe redesign */
+.rd-label { paint-order: stroke; stroke: rgb(var(--panel)); stroke-width: 3px; stroke-linejoin: round; }
+.rd-chip { display: flex; width: 100%; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; font-size: 13px;
+  border: 1px solid rgb(var(--glass) / 0.09); background: rgb(var(--glass) / 0.03); }
+.rd-chip:hover { border-color: rgb(var(--accent) / 0.5); }
+.un-flow { animation: un-flow 2.4s linear infinite; }
+@keyframes un-flow { to { stroke-dashoffset: -34; } }
+@media (prefers-reduced-motion: reduce) { .un-flow { animation: none; } }

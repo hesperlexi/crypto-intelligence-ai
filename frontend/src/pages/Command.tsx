@@ -85,48 +85,83 @@ function Galaxy({ rows, open, sel, onSel }: { rows: any[]; open: Set<string>; se
 
 /* ---------------------------------------------------------------- radar */
 function Radar({ boards, onSel }: { boards: any[][]; onSel: (s: string) => void }) {
-  const blips = TFS.flatMap((tf, ti) => (boards[ti] ?? []).map((r: any) => {
+  // v2.46 redesign (owner: "match the concept"): calls only, each with a halo, a label placed outside its dot, a lit
+  // slice where a timeframe has calls, an instrument tick ring and the strongest calls listed underneath.
+  const C = 180, R = 150;
+  const calls = TFS.flatMap((tf, ti) => (boards[ti] ?? []).map((r: any) => {
     const side = callOf(r);
-    const lean = isNum(r.p_up) && isNum(r.p_down) ? r.p_up - r.p_down : 0;
-    // distance = grade, then how one-sided the AI lean is (no confidence score shown to members, v2.17)
-    const strength = side ? (r.grade === "A" ? 0.66 : 0.46) + 0.28 * Math.min(1, Math.abs(lean)) : Math.min(0.4, Math.abs(lean));
-    return { r, tf, ti, side, strength, a: r.grade === "A" && side !== 0, lean };
-  }).filter((b) => b.side !== 0 || Math.abs(b.lean) >= 0.2)
-    .sort((a, b) => Number(b.side !== 0) - Number(a.side !== 0) || b.strength - a.strength)
-    .filter((b, _i, all) => all.filter((x) => x.ti === b.ti).indexOf(b) < 5));   // at most 5 per timeframe slice
-  const C = 170, R = 140;
+    const lean = isNum(r.p_up) && isNum(r.p_down) ? Math.abs(r.p_up - r.p_down) : 0;
+    return { r, tf, ti, side, a: r.grade === "A", strength: (r.grade === "A" ? 0.62 : 0.42) + 0.3 * Math.min(1, lean) };
+  }).filter((b) => b.side !== 0))
+    .sort((a, b) => b.strength - a.strength);
   const per = new Map<number, number>();
+  const placed = calls.map((b) => {
+    const k = per.get(b.ti) ?? 0; per.set(b.ti, k + 1);
+    if (k >= 3) return null;                                  // the 3 strongest per timeframe (all in the list below)
+    const mid = b.ti * 60 - 60;                               // slice centre (deg)
+    const ang = (mid + (k === 1 ? -14 : k === 2 ? 14 : 0)) * (Math.PI / 180);
+    const d = Math.min(R - 22, R * (1 - b.strength) + 26 + k * 26);
+    const x = C + d * Math.cos(ang), y = C + d * Math.sin(ang);
+    const out = Math.cos(ang) >= 0.05 || (Math.abs(Math.cos(ang)) < 0.05 && k !== 1);
+    return { ...b, x, y, lx: x + (out ? 12 : -12), anchor: out ? "start" : "end" };
+  }).filter(Boolean) as any[];
+  const lit = new Set(placed.map((b) => b.ti));
+  const wedge = (i: number) => {
+    const a0 = (i * 60 - 90) * (Math.PI / 180), a1 = a0 + Math.PI / 3;
+    return `M${C} ${C} L${C + R * Math.cos(a0)} ${C + R * Math.sin(a0)} A${R} ${R} 0 0 1 ${C + R * Math.cos(a1)} ${C + R * Math.sin(a1)} Z`;
+  };
   return (
-    <svg viewBox="0 0 340 340" className="mx-auto w-full max-w-[400px]" role="group" aria-label="Opportunity radar: signals by timeframe; closer to the centre = stronger">
-      <circle cx={C} cy={C} r={R} fill="rgb(var(--accent) / 0.03)" stroke="rgb(var(--accent) / 0.3)" />
-      {[R * 0.66, R * 0.33].map((r) => <circle key={r} cx={C} cy={C} r={r} fill="none" stroke="rgb(var(--accent) / 0.16)" />)}
-      {TFS.map((tf, i) => {
-        const a = (i * 60 - 90) * (Math.PI / 180), m = a + Math.PI / 6;
-        return (
-          <g key={tf}>
-            <line x1={C} y1={C} x2={C + R * Math.cos(a)} y2={C + R * Math.sin(a)} stroke="rgb(var(--accent) / 0.14)" />
-            <text x={C + (R + 14) * Math.cos(m)} y={C + (R + 14) * Math.sin(m) + 4} textAnchor="middle" fontSize="12" fontWeight="600" fill="rgb(var(--accent) / 0.85)">{tf.toUpperCase()}</text>
-          </g>
-        );
-      })}
-      <g className="cc-sweep" style={{ transformOrigin: `${C}px ${C}px` }}><path d={`M${C} ${C} L${C + R} ${C} A${R} ${R} 0 0 0 ${C + R * Math.cos(-Math.PI / 4)} ${C + R * Math.sin(-Math.PI / 4)} Z`} fill="url(#cc-sweep)" /></g>
-      {blips.map((b) => {
-        const k = per.get(b.ti) ?? 0; per.set(b.ti, k + 1);
-        const ang = (b.ti * 60 - 90 + 10 + k * 10) * (Math.PI / 180);
-        const d = R * (1 - b.strength) + 14 + k * 9;
-        const x = C + d * Math.cos(ang), y = C + d * Math.sin(ang);
-        const col = b.side > 0 ? UP : b.side < 0 ? DN : MUTE;
-        return (
-          <g key={`${b.tf}${b.r.symbol}`} className="cc-planet" tabIndex={0} role="button" onClick={() => onSel(b.r.symbol)} onKeyDown={(e) => { if (e.key === "Enter") onSel(b.r.symbol); }}
-            aria-label={`${name(b.r.symbol)} ${b.tf}: ${b.side > 0 ? "long" : b.side < 0 ? "short" : "watching"}${b.a ? ", grade A" : ""}`}>
-            {b.a && <circle cx={x} cy={y} r="11" fill="rgb(var(--accent) / 0.3)" />}
-            <circle cx={x} cy={y} r="5" fill={col} />
-            {b.side !== 0 && k < 2 && <text x={x + 8} y={y - 7} fontSize="12" fontWeight="600" fill="rgb(var(--text))">{name(b.r.symbol)}</text>}
-          </g>
-        );
-      })}
-      {!blips.length && <text x={C} y={C + 4} textAnchor="middle" fontSize="13" fill={MUTE}>No signals right now</text>}
-    </svg>
+    <div>
+      <svg viewBox="-20 -20 400 400" className="mx-auto w-full max-w-[400px]" role="group" aria-label="Opportunity radar: live calls by timeframe; closer to the centre = stronger">
+        <defs>
+          <radialGradient id="rd-bg"><stop offset="0%" stopColor="rgb(var(--accent) / 0.16)" /><stop offset="70%" stopColor="rgb(var(--accent) / 0.04)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
+        </defs>
+        <circle cx={C} cy={C} r={R + 12} fill="url(#rd-bg)" />
+        {Array.from({ length: 72 }, (_, i) => {
+          const a = (i * 5) * (Math.PI / 180), long = i % 6 === 0;
+          return <line key={i} x1={C + (R + 3) * Math.cos(a)} y1={C + (R + 3) * Math.sin(a)} x2={C + (R + (long ? 10 : 6)) * Math.cos(a)} y2={C + (R + (long ? 10 : 6)) * Math.sin(a)} stroke={`rgb(var(--accent) / ${long ? 0.55 : 0.22})`} />;
+        })}
+        {TFS.map((_, i) => lit.has(i) && <path key={`w${i}`} d={wedge(i)} fill="rgb(var(--accent) / 0.07)" />)}
+        <circle cx={C} cy={C} r={R} fill="none" stroke="rgb(var(--accent) / 0.45)" />
+        {[0.66, 0.33].map((f) => <circle key={f} cx={C} cy={C} r={R * f} fill="none" stroke="rgb(var(--accent) / 0.16)" strokeDasharray="2 5" />)}
+        {TFS.map((tf, i) => {
+          const a = (i * 60 - 90) * (Math.PI / 180), m = a + Math.PI / 6;
+          return (
+            <g key={tf}>
+              <line x1={C} y1={C} x2={C + R * Math.cos(a)} y2={C + R * Math.sin(a)} stroke="rgb(var(--accent) / 0.16)" />
+              <text x={C + (R + 24) * Math.cos(m)} y={C + (R + 24) * Math.sin(m) + 4} textAnchor="middle" fontSize="12" fontWeight="700" fill={lit.has(i) ? "rgb(var(--accent))" : "rgb(var(--mute))"}>{tf.toUpperCase()}</text>
+            </g>
+          );
+        })}
+        <g className="cc-sweep" style={{ transformOrigin: `${C}px ${C}px` }}><path d={`M${C} ${C} L${C + R} ${C} A${R} ${R} 0 0 0 ${C + R * Math.cos(-Math.PI / 4)} ${C + R * Math.sin(-Math.PI / 4)} Z`} fill="url(#cc-sweep)" /></g>
+        <circle cx={C} cy={C} r="7" fill="url(#cc-gold)" />
+        {placed.map((b) => {
+          const col = b.side > 0 ? UP : DN;
+          return (
+            <g key={`${b.tf}${b.r.symbol}`} className="cc-planet" tabIndex={0} role="button" onClick={() => onSel(b.r.symbol)} onKeyDown={(e) => { if (e.key === "Enter") onSel(b.r.symbol); }}
+              aria-label={`${name(b.r.symbol)} ${b.tf}: ${b.side > 0 ? "long" : "short"}${b.a ? ", grade A" : ""}`}>
+              <circle cx={b.x} cy={b.y} r={b.a ? 13 : 10} fill={b.side > 0 ? "rgb(var(--bull) / 0.18)" : "rgb(var(--bear) / 0.18)"} />
+              {b.a && <circle cx={b.x} cy={b.y} r="13" fill="none" stroke="rgb(var(--accent) / 0.8)" strokeWidth="1.5" />}
+              <circle cx={b.x} cy={b.y} r="5.5" fill={col} />
+              <text x={b.lx} y={b.y + 4} textAnchor={b.anchor} fontSize="12" fontWeight="600" fill="rgb(var(--text))" className="rd-label">{name(b.r.symbol)}</text>
+            </g>
+          );
+        })}
+        {!placed.length && <text x={C} y={C + 30} textAnchor="middle" fontSize="13" fill={MUTE}>No live calls right now</text>}
+      </svg>
+      {calls.length > 0 && (
+        <ul className="mt-2 grid grid-cols-2 gap-1.5">
+          {calls.slice(0, 4).map((b) => (
+            <li key={`l${b.tf}${b.r.symbol}`}>
+              <button type="button" onClick={() => onSel(b.r.symbol)} className="rd-chip">
+                <span className={b.side > 0 ? "text-bull" : "text-bear"}>{b.side > 0 ? "▲" : "▼"}</span>
+                <b>{name(b.r.symbol)}</b><span className="text-mute">{b.tf.toUpperCase()}</span>{b.a && <span className="text-accent">A</span>}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 
@@ -183,38 +218,55 @@ const rets = (c: any[] | null) => (c ?? []).map((k, i, a) => (i ? Math.log(k[4] 
 const week = (c: any[] | null) => (c && c.length > 1 ? (c[c.length - 1][4] / c[0][4] - 1) * 100 : null);
 
 function Universe({ peers, status, mc, onSel }: { peers: string[]; status: any; mc: any; onSel: (s: string) => void }) {
+  // v2.46 redesign: a solar system - BTC as the gold sun, the five biggest coins as planets on their own orbits; the
+  // closer a planet orbits, the more it moved with Bitcoin (7-day hourly correlation); a light beam flows along each
+  // link; planet size = 7-day move size, colour = up / down.
   const btc = useKlines("BTC/USDT", "1h", 168, 900_000);
   const k = [useKlines(peers[0] ?? "ETH/USDT", "1h", 168, 900_000), useKlines(peers[1] ?? "SOL/USDT", "1h", 168, 900_000), useKlines(peers[2] ?? "BNB/USDT", "1h", 168, 900_000),
     useKlines(peers[3] ?? "XRP/USDT", "1h", 168, 900_000), useKlines(peers[4] ?? "DOGE/USDT", "1h", 168, 900_000)];
   const rb = rets(btc.data);
   const nodes = peers.slice(0, 5).map((s, i) => ({ s, c: corr(rb, rets(k[i].data)), w: week(k[i].data) }));
   const alt = mc?.altseason?.value;
+  const bw = week(btc.data);
+  const W = 360, H = 270, C = { x: 180, y: 132 };
+  const maxW = Math.max(1, ...nodes.map((n) => Math.abs(n.w ?? 0)));
   return (
     <div className="space-y-3">
-      <svg viewBox="0 0 360 240" className="w-full" role="group" aria-label="Major coins linked to Bitcoin: a thicker line means the coin moved more with Bitcoin over 7 days">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Bitcoin and the five biggest coins: a closer orbit means the coin moved more with Bitcoin over 7 days">
+        <defs>
+          <radialGradient id="un-sun"><stop offset="0%" stopColor="rgb(var(--accent) / 0.55)" /><stop offset="55%" stopColor="rgb(var(--accent) / 0.12)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
+        </defs>
+        <circle cx={C.x} cy={C.y} r="78" fill="url(#un-sun)" />
+        {[58, 86, 114].map((r, i) => <ellipse key={r} cx={C.x} cy={C.y} rx={r * 1.35} ry={r * 0.82} fill="none" stroke={`rgb(var(--accent) / ${0.3 - i * 0.07})`} strokeDasharray="2 6" />)}
         {nodes.map((n, i) => {
-          const a = (i * 72 - 90) * (Math.PI / 180), x = 180 + 135 * Math.cos(a), y = 118 + 88 * Math.sin(a);
-          return <line key={`l${n.s}`} x1="180" y1="118" x2={x} y2={y} stroke="rgb(var(--accent) / 0.55)" strokeWidth={isNum(n.c) ? Math.max(1, n.c * 7) : 1} strokeDasharray={isNum(n.c) ? undefined : "3 4"} />;
-        })}
-        <circle cx="180" cy="118" r="30" fill="url(#cc-gold)" />
-        <text x="180" y="123" textAnchor="middle" fontSize="13" fontWeight="800" fill="#1a1408">BTC</text>
-        {nodes.map((n, i) => {
-          const a = (i * 72 - 90) * (Math.PI / 180), x = 180 + 135 * Math.cos(a), y = 118 + 88 * Math.sin(a);
+          const c = isNum(n.c) ? Math.max(0, Math.min(1, n.c)) : 0.3;
+          const r = 114 - c * 56;                          // stronger link = inner orbit
+          const a = (i * 72 - 100) * (Math.PI / 180);
+          const x = C.x + r * 1.35 * Math.cos(a), y = C.y + r * 0.82 * Math.sin(a);
+          const size = 11 + 8 * (Math.abs(n.w ?? 0) / maxW);
+          const up = (n.w ?? 0) >= 0;
           return (
             <g key={n.s} className="cc-planet" tabIndex={0} role="button" onClick={() => onSel(n.s)} onKeyDown={(e) => { if (e.key === "Enter") onSel(n.s); }}
-              aria-label={`${name(n.s)}: ${pct(n.w)} in 7 days, correlation with Bitcoin ${isNum(n.c) ? n.c.toFixed(2) : "unknown"}`}>
-              <circle cx={x} cy={y} r="17" fill={(n.w ?? 0) >= 0 ? "url(#cc-up)" : "url(#cc-dn)"} />
-              <text x={x} y={y + 31} textAnchor="middle" fontSize="12" fontWeight="600" fill="rgb(var(--text))">{name(n.s)} <tspan fill={(n.w ?? 0) >= 0 ? UP : DN}>{pct(n.w)}</tspan></text>
+              aria-label={`${name(n.s)}: ${pct(n.w)} in 7 days, moves with Bitcoin ${isNum(n.c) ? Math.round(n.c * 100) + "%" : "unknown"}`}>
+              <line x1={C.x} y1={C.y} x2={x} y2={y} stroke="rgb(var(--accent) / 0.25)" strokeWidth="1" />
+              <line x1={C.x} y1={C.y} x2={x} y2={y} stroke="rgb(var(--accent) / 0.85)" strokeWidth={1 + c * 2.5} strokeDasharray="3 14" className="un-flow" />
+              <circle cx={x} cy={y} r={size + 5} fill={up ? "rgb(var(--bull) / 0.12)" : "rgb(var(--bear) / 0.12)"} />
+              <circle cx={x} cy={y} r={size} fill={up ? "url(#cc-up)" : "url(#cc-dn)"} />
+              <text x={x} y={y + size + 15} textAnchor="middle" fontSize="12" fontWeight="700" fill="rgb(var(--text))">{name(n.s)}</text>
+              <text x={x} y={y + size + 29} textAnchor="middle" fontSize="12" fill={up ? UP : DN}>{pct(n.w)}{isNum(n.c) ? ` · ${Math.round(n.c * 100)}%` : ""}</text>
             </g>
           );
         })}
+        <circle cx={C.x} cy={C.y} r="28" fill="url(#cc-gold)" />
+        <text x={C.x} y={C.y + 1} textAnchor="middle" fontSize="13" fontWeight="800" fill="#1a1408">BTC</text>
+        <text x={C.x} y={C.y + 15} textAnchor="middle" fontSize="11" fontWeight="700" fill="#3a2a05">{pct(bw)}</text>
       </svg>
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div className="cc-cell"><div className="text-mute">Breadth · 4H</div><div className="text-sm font-semibold"><span className="text-bull">{status?.bull ?? "—"} ▲</span> <span className="text-bear">{status?.bear ?? "—"} ▼</span></div></div>
         <div className="cc-cell"><div className="text-mute">Alt strength</div><div className="text-sm font-semibold">{isNum(alt) ? `${Math.round(alt)} / 100` : "—"}</div></div>
-        <div className="cc-cell"><div className="text-mute">BTC · 7 days</div><div className={`text-sm font-semibold ${(week(btc.data) ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(week(btc.data))}</div></div>
+        <div className="cc-cell"><div className="text-mute">BTC · 7 days</div><div className={`text-sm font-semibold ${(bw ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(bw)}</div></div>
       </div>
-      <p className="text-xs text-mute">Line thickness = how closely each coin moved with Bitcoin, hourly, last 7 days.</p>
+      <p className="text-xs text-mute">Closer orbit and thicker beam = moved more with Bitcoin (%, hourly, 7 days). Planet size = 7-day move.</p>
     </div>
   );
 }
@@ -346,7 +398,7 @@ export default function Command() {
         <section className="cc-panel p-4" aria-label="Opportunity radar">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Opportunity radar</h2><span className="text-xs text-mute">closer = stronger</span></div>
           <Radar boards={boards.map((b) => b.data?.rows ?? [])} onSel={pick} />
-          <div className="mt-1 flex flex-wrap justify-center gap-3 text-xs text-mute"><span className="text-bull">● long</span><span className="text-bear">● short</span><span>● AI leaning, no call</span><span className="text-accent">◎ grade A</span></div>
+          <div className="mt-1 flex flex-wrap justify-center gap-3 text-xs text-mute"><span className="text-bull">● long</span><span className="text-bear">● short</span><span className="text-accent">◎ grade A</span><span>lit slice = live calls</span></div>
         </section>
         <section className="cc-panel p-4" aria-label="Market universe">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market universe</h2><span className="text-xs text-mute">7 days</span></div>
@@ -357,14 +409,14 @@ export default function Command() {
           <div className="mt-3"><Mission health={health.data} connected={connected} /></div>
         </section>
       </div>
-      <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <section className="cc-panel p-4 sm:p-5" aria-label="Live signal journeys">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signal journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
           <div className="mt-3"><SignalJourneys track={track.data} /></div>
         </section>
-        <section className="cc-panel p-4 sm:p-5" aria-label="Market heat globe">
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Market heat globe">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
-          <div className="mt-3"><HeatGlobe news={news.data} /></div>
+          <div className="mt-3 flex flex-1 flex-col justify-center"><HeatGlobe news={news.data} /></div>
         </section>
       </div>
       <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
