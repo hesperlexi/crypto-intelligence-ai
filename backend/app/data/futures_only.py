@@ -93,9 +93,15 @@ class MexcFutures:
         return self._size[c]
 
     async def _native(self, symbol: str, tf: str, start_ms: int, end_ms: int) -> list[list[float]]:
+        # MEXC fills a window that reaches past now with flat made-up candles dated in the future (probe 17 Nov 2026):
+        # never ask past now, and drop any candle that opens after now
+        now = now_ms()
+        end_ms = min(end_ms, now)
+        if end_ms < start_ms:
+            return []
         d = await self._get(f"kline/{FUT_ONLY[symbol.upper()]}",
                             {"interval": NATIVE[tf], "start": start_ms // 1000, "end": end_ms // 1000})
-        return mexc_rows(d or {}, await self.size(symbol))
+        return [r for r in mexc_rows(d or {}, await self.size(symbol)) if r[0] <= now]
 
     async def fetch_ohlcv(self, symbol: str, timeframe: str, since: int | None = None,
                           limit: int = 1000) -> list[list[float]]:

@@ -37,7 +37,7 @@ class FakeMexc:
         now = int(time.time() * 1000)
         a = max(params["start"] * 1000, self.listed)
         a = -(-a // step) * step
-        b = min(params["end"] * 1000, now)
+        b = params["end"] * 1000 + 50 * step          # like MEXC: windows past now come back with future candles
         ts = list(range(a, b + 1, step))[:2000]
         return Resp({"success": True, "data": {"time": [t // 1000 for t in ts], "open": [1.0] * len(ts),
                                                "high": [2.0 + i for i in range(len(ts))], "low": [0.5] * len(ts),
@@ -58,6 +58,7 @@ def test_candles_skip_to_listing_and_shape():
     assert rows and rows[0][0] >= listed and len(rows) <= 1000
     assert rows[0][5] == 1.0                         # 100 contracts x 0.01
     assert all(b[0] - a[0] == 900_000 for a, b in zip(rows, rows[1:]))
+    assert max(r[0] for r in rows) <= now
 
 
 def test_12h_and_3d_built_aligned_and_complete():
@@ -97,7 +98,8 @@ def test_store_sync_backfills_from_listing():
     p = prov(now - 15 * D1)
     st = CandleStore(Database("sqlite:///:memory:"))
     n = asyncio.run(st.sync(p, "MSTR/USDT", "15m", bars=30000))
-    assert n >= 15 * 96 - 2 and st.count("binance", "MSTR/USDT", "15m") >= 15 * 96 - 2
+    assert 15 * 96 - 2 <= st.count("binance", "MSTR/USDT", "15m") <= 15 * 96 + 2
+    assert st.last_ts("binance", "MSTR/USDT", "15m") <= now
 
 
 def test_mstr_added_to_watchlist_once(tmp_path, monkeypatch):
