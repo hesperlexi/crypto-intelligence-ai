@@ -390,7 +390,7 @@ MIGRATION_FLAGS = (
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
-    "coins_growth_v216", "test_tp08_v240",
+    "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -795,6 +795,15 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/bots", {**doc, "bots": keep, "defaults_added": seen, "updated_at": now_ms()})
                 notes["public_1d3d_v212"] = {"removed": sorted(demo_ids & {b.get("id") for b in doc["bots"]}), "added": added}
         rt.db.set_setting("public_1d3d_v212", True)
+    # v2.42 (owner, 16 Nov 2026, testing mode with free test members): the 15m grade-B test (v2.40, 15-16 Nov) was
+    # stopped; its calls are left out of the record and disclosed on Results with their own figures (views.excluded_tests)
+    if not rt.db.get_setting("exclude_15m_b_v242", False):
+        ex = [x for x in (rt.db.get_setting("record_excludes", None) or []) if isinstance(x, dict)]
+        ex.append({"timeframe": "15m", "grade": "B", "from": 1794744000000, "to": now_ms(),
+                   "note": "15m grade B was tested for a few hours and stopped"})
+        rt.db.set_setting("record_excludes", ex)
+        rt.db.set_setting("exclude_15m_b_v242", True)
+        notes["exclude_15m_b_v242"] = True
     # v2.40 (owner, 15 Nov 2026): add the 15m TP1-0.8R test bot once (removing it later sticks)
     if not rt.db.get_setting("test_tp08_v240", False) and os.environ.get("TEST_BOT_TP08", "1") != "0":
         from .services.bots import TEST_TP08_15M

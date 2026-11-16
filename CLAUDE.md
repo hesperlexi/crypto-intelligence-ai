@@ -917,7 +917,10 @@ lightweight-charts baseline series, dotted "start" line, end marker), Track reco
 `Sparkline split={0}`, Hesper `BalanceCurve` (baseline = run start), Lab `Pulse` (filter removed), Backtest strategy line.
 
 ## v2.42 15m back to grade A + lenient Guardian on 15m (owner, 16 Nov 2026)
-15m grade B (v2.40) lost live → `analysis.A_ONLY_TFS` "15m,1h,1d,3d" again. 15m grade-B calls already published stay in
-the record (ground rule: never delete / hide losing trades; owner asked to remove them - declined, options offered).
+15m grade B (v2.40) lost live → `analysis.A_ONLY_TFS` "15m,1h,1d,3d" again. Owner (testing mode, 5 free test members):
+the stopped test is left out of the record - setting `record_excludes` [{timeframe 15m, grade B, from 15 Nov 12:00Z, to
+the migration time}] (flag `exclude_15m_b_v242`), applied in `views.record_clause` (json_extract payload grade), and
+DISCLOSED on Results with its own figures (`track_record.excluded_tests`: calls, won, lost, total net, open). Rows are
+never deleted; they stay in the Signal log. Test `tests/test_exclude_v242.py`.
 Trade Guardian on 15m only: TIGHTEN ≥ 65, CLOSE ≥ 90 (`guardian.TF_BANDS`, env `GUARDIAN_15M_TIGHTEN_AT/_CLOSE_AT`);
 other timeframes 50 / 75.

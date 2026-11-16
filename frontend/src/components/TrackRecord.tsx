@@ -145,6 +145,11 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
         </section>
       )}
       {!compact && d.last_7d && <Last7 r={d.last_7d} />}
+      {d.excluded_tests?.map((x: any) => (
+        <p key={`${x.timeframe}${x.grade}`} className="px-1 text-xs text-mute">
+          {x.timeframe.toUpperCase()} grade {x.grade} was tested {fmtDate(x.from)}–{fmtDate(x.to)} and stopped; its {x.calls} call{x.calls === 1 ? "" : "s"} ({x.wins} won, {x.losses} lost{isNum(x.total_net_pct) ? `, ${x.total_net_pct > 0 ? "+" : ""}${x.total_net_pct.toFixed(1)}% in total after fees` : ""}{x.open ? `, ${x.open} still open` : ""}) are not counted. They stay in the Signal log.
+        </p>
+      ))}
       {(d.restart?.text || d.withdrawn?.count > 0) && (
         <p className="px-1 text-xs text-mute">
           {d.restart?.text}{d.restart?.text && d.withdrawn?.count > 0 ? " " : ""}

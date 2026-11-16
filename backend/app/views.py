@@ -260,7 +260,37 @@ def record_clause(rt: Runtime) -> tuple[str, tuple]:
     for tf, t in sorted(record_since_tf(rt).items()):
         sql += " AND (timeframe != ? OR created_at >= ?)"
         params += [tf, t]
+    # v2.42 (owner, 16 Nov 2026, testing mode): a stopped test (15m grade B, 15-16 Nov) is not counted; it is disclosed
+    # on Results with its own figures (`excluded_tests`), and its calls stay in the Signal log
+    for x in record_excludes(rt):
+        sql += (" AND NOT (timeframe = ? AND created_at >= ? AND created_at < ? "
+                "AND COALESCE(json_extract(payload, '$.grade'), '') = ?)")
+        params += [x["timeframe"], int(x["from"]), int(x["to"]), x["grade"]]
     return sql, tuple(params)
+
+
+def record_excludes(rt: Runtime) -> list[dict[str, Any]]:
+    v = rt.db.get_setting("record_excludes", None)
+    return [x for x in v if isinstance(x, dict) and {"timeframe", "grade", "from", "to"} <= set(x)] if isinstance(v, list) else []
+
+
+def excluded_tests(rt: Runtime) -> list[dict[str, Any]] | None:
+    """Disclosure of each stopped test left out of the record: its calls, wins / losses and total after fees."""
+    out = []
+    for x in record_excludes(rt):
+        rows = rt.db.query("SELECT * FROM signals WHERE status != 'INFO' AND side != 0 AND timeframe = ? AND created_at >= ? "
+                           "AND created_at < ? AND COALESCE(json_extract(payload, '$.grade'), '') = ? AND created_at >= ?",
+                           (x["timeframe"], int(x["from"]), int(x["to"]), x["grade"], record_since(rt)))
+        if not rows:
+            continue
+        nets = [tracking.net_pct(r) for r in rows if r["status"] in tracking.CLOSED_STATUSES]
+        nets = [n for n in nets if n is not None]
+        out.append({"timeframe": x["timeframe"], "grade": x["grade"], "from": x["from"], "to": x["to"],
+                    "note": x.get("note"), "calls": len(rows), "closed": len(nets),
+                    "wins": sum(1 for n in nets if n > 0), "losses": sum(1 for n in nets if n <= 0),
+                    "total_net_pct": round(sum(nets), 2) if nets else None,
+                    "open": sum(1 for r in rows if r["status"] == "OPEN")})
+    return out or None
 
 
 def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: int = 150) -> dict[str, Any]:
@@ -346,7 +376,7 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
                      "max_drawdown_pct": st.get("max_drawdown_pct"), "started_at": (bt.get("state") or {}).get("started_at")})
     first = min((x["created_at"] for x in sigs), default=None)
     out = {"generated_at": now_ms(), "since": first, "record_since": since0 or None,
-           "restart": restart_note(rt), "results_net": True, "withdrawn": _withdrawn(rt), "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
+           "restart": restart_note(rt), "results_net": True, "withdrawn": _withdrawn(rt), "excluded_tests": excluded_tests(rt), "record_since_tf": record_since_tf(rt) or None, "testing_since": rt.db.get_setting("testing_since", None), "live": {"summary": summ(closed), "by_timeframe": by_tf,
             "by_grade": by_grade, "open": sum(x["status"] == "OPEN" for x in sigs), "curve": curve[-500:],
             "not_filled": sum(x["status"] == "NOT_FILLED" for x in sigs), "void": sum(x["status"] == "VOID" for x in sigs),
             "signals": sigs[:limit]},
