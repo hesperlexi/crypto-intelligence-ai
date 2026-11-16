@@ -198,11 +198,114 @@ def _sentiment(db: Database, now: int) -> dict[str, Any] | None:
     return {"latest": latest, "series": series}
 
 
-def news_view(db: Database, heads: dict[str, Any] | None, cal_status: dict[str, Any] | None) -> dict[str, Any]:
+# v2.43 (owner, 16 Nov 2026: "show the impact after the news - bullish or bearish - and why"). After a high-impact
+# release: (1) how the number came in against the forecast and what such a surprise usually means for crypto (the
+# common market reading, matched on the title; only when the calendar has the actual), and (2) what BTC actually did
+# afterwards, from the engine's own 15m candles (open of the release candle -> close 1 h and 4 h later). The verdict is
+# the market's reaction, never a forecast.
+SURPRISE = (   # pattern, a HIGHER number than expected is ... for crypto, words for higher / lower
+    (r"\bCPI\b|Consumer Price|\bPCE\b|\bPPI\b|Producer Price|Inflation", "bearish", "hotter than expected", "cooler than expected",
+     "Hot inflation keeps interest rates high, which usually weighs on crypto", "Cooler inflation raises the odds of rate cuts, which usually helps crypto"),
+    (r"Unemployment|Jobless Claims", "bullish", "higher than expected", "lower than expected",
+     "A weaker job market raises the odds of rate cuts, which usually helps crypto", "A strong job market keeps rates higher for longer, which usually weighs on crypto"),
+    (r"Federal Funds|Interest Rate|Rate Decision", "bearish", "higher than expected", "lower than expected",
+     "A higher rate than expected usually weighs on crypto", "A lower rate than expected usually helps crypto"),
+    (r"Non-Farm|Nonfarm|NFP|Employment Change|Retail Sales|GDP|ISM|PMI|JOLTS|Job Openings", "bearish", "stronger than expected", "weaker than expected",
+     "A strong economy can keep rates higher for longer, which usually weighs on crypto", "A softer economy raises the odds of rate cuts, which usually helps crypto"),
+)
+CALM_PCT = 0.3          # BTC move within +-0.3 % = calm reaction
+REACT_FROM_MS = 15 * 60_000
+
+
+def parse_num(s: Any) -> float | None:
+    if s is None:
+        return None
+    t = str(s).strip().replace(",", "")
+    m = re.match(r"^([<>]?)(-?\d+(?:\.\d+)?)\s*([KMBT%]?)", t, re.I)
+    if not m:
+        return None
+    return float(m.group(2)) * {"K": 1e3, "M": 1e6, "B": 1e9, "T": 1e12}.get(m.group(3).upper(), 1.0)
+
+
+def surprise(e: dict[str, Any]) -> dict[str, Any] | None:
+    a, f = parse_num(e.get("actual")), parse_num(e.get("forecast"))
+    if a is None or f is None:
+        return None
+    for pat, higher, w_hi, w_lo, why_hi, why_lo in SURPRISE:
+        if re.search(pat, e.get("title") or "", re.I):
+            if a == f:
+                return {"read": "neutral", "words": "in line with the forecast",
+                        "why": "No surprise against the forecast, so the number itself gave the market little new."}
+            hi = a > f
+            lean = higher if hi else ("bullish" if higher == "bearish" else "bearish")
+            return {"read": lean, "words": w_hi if hi else w_lo, "why": why_hi if hi else why_lo}
+    return None
+
+
+def reaction(candles: Any, ts: int, now: int) -> dict[str, Any] | None:
+    """BTC from the open of the 15m candle the release fell in to the close 1 h / 4 h later (closed candles only)."""
+    if candles is None or len(candles) == 0 or now < ts + REACT_FROM_MS:
+        return None
+    start = ts - ts % 900_000
+    df = candles[candles["ts"] >= start]
+    if df.empty or int(df["ts"].iloc[0]) != start:
+        return None
+    p0 = float(df["open"].iloc[0])
+    out: dict[str, Any] = {"price": round(p0, 2)}
+    for key, mins in (("h1", 60), ("h4", 240)):
+        end = start + mins * 60_000
+        w = df[df["ts"] < end]
+        if int(w["ts"].iloc[-1]) + 900_000 == end:
+            out[key] = round((float(w["close"].iloc[-1]) / p0 - 1) * 100, 2)
+    w = df[df["ts"] < start + 60 * 60_000]
+    out["swing_pct"] = round((float(w["high"].max()) - float(w["low"].min())) / p0 * 100, 2)
+    out["sofar"] = round((float(df["close"].iloc[min(len(df), 16) - 1]) / p0 - 1) * 100, 2)
+    return out
+
+
+def after_release(e: dict[str, Any], candles: Any, now: int) -> dict[str, Any] | None:
+    if e.get("impact") != "High" or e["ts"] > now:
+        return None
+    sp, rx = surprise(e), reaction(candles, int(e["ts"]), now)
+    if sp is None and rx is None:
+        return None
+    move = None if rx is None else rx.get("h1", rx.get("sofar"))
+    verdict = None if move is None else "bullish" if move >= CALM_PCT else "bearish" if move <= -CALM_PCT else "calm"
+    parts = []
+    if sp:
+        parts.append(f"Came in {sp['words']} ({e.get('actual')} vs {e.get('forecast')} forecast). {sp['why']}.")
+    if rx and move is not None:
+        span = "in the hour after" if "h1" in rx else "so far"
+        if verdict == "calm":
+            parts.append(f"BTC barely moved {span} ({move:+.2f}%).")
+        else:
+            parts.append(f"BTC {'rose' if move > 0 else 'fell'} {abs(move):.2f}% {span}"
+                         + (f" ({rx['h4']:+.2f}% after 4 h)" if "h4" in rx else "") + ".")
+        if not sp and explain(e.get("title") or ""):
+            parts.append(f"Why it matters: {explain(e.get('title') or '')}")
+        if sp and sp["read"] in ("bullish", "bearish") and verdict in ("bullish", "bearish") and sp["read"] != verdict:
+            parts.append("The market moved against the usual reading - other news or positioning outweighed the number.")
+    return {"verdict": verdict, "data_read": sp["read"] if sp else None, "move_1h": rx.get("h1") if rx else None,
+            "move_4h": rx.get("h4") if rx else None, "swing_1h": rx.get("swing_pct") if rx else None,
+            "summary": " ".join(parts)}
+
+
+def news_view(db: Database, heads: dict[str, Any] | None, cal_status: dict[str, Any] | None,
+              btc: Any = None) -> dict[str, Any]:
     now = now_ms()
     items = [{**h, "coins": coin_tags(h.get("title") or "")} for h in (heads or {}).get("items", [])]
+    cal = events(db, now - 2 * 86_400_000, now + 10 * 86_400_000)
+    for e in cal:
+        try:
+            a = after_release(e, btc, now)
+        except Exception:
+            a = None
+        if a:
+            e["after"] = a
+    last = next((e for e in reversed(cal) if e.get("after") and e["country"] == "USD" and now - e["ts"] <= 12 * 3_600_000), None)
     return {"generated_at": now, "sentiment": _sentiment(db, now),
-            "calendar": events(db, now - 2 * 86_400_000, now + 10 * 86_400_000),
+            "last_high": last,
+            "calendar": cal,
             "risk_now": event_risk(db, now),
             "next_high": next((e for e in events(db, now - AFTER_MS, now + 10 * 86_400_000)
                                if e["impact"] == "High" and e["country"] == "USD"), None),

@@ -10,6 +10,30 @@ import { useApi } from "../lib/api";
 import { CoinConstellation, Intercept, NewsSpectrum, OrbitTrack, ReleaseDial, SignalBeacon } from "../components/NewsViz";
 import { ago, isNum } from "../lib/format";
 
+// v2.43: after a high-impact release - how the number came in (when the calendar has it) and what BTC actually did
+const VERDICT: Record<string, [string, string, string]> = {
+  bullish: ["Bullish reaction", "bg-bull/15 text-bull border-bull/40", "▲"],
+  bearish: ["Bearish reaction", "bg-bear/15 text-bear border-bear/40", "▼"],
+  calm: ["Calm reaction", "bg-glass/10 text-mute border-glass/20", "•"],
+};
+const sgn = (v: number) => `${v > 0 ? "+" : ""}${v.toFixed(2)}%`;
+
+function ImpactNote({ a, compact = false }: { a: any; compact?: boolean }) {
+  if (!a) return <p className="mt-1 text-xs text-mute">Released. Reading the market's reaction…</p>;
+  const v = a.verdict ? VERDICT[a.verdict] : null;
+  return (
+    <div className="mt-1.5">
+      <div className="flex flex-wrap items-center gap-1.5 text-xs">
+        {v ? <span className={`rounded border px-1.5 py-0.5 font-semibold ${v[1]}`}>{v[2]} {v[0]}</span>
+          : <span className="rounded border border-glass/20 px-1.5 py-0.5 text-mute">Reaction pending</span>}
+        {isNum(a.move_1h) && <span className="num text-mute">BTC 1 h <b className={a.move_1h > 0 ? "text-bull" : a.move_1h < 0 ? "text-bear" : "text-text"}>{sgn(a.move_1h)}</b></span>}
+        {isNum(a.move_4h) && <span className="num text-mute">4 h <b className={a.move_4h > 0 ? "text-bull" : a.move_4h < 0 ? "text-bear" : "text-text"}>{sgn(a.move_4h)}</b></span>}
+      </div>
+      {a.summary && <p className={`mt-1 text-xs text-text/85 ${compact ? "line-clamp-3" : ""}`}>{a.summary}</p>}
+    </div>
+  );
+}
+
 const IMPACT: Record<string, string> = { High: "bg-bear/15 text-bear border-bear/40", Medium: "bg-warn/15 text-warn border-warn/40" };
 const SRC_DOT: Record<string, string> = { CoinDesk: "bg-accent", Cointelegraph: "bg-bull", Decrypt: "bg-warn" };
 
@@ -59,7 +83,8 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
   const s = d.sentiment;
   const m = s?.latest?.market;
   const [word, tone] = mood(m?.score);
-  const nh = d.next_high;
+  const nh = (d.calendar ?? []).find((e: any) => e.impact === "High" && e.country === "USD" && e.ts > now) ?? (d.next_high?.ts > now ? d.next_high : null);
+  const lh = d.last_high;
   const risk = d.risk_now;
   const day = heads.filter((h) => h.ts && now - h.ts <= 24 * 3_600_000).length;
   const week = (d.calendar ?? []).filter((e: any) => e.impact === "High" && e.ts > now && e.ts - now <= 7 * 86_400_000).length;
@@ -91,6 +116,12 @@ function Overview({ d, now, heads }: { d: any; now: number; heads: any[] }) {
             <ReleaseDial ts={nh.ts} now={now} size={92} />
           </div>
         ) : <p className="mt-2 text-sm text-mute">None scheduled in the next days.</p>}
+        {lh && (
+          <div className="mt-3 border-t border-glass/[0.06] pt-2.5">
+            <div className="text-xs text-mute">Just out · {lh.title} · {ago(lh.ts)}</div>
+            <ImpactNote a={lh.after} compact />
+          </div>
+        )}
       </div>
       <div className="border-b border-glass/[0.06] p-4 md:border-b-0 md:border-r">
         <div className="label">New signals</div>
@@ -224,8 +255,10 @@ export default function News() {
   if (v.error) return <ErrorBox error={v.error} retry={v.reload} />;
   const d = v.data ?? {};
   const cal: any[] = (d.calendar ?? []).filter((e: any) => all || e.impact === "High");
-  const upcoming = cal.filter((e) => e.ts > now - 60 * 60_000);
-  const past = cal.filter((e) => e.ts <= now - 60 * 60_000).reverse().slice(0, 8);
+  // v2.43: a released high-impact item stays in the list for 12 h with its reaction, then moves to "Earlier"
+  const keep = (e: any) => e.ts > now - (e.impact === "High" ? 12 * 3_600_000 : 60 * 60_000);
+  const upcoming = cal.filter(keep);
+  const past = cal.filter((e) => !keep(e)).reverse().slice(0, 8);
   const groups: [string, any[]][] = [];
   for (const e of upcoming) {
     const k = dayKey(e.ts);
@@ -267,7 +300,8 @@ export default function News() {
                           <span className="font-medium">{e.title}</span>
                           <span className={`rounded border px-1.5 text-xs font-bold ${IMPACT[e.impact] ?? ""}`}>{e.impact}</span>
                         </div>
-                        {e.explain && <p className="mt-0.5 text-xs text-mute">{e.explain}</p>}
+                        {e.explain && !(e.ts <= now) && <p className="mt-0.5 text-xs text-mute">{e.explain}</p>}
+                        {e.ts <= now && e.impact === "High" && <ImpactNote a={e.after} />}
                         {(e.forecast || e.previous || e.actual) && (
                           <div className="num mt-1 flex flex-wrap gap-x-4 text-xs">
                             {e.actual && <span>Actual <b className="text-text">{e.actual}</b></span>}
@@ -276,7 +310,7 @@ export default function News() {
                           </div>
                         )}
                       </div>
-                      <span className={`num whitespace-nowrap pt-0.5 text-xs ${near ? "font-semibold text-bear" : "text-mute"}`}>{countdown(e.ts, now)}</span>
+                      <span className={`num whitespace-nowrap pt-0.5 text-xs ${near ? "font-semibold text-bear" : "text-mute"}`}>{e.ts <= now ? `out ${ago(e.ts)}` : countdown(e.ts, now)}</span>
                     </li>
                   );
                 })}
@@ -287,7 +321,12 @@ export default function News() {
             <details className="border-t border-glass/[0.06] px-4 py-2 text-sm">
               <summary className="cursor-pointer text-mute">Earlier this week ({past.length})</summary>
               <ul className="mt-2 space-y-1 text-xs text-mute">
-                {past.map((e) => <li key={e.id ?? `${e.ts}-${e.title}`}><span className="num">{dayKey(e.ts)} {hhmm(e.ts)}</span> · {e.country} {e.title}{e.actual ? ` · actual ${e.actual}` : ""}</li>)}
+                {past.map((e) => (
+                  <li key={e.id ?? `${e.ts}-${e.title}`}>
+                    <span className="num">{dayKey(e.ts)} {hhmm(e.ts)}</span> · {e.country} {e.title}{e.actual ? ` · actual ${e.actual}` : ""}
+                    {e.after && <ImpactNote a={e.after} />}
+                  </li>
+                ))}
               </ul>
             </details>
           )}

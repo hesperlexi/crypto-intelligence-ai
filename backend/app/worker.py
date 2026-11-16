@@ -1492,8 +1492,14 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
             return {"screened": r["screened"], "picks": [p["symbol"] for p in r["picks"][:5]]}
         detail["radar"] = step("radar", run_radar)
     if fetch_context:
+        def _btc15():
+            try:
+                df = rt.candles("BTC/USDT", "15m")
+                return df.tail(400) if df is not None else None
+            except Exception:
+                return None
         step("news_publish", lambda: sink.view("news", news.news_view(rt.db, getattr(rt, "headlines", None),
-                                                                        getattr(rt, "calendar_status", None))))
+                                                                        getattr(rt, "calendar_status", None), _btc15())))
         due = news.due_notifications(rt.db)
         if due:
             detail["news_push"] = step("news_push", lambda: sink.send_push(due))

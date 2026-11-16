@@ -985,7 +985,10 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .fx-lite .panel { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; background-color: rgb(var(--panel) / 0.94) !important; }
 .fx-lite .ai-card::after { display: none; }
 @media (pointer: coarse) {
-  .fx-lite .xeno-sweep, .fx-lite .xeno-blip, .fx-lite .bot-drone, .fx-lite .wave-glint { animation: none !important; }
+  .fx-lite .xeno-blip, .fx-lite .wave-glint { animation: none !important; }
+  /* v2.43 (owner: "radar is stuck on mobile / tablet"): the sweep and the drones only rotate / move (transform), which
+     the GPU composites cheaply - kept moving, a little slower */
+  .fx-lite .xeno-sweep { animation-duration: 12s !important; will-change: transform; }
 }
 
 /* v2.41 lively fleet pulse: lines draw in once (no filters, cheap on phones) */

@@ -924,3 +924,12 @@ DISCLOSED on Results with its own figures (`track_record.excluded_tests`: calls,
 never deleted; they stay in the Signal log. Test `tests/test_exclude_v242.py`.
 Trade Guardian on 15m only: TIGHTEN ≥ 65, CLOSE ≥ 90 (`guardian.TF_BANDS`, env `GUARDIAN_15M_TIGHTEN_AT/_CLOSE_AT`);
 other timeframes 50 / 75.
+
+## v2.43 radar moving on phones + news impact after a release (owner, 16 Nov 2026)
+- Demo bots radar sweep moves again on touch screens (`.fx-lite .xeno-sweep` 12 s, transform only); blips / glint stay off.
+- News: after a high-impact release (`news.after_release`, in `news_view` with the engine's BTC 15m candles): surprise
+  reading when the calendar has the actual (`SURPRISE` rules: hot inflation / strong economy / higher rate = usually
+  bearish, weaker jobs = usually bullish; else "Why it matters" from `EXPLAIN`) + BTC's real reaction (release candle open
+  → close 1 h / 4 h later; verdict bullish / bearish ≥ ±0.3 %, else calm; "moved against the usual reading" note).
+  Calendar rows `after`, view `last_high` (≤ 12 h). UI `News.ImpactNote`: Overview "Just out" block, released High items
+  stay in the list 12 h ("out N ago"). Tests `tests/test_news_after_v243.py`.
