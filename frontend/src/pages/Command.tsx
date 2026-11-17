@@ -48,7 +48,8 @@ function useNarrow() {
 function Galaxy({ rows, open, sel, onSel }: { rows: any[]; open: Set<string>; sel: string; onSel: (s: string) => void }) {
   const { tickers } = useLive();
   const narrow = useNarrow();                    // phones: a tighter drawing so labels stay readable
-  const W = narrow ? 400 : 640, H = narrow ? 430 : 640;   // v2.55: squarer, so the galaxy fills its card
+  // v2.55 (owner): the galaxy has the whole first row on computers, so the orbits are stretched wide (KX)
+  const W = narrow ? 400 : 1100, H = narrow ? 430 : 600, KX = narrow ? 1 : 1.75, KY = narrow ? 0.92 : 0.95;
   const C = { x: W / 2, y: H / 2 };
   const ranked = [...rows].sort((a, b) => (b.quote_volume_24h ?? 0) - (a.quote_volume_24h ?? 0));
   const maxV = Math.max(1, ...ranked.map((r) => r.quote_volume_24h ?? 0));
@@ -58,13 +59,13 @@ function Galaxy({ rows, open, sel, onSel }: { rows: any[]; open: Set<string>; se
     const a = ((i / Math.max(1, t.length)) * 360 + ti * 37 - 90) * (Math.PI / 180);
     const chg = tickers[r.symbol]?.change_pct ?? r.change_24h_pct;
     const size = (narrow ? 7 : 9) + (narrow ? 9 : 15) * Math.sqrt((r.quote_volume_24h ?? 0) / maxV);
-    return { r, x: C.x + RAD[ti] * Math.cos(a), y: C.y + RAD[ti] * Math.sin(a) * 0.92, size, chg, sig: open.has(r.symbol) };
+    return { r, x: C.x + RAD[ti] * KX * Math.cos(a), y: C.y + RAD[ti] * Math.sin(a) * KY, size, chg, sig: open.has(r.symbol) };
   }));
   return (
     <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Crypto galaxy: every coin you watch as a planet">
-      <circle cx={C.x} cy={C.y} r={narrow ? 80 : 120} fill="url(#cc-glow)" />
-      {RAD.map((r) => <ellipse key={r} cx={C.x} cy={C.y} rx={r} ry={r * 0.92} fill="none" stroke="rgb(var(--accent) / 0.22)" strokeDasharray="2 6" />)}
-      <g className="cc-orbit" style={{ transformOrigin: `${C.x}px ${C.y}px` }}><circle cx={C.x + RAD[2]} cy={C.y} r="3" fill="#fff1c4" /></g>
+      <ellipse cx={C.x} cy={C.y} rx={narrow ? 80 : 190} ry={narrow ? 80 : 130} fill="url(#cc-glow)" />
+      {RAD.map((r) => <ellipse key={r} cx={C.x} cy={C.y} rx={r * KX} ry={r * KY} fill="none" stroke="rgb(var(--accent) / 0.22)" strokeDasharray="2 6" />)}
+      <g className="cc-orbit" style={{ transformOrigin: `${C.x}px ${C.y}px` }}><circle cx={C.x + RAD[2] * KX} cy={C.y} r="3" fill="#fff1c4" /></g>
       <circle cx={C.x} cy={C.y} r={narrow ? 22 : 32} fill="url(#cc-gold)" />
       <text x={C.x} y={C.y + 5} textAnchor="middle" fontSize="15" fontWeight="800" fill="#1a1408">AI</text>
       {planets.map((p) => {
@@ -293,7 +294,7 @@ function Mission({ health, connected }: { health: any; connected: boolean }) {
     ["Errors · recent", errs ? `${errs} logged by the engine` : "None logged", String(errs), errs ? warn : ok],
   ];
   return (
-    <ul className="space-y-2">
+    <ul className="grid h-full auto-rows-fr gap-2 sm:grid-cols-2">
       {rows.map(([k, sub, st, c]) => (
         <li key={k} className="cc-row">
           <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c, boxShadow: `0 0 0 4px color-mix(in srgb, ${c} 18%, transparent)` }} />
@@ -393,24 +394,23 @@ export default function Command() {
         <Segmented value={tf} onChange={setTf} options={TFS.map((t) => [t, t.toUpperCase()] as [string, string])} label="Timeframe" />
         <span className="hidden text-xs text-mute sm:inline">Galaxy, AI core, breadth and the scan follow it. The radar always shows every timeframe.</span>
       </div>
-      {/* row 1: the galaxy beside what the engine sees + system status (right column ends level with the galaxy) */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.75fr)_minmax(0,1fr)]">
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Crypto galaxy">
-          <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div><h2 className="font-display text-xl font-semibold">Crypto galaxy</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a planet to scan it.</p></div>
-            <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● up 24h</span><span className="text-bear">● down 24h</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
-          </div>
-          <div className="flex flex-1 items-center"><div className="w-full"><Galaxy rows={rows} open={open} sel={focus} onSel={pick} /></div></div>
-        </section>
-        <div className="cc-stack">
-          <section className="cc-panel p-4 sm:p-5" aria-label="AI intelligence core">
-            <Core row={row} f4={f4} status={dash.data?.market_status} ctx={ctx.data} health={health.data} tf={tf} />
-          </section>
-          <section className="cc-panel p-4 sm:p-5" aria-label="Mission control">
-            <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Mission control</h2><span className="text-xs text-mute">real system status</span></div>
-            <div className="mt-3"><Mission health={health.data} connected={connected} /></div>
-          </section>
+      {/* row 1 (owner, 18 Nov 2026): the galaxy on its own */}
+      <section className="cc-panel p-4 sm:p-5" aria-label="Crypto galaxy">
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <div><h2 className="font-display text-xl font-semibold">Crypto galaxy</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a planet to scan it.</p></div>
+          <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● up 24h</span><span className="text-bear">● down 24h</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
         </div>
+        <Galaxy rows={rows} open={open} sel={focus} onSel={pick} />
+      </section>
+      {/* row 2: what the engine sees beside the system status, same height */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <section className="cc-panel p-4 sm:p-5" aria-label="AI intelligence core">
+          <Core row={row} f4={f4} status={dash.data?.market_status} ctx={ctx.data} health={health.data} tf={tf} />
+        </section>
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Mission control">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Mission control</h2><span className="text-xs text-mute">real system status</span></div>
+          <div className="mt-3 flex-1"><Mission health={health.data} connected={connected} /></div>
+        </section>
       </div>
       {/* row 2: three equal instruments; footers pinned so the bottoms line up */}
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -427,17 +427,20 @@ export default function Command() {
           <Scan symbol={focus} row={row} f4={f4} tf={tf} />
         </section>
       </div>
-      <section className="cc-panel p-4 sm:p-5" aria-label="Live signal journeys">
-        <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signal journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
-        <div className="mt-3"><SignalJourneys track={track.data} /></div>
-      </section>
+      {/* row 4: running signals beside coin vs coin; then the globe */}
+      <div className="grid gap-4 xl:grid-cols-2">
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Live signal journeys">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signal journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
+          <div className="mt-3 flex-1"><SignalJourneys track={track.data} /></div>
+        </section>
+        <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Coin vs coin</h2><span className="text-xs text-mute">pick up to 3</span></div>
+          <div className="mt-3"><LazyMount height={320}><CoinCompare rows={rows} /></LazyMount></div>
+        </section>
+      </div>
       <section className="cc-panel p-4 sm:p-5" aria-label="Market heat globe">
         <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
         <div className="mt-3"><LazyMount height={380}><Suspense fallback={<div className="skeleton h-[360px] rounded-xl" />}><MarketGlobe news={news.data} /></Suspense></LazyMount></div>
-      </section>
-      <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
-        <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Coin vs coin</h2><span className="text-xs text-mute">pick up to 3</span></div>
-        <div className="mt-3"><LazyMount height={320}><CoinCompare rows={rows} /></LazyMount></div>
       </section>
     </div>
   );

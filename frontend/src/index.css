@@ -1335,8 +1335,7 @@ main table tbody tr:nth-child(even):hover > td, main table tbody tr:nth-child(od
 .cc-stack > :last-child { flex: 1 1 auto; }
 
 /* v2.55 signal journeys: slim lanes with a comet */
-.sj-list { display: grid; gap: 8px; }
-@media (min-width: 1280px) { .sj-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 14px; } }
+.sj-list { display: grid; gap: 8px; grid-auto-rows: minmax(56px, 1fr); }
 .sj-lane { display: grid; grid-template-columns: 92px minmax(0, 1fr) 104px; align-items: center; gap: 14px; padding: 9px 12px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.07); background: rgb(var(--glass) / 0.025); }
 .sj-name { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
 .sj-name:hover b { color: rgb(var(--accent)); }

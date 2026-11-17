@@ -25,7 +25,7 @@ export function SignalJourneys({ track }: { track: any }) {
   const open: any[] = (track?.live?.signals ?? []).filter((x: any) => x.status === "OPEN").slice(0, 8);
   if (!open.length) return <p className="py-6 text-center text-sm text-mute">No signals running right now. New calls appear here the moment they open.</p>;
   return (
-    <ul className="sj-list">
+    <ul className="sj-list h-full">
       {open.map((x) => {
         const s = x.side === "SHORT" ? -1 : 1;
         const tps = [x.tp1, x.tp2, x.tp3].filter(isNum);
@@ -114,7 +114,7 @@ export function CoinCompare({ rows }: { rows: any[] }) {
               <div className="flex items-baseline justify-between"><Link to={`/asset/${slug(s)}`} className="font-semibold hover:underline" style={{ color: COLORS[i] }}>{name(s)}</Link><span className={`num text-sm font-semibold ${(d[d.length - 1] ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(d[d.length - 1])} 7d</span></div>
               <dl className="mt-1.5 grid grid-cols-2 gap-x-2 gap-y-1 text-xs">
                 <dt className="text-mute">Trend 4H</dt><dd className="text-right">{r?.trend_label ?? "—"}</dd>
-                <dt className="text-mute">AI up / down</dt><dd className="num text-right">{isNum(r?.p_up) ? `${Math.round(r.p_up * 100)} / ${Math.round(r.p_down * 100)}%` : "—"}</dd>
+                <dt className="text-mute whitespace-nowrap">AI lean</dt><dd className="num text-right">{isNum(r?.p_up) ? `${Math.round(r.p_up * 100)} / ${Math.round(r.p_down * 100)}%` : "—"}</dd>
                 <dt className="text-mute">Volatility</dt><dd className="text-right">{r?.volatility ? String(r.volatility).toLowerCase() : "—"}</dd>
                 <dt className="text-mute">RSI 14</dt><dd className="num text-right">{isNum(r?.rsi) ? r.rsi.toFixed(0) : "—"}</dd>
                 <dt className="text-mute">Our record</dt><dd className="num text-right">{!opened ? <button className="text-accent" onClick={() => setOpened(true)}>show</button> : sc ? `${sc.wins}/${sc.closed} won · ${pct(sc.total_net_pct)}` : radar.loading ? "…" : "no calls yet"}</dd>
