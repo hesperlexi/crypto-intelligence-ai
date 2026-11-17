@@ -161,9 +161,9 @@ export default function Report() {
         <button className="btn btn-primary" onClick={download}>Download image</button>
         <button className="btn" onClick={copy}>{copied ? "Caption copied" : "Copy caption"}</button>
       </div>
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-        <canvas ref={cv} className="w-full max-w-[560px] rounded-xl border border-glass/10" style={{ aspectRatio: story ? "9 / 16" : "1 / 1" }} aria-label="Weekly report image" />
-        <div className="space-y-3">
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)]">
+        <canvas ref={cv} className="mx-auto w-full max-w-[560px] self-start rounded-xl border border-glass/10" style={{ aspectRatio: story ? "9 / 16" : "1 / 1" }} aria-label="Weekly report image" />
+        <div className="ov-stack flex min-w-0 flex-col gap-3">
           <section className="panel panel-hero p-4">
             <h2 className="label mb-2">Caption</h2>
             <pre className="whitespace-pre-wrap font-sans text-sm text-text/90">{cap}</pre>

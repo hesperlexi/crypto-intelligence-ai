@@ -1289,3 +1289,11 @@ main table tbody tr:nth-child(even):hover > td, main table tbody tr:nth-child(od
 .mg-heat > span { flex: 1; border-radius: 2px 2px 0 0; min-width: 2px; }
 .mg-heat > .is-up { background: linear-gradient(rgb(var(--bull)), rgb(var(--bull) / 0.35)); }
 .mg-heat > .is-down { background: linear-gradient(rgb(var(--bear)), rgb(var(--bear) / 0.35)); }
+
+/* v2.54 alignment (owner, 17 Nov 2026: "cards not aligned"): a column stack's last card fills the column, also when it
+   is wrapped (a <section id> around a Card); cards in a stretched grid row fill their cell */
+.ov-stack > :last-child > .panel:only-child { height: 100%; display: flex; flex-direction: column; }
+.ov-stack > :last-child > .panel:only-child > .card-body { flex: 1 1 auto; }
+.grid-even > * { height: 100%; }
+.grid-even > .panel, .grid-even > * > .panel:only-child { display: flex; flex-direction: column; height: 100%; }
+.grid-even > .panel > .card-body, .grid-even > * > .panel:only-child > .card-body { flex: 1 1 auto; }

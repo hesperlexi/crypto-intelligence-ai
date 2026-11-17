@@ -35,20 +35,20 @@ function MemberSettings() {
   return (
     <div className="space-y-8">
       <PageHead />
-      <section aria-label="Your membership" className="grid items-start gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+      <section aria-label="Your membership" className="grid gap-4 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <MembershipCard />
         <InviteCard />
       </section>
       <section aria-labelledby="set-device" className="space-y-3">
         <h2 id="set-device" className="section-title">This device</h2>
-        <div className="grid items-start gap-4 lg:grid-cols-2">
-          <div className="space-y-4"><NotificationsCard /><AndroidCard /></div>
-          <div className="space-y-4"><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /></div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          <div className="ov-stack flex min-w-0 flex-col gap-4"><NotificationsCard /><AndroidCard /></div>
+          <div className="ov-stack flex min-w-0 flex-col gap-4"><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /></div>
         </div>
       </section>
       <section aria-labelledby="set-help" className="space-y-3">
         <h2 id="set-help" className="section-title">Help</h2>
-        <div className="grid items-start gap-4 lg:grid-cols-3"><ManualCard /><ContactCard /><AboutCard /></div>
+        <div className="grid gap-4 lg:grid-cols-3"><ManualCard /><ContactCard /><AboutCard /></div>
       </section>
     </div>
   );
@@ -99,11 +99,11 @@ function AdminSettings() {
       <PageHead />
       {msg && <p className="text-sm text-accent">{msg}</p>}
       {err && <ErrorBox error={err} />}
-      <div className="grid items-start gap-4 lg:grid-cols-2">
-        <div className="space-y-4"><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /><AboutCard /></div>
-        <div className="space-y-4"><TelegramCard /><NotificationsCard /><AndroidCard /><ManualCard /></div>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="ov-stack flex min-w-0 flex-col gap-4"><Card title="Appearance"><AppearancePanel /></Card><ViewModeCard /><AboutCard /></div>
+        <div className="ov-stack flex min-w-0 flex-col gap-4"><TelegramCard /><NotificationsCard /><AndroidCard /><ManualCard /></div>
       </div>
-      <div className="grid items-start gap-4 lg:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-2">
         <Card title="Risk profile">
           <div className="grid gap-3 sm:grid-cols-2">
             {RISK_FIELDS.map(([k, label]) => (

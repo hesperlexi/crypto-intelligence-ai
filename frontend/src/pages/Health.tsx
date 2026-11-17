@@ -282,7 +282,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
             <Dot level={attention.length ? (attention.some((s) => s.level === "down") ? "down" : "warn") : "ok"} />
             {attention.length ? `${attention.length} need${attention.length === 1 ? "s" : ""} attention` : "All systems operational"}
           </span>}>
-          <ul className="grid grid-cols-1 gap-2 min-[360px]:grid-cols-2 lg:grid-cols-1 min-[1180px]:grid-cols-2">
+          <ul className="grid auto-rows-fr grid-cols-1 gap-2 min-[360px]:grid-cols-2 lg:grid-cols-1 min-[1180px]:grid-cols-2 [&>li:last-child:nth-child(odd)]:min-[360px]:col-span-2 lg:[&>li:last-child:nth-child(odd)]:col-span-1 min-[1180px]:[&>li:last-child:nth-child(odd)]:col-span-2">
             {services.map((s) => {
               const inner = (
                 <>
@@ -290,7 +290,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
                     <span className="min-w-0 break-words text-sm font-medium leading-snug text-text">{s.name}</span>
                     <span className="flex h-5 shrink-0 items-center"><Dot level={s.level} pulse={s.id === "hc-engine"} /></span>
                   </span>
-                  <span className="mt-0.5 block break-words text-xs leading-snug text-mute">{s.line}</span>
+                  <span className="mt-0.5 line-clamp-2 break-words text-xs leading-snug text-mute" title={s.line}>{s.line}</span>
                 </>
               );
               const cls = "tile block h-full w-full min-w-0 px-3 py-2.5 text-left transition-colors hover:border-accent/40 focus-visible:border-accent/60";
@@ -387,7 +387,6 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
           <Link to="/results?tab=bots" className="mt-3 block border-t border-glass/[0.06] pt-3 text-center text-sm text-mute transition-colors hover:text-accent">View all bots →</Link>
         </Card>
 
-        {turn && <div id="hc-turn" className="scroll-mt-24 lg:col-span-2 xl:col-span-3"><MarketTurnCard v={turn} /></div>}
         <Card title="Safeguards" className="lg:col-span-2 xl:col-span-1">
           <div id="hc-safeguards" className="scroll-mt-24 space-y-4">
             <div>
@@ -420,6 +419,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
             </div>
           </div>
         </Card>
+        {turn && <div id="hc-turn" className="scroll-mt-24 lg:col-span-2 xl:col-span-3"><MarketTurnCard v={turn} /></div>}
       </div>
 
       {/* ---- details (collapsible) ---- */}

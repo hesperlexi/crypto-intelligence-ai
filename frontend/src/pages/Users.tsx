@@ -220,7 +220,7 @@ export default function Users() {
       )}
 
       <RewardsCard all={all} />
-      <div className="grid items-start gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
+      <div className="grid-even grid gap-4 xl:grid-cols-2"><PricesCard cfg={cfg} act={act} /><LimitsCard act={act} total={all.length} /></div>
       <section className="panel flex flex-col gap-2 px-4 py-3 sm:flex-row sm:items-center sm:justify-between" aria-label="Payment screenshots">
         <div className="text-sm"><span className="font-semibold">Payment screenshots</span>
           <span className="block text-xs text-mute">Deleted when you accept or reject. <span className="num">{checkedProofs}</span> older checked screenshot{checkedProofs === 1 ? "" : "s"} still stored.</span></div>

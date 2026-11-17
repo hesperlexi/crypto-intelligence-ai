@@ -1042,3 +1042,9 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
 - Model-set study `python -m app.research modelset --timeframes X` (`research_modelset.py`, workflow `research-modelset.yml`,
   one job per timeframe on branch `models-v253`, results `research-results/results/modelset-<tf>-*.json`): retrain each coin
   as control (all models) / no_arima / rf_only, judge on the test split (net R), series bootstrap vs control.
+- v2.54 alignment pass (owner, 17 Nov 2026: "cards not aligned"): Health = KPI row · System health / Open signals / Data
+  sources · Models / Demo bots / Safeguards · Market turn (full width) · details; service tiles `auto-rows-fr`, line clamped
+  to 2, an odd last tile spans the row. CSS `.grid-even` (cards fill their grid cell) and `.ov-stack` last-card fill also for
+  wrapped cards; Settings columns use `ov-stack`, paired grids stretch; Users prices / limits `grid-even`; Report image +
+  side cards (`ov-stack`); Signals coin list sticky beside the long signal card on computers (scrolls inside). Check script:
+  scratchpad `align.js` (uneven bottoms / unfilled rows per page).
