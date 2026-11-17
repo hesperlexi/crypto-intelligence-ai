@@ -253,57 +253,48 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
 
   return (
     <>
-      {/* ---- KPI row ---- */}
-      <div className="grid grid-cols-1 gap-3 min-[360px]:grid-cols-2 sm:gap-4 xl:grid-cols-4">
-        <Kpi hero label="Engine" icon="pulse" value={engineLevel === "ok" ? "LIVE" : engineLevel === "off" ? DASH : engineLevel === "down" ? "STALE" : "LATE"}
-          valueClass={engineLevel === "ok" ? "text-bull" : engineLevel === "down" ? "text-bear" : engineLevel === "warn" ? "text-warn" : ""}
-          chip={<Badge tone={LEVEL_TONE[engineLevel]}>{tickAge == null ? "no cycle" : ago(e.last_tick_finished)}</Badge>}
-          caption={isNum(e.last_tick_seconds) ? `cycle ${e.last_tick_seconds}s · every ${e.schedule_minutes ?? 5} min` : `every ${e.schedule_minutes ?? 5} min`} />
-        <Kpi label="Writes today" icon="db" value={writes != null ? fmtNum(writes, 0) : DASH}
-          valueClass={wLevel === "down" ? "text-bear" : wLevel === "warn" ? "text-warn" : ""}
-          chip={writes != null ? <Badge tone={LEVEL_TONE[wLevel]}>{wPct.toFixed(0)}%</Badge> : undefined}
-          caption={`lean at ${fmtNum(engineBudget, 0)} · limit ${fmtNum(wLimit, 0)}`}
-          bar={<Bar pct={wPct} marker={(engineBudget / wLimit) * 100} tone={writes != null && writes >= engineBudget ? "bg-warn" : "bg-accent"}
-            label={writes != null ? `${fmtNum(writes, 0)} of ${fmtNum(wLimit, 0)} writes used` : "no data"} />} />
-        <Kpi label="Reads today" icon="eye" value={reads != null ? fmtNum(reads, 0) : DASH}
-          valueClass={rLevel === "down" ? "text-bear" : rLevel === "warn" ? "text-warn" : ""}
-          chip={reads != null ? <Badge tone={LEVEL_TONE[rLevel]}>{rPct.toFixed(1)}%</Badge> : undefined}
-          caption={reads != null ? `limit ${fmtNum(rLimit, 0)}/day` : "after the next update"}
-          bar={<Bar pct={rPct} tone={reads != null && reads >= rLimit * 0.5 ? "bg-warn" : "bg-accent"} label={reads != null ? `${fmtNum(reads, 0)} of ${fmtNum(rLimit, 0)} reads used` : "no data"} />} />
-        <Kpi label="Open signals" icon="target" to="/results?tab=track" value={tr ? openSigs.length : DASH}
-          chip={closed != null ? <Badge tone="text">{closed} closed</Badge> : undefined}
-          caption={tr?.record_since ? `since ${fmtDate(tr.record_since)}` : "track record"} />
-      </div>
+      {/* ---- v2.55 status banner: one sentence for the whole system + the three numbers that matter ---- */}
+      <section className={`panel panel-hero hc-banner ${attention.length ? (attention.some((x) => x.level === "down") ? "is-down" : "is-warn") : "is-ok"}`} aria-label="System status">
+        <div className="hc-banner-main">
+          <div className="hc-state">
+            <span className="hc-beacon" aria-hidden="true"><Dot level={attention.length ? (attention.some((x) => x.level === "down") ? "down" : "warn") : "ok"} pulse /></span>
+            <div className="min-w-0">
+              <div className="text-xs text-mute">System status</div>
+              <div className="font-display text-xl font-semibold leading-tight sm:text-2xl">{attention.length ? `${attention.length} ${attention.length === 1 ? "thing needs" : "things need"} attention` : "Everything is running"}</div>
+              <div className="mt-1 text-sm text-mute">{attention.length ? attention.map((x) => x.name).join(" · ") : `${services.length} services checked`} · engine <b className={engineLevel === "ok" ? "text-bull" : engineLevel === "down" ? "text-bear" : "text-warn"}>{engineLevel === "ok" ? "live" : engineLevel === "off" ? "not started" : engineLevel === "down" ? "stale" : "late"}</b>{tickAge != null ? `, last cycle ${ago(e.last_tick_finished)}` : ""}{isNum(e.last_tick_seconds) ? ` (${e.last_tick_seconds}s)` : ""}</div>
+            </div>
+          </div>
+          <div className="hc-meters">
+            <div className="hc-meter">
+              <div className="flex items-baseline justify-between gap-2"><span className="text-xs text-mute">Writes today</span><span className={`num text-xs ${wLevel === "ok" ? "text-mute" : wLevel === "down" ? "text-bear" : "text-warn"}`}>{writes != null ? `${wPct.toFixed(0)}%` : ""}</span></div>
+              <div className="num text-lg font-semibold">{writes != null ? fmtNum(writes, 0) : DASH}<span className="text-xs font-normal text-mute"> / {fmtNum(wLimit, 0)}</span></div>
+              <Bar pct={wPct} marker={(engineBudget / wLimit) * 100} tone={writes != null && writes >= engineBudget ? "bg-warn" : "bg-accent"} label={writes != null ? `${fmtNum(writes, 0)} of ${fmtNum(wLimit, 0)} writes used; lean mode from ${fmtNum(engineBudget, 0)}` : "no data"} />
+            </div>
+            <div className="hc-meter">
+              <div className="flex items-baseline justify-between gap-2"><span className="text-xs text-mute">Reads today</span><span className={`num text-xs ${rLevel === "ok" ? "text-mute" : rLevel === "down" ? "text-bear" : "text-warn"}`}>{reads != null ? `${rPct.toFixed(1)}%` : ""}</span></div>
+              <div className="num text-lg font-semibold">{reads != null ? fmtNum(reads, 0) : DASH}<span className="text-xs font-normal text-mute"> / {fmtNum(rLimit, 0)}</span></div>
+              <Bar pct={rPct} tone={reads != null && reads >= rLimit * 0.5 ? "bg-warn" : "bg-accent"} label={reads != null ? `${fmtNum(reads, 0)} of ${fmtNum(rLimit, 0)} reads used` : "no data"} />
+            </div>
+            <Link to="/results?tab=track" className="hc-meter transition-colors hover:border-accent/40">
+              <div className="text-xs text-mute">Signals</div>
+              <div className="num text-lg font-semibold">{tr ? openSigs.length : DASH}<span className="text-xs font-normal text-mute"> open</span></div>
+              <div className="text-xs text-mute">{closed != null ? `${closed} closed` : ""}{tr?.record_since ? ` since ${fmtDate(tr.record_since)}` : ""}</div>
+            </Link>
+          </div>
+        </div>
+        {/* every service as one compact chip; tap = its details */}
+        <ul className="hc-services" aria-label="Services">
+          {services.map((x) => {
+            const inner = (<><Dot level={x.level} /><span className="min-w-0"><span className="block truncate text-sm font-medium text-text">{x.name}</span><span className="block truncate text-xs text-mute" title={x.line}>{x.line}</span></span></>);
+            const cls = `hc-svc ${x.level === "warn" ? "is-warn" : x.level === "down" ? "is-down" : ""}`;
+            return <li key={x.id} className="min-w-0">{x.target.startsWith("/") ? <Link to={x.target} className={cls}>{inner}</Link>
+              : <button type="button" className={cls} onClick={() => jump(x.target)} aria-label={`${x.name}: ${x.line}. Show details`}>{inner}</button>}</li>;
+          })}
+        </ul>
+      </section>
 
-      {/* ---- system health · open signals · data sources ---- */}
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <Card title="System health" right={
-          <span className={`inline-flex items-center gap-1.5 text-xs font-semibold ${attention.length ? (attention.some((s) => s.level === "down") ? "text-bear" : "text-warn") : "text-bull"}`}>
-            <Dot level={attention.length ? (attention.some((s) => s.level === "down") ? "down" : "warn") : "ok"} />
-            {attention.length ? `${attention.length} need${attention.length === 1 ? "s" : ""} attention` : "All systems operational"}
-          </span>}>
-          <ul className="grid auto-rows-fr grid-cols-1 gap-2 min-[360px]:grid-cols-2 lg:grid-cols-1 min-[1180px]:grid-cols-2 [&>li:last-child:nth-child(odd)]:min-[360px]:col-span-2 lg:[&>li:last-child:nth-child(odd)]:col-span-1 min-[1180px]:[&>li:last-child:nth-child(odd)]:col-span-2">
-            {services.map((s) => {
-              const inner = (
-                <>
-                  <span className="flex items-start justify-between gap-2">
-                    <span className="min-w-0 break-words text-sm font-medium leading-snug text-text">{s.name}</span>
-                    <span className="flex h-5 shrink-0 items-center"><Dot level={s.level} pulse={s.id === "hc-engine"} /></span>
-                  </span>
-                  <span className="mt-0.5 line-clamp-2 break-words text-xs leading-snug text-mute" title={s.line}>{s.line}</span>
-                </>
-              );
-              const cls = "tile block h-full w-full min-w-0 px-3 py-2.5 text-left transition-colors hover:border-accent/40 focus-visible:border-accent/60";
-              return (
-                <li key={s.id} className="min-w-0 h-full">
-                  {s.target.startsWith("/") ? <Link to={s.target} className={cls}>{inner}</Link>
-                    : <button type="button" className={cls} onClick={() => jump(s.target)} aria-label={`${s.name}: ${s.line}. Show details`}>{inner}</button>}
-                </li>
-              );
-            })}
-          </ul>
-        </Card>
-
+      {/* ---- v2.55 cards flow in two balanced columns (each card only as tall as its content) ---- */}
+      <div className="hc-flow">
         <Card title="Open signals" right={<Segmented label="Order" value={sigSort} onChange={setSigSort} options={[["oldest", "Oldest"], ["newest", "Newest"]] as const} />}>
           {!tr ? <Loading /> : sigs.length ? (
             <ul className="-my-1 divide-y divide-glass/[0.06]">
@@ -331,7 +322,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
           </Link>
         </Card>
 
-        <Card title="Data sources" right={<span className="text-xs font-semibold text-mute"><span className={fresh === sources.length ? "text-bull" : "text-warn"}>{fresh}/{sources.length}</span> fresh</span>} className="lg:col-span-2 xl:col-span-1">
+        <Card title="Data sources" right={<span className="text-xs font-semibold text-mute"><span className={fresh === sources.length ? "text-bull" : "text-warn"}>{fresh}/{sources.length}</span> fresh</span>}>
           <ul id="hc-sources" className="-my-1 scroll-mt-24 divide-y divide-glass/[0.06]">
             {sources.map((s) => (
               <li key={s.name} className="flex min-w-0 items-center gap-3 py-2.5">
@@ -345,10 +336,6 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
             ))}
           </ul>
         </Card>
-      </div>
-
-      {/* ---- models · bots · safeguards ---- */}
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <Card title="Models" right={<Badge tone={modelErr.length ? "warn" : "bull"}>{modelErr.length ? `${modelErr.length} in error` : "no errors"}</Badge>}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 min-[360px]:grid-cols-3">
             <Tile label="Active" value={`${active.length}/${models.length}`} />
@@ -387,7 +374,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
           <Link to="/results?tab=bots" className="mt-3 block border-t border-glass/[0.06] pt-3 text-center text-sm text-mute transition-colors hover:text-accent">View all bots →</Link>
         </Card>
 
-        <Card title="Safeguards" className="lg:col-span-2 xl:col-span-1">
+        <Card title="Safeguards">
           <div id="hc-safeguards" className="scroll-mt-24 space-y-4">
             <div>
               <div className="mb-2 flex items-center justify-between gap-2"><Caps>Safety switch</Caps><Badge tone={safety.length ? "warn" : "bull"}>{safety.length ? `${safety.length} paused` : "all active"}</Badge></div>
@@ -419,8 +406,8 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
             </div>
           </div>
         </Card>
-        {turn && <div id="hc-turn" className="scroll-mt-24 lg:col-span-2 xl:col-span-3"><MarketTurnCard v={turn} /></div>}
       </div>
+      {turn && <div id="hc-turn" className="scroll-mt-24"><MarketTurnCard v={turn} /></div>}
 
       {/* ---- details (collapsible) ---- */}
       <div className="space-y-3">
