@@ -1050,3 +1050,9 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   wrapped cards; Settings columns use `ov-stack`, paired grids stretch; Users prices / limits `grid-even`; Report image +
   side cards (`ov-stack`); Signals coin list sticky beside the long signal card on computers (scrolls inside). Check script:
   scratchpad `align.js` (uneven bottoms / unfilled rows per page).
+- v2.55 (owner, 17-18 Nov 2026, branch `redesign-v255`): Health = status banner (`.hc-banner`, meters, service chips) +
+  flowing cards (`.hc-flow`). Results: only a period switch added (since start / Today / This week / Last 7 days /
+  Last 30 days, `ResultsBoard.periodStart`, viewer's local time; "since start" = the same live figures; owner: do not
+  redesign Results). Command Centre order: galaxy alone (wide orbits `KX`) · Intelligence core + Mission control ·
+  radar + universe · signal journeys (slim lanes `.sj-*`, comet, flaring targets) + Coin vs coin · Market heat ·
+  Deep-space scan (unchanged).
