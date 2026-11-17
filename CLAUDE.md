@@ -1031,3 +1031,14 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   70 %, mean weight 0.41; ARIMA skill < 0 in 91 % of series (weight 0.08 in 80); technical rules < 0 in 79 %; boosted trees /
   logistic positive on 15m but strongly negative on 12h / 1d / 3d. Ensemble skill > 0 in 91 % (15m), 84 % (1h), 74 % (4h),
   33 % (12h), 14 % (1d), 4 % (3d); calibration error 1-2.5 % (15m-4h) vs 4-10 % (12h-3d). Nothing changed live.
+- v2.53 (owner, 17 Nov 2026): light theme "Ivory" softened (low glare: ink 222 216 202, panel 234 229 217, raised 216 209 193,
+  text 38 34 28; bull / bear / warn / accent deepened, all ≥ 4.4:1 on raised; glass sheen / edge / input dimmed).
+  Command Centre "Market heat" = `components/MarketGlobe.tsx` (lazy): real Earth (Natural Earth 1:110m land via
+  world-atlas → `src/data/land110.json`, dynamic import) on a canvas with `d3-geo` orthographic, turns 6°/s (~20 fps, only
+  on screen / tab visible, still under reduced motion), drag to spin, night side from the real sun, TSE / DFM / LSE / NYSE
+  glow while open (UTC winter hours, weekdays). Insights: exchange status + countdown, BTC change and volume share per
+  session (Asia 0-8, Europe 8-14, US 14-21, Late US 21-24 UTC) over the last 24 closed 1h candles, hourly volume heat,
+  last hour vs 48 h, next high-impact US release with countdown. Old `HeatGlobe` removed. No Firestore reads.
+- Model-set study `python -m app.research modelset --timeframes X` (`research_modelset.py`, workflow `research-modelset.yml`,
+  one job per timeframe on branch `models-v253`, results `research-results/results/modelset-<tf>-*.json`): retrain each coin
+  as control (all models) / no_arima / rf_only, judge on the test split (net R), series bootstrap vs control.

@@ -11,8 +11,7 @@
     "deploy": "npm run build && firebase deploy --only hosting,firestore"
   },
   "dependencies": {
-    "@types/d3-geo": "^3.1.0",
-    "d3-geo": "^3.1.1",
+    "d3-geo": "3.1.1",
     "firebase": "10.14.1",
     "lightweight-charts": "4.2.0",
     "react": "18.3.1",
@@ -20,6 +19,7 @@
     "react-router-dom": "6.26.2"
   },
   "devDependencies": {
+    "@types/d3-geo": "3.1.0",
     "@types/react": "18.3.11",
     "@types/react-dom": "18.3.0",
     "@vitejs/plugin-react": "4.3.2",
