@@ -1,0 +1,87 @@
+{
+ "ok": true,
+ "command": "modelset",
+ "timeframes": {
+  "12h": {
+   "coins_done": 33,
+   "skipped": [
+    "BARD/USDT: control not evaluated: BARD/USDT 12h: no model / too few out-of-sample bars; no_arima not evaluated: BARD/USDT 12h: no model / too few out-of-sample bars; rf_only not evaluated: BARD/USDT 12h: no mode",
+    "BIO/USDT: control not evaluated: BIO/USDT 12h: no model / too few out-of-sample bars; no_arima not evaluated: BIO/USDT 12h: no model / too few out-of-sample bars; rf_only not evaluated: BIO/USDT 12h: no model /",
+    "ERA/USDT: control not evaluated: ERA/USDT 12h: no model / too few out-of-sample bars; no_arima not evaluated: ERA/USDT 12h: no model / too few out-of-sample bars; rf_only not evaluated: ERA/USDT 12h: no model /",
+    "MSTR/USDT: control not evaluated: MSTR/USDT 12h: no model / too few out-of-sample bars; no_arima not evaluated: MSTR/USDT 12h: no model / too few out-of-sample bars; rf_only not evaluated: MSTR/USDT 12h: no mode",
+    "U/USDT: control not evaluated: U/USDT 12h: no model / too few out-of-sample bars; no_arima not evaluated: U/USDT 12h: no model / too few out-of-sample bars; rf_only not evaluated: U/USDT 12h: no model / too f",
+    "XAUT/USDT: control not evaluated: XAUT/USDT 12h: no model / too few out-of-sample bars; no_arima not evaluated: XAUT/USDT 12h: no model / too few out-of-sample bars; rf_only not evaluated: XAUT/USDT 12h: no mode"
+   ],
+   "control": {
+    "trades": 248,
+    "avg_r": 0.0093,
+    "total_r": 2.29,
+    "win_rate": 0.504,
+    "series": 33,
+    "drawdown_r_sum": 75.75
+   },
+   "no_arima": {
+    "trades": 248,
+    "avg_r": 0.0897,
+    "total_r": 22.25,
+    "win_rate": 0.54,
+    "series": 33,
+    "drawdown_r_sum": 65.52
+   },
+   "rf_only": {
+    "trades": 255,
+    "avg_r": 0.0559,
+    "total_r": 14.24,
+    "win_rate": 0.541,
+    "series": 33,
+    "drawdown_r_sum": 69.57
+   },
+   "no_arima_vs_control": {
+    "n_series": 33,
+    "share_better": 0.991,
+    "ci90_r_per_trade": [
+     0.0234,
+     0.1413
+    ]
+   },
+   "rf_only_vs_control": {
+    "n_series": 33,
+    "share_better": 0.798,
+    "ci90_r_per_trade": [
+     -0.0436,
+     0.1425
+    ]
+   }
+  }
+ },
+ "models_control": [
+  "prior_baseline",
+  "prev_candle",
+  "logistic",
+  "technical_rules",
+  "random_forest",
+  "hist_gbm",
+  "xgboost",
+  "lightgbm",
+  "arima"
+ ],
+ "variants": {
+  "no_arima": [
+   "prior_baseline",
+   "prev_candle",
+   "logistic",
+   "technical_rules",
+   "random_forest",
+   "hist_gbm",
+   "xgboost",
+   "lightgbm"
+  ],
+  "rf_only": [
+   "prior_baseline",
+   "prev_candle",
+   "random_forest"
+  ]
+ },
+ "seconds": 2416.1,
+ "method": "Model-set study (audit v2.52, owner 17 Nov 2026: \"anything that improves the results\") - READ-ONLY on production.\n\n`python -m app.research modelset --timeframes 4h --budget 17000`\nFor each active coin of the timeframe, on a PRIVATE copy of the engine state:\n  1. control  = retrain with today's model set (every available model) - so all variants see the same, latest data;\n  2. no_arima = the same without ARIMA (skill < 0 in 91 % of series, 17 Nov models-value study);\n  3. rf_only  = Random Forest alone (+ the two baselines, which never carry weight) - it is the best model in 154/233.\nEach fresh model is judged exactly like `research_engine.evaluate` judges the live pipeline: its walk-forward\nout-of-sample calls through the live decision rules and the record's exits, 0.15 % costs, one call at a time; first 70 %\nof the series chooses, the untouched last 30 % is the test. Reported: test trades, avg / total R, win rate, profit factor\nper variant, the paired difference to the control per series, and a series bootstrap of that difference.\nAggregates only; nothing is written to the live engine state."
+}
