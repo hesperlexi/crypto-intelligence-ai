@@ -235,7 +235,7 @@ function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: a
   const maxW = Math.max(1, ...nodes.map((n) => Math.abs(n.w ?? 0)));
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className="flex flex-1 items-center"><svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Bitcoin and the five biggest coins: a closer orbit means the coin moved more with Bitcoin over 7 days">
+      <div className="flex flex-1 items-center"><svg viewBox={`0 0 ${W} ${H}`} className="mx-auto w-full max-w-[480px]" role="group" aria-label="Bitcoin and the five biggest coins: a closer orbit means the coin moved more with Bitcoin over 7 days">
         <defs>
           <radialGradient id="un-sun"><stop offset="0%" stopColor="rgb(var(--accent) / 0.55)" /><stop offset="55%" stopColor="rgb(var(--accent) / 0.12)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
         </defs>
@@ -329,33 +329,33 @@ function Scan({ symbol, row, f4, tf }: { symbol: string; row: any; f4: any; tf: 
     ["News", f4?.news_risk?.title ? `${f4.news_risk.title}` : "No major release near", f4?.news_risk ? "text-warn" : ""],
   ];
   return (
-    <div className="flex h-full flex-col gap-4">
-      <div className="flex items-center gap-3">
-        <svg viewBox="0 0 170 150" width="76" height="67" aria-hidden="true" className="shrink-0">
-          <ellipse cx="85" cy="75" rx="80" ry="20" fill="none" stroke="rgb(var(--accent) / 0.45)" strokeWidth="2" transform="rotate(-16 85 75)" />
+    <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_320px] lg:items-start">
+      <div className="flex flex-col items-center gap-2 text-center">
+        <svg viewBox="0 0 170 150" width="170" height="150" aria-hidden="true">
+          <ellipse cx="85" cy="75" rx="80" ry="20" fill="none" stroke="rgb(var(--accent) / 0.45)" strokeWidth="1.5" transform="rotate(-16 85 75)" />
           <circle cx="85" cy="75" r="46" fill={symbol.startsWith("PAXG") ? "url(#cc-gold)" : (chg ?? 0) >= 0 ? "url(#cc-up)" : "url(#cc-dn)"} />
-          <path d="M5 75 A80 20 0 0 0 165 75" fill="none" stroke="#f0b90b" strokeWidth="3" transform="rotate(-16 85 75)" />
+          <path d="M5 75 A80 20 0 0 0 165 75" fill="none" stroke="#f0b90b" strokeWidth="2" transform="rotate(-16 85 75)" />
         </svg>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-baseline justify-between gap-2"><h2 className="font-display text-lg font-semibold">Deep-space scan</h2><span className="text-xs text-mute">{T}</span></div>
-          <div className="flex items-center gap-2"><CoinAvatar symbol={symbol} size={20} /><span className="font-display text-xl font-bold">{name(symbol)}</span>
-            <span className="num ml-auto text-base font-semibold">{fmtPrice(px)} <span className={`text-sm ${(chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(chg)}</span></span></div>
-        </div>
+        <div className="flex items-center gap-2"><CoinAvatar symbol={symbol} size={24} /><span className="font-display text-2xl font-bold">{name(symbol)}</span></div>
+        <div className="num text-xl font-semibold">{fmtPrice(px)} <span className={`text-sm ${(chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(chg)}</span></div>
       </div>
-      <div className="grid grid-cols-2 gap-2">
-        {inds.map(([k, v, c]) => <div key={k} className="cc-cell"><div className="truncate text-xs text-mute">{k}</div><div className={`truncate font-semibold ${c ?? ""}`}>{v}</div></div>)}
-      </div>
-      {pos != null && (
-        <div>
-          <div className="text-xs text-mute">Nearest support to resistance</div>
-          <div className="cc-structure mt-2"><span style={{ left: `${pos * 100}%` }} /></div>
-          <div className="num mt-1.5 flex justify-between text-xs"><span className="text-bull">{fmtPrice(sup)}</span><span className="text-bear">{fmtPrice(res)}</span></div>
+      <div className="min-w-0 space-y-4">
+        <h2 className="font-display text-lg font-semibold">Deep-space scan · {T}</h2>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+          {inds.map(([k, v, c]) => <div key={k} className="cc-cell"><div className="text-xs text-mute">{k}</div><div className={`truncate font-semibold ${c ?? ""}`}>{v}</div></div>)}
         </div>
-      )}
-      <div className="cc-cell mt-auto space-y-3 p-4">
+        {pos != null && (
+          <div>
+            <div className="text-xs text-mute">Market structure · nearest support to resistance</div>
+            <div className="cc-structure mt-2"><span style={{ left: `${pos * 100}%` }} /></div>
+            <div className="num mt-1.5 flex justify-between text-xs"><span className="text-bull">Support {fmtPrice(sup)}</span><span className="text-accent">Price {fmtPrice(px)}</span><span className="text-bear">Resistance {fmtPrice(res)}</span></div>
+          </div>
+        )}
+      </div>
+      <div className="cc-cell space-y-3 p-4">
         <div className="flex items-center justify-between"><span className="text-xs text-mute">Signal · {T}</span>
           <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${side > 0 ? "bg-bull text-ink" : side < 0 ? "bg-bear text-white" : "bg-glass/15 text-text"}`}>{side > 0 ? "▲ LONG" : side < 0 ? "▼ SHORT" : "WAIT"}{side && f4?.grade ? ` · ${f4.grade}` : ""}</span></div>
-        <p className="line-clamp-3 text-sm leading-relaxed">{a?.ai?.rationale || (side ? f4?.decision_basis : f4?.decision_reason ? `No trade: ${f4.decision_reason}.` : null) || "The engine has no note for this coin yet."}</p>
+        <p className="text-sm leading-relaxed">{a?.ai?.rationale || (side ? f4?.decision_basis : f4?.decision_reason ? `No trade: ${f4.decision_reason}.` : null) || "The engine has no note for this coin yet."}</p>
         <Link to={`/asset/${slug(symbol)}?tf=${tf}`} className="btn btn-primary w-full">Open full analysis</Link>
       </div>
     </div>
@@ -412,8 +412,8 @@ export default function Command() {
           <div className="mt-3 flex-1"><Mission health={health.data} connected={connected} /></div>
         </section>
       </div>
-      {/* row 2: three equal instruments; footers pinned so the bottoms line up */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+      {/* row 3: radar beside the market universe; footers pinned so the bottoms line up */}
+      <div className="grid gap-4 lg:grid-cols-2">
         <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Opportunity radar">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Opportunity radar</h2><span className="text-xs text-mute">closer = stronger</span></div>
           <div className="flex flex-1 flex-col justify-center"><Radar boards={boards.map((b) => b.data?.rows ?? [])} onSel={pick} tf={tf} /></div>
@@ -422,9 +422,6 @@ export default function Command() {
         <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Market universe">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market universe</h2><span className="text-xs text-mute">7 days</span></div>
           <Universe peers={peers} status={dash.data?.market_status} mc={mc.data} onSel={pick} tf={tf} />
-        </section>
-        <section id="cc-scan" className="cc-panel cc-scan scroll-mt-20 p-4 sm:p-5 md:col-span-2 xl:col-span-1" aria-label={`Deep-space scan of ${name(focus)}`}>
-          <Scan symbol={focus} row={row} f4={f4} tf={tf} />
         </section>
       </div>
       {/* row 4: running signals beside coin vs coin; then the globe */}
@@ -441,6 +438,9 @@ export default function Command() {
       <section className="cc-panel p-4 sm:p-5" aria-label="Market heat globe">
         <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
         <div className="mt-3"><LazyMount height={380}><Suspense fallback={<div className="skeleton h-[360px] rounded-xl" />}><MarketGlobe news={news.data} /></Suspense></LazyMount></div>
+      </section>
+      <section id="cc-scan" className="cc-panel cc-scan scroll-mt-20 p-4 sm:p-6" aria-label={`Deep-space scan of ${name(focus)}`}>
+        <Scan symbol={focus} row={row} f4={f4} tf={tf} />
       </section>
     </div>
   );
