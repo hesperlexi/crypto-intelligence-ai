@@ -241,7 +241,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
   const sources: { name: string; sub: string; at: unknown; level: Level }[] = [
     { name: "Engine cycle", sub: `every ${e.schedule_minutes ?? 5} min`, at: e.last_tick_finished, level: engineLevel },
     { name: "Candles (Binance spot)", sub: e.data_host?.replace("https://", "") ?? "market data", at: md.last_update_ms ?? ex.last_ok_ms, level: mdLevel },
-    { name: "Live prices (this browser)", sub: "Binance WebSocket", at: feed?.last_update_ms, level: connected ? "ok" : "warn" },
+    { name: "Live prices (this browser)", sub: feed?.transport ?? "Binance WebSocket", at: feed?.last_update_ms, level: connected ? "ok" : "warn" },
     { name: "Futures funding", sub: fundSrc || "bots report", at: bots?.generated_at, level: futLevel },
     { name: "News & calendar", sub: newsErr.length ? newsErr.slice(0, 1).join("") : "headlines + US releases", at: news?.generated_at, level: newsLevel },
     { name: "Telegram", sub: tg?.last_post_at ? `last post ${ago(tg.last_post_at)}` : "autopilot status", at: tg?.checked_at ?? tg?.last_post_at, level: tgLevel },
@@ -294,7 +294,9 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
       </section>
 
       {/* ---- v2.55 cards flow in two balanced columns (each card only as tall as its content) ---- */}
-      <div className="hc-flow">
+      {/* v2.55b: two stacks that end level (the last card of each fills), no gap above Market turn */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="ov-stack hc-col">
         <Card title="Open signals" right={<Segmented label="Order" value={sigSort} onChange={setSigSort} options={[["oldest", "Oldest"], ["newest", "Newest"]] as const} />}>
           {!tr ? <Loading /> : sigs.length ? (
             <ul className="-my-1 divide-y divide-glass/[0.06]">
@@ -336,6 +338,8 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
             ))}
           </ul>
         </Card>
+        </div>
+        <div className="ov-stack hc-col">
         <Card title="Models" right={<Badge tone={modelErr.length ? "warn" : "bull"}>{modelErr.length ? `${modelErr.length} in error` : "no errors"}</Badge>}>
           <div className="grid grid-cols-2 gap-x-4 gap-y-3 min-[360px]:grid-cols-3">
             <Tile label="Active" value={`${active.length}/${models.length}`} />
@@ -406,6 +410,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
             </div>
           </div>
         </Card>
+        </div>
       </div>
       {turn && <div id="hc-turn" className="scroll-mt-24"><MarketTurnCard v={turn} /></div>}
 

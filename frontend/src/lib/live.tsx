@@ -213,6 +213,13 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   // spot, so every page shows that price too. Every trade (aggTrade) moves it; 24h change / volume come from the
   // futures REST ticker every 20 s. Coins without a perpetual, or a network that blocks futures, keep spot.
   const [fut, setFut] = useState<Record<string, Ticker>>({});
+  // v2.55: the futures stream counts as live too (it carries most prices); "connected" = any stream delivered < 10 s ago
+  const futFrame = useRef(0);
+  const [futLive, setFutLive] = useState(false);
+  useEffect(() => {
+    const id = window.setInterval(() => setFutLive(Date.now() - futFrame.current < 10_000), 1000);
+    return () => window.clearInterval(id);
+  }, []);
   useEffect(() => {
     const all0 = key ? key.split(",") : [];
     if (!all0.length) return;
@@ -245,7 +252,8 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       // LITE: one price per coin per second (@miniTicker) instead of every trade
       const streams = syms.map((s) => `${bsym(s).toLowerCase()}${LITE ? "@miniTicker" : "@aggTrade"}`).join("/");
       race = raceSocket([`${FUT_WS}/stream?streams=${streams}`], (m) => {
-        lastFrame = Date.now(); attempt = 0;
+        lastFrame = Date.now(); attempt = 0; futFrame.current = lastFrame;
+        if (!futLive) setFutLive(true);
         const d = m.data, sym = d && bySym[d.s];
         if (sym && d.e === "aggTrade" && opens[sym]) put(sym, +d.p, d.T);   // only once its 24h stats are known
         else if (sym && d.e === "24hrMiniTicker" && opens[sym]) put(sym, +d.c, d.E);
@@ -311,16 +319,18 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, [hasPrices]);
 
-  const status = !online ? "OFFLINE" : mode === "ws" ? "LIVE" : mode === "rest" ? "LIVE · 2s" : all.length ? "RECONNECTING" : "IDLE";
+  const live = mode === "ws" || futLive;
+  const status = !online ? "OFFLINE" : live ? "LIVE" : mode === "rest" ? "LIVE · 2s" : all.length ? "RECONNECTING" : "IDLE";
   const dismissAlert = useCallback((id: string) => setAlerts((a) => a.filter((x) => x.id !== id)), []);
   const symbolList = useMemo(() => (key ? key.split(",") : []), [key]);
   const value = useMemo<LiveState>(() => ({
-    tickers: slow.merged, spotTickers: slow.tickers, connected, alerts, refreshAt, symbols: symbolList, dismissAlert,
+    tickers: slow.merged, spotTickers: slow.tickers, connected: live, alerts, refreshAt, symbols: symbolList, dismissAlert,
     feed: {
       status, last_update_ms: slow.lastMsg,
-      transport: mode === "ws" ? "Binance WebSocket (streaming)" : mode === "rest" ? "Binance REST, refreshed every 2 s (stream reconnecting)" : "reconnecting to Binance…",
+      transport: mode === "ws" && futLive ? "Binance WebSocket · spot + futures (streaming)" : mode === "ws" ? "Binance WebSocket · spot (streaming)"
+        : futLive ? "Binance WebSocket · futures (streaming)" : mode === "rest" ? "Binance REST, refreshed every 2 s (stream reconnecting)" : "reconnecting to Binance…",
     },
-  }), [slow, connected, alerts, refreshAt, symbolList, dismissAlert, status, mode]);
+  }), [slow, live, alerts, refreshAt, symbolList, dismissAlert, status, mode, futLive]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 

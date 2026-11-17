@@ -1366,3 +1366,5 @@ main table tbody tr:nth-child(even):hover > td, main table tbody tr:nth-child(od
 @keyframes sj-pulse-dn { 50% { box-shadow: 0 0 0 7px rgb(var(--bear) / 0.08), 0 0 22px rgb(var(--bear) / 1); } }
 @media (max-width: 479px) { .sj-lane { grid-template-columns: 72px minmax(0, 1fr) 84px; gap: 10px; padding: 8px 10px; } }
 @media (prefers-reduced-motion: reduce) { .sj-trail::after, .sj-tp.is-next, .sj-tp.is-hit::after, .sj-comet { animation: none; } .sj-comet { transition: none; } }
+.hc-col { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.hc-col > :last-child { flex: 1 1 auto; }
