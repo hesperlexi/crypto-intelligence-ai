@@ -1329,3 +1329,41 @@ main table tbody tr:nth-child(even):hover > td, main table tbody tr:nth-child(od
   .rb-periods .seg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; }
   .rb-periods .seg > button { padding-left: 2px; padding-right: 2px; font-size: 13px; text-align: center; justify-content: center; }
 }
+
+/* v2.55 Command Centre layout: right column of row 1 ends level with the galaxy (last card fills) */
+.cc-stack { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
+.cc-stack > :last-child { flex: 1 1 auto; }
+
+/* v2.55 signal journeys: slim lanes with a comet */
+.sj-list { display: grid; gap: 8px; }
+@media (min-width: 1280px) { .sj-list { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 14px; } }
+.sj-lane { display: grid; grid-template-columns: 92px minmax(0, 1fr) 104px; align-items: center; gap: 14px; padding: 9px 12px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.07); background: rgb(var(--glass) / 0.025); }
+.sj-name { display: flex; flex-direction: column; line-height: 1.25; min-width: 0; }
+.sj-name:hover b { color: rgb(var(--accent)); }
+.sj-out { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; text-align: right; }
+.sj-track { position: relative; height: 26px; }
+.sj-risk, .sj-reward { position: absolute; top: 11px; height: 4px; border-radius: 4px; }
+.sj-risk { left: 0; background: linear-gradient(90deg, rgb(var(--bear) / 0.75), rgb(var(--bear) / 0.15)); }
+.sj-reward { right: 0; background: linear-gradient(90deg, rgb(var(--accent) / 0.25), rgb(var(--bull) / 0.4)); }
+.sj-trail { position: absolute; top: 9px; height: 8px; border-radius: 8px; overflow: hidden;
+  background: linear-gradient(90deg, rgb(var(--bull) / 0.25), rgb(var(--bull) / 0.85)); box-shadow: 0 0 12px rgb(var(--bull) / 0.45); }
+.sj-trail.is-down { background: linear-gradient(270deg, rgb(var(--bear) / 0.25), rgb(var(--bear) / 0.85)); box-shadow: 0 0 12px rgb(var(--bear) / 0.45); }
+.sj-trail::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.55), transparent); animation: sj-run 2.4s linear infinite; }
+.sj-trail.is-down::after { animation-direction: reverse; }
+@keyframes sj-run { from { transform: translateX(-120%); } to { transform: translateX(300%); } }
+.sj-entry { position: absolute; top: 4px; width: 2px; height: 18px; margin-left: -1px; border-radius: 2px; background: rgb(var(--accent)); box-shadow: 0 0 6px rgb(var(--accent) / 0.8); }
+.sj-stopnow { position: absolute; top: 5px; width: 2px; height: 16px; margin-left: -1px; background: rgb(var(--warn)); }
+.sj-tp { position: absolute; top: 8px; width: 10px; height: 10px; margin-left: -5px; transform: rotate(45deg); border: 2px solid rgb(var(--bull) / 0.7); background: rgb(var(--panel)); }
+.sj-tp.is-next { border-color: rgb(var(--bull)); animation: sj-beckon 1.8s ease-in-out infinite; }
+.sj-tp.is-hit { background: rgb(var(--bull)); border-color: rgb(var(--bull)); box-shadow: 0 0 10px rgb(var(--bull) / 0.9); }
+.sj-tp.is-hit::after { content: ""; position: absolute; inset: -5px; border: 1px solid rgb(var(--bull) / 0.7); animation: sj-flare 2.2s ease-out infinite; }
+@keyframes sj-beckon { 0%, 100% { box-shadow: 0 0 0 0 rgb(var(--bull) / 0); } 50% { box-shadow: 0 0 0 4px rgb(var(--bull) / 0.25); } }
+@keyframes sj-flare { from { opacity: 0.9; transform: scale(0.6); } to { opacity: 0; transform: scale(1.8); } }
+.sj-comet { position: absolute; top: 5px; width: 16px; height: 16px; margin-left: -8px; border-radius: 9999px; transition: left 0.8s ease;
+  background: radial-gradient(circle at 35% 35%, #fff, rgb(var(--bull)) 45%, rgb(var(--bull) / 0.6)); box-shadow: 0 0 0 4px rgb(var(--bull) / 0.18), 0 0 16px rgb(var(--bull) / 0.9); animation: sj-pulse 1.6s ease-in-out infinite; }
+.sj-comet.is-down { background: radial-gradient(circle at 35% 35%, #fff, rgb(var(--bear)) 45%, rgb(var(--bear) / 0.6)); box-shadow: 0 0 0 4px rgb(var(--bear) / 0.18), 0 0 16px rgb(var(--bear) / 0.9); }
+@keyframes sj-pulse { 50% { box-shadow: 0 0 0 7px rgb(var(--bull) / 0.08), 0 0 22px rgb(var(--bull) / 1); } }
+.sj-comet.is-down { animation-name: sj-pulse-dn; }
+@keyframes sj-pulse-dn { 50% { box-shadow: 0 0 0 7px rgb(var(--bear) / 0.08), 0 0 22px rgb(var(--bear) / 1); } }
+@media (max-width: 479px) { .sj-lane { grid-template-columns: 72px minmax(0, 1fr) 84px; gap: 10px; padding: 8px 10px; } }
+@media (prefers-reduced-motion: reduce) { .sj-trail::after, .sj-tp.is-next, .sj-tp.is-hit::after, .sj-comet { animation: none; } .sj-comet { transition: none; } }

@@ -18,11 +18,14 @@ const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 /** Each running record call as a journey from its stop to TP3: entry, targets (lit when hit), the stop in force and
  *  the live price as a moving craft; published / filled times underneath. */
 export function SignalJourneys({ track }: { track: any }) {
+  // v2.55 (owner: "too big, make it more interesting"): one slim lane per call, two lanes side by side on computers.
+  // Stop zone red, profit zone toward the targets; a comet (live price) with a glowing trail from the entry, a light
+  // pulse running along the trail, targets as diamonds that flare once hit, and the next target's distance on the right.
   const { tickers } = useLive();
   const open: any[] = (track?.live?.signals ?? []).filter((x: any) => x.status === "OPEN").slice(0, 8);
   if (!open.length) return <p className="py-6 text-center text-sm text-mute">No signals running right now. New calls appear here the moment they open.</p>;
   return (
-    <ul className="space-y-3">
+    <ul className="sj-list">
       {open.map((x) => {
         const s = x.side === "SHORT" ? -1 : 1;
         const tps = [x.tp1, x.tp2, x.tp3].filter(isNum);
@@ -34,25 +37,28 @@ export function SignalJourneys({ track }: { track: any }) {
         const sNow = stopNow(x)?.price;
         const hits = [x.tp1_hit, x.tp2_hit, x.tp3_hit];
         const r = isNum(px) && x.entry !== x.stop ? (s * (px - x.entry)) / Math.abs(x.entry - x.stop) : null;
+        const e = at(x.entry) * 100, c = isNum(px) ? at(px) * 100 : e;
+        const up = r == null || r >= 0;
+        const next = tps.findIndex((t, k) => !hits[k]);
+        const toNext = next >= 0 && isNum(px) ? (s * (tps[next] - px) / px) * 100 : null;
         return (
-          <li key={x.id ?? `${x.symbol}${x.created_at}`} className="journey">
-            <div className="flex flex-wrap items-baseline justify-between gap-2">
-              <Link to={`/asset/${slug(x.symbol)}?tf=${x.timeframe}`} className="font-semibold hover:text-accent">
-                {name(x.symbol)} <span className={s > 0 ? "text-bull" : "text-bear"}>{s > 0 ? "▲ LONG" : "▼ SHORT"}</span> <span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}{x.grade ? ` · ${x.grade}` : ""}</span>
-              </Link>
-              <span className={`num text-sm font-semibold ${r == null || pending ? "text-mute" : r >= 0 ? "text-bull" : "text-bear"}`}>{pending ? "waiting for entry" : r == null ? "—" : `${r >= 0 ? "+" : ""}${r.toFixed(2)}R`}</span>
+          <li key={x.id ?? `${x.symbol}${x.created_at}`} className="sj-lane">
+            <Link to={`/asset/${slug(x.symbol)}?tf=${x.timeframe}`} className="sj-name" title={`opened ${ago(x.filled_at ?? x.created_at)}`}>
+              <b>{name(x.symbol)}</b>
+              <span className={`text-xs font-semibold ${s > 0 ? "text-bull" : "text-bear"}`}>{s > 0 ? "▲ LONG" : "▼ SHORT"} <span className="text-mute">{String(x.timeframe).toUpperCase()}</span></span>
+            </Link>
+            <div className="sj-track" aria-label={`${name(x.symbol)} ${s > 0 ? "long" : "short"}: ${pending ? "waiting for entry" : r == null ? "no live price" : `${r.toFixed(2)}R`}, ${hits.filter(Boolean).length} of ${tps.length} targets hit`}>
+              <span className="sj-risk" style={{ width: `${e}%` }} />
+              <span className="sj-reward" style={{ left: `${e}%` }} />
+              {!pending && isNum(px) && <span className={`sj-trail ${up ? "" : "is-down"}`} style={{ left: `${Math.min(e, c)}%`, width: `${Math.abs(c - e)}%` }} />}
+              {isNum(sNow) && sNow !== x.stop && <span className="sj-stopnow" style={{ left: `${at(sNow) * 100}%` }} title={`Stop moved to ${fmtPrice(sNow)}`} />}
+              <span className="sj-entry" style={{ left: `${e}%` }} title={`Entry ${fmtPrice(x.entry)}`} />
+              {tps.map((t, k) => <span key={k} className={`sj-tp ${hits[k] ? "is-hit" : ""} ${k === next ? "is-next" : ""}`} style={{ left: `${at(t) * 100}%` }} title={`TP${k + 1} ${fmtPrice(t)}${hits[k] ? " · hit" : ""}`} />)}
+              {isNum(px) && !pending && <span className={`sj-comet ${up ? "" : "is-down"} ${c < e ? "to-left" : ""}`} style={{ left: `${c}%` }} />}
             </div>
-            <div className="journey-track" aria-hidden="true">
-              <span className="j-mark j-stop" style={{ left: 0 }} />
-              {isNum(sNow) && sNow !== x.stop && <span className="j-mark j-stopnow" style={{ left: `${at(sNow) * 100}%` }} title="Stop in force" />}
-              <span className="j-mark j-entry" style={{ left: `${at(x.entry) * 100}%` }} />
-              {tps.map((t, i) => <span key={i} className={`j-mark j-tp ${hits[i] ? "is-hit" : ""}`} style={{ left: `${at(t) * 100}%` }} />)}
-              {isNum(px) && !pending && <span className={`j-craft ${r != null && r < 0 ? "is-down" : ""}`} style={{ left: `${at(px) * 100}%` }} />}
-            </div>
-            <div className="mt-1 flex flex-wrap justify-between gap-x-3 text-xs text-mute">
-              <span>Stop {fmtPrice(sNow ?? x.stop)}{isNum(sNow) && sNow !== x.stop ? " (moved)" : ""}</span>
-              <span>{hits.filter(Boolean).length ? `${hits.filter(Boolean).length} target${hits.filter(Boolean).length > 1 ? "s" : ""} hit` : "no target hit yet"}</span>
-              <span>opened {ago(x.filled_at ?? x.created_at)}</span>
+            <div className="sj-out">
+              <span className={`num text-sm font-semibold ${r == null || pending ? "text-mute" : up ? "text-bull" : "text-bear"}`}>{pending ? "waiting" : r == null ? "—" : `${r >= 0 ? "+" : ""}${r.toFixed(2)}R`}</span>
+              <span className="text-xs text-mute">{pending ? "for entry" : next < 0 ? "all targets hit" : isNum(toNext) ? `TP${next + 1} in ${Math.abs(toNext).toFixed(2)}%` : `TP${next + 1} next`}</span>
             </div>
           </li>
         );
