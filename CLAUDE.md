@@ -1055,4 +1055,5 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   Last 30 days, `ResultsBoard.periodStart`, viewer's local time; "since start" = the same live figures; owner: do not
   redesign Results). Command Centre order: galaxy alone (wide orbits `KX`) · Intelligence core + Mission control ·
   radar + universe · signal journeys (slim lanes `.sj-*`, comet, flaring targets) + Coin vs coin · Market heat ·
-  Deep-space scan (unchanged).
+  Deep-space scan (unchanged). Live prices: every trade on every device (`live.LITE` only with localStorage `cia-live-lite`=1);
+  `connected` = spot OR futures stream delivered < 10 s ago (`futLive`). Health cards = two level stacks (`.hc-col`).
