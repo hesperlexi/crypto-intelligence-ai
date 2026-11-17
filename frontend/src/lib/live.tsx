@@ -2,15 +2,10 @@ import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { bsym, futures24h, isFutOnly, listedPairs, tickers as restTickers, toTicker } from "./binance";
 
-/** Phones and slow devices: prices once a second per coin instead of every trade (saves CPU, battery and data).
- *  Set localStorage "cia-live-full" = "1" to force full speed. */
+/** v2.55 (owner, 18 Nov 2026: "no compromise on live prices"): every device streams every trade, phones too.
+ *  The old battery saver (one price per coin per second) is only on when localStorage "cia-live-lite" = "1". */
 const LITE: boolean = (() => {
-  try {
-    if (localStorage.getItem("cia-live-full") === "1") return false;
-    const nav = navigator as any;
-    return !!(window.matchMedia?.("(max-width: 820px)").matches || (nav.hardwareConcurrency && nav.hardwareConcurrency <= 4)
-      || nav.connection?.saveData);
-  } catch { return false; }
+  try { return localStorage.getItem("cia-live-lite") === "1"; } catch { return false; }
 })();
 import { Race, raceSocket } from "./ws";
 import { db } from "./firebase";
