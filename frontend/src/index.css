@@ -1319,3 +1319,13 @@ main table tbody tr:nth-child(even):hover > td, main table tbody tr:nth-child(od
 @media (min-width: 1024px) { .hc-flow { columns: 2; } }
 .hc-flow > * { break-inside: avoid; margin-bottom: 16px; display: block; width: 100%; }
 
+
+/* Results period switch: one row; scrolls sideways on narrow phones */
+.rb-periods { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+.rb-periods::-webkit-scrollbar { display: none; }
+.rb-periods .seg { flex-wrap: nowrap; width: max-content; }
+.rb-periods .seg > button { white-space: nowrap; }
+@media (max-width: 639px) {
+  .rb-periods .seg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; }
+  .rb-periods .seg > button { padding-left: 2px; padding-right: 2px; font-size: 13px; text-align: center; justify-content: center; }
+}

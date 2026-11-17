@@ -17,21 +17,46 @@ const OUTCOMES = [
 ] as const;
 
 type Row = any;
+type Period = "all" | "today" | "week" | "7d" | "30d";
+const PERIOD_LABEL: Record<Period, string> = { all: "All results", today: "Today", week: "This week", "7d": "Last 7 days", "30d": "Last 30 days" };
+const PERIOD_SUB: Record<Period, string> = { all: "", today: "closed today", week: "closed this week (from Monday)", "7d": "closed in the last 7 days", "30d": "closed in the last 30 days" };
+const PL = ({ long, short }: { long: string; short: string }) => <><span className="hidden sm:inline">{long}</span><span className="sm:hidden">{short}</span></>;
+// start of a period in the viewer's own time (today = from midnight, this week = from Monday midnight)
+function periodStart(p: Period): number {
+  const now = new Date();
+  if (p === "7d") return now.getTime() - 7 * 86_400_000;
+  if (p === "30d") return now.getTime() - 30 * 86_400_000;
+  if (p === "all") return 0;
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (p === "week") d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.getTime();
+}
 
 export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }: {
   d: any; sigs: Row[]; roi: boolean; admin: boolean; avgTested: number | null; proven: number;
 }) {
-  const [period, setPeriod] = useState<"all" | "7d">("all");
+  const [period, setPeriod] = useState<Period>("all");
   const s = d.live?.summary ?? {};
-  const w7 = d.last_7d;
   const closed = useMemo(() => sigs.filter((x) => OUTCOMES.some(([k]) => k === x.status) && isNum(x.return_pct))
     .sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0)), [sigs]);
-  const inPeriod = period === "7d" ? closed.filter((x) => (x.closed_at ?? 0) >= Date.now() - 7 * 86_400_000) : closed;
+  const inPeriod = period === "all" ? closed : closed.filter((x) => (x.closed_at ?? 0) >= periodStart(period));
   const won = inPeriod.filter((x) => x.return_pct > 0).length, lost = inPeriod.length - won;
   const open = d.live?.open ?? 0;
-  const winRate = period === "7d" ? (w7?.win_rate ?? (inPeriod.length ? won / inPeriod.length : null)) : s.win_rate;
-  const lead = period === "7d" ? w7?.total_return_pct : roi ? s.total_roi_pct : s.total_return_pct;
-  const leadLabel = period === "7d" ? "Last 7 days, after fees" : roi ? `Total ROI on margin${s.net ? ", after fees" : ""}` : s.net ? "Total result after fees" : "Total price move";
+  // a chosen period: the engine's own last-7-days summary for "7 days", else figures from the closed rows (after fees)
+  const w7 = d.last_7d;
+  const ps = useMemo(() => {
+    if (period === "all") return null;
+    if (period === "7d" && w7) return w7;
+    const r = inPeriod.map((x) => x.return_pct as number);
+    const best = inPeriod.reduce<Row | null>((a, x) => (!a || x.return_pct > a.return_pct ? x : a), null);
+    const worst = inPeriod.reduce<Row | null>((a, x) => (!a || x.return_pct < a.return_pct ? x : a), null);
+    return { closed: r.length, wins: won, losses: lost, win_rate: r.length ? won / r.length : null,
+      total_return_pct: r.length ? r.reduce((a, b) => a + b, 0) : null, avg_return_pct: r.length ? r.reduce((a, b) => a + b, 0) / r.length : null,
+      best, worst, sample_note: r.length && r.length < 30 ? `${r.length} closed so far in this period: too few to judge (30 or more needed).` : null };
+  }, [period, inPeriod, w7, won, lost]);
+  const winRate = ps ? ps.win_rate : s.win_rate;
+  const lead = ps ? ps.total_return_pct : roi ? s.total_roi_pct : s.total_return_pct;
+  const leadLabel = ps ? `${PERIOD_LABEL[period]}, after fees` : roi ? `Total ROI on margin${s.net ? ", after fees" : ""}` : s.net ? "Total result after fees" : "Total price move";
 
   const weeks = useMemo(() => {
     const m = new Map<number, number>();
@@ -60,13 +85,14 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
       <section className="panel panel-hero rb-hero p-0" aria-label="Track record statement">
         <div className="grid gap-5 p-4 sm:p-6 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)] lg:items-center">
           <div className="min-w-0">
-            <Segmented label="Period" value={period} onChange={setPeriod}
-              options={[["all", d.record_since ? `Since ${fmtDate(d.record_since)}` : "All results"], ["7d", "Last 7 days"]] as const} />
+            <div className="rb-periods"><Segmented label="Period" value={period} onChange={setPeriod}
+              options={[["all", <PL key="a" long={d.record_since ? `Since ${fmtDate(d.record_since)}` : "All results"} short="All" />], ["today", "Today"],
+                ["week", <PL key="w" long="This week" short="Week" />], ["7d", <PL key="7" long="Last 7 days" short="7 days" />], ["30d", <PL key="3" long="Last 30 days" short="30 days" />]] as const} /></div>
             <div className="label mt-4">{leadLabel}</div>
             <div className={`num statement-figure mt-1 font-semibold ${tone(lead)}`}>{pct(lead)}</div>
             <p className="mt-1.5 text-sm text-mute">
-              {period === "7d"
-                ? `${w7?.closed ?? inPeriod.length} closed in the last 7 days · equal size per signal, no leverage`
+              {ps
+                ? `${ps.closed ?? inPeriod.length} ${PERIOD_SUB[period]} · equal size per signal, no leverage`
                 : `${s.closed ?? 0} closed ${s.closed === 1 ? "signal" : "signals"}${d.record_since_tf?.["15m"] ? ` (15M since ${fmtDate(d.record_since_tf["15m"])})` : ""} · ${open} open now${d.testing_since ? " · testing" : ""}`}
             </p>
             <div className="rb-trust mt-4">
@@ -78,18 +104,18 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
               <div><div className="num text-3xl font-semibold">{isNum(winRate) ? `${Math.round(winRate * 100)}%` : "—"}</div><div className="text-xs text-mute">won</div></div>
             </Ring>
             <ul className="rb-tally">
-              <li><span className="rb-dot bg-bull" />Won<b className="num">{period === "7d" ? (w7?.wins ?? won) : won}</b></li>
-              <li><span className="rb-dot bg-bear" />Lost<b className="num">{period === "7d" ? (w7?.losses ?? lost) : lost}</b></li>
+              <li><span className="rb-dot bg-bull" />Won<b className="num">{ps ? (ps.wins ?? won) : won}</b></li>
+              <li><span className="rb-dot bg-bear" />Lost<b className="num">{ps ? (ps.losses ?? lost) : lost}</b></li>
               <li><span className="rb-dot live-dot bg-accent" />Open now<b className="num">{open}</b></li>
             </ul>
           </div>
         </div>
         <dl className="statement-facts grid grid-cols-2 border-t border-glass/[0.07] sm:grid-cols-4">
-          {period === "7d" ? <>
-            <Fact k="Average per signal" v={pct(w7?.avg_return_pct, 2)} cls={tone(w7?.avg_return_pct)} sub="after fees, no leverage" />
-            <Fact k="Best" v={w7?.best ? pct(w7.best.return_pct, 2) : "—"} cls={tone(w7?.best?.return_pct)} sub={w7?.best ? `${base(w7.best.symbol)} ${w7.best.side} ${String(w7.best.timeframe).toUpperCase()}` : ""} />
-            <Fact k="Worst" v={w7?.worst ? pct(w7.worst.return_pct, 2) : "—"} cls={tone(w7?.worst?.return_pct)} sub={w7?.worst ? `${base(w7.worst.symbol)} ${w7.worst.side} ${String(w7.worst.timeframe).toUpperCase()}` : ""} />
-            <Fact k="Closed" v={String(w7?.closed ?? 0)} sub={w7?.sample_note ? "small sample" : "last 7 days"} />
+          {ps ? <>
+            <Fact k="Average per signal" v={pct(ps.avg_return_pct, 2)} cls={tone(ps.avg_return_pct)} sub="after fees, no leverage" />
+            <Fact k="Best" v={ps.best ? pct(ps.best.return_pct, 2) : "—"} cls={tone(ps.best?.return_pct)} sub={ps.best ? `${base(ps.best.symbol)} ${ps.best.side} ${String(ps.best.timeframe).toUpperCase()}` : ""} />
+            <Fact k="Worst" v={ps.worst ? pct(ps.worst.return_pct, 2) : "—"} cls={tone(ps.worst?.return_pct)} sub={ps.worst ? `${base(ps.worst.symbol)} ${ps.worst.side} ${String(ps.worst.timeframe).toUpperCase()}` : ""} />
+            <Fact k="Closed" v={String(ps.closed ?? 0)} sub={ps.sample_note ? "small sample" : PERIOD_LABEL[period].toLowerCase()} />
           </> : <>
             {roi ? <Fact k="Average ROI per signal" v={pct(s.avg_roi_pct, 2)} cls={tone(s.avg_roi_pct)} sub={`${pct(s.avg_return_pct, 2)} price ${s.net ? "after fees" : "before fees"}`} />
               : <Fact k={s.net ? "Average per signal" : "Average price move"} v={pct(s.avg_return_pct, 2)} cls={tone(s.avg_return_pct)} sub={s.net ? "after fees" : "before fees"} />}
@@ -99,7 +125,7 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
               : <Fact k="Worst week" v={weeks.worst ? pct(weeks.worst[1], 2) : "—"} cls={tone(weeks.worst?.[1])} sub={weeks.worst ? `from ${wkLabel(weeks.worst[0])}` : ""} />}
           </>}
         </dl>
-        {period === "7d" && w7?.sample_note && <p className="px-4 pb-3 text-xs text-warn sm:px-6">{w7.sample_note}</p>}
+        {ps?.sample_note && <p className="px-4 pb-3 text-xs text-warn sm:px-6">{ps.sample_note}</p>}
       </section>
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
