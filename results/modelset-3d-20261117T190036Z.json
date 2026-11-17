@@ -1,0 +1,95 @@
+{
+ "ok": true,
+ "command": "modelset",
+ "timeframes": {
+  "3d": {
+   "coins_done": 14,
+   "skipped": [
+    "AAVE/USDT: control not evaluated: AAVE/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: AAVE/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: AAVE/USDT 3d: no model /",
+    "APT/USDT: control not evaluated: APT/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: APT/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: APT/USDT 3d: no model / to",
+    "AVAX/USDT: control not evaluated: AVAX/USDT 3d: span too short to split; no_arima not evaluated: AVAX/USDT 3d: span too short to split; rf_only not evaluated: AVAX/USDT 3d: span too short to split",
+    "DOT/USDT: control not evaluated: DOT/USDT 3d: span too short to split; no_arima not evaluated: DOT/USDT 3d: span too short to split; rf_only not evaluated: DOT/USDT 3d: span too short to split",
+    "GALA/USDT: control not evaluated: GALA/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: GALA/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: GALA/USDT 3d: no model /",
+    "INJ/USDT: control not evaluated: INJ/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: INJ/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: INJ/USDT 3d: no model / to",
+    "NEAR/USDT: control not evaluated: NEAR/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: NEAR/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: NEAR/USDT 3d: no model /",
+    "PAXG/USDT: control not evaluated: PAXG/USDT 3d: span too short to split; no_arima not evaluated: PAXG/USDT 3d: span too short to split; rf_only not evaluated: PAXG/USDT 3d: span too short to split",
+    "PEPE/USDT: control not evaluated: PEPE/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: PEPE/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: PEPE/USDT 3d: no model /",
+    "RARE/USDT: control not evaluated: RARE/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: RARE/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: RARE/USDT 3d: no model /",
+    "SHIB/USDT: control not evaluated: SHIB/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: SHIB/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: SHIB/USDT 3d: no model /",
+    "SOL/USDT: control not evaluated: SOL/USDT 3d: span too short to split; no_arima not evaluated: SOL/USDT 3d: span too short to split; rf_only not evaluated: SOL/USDT 3d: span too short to split",
+    "SUI/USDT: control not evaluated: SUI/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: SUI/USDT 3d: no model / too few out-of-sample bars; rf_only not evaluated: SUI/USDT 3d: no model / to",
+    "UNI/USDT: control not evaluated: UNI/USDT 3d: span too short to split; no_arima not evaluated: UNI/USDT 3d: span too short to split; rf_only not evaluated: UNI/USDT 3d: span too short to split"
+   ],
+   "control": {
+    "trades": 16,
+    "avg_r": -0.067,
+    "total_r": -1.07,
+    "win_rate": 0.5,
+    "series": 14,
+    "drawdown_r_sum": 6.41
+   },
+   "no_arima": {
+    "trades": 22,
+    "avg_r": -0.2182,
+    "total_r": -4.8,
+    "win_rate": 0.409,
+    "series": 14,
+    "drawdown_r_sum": 11.4
+   },
+   "rf_only": {
+    "trades": 25,
+    "avg_r": -0.2993,
+    "total_r": -7.48,
+    "win_rate": 0.4,
+    "series": 14,
+    "drawdown_r_sum": 13.92
+   },
+   "no_arima_vs_control": {
+    "n_series": 14,
+    "share_better": 0.154,
+    "ci90_r_per_trade": [
+     -0.7833,
+     0.108
+    ]
+   },
+   "rf_only_vs_control": {
+    "n_series": 14,
+    "share_better": 0.013,
+    "ci90_r_per_trade": [
+     -1.048,
+     -0.0938
+    ]
+   }
+  }
+ },
+ "models_control": [
+  "prior_baseline",
+  "prev_candle",
+  "logistic",
+  "technical_rules",
+  "random_forest",
+  "hist_gbm",
+  "xgboost",
+  "lightgbm",
+  "arima"
+ ],
+ "variants": {
+  "no_arima": [
+   "prior_baseline",
+   "prev_candle",
+   "logistic",
+   "technical_rules",
+   "random_forest",
+   "hist_gbm",
+   "xgboost",
+   "lightgbm"
+  ],
+  "rf_only": [
+   "prior_baseline",
+   "prev_candle",
+   "random_forest"
+  ]
+ },
+ "seconds": 1367.9,
+ "method": "Model-set study (audit v2.52, owner 17 Nov 2026: \"anything that improves the results\") - READ-ONLY on production.\n\n`python -m app.research modelset --timeframes 4h --budget 17000`\nFor each active coin of the timeframe, on a PRIVATE copy of the engine state:\n  1. control  = retrain with today's model set (every available model) - so all variants see the same, latest data;\n  2. no_arima = the same without ARIMA (skill < 0 in 91 % of series, 17 Nov models-value study);\n  3. rf_only  = Random Forest alone (+ the two baselines, which never carry weight) - it is the best model in 154/233.\nEach fresh model is judged exactly like `research_engine.evaluate` judges the live pipeline: its walk-forward\nout-of-sample calls through the live decision rules and the record's exits, 0.15 % costs, one call at a time; first 70 %\nof the series chooses, the untouched last 30 % is the test. Reported: test trades, avg / total R, win rate, profit factor\nper variant, the paired difference to the control per series, and a series bootstrap of that difference.\nAggregates only; nothing is written to the live engine state."
+}
