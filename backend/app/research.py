@@ -219,7 +219,7 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15", "exits", "models-value"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15", "exits", "models-value", "modelset"])
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
@@ -244,7 +244,12 @@ def main(argv: list[str] | None = None) -> int:
             src.close()
             dst.close()
             a.db = f"sqlite:///{tmp}"
-        if a.command == "models-value":
+        if a.command == "modelset":
+            from . import research_modelset
+            out = {"ok": True, "command": a.command,
+                   **research_modelset.run(a.db, [x for x in (a.timeframes or "4h").split(",") if x], a.budget, a.cost_pct,
+                                           [x for x in (a.symbols or "").split(",") if x] or None)}
+        elif a.command == "models-value":
             from . import research_models
             out = {"ok": True, "command": a.command, **research_models.run(a.db, a.budget)}
         elif a.command == "exits":
