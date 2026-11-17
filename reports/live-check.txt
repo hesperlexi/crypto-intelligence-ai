@@ -1,0 +1,33 @@
+deployed: {"version":"2.1.0","build":"5c6cfae-202611171913"}
+live:     {"version":"2.1.0","build":"5c6cfae-202611171913"}
+
+== /
+HTTP/2 200 
+cache-control: no-cache
+content-type: text/html; charset=utf-8
+== /futures
+HTTP/2 200 
+cache-control: no-cache
+content-type: text/html; charset=utf-8
+== /sw.js
+HTTP/2 200 
+cache-control: no-cache
+content-type: text/javascript; charset=utf-8
+== /version.json
+HTTP/2 200 
+cache-control: no-cache
+content-type: application/json
+== /manifest.webmanifest
+HTTP/2 200 
+cache-control: no-cache
+content-type: application/manifest+json
+== /icons/icon-512.png
+HTTP/2 200 
+cache-control: no-cache
+content-type: image/png
+== manifest icons
+"src": "/icons/icon-192.png?v=5c6cfae-202611171913"
+"src": "/icons/icon-512.png?v=5c6cfae-202611171913"
+"src": "/icons/maskable-192.png?v=5c6cfae-202611171913"
+== update check present in the bundle
+frontend/dist/assets/index-BqKF1KRr.js
