@@ -1346,3 +1346,10 @@ main table tbody tr:nth-child(even):hover > td, main table tbody tr:nth-child(od
 .rs-div-neg { display: flex; justify-content: flex-end; border-right: 1px solid rgb(var(--glass) / 0.25); }
 .rs-div-neg > span { display: block; height: 100%; border-radius: 3px 0 0 3px; background: rgb(var(--bear) / 0.85); }
 .rs-div-pos > span { display: block; height: 100%; border-radius: 0 3px 3px 0; background: rgb(var(--bull) / 0.85); }
+.rs-periods .seg { flex-wrap: nowrap; }
+.rs-periods .seg > button { white-space: nowrap; }
+@media (max-width: 639px) {
+  .rs-periods { width: 100%; }
+  .rs-periods .seg { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); width: 100%; }
+  .rs-periods .seg > button { padding-left: 2px; padding-right: 2px; font-size: 12px; text-align: center; }
+}

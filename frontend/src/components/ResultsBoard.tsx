@@ -16,7 +16,19 @@ const OUT: Record<string, [string, string]> = {
 };
 const DAY = 86_400_000;
 type Row = any;
-type Period = "all" | "30d" | "7d";
+type Period = "all" | "today" | "week" | "7d" | "30d";
+const PERIODS = [["today", "Today"], ["week", "This week"], ["7d", "7 days"], ["30d", "30 days"], ["all", "All time"]] as const;
+const PERIOD_TEXT: Record<Period, string> = { all: "all closed signals", today: "closed today", week: "closed this week (from Monday)", "7d": "closed in the last 7 days", "30d": "closed in the last 30 days" };
+// start of the period in the viewer's own time zone (today = from midnight, this week = from Monday midnight)
+function periodStart(p: Period): number {
+  const now = new Date();
+  if (p === "7d") return now.getTime() - 7 * DAY;
+  if (p === "30d") return now.getTime() - 30 * DAY;
+  if (p === "all") return 0;
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  if (p === "week") d.setDate(d.getDate() - ((d.getDay() + 6) % 7));
+  return d.getTime();
+}
 
 function stats(rows: Row[]) {
   const r = rows.map((x) => x.return_pct as number);
@@ -26,6 +38,7 @@ function stats(rows: Row[]) {
   return {
     n: r.length, won: wins.length, lost: losses.length, win: r.length ? wins.length / r.length : null,
     total: r.reduce((a, b) => a + b, 0), avg: r.length ? r.reduce((a, b) => a + b, 0) / r.length : null,
+    avgRoi: roi != null && r.length ? roi / r.length : null,
     pf: lossSum > 0 ? wins.reduce((a, b) => a + b, 0) / lossSum : null, roi,
     best: r.length ? Math.max(...r) : null, worst: r.length ? Math.min(...r) : null,
   };
@@ -37,7 +50,7 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
   const [period, setPeriod] = useState<Period>("all");
   const s = d.live?.summary ?? {};
   const closedAll = useMemo(() => sigs.filter((x) => x.status in OUT && isNum(x.return_pct)).sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0)), [sigs]);
-  const cut = period === "7d" ? Date.now() - 7 * DAY : period === "30d" ? Date.now() - 30 * DAY : 0;
+  const cut = periodStart(period);
   const rows = closedAll.filter((x) => (x.closed_at ?? 0) >= cut);
   const st = stats(rows);
   const open = d.live?.open ?? 0;
@@ -48,7 +61,7 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
   const n = all ? (s.closed ?? st.n) : st.n;
   const win = all ? s.win_rate : st.win;
   const pf = all ? s.profit_factor ?? st.pf : st.pf;
-  const avg = all ? (roi ? s.avg_roi_pct : s.avg_return_pct) : st.avg;
+  const avg = all ? (roi ? s.avg_roi_pct : s.avg_return_pct) : (leadIsRoi && isNum(st.avgRoi) ? st.avgRoi : st.avg);
   const small = n < 30;
 
   const byTf = d.live?.by_timeframe ?? {};
@@ -77,7 +90,7 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
             <h2 className="font-display text-xl font-semibold">Scoreboard</h2>
             <p className="text-xs text-mute">Every signal counted, losses included · after fees and funding{d.record_since ? ` · since ${fmtDate(d.record_since)}` : ""}</p>
           </div>
-          <Segmented label="Period" value={period} onChange={setPeriod} options={[["all", "All"], ["30d", "30 days"], ["7d", "7 days"]] as const} />
+          <div className="rs-periods"><Segmented label="Period" value={period} onChange={setPeriod} options={PERIODS} /></div>
         </div>
         <div className="rs-tiles mt-4">
           <div className="rs-tile rs-lead">
@@ -113,7 +126,7 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
 
       {/* ---- per timeframe ---- */}
       <section aria-label="By timeframe">
-        <div className="mb-2 flex items-baseline justify-between px-1"><h2 className="label">Each timeframe</h2><span className="text-xs text-mute">{all ? "all closed signals" : `last ${period === "7d" ? "7" : "30"} days`}</span></div>
+        <div className="mb-2 flex items-baseline justify-between px-1"><h2 className="label">Each timeframe</h2><span className="text-xs text-mute">{PERIOD_TEXT[period]}</span></div>
         <div className="rs-tf">
           {tfCards.map((c) => (
             <div key={c.tf} className={`rs-tfcard ${!c.n ? "is-empty" : isNum(c.avg) && c.avg > 0 ? "is-up" : "is-down"}`}>

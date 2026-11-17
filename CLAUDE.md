@@ -12,7 +12,9 @@ Version **2.1.0** (fresh start 30 Oct 2026: `reset_v1.py`, record counted from t
   (`record_since_tf`, e.g. 15m on 27 Oct 2026 with the costs rule, again 19:10 Dubai after the no-flip fix, flag `reset_15m_v23b`) go through `views.record_clause` — wins and losses alike, shown on Results.
 - The Firebase service-account key lives only in the GitHub secret `FIREBASE_SERVICE_ACCOUNT`. The Telegram bot token
   lives in Firestore `owner/telegram` (owner-only rule). Never print or commit secrets.
-- The user is non-technical: answer in plain words, short. Commits end with the attribution lines given by the
+- The user is non-technical: answer in plain words, short. **Look and alignment matter most to the owner** (17 Nov 2026):
+  every page change is screenshot-checked on desktop and phone (even card edges, no hollow or stretched cards, no wrapping
+  controls) and shown as a preview before going live. Commits end with the attribution lines given by the
   session's system reminder.
 
 ## Architecture
