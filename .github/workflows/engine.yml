@@ -51,8 +51,6 @@ jobs:
             backend/requirements-torch.txt
       - run: pip install -r requirements-worker.txt
       - name: Install PyTorch (CPU) for the LSTM / GRU / Transformer models
-        # v2.52 (audit): only when the deep models are switched on - they are off, so this saved ~1-2 min per job
-        if: env.ENABLE_DEEP_MODELS == 'true'
         run: pip install -r requirements-torch.txt
       - name: Restore engine state (candles, models, bot books)
         id: state

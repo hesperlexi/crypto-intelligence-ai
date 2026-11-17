@@ -1018,3 +1018,16 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   bar + outcome table; "Recent form" tiles of the last 20 closed + month totals). `ProofWall` / `Curve` no longer on the
   page (compact hero unchanged). Light theme "Ivory" is now cream (ink 240 235 223, panel 250 246 237, no pure white).
   Alternate row shading: `main table tbody tr:nth-child(even)`, `main .divide-y > *:nth-child(even)`, `.zebra`.
+- v2.52 audit step 1 (owner, 17 Nov 2026; audit doc "Crypto Intelligence AI — Audit v2.51"): Firestore on-device cache
+  (`lib/firebase.ts` `persistentLocalCache` + multi-tab; `dropLocalCache` on sign-out and once per account when the role
+  becomes expired / blocked, flag localStorage `cia-cache-wiped-<uid>-<role>`; `session.watchRole` ignores a cached
+  "no record" so an offline start never creates a record). Background pause: `lib/awake.ts` `usePageAwake` (hidden ≥ 60 s →
+  `useApi` listeners and the `views/meta` listener detach; shown data kept; re-attach on return). Firebase chunk +24 KB gz
+  (cache code). Icons / og-image recompressed (libimagequant, stored truecolor, ~2x smaller). Removed dead `ProofWall`,
+  `DailyBars`, `FuturesPaper.tsx` and their CSS. PyTorch install kept in engine / train: 7 active 15m bundles still hold
+  LSTM / GRU / Transformer members (loading them needs torch) - skip it once those retrain without deep models.
+- Model value study `python -m app.research models-value` (`research_models.py`, workflow `research-models.yml`, results
+  `research-results/results/models-value-*.json`, 17 Nov: 233 active series): Random Forest best in 154 series, skill > 0 in
+  70 %, mean weight 0.41; ARIMA skill < 0 in 91 % of series (weight 0.08 in 80); technical rules < 0 in 79 %; boosted trees /
+  logistic positive on 15m but strongly negative on 12h / 1d / 3d. Ensemble skill > 0 in 91 % (15m), 84 % (1h), 74 % (4h),
+  33 % (12h), 14 % (1d), 4 % (3d); calibration error 1-2.5 % (15m-4h) vs 4-10 % (12h-3d). Nothing changed live.

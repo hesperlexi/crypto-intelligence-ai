@@ -1,6 +1,6 @@
 import { initializeApp } from "firebase/app";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+import { clearIndexedDbPersistence, Firestore, getFirestore, initializeFirestore, persistentLocalCache, persistentMultipleTabManager, terminate } from "firebase/firestore";
 
 // Firebase web config is public by design: access is controlled by Firestore security rules + sign-in.
 export const firebaseConfig = {
@@ -15,7 +15,24 @@ export const firebaseConfig = {
 
 export const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
-export const db = getFirestore(app);
+// v2.52 (audit, owner 17 Nov 2026): Firebase's free on-device cache. Pages show the last data at once on the next
+// visit and reopened listeners only download what changed (fewer free-plan reads). Without IndexedDB (private
+// windows, old browsers) the SDK falls back to memory by itself. The cache is wiped on sign-out and when an account
+// stops being a member (`dropLocalCache`), so nothing paid-for stays readable on a shared device.
+function makeDb(): Firestore {
+  try {
+    return initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+  } catch {
+    return getFirestore(app);
+  }
+}
+export const db = makeDb();
+
+/** Wipe the on-device cache (the database connection is closed: reload the page afterwards). */
+export async function dropLocalCache(): Promise<void> {
+  try { await terminate(db); } catch { /* already closed */ }
+  try { await clearIndexedDbPersistence(db); } catch { /* another tab still open: cleared on its next sign-out */ }
+}
 export const googleProvider = new GoogleAuthProvider();
 
 // Firebase App Check (reCAPTCHA v3): only switched on when a site key is provided at build time

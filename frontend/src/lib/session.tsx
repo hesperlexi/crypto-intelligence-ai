@@ -46,6 +46,9 @@ export function watchRole(user: User, cb: (role: Role) => void): () => void {
     const ref = doc(db, "users", user.uid);
     stop = onSnapshot(ref, (s) => {
       const d = s.data();
+      // v2.52 on-device cache: "no record" is only believed from the server (offline, a missing cache entry must never
+      // create a new record over the real one)
+      if (!d && s.metadata?.fromCache) return;
       if (!d) {
         markNewAccount(user.uid);
         // v2.16: an account opened from an invite link records who invited it (only now, at creation)

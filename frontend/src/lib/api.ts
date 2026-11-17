@@ -10,6 +10,8 @@
  */
 import { addDoc, collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from "firebase/firestore";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePageAwake } from "./awake";
+export { usePageAwake } from "./awake";
 import * as binance from "./binance";
 import { auth, db } from "./firebase";
 import * as paper from "./paper";
@@ -212,9 +214,13 @@ export function useApi<T = any>(path: string | null, refreshMs = 0): ApiState<T>
   const [loading, setLoading] = useState<boolean>(!!path);
   const [tick, setTick] = useState(0);
   const seq = useRef(0);
+  const awake = usePageAwake();
+  const shown = useRef<string | null>(null);     // the path whose data is on screen (kept while paused)
 
   useEffect(() => {
-    setData(null);
+    if (!awake && shown.current === path) return;     // background: keep what is shown, read nothing
+    if (shown.current !== path) setData(null);
+    shown.current = path;
     if (!path) { setLoading(false); return; }
     const id = ++seq.current;
     setLoading(true);
@@ -223,7 +229,7 @@ export function useApi<T = any>(path: string | null, refreshMs = 0): ApiState<T>
       (e) => { if (id === seq.current) { setError(e.message); setLoading(false); } },
     );
     return unsub;
-  }, [path, refreshMs, tick]);
+  }, [path, refreshMs, tick, awake]);
 
   const reload = useCallback(() => setTick((x) => x + 1), []);
   return { data, error, loading, reload };

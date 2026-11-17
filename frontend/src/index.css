@@ -1031,22 +1031,6 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 /* proof wall */
 .trust-strip { display: flex; flex-wrap: wrap; gap: 6px 14px; padding: 8px 12px; border-radius: var(--r-control, 8px);
   border: 1px solid rgb(var(--accent) / 0.22); background: linear-gradient(90deg, rgb(var(--accent) / 0.08), transparent); font-size: 12px; color: rgb(var(--text) / 0.85); }
-.pw-grid { display: grid; grid-template-rows: repeat(7, auto); gap: 4px; align-items: center; justify-content: start; }
-.pw-dow { font-size: 10px; color: rgb(var(--mute)); padding-right: 4px; line-height: 1; }
-.pw-cell { display: block; aspect-ratio: 1; min-height: 10px; border-radius: 3px; background: rgb(var(--glass) / 0.06); }
-.pw-cell.is-up { background: rgb(var(--bull)); }
-.pw-cell.is-down { background: rgb(var(--bear)); }
-.pw-cell.is-future { background: transparent; border: 1px dashed rgb(var(--glass) / 0.08); }
-.pw-cell.is-today { outline: 1.5px solid rgb(var(--accent)); outline-offset: 1px; }
-.pw-key { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: -1px; }
-.pw-key.is-up { background: rgb(var(--bull)); } .pw-key.is-down { background: rgb(var(--bear)); }
-.pw-bar { height: 8px; border-radius: 9999px; background: rgb(var(--glass) / 0.07); overflow: hidden; }
-.pw-bar > div { height: 100%; border-radius: 9999px; }
-.pw-bar .is-up { background: linear-gradient(90deg, rgb(var(--bull) / 0.5), rgb(var(--bull))); }
-.pw-bar .is-down { background: linear-gradient(90deg, rgb(var(--bear) / 0.5), rgb(var(--bear))); }
-.pw-week { padding: 10px 12px; border-radius: var(--r-card, 12px); border: 1px solid rgb(var(--glass) / 0.08); }
-.pw-week.is-up { background: linear-gradient(160deg, rgb(var(--bull) / 0.10), transparent 70%); }
-.pw-week.is-down { background: linear-gradient(160deg, rgb(var(--bear) / 0.10), transparent 70%); }
 
 /* rings */
 .ring-draw { transition: stroke-dasharray .9s var(--ease-out, ease-out); }
@@ -1256,23 +1240,6 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 }
 .tb-plan { font-size: 11px; line-height: 1.3; color: rgb(var(--accent) / 0.9); font-weight: 600; }
 
-/* ---- v2.49 Results daily chart (replaces the day calendar) ---- */
-.db-head { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px; }
-.db-chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.db-chip { font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; border: 1px solid rgb(var(--accent) / 0.3); color: rgb(var(--accent)); background: rgb(var(--accent) / 0.06); }
-.db-chip.is-up { border-color: rgb(var(--bull) / 0.35); color: rgb(var(--bull)); background: rgb(var(--bull) / 0.07); }
-.db-chip.is-down { border-color: rgb(var(--bear) / 0.35); color: rgb(var(--bear)); background: rgb(var(--bear) / 0.07); }
-.db-chart { position: relative; margin-top: 10px; padding: 6px 4px 0; border-radius: 14px; border: 1px solid rgb(var(--glass) / 0.08);
-  background: radial-gradient(120% 80% at 50% 0%, rgb(var(--accent) / 0.05), transparent 60%), rgb(var(--glass) / 0.02); }
-.db-bar { transition: opacity .15s; }
-.db-now { animation: db-pulse 2.4s ease-out infinite; transform-box: fill-box; transform-origin: center; }
-@keyframes db-pulse { 0% { opacity: 1; } 50% { opacity: .45; } 100% { opacity: 1; } }
-.db-tip { position: absolute; top: 8px; transform: translateX(-50%); display: flex; flex-direction: column; gap: 1px; pointer-events: none;
-  font-size: 12px; padding: 6px 10px; border-radius: 10px; background: rgb(var(--panel) / 0.95); border: 1px solid rgb(var(--accent) / 0.35); box-shadow: var(--elev-2); white-space: nowrap; }
-.db-key { display: inline-block; vertical-align: middle; margin-right: 4px; }
-.db-key.is-bar { width: 8px; height: 10px; border-radius: 2px; background: linear-gradient(rgb(var(--bull)), rgb(var(--bear))); }
-.db-key.is-line { width: 14px; height: 2px; background: rgb(var(--accent)); }
-@media (prefers-reduced-motion: reduce) { .db-now { animation: none; } }
 
 /* ---- v2.51 Results board (statement, outcomes, recent form) ---- */
 .rb-hero { background-image: radial-gradient(600px 220px at 85% 20%, rgb(var(--bull) / 0.07), transparent 70%), radial-gradient(500px 200px at 10% 0%, rgb(var(--accent) / 0.08), transparent 70%); }

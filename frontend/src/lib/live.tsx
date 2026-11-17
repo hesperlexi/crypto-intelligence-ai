@@ -14,6 +14,7 @@ const LITE: boolean = (() => {
 })();
 import { Race, raceSocket } from "./ws";
 import { db } from "./firebase";
+import { usePageAwake } from "./awake";
 import { localNotify } from "./push";
 import { myUid } from "./session";
 
@@ -89,13 +90,14 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   const [mine, setMine] = useState<string[]>([]);
   useEffect(() => onSnapshot(doc(db, "user_coins", myUid()), (s) => setMine((s.data()?.symbols ?? []) as string[]), () => {}), []);
 
-  useEffect(() => onSnapshot(doc(db, "views", "meta"), (s) => {
+  const awake = usePageAwake();      // v2.52: views/meta changes every engine cycle - not read while in the background
+  useEffect(() => (!awake ? undefined : onSnapshot(doc(db, "views", "meta"), (s) => {
     const t = s.data()?.updated_at;
     if (t) setRefreshAt(t);
     if (!symbols.length && s.data()?.json) {
       try { setSymbols((JSON.parse(s.data()!.json).watchlist ?? []).map((w: any) => w.symbol)); } catch { /* ignore */ }
     }
-  }, () => {}), []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, () => {})), [awake]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => onSnapshot(doc(db, "views", `alerts_u_${myUid()}`), (s) => {
     try {

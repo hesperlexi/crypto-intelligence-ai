@@ -18,6 +18,11 @@ export interface Coll { kind: "coll"; path: string; filters: [string, string, an
 type Clause = [string, string, any] | { __order: [string, "asc" | "desc"] } | { __limit: number } | { __after: any };
 
 export const getFirestore = () => ({ mock: true });
+export const initializeFirestore = () => ({ mock: true });
+export const persistentLocalCache = (o?: unknown) => ({ kind: "persistent", o });
+export const persistentMultipleTabManager = () => ({});
+export const terminate = async () => {};
+export const clearIndexedDbPersistence = async () => {};
 export function doc(dbOrColl: any, ...parts: string[]): Ref {
   if (dbOrColl?.kind === "coll") parts = [...dbOrColl.path.split("/"), ...(parts.length ? parts : [Math.random().toString(36).slice(2, 12)])];
   const path = parts.join("/");

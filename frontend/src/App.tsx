@@ -12,7 +12,7 @@ import { Badge } from "./components/ui";
 import { useApi } from "./lib/api";
 import { useAppearance } from "./lib/appearance";
 import { Role, SessionCtx, setSession, useIsAdmin, useSession, watchRole } from "./lib/session";
-import { auth, db, googleProvider } from "./lib/firebase";
+import { auth, db, dropLocalCache, googleProvider } from "./lib/firebase";
 import { ago } from "./lib/format";
 import { LiveProvider, useLive } from "./lib/live";
 import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
@@ -182,7 +182,24 @@ export default function App() {
   const [user, setUser] = useState<User | null | undefined>(undefined);
   const [role, setRole] = useState<Role>("loading");
   const [verified, setVerified] = useState(0);          // bumped when an email account confirms its address
-  useEffect(() => onAuthStateChanged(auth, (u) => { void (u ? loadDashboard() : loadLanding()).catch(() => {}); setUser(u); setRole("loading"); }), []);
+  useEffect(() => {
+    let had = false;
+    return onAuthStateChanged(auth, (u) => {
+      // v2.52: signing out wipes the on-device data cache, then starts clean
+      if (had && !u) { void dropLocalCache().then(() => window.location.reload()); return; }
+      had = !!u;
+      void (u ? loadDashboard() : loadLanding()).catch(() => {});
+      setUser(u); setRole("loading");
+    });
+  }, []);
+  // v2.52: an account that is not (or no longer) a member never keeps cached member data on the device - wiped once
+  // per account and state (the flag stops a reload loop)
+  useEffect(() => {
+    if (!user || !(role === "expired" || role === "blocked")) return;
+    const k = `cia-cache-wiped-${user.uid}-${role}`;
+    try { if (localStorage.getItem(k)) return; localStorage.setItem(k, "1"); } catch { return; }
+    void dropLocalCache().then(() => window.location.reload());
+  }, [user, role]);
   // email accounts must confirm their address first: until then the database rules refuse them, so nothing is read
   const unverified = needsVerification(user);
   useEffect(() => (user && !unverified ? watchRole(user, setRole) : undefined), [user, unverified, verified]);
