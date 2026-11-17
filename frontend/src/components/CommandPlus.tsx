@@ -62,69 +62,6 @@ export function SignalJourneys({ track }: { track: any }) {
 }
 
 /* ---------------------------------------------------------------- market heat globe */
-const CITIES: [string, number, number, number, number][] = [   // name, lon, lat, open UTC h, close UTC h (main stock session)
-  ["Tokyo", 139.7, 35.7, 0, 6], ["Dubai", 55.3, 25.2, 6, 11], ["London", -0.1, 51.5, 8, 16.5], ["New York", -74, 40.7, 14.5, 21],
-];
-/** A gold globe: night side shaded from the real sun position, the four main stock sessions lit while
- *  open, BTC's last-hour volume against its 48-hour average, and the next US data release. */
-export function HeatGlobe({ news }: { news: any }) {
-  const k = useKlines("BTC/USDT", "1h", 48, 600_000);
-  const now = new Date();
-  const h = now.getUTCHours() + now.getUTCMinutes() / 60;
-  const sunLon = (12 - h) * 15;                               // longitude under the sun
-  const view = sunLon + 25;                                   // keep the day side in view
-  const R = 92, C = 110;
-  const proj = (lon: number, lat: number) => {
-    const l = ((lon - view) * Math.PI) / 180, p = (lat * Math.PI) / 180;
-    return { x: C + R * Math.cos(p) * Math.sin(l), y: C - R * Math.sin(p) * 0.98, front: Math.cos(p) * Math.cos(l) > 0 };
-  };
-  const vols = (k.data ?? []).map((c) => c[5]);
-  const last = vols.length > 1 ? vols[vols.length - 2] : null;          // last closed hour
-  const avg = vols.length > 2 ? vols.slice(0, -1).reduce((a, b) => a + b, 0) / (vols.length - 1) : null;
-  const ratio = isNum(last) && isNum(avg) && avg ? last / avg : null;
-  const openNow = CITIES.filter(([, , , o, c]) => h >= o && h < c && now.getUTCDay() % 6 !== 0);
-  const next = news?.next_high && news.next_high.ts > Date.now() ? news.next_high : null;
-  const nightX = C + R * Math.sin(((sunLon + 180 - view) * Math.PI) / 180);
-  return (
-    <div className="grid items-center gap-4 sm:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-1 2xl:grid-cols-[200px_minmax(0,1fr)]">
-      <svg viewBox="0 0 220 220" className="mx-auto w-full max-w-[220px]" role="img" aria-label={`World markets now: ${openNow.length ? openNow.map((c) => c[0]).join(", ") + " open" : "main stock markets closed"}; crypto trades 24/7`}>
-        <defs>
-          <radialGradient id="hg-sea" cx="38%" cy="32%"><stop offset="0%" stopColor="#3a3226" /><stop offset="100%" stopColor="#14110d" /></radialGradient>
-          <clipPath id="hg-clip"><circle cx={C} cy={C} r={R} /></clipPath>
-        </defs>
-        <circle cx={C} cy={C} r={R + 10} fill="rgb(var(--accent) / 0.06)" />
-        <circle cx={C} cy={C} r={R} fill="url(#hg-sea)" stroke="rgb(var(--accent) / 0.55)" />
-        <g clipPath="url(#hg-clip)">
-          {[-60, -30, 0, 30, 60].map((lat) => <ellipse key={lat} cx={C} cy={C - R * Math.sin((lat * Math.PI) / 180)} rx={R * Math.cos((lat * Math.PI) / 180)} ry={3} fill="none" stroke="rgb(var(--accent) / 0.16)" />)}
-          <g>
-            {[0, 30, 60, 90, 120, 150].map((d) => <ellipse key={d} cx={C} cy={C} rx={Math.abs(R * Math.cos((d * Math.PI) / 180))} ry={R} fill="none" stroke="rgb(var(--accent) / 0.14)" />)}
-          </g>
-          <ellipse cx={nightX} cy={C} rx={R * 1.15} ry={R * 1.2} fill="rgb(0 0 0 / 0.3)" />
-        </g>
-        {CITIES.map(([n, lon, lat, o, c]) => {
-          const p = proj(lon, lat);
-          if (!p.front) return null;
-          const on = h >= o && h < c && now.getUTCDay() % 6 !== 0;
-          return (
-            <g key={n}>
-              {on && <circle cx={p.x} cy={p.y} r="9" fill="rgb(var(--accent) / 0.25)" className="hg-pulse" />}
-              <circle cx={p.x} cy={p.y} r="3.5" fill={on ? "#f0b90b" : "rgb(var(--mute))"} />
-              <text x={p.x + (p.x >= C ? 7 : -7)} y={p.y + (n === "New York" || n === "Dubai" ? 15 : -7)} textAnchor={p.x >= C ? "start" : "end"} fontSize="12" fill={on ? "#fff1c4" : "rgb(var(--mute))"}>{n}</text>
-            </g>
-          );
-        })}
-      </svg>
-      <div className="space-y-2.5">
-        <div className="cc-cell"><div className="text-xs text-mute">Stock markets open now</div><div className="font-semibold">{openNow.length ? openNow.map((c) => c[0]).join(" · ") : "None (crypto trades 24/7)"}</div></div>
-        <div className="cc-cell"><div className="text-xs text-mute">BTC volume, last hour vs 48 h average</div>
-          <div className={`font-semibold ${ratio == null ? "" : ratio >= 1.3 ? "text-accent" : ratio < 0.7 ? "text-mute" : ""}`}>{ratio == null ? "—" : `${ratio.toFixed(2)}×  ${ratio >= 1.3 ? "busy" : ratio < 0.7 ? "quiet" : "normal"}`}</div>
-          {ratio != null && <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-glass/[0.08]"><div className="h-full rounded-full bg-accent" style={{ width: `${clamp(ratio / 2) * 100}%` }} /></div>}
-        </div>
-        <div className="cc-cell"><div className="text-xs text-mute">Next high-impact US release</div><div className="font-semibold">{next ? next.title : "None scheduled soon"}</div>{next && <div className="text-xs text-mute">{new Date(next.ts).toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" })} · new signals pause 45 min before</div>}</div>
-      </div>
-    </div>
-  );
-}
 
 /* ---------------------------------------------------------------- coin vs coin */
 const COLORS = ["#f0b90b", "rgb(var(--bull))", "#9ec5ff"];

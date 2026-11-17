@@ -68,18 +68,18 @@
   color-scheme: dark;
 }
 [data-theme="light"] {
-  /* Ivory: v2.51 (owner, 17 Nov 2026: "too much white - creamy, like Binance light"): warm cream page, soft cream cards
-     (no pure white), deep gold. Text colours ≥ 4.5:1 on the cards and on raised surfaces;
-     the bright gold is only used as a fill (primary button) with dark text on it. */
-  --ink: 240 235 223; --panel: 250 246 237; --raised: 233 226 210; --line: 216 207 188;
-  --text: 30 27 22; --mute: 92 86 74;
-  --bull: 0 122 77; --bear: 186 28 56; --warn: 160 78 0;
-  --accent: 128 90 0; --accent-2: 222 170 30; --ai: 44 82 168;
-  --primary: 226 172 30; --primary-2: 236 184 52; --on-primary: 30 27 22; --on-accent: 255 252 244;
+  /* Ivory v2.53 (owner, 17 Nov 2026: "too much white, hard to watch - soft for the eyes"): low-glare warm parchment.
+     Page ~ #DED8CA, cards ~ #EAE5D9 (no surface brighter than 92 % white), soft warm-brown text instead of black,
+     deeper greens / reds so they stay ≥ 4.5:1 on the darker cards. The bright gold is only a button fill. */
+  --ink: 222 216 202; --panel: 234 229 217; --raised: 216 209 193; --line: 196 187 167;
+  --text: 38 34 28; --mute: 86 79 66;
+  --bull: 0 106 66; --bear: 172 26 52; --warn: 146 70 0;
+  --accent: 116 81 0; --accent-2: 214 162 28; --ai: 40 74 152;
+  --primary: 214 162 28; --primary-2: 224 174 46; --on-primary: 34 30 24; --on-accent: 246 241 230;
   --glass: 60 46 20;
-  --panel-bg: 250 246 237; --panel-a: 0.96; --bar-a: 0.93;
-  --glow1: rgba(222, 170, 30, 0.10); --glow2: rgba(180, 120, 40, 0.05);
-  --shadow: rgba(60, 46, 20, 0.12);
+  --panel-bg: 234 229 217; --panel-a: 0.96; --bar-a: 0.94;
+  --glow1: rgba(200, 150, 40, 0.10); --glow2: rgba(150, 110, 50, 0.06);
+  --shadow: rgba(60, 46, 20, 0.14);
   color-scheme: light;
 }
 
@@ -108,8 +108,8 @@
   --hair: rgb(15 23 42 / 0.09); --hair-strong: rgb(15 23 42 / 0.16);
   --elev-1: 0 1px 2px 0 rgb(15 23 42 / 0.05), 0 0 0 0 transparent;
   --elev-2: 0 18px 44px -14px rgb(15 23 42 / 0.22), 0 2px 6px -2px rgb(15 23 42 / 0.08);
-  --input-bg: rgb(253 250 243);
-  --glass-highlight: rgb(255 251 240 / 0.7);
+  --input-bg: rgb(240 235 224);
+  --glass-highlight: rgb(250 244 230 / 0.35);
   --glass-shadow: 0 1px 2px 0 rgb(15 23 42 / 0.05);
 }
 
@@ -303,8 +303,8 @@ table.grid-table td.num, table.grid-table td .num { font-variant-numeric: tabula
   --crystal-sheen: linear-gradient(135deg, rgb(var(--glass) / 0.12) 0%, rgb(var(--glass) / 0.035) 35%, transparent 60%);
 }
 [data-glass="on"][data-theme="light"], [data-theme="light"] [data-glass="on"] {
-  --panel-a: 0.82; --crystal-edge: rgb(255 248 230 / 0.7); --crystal-top: rgb(255 250 238 / 0.8);
-  --crystal-sheen: linear-gradient(135deg, rgb(255 248 228 / 0.45) 0%, rgb(255 248 228 / 0.12) 40%, transparent 65%);
+  --panel-a: 0.86; --crystal-edge: rgb(246 238 220 / 0.45); --crystal-top: rgb(246 239 222 / 0.5);
+  --crystal-sheen: linear-gradient(135deg, rgb(244 236 216 / 0.22) 0%, rgb(244 236 216 / 0.06) 40%, transparent 65%);
 }
 [data-glass="on"] body {
   background-image:
@@ -1275,3 +1275,17 @@ main table tbody tr:nth-child(even):hover > td, main table tbody tr:nth-child(od
 .zebra > *:nth-child(even), main .divide-y > *:nth-child(even) { background-color: rgb(var(--glass) / 0.045); }
 [data-theme="light"] main table tbody tr:nth-child(even) > td, [data-theme="light"] .zebra > *:nth-child(even),
 [data-theme="light"] main .divide-y > *:nth-child(even) { background-color: rgb(120 96 40 / 0.075); }
+
+/* ---- v2.53 Market heat globe (Command Centre) ---- */
+.mg-globe { position: relative; aspect-ratio: 1; cursor: grab; }
+.mg-globe:active { cursor: grabbing; }
+.mg-cell { padding: 12px 14px; border-radius: var(--r-card, 12px); border: 1px solid var(--hair); background: rgb(var(--glass) / 0.03); min-width: 0; }
+.mg-h { font-size: 12px; font-weight: 600; color: rgb(var(--text) / 0.9); }
+.mg-mkt { padding: 8px 10px; border-radius: 10px; border: 1px solid var(--hair); background: rgb(var(--glass) / 0.025); }
+.mg-mkt.is-open { border-color: rgb(var(--bull) / 0.35); background: rgb(var(--bull) / 0.06); }
+.mg-share { display: block; height: 8px; border-radius: 999px; background: rgb(var(--glass) / 0.08); overflow: hidden; }
+.mg-share > span { display: block; height: 100%; border-radius: 999px; background: linear-gradient(90deg, rgb(var(--accent) / 0.55), rgb(var(--accent))); }
+.mg-heat { display: flex; align-items: flex-end; gap: 2px; height: 72px; }
+.mg-heat > span { flex: 1; border-radius: 2px 2px 0 0; min-width: 2px; }
+.mg-heat > .is-up { background: linear-gradient(rgb(var(--bull)), rgb(var(--bull) / 0.35)); }
+.mg-heat > .is-down { background: linear-gradient(rgb(var(--bear)), rgb(var(--bear) / 0.35)); }

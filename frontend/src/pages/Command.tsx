@@ -4,7 +4,7 @@
 //   Signals page's calls), views/track_record (open calls), views/market_context + context (alt strength, Fear & Greed),
 //   views/health (mission control; already open in the header), the coin's analysis view for the scan (1 read per coin
 //   picked). Correlations from public Binance 1h candles in the browser (no Firebase).
-import { useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { PageHeader, Segmented } from "../components/kit";
 import { CoinAvatar } from "../components/Polish";
@@ -12,7 +12,8 @@ import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
 import { useKlines } from "../lib/klines";
 import LazyMount from "../components/LazyMount";
-import { CoinCompare, HeatGlobe, SignalJourneys } from "../components/CommandPlus";
+import { CoinCompare, SignalJourneys } from "../components/CommandPlus";
+const MarketGlobe = lazy(() => import("../components/MarketGlobe"));
 import { useLive, useTicker } from "../lib/live";
 import { ago, base, fmtCompact, fmtPrice, isNum, slug } from "../lib/format";
 
@@ -420,16 +421,14 @@ export default function Command() {
           <div className="mt-3"><Mission health={health.data} connected={connected} /></div>
         </section>
       </div>
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
-        <section className="cc-panel p-4 sm:p-5" aria-label="Live signal journeys">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signal journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
-          <div className="mt-3"><SignalJourneys track={track.data} /></div>
-        </section>
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Market heat globe">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
-          <div className="mt-3 flex flex-1 flex-col justify-center"><HeatGlobe news={news.data} /></div>
-        </section>
-      </div>
+      <section className="cc-panel p-4 sm:p-5" aria-label="Live signal journeys">
+        <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signal journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
+        <div className="mt-3"><SignalJourneys track={track.data} /></div>
+      </section>
+      <section className="cc-panel p-4 sm:p-5" aria-label="Market heat globe">
+        <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
+        <div className="mt-3"><LazyMount height={380}><Suspense fallback={<div className="skeleton h-[360px] rounded-xl" />}><MarketGlobe news={news.data} /></Suspense></LazyMount></div>
+      </section>
       <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
         <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Coin vs coin</h2><span className="text-xs text-mute">pick up to 3</span></div>
         <div className="mt-3"><LazyMount height={320}><CoinCompare rows={rows} /></LazyMount></div>
