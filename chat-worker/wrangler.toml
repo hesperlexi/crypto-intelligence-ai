@@ -1,0 +1,19 @@
+# AI chat for members (v2.61). Free Cloudflare Workers plan. Deployed by .github/workflows/chat-worker.yml, which fills
+# the KV namespace id below (created once, title "cia-chat") and sets the secret GEMINI_API_KEY.
+name = "cia-chat"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+workers_dev = true
+
+[vars]
+FIREBASE_PROJECT = "crypapp-6a9b9"
+ALLOWED_ORIGINS = "https://cryptointelai.com,https://www.cryptointelai.com,https://crypapp-6a9b9.web.app,https://crypapp-6a9b9.firebaseapp.com"
+GEMINI_MODEL = "gemini-2.5-flash"
+MEMBER_DAILY = "20"
+ADMIN_DAILY = "100"
+GLOBAL_DAILY = "400"
+ADMIN_EMAILS = ""
+
+[[kv_namespaces]]
+binding = "KV"
+id = "__KV_ID__"

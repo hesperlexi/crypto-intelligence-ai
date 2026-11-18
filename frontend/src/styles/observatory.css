@@ -492,3 +492,37 @@ header.tb-premium > :last-child::after, .obs-horizon {
   .nav-side .page-head.ph-nosub.ph-noact { display: none; }
   .nav-side .page-head.ph-nosub.ph-noact + * { margin-top: 0 !important; }
 }
+
+/* v2.61 Ask AI: button bottom-right (above the tab bar on phones), panel / bottom sheet */
+.askai-fab { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 44; display: inline-flex; align-items: center; gap: .45rem;
+  min-height: 44px; padding: 0 1rem; border-radius: 999px; font-size: .875rem; font-weight: 600; color: rgb(var(--text));
+  background: linear-gradient(180deg, rgb(var(--raised)), rgb(var(--panel))); border: 1px solid rgb(var(--ai) / .45);
+  box-shadow: 0 10px 30px -10px rgb(0 0 0 / .6), 0 0 0 4px rgb(var(--ai) / .08); transition: transform var(--t-fast), border-color var(--t-fast); }
+.askai-fab svg { color: rgb(var(--ai)); }
+.askai-fab:hover { transform: translateY(-1px); border-color: rgb(var(--ai) / .8); }
+.askai-wrap { position: fixed; right: 1.25rem; bottom: 1.25rem; z-index: 46; width: min(400px, calc(100vw - 2.5rem)); }
+.askai-panel { display: flex; flex-direction: column; height: min(600px, calc(100vh - 7rem)); overflow: hidden; border-radius: 16px;
+  border: 1px solid var(--hair); background: rgb(var(--panel)); box-shadow: 0 24px 60px -20px rgb(0 0 0 / .7), inset 0 1px 0 rgb(var(--glass) / .06);
+  animation: obs-rise .22s var(--ease-out); }
+.askai-panel::before { content: ""; height: 2px; background: var(--horizon); flex-shrink: 0; }
+.askai-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .8rem 1rem; border-bottom: 1px solid var(--hair); }
+.askai-dot { width: .5rem; height: .5rem; border-radius: 999px; background: rgb(var(--ai)); box-shadow: 0 0 0 3px rgb(var(--ai) / .18); }
+.askai-x { display: inline-flex; align-items: center; justify-content: center; width: 2rem; height: 2rem; border-radius: 8px; color: rgb(var(--mute)); }
+.askai-x:hover { color: rgb(var(--text)); background: rgb(var(--glass) / .06); }
+.askai-list { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1rem; display: flex; flex-direction: column; gap: .75rem; font-size: .875rem; line-height: 1.55; }
+.askai-me { align-self: flex-end; max-width: 85%; padding: .55rem .8rem; border-radius: 14px 14px 4px 14px; background: rgb(var(--accent) / .14); border: 1px solid rgb(var(--accent) / .3); white-space: pre-wrap; }
+.askai-ai { align-self: flex-start; max-width: 92%; padding: .6rem .85rem; border-radius: 14px 14px 14px 4px; background: rgb(var(--glass) / .04); border: 1px solid var(--hair); border-left: 2px solid rgb(var(--ai) / .7); }
+.askai-starter { text-align: left; padding: .6rem .8rem; border-radius: 10px; border: 1px solid var(--hair); background: rgb(var(--glass) / .025); font-size: .875rem; transition: border-color var(--t-fast); }
+.askai-starter:hover { border-color: rgb(var(--ai) / .5); }
+.askai-err { align-self: stretch; padding: .55rem .8rem; border-radius: 10px; font-size: .8125rem; color: rgb(var(--warn)); background: rgb(var(--warn) / .08); border: 1px solid rgb(var(--warn) / .3); }
+.askai-form { display: flex; align-items: flex-end; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid var(--hair); }
+.askai-typing { display: inline-flex; gap: .3rem; padding: .75rem .9rem; }
+.askai-typing span { width: .4rem; height: .4rem; border-radius: 999px; background: rgb(var(--ai)); animation: askai-b 1s infinite ease-in-out; }
+.askai-typing span:nth-child(2) { animation-delay: .15s; } .askai-typing span:nth-child(3) { animation-delay: .3s; }
+@keyframes askai-b { 0%, 80%, 100% { opacity: .25; transform: translateY(0); } 40% { opacity: 1; transform: translateY(-3px); } }
+@media (max-width: 767px) {
+  .askai-fab { right: .75rem; bottom: calc(4.6rem + env(safe-area-inset-bottom)); padding: 0 .9rem; }
+  .askai-wrap { left: .5rem; right: .5rem; width: auto; bottom: calc(4.4rem + env(safe-area-inset-bottom)); }
+  .askai-panel { height: min(72vh, 560px); }
+}
+@media (prefers-reduced-motion: reduce) { .askai-panel, .askai-typing span { animation: none; } }

@@ -3,6 +3,7 @@ import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
+import AskAI from "./components/AskAI";
 import InstallButton from "./components/InstallButton";
 import UpdateNotice from "./components/UpdateNotice";
 import NotifyPrompt from "./components/NotifyPrompt";
@@ -479,6 +480,7 @@ function Shell({ user }: { user: User }) {
         </div>
       )}
       <Toasts />
+      <AskAI />
       <UpdateNotice />
       <NotifyPrompt />
     </div>

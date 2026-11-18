@@ -235,7 +235,7 @@ export function useApi<T = any>(path: string | null, refreshMs = 0): ApiState<T>
   return { data, error, loading, reload };
 }
 
-function first<T>(sub: Sub): Promise<T> {
+export function first<T>(sub: Sub): Promise<T> {
   return new Promise((res, rej) => {
     let un: () => void = () => {};
     let done = false;
@@ -381,3 +381,6 @@ export type ScalpingVisibility = "admin" | "members";
 export async function setScalpingVisibility(visibility: ScalpingVisibility): Promise<void> {
   await setDoc(doc(db, "config", "scalping"), { visibility, updated_at: Date.now(), by: auth.currentUser?.email ?? null });
 }
+
+/** v2.61: one reading of a data path (the AI chat collects the page's figures only when a question is sent). */
+export const getOnce = <T = any>(path: string): Promise<T> => first<T>(resolve(path, 0));
