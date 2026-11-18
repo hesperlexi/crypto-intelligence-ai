@@ -239,3 +239,89 @@ header.tb-premium > :last-child::after, .obs-horizon {
 [data-theme="light"] body { background-image: radial-gradient(140% 70% at 50% -46%, rgb(var(--accent-2) / 0.16), transparent 62%); }
 [data-theme="light"] .side-bar { background: rgb(var(--panel) / 0.92) !important; }
 [data-theme="light"] .seg { background: rgb(var(--raised) / 0.55); }
+
+/* =====================================================================================================
+   PAGE: HOME - the Intelligence Deck
+   ===================================================================================================== */
+.deck-hero-grid { display: grid; gap: 1.25rem; align-items: center; }
+@media (min-width: 900px) { .deck-hero-grid { grid-template-columns: minmax(0, 1fr) 250px; } }
+.deck-hero-grid > section { align-items: flex-start; }
+.deck-dial { position: relative; margin: 0 auto; }
+.deck-dial svg { display: block; width: 100%; height: auto; overflow: visible; }
+.deck-dial-centre { position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; pointer-events: none; }
+.deck-dial-cap { margin-top: 0.5rem; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.8125rem; text-align: center; }
+.deck-seg { transition: stroke-width var(--t-fast); cursor: pointer; }
+.deck-seg:hover { stroke-width: 13; }
+@media (max-width: 899px) { .deck-dial { width: 210px !important; } }
+.deck-today { display: flex; flex-wrap: wrap; gap: 0.5rem 1.25rem; font-size: 0.875rem; }
+.deck-today > span { display: inline-flex; align-items: baseline; gap: 0.35rem; padding: 0.35rem 0.7rem; border-radius: 999px; border: 1px solid var(--hair); background: rgb(var(--glass) / 0.03); }
+.deck-fill { display: flex; flex-direction: column; }
+.deck-fill > .card-body { flex: 1 1 auto; }
+.deck-board { display: flex; flex-direction: column; gap: 6px; }
+.deck-opp {
+  display: grid; grid-template-columns: 22px minmax(0, 1fr) auto auto 64px; align-items: center; gap: 0.75rem;
+  padding: 0.6rem 0.75rem; border-radius: 11px; border: 1px solid var(--hair); background: rgb(var(--glass) / 0.02);
+  position: relative; transition: border-color var(--t-fast), background-color var(--t-fast), transform var(--t-fast);
+}
+.deck-opp::before { content: ""; position: absolute; left: -1px; top: 18%; bottom: 18%; width: 2px; border-radius: 2px; background: rgb(var(--glass) / 0.2); }
+.deck-opp.is-long::before { background: rgb(var(--bull)); box-shadow: 0 0 8px rgb(var(--bull) / 0.6); }
+.deck-opp.is-short::before { background: rgb(var(--bear)); box-shadow: 0 0 8px rgb(var(--bear) / 0.6); }
+.deck-opp:hover { border-color: rgb(var(--accent) / 0.3); background: rgb(var(--accent) / 0.04); }
+.deck-rank { font-size: 0.75rem; color: rgb(var(--mute)); text-align: center; }
+.deck-side { font-size: 0.8125rem; font-weight: 600; white-space: nowrap; }
+@media (max-width: 479px) { .deck-opp { grid-template-columns: 18px minmax(0, 1fr) auto 56px; } .deck-opp > :nth-child(4) { display: none; } }
+@media (prefers-reduced-motion: reduce) { .deck-seg { transition: none; } }
+.deck-fill .deck-board { height: 100%; }
+.deck-fill .deck-board > li { flex: 1 1 auto; display: flex; max-height: 84px; }
+.deck-fill .deck-board > li > a { flex: 1 1 auto; }
+@media (max-width: 479px) { .deck-today > span { border-radius: 12px; } }
+
+/* =====================================================================================================
+   PAGE: SIGNALS - premium signal tickets
+   ===================================================================================================== */
+/* the coin rail: each coin a small ticket with its direction light */
+.sig-pick { position: relative; display: flex; flex-shrink: 0; align-items: center; gap: 0.5rem; padding: 0.45rem 0.8rem 0.45rem 0.7rem; border-radius: 12px;
+  border: 1px solid var(--hair); background: rgb(var(--panel) / 0.8); font-size: 0.875rem; transition: border-color var(--t-fast), background-color var(--t-fast), transform var(--t-fast); }
+.sig-pick:hover { border-color: rgb(var(--glass) / 0.22); transform: translateY(-1px); }
+.sig-pick.is-on { border-color: rgb(var(--accent) / 0.6); background: linear-gradient(180deg, rgb(var(--accent) / 0.1), rgb(var(--accent) / 0.03)); box-shadow: 0 0 0 1px rgb(var(--accent) / 0.15), 0 10px 24px -16px rgb(var(--accent) / 0.8); }
+.sig-pick.is-bull { box-shadow: inset 2px 0 0 0 rgb(var(--bull)); }
+.sig-pick.is-bear { box-shadow: inset 2px 0 0 0 rgb(var(--bear)); }
+.sig-pick.is-on.is-bull { box-shadow: inset 2px 0 0 0 rgb(var(--bull)), 0 0 0 1px rgb(var(--accent) / 0.15), 0 10px 24px -16px rgb(var(--accent) / 0.8); }
+.sig-pick.is-on.is-bear { box-shadow: inset 2px 0 0 0 rgb(var(--bear)), 0 0 0 1px rgb(var(--accent) / 0.15), 0 10px 24px -16px rgb(var(--accent) / 0.8); }
+
+/* the ticket: a direction light across the top, a calm header, the decision in large type */
+.signal-card { --tone: var(--glass); }
+.signal-card::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 2px; z-index: 1;
+  background: linear-gradient(90deg, rgb(var(--tone)), rgb(var(--tone) / 0.25) 60%, transparent) !important; opacity: 1 !important; }
+.signal-card.sc-bull { background-image: radial-gradient(80% 60% at 0% 0%, rgb(var(--bull) / 0.08), transparent 60%), var(--panel-grad) !important; }
+.signal-card.sc-bear { background-image: radial-gradient(80% 60% at 0% 0%, rgb(var(--bear) / 0.08), transparent 60%), var(--panel-grad) !important; }
+.signal-card .sc-head { background: none !important; border-bottom: 1px solid var(--hair) !important; }
+.signal-card .sc-head::before, .signal-card .sc-head::after { display: none !important; }
+.sc-side { border-radius: 10px; padding: 0.55rem 0.95rem; font-weight: 700; }
+.sc-side-bull { background: linear-gradient(180deg, rgb(var(--bull)), rgb(var(--bull) / 0.82)); box-shadow: 0 8px 22px -12px rgb(var(--bull) / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.3); }
+.sc-side-bear { background: linear-gradient(180deg, rgb(var(--bear)), rgb(var(--bear) / 0.82)); box-shadow: 0 8px 22px -12px rgb(var(--bear) / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.25); }
+.sc-chip { border-radius: 6px; padding: 3px 7px; background: rgb(var(--glass) / 0.06); }
+.sc-headline { font-size: 1.375rem; }
+@media (min-width: 640px) { .sc-headline { font-size: 1.875rem; letter-spacing: -0.03em; } }
+.sc-reason { font-size: 0.875rem; line-height: 1.5; color: rgb(var(--text) / 0.88); padding: 0.55rem 0.75rem; border-radius: 10px;
+  background: rgb(var(--ai) / 0.06); box-shadow: inset 2px 0 0 0 rgb(var(--ai) / 0.7); }
+
+/* signal trajectory: a lit track from the stop to the last target, the move so far glowing */
+.ptrack-bar { height: 8px !important; border-radius: 8px !important; background: rgb(var(--glass) / 0.06) !important; overflow: visible !important; }
+.ptrack-risk { background: linear-gradient(90deg, rgb(var(--bear) / 0.55), rgb(var(--bear) / 0.12)) !important; border-radius: 8px 0 0 8px !important; }
+.ptrack-won { background: linear-gradient(90deg, rgb(var(--bull) / 0.35), rgb(var(--bull))) !important; box-shadow: 0 0 14px rgb(var(--bull) / 0.55); border-radius: 8px !important; }
+.ptrack-lost { background: linear-gradient(270deg, rgb(var(--bear) / 0.35), rgb(var(--bear))) !important; box-shadow: 0 0 14px rgb(var(--bear) / 0.55); border-radius: 8px !important; }
+.ptrack-now { width: 16px !important; height: 16px !important; margin-left: -8px !important; top: -4px !important; border: 2px solid rgb(var(--ink)) !important;
+  background: radial-gradient(circle at 35% 35%, #fff, rgb(var(--bull)) 50%) !important; box-shadow: 0 0 0 4px rgb(var(--bull) / 0.2), 0 0 16px rgb(var(--bull) / 0.9) !important; transition: left .8s var(--ease-out); }
+.ptrack-now.is-down { background: radial-gradient(circle at 35% 35%, #fff, rgb(var(--bear)) 50%) !important; box-shadow: 0 0 0 4px rgb(var(--bear) / 0.2), 0 0 16px rgb(var(--bear) / 0.9) !important; }
+.sig-toolbar { border-radius: 14px !important; }
+@media (prefers-reduced-motion: reduce) { .ptrack-now { transition: none; } .sig-pick:hover { transform: none; } }
+@media (min-width: 640px) { .sig-row { grid-template-columns: minmax(7.5rem, 1.35fr) repeat(3, minmax(0, 1fr)) 5.75rem; } }
+
+/* phones: page-header switches (timeframes, market) stay one row and scroll sideways instead of wrapping */
+@media (max-width: 639px) {
+  .page-head > div:last-child { width: 100%; }
+  .page-head .seg { flex-wrap: nowrap !important; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .page-head .seg::-webkit-scrollbar { display: none; }
+  .page-head .seg > button { white-space: nowrap; flex-shrink: 0; }
+}

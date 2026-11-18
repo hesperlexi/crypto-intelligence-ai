@@ -1,7 +1,7 @@
 // One clear answer per coin: go long, go short, buy, sell or wait, at which prices, with what risk.
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { DASH, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, isGoldSignal } from "../lib/format";
+import { DASH, ago, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, isGoldSignal } from "../lib/format";
 import { useLive } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 import { AiNote, CallStatusRow, RiskBadge } from "./SignalExtras";
@@ -149,7 +149,6 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   // context lines (quiet section): only what applies to this card
   const notes = [
     r.record_status === "already_open" && <p key="open">Already in the record (open call).</p>,
-    v.tone !== "wait" && r.decision_basis && <p key="why"><span className="text-text/80">Why:</span> {r.decision_basis}</p>,
     pro && v.tone !== "wait" && isNum(r.filter_score) && <p key="filter" className="text-bull" title="A second model trained on which past setups actually reached their targets before the stop">✓ Passed the trade filter ({Math.round(r.filter_score * 100)}% vs a {Math.round((r.filter_threshold ?? 0) * 100)}% bar)</p>,
     isGoldSignal(r.symbol) && <p key="gold"><span className="font-semibold text-accent">Gold (XAU/USD).</span> Levels are in PAXG (tracks gold). On forex.com, use the same % distances.</p>,
     market === "spot" && v.tone === "bear" && <p key="spot">The trend points down. If you hold {base(r.symbol)}, consider taking profit or protecting it with a stop; avoid new buys for now.</p>,
@@ -164,7 +163,8 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           <div className="min-w-0">
             <div className="flex items-baseline gap-1.5"><span className="font-display text-xl font-semibold leading-tight tracking-tight">{base(r.symbol)}</span><span className="text-xs text-mute">/USDT</span></div>
             <div className="mt-0.5 flex items-center gap-1.5 text-xs text-mute">
-              <span className="sc-chip">{tfLabel}</span><span className="sc-chip">{market}</span><span className="num">{fmtPrice(px)}</span>
+              <span className="sc-chip">{tfLabel}</span><span className="sc-chip">{market}</span><span className="num sc-px">{fmtPrice(px)}</span>
+              {isNum(call?.created_at) && <span className="hidden sm:inline" title="When this call was published">· {ago(call.created_at)}</span>}
             </div>
           </div>
         </Link>
@@ -191,6 +191,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           {active && plan && (
             <div className="mt-3 space-y-2">
               <WhyChips r={r} />
+              {r.decision_basis && <p className="sc-reason"><span className="ai-tag mr-1.5 inline-flex rounded px-1.5 py-0.5 text-xs font-semibold">AI</span>{r.decision_basis}</p>}
               {isNum(plan.entry) && isNum(plan.stop) && (plan.targets?.length ?? 0) > 0 && (
                 <TradeProgress side={side} entry={plan.entry} stop={plan.stop} targets={(plan.targets ?? []).map((t: any) => t.price)} px={px}
                   hits={({ TP1: 1, TP2: 2, TP3: 3 } as Record<string, number>)[call?.status === "OPEN" ? "" : String(call?.status ?? "")] ?? (isNum(call?.tp_hits) ? call.tp_hits : 0)} />

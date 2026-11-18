@@ -3,9 +3,11 @@ import MarketInsights from "../components/MarketInsights";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
-import { FirstWeekGuide, TodayPulse } from "../components/TodayPulse";
+import { FirstWeekGuide } from "../components/TodayPulse";
+import { MarketDial, OpportunityBoard } from "../components/Deck";
+import { SignalJourneys } from "../components/CommandPlus";
 import { BriefingPanel } from "../components/Polish";
-import { ActiveSignalsCard, AiBriefCard, BtcCard, BtcChartCard, GlobalStatusCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
+import { AiBriefCard, BtcCard, BtcChartCard, GlobalStatusCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
 import { useIsAdmin, useSession } from "../lib/session";
 import NewsBanner, { countdown } from "../components/NewsBanner";
 import { TfTabs } from "../components/Pickers";
@@ -37,14 +39,18 @@ export default function Dashboard() {
   const sentiment = ctx.data?.sentiment;
   const status4 = dash4.data?.market_status;
   const briefing = mc.data?.briefing;
+  const openCount = ((track.data?.live?.signals ?? []) as any[]).filter((x) => x.status === "OPEN").length;
 
   return (
     <div className="space-y-4 sm:space-y-5">
       <NewsBanner />
-      {/* v2.23 premium: one lead card - the market line, the actions and the four figures as a divided strip */}
-      <section className="panel panel-hero p-4 sm:p-6" aria-label="Market today">
-        <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} />
-        <TodayPulse track={track.data} />
+      {/* v2.56 Intelligence Deck: one lead instrument - the market line and actions beside the market dial,
+          then the four figures as a divided strip */}
+      <section className="panel panel-hero deck-hero p-4 sm:p-6" aria-label="Market today">
+        <div className="deck-hero-grid">
+          <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} track={track.data} />
+          <MarketDial rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
+        </div>
         <div className="ov-strip mt-5 grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4">
           <BtcCard />
           <MarketCapCard mc={mc.data} ctx={ctx.data} />
@@ -54,24 +60,31 @@ export default function Dashboard() {
       </section>
 
       <FirstWeekGuide />
-      {/* row 2: BTC chart + AI market intelligence (the v2.16 briefing) */}
+      {/* row 2: what is running (live journeys) beside what is setting up (the opportunity board) */}
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+        <Card title={<>Live signals <span className="num font-normal text-mute">· {openCount}</span></>}
+          right={<Link to="/results?tab=track" className="text-xs font-medium text-accent hover:underline">Track record ›</Link>} className="deck-fill">
+          <SignalJourneys track={track.data} />
+        </Card>
+        <Card title="Opportunity board" right={<span className="text-xs text-mute">4H · passes every check</span>} className="deck-fill">
+          <OpportunityBoard rows={dash4.data?.opportunities} />
+        </Card>
+      </div>
+
+      {/* row 3: BTC chart + AI market intelligence (the v2.16 briefing) */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <BtcChartCard />
         <AiBriefCard b={briefing} loading={mc.loading} rows={dash4.data?.rows} />
       </div>
 
-      {/* rows 3-4 as two balanced columns (owner, 14 Nov 2026: no big empty gaps on desktop):
-          left = market status · Trade Guardian (admin) · performance; right = open calls · recent activity */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.45fr)]">
+      {/* row 4: market status · performance (+ Trade Guardian for the admin) · recent activity, equal heights */}
+      <div className="grid-even grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <GlobalStatusCard mc={mc.data} ctx={ctx.data} />
         <div className="ov-stack flex min-w-0 flex-col gap-4">
-          <GlobalStatusCard mc={mc.data} ctx={ctx.data} />
           {admin && <GuardianCard />}
           <PerformanceCard track={track.data} loading={track.loading} />
         </div>
-        <div className="ov-stack flex min-w-0 flex-col gap-4">
-          <ActiveSignalsCard track={track.data} loading={track.loading} />
-          <RecentActivityCard track={track.data} briefing={briefing} />
-        </div>
+        <div className="lg:col-span-2 xl:col-span-1"><RecentActivityCard track={track.data} briefing={briefing} /></div>
       </div>
 
       {/* everything Home had before v2.20, below the overview */}
@@ -154,7 +167,7 @@ function greeting() {
 
 /** Top line of Home (kept from the old hero, owner 4 Nov 2026): the 4H market line, "Know why" (the briefing) and the
  *  quick actions Signals / Set an alert / Paper trade. */
-function OverviewHead({ rows, status, briefing }: { rows?: any[]; status?: any; briefing?: any }) {
+function OverviewHead({ rows, status, briefing, track }: { rows?: any[]; status?: any; briefing?: any; track?: any }) {
   const s = useSession();
   const [why, setWhy] = useState(false);
   const first = (s?.username || s?.name || s?.email || "").split(/[ @]/)[0];
@@ -175,13 +188,30 @@ function OverviewHead({ rows, status, briefing }: { rows?: any[]; status?: any; 
           {briefing?.text && <>{" "}<button type="button" className="tap-h whitespace-nowrap font-medium text-accent hover:underline" aria-expanded={why} aria-controls="market-why" onClick={() => setWhy((v) => !v)}>{why ? "Hide why" : "Know why ›"}</button></>}
         </p>
         {why && briefing?.text && <BriefingPanel b={briefing} />}
-      </div>
-      <div className="flex flex-wrap gap-2">
+        <TodayLine track={track} />
+        <div className="mt-5 flex flex-wrap gap-2">
         <Link to="/futures" className="btn btn-primary px-4"><span className="sm:hidden">Signals</span><span className="hidden sm:inline">Futures signals</span></Link>
         <Link to="/alerts" className="btn px-4">Set an alert</Link>
         <Link to="/paper" className="btn px-4">Paper trade</Link>
+        </div>
       </div>
     </section>
+  );
+}
+
+/** Today in one line: open calls and what closed today (Dubai day), after fees - from the record already loaded. */
+function TodayLine({ track }: { track?: any }) {
+  const sigs: any[] = track?.live?.signals ?? [];
+  if (!track) return null;
+  const DUBAI = 4 * 3_600_000, day = (ms: number) => Math.floor((ms + DUBAI) / 86_400_000), today = day(Date.now());
+  const open = sigs.filter((x) => x.status === "OPEN").length;
+  const closed = sigs.filter((x) => ["STOPPED", "TP1", "TP2", "TP3", "EXPIRED"].includes(x.status) && isNum(x.closed_at) && day(x.closed_at) === today && isNum(x.return_pct));
+  const sum = closed.reduce((a, x) => a + x.return_pct, 0), won = closed.filter((x) => x.return_pct > 0).length;
+  return (
+    <div className="deck-today mt-4">
+      <span><b className="num">{open}</b> open signal{open === 1 ? "" : "s"}</span>
+      <span>{closed.length ? <>Closed today <b className={`num ${sum >= 0 ? "text-bull" : "text-bear"}`}>{sum >= 0 ? "+" : ""}{sum.toFixed(1)}%</b> <span className="text-mute">({won} won · {closed.length - won} lost, after fees)</span></> : <span className="text-mute">Nothing closed yet today</span>}</span>
+    </div>
   );
 }
 
