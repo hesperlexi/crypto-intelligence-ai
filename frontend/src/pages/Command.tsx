@@ -4,9 +4,9 @@
 //   Signals page's calls), views/track_record (open calls), views/market_context + context (alt strength, Fear & Greed),
 //   views/health (mission control; already open in the header), the coin's analysis view for the scan (1 read per coin
 //   picked). Correlations from public Binance 1h candles in the browser (no Firebase).
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, ReactNode, Suspense, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { PageHeader, Segmented } from "../components/kit";
+import { Segmented } from "../components/kit";
 import { CoinAvatar } from "../components/Polish";
 import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
@@ -45,7 +45,7 @@ function useNarrow() {
   return n;
 }
 
-function Galaxy({ rows, open, sel, onSel }: { rows: any[]; open: Set<string>; sel: string; onSel: (s: string) => void }) {
+function Galaxy({ rows, open, sel, onSel, onScan, tf }: { rows: any[]; open: Set<string>; sel: string; onSel: (s: string) => void; onScan: () => void; tf: string }) {
   const { tickers } = useLive();
   const narrow = useNarrow();                    // phones: a tighter drawing so labels stay readable
   // v2.55 (owner): the galaxy has the whole first row on computers, so the orbits are stretched wide (KX)
@@ -59,29 +59,63 @@ function Galaxy({ rows, open, sel, onSel }: { rows: any[]; open: Set<string>; se
     const a = ((i / Math.max(1, t.length)) * 360 + ti * 37 - 90) * (Math.PI / 180);
     const chg = tickers[r.symbol]?.change_pct ?? r.change_24h_pct;
     const size = (narrow ? 7 : 9) + (narrow ? 9 : 15) * Math.sqrt((r.quote_volume_24h ?? 0) / maxV);
-    return { r, x: C.x + RAD[ti] * KX * Math.cos(a), y: C.y + RAD[ti] * Math.sin(a) * KY, size, chg, sig: open.has(r.symbol) };
+    const sig = String(r.signal ?? "");
+    const dir = /BUY|LONG/.test(sig) ? 1 : /SELL|SHORT/.test(sig) ? -1 : 0;
+    return { r, a, x: C.x + RAD[ti] * KX * Math.cos(a), y: C.y + RAD[ti] * Math.sin(a) * KY, size, chg, sig: open.has(r.symbol), dir };
   }));
+  // v2.56 signal constellations: coins with a call in the same direction joined by a faint line (in orbit order)
+  const chain = (d: 1 | -1) => planets.filter((p) => p.dir === d).sort((p, q) => p.a - q.a);
+  const line = (ps: typeof planets) => ps.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
+  const longs = chain(1), shorts = chain(-1);
+  const [hover, setHover] = useState<string | null>(null);
+  const shown = planets.find((p) => p.r.symbol === (hover ?? sel));
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Crypto galaxy: every coin you watch as a planet">
-      <ellipse cx={C.x} cy={C.y} rx={narrow ? 80 : 190} ry={narrow ? 80 : 130} fill="url(#cc-glow)" />
-      {RAD.map((r) => <ellipse key={r} cx={C.x} cy={C.y} rx={r * KX} ry={r * KY} fill="none" stroke="rgb(var(--accent) / 0.22)" strokeDasharray="2 6" />)}
-      <g className="cc-orbit" style={{ transformOrigin: `${C.x}px ${C.y}px` }}><circle cx={C.x + RAD[2] * KX} cy={C.y} r="3" fill="#fff1c4" /></g>
-      <circle cx={C.x} cy={C.y} r={narrow ? 22 : 32} fill="url(#cc-gold)" />
-      <text x={C.x} y={C.y + 5} textAnchor="middle" fontSize="15" fontWeight="800" fill="#1a1408">AI</text>
-      {planets.map((p) => {
-        const on = p.r.symbol === sel;
-        return (
-          <g key={p.r.symbol} className="cc-planet" tabIndex={0} role="button" aria-label={`${name(p.r.symbol)} ${pct(p.chg)} in 24 hours${p.sig ? ", signal running" : ""}`}
-            onClick={() => onSel(p.r.symbol)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSel(p.r.symbol); } }}>
-            {on && <circle cx={p.x} cy={p.y} r={p.size + 13} fill="none" stroke="#fff1c4" strokeWidth="1.5" />}
-            {p.sig && <circle cx={p.x} cy={p.y} r={p.size + 7} fill="none" stroke={GOLD} strokeWidth="2" strokeDasharray="4 3" />}
-            <circle cx={p.x} cy={p.y} r={p.size} fill={name(p.r.symbol) === "GOLD" || p.r.symbol.startsWith("PAXG") ? "url(#cc-gold)" : (p.chg ?? 0) >= 0 ? "url(#cc-up)" : "url(#cc-dn)"} />
-            <text x={p.x} y={p.y + p.size + 15} textAnchor="middle" fontSize="13" fontWeight="600" fill="rgb(var(--text))">{name(p.r.symbol)}</text>
-            <text x={p.x} y={p.y + p.size + 29} textAnchor="middle" fontSize="12" fill={(p.chg ?? 0) >= 0 ? UP : DN}>{pct(p.chg)}</text>
+    <div className="cc-galaxy">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Crypto galaxy: every coin you watch as a planet">
+        <ellipse cx={C.x} cy={C.y} rx={narrow ? 80 : 190} ry={narrow ? 80 : 130} fill="url(#cc-glow)" />
+        {RAD.map((r, i) => (
+          <g key={r}>
+            <ellipse cx={C.x} cy={C.y} rx={r * KX} ry={r * KY} fill="none" stroke="rgb(var(--accent) / 0.2)" strokeDasharray="2 6" />
+            {/* a light travelling along each orbit (stroke offset only: cheap) */}
+            <ellipse cx={C.x} cy={C.y} rx={r * KX} ry={r * KY} fill="none" stroke="rgb(var(--accent-2) / 0.7)" strokeWidth={1.6} strokeLinecap="round"
+              pathLength={1000} strokeDasharray="6 994" className="cc-trail" style={{ animationDuration: `${18 + i * 9}s` }} />
           </g>
-        );
-      })}
-    </svg>
+        ))}
+        {longs.length > 1 && <path d={line(longs)} fill="none" stroke="rgb(var(--bull) / 0.35)" strokeWidth={1} strokeDasharray="1 5" strokeLinecap="round" />}
+        {shorts.length > 1 && <path d={line(shorts)} fill="none" stroke="rgb(var(--bear) / 0.4)" strokeWidth={1} strokeDasharray="1 5" strokeLinecap="round" />}
+        <circle cx={C.x} cy={C.y} r={narrow ? 22 : 32} fill="url(#cc-gold)" />
+        <circle cx={C.x} cy={C.y} r={narrow ? 30 : 44} fill="none" stroke="rgb(var(--accent) / 0.35)" strokeDasharray="3 5" className="cc-ring" style={{ transformOrigin: `${C.x}px ${C.y}px` }} />
+        <text x={C.x} y={C.y + 5} textAnchor="middle" fontSize="15" fontWeight="800" fill="#1a1408">AI</text>
+        {planets.map((p) => {
+          const on = p.r.symbol === sel;
+          return (
+            <g key={p.r.symbol} className="cc-planet" tabIndex={0} role="button" aria-label={`${name(p.r.symbol)} ${pct(p.chg)} in 24 hours${p.sig ? ", signal running" : ""}`}
+              onMouseEnter={() => setHover(p.r.symbol)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(p.r.symbol)} onBlur={() => setHover(null)}
+              onClick={() => onSel(p.r.symbol)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSel(p.r.symbol); } }}>
+              {on && <circle cx={p.x} cy={p.y} r={p.size + 13} fill="none" stroke="#fff1c4" strokeWidth="1.5" className="cc-lock" />}
+              {p.sig && <circle cx={p.x} cy={p.y} r={p.size + 7} fill="none" stroke={GOLD} strokeWidth="2" strokeDasharray="4 3" />}
+              <circle cx={p.x} cy={p.y} r={p.size} fill={name(p.r.symbol) === "GOLD" || p.r.symbol.startsWith("PAXG") ? "url(#cc-gold)" : (p.chg ?? 0) >= 0 ? "url(#cc-up)" : "url(#cc-dn)"} />
+              <text x={p.x} y={p.y + p.size + 15} textAnchor="middle" fontSize="13" fontWeight="600" fill="rgb(var(--text))">{name(p.r.symbol)}</text>
+              <text x={p.x} y={p.y + p.size + 29} textAnchor="middle" fontSize="12" fill={(p.chg ?? 0) >= 0 ? UP : DN}>{pct(p.chg)}</text>
+            </g>
+          );
+        })}
+      </svg>
+      {/* hologram readout of the planet under the pointer (or the one locked on) */}
+      {shown && (
+        <div className="cc-holo" aria-live="polite">
+          <div className="flex items-center gap-2"><CoinAvatar symbol={shown.r.symbol} size={22} /><b className="font-display text-base">{name(shown.r.symbol)}</b>
+            <span className={`ml-auto text-xs font-semibold ${shown.dir > 0 ? "text-bull" : shown.dir < 0 ? "text-bear" : "text-mute"}`}>{shown.dir > 0 ? "▲ Long call" : shown.dir < 0 ? "▼ Short call" : "No call"} · {tf.toUpperCase()}</span></div>
+          <div className="num mt-1.5 text-xl font-semibold">{fmtPrice(tickers[shown.r.symbol]?.last ?? shown.r.price)} <span className={`text-sm ${(shown.chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(shown.chg)}</span></div>
+          <div className="mt-1.5 grid grid-cols-3 gap-2 text-xs">
+            <span><span className="block text-mute">Trend</span>{shown.r.trend_label ?? "—"}</span>
+            <span><span className="block text-mute">RSI</span><span className="num">{isNum(shown.r.rsi) ? shown.r.rsi.toFixed(0) : "—"}</span></span>
+            <span><span className="block text-mute">Volume</span><span className="num">{isNum(shown.r.quote_volume_24h) ? fmtCompact(shown.r.quote_volume_24h) : "—"}</span></span>
+          </div>
+          <button type="button" className="btn btn-sm mt-2.5 w-full" onClick={() => { onSel(shown.r.symbol); onScan(); }}>Deep-space scan ↓</button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -362,6 +396,36 @@ function Scan({ symbol, row, f4, tf }: { symbol: string; row: any; f4: any; tf: 
   );
 }
 
+/* ---------------------------------------------------------------- mission strip (v2.56) */
+/** The page's opening instrument: title, the readouts that matter right now, and the timeframe the instruments follow. */
+function MissionStrip({ tf, setTf, status, open, health, connected }: { tf: string; setTf: (t: string) => void; status: any; open: any; health: any; connected: boolean }) {
+  const btc = useTicker("BTC/USDT");
+  const last = health?.engine?.last_tick_finished;
+  const calls = ((open?.live?.signals ?? []) as any[]).filter((x) => x.status === "OPEN").length;
+  const mood = status?.status;
+  const read: [string, ReactNode, string?][] = [
+    ["Market · " + tf.toUpperCase(), mood === "BULL" ? "Leaning bullish" : mood === "BEAR" ? "Leaning bearish" : mood ? "Mixed" : "—", mood === "BULL" ? "text-bull" : mood === "BEAR" ? "text-bear" : ""],
+    ["Breadth", status ? <><span className="text-bull">{status.bull}▲</span> <span className="text-bear">{status.bear}▼</span> <span className="text-mute">/ {status.assets}</span></> : "—"],
+    ["Bitcoin", <span className="num">{isNum(btc?.last) ? fmtPrice(btc!.last) : "—"} <span className={`text-sm ${(btc?.change_pct ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(btc?.change_pct)}</span></span>],
+    ["Live calls", <span className="num">{calls}</span>],
+    ["Engine", <span className={isNum(last) && Date.now() - last < 15 * 60_000 ? "text-bull" : "text-warn"}>{isNum(last) ? ago(last) : "—"}</span>],
+  ];
+  return (
+    <section className="cc-mission" aria-label="Mission status">
+      <div className="min-w-0">
+        <h1 className="page-title">Command Centre</h1>
+        <p className="mt-1 flex items-center gap-2 text-sm text-mute"><span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-bull live-dot" : "bg-warn"}`} />Live market intelligence · real data only</p>
+      </div>
+      <dl className="cc-readouts">
+        {read.map(([k, v, c]) => <div key={k}><dt>{k}</dt><dd className={c ?? ""}>{v}</dd></div>)}
+      </dl>
+      <div className="cc-mission-tf">
+        <Segmented value={tf} onChange={setTf} options={TFS.map((t) => [t, t.toUpperCase()] as [string, string])} label="Timeframe the galaxy, AI core and scan follow" />
+      </div>
+    </section>
+  );
+}
+
 export default function Command() {
   // v2.47 (owner): every timeframe - the galaxy, AI core, breadth and the scan follow the chosen one (remembered)
   const [tf, setTfRaw] = useState<string>(() => { try { const t = localStorage.getItem("cia-cc-tf"); return t && (TFS as readonly string[]).includes(t) ? t : "4h"; } catch { return "4h"; } });
@@ -377,7 +441,8 @@ export default function Command() {
   const rows: any[] = (dash.data?.rows ?? []).filter((r: any) => r.status === "OK");
   const open = useMemo(() => new Set<string>((track.data?.live?.signals ?? []).filter((x: any) => x.status === "OPEN" && x.timeframe === tf).map((x: any) => x.symbol)), [track.data, tf]);
   const [sel, setSel] = useState<string | null>(null);
-  const pick = (s: string) => { setSel(s); window.setTimeout(() => document.getElementById("cc-scan")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50); };
+  const scan = () => window.setTimeout(() => document.getElementById("cc-scan")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+  const pick = (s: string) => { setSel(s); scan(); };
   const focus = sel ?? [...open][0] ?? rows[0]?.symbol ?? "BTC/USDT";
   const row = rows.find((r) => r.symbol === focus);
   const f4 = (boards[TFS.indexOf(tf as any)]?.data?.rows ?? []).find((r: any) => r.symbol === focus);
@@ -388,19 +453,14 @@ export default function Command() {
   return (
     <div className="cc-page space-y-4">
       <Defs />
-      <PageHeader title="Command Centre" />
-      <div className="cc-tfbar">
-        <span className="text-xs text-mute">Timeframe</span>
-        <Segmented value={tf} onChange={setTf} options={TFS.map((t) => [t, t.toUpperCase()] as [string, string])} label="Timeframe" />
-        <span className="hidden text-xs text-mute sm:inline">Galaxy, AI core, breadth and the scan follow it. The radar always shows every timeframe.</span>
-      </div>
+      <MissionStrip tf={tf} setTf={setTf} status={dash.data?.market_status} open={track.data} health={health.data} connected={connected} />
       {/* row 1 (owner, 18 Nov 2026): the galaxy on its own */}
       <section className="cc-panel p-4 sm:p-5" aria-label="Crypto galaxy">
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <div><h2 className="font-display text-xl font-semibold">Crypto galaxy</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a planet to scan it.</p></div>
           <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● up 24h</span><span className="text-bear">● down 24h</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
         </div>
-        <Galaxy rows={rows} open={open} sel={focus} onSel={pick} />
+        <Galaxy rows={rows} open={open} sel={focus} onSel={setSel} onScan={scan} tf={tf} />
       </section>
       {/* row 2: what the engine sees beside the system status, same height */}
       <div className="grid gap-4 lg:grid-cols-2">

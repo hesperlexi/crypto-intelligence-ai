@@ -325,3 +325,52 @@ header.tb-premium > :last-child::after, .obs-horizon {
   .page-head .seg::-webkit-scrollbar { display: none; }
   .page-head .seg > button { white-space: nowrap; flex-shrink: 0; }
 }
+
+/* =====================================================================================================
+   PAGE: COMMAND CENTRE - the signature page
+   ===================================================================================================== */
+.cc-panel { border-radius: 18px !important; border: 1px solid var(--hair) !important; background: rgb(var(--panel) / 0.92) !important;
+  background-image: var(--panel-grad) !important; box-shadow: var(--lift) !important; }
+.cc-scan { border-color: rgb(var(--accent) / 0.25) !important; background-image: linear-gradient(120deg, rgb(var(--accent) / 0.08), transparent 40%), var(--panel-grad) !important; }
+/* mission strip: title · live readouts · timeframe */
+.cc-mission { position: relative; display: grid; gap: 1rem 1.5rem; align-items: center; padding: 1.1rem 1.25rem; border-radius: 18px; border: 1px solid var(--hair);
+  background: radial-gradient(120% 160% at 0% 0%, rgb(var(--accent) / 0.08), transparent 50%), radial-gradient(80% 140% at 100% 0%, rgb(var(--ai) / 0.07), transparent 55%), rgb(var(--panel) / 0.9);
+  box-shadow: var(--lift); overflow: hidden; }
+.cc-mission::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: 1px; background: var(--horizon); }
+@media (min-width: 1180px) { .cc-mission { grid-template-columns: auto minmax(0, 1fr) auto; } }
+.cc-readouts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem 1.25rem; }
+@media (min-width: 640px) { .cc-readouts { grid-template-columns: repeat(5, minmax(0, auto)); justify-content: center; } }
+.cc-readouts > div { min-width: 0; padding-left: 0.85rem; border-left: 1px solid var(--hair); }
+.cc-readouts dt { font-size: 0.75rem; color: rgb(var(--mute)); white-space: nowrap; }
+.cc-readouts dd { margin-top: 2px; font-size: 1rem; font-weight: 600; white-space: nowrap; }
+.cc-mission-tf { justify-self: start; max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+@media (min-width: 1180px) { .cc-mission-tf { justify-self: end; } }
+/* galaxy: a deep field with drifting orbit lights, constellation lines and a hologram readout */
+.cc-galaxy { position: relative; border-radius: 14px; margin-top: 0.75rem;
+  background: radial-gradient(60% 70% at 50% 50%, rgb(var(--accent) / 0.05), transparent 70%),
+    radial-gradient(1px 1px at 12% 22%, rgb(255 255 255 / 0.5), transparent), radial-gradient(1px 1px at 28% 78%, rgb(255 255 255 / 0.35), transparent),
+    radial-gradient(1px 1px at 46% 12%, rgb(255 255 255 / 0.4), transparent), radial-gradient(1px 1px at 63% 88%, rgb(255 255 255 / 0.3), transparent),
+    radial-gradient(1px 1px at 81% 30%, rgb(255 255 255 / 0.45), transparent), radial-gradient(1.5px 1.5px at 92% 70%, rgb(var(--ai) / 0.6), transparent),
+    radial-gradient(1.5px 1.5px at 6% 60%, rgb(var(--accent-2) / 0.5), transparent); }
+.cc-trail { animation: cc-trail linear infinite; }
+@keyframes cc-trail { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
+.cc-lock { animation: cc-lock 2.4s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes cc-lock { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+.cc-planet circle:last-of-type { transition: filter var(--t-fast); }
+.cc-planet:hover circle:last-of-type { filter: brightness(1.25) drop-shadow(0 0 8px rgb(var(--accent) / 0.6)); }
+.cc-holo { position: absolute; left: 12px; top: 12px; width: min(280px, calc(100% - 24px)); padding: 0.85rem 0.95rem; border-radius: 14px;
+  border: 1px solid rgb(var(--ai) / 0.3); background: linear-gradient(160deg, rgb(var(--ai) / 0.1), rgb(var(--panel) / 0.92) 60%);
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.3), 0 18px 40px -20px rgb(0 0 0 / 0.9), inset 0 1px 0 rgb(255 255 255 / 0.06); animation: cc-holo .22s var(--ease-out); }
+@media (min-width: 1024px) { .cc-holo { -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); } }
+@keyframes cc-holo { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+@media (max-width: 640px) { .cc-holo { position: static; width: auto; margin-top: 0.75rem; } }
+@media (prefers-reduced-motion: reduce) { .cc-trail, .cc-lock, .cc-holo { animation: none !important; } }
+.cc-readouts { display: flex !important; flex-wrap: wrap; gap: 0.75rem 1.4rem; }
+@media (min-width: 1180px) { .cc-readouts { justify-content: center; } }
+@media (min-width: 900px) {
+  .cc-mission { grid-template-columns: minmax(0, 1fr) auto !important; }
+  .cc-mission > .min-w-0 { grid-column: 1; grid-row: 1; }
+  .cc-mission-tf { grid-column: 2; grid-row: 1; justify-self: end !important; }
+  .cc-readouts { grid-column: 1 / -1; grid-row: 2; justify-content: space-between !important; padding-top: 0.9rem; border-top: 1px solid var(--hair); }
+  .cc-readouts > div:first-child { border-left: 0; padding-left: 0; }
+}
