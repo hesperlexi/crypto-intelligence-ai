@@ -429,3 +429,8 @@ header.tb-premium > :last-child::after, .obs-horizon {
 /* PAGE: COMMUNITY - the feed beside a quiet rail */
 .comm-grid { display: grid; gap: 1rem; }
 @media (min-width: 1100px) { .comm-grid { grid-template-columns: minmax(0, 1fr) minmax(260px, 340px); align-items: start; } .comm-rail { position: sticky; top: 6rem; } }
+
+/* Command Centre: the logo planet at the galaxy's centre */
+.lp-atmo { animation: lp-breathe 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes lp-breathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .lp-atmo { animation: none; } }

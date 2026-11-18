@@ -83,9 +83,7 @@ function Galaxy({ rows, open, sel, onSel, onScan, tf }: { rows: any[]; open: Set
         ))}
         {longs.length > 1 && <path d={line(longs)} fill="none" stroke="rgb(var(--bull) / 0.35)" strokeWidth={1} strokeDasharray="1 5" strokeLinecap="round" />}
         {shorts.length > 1 && <path d={line(shorts)} fill="none" stroke="rgb(var(--bear) / 0.4)" strokeWidth={1} strokeDasharray="1 5" strokeLinecap="round" />}
-        <circle cx={C.x} cy={C.y} r={narrow ? 22 : 32} fill="url(#cc-gold)" />
-        <circle cx={C.x} cy={C.y} r={narrow ? 30 : 44} fill="none" stroke="rgb(var(--accent) / 0.35)" strokeDasharray="3 5" className="cc-ring" style={{ transformOrigin: `${C.x}px ${C.y}px` }} />
-        <text x={C.x} y={C.y + 5} textAnchor="middle" fontSize="15" fontWeight="800" fill="#1a1408">AI</text>
+        <LogoPlanet x={C.x} y={C.y} r={narrow ? 30 : 48} />
         {planets.map((p) => {
           const on = p.r.symbol === sel;
           return (
@@ -116,6 +114,45 @@ function Galaxy({ rows, open, sel, onSel, onScan, tf }: { rows: any[]; open: Set
         </div>
       )}
     </div>
+  );
+}
+
+/** v2.58 (owner, 18 Nov 2026): the galaxy's centre is the brand itself - the round logo artwork as a planet: lit from
+ *  the upper left, a gold atmosphere, a tilted ring that passes behind and in front of it, a small moon on the ring. */
+function LogoPlanet({ x, y, r }: { x: number; y: number; r: number }) {
+  const rx = r * 1.85, ry = r * 0.42, tilt = -16;
+  const ring = (front: boolean) => (
+    <path d={`M${x - rx} ${y} A${rx} ${ry} 0 0 ${front ? 0 : 1} ${x + rx} ${y}`} fill="none"
+      stroke={front ? "url(#lp-ring)" : "rgb(var(--accent) / 0.35)"} strokeWidth={front ? 3 : 2} transform={`rotate(${tilt} ${x} ${y})`} />
+  );
+  return (
+    <g aria-label="Crypto Intelligence AI" role="img">
+      <defs>
+        <clipPath id="lp-clip"><circle cx={x} cy={y} r={r} /></clipPath>
+        <radialGradient id="lp-shade" cx="32%" cy="28%" r="80%">
+          <stop offset="0%" stopColor="#fff6dc" stopOpacity="0.28" />
+          <stop offset="38%" stopColor="#000" stopOpacity="0" />
+          <stop offset="100%" stopColor="#000" stopOpacity="0.62" />
+        </radialGradient>
+        <radialGradient id="lp-atmo"><stop offset="70%" stopColor="rgb(var(--accent) / 0)" /><stop offset="82%" stopColor="rgb(var(--accent) / 0.45)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
+        <linearGradient id="lp-ring" x1="0" x2="1"><stop offset="0%" stopColor="rgb(var(--accent) / 0.2)" /><stop offset="50%" stopColor="rgb(var(--accent-2))" /><stop offset="100%" stopColor="rgb(var(--accent) / 0.2)" /></linearGradient>
+      </defs>
+      <circle cx={x} cy={y} r={r * 1.3} fill="url(#lp-atmo)" className="lp-atmo" />
+      {ring(false)}
+      <circle cx={x} cy={y} r={r} fill="#0b0b0d" />
+      <image href="/brand/logo-art-384.webp" x={x - r} y={y - r} width={r * 2} height={r * 2} clipPath="url(#lp-clip)" preserveAspectRatio="xMidYMid slice" />
+      <circle cx={x} cy={y} r={r} fill="url(#lp-shade)" />
+      <circle cx={x} cy={y} r={r} fill="none" stroke="rgb(var(--accent-2) / 0.7)" strokeWidth={1.2} />
+      {ring(true)}
+      {/* a small moon travelling along the ring (left out for people who reduce motion) */}
+      {!(typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) && (
+        <g transform={`rotate(${tilt} ${x} ${y})`}>
+          <circle r={Math.max(2.5, r * 0.07)} fill="rgb(var(--ai))">
+            <animateMotion dur="24s" repeatCount="indefinite" path={`M${x + rx} ${y} A${rx} ${ry} 0 1 1 ${x - rx} ${y} A${rx} ${ry} 0 1 1 ${x + rx} ${y}`} />
+          </circle>
+        </g>
+      )}
+    </g>
   );
 }
 
