@@ -1076,3 +1076,6 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   retrained again and again). Study: 12h no-ARIMA +0.090R vs +0.009R/trade, better in 99% of resamples, DD 66R vs 76R;
   15m without ARIMA clearly worse (0.00R vs +0.07R) → kept; 1h/4h/1d/3d no clear difference → unchanged. Live 12h models
   switch at their next nightly retrain. Tests `tests/test_model_exclude_v257.py`.
+- **v2.58 logo planet** (owner, 18 Nov 2026): Command Centre galaxy centre = `Command.LogoPlanet` (the round logo artwork
+  `/brand/logo-art-384.webp` clipped to a sphere, light from the upper left `lp-shade`, breathing gold atmosphere `.lp-atmo`,
+  tilted ring behind + in front, blue moon on the ring via SVG animateMotion, skipped under reduced motion). Live.
