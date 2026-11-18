@@ -127,6 +127,21 @@ async function spend(uid: string, admin: boolean, env: Env): Promise<{ ok: boole
   return { ok: true, left: cap - n - 1 };
 }
 
+/** Calls the first model in GEMINI_MODEL (comma list) that exists for this key; remembers the working one 1 day.
+ *  Google retires model names for new keys (18 Nov 2026: gemini-2.5-flash refused), so a 404 moves to the next name. */
+async function gemini(env: Env, body: unknown): Promise<Response> {
+  const names = [(await env.KV.get("diag:model")) ?? "", ...env.GEMINI_MODEL.split(",").map((x) => x.trim())].filter(Boolean);
+  let last: Response | null = null;
+  for (const m of [...new Set(names)]) {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+      method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, body: JSON.stringify(body),
+    });
+    if (r.status !== 404) { if (r.ok) await env.KV.put("diag:model", m, { expirationTtl: 86400 }); return r; }
+    last = r;
+  }
+  return last ?? new Response("no model", { status: 404 });
+}
+
 /** Last problem (no keys, no questions) for /diag, kept 1 day. */
 async function note(env: Env, what: string) {
   try { await env.KV.put("diag:last", JSON.stringify({ at: new Date().toISOString(), what: what.replace(/AIza[\w-]{20,}/g, "[key]") }), { expirationTtl: 86400 }); } catch { /* ignore */ }
@@ -139,11 +154,9 @@ async function ask(env: Env, question: string, page: string, context: string, hi
   const body = {
     systemInstruction: { parts: [{ text: SYSTEM }] },
     contents: [...turns, { role: "user", parts: [{ text: `PAGE: ${clip(page, 80)}\nPAGE DATA (JSON):\n${clip(context, MAX_CONTEXT)}\n\nQUESTION: ${question}` }] }],
-    generationConfig: { temperature: 0.2, maxOutputTokens: 700, thinkingConfig: { thinkingBudget: 0 } },
+    generationConfig: { temperature: 0.2, maxOutputTokens: 2048 },
   };
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL || "gemini-2.5-flash"}:generateContent`, {
-    method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, body: JSON.stringify(body),
-  });
+  const r = await gemini(env, body);
   if (!r.ok) { await note(env, `gemini ${r.status}: ${(await r.text()).slice(0, 300)}`); return null; }
   const d: any = await r.json();
   const text = (d.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? "").join("").trim();
@@ -159,14 +172,11 @@ export default {
     if (url.pathname === "/health") return json({ ok: true, ready: !!env.GEMINI_API_KEY }, 200, h);
     if (url.pathname === "/diag") {
       // a tiny Gemini call at most every 10 min + the last recorded problem; no keys or questions are ever shown
-      let gem = await env.KV.get("diag:gemini");
+      let gem = await env.KV.get("diag:gemini2");
       if (!gem && env.GEMINI_API_KEY) {
-        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent`, {
-          method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
-          body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Reply with OK" }] }], generationConfig: { maxOutputTokens: 5, thinkingConfig: { thinkingBudget: 0 } } }),
-        });
-        gem = `${r.status} ${r.ok ? "" : (await r.text()).slice(0, 200).replace(/AIza[\w-]{20,}/g, "[key]")}`;
-        await env.KV.put("diag:gemini", gem, { expirationTtl: 600 });
+        const r = await gemini(env, { contents: [{ role: "user", parts: [{ text: "Reply with OK" }] }], generationConfig: { maxOutputTokens: 256 } });
+        gem = `${r.status} ${(await env.KV.get("diag:model")) ?? ""} ${r.ok ? "" : (await r.text()).slice(0, 200).replace(/AIza[\w-]{20,}/g, "[key]")}`;
+        await env.KV.put("diag:gemini2", gem, { expirationTtl: 600 });
       }
       return json({ gemini: gem, admins: env.ADMIN_EMAILS.split(/[,\s;]+/).filter(Boolean).length, last: JSON.parse((await env.KV.get("diag:last")) ?? "null") }, 200, h);
     }
@@ -175,7 +185,7 @@ export default {
 
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
     const claims = token ? await verify(token, env.FIREBASE_PROJECT) : null;
-    if (!claims) { await note(env, "token not accepted"); return json({ error: "Please sign in again." }, 401, h); }
+    if (!claims) { if (token) await note(env, "token not accepted"); return json({ error: "Please sign in again." }, 401, h); }
     const role = await roleOf(claims, token, env);
     if (!role) return json({ error: "The assistant is for active members." }, 403, h);
 
