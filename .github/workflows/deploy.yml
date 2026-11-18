@@ -5,6 +5,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# v2.61: one deploy at a time; a newer push cancels an older run, so an older build can never finish last and
+# overwrite the live site (18 Nov 2026: an earlier commit's deploy finished after the newest one).
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   test:
     runs-on: ubuntu-latest
