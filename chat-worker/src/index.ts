@@ -172,13 +172,20 @@ export default {
     if (url.pathname === "/health") return json({ ok: true, ready: !!env.GEMINI_API_KEY }, 200, h);
     if (url.pathname === "/diag") {
       // a tiny Gemini call at most every 10 min + the last recorded problem; no keys or questions are ever shown
-      let gem = await env.KV.get("diag:gemini2");
+      let gem = await env.KV.get("diag:gemini3");
       if (!gem && env.GEMINI_API_KEY) {
         const r = await gemini(env, { contents: [{ role: "user", parts: [{ text: "Reply with OK" }] }], generationConfig: { maxOutputTokens: 256 } });
         gem = `${r.status} ${(await env.KV.get("diag:model")) ?? ""} ${r.ok ? "" : (await r.text()).slice(0, 200).replace(/AIza[\w-]{20,}/g, "[key]")}`;
-        await env.KV.put("diag:gemini2", gem, { expirationTtl: 600 });
+        await env.KV.put("diag:gemini3", gem, { expirationTtl: 600 });
       }
-      return json({ gemini: gem, admins: env.ADMIN_EMAILS.split(/[,\s;]+/).filter(Boolean).length, last: JSON.parse((await env.KV.get("diag:last")) ?? "null") }, 200, h);
+      let models = await env.KV.get("diag:models");
+      if (!models && env.GEMINI_API_KEY) {
+        const r = await fetch("https://generativelanguage.googleapis.com/v1beta/models?pageSize=200", { headers: { "x-goog-api-key": env.GEMINI_API_KEY } });
+        const d: any = r.ok ? await r.json() : {};
+        models = String((d.models ?? []).filter((m: any) => (m.supportedGenerationMethods ?? []).includes("generateContent")).map((m: any) => String(m.name).replace("models/", "")).filter((n: string) => /flash/.test(n)).join(",") || `list ${r.status}`);
+        await env.KV.put("diag:models", models ?? "", { expirationTtl: 600 });
+      }
+      return json({ models, gemini: gem, admins: env.ADMIN_EMAILS.split(/[,\s;]+/).filter(Boolean).length, last: JSON.parse((await env.KV.get("diag:last")) ?? "null") }, 200, h);
     }
     if (url.pathname !== "/chat" || req.method !== "POST") return json({ error: "Not found" }, 404, h);
     if (!env.GEMINI_API_KEY) return json({ error: "The assistant is not set up yet." }, 503, h);
