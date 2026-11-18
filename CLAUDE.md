@@ -1079,3 +1079,9 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
 - **v2.58 logo planet** (owner, 18 Nov 2026): Command Centre galaxy centre = `Command.LogoPlanet` (the round logo artwork
   `/brand/logo-art-384.webp` clipped to a sphere, light from the upper left `lp-shade`, breathing gold atmosphere `.lp-atmo`,
   tilted ring behind + in front, blue moon on the ring via SVG animateMotion, skipped under reduced motion). Live.
+- **v2.59 UX round** (owner, 18 Nov 2026, live): Signals card details fold (`.sc-more`, localStorage `cia-sc-details`), coin
+  rail phones only; Home "More market detail" without repeated opportunities / F&G gauge ("Market context" + Top risks |
+  regime); sidebar Admin folds (`NavGroup.icon`, count when closed); `TickerTape` only on `/`, `/signals`, `/paper`
+  (`App.TAPE_PATHS`); top bar `PriceChips` BTC/ETH ≥ 1400 px (socket, no reads); phone theme switch in the More sheet;
+  coin page dossier (`.asset-dossier`: chart + report | trade call, report joins the side when no call, chart height
+  460-760 follows the side column; missing analysis = `.asset-wait` line).
