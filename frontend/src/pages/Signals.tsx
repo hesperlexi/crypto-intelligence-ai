@@ -170,7 +170,7 @@ export default function Signals() {
       {!all && rows.length > 0 && (
         <>
           {/* coin picker */}
-          <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0" role="tablist" aria-label="Coins">
+          <div className="-mx-3 flex gap-2 overflow-x-auto px-3 pb-1 sm:mx-0 sm:flex-wrap sm:px-0 lg:hidden" role="tablist" aria-label="Coins">
             {rows.map((r) => {
               const vv = verdictOf(r, market);
               const on = r.symbol === row?.symbol;
@@ -190,7 +190,7 @@ export default function Signals() {
             <TradeCall r={row} market={market} m={mkt.data?.rows?.[row?.symbol]} />
 
             {/* all coins at a glance: table-like rows, side rule on the left */}
-            <section className="panel self-start overflow-hidden p-0 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-7rem)] lg:flex-col [&>ul]:lg:overflow-y-auto">
+            <section className="panel hidden self-start overflow-hidden p-0 lg:sticky lg:top-24 lg:flex lg:max-h-[calc(100vh-7rem)] lg:flex-col [&>ul]:lg:overflow-y-auto">
               <div className="card-head flex items-center justify-between border-b px-4 py-3"><h2 className="label">All coins, {market}</h2><span className="text-xs text-mute">{active} with a call</span></div>
               <div className="sig-row sig-head label border-b border-glass/[0.06]" aria-hidden="true">
                 <span>Coin</span><span className="text-right">Entry</span><span className="text-right">Stop</span><span className="text-right">TP1</span><span className="text-right">Call</span>

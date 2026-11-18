@@ -94,7 +94,7 @@ export default function Dashboard() {
 
       <MyCoins rows={d?.rows} />
       <MoreDetail>
-      <div className="grid gap-4 xl:grid-cols-3">
+      <div className="grid-even grid gap-4 xl:grid-cols-2">
         <div className="ov-stack flex min-w-0 flex-col gap-4">
         <Card title="Market regime" right={<span className="text-xs text-mute">{(d?.regimes ?? []).length} coins</span>}>
           <div className="-mr-2 max-h-[34rem] space-y-3 overflow-y-auto pr-2">
@@ -108,34 +108,12 @@ export default function Dashboard() {
             {!d?.regimes?.length && <Empty>No regimes yet: candles are still loading</Empty>}
           </div>
         </Card>
-        <Card title="Top risks">
-          {d?.risks?.length ? d.risks.map((r: any, i: number) => (
-            <div key={i} className="flex items-center justify-between gap-3 border-b border-line/50 px-2 py-2 text-sm last:border-0">
-              <span className="font-medium">{base(r.symbol)}</span><span className="text-right text-warn">{r.risk}</span>
-            </div>
-          )) : <Empty>No elevated risks flagged</Empty>}
-        </Card>
         </div>
         <div className="ov-stack flex min-w-0 flex-col gap-4">
-          <TopSignals d={d} />
-          <Card title="Top opportunities">
-            {d?.opportunities?.length ? d.opportunities.map((o: any) => (
-              <Link key={o.symbol} to={`/asset/${slug(o.symbol)}`} className="grid min-h-[44px] grid-cols-[minmax(3rem,1fr)_auto] items-center gap-x-3 gap-y-1 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] sm:grid-cols-[minmax(0,1fr)_auto_4.5rem_4.5rem]">
-                <span className="truncate font-medium">{base(o.symbol)}</span><SignalBadge signal={o.decision} />
-                <span className="text-mute sm:text-right">{o.grade ? <span className="text-xs">Grade {o.grade === "A" ? "A · strong" : o.grade === "B" ? "B · moderate" : o.grade}</span> : DASH}</span><span className="num text-right text-mute">1:{isNum(o.risk_reward) ? o.risk_reward.toFixed(1) : DASH}<span className="text-xs"> R:R</span></span>
-              </Link>
-            )) : <Empty>No setup passes every check right now.</Empty>}
-          </Card>
-        </div>
-        <Card title="Sentiment & context" right={<span className="text-xs text-mute">Fear &amp; Greed index</span>}>
-          {sentiment ? (
-            <div className="space-y-2">
-              <FearGreed value={sentiment.value} label={sentiment.label} change7d={isNum(sentiment.change_7d) ? sentiment.change_7d : null} history={sentiment.history ?? []} />
-              {sentiment.divergence && <Badge tone="warn">{sentiment.divergence}</Badge>}
-            </div>
-          ) : <Empty>{ctx.data?.reason ?? ctx.data?.sentiment_error ?? "Sentiment source unavailable"}</Empty>}
+        <Card title="Market context" right={<span className="text-xs text-mute">cross-asset · coming up · radar</span>}>
+          {sentiment?.divergence && <div className="mb-2"><Badge tone="warn">{sentiment.divergence}</Badge></div>}
           {(cross.data?.observations ?? []).length > 0 && (
-            <ul className="mt-3 space-y-1.5 border-t border-glass/[0.06] pt-3">
+            <ul className="space-y-1.5">
               {(cross.data?.observations ?? []).map((o: string) => (
                 <li key={o} className="flex gap-2 rounded-lg bg-glass/[0.03] px-2.5 py-1.5 text-sm text-text"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />{o}</li>
               ))}
@@ -144,6 +122,14 @@ export default function Dashboard() {
           <ComingUp />
           <RadarMini />
         </Card>
+        <Card title="Top risks">
+          {d?.risks?.length ? d.risks.map((r: any, i: number) => (
+            <div key={i} className="flex items-center justify-between gap-3 border-b border-line/50 px-2 py-2 text-sm last:border-0">
+              <span className="font-medium">{base(r.symbol)}</span><span className="text-right text-warn">{r.risk}</span>
+            </div>
+          )) : <Empty>No elevated risks flagged</Empty>}
+        </Card>
+        </div>
       </div>
 
       {/* directly below the Fear & Greed row: dominance, altcoin season, market pulse, top headline */}

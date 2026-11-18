@@ -434,3 +434,11 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .lp-atmo { animation: lp-breathe 5s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
 @keyframes lp-breathe { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
 @media (prefers-reduced-motion: reduce) { .lp-atmo { animation: none; } }
+
+/* v2.59 signal card: one "Details" switch for the long part */
+.sc-more { display: flex; width: 100%; align-items: center; gap: 0.6rem; padding: 0.65rem 0.85rem; border-radius: 11px; border: 1px solid var(--hair);
+  background: rgb(var(--glass) / 0.025); font-size: 0.875rem; font-weight: 600; text-align: left; transition: border-color var(--t-fast), background-color var(--t-fast); }
+.sc-more:hover { border-color: rgb(var(--accent) / 0.35); background: rgb(var(--accent) / 0.05); }
+.sc-more[aria-expanded="true"] { border-color: rgb(var(--accent) / 0.3); }
+.sc-details { animation: obs-rise .24s var(--ease-out); }
+@media (prefers-reduced-motion: reduce) { .sc-details { animation: none; } }

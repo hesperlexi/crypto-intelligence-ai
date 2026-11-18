@@ -86,6 +86,8 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
   const pro = useIsPro();
   const admin = useIsAdmin();
   const [copied, setCopied] = useState(false);
+  const [more, setMore] = useState(() => { try { return localStorage.getItem("cia-sc-details") === "1"; } catch { return false; } });
+  const flipMore = () => setMore((v) => { try { localStorage.setItem("cia-sc-details", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
   if (!r) return null;
   const px = tickers[r.symbol]?.last ?? r.price;
   const v = verdictOf(r, market);
@@ -243,6 +245,16 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </Explain>
         )}
 
+        {/* v2.59 (owner: shorter cards): the full price list, context, admin changes and the AI view fold under one
+            "Details" switch (remembered on this device); the decision, track and key numbers stay up front */}
+        {!compact && (plan || notes.length > 0 || call?.adjustments?.length > 0 || r.ai?.rationale || pro) && (
+          <button type="button" className="sc-more" aria-expanded={more} onClick={flipMore}>
+            <span>{more ? "Hide details" : "Details"}</span>
+            <span className="text-xs font-normal text-mute">{["price levels", notes.length ? "context" : null, (r.ai?.rationale || pro) ? "AI view" : null].filter(Boolean).join(" · ")}</span>
+            <svg aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" className={`ml-auto transition-transform ${more ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
+          </button>
+        )}
+        {(more || compact) && (<div className="sc-details space-y-3.5">
         {/* full ladder */}
         {!compact && plan && levels.length > 0 && (
           <div className={`sc-section ${active ? "" : "opacity-70"}`}>
@@ -294,6 +306,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             </div>}
           </div>
         )}
+        </div>)}
         {!pro && v.tone !== "wait" && r.grade && <Explain>{PLAIN.grade}</Explain>}
 
         <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 pt-1">
