@@ -425,8 +425,8 @@ function OrderForm({ symbol, market, d, act }: { symbol: string; market: Mkt; d:
         </div>
         {market === "futures" ? (
           <div className="grid grid-cols-2 gap-2">
-            <button disabled={busy || !amt} onClick={() => go(1)} className="rounded-xl bg-bull py-3 text-sm font-bold text-ink transition hover:brightness-110 disabled:opacity-50">Buy / Long</button>
-            <button disabled={busy || !amt} onClick={() => go(-1)} className="rounded-xl bg-bear py-3 text-sm font-bold text-white transition hover:brightness-110 disabled:opacity-50">Sell / Short</button>
+            <button disabled={busy || !amt} onClick={() => go(1)} className="obs-buy rounded-xl py-3 text-sm font-bold transition hover:brightness-110 disabled:opacity-50">Buy / Long</button>
+            <button disabled={busy || !amt} onClick={() => go(-1)} className="obs-sell rounded-xl py-3 text-sm font-bold transition hover:brightness-110 disabled:opacity-50">Sell / Short</button>
           </div>
         ) : (
           <button disabled={busy || !amt} onClick={() => go(spotSide === "BUY" ? 1 : -1)} className={`w-full rounded-xl py-3 text-sm font-bold transition hover:brightness-110 disabled:opacity-50 ${spotSide === "BUY" ? "bg-bull text-ink" : "bg-bear text-white"}`}>{spotSide === "BUY" ? "Buy" : "Sell"} {base(symbol)}</button>

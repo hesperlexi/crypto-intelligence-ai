@@ -186,7 +186,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                             <CoinAvatar symbol={x.symbol} size={30} />
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-x-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span>{x.grade && <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded border px-1 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}</div>
-                              <div className={`mt-0.5 text-xs font-semibold ${cls}`}>{lab} <span className="num whitespace-nowrap font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
+                              <div className={`mt-1 text-xs font-semibold ${cls}`}><span className={`res-pill res-${String(x.status).toLowerCase()}`}>{lab}</span> <span className="num whitespace-nowrap font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
                             </div>
                           </div>
                           <div className="shrink-0 text-right max-[359px]:basis-full min-[360px]:max-w-[45%]">{isOpen(x) ? <LiveRoi x={x} size="md" /> : <RoiFigure x={x} size="md" />}</div>
@@ -208,11 +208,11 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                     {rows.map((x, i) => {
                       const [lab, cls] = statusOf(x);
                       return (
-                        <tr key={i} {...rowProps(x)} className="cursor-pointer outline-none focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60">
+                        <tr key={i} {...rowProps(x)} className={`res-row res-row-${isOpen(x) ? "open" : isNum(x.return_pct) ? (x.return_pct > 0 ? "won" : "lost") : "none"} cursor-pointer outline-none focus-visible:bg-glass/[0.05] focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent/60`}>
                           <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span></div><div className="num mt-0.5 pl-[30px] text-xs text-mute">{fmtTime(x.created_at)}</div></td>
                           <td className="text-center">{x.grade ? <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span> : <span className="text-mute">—</span>}</td>
                           <td className="num text-right">{fmtPrice(x.entry)}</td><td className="num text-right text-bear">{fmtPrice(x.stop)}</td><td className="num text-right text-bull">{fmtPrice(x.tp1)}</td>
-                          <td className={`text-xs font-semibold ${cls}`}>{lab}{isOpen(x) && <LiveResult x={x} />}<RecordExtras x={x} /></td>
+                          <td className={`text-xs font-semibold ${cls}`}><span className={`res-pill res-${String(x.status).toLowerCase()}`}>{lab}</span>{isOpen(x) && <LiveResult x={x} />}<RecordExtras x={x} /></td>
                           <td className="text-right align-middle">{isOpen(x) ? <LiveRoi x={x} /> : <RoiFigure x={x} size="sm" />}</td>
                         </tr>
                       );

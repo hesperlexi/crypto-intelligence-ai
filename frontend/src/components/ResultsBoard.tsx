@@ -154,7 +154,7 @@ function Outcomes({ rows }: { rows: Row[] }) {
     return { k, label, cls, n: xs.length, avg: xs.length ? xs.reduce((a, x) => a + x.return_pct, 0) / xs.length : null };
   });
   return (
-    <section className="panel p-4 sm:p-5" aria-label="How the signals ended">
+    <section className="panel flex flex-col p-4 sm:p-5" aria-label="How the signals ended">
       <div className="flex items-baseline justify-between gap-2"><h2 className="label">How the signals ended</h2><span className="text-xs text-mute">{n} closed · after fees</span></div>
       {n ? <>
         <div className="rb-stack mt-4" role="img" aria-label={parts.filter((p) => p.n).map((p) => `${p.label} ${p.n}`).join(", ")}>
@@ -182,8 +182,14 @@ function Outcomes({ rows }: { rows: Row[] }) {
 
 /** The latest closed signals as tiles, newest first, and the last months' totals. */
 function Form({ rows, months }: { rows: Row[]; months: [string, number][] }) {
+  // v2.56: the form in three numbers under the tiles - average win, average loss, longest winning run (same rows)
+  const wins = rows.filter((x) => x.return_pct > 0), losses = rows.filter((x) => x.return_pct <= 0);
+  const avgW = wins.length ? wins.reduce((a, x) => a + x.return_pct, 0) / wins.length : null;
+  const avgL = losses.length ? losses.reduce((a, x) => a + x.return_pct, 0) / losses.length : null;
+  let run = 0, best = 0;
+  for (const x of [...rows].reverse()) { run = x.return_pct > 0 ? run + 1 : 0; best = Math.max(best, run); }
   return (
-    <section className="panel p-4 sm:p-5" aria-label="Recent form">
+    <section className="panel flex flex-col p-4 sm:p-5" aria-label="Recent form">
       <div className="flex items-baseline justify-between gap-2"><h2 className="label">Recent form</h2><span className="text-xs text-mute">latest {rows.length} closed, newest first</span></div>
       {rows.length ? (
         <div className="rb-form mt-4">
@@ -192,11 +198,18 @@ function Form({ rows, months }: { rows: Row[]; months: [string, number][] }) {
               title={`${x.symbol} ${x.side} ${String(x.timeframe).toUpperCase()} · ${pct(x.return_pct, 2)} · closed ${fmtDate(x.closed_at)}`}>
               <div className="flex items-center gap-1.5"><CoinAvatar symbol={x.symbol} size={16} /><b className="truncate text-xs">{base(x.symbol)}</b></div>
               <div className={`num text-sm font-semibold ${tone(x.return_pct)}`}>{pct(x.return_pct, 2)}</div>
-              <div className="text-[11px] text-mute">{x.side === "LONG" ? "Long" : "Short"} · {String(x.timeframe).toUpperCase()}</div>
+              <div className="text-xs text-mute">{x.side === "LONG" ? "Long" : "Short"} · {String(x.timeframe).toUpperCase()}</div>
             </div>
           ))}
         </div>
       ) : <p className="mt-3 text-sm text-mute">No signal closed in this period yet.</p>}
+      {rows.length > 0 && (
+        <dl className="rb-formstats mt-4">
+          <div><dt>Average win</dt><dd className="num text-bull">{pct(avgW, 2)}</dd></div>
+          <div><dt>Average loss</dt><dd className={`num ${avgL != null ? "text-bear" : "text-mute"}`}>{pct(avgL, 2)}</dd></div>
+          <div><dt>Longest winning run</dt><dd className="num">{best}</dd></div>
+        </dl>
+      )}
       {months.length > 0 && (
         <div className="mt-4 flex flex-wrap gap-2 border-t border-glass/[0.07] pt-3">
           {months.map(([m, v]) => (

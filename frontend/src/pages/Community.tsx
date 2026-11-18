@@ -3,6 +3,7 @@
 // (post_meta/{uid}). Links are shown as plain text on purpose (no clickable links between members).
 import { collection, deleteDoc, doc, getDocs, limit, onSnapshot, orderBy, query, startAfter, writeBatch } from "firebase/firestore";
 import { PageHeader } from "../components/kit";
+import { Link } from "react-router-dom";
 import { FormEvent, memo, useEffect, useMemo, useState } from "react";
 import { Empty } from "../components/ui";
 import { UsernameForm } from "../components/AuthPanel";
@@ -131,12 +132,16 @@ export default function Community() {
   const admin = s?.role === "admin";
   const feed = useFeed();
   // v2.16: practice leaderboard winners' badges (views/leaderboard.badges, by username; one read)
-  const badges = useApi<LbView>("/leaderboard").data?.badges ?? {};
+  const lb = useApi<LbView>("/leaderboard").data;
+  const badges = lb?.badges ?? {};
   const [, tick] = useState(0);
   useEffect(() => { const t = window.setInterval(() => tick((n) => n + 1), 60_000); return () => window.clearInterval(t); }, []);   // "time ago"
   return (
-    <div className="mx-auto max-w-2xl space-y-4">
-      <PageHeader title="Community" />
+    <div className="space-y-4">
+      <PageHeader title="Community" sub="Members talk trades, questions and lessons." />
+      {/* v2.56: the feed beside a quiet rail (this month's practice leaders from the document already read, house rules) */}
+      <div className="comm-grid">
+      <div className="min-w-0 space-y-4">
       {s && s.username ? <Composer uid={s.uid} username={s.username} admin={admin} />
         : s && auth.currentUser ? (
           <div className="panel p-3 sm:p-4">
@@ -155,6 +160,33 @@ export default function Community() {
       {feed.loaded && feed.more && feed.posts.length >= PAGE && (
         <div className="text-center"><button className="btn px-4" onClick={feed.loadMore} disabled={feed.loading}>{feed.loading ? "Loading…" : "Show older posts"}</button></div>
       )}
+      </div>
+      <aside className="comm-rail space-y-4" aria-label="Community information">
+        <section className="panel p-4">
+          <div className="flex items-baseline justify-between"><h2 className="text-sm font-semibold">Practice leaders</h2><span className="text-xs text-mute">{lb?.label ?? "this month"}</span></div>
+          {lb?.rows?.length ? (
+            <ol className="mt-3 space-y-1.5">
+              {lb.rows.slice(0, 5).map((r: any, i: number) => (
+                <li key={r.username} className="flex items-center gap-2.5 rounded-lg px-2 py-1.5 text-sm odd:bg-glass/[0.03]">
+                  <span className={`num w-5 text-center text-xs font-semibold ${i === 0 ? "text-accent" : "text-mute"}`}>{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate font-medium">@{r.username}</span>
+                  <span className={`num font-semibold ${r.return_pct >= 0 ? "text-bull" : "text-bear"}`}>{r.return_pct >= 0 ? "+" : ""}{Number(r.return_pct).toFixed(1)}%</span>
+                </li>
+              ))}
+            </ol>
+          ) : <p className="mt-2 text-sm text-mute">No ranked members yet this month.</p>}
+          <Link to="/results?tab=leaderboard" className="mt-3 inline-block text-xs font-medium text-accent hover:underline">Full leaderboard ›</Link>
+        </section>
+        <section className="panel p-4 text-sm">
+          <h2 className="font-semibold">Posting</h2>
+          <ul className="mt-2 space-y-1.5 text-mute">
+            <li>Up to 500 characters, text only.</li>
+            <li>One post every 30 seconds.</li>
+            <li>Practice results are virtual money, not advice.</li>
+          </ul>
+        </section>
+      </aside>
+      </div>
     </div>
   );
 }
