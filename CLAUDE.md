@@ -1057,3 +1057,13 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   radar + universe · signal journeys (slim lanes `.sj-*`, comet, flaring targets) + Coin vs coin · Market heat ·
   Deep-space scan (unchanged). Live prices: every trade on every device (`live.LITE` only with localStorage `cia-live-lite`=1);
   `connected` = spot OR futures stream delivered < 10 s ago (`futLive`). Health cards = two level stacks (`.hc-col`).
+- **v2.56 THE INTELLIGENCE OBSERVATORY** (owner brief, 18 Nov 2026, branch `obs-v256`, frontend only): design system in
+  `frontend/src/styles/observatory.css` (loaded after index.css, wins over older passes): deep-space tokens for theme id
+  "gold" (now named "Observatory"), Geist for text and numbers (Sora for titles), obsidian cards (`--lift`, hairline,
+  no card blur on phones), the "horizon" (gold→blue line) under the top bar / page titles / lead cards, gold only for
+  active / primary / key figures, AI = electric blue edge. Removed v2.27 glints (title glyph, diamonds, HUD corners,
+  button glint, AI scan line). Sidebar `SideStatus`; top bar compact title. Pages: Home = Intelligence Deck
+  (`components/Deck.tsx` `MarketDial`, `OpportunityBoard`; live lanes = `CommandPlus.SignalJourneys`); Signals tickets
+  (direction light, AI reason `.sc-reason`, age, coin rail `.sig-pick`, glowing `ptrack`); Command Centre `MissionStrip`,
+  galaxy constellations / orbit lights / hologram `.cc-holo`; charts: faint grid, gold dashed crosshair, Geist
+  (`chartColors` gridV/cross/crossBg); `TabStrip` = `.obs-tabs`; `kit.TickFlash` live price flash; coin page planet header.
