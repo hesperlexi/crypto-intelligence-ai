@@ -6,6 +6,7 @@ import { AppearanceProvider } from "./lib/appearance";
 import { ModeProvider } from "./lib/mode";
 import { startUpdater } from "./lib/updater";
 import "./index.css";
+import "./styles/observatory.css";
 import { CosmicBackdrop } from "./components/Xeno";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(

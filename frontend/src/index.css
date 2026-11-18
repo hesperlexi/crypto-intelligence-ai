@@ -15,17 +15,18 @@
    Theme ids are stable: "gold" = Midnight Gold, "light" = Ivory (saved preferences keep working).
    ===================================================================================================== */
 :root, [data-theme="gold"] {
-  /* Midnight Gold (default): warm near-black, rich gold */
-  /* v2.22 (owner, 14 Nov 2026): lighter black, warm graphite instead of near-black */
-  --ink: 26 24 21; --panel: 37 34 30; --raised: 49 45 40; --line: 70 64 56;
-  --text: 243 239 231; --mute: 170 161 147;
-  --bull: 34 197 128; --bear: 240 86 96; --warn: 242 138 60;
-  --accent: 234 178 36; --accent-2: 250 210 100; --ai: 146 164 240;
-  --primary: 234 178 36; --primary-2: 246 194 64; --on-primary: 20 16 8; --on-accent: 20 16 8;
-  --glass: 255 244 222;
-  --panel-bg: 37 34 30; --panel-a: 0.9; --bar-a: 0.9;
-  --glow1: rgba(234, 178, 36, 0.11); --glow2: rgba(234, 120, 36, 0.05);
-  --shadow: rgba(0, 0, 0, 0.6);
+  /* v2.56 THE INTELLIGENCE OBSERVATORY (owner, 18 Nov 2026): deep-space blue-black, obsidian instruments, champagne
+     gold used like a signal light (active, primary, the figure that matters), emerald / crimson for direction,
+     a controlled electric blue for anything the AI wrote. Theme id stays "gold" so saved preferences keep working. */
+  --ink: 7 8 12; --panel: 14 16 22; --raised: 22 25 33; --line: 38 42 53;
+  --text: 238 235 228; --mute: 148 152 164;
+  --bull: 48 206 148; --bear: 238 86 104; --warn: 240 166 70;
+  --accent: 218 182 112; --accent-2: 242 214 150; --ai: 102 168 255;
+  --primary: 222 180 96; --primary-2: 236 198 120; --on-primary: 18 14 6; --on-accent: 18 14 6;
+  --glass: 214 224 255;
+  --panel-bg: 14 16 22; --panel-a: 0.92; --bar-a: 0.82;
+  --glow1: rgba(218, 182, 112, 0.075); --glow2: rgba(102, 168, 255, 0.06);
+  --shadow: rgba(0, 0, 0, 0.7);
   color-scheme: dark;
 }
 [data-theme="obsidian"] {
@@ -134,7 +135,7 @@ html.theme-switching, html.theme-switching *, html.theme-switching *::before, ht
   transition: background-color .24s ease, border-color .24s ease, color .24s ease, fill .24s ease, stroke .24s ease, box-shadow .24s ease !important;
 }
 /* numbers: Inter's tabular figures (same family as the text, digits line up in columns) */
-.num { font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 0, "cv11" 1; letter-spacing: -0.01em; }
+.num { font-family: Geist, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 0, "cv11" 1; letter-spacing: -0.01em; }
 .tabular { font-variant-numeric: tabular-nums; }
 
 /* ---- type scale: display / page title / section / label ---- */

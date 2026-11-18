@@ -1,0 +1,241 @@
+/* =====================================================================================================
+   v2.56 THE INTELLIGENCE OBSERVATORY - shared design system (owner brief, 18 Nov 2026)
+   Loaded after index.css, so these rules win over the older passes they replace.
+
+   Idea: instruments in deep space. The page is the night sky (blue-black void, a faint planetary horizon of light
+   at the top); every card is an obsidian instrument panel - quiet, precise, hairline-edged. Gold is a signal light,
+   not paint: the active place, the primary action, the figure that matters. Emerald / crimson = direction,
+   electric blue = what the AI wrote, amber = caution. Numbers are set like a terminal (Geist, tabular).
+
+   Signature device: the HORIZON - a thin arc of light (gold into blue) under the top bar and under each page title,
+   like the limb of a planet seen from orbit. Everything else stays disciplined.
+   Motion: one page entrance, live-price flashes, radar / orbit motion only where it carries data. All off under
+   prefers-reduced-motion. No backdrop blur on cards on phones (fast on low-power Android).
+   ===================================================================================================== */
+
+:root, [data-theme] {
+  --r-card: 14px; --r-control: 10px; --r-pill: 999px;
+  --hair: rgb(var(--glass) / 0.07);
+  --hair-strong: rgb(var(--glass) / 0.13);
+  --edge-top: rgb(255 255 255 / 0.045);
+  --horizon: linear-gradient(90deg, transparent 0%, rgb(var(--accent) / 0.0) 2%, rgb(var(--accent-2) / 0.9) 22%, rgb(var(--accent) / 0.55) 45%, rgb(var(--ai) / 0.55) 72%, transparent 100%);
+  --panel-grad: linear-gradient(180deg, rgb(var(--glass) / 0.028), rgb(var(--glass) / 0) 42%);
+  --lift: 0 1px 0 0 var(--edge-top) inset, 0 18px 40px -28px rgb(0 0 0 / 0.9), 0 1px 2px 0 rgb(0 0 0 / 0.25);
+  --lift-hover: 0 1px 0 0 rgb(255 255 255 / 0.06) inset, 0 24px 48px -26px rgb(0 0 0 / 0.95), 0 0 0 1px rgb(var(--accent) / 0.18);
+  --ring: 0 0 0 2px rgb(var(--ink)), 0 0 0 4px rgb(var(--accent) / 0.8);
+  --ease-out: cubic-bezier(.2, .8, .2, 1);
+  --t-fast: .14s; --t-med: .24s;
+}
+[data-theme="light"] {
+  --edge-top: rgb(255 250 238 / 0.55);
+  --lift: 0 1px 0 0 var(--edge-top) inset, 0 14px 30px -24px rgb(60 46 20 / 0.35), 0 1px 2px 0 rgb(60 46 20 / 0.06);
+  --lift-hover: 0 1px 0 0 var(--edge-top) inset, 0 18px 36px -22px rgb(60 46 20 / 0.4), 0 0 0 1px rgb(var(--accent) / 0.25);
+  --panel-grad: linear-gradient(180deg, rgb(255 252 244 / 0.35), transparent 45%);
+}
+
+/* ---------------------------------------------------------------------------------------------- BASE */
+body {
+  font-family: Geist, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: "ss01" 1, "cv11" 1;
+  letter-spacing: -0.003em;
+  background-color: rgb(var(--ink));
+  /* the horizon: a wide limb of light above the top edge, gold to blue; nothing else on the page */
+  background-image:
+    radial-gradient(140% 70% at 50% -46%, rgb(var(--accent) / 0.10), rgb(var(--ai) / 0.05) 42%, transparent 66%),
+    radial-gradient(60% 40% at 100% 0%, rgb(var(--ai) / 0.05), transparent 70%);
+  background-attachment: fixed;
+}
+[data-glass="on"] body, [data-glass="off"] body {
+  background-image:
+    radial-gradient(140% 70% at 50% -46%, rgb(var(--accent) / 0.10), rgb(var(--ai) / 0.05) 42%, transparent 66%),
+    radial-gradient(60% 40% at 100% 0%, rgb(var(--ai) / 0.05), transparent 70%);
+}
+.font-display, h1, .page-title, .section-title { font-family: Sora, Geist, ui-sans-serif, system-ui, sans-serif; }
+.num, .tabular { font-family: Geist, Inter, ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "ss01" 1; }
+::selection { background: rgb(var(--accent) / 0.3); }
+
+/* ---------------------------------------------------------------------------------------------- TYPE */
+.page-title { display: block; font-size: 1.625rem; line-height: 2rem; font-weight: 600; letter-spacing: -0.03em; }
+@media (min-width: 640px) { .page-title { font-size: 2rem; line-height: 2.375rem; } }
+.page-sub { margin-top: 0.4rem; font-size: 0.9375rem; line-height: 1.5; color: rgb(var(--mute)); max-width: 68ch; }
+.label { font-size: 0.8125rem; font-weight: 500; letter-spacing: 0; text-transform: none; color: rgb(var(--mute)); }
+.figure, .metric-v { font-family: Geist, Inter, sans-serif; font-variant-numeric: tabular-nums; letter-spacing: -0.025em; }
+
+/* page header: title, one line, and the horizon under it (no glyph, no travelling glint) */
+.page-head { padding-bottom: 1.1rem; margin-bottom: 0.5rem; }
+.page-head::before { display: none !important; animation: none !important; }
+.page-head::after { width: min(520px, 80%); height: 1px; opacity: 1; background: var(--horizon) !important; }
+.page-title .ai-glyph { display: none; }
+
+/* ---------------------------------------------------------------------------------------------- SURFACES */
+.panel, [data-glass="on"] .panel, [data-glass="off"] .panel {
+  border-radius: var(--r-card);
+  border: 1px solid var(--hair);
+  background-color: rgb(var(--panel) / var(--panel-a));
+  background-image: var(--panel-grad);
+  box-shadow: var(--lift);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+/* frosted only on large screens, and only while Glass is on (phones stay solid and fast) */
+@media (min-width: 1024px) {
+  [data-glass="on"] .panel { -webkit-backdrop-filter: blur(14px) saturate(140%); backdrop-filter: blur(14px) saturate(140%); }
+}
+/* clickable cards lift a little */
+a.panel, .panel-link { transition: box-shadow var(--t-med) var(--ease-out), border-color var(--t-med), transform var(--t-med) var(--ease-out); }
+a.panel:hover, .panel-link:hover { box-shadow: var(--lift-hover); border-color: rgb(var(--accent) / 0.22); transform: translateY(-1px); }
+
+/* the lead card of a page: a gold-to-blue horizon along its top edge, no corner brackets */
+.panel-hero::before { height: 1px; background: var(--horizon) !important; opacity: 0.9; }
+.panel-hero::after { display: none !important; }
+[data-glass="on"] .panel-hero, .panel-hero {
+  background-image: radial-gradient(90% 120% at 0% 0%, rgb(var(--accent) / 0.07), transparent 55%), var(--panel-grad);
+}
+
+/* card header: title in text colour, quiet meta on the right; no diamonds */
+.card-head { min-height: 48px; padding: 0.7rem 1.1rem !important; border-color: var(--hair) !important; }
+.card-head .label { color: rgb(var(--text)); font-weight: 600; font-size: 0.9375rem; letter-spacing: -0.01em; }
+.card-head .label::before { display: none !important; }
+.card-body { padding: 1.1rem; }
+@media (max-width: 639px) { .card-head { padding: 0.65rem 0.9rem !important; } .card-body { padding: 0.9rem; } }
+
+/* AI content: an electric-blue edge on the left and a blue "AI" tag; no aura, no scan line */
+.ai-card { box-shadow: var(--lift), inset 2px 0 0 0 rgb(var(--ai) / 0.7) !important; }
+.ai-card::after { display: none !important; animation: none !important; }
+
+.tile, [data-glass="on"] .tile {
+  border-radius: 12px; border: 1px solid var(--hair);
+  background: rgb(var(--glass) / 0.022); background-image: none; box-shadow: none;
+}
+.metric-strip, [data-glass="on"] .metric-strip { border-radius: 12px; border-color: var(--hair); background: rgb(var(--ink) / 0.4); background-image: none; box-shadow: none; }
+.metric-k { font-size: 0.8125rem; font-weight: 500; color: rgb(var(--mute)); }
+.metric-v { font-size: 1.375rem; font-weight: 600; }
+
+.popover, [data-glass="on"] .popover {
+  border-radius: 14px !important; border-color: var(--hair-strong) !important;
+  background: rgb(var(--raised) / 0.97) !important;
+  box-shadow: 0 1px 0 0 var(--edge-top) inset, 0 30px 60px -20px rgb(0 0 0 / 0.85), 0 0 0 1px rgb(0 0 0 / 0.3) !important;
+}
+@media (min-width: 1024px) { [data-glass="on"] .popover { -webkit-backdrop-filter: blur(20px) saturate(150%); backdrop-filter: blur(20px) saturate(150%); background: rgb(var(--raised) / 0.88) !important; } }
+.menu-item { border-radius: 9px; }
+
+/* ---------------------------------------------------------------------------------------------- CONTROLS */
+.btn, [data-glass="on"] .btn {
+  border-radius: var(--r-control); font-weight: 500; letter-spacing: -0.005em;
+  border-color: var(--hair-strong); background: rgb(var(--glass) / 0.035); background-image: none;
+  box-shadow: 0 1px 0 0 var(--edge-top) inset;
+}
+.btn:hover { border-color: rgb(var(--glass) / 0.24); background: rgb(var(--glass) / 0.07); }
+.btn-primary, [data-glass="on"] .btn-primary {
+  border-color: transparent; color: rgb(var(--on-primary)); font-weight: 600;
+  background: linear-gradient(180deg, rgb(var(--accent-2)) 0%, rgb(var(--primary)) 52%, rgb(186 142 62) 100%);
+  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.4), inset 0 -1px 0 0 rgb(0 0 0 / 0.18), 0 8px 22px -12px rgb(var(--primary) / 0.7);
+}
+.btn-primary:hover { filter: brightness(1.07); border-color: transparent; }
+.btn-primary::after { display: none !important; animation: none !important; }
+.btn-ghost, [data-glass="on"] .btn-ghost { background: transparent; border-color: transparent; box-shadow: none; }
+.btn-on { color: rgb(var(--accent)); border-color: rgb(var(--accent) / 0.45); background: rgb(var(--accent) / 0.09); }
+
+/* segmented control: a dark instrument track, the chosen option a lit key with a gold underline */
+.seg { border-radius: 11px; padding: 3px; gap: 2px; border-color: var(--hair); background: rgb(var(--ink) / 0.65); }
+.seg > button { border-radius: 8px; font-weight: 500; font-size: 0.8125rem; color: rgb(var(--mute)); }
+.seg > button[aria-pressed="true"], .seg > button[aria-selected="true"], .seg > button[aria-checked="true"] {
+  color: rgb(var(--text)); font-weight: 600;
+  background: linear-gradient(180deg, rgb(var(--raised)), rgb(var(--raised) / 0.7));
+  box-shadow: inset 0 1px 0 0 rgb(255 255 255 / 0.06), inset 0 -2px 0 0 rgb(var(--accent) / 0.85), 0 1px 3px rgb(0 0 0 / 0.35);
+}
+.seg > button.seg-strong[aria-pressed="true"] { color: rgb(var(--on-primary)); background: rgb(var(--primary)); box-shadow: none; }
+
+.chip { border-color: var(--hair-strong); color: rgb(var(--mute)); font-weight: 500; }
+.chip[aria-pressed="true"], .chip[aria-selected="true"], .chip.is-on { color: rgb(var(--accent-2)); border-color: rgb(var(--accent) / 0.55); background: rgb(var(--accent) / 0.1); }
+
+.input { border-radius: var(--r-control); background-color: rgb(var(--ink) / 0.7); border-color: var(--hair-strong); }
+.input:focus { border-color: rgb(var(--accent) / 0.7); box-shadow: 0 0 0 3px rgb(var(--accent) / 0.13); }
+
+/* underline tabs (TabStrip, role=tab): a gold beam under the active one */
+[role="tablist"] [role="tab"][aria-selected="true"] { color: rgb(var(--text)); }
+
+/* ---------------------------------------------------------------------------------------------- TABLES */
+table.grid-table th {
+  font-size: 0.75rem; font-weight: 500; color: rgb(var(--mute)); letter-spacing: 0.01em;
+  background: rgb(var(--panel)); border-bottom: 1px solid var(--hair-strong);
+  -webkit-backdrop-filter: none; backdrop-filter: none;
+}
+table.grid-table td { border-bottom-color: var(--hair); }
+table.grid-table tbody tr:hover td { background: rgb(var(--accent) / 0.045); }
+main table tbody tr:nth-child(even) td { background-color: rgb(var(--glass) / 0.018); }
+
+/* ---------------------------------------------------------------------------------------------- BADGES / AI TAG */
+.badge-caps { letter-spacing: 0.02em; }
+.ai-tag { color: rgb(var(--ai)); border-color: rgb(var(--ai) / 0.35); background: rgb(var(--ai) / 0.1); }
+
+/* ---------------------------------------------------------------------------------------------- STATES */
+.skeleton { background: linear-gradient(90deg, rgb(var(--glass) / 0.035) 25%, rgb(var(--glass) / 0.085) 37%, rgb(var(--glass) / 0.035) 63%) !important; background-size: 400% 100% !important; border-radius: 10px; }
+.empty-state { gap: 0.75rem; padding: 2rem 1rem; }
+.empty-state::before {
+  content: ""; width: 38px !important; height: 38px !important; border-radius: 9999px; animation: none !important;
+  background: radial-gradient(circle, rgb(var(--accent) / 0.9) 0 2.5px, transparent 3px),
+    radial-gradient(circle, transparent 0 13px, rgb(var(--glass) / 0.16) 13.5px 14px, transparent 14.5px),
+    radial-gradient(circle, transparent 0 18px, rgb(var(--glass) / 0.09) 18.5px 19px, transparent 19.5px) !important;
+}
+
+/* ---------------------------------------------------------------------------------------------- NAVIGATION */
+/* glass bars: obsidian, frosted on computers only */
+.glass-bar, [data-glass="on"] .glass-bar {
+  background: rgb(var(--ink) / var(--bar-a)); border-color: var(--hair);
+  box-shadow: none; -webkit-backdrop-filter: blur(16px) saturate(150%); backdrop-filter: blur(16px) saturate(150%);
+}
+@media (max-width: 767px) { .glass-bar, [data-glass="on"] .glass-bar { -webkit-backdrop-filter: none; backdrop-filter: none; background: rgb(var(--ink) / 0.96); } }
+.tb-premium::before, .tb-premium::after { display: none !important; }
+/* the horizon under the top bar */
+header.tb-premium { border-bottom-color: transparent !important; }
+header.tb-premium > :last-child::after, .obs-horizon {
+  content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px; background: var(--horizon); opacity: 0.55; pointer-events: none;
+}
+
+/* sidebar: the console rail */
+.side-bar { background: rgb(var(--ink) / 0.9) !important; border-right: 1px solid var(--hair) !important; }
+.side-group-title { padding: 0.9rem 0.85rem 0.35rem; font-size: 0.75rem; font-weight: 500; color: rgb(var(--mute) / 0.85); letter-spacing: 0.01em; }
+.side-link { min-height: 38px; gap: 0.7rem; padding: 0.45rem 0.75rem; border-radius: 10px; font-size: 0.875rem; color: rgb(var(--mute)); }
+.side-link:hover { color: rgb(var(--text)); background: rgb(var(--glass) / 0.045); }
+.side-link[aria-current="page"] {
+  color: rgb(var(--text)); font-weight: 600; box-shadow: none !important;
+  background: linear-gradient(90deg, rgb(var(--accent) / 0.13), rgb(var(--accent) / 0.02) 70%, transparent);
+}
+.side-link[aria-current="page"] svg { color: rgb(var(--accent)); }
+.side-link::before { left: -0.5rem; width: 2px; top: 22%; bottom: 22%; background: rgb(var(--accent)); box-shadow: 0 0 10px rgb(var(--accent) / 0.8); }
+.side-link[aria-current="page"]::after { display: none !important; }
+.side-status { margin: 0 0.25rem; padding: 0.7rem 0.8rem; border-radius: 12px; border: 1px solid var(--hair); background: rgb(var(--glass) / 0.025); }
+
+/* top bar: page title with its section, instruments on the right */
+.tb-icon { display: none !important; }
+.tb-crumb { font-size: 0.75rem; color: rgb(var(--mute)); }
+.tb-clock { border-radius: 12px !important; border: 1px solid var(--hair) !important; background: rgb(var(--glass) / 0.03) !important; box-shadow: none !important; }
+.tb-sec { color: rgb(var(--accent)) !important; }
+.tb-safe { border-radius: 999px; }
+
+/* ticker tape: a thin instrument band */
+.ticker-tape { background: rgb(var(--ink) / 0.55); border-bottom: 1px solid var(--hair); }
+
+/* phone bottom bar: obsidian dock, active = gold glyph with a small light above */
+.tab-link { font-weight: 500; letter-spacing: 0; }
+.tab-link::before { top: 0; left: 36%; right: 36%; height: 2px; box-shadow: 0 0 10px rgb(var(--accent) / 0.9); }
+.tab-link[aria-current="page"] .tab-ico { filter: drop-shadow(0 0 6px rgb(var(--accent) / 0.55)); }
+
+/* ---------------------------------------------------------------------------------------------- MOTION */
+/* one entrance per page: the page rises in; sections follow with a short stagger (already in index.css) */
+@keyframes obs-rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.route-fade { animation: obs-rise .32s var(--ease-out) both; }
+/* live price ticks: a brief light on the changed figure (add .tick-up / .tick-down) */
+@keyframes obs-up { from { color: rgb(var(--bull)); text-shadow: 0 0 12px rgb(var(--bull) / 0.6); } }
+@keyframes obs-down { from { color: rgb(var(--bear)); text-shadow: 0 0 12px rgb(var(--bear) / 0.6); } }
+.tick-up { animation: obs-up .9s ease-out; }
+.tick-down { animation: obs-down .9s ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .route-fade, .tick-up, .tick-down { animation: none !important; }
+  a.panel:hover, .panel-link:hover { transform: none; }
+}
+
+/* ---------------------------------------------------------------------------------------------- LIGHT THEME */
+[data-theme="light"] body { background-image: radial-gradient(140% 70% at 50% -46%, rgb(var(--accent-2) / 0.16), transparent 62%); }
+[data-theme="light"] .side-bar { background: rgb(var(--panel) / 0.92) !important; }
+[data-theme="light"] .seg { background: rgb(var(--raised) / 0.55); }

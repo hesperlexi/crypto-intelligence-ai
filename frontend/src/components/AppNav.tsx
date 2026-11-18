@@ -159,19 +159,20 @@ export const Sidebar = memo(function Sidebar({ groups, counts, collapsed, onTogg
           const activeIn = g.items.some(([to]) => loc.pathname.startsWith(to));
           const open = !g.fold || collapsed || folds[g.title] || activeIn;
           return (
-            <div key={g.title || i} className={`flex flex-col gap-0.5 ${i ? "mt-2 border-t border-glass/[0.07] pt-2" : ""}`}>
+            <div key={g.title || i} className="flex flex-col gap-0.5">
               {g.title && !collapsed && (g.fold ? (
                 <button type="button" className="side-group justify-between" aria-expanded={open} onClick={() => toggleFold(g.title)}>
                   <span className="flex items-center gap-3"><Ico name="tools" />{g.title}</span>
                   <Ico name="chevron" size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
                 </button>
-              ) : <div className="label px-3 pb-1 pt-1">{g.title}</div>)}
+              ) : <div className="side-group-title">{g.title}</div>)}
               {open && g.items.map(([to, label]) => <SideLink key={to} to={to} label={label} collapsed={collapsed} count={counts[to]} />)}
             </div>
           );
         })}
       </nav>
       <div className="space-y-1 border-t border-glass/[0.06] px-2 py-3">
+        {!collapsed && <SideStatus />}
         <ThemeToggle collapsed={collapsed} />
         <a href={`mailto:${BRAND.supportEmail}?subject=${encodeURIComponent("Crypto Intelligence AI: help")}`} className={`side-link ${collapsed ? "justify-center" : ""}`}
           title={collapsed ? "Help & support" : BRAND.supportEmail} aria-label={collapsed ? "Help and support (email)" : undefined}>
@@ -181,6 +182,23 @@ export const Sidebar = memo(function Sidebar({ groups, counts, collapsed, onTogg
     </aside>
   );
 });
+
+/** v2.56: the console's status line at the foot of the sidebar - price feed and engine, from data already loaded. */
+function SideStatus() {
+  const { connected } = useLive();
+  const health = useApi<any>("/system/health");
+  const last = health.data?.engine?.last_tick_finished;
+  const late = isNumber(last) && Date.now() - last > 45 * 60_000;
+  return (
+    <div className="side-status mb-1.5 space-y-1.5 text-xs" role="status">
+      <div className="flex items-center justify-between"><span className="text-mute">Prices</span>
+        <span className={`inline-flex items-center gap-1.5 font-medium ${connected ? "text-bull" : "text-warn"}`}><span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-bull live-dot" : "bg-warn"}`} />{connected ? "Streaming" : "Reconnecting"}</span></div>
+      <div className="flex items-center justify-between"><span className="text-mute">AI engine</span>
+        <span className={`num font-medium ${late ? "text-warn" : "text-text/85"}`}>{isNumber(last) ? ago(last) : "—"}</span></div>
+    </div>
+  );
+}
+const isNumber = (v: unknown): v is number => typeof v === "number" && Number.isFinite(v);
 
 /* ---- top bar pieces -------------------------------------------------------------------------------------------- */
 /** Price feed status with a ticking clock. Only this small chip re-renders every second.
@@ -296,8 +314,8 @@ export function PageTitle() {
     <div className="flex min-w-0 items-center gap-3">
       <span className="tb-icon"><Ico name={icon} size={20} /></span>
       <div className="min-w-0">
-        <div className="font-display truncate text-xl font-semibold leading-tight tracking-tight">{title}</div>
-        <div className="truncate text-xs text-mute">{sub}</div>
+        <div className="truncate text-base font-semibold leading-tight tracking-tight">{title}</div>
+        <div className="tb-crumb truncate">{sub}</div>
       </div>
     </div>
   );

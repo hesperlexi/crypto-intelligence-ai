@@ -4,7 +4,7 @@ import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useRe
  *  Theme ids are stable keys in saved preferences: "gold" is Midnight Gold and "light" is Ivory. The colours of each
  *  theme live in index.css under [data-theme="<id>"]. */
 export const THEMES = [
-  { id: "gold", name: "Midnight Gold", sub: "Default · warm black, rich gold", dark: true },
+  { id: "gold", name: "Observatory", sub: "Default · deep space, champagne gold", dark: true },
   { id: "obsidian", name: "Obsidian", sub: "Pure black, champagne gold", dark: true },
   { id: "aurora", name: "Aurora", sub: "Navy blue, gold and cyan", dark: true },
   { id: "violet", name: "Violet Night", sub: "Deep purple, violet glow", dark: true },
