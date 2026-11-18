@@ -81,4 +81,4 @@ jobs:
           echo "$url" >> "$GITHUB_STEP_SUMMARY"
           # a brand-new workers.dev address needs a few minutes for its certificate
           h=""; for i in $(seq 1 40); do h=$(curl -s -m 10 "$url/health" || true); [ -n "$h" ] && break; sleep 15; done
-          echo "::notice::chat url $url health ${h:-no answer yet} chat-no-token $(curl -s -m 10 -X POST "$url/chat" -d '{}' || true) diag $(curl -s -m 20 "$url/diag" || true)"
+          echo "::notice::chat url $url health ${h:-no answer yet} chat-no-token $(curl -s -m 10 -X POST "$url/chat" -d '{}' || true) diag $(curl -s -m 90 "$url/diag" || echo timeout)"
