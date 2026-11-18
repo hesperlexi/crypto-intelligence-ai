@@ -136,7 +136,8 @@ async function gemini(env: Env, body: unknown): Promise<Response> {
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
       method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, body: JSON.stringify(body),
     });
-    if (r.status !== 404) { if (r.ok) await env.KV.put("diag:model", m, { expirationTtl: 86400 }); return r; }
+    // gone (404), busy (503 / 500) or out of free quota (429): try the next name
+    if (![404, 429, 500, 503].includes(r.status)) { if (r.ok) await env.KV.put("diag:model", m, { expirationTtl: 86400 }); return r; }
     last = r;
   }
   return last ?? new Response("no model", { status: 404 });
@@ -172,11 +173,11 @@ export default {
     if (url.pathname === "/health") return json({ ok: true, ready: !!env.GEMINI_API_KEY }, 200, h);
     if (url.pathname === "/diag") {
       // a tiny Gemini call at most every 10 min + the last recorded problem; no keys or questions are ever shown
-      let gem = await env.KV.get("diag:gemini3");
+      let gem = await env.KV.get("diag:gemini4");
       if (!gem && env.GEMINI_API_KEY) {
         const r = await gemini(env, { contents: [{ role: "user", parts: [{ text: "Reply with OK" }] }], generationConfig: { maxOutputTokens: 256 } });
         gem = `${r.status} ${(await env.KV.get("diag:model")) ?? ""} ${r.ok ? "" : (await r.text()).slice(0, 200).replace(/AIza[\w-]{20,}/g, "[key]")}`;
-        await env.KV.put("diag:gemini3", gem, { expirationTtl: 600 });
+        await env.KV.put("diag:gemini4", gem, { expirationTtl: 600 });
       }
       let models = await env.KV.get("diag:models");
       if (!models && env.GEMINI_API_KEY) {
