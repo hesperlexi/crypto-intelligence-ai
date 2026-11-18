@@ -1085,3 +1085,11 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   (`App.TAPE_PATHS`); top bar `PriceChips` BTC/ETH ≥ 1400 px (socket, no reads); phone theme switch in the More sheet;
   coin page dossier (`.asset-dossier`: chart + report | trade call, report joins the side when no call, chart height
   460-760 follows the side column; missing analysis = `.asset-wait` line).
+- **v2.60** (owner, 18 Nov 2026, live): computers with the sidebar show the page title in the top bar (`AppNav.PageTitle`
+  `.tb-title`; CSS `.nav-side .page-title` hidden, `PageHeader` classes `ph-nosub` / `ph-noact` drop an empty header,
+  `phoneSub` = sub only where the page title shows); BTC/ETH `PriceChips` ≥ 1600 px off tape pages. Results 4 tabs
+  (Track record · Demo bots [+ Hesper Challenge switch] · Signal log [+ Model accuracy switch] · Leaderboard; old `?tab=`
+  values map via `Results.PARENT`; Tools tab dropped). Trade chart toolbar two rows (`.tt-tools`), badges after positions,
+  phone badge strip. Admin menu = Control room (`/health`; tabs Health · Trade Guardian · Performance Lab) · Hesper
+  Challenge · Share kit (`/report`; tabs Weekly report · Achievements) · Users (`components/AdminTabs.tsx`,
+  `ADMIN_ALIASES` light the sidebar entry). Inter no longer loaded (Geist; canvases too).
