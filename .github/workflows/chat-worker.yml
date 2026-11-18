@@ -79,5 +79,5 @@ jobs:
         run: |
           url="https://cia-chat.${{ steps.sub.outputs.sub }}.workers.dev"
           echo "$url" >> "$GITHUB_STEP_SUMMARY"
-          sleep 20
-          echo "::notice::chat url $url health $(curl -s "$url/health")"
+          h=""; for i in $(seq 1 12); do h=$(curl -s -m 10 "$url/health"); [ -n "$h" ] && break; sleep 10; done
+          echo "::notice::chat url $url health ${h:-no answer} chat-no-token $(curl -s -m 10 -X POST "$url/chat" -d '{}')"
