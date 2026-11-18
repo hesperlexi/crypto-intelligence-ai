@@ -50,7 +50,7 @@ def train_bundle(symbol: str, timeframe: str, frame: Frame, btc: Frame | None = 
     idx = np.where(ds.trainable)[0]
     if len(idx) < settings.min_train_samples + 60:
         raise InsufficientData(f"{len(idx)} usable training rows for {symbol} {timeframe}")
-    names = model_names or default_models(fast)
+    names = model_names or default_models(fast, timeframe)
     X = ds.X.to_numpy(float)[idx]
     m = ds.meta.iloc[idx]
     y, sigma, fwd = m["y"].to_numpy(float), m["sigma"].to_numpy(float), m["fwd_ret"].to_numpy(float)

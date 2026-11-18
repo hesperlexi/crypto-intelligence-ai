@@ -82,6 +82,16 @@ LIMITS = {
 }
 
 
+def _model_exclude(raw: str) -> dict[str, set[str]]:
+    """"12h:arima,1d:lstm" -> {"12h": {"arima"}, "1d": {"lstm"}} (blank / malformed parts ignored)."""
+    out: dict[str, set[str]] = {}
+    for part in (raw or "").split(","):
+        tf, _, name = part.strip().partition(":")
+        if tf.strip() and name.strip():
+            out.setdefault(tf.strip(), set()).add(name.strip())
+    return out
+
+
 def _b(name: str, default: bool) -> bool:
     return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
 
@@ -120,6 +130,11 @@ class Settings:
     # higher-timeframe context tested per series (ml.htf_gate); with HTF_GATES=0 only the HTF_GATE_KEEP series still run
     # it ("SYMBOL|TF", comma separated; SOL/USDT 15m survived the test)
     htf_gates: bool = field(default_factory=lambda: _b("HTF_GATES", True))
+    # v2.57 (owner, 18 Nov 2026, model-set study results/modelset-12h-*.json): models left out per timeframe.
+    # "12h:arima" - without ARIMA, 12h signals scored +0.090R vs +0.009R a trade on unseen data (better in 99% of
+    # series resamples, smaller drawdown); on 15m removing it was clearly worse, elsewhere no clear difference.
+    # Format "tf:model,tf:model"; MODEL_EXCLUDE="" restores every model everywhere.
+    model_exclude: dict[str, set[str]] = field(default_factory=lambda: _model_exclude(os.getenv("MODEL_EXCLUDE", "12h:arima")))
     htf_gate_keep: list[str] = field(default_factory=lambda: [
         s.strip() for s in _env("HTF_GATE_KEEP", "SOL/USDT|15m").split(",") if s.strip()])
     # per-model trade filter v1 (ml.trade_filter), AI target lifts (ml.target_model; off = plain historical base rates

@@ -205,8 +205,12 @@ def model_status() -> list[dict[str, Any]]:
     return out
 
 
-def default_models(fast: bool = False) -> list[str]:
+def default_models(fast: bool = False, timeframe: str | None = None) -> list[str]:
+    """Available models; with a timeframe, minus the ones settings.model_exclude leaves out there (v2.57: 12h ARIMA)."""
     avail = [m["name"] for m in model_status() if m["available"]]
+    if timeframe:
+        drop = settings.model_exclude.get(timeframe, set())
+        avail = [m for m in avail if m not in drop]
     return [m for m in avail if m in FAST_MODELS] if fast else avail
 
 

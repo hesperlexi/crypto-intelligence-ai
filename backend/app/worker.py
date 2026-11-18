@@ -1131,16 +1131,16 @@ def pairs_needing_full(rt: Runtime) -> list[tuple[str, str]]:
             if v is None:
                 out.append((0, s, tf))
             elif (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > settings.retrain_interval_h * 3.6e6 \
-                    or _missing_models(v.get("summary") or {}):
+                    or _missing_models(v.get("summary") or {}, tf):
                 # also retrain when a model family became available after this bundle was trained (e.g. torch)
                 out.append((v["created_at"], s, tf))
     return [(s, tf) for _, s, tf in sorted(out)]
 
 
-def _missing_models(summary: dict[str, Any]) -> bool:
-    """A model family is installed now but this bundle has neither trained nor tried it."""
+def _missing_models(summary: dict[str, Any], timeframe: str | None = None) -> bool:
+    """A model family is installed now (and wanted on this timeframe) but this bundle has neither trained nor tried it."""
     tried = set(summary.get("models") or []) | set((summary.get("failures") or {}).keys())
-    return bool(set(default_models()) - tried)
+    return bool(set(default_models(timeframe=timeframe)) - tried)
 
 
 def train_until(rt: Runtime, pairs: list[tuple[str, str]], fast: bool, deadline: float) -> list[dict[str, Any]]:
@@ -1601,7 +1601,7 @@ def shard_pairs(rt: Runtime, shard: int, of: int, max_age_h: float = 12) -> list
                 continue
             v = trainer.active_version(s, tf, rt.db)
             if v is None or (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > max_age_h * 3.6e6 \
-                    or _missing_models(v.get("summary") or {}):
+                    or _missing_models(v.get("summary") or {}, tf):
                 pairs.append((s, tf))
     # v2.16: within a cost tier, missing models first, then the oldest (new coins get their models on the first night,
     # and a pair a slice could not reach last night goes first the next night)
