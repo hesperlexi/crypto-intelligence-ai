@@ -21,7 +21,7 @@ function Lean({ e }: { e: Expect }) {
   );
 }
 
-export default function CoinReport({ symbol }: { symbol: string }) {
+export default function CoinReport({ symbol, narrow = false }: { symbol: string; narrow?: boolean }) {
   const v = useApi<any>(`/coin-reports/${slug(symbol)}`);
   const r = v.data;
   if (!r) return null;                       // not published yet (new coin, or before the engine's hourly run): no card
@@ -32,7 +32,7 @@ export default function CoinReport({ symbol }: { symbol: string }) {
     <Card ai title="AI coin report" right={<Badge tone={trendTone(r.trend?.label ?? "") as any}>{r.trend?.label}</Badge>}>
       <div className="space-y-3">
         {r.ai?.text ? <p className="text-sm leading-relaxed">{r.ai.text}</p> : <p className="text-sm leading-relaxed">{r.summary}</p>}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className={`grid grid-cols-2 gap-3 sm:grid-cols-4 ${narrow ? "xl:grid-cols-2" : ""}`}>
           {(r.expects ?? []).map((e: Expect) => <Lean key={e.timeframe} e={e} />)}
           <Tile label="Support (4H)" value={<span className="text-bull">{sup.length ? fmtPrice(sup[0]) : "—"}</span>} sub={sup[1] ? `then ${fmtPrice(sup[1])}` : undefined} />
           <Tile label="Resistance (4H)" value={<span className="text-bear">{res.length ? fmtPrice(res[0]) : "—"}</span>} sub={res[1] ? `then ${fmtPrice(res[1])}` : undefined} />

@@ -1,5 +1,5 @@
 import { isFutOnly } from "../lib/binance";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CoinAvatar } from "../components/Polish";
 import { TickFlash } from "../components/kit";
 import { useIsAdmin } from "../lib/session";
@@ -10,8 +10,8 @@ import CandleChart, { Marker, OVERLAY_COLORS, PriceLine } from "../components/Ca
 import { MODEL_TFS, TfTabs } from "../components/Pickers";
 
 const ASSET_TFS = ["15m", "1h", "4h", "12h", "1d", "3d", "1w"] as const;
-import { Badge, Card, Check, Empty, ErrorBox, FlagList, Loading, Meter, Note, ProbBar, RegimeBadge, Row, ScoreBar, SignalBadge, signalTone, Stat } from "../components/ui";
-import TradeCall, { Market } from "../components/TradeCall";
+import { Badge, Card, Check, Empty, ErrorBox, isNotReady, FlagList, Loading, Meter, Note, ProbBar, RegimeBadge, Row, ScoreBar, SignalBadge, signalTone, Stat } from "../components/ui";
+import TradeCall, { Market, verdictOf } from "../components/TradeCall";
 import CoinReport from "../components/CoinReport";
 import CoinPassport from "../components/CoinPassport";
 import { post, useApi } from "../lib/api";
@@ -47,6 +47,26 @@ export default function Asset() {
   const setup = a?.setup;
   const fc = a?.forecast;
   const admin = useIsAdmin();
+  // v2.59 dossier: with a live futures call the card fills the side column; with none (a short WAIT card) the AI
+  // report joins it so both columns end level. Same path as AssetCall, so the listener is shared (no extra read).
+  const callTf = ["15m", "1h", "4h", "12h", "1d", "3d"].includes(tf) ? tf : "4h";
+  const board = useApi<any>(`/futures?timeframe=${callTf}`);
+  const callRow = (board.data?.rows ?? []).find((r: any) => r.symbol === symbol);
+  const hasCall = !!callRow && verdictOf(callRow, "futures").tone !== "wait";
+  // the chart grows (460-760 px, computers only) so the chart column ends level with the side column
+  const leftRef = useRef<HTMLDivElement>(null), sideRef = useRef<HTMLDivElement>(null);
+  const [chartH, setChartH] = useState(460);
+  useEffect(() => {
+    const l = leftRef.current, r = sideRef.current;
+    if (!l || !r || typeof ResizeObserver === "undefined") return;
+    const fit = () => setChartH((cur) => {
+      if (window.innerWidth < 1280 || !r.offsetHeight) return 460;
+      const base = l.offsetHeight - cur + 460;
+      return Math.round(Math.max(460, Math.min(760, 460 + r.offsetHeight - base)));
+    });
+    const ro = new ResizeObserver(fit); ro.observe(l); ro.observe(r); window.addEventListener("resize", fit);
+    return () => { ro.disconnect(); window.removeEventListener("resize", fit); };
+  }, []);
 
   const lines = useMemo<PriceLine[]>(() => {
     const out: PriceLine[] = [];
@@ -111,12 +131,15 @@ export default function Asset() {
         {ok && a.decision_reason && <p className="mt-2 text-sm text-mute">Why {a.decision.toLowerCase()}: {a.decision_reason}.</p>}
       </div>
 
-      {an.error && <ErrorBox error={an.error} retry={an.reload} />}
-      <CoinPassport symbol={symbol} analysis={a} />
-      <CoinReport symbol={symbol} />
-      <AssetCall symbol={symbol} tf={tf} />
-      {a && !ok && <Card title="Insufficient data"><Empty>{a.reason ?? "Not enough closed candles for this timeframe yet."} The system does not predict without data.</Empty></Card>}
+      {/* v2.59 dossier: a missing analysis is one quiet line, not a big empty block; real errors stay red */}
+      {an.error && (isNotReady(an.error)
+        ? <p className="asset-wait"><span className="dot" aria-hidden="true" />The AI analysis for {tf.toUpperCase()} is not published yet. The chart and live price below are live.<button className="btn px-2.5 py-1 text-xs" onClick={an.reload}>Check again</button></p>
+        : <ErrorBox error={an.error} retry={an.reload} />)}
+      {a && !ok && <p className="asset-wait"><span className="dot" aria-hidden="true" />{a.reason ?? "Not enough closed candles for this timeframe yet."} The system does not predict without data.</p>}
 
+      {/* chart first; the signal and the AI report beside it on computers (side column collapses when both are empty) */}
+      <div className="asset-dossier">
+      <div ref={leftRef} className="flex min-w-0 flex-col gap-4">
       {/* ---- chart ---- */}
       <Card title={`${symbol} · ${tf.toUpperCase()} · ${oh.data?.exchange ?? ""}`} right={
         <div className="flex flex-wrap items-center gap-1">
@@ -132,7 +155,7 @@ export default function Asset() {
         </div>}>
         {pro ? <TVChart symbol={symbol} tf={tf} /> : oh.error ? <ErrorBox error={oh.error} retry={oh.reload} /> : !oh.data ? <Loading what="Loading candles" /> : (
           <>
-            <CandleChart candles={oh.data.candles} overlays={oh.data.overlays} show={show} lines={lines} markers={markers} liveCandle={live.live} livePrice={live.live ? null : tk?.last} viewKey={`asset|${symbol}|${tf}`} />
+            <CandleChart height={chartH} candles={oh.data.candles} overlays={oh.data.overlays} show={show} lines={lines} markers={markers} liveCandle={live.live} livePrice={live.live ? null : tk?.last} viewKey={`asset|${symbol}|${tf}`} />
             <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-mute">
               {show.map((k) => <span key={k} className="inline-flex items-center gap-1.5"><span className="inline-block h-0.5 w-4" style={{ background: OVERLAY_COLORS[k] }} />{k.replace("_", " ").toUpperCase()}</span>)}
               <span>Times in UTC</span>
@@ -141,6 +164,11 @@ export default function Asset() {
           </>
         )}
       </Card>
+      {hasCall && <CoinReport symbol={symbol} />}
+      </div>
+      <div ref={sideRef} className="asset-side"><AssetCall symbol={symbol} tf={tf} />{!hasCall && <CoinReport symbol={symbol} narrow />}</div>
+      </div>
+      <CoinPassport symbol={symbol} analysis={a} />
 
       {ok && (
         <>

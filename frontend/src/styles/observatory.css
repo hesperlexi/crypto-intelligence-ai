@@ -447,3 +447,20 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .tb-price { display:inline-flex; align-items:baseline; gap:.4rem; padding:.3rem .6rem; border-radius:999px; border:1px solid var(--hair); background:rgb(var(--glass)/.03); font-size:.75rem; white-space:nowrap; transition:border-color var(--t-fast); }
 .tb-price b { font-size:.8125rem; font-weight:600; color:rgb(var(--text)); }
 .tb-price:hover { border-color:rgb(var(--accent)/.45); }
+
+/* v2.59 coin page dossier: chart | signal + AI report */
+.asset-dossier { display:grid; gap:1rem; grid-template-columns:minmax(0,1fr); align-items:start; }
+@media (min-width:1280px) {
+  .asset-dossier { grid-template-columns:minmax(0,1fr) 25rem; }
+  .asset-dossier:has(> .asset-side:empty) { grid-template-columns:minmax(0,1fr); }
+}
+.asset-side { display:flex; flex-direction:column; gap:1rem; min-width:0; }
+.asset-side:empty { display:none; }
+.asset-wait { display:flex; flex-wrap:wrap; align-items:center; gap:.5rem .75rem; padding:.7rem 1rem; border-radius:var(--r-card); border:1px solid var(--hair); background:rgb(var(--glass)/.025); font-size:.875rem; color:rgb(var(--mute)); }
+.asset-wait .dot { width:.5rem; height:.5rem; border-radius:999px; background:rgb(var(--warn)); box-shadow:0 0 0 3px rgb(var(--warn)/.15); }
+.asset-wait .btn { margin-left:auto; }
+@media (min-width:1280px) {
+  .asset-side .metric-strip { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  .asset-side .sc-head [title="When this call was published"] { display:none; }
+  .asset-side .sc-head > div:last-child { flex-direction:column; align-items:flex-end; gap:.375rem; }
+}
