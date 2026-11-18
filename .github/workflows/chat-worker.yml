@@ -57,4 +57,8 @@ jobs:
           printf '%s' "$KEY" | npx wrangler secret put GEMINI_API_KEY >/dev/null && echo "Gemini key set"
       - name: Address
         if: steps.chk.outputs.go == '1'
-        run: grep -o 'https://[a-z0-9.-]*workers.dev' deploy.log | head -1 | tee -a "$GITHUB_STEP_SUMMARY" || true
+        run: |
+          url=$(grep -o 'https://[a-z0-9.-]*workers.dev' deploy.log | head -1)
+          echo "$url" >> "$GITHUB_STEP_SUMMARY"
+          sleep 5
+          echo "::notice::chat url $url health $(curl -s "$url/health")"
