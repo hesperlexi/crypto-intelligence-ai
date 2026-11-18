@@ -1,4 +1,4 @@
-// v2.61 "Ask AI" for members: a small button bottom-right that opens a chat panel (bottom sheet on phones). The assistant
+// v2.61 "Ask Cintel" (owner named it) for members: a small button bottom-right that opens a chat panel (bottom sheet on phones). The assistant
 // explains what is on the current page (lib/chat.ts sends that page's figures); it never gives buy / sell advice.
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
@@ -59,19 +59,19 @@ export default function AskAI() {
   return (
     <>
       {!open && (
-        <button type="button" className="askai-fab" onClick={() => setOpen(true)} aria-label="Ask AI about this page">
+        <button type="button" className="askai-fab" onClick={() => setOpen(true)} aria-label="Ask Cintel about this page">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
             <path d="M12 3l1.8 4.6L18 9l-4.2 1.6L12 15l-1.8-4.4L6 9l4.2-1.4z" /><path d="M19 15l.8 2 2 .8-2 .8-.8 2-.8-2-2-.8 2-.8z" />
           </svg>
-          <span>Ask AI</span>
+          <span>Ask Cintel</span>
         </button>
       )}
       {open && (
-        <div className="askai-wrap" role="dialog" aria-modal="false" aria-label="Ask AI">
+        <div className="askai-wrap" role="dialog" aria-modal="false" aria-label="Ask Cintel">
           <section className="askai-panel">
             <header className="askai-head">
               <div className="min-w-0">
-                <div className="flex items-center gap-2 font-semibold"><span className="askai-dot" aria-hidden="true" />Ask AI</div>
+                <div className="flex items-center gap-2 font-semibold"><span className="askai-dot" aria-hidden="true" />Cintel</div>
                 <p className="truncate text-xs text-mute">Explains what's on this page · not financial advice</p>
               </div>
               <div className="flex items-center gap-1">
@@ -98,7 +98,7 @@ export default function AskAI() {
             </div>
             <form className="askai-form" onSubmit={submit}>
               <textarea ref={input} className="input min-h-[44px] flex-1 resize-none py-2.5" rows={1} maxLength={600} value={q}
-                placeholder="Ask about this page…" aria-label="Your question" onChange={(e) => setQ(e.target.value)}
+                placeholder="Ask Cintel about this page…" aria-label="Your question" onChange={(e) => setQ(e.target.value)}
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(q); } }} />
               <button type="submit" className="btn btn-primary shrink-0 px-4" disabled={busy || !q.trim()}>Send</button>
             </form>

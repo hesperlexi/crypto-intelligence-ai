@@ -29,7 +29,7 @@ const MAX_TURNS = 6;          // earlier messages kept
 
 let jwks: { keys: any[]; at: number } | null = null;
 
-const SYSTEM = `You are the assistant inside "Crypto Intelligence AI", a crypto analysis app for its members.
+const SYSTEM = `You are Cintel, the assistant inside "Crypto Intelligence AI", a crypto analysis app for its members.
 Rules (always):
 - Answer ONLY from the PAGE DATA in the message. It is what the member sees on screen right now. If the answer is not
   in it, say you can't see that on this page and suggest where in the app it is (Signals, Results, News, Radar, coin page).
@@ -107,6 +107,7 @@ async function roleOf(claims: any, token: string, env: Env): Promise<"admin" | "
     const exp = Number(f.expires_at?.integerValue ?? f.expires_at?.doubleValue ?? 0);
     if (status === "approved" && (!exp || exp > Date.now())) role = "member";
   }
+  if (role !== "member") await note(env, `not a member: users read ${r.status}`);
   await env.KV.put(ck, role, { expirationTtl: 1800 });
   return role === "member" ? "member" : null;
 }
@@ -126,6 +127,11 @@ async function spend(uid: string, admin: boolean, env: Env): Promise<{ ok: boole
   return { ok: true, left: cap - n - 1 };
 }
 
+/** Last problem (no keys, no questions) for /diag, kept 1 day. */
+async function note(env: Env, what: string) {
+  try { await env.KV.put("diag:last", JSON.stringify({ at: new Date().toISOString(), what: what.replace(/AIza[\w-]{20,}/g, "[key]") }), { expirationTtl: 86400 }); } catch { /* ignore */ }
+}
+
 const clip = (s: unknown, n: number) => String(s ?? "").slice(0, n);
 
 async function ask(env: Env, question: string, page: string, context: string, history: { role: string; text: string }[]) {
@@ -138,9 +144,10 @@ async function ask(env: Env, question: string, page: string, context: string, hi
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL || "gemini-2.5-flash"}:generateContent`, {
     method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, body: JSON.stringify(body),
   });
-  if (!r.ok) return null;
+  if (!r.ok) { await note(env, `gemini ${r.status}: ${(await r.text()).slice(0, 300)}`); return null; }
   const d: any = await r.json();
   const text = (d.candidates?.[0]?.content?.parts ?? []).map((p: any) => p.text ?? "").join("").trim();
+  if (!text) await note(env, `gemini empty: ${JSON.stringify(d).slice(0, 300)}`);
   return text || null;
 }
 
@@ -150,12 +157,25 @@ export default {
     const url = new URL(req.url);
     if (req.method === "OPTIONS") return new Response(null, { status: 204, headers: h });
     if (url.pathname === "/health") return json({ ok: true, ready: !!env.GEMINI_API_KEY }, 200, h);
+    if (url.pathname === "/diag") {
+      // a tiny Gemini call at most every 10 min + the last recorded problem; no keys or questions are ever shown
+      let gem = await env.KV.get("diag:gemini");
+      if (!gem && env.GEMINI_API_KEY) {
+        const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${env.GEMINI_MODEL}:generateContent`, {
+          method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+          body: JSON.stringify({ contents: [{ role: "user", parts: [{ text: "Reply with OK" }] }], generationConfig: { maxOutputTokens: 5, thinkingConfig: { thinkingBudget: 0 } } }),
+        });
+        gem = `${r.status} ${r.ok ? "" : (await r.text()).slice(0, 200).replace(/AIza[\w-]{20,}/g, "[key]")}`;
+        await env.KV.put("diag:gemini", gem, { expirationTtl: 600 });
+      }
+      return json({ gemini: gem, admins: env.ADMIN_EMAILS.split(/[,\s;]+/).filter(Boolean).length, last: JSON.parse((await env.KV.get("diag:last")) ?? "null") }, 200, h);
+    }
     if (url.pathname !== "/chat" || req.method !== "POST") return json({ error: "Not found" }, 404, h);
     if (!env.GEMINI_API_KEY) return json({ error: "The assistant is not set up yet." }, 503, h);
 
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
     const claims = token ? await verify(token, env.FIREBASE_PROJECT) : null;
-    if (!claims) return json({ error: "Please sign in again." }, 401, h);
+    if (!claims) { await note(env, "token not accepted"); return json({ error: "Please sign in again." }, 401, h); }
     const role = await roleOf(claims, token, env);
     if (!role) return json({ error: "The assistant is for active members." }, 403, h);
 
