@@ -392,3 +392,4 @@ header.tb-premium > :last-child::after, .obs-horizon {
   background: radial-gradient(circle at 50% 0%, rgb(var(--accent-2)) 0 2px, transparent 2.5px); animation: xeno-spin 9s linear infinite; }
 .asset-planet > * { box-shadow: 0 0 22px -4px rgb(var(--accent) / 0.55); border-radius: 9999px; }
 @media (prefers-reduced-motion: reduce) { .asset-planet::after { animation: none; } }
+.asset-planet { margin: 4px 14px 4px 10px; }
