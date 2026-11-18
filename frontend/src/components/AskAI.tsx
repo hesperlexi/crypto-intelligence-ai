@@ -2,7 +2,7 @@
 // explains what is on the current page (lib/chat.ts sends that page's figures); it never gives buy / sell advice.
 import { FormEvent, useEffect, useRef, useState } from "react";
 import { useLocation } from "react-router-dom";
-import { askAI, chatReady, starters, Turn } from "../lib/chat";
+import { askAI, CHAT_MEMBERS, chatReady, starters, Turn } from "../lib/chat";
 import { useSession } from "../lib/session";
 
 function Answer({ text }: { text: string }) {
@@ -37,7 +37,7 @@ export default function AskAI() {
     return () => window.removeEventListener("keydown", esc);
   }, [open]);
 
-  if (!s || (s.role !== "member" && s.role !== "admin") || !chatReady()) return null;
+  if (!s || !(s.role === "admin" || (s.role === "member" && CHAT_MEMBERS)) || !chatReady()) return null;
 
   const send = async (text: string) => {
     const question = text.trim();

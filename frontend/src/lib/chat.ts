@@ -9,6 +9,8 @@ import { BUILD_ID } from "./version";
 export const CHAT_URL = (import.meta.env.VITE_CHAT_URL as string | undefined)?.replace(/\/$/, "") ?? "";
 export const PREVIEW = BUILD_ID === "preview";
 export const chatReady = () => !!CHAT_URL || PREVIEW;
+/** While testing (VITE_CHAT_MEMBERS=0) only the owner sees the assistant. */
+export const CHAT_MEMBERS = PREVIEW || import.meta.env.VITE_CHAT_MEMBERS !== "0";
 
 export interface Turn { role: "user" | "model"; text: string }
 
