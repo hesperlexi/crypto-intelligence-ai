@@ -197,13 +197,13 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .side-group-title { padding: 0.9rem 0.85rem 0.35rem; font-size: 0.75rem; font-weight: 500; color: rgb(var(--mute) / 0.85); letter-spacing: 0.01em; }
 .side-link { min-height: 38px; gap: 0.7rem; padding: 0.45rem 0.75rem; border-radius: 10px; font-size: 0.875rem; color: rgb(var(--mute)); }
 .side-link:hover { color: rgb(var(--text)); background: rgb(var(--glass) / 0.045); }
-.side-link[aria-current="page"] {
+.side-link[aria-current="page"] , .side-link.is-alias {
   color: rgb(var(--text)); font-weight: 600; box-shadow: none !important;
   background: linear-gradient(90deg, rgb(var(--accent) / 0.13), rgb(var(--accent) / 0.02) 70%, transparent);
 }
-.side-link[aria-current="page"] svg { color: rgb(var(--accent)); }
+.side-link[aria-current="page"] svg , .side-link.is-alias svg { color: rgb(var(--accent)); }
 .side-link::before { left: -0.5rem; width: 2px; top: 22%; bottom: 22%; background: rgb(var(--accent)); box-shadow: 0 0 10px rgb(var(--accent) / 0.8); }
-.side-link[aria-current="page"]::after { display: none !important; }
+.side-link[aria-current="page"]::after , .side-link.is-alias::after { display: none !important; }
 .side-status { margin: 0 0.25rem; padding: 0.7rem 0.8rem; border-radius: 12px; border: 1px solid var(--hair); background: rgb(var(--glass) / 0.025); }
 
 /* top bar: page title with its section, instruments on the right */
@@ -483,10 +483,12 @@ header.tb-premium > :last-child::after, .obs-horizon {
 /* v2.60 (owner): on computers with the sidebar the page title sits in the top bar; the page keeps only its controls */
 .tb-title { font-family: var(--font-display, "Sora"), "Geist", sans-serif; font-size: 1.25rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; color: rgb(var(--text)); }
 @media (min-width: 1024px) {
-  .nav-side .page-head .page-title, .nav-side .page-head .page-sub { display: none; }
-  .nav-side .page-head > div:first-child:not(:has(> :not(.page-title):not(.page-sub))) { display: none; }
-  .nav-side .page-head { padding-bottom: 0; margin-bottom: 0; justify-content: flex-start; }
+  .nav-side .page-title, .nav-side .page-head .pg-phone { display: none; }
+  .nav-side .page-head.ph-nosub > div:first-child { display: none; }
+  .nav-side .page-sub { margin-top: 0; font-size: .875rem; }
+  .nav-side .page-head { padding-bottom: 0; margin-bottom: 0; align-items: center; }
   .nav-side .page-head::after { display: none; }
-  .nav-side .page-head:not(:has(> div:not(:first-child))) { display: none; }
-  .nav-side .page-head:not(:has(> div:not(:first-child))) + * { margin-top: 0 !important; }
+  /* nothing left (no live line, no controls): drop the header and its gap */
+  .nav-side .page-head.ph-nosub.ph-noact { display: none; }
+  .nav-side .page-head.ph-nosub.ph-noact + * { margin-top: 0 !important; }
 }

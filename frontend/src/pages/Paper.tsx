@@ -13,7 +13,7 @@ export default function Paper() {
   useMarkVisited("paper");
   return (
     <div className="space-y-3">
-      <PageHeader title="Trade" sub={<Badge tone="warn">Practice account</Badge>} />
+      <PageHeader title="Trade" sub={<Badge tone="warn">Practice account</Badge>} phoneSub />
       <TradeTerminal />
     </div>
   );

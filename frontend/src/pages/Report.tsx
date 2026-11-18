@@ -9,6 +9,7 @@ import { base, isNum } from "../lib/format";
 import { SITE_HOST } from "../lib/brand";
 import { curveChart, figure, foil, inter, L, luxBackground, luxBrand, luxFooter, luxReady, sora, statRow, txt, wrapLines } from "../lib/luxCard";
 import { roiOf } from "../lib/roi";
+import AdminTabs from "../components/AdminTabs";
 
 const SITE = SITE_HOST;
 const dfmt = (ms: number) => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
@@ -149,6 +150,7 @@ export default function Report() {
 
   return (
     <div className="space-y-4">
+      <AdminTabs family="share" />
       <PageHeader title="Weekly report" />
       <div className="flex flex-wrap items-center gap-2">
         <select className="input w-auto" value={idx} onChange={(e) => setI(Number(e.target.value))} aria-label="Week">

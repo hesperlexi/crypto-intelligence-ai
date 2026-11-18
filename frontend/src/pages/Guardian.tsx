@@ -15,6 +15,7 @@ import { queueJob, useApi } from "../lib/api";
 import { ago, base, fmtPrice, isNum, slug } from "../lib/format";
 import { useTickerThrottled } from "../lib/live";
 import { track, useNotices } from "../lib/notice";
+import AdminTabs from "../components/AdminTabs";
 
 type Reason = { code: string; label: string; points: number; estimate?: boolean };
 type Shadow = { action?: string; applied?: boolean; with_r?: number; without_r?: number; delta_r?: number; skipped?: string };
@@ -59,6 +60,7 @@ export default function Guardian() {
   const hist: GuardianRec[] = v?.history ?? [];
   return (
     <div className="space-y-4">
+      <AdminTabs family="control" />
       <PageHeader title="Trade Guardian" />
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}
       {!v && !q.error && <div className="skeleton h-64 rounded-xl" />}

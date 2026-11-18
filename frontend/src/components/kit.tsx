@@ -97,12 +97,14 @@ export function TabStrip<T extends string>({ value, options, onChange, label, cl
 
 /** v2.23 premium page header: calm title, one-line subtitle, actions on the right, gold-leaf line underneath.
  *  Every page starts with it so the app reads as one product. */
-export function PageHeader({ title, sub, actions, className = "" }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode; className?: string }) {
+/** v2.60: on computers with the sidebar the title moves to the top bar (CSS hides `.page-title`); a live `sub` line and
+ *  `actions` stay. `phoneSub` = a sub shown only where the page title is shown (it repeats the top bar otherwise). */
+export function PageHeader({ title, sub, actions, className = "", phoneSub = false }: { title: ReactNode; sub?: ReactNode; actions?: ReactNode; className?: string; phoneSub?: boolean }) {
   return (
-    <header className={`page-head flex flex-wrap items-end justify-between gap-x-4 gap-y-3 ${className}`}>
+    <header className={`page-head flex flex-wrap items-end justify-between gap-x-4 gap-y-3 ${!sub || phoneSub ? "ph-nosub" : ""} ${actions ? "" : "ph-noact"} ${className}`}>
       <div className="min-w-0">
         <h1 className="page-title"><span className="min-w-0">{title}</span></h1>
-        {sub && <p className="page-sub">{sub}</p>}
+        {sub && <p className={`page-sub ${phoneSub ? "pg-phone" : ""}`}>{sub}</p>}
       </div>
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>

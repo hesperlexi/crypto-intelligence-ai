@@ -15,6 +15,7 @@ import { useLive, useTickerThrottled } from "../lib/live";
 import { useMyRecord } from "../lib/membership";
 import { BRAND } from "../lib/brand";
 import { AnimatedLogo } from "./Logo";
+import { ADMIN_ALIASES } from "./AdminTabs";
 import { Badge } from "./kit";
 
 export type NavItem = readonly [string, string];
@@ -92,9 +93,10 @@ const readFold = (k: string) => { try { return localStorage.getItem(k) === "1"; 
 
 function SideLink({ to, label, collapsed, count }: { to: string; label: string; collapsed: boolean; count?: number }) {
   const text = LABEL[to] ?? label;
+  const loc = useLocation();
   return (
     <NavLink to={to} end={to === "/"} title={collapsed ? text : undefined} aria-label={collapsed ? `${text}${count ? `, ${count} new` : ""}` : undefined}
-      className={`side-link ${collapsed ? "justify-center" : ""}`}>
+      className={({ isActive }) => `side-link ${collapsed ? "justify-center" : ""} ${!isActive && (ADMIN_ALIASES[to] ?? []).some((a) => loc.pathname.startsWith(a)) ? "is-alias" : ""}`}>
       <span className="relative inline-flex">
         <Ico name={to} />
         {collapsed && !!count && <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-accent" aria-hidden="true" />}
@@ -156,7 +158,7 @@ export const Sidebar = memo(function Sidebar({ groups, counts, collapsed, onTogg
       </div>
       <nav className="flex flex-1 flex-col gap-0.5 overflow-y-auto overflow-x-hidden px-2 pb-3" aria-label="Sections">
         {groups.map((g, i) => {
-          const activeIn = g.items.some(([to]) => loc.pathname.startsWith(to));
+          const activeIn = g.items.some(([to]) => [to, ...(ADMIN_ALIASES[to] ?? [])].some((p) => loc.pathname.startsWith(p)));
           const open = !g.fold || collapsed || folds[g.title] || activeIn;
           return (
             <div key={g.title || i} className="flex flex-col gap-0.5">

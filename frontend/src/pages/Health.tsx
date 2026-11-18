@@ -14,6 +14,7 @@ import { db } from "../lib/firebase";
 import { ago, DASH, fmtDate, fmtNum, fmtPctRaw, fmtTime, isNum } from "../lib/format";
 import { useLive } from "../lib/live";
 import { MarketTurnCard, stateTone, useMarketTurn } from "../components/MarketTurn";
+import AdminTabs from "../components/AdminTabs";
 
 const toneOf = (s: string) => (["LIVE", "OK", "active", "done"].includes(s) ? "bull" : ["DOWN", "failed"].includes(s) ? "bear" : ["POLLING", "running", "queued"].includes(s) ? "accent" : "warn") as Tone;
 
@@ -142,6 +143,7 @@ export default function Health() {
 
   return (
     <div className="space-y-5">
+      <AdminTabs family="control" />
       <PageHeader title="System health" sub={d?.generated_at ? `Updated ${ago(d.generated_at)}` : undefined}
         actions={d?.status ? <Badge tone={toneOf(d.status)}>● {d.status}</Badge> : undefined} />
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}

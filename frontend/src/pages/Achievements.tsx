@@ -8,6 +8,7 @@ import { fmtDate, isNum } from "../lib/format";
 import { C, download, font } from "../lib/cardCanvas";
 import { figure, foil, inter, L, luxBackground, luxBrand, luxFooter, luxReady, sora, txt, wrapLines } from "../lib/luxCard";
 import { LevChip } from "../components/SignalExtras";
+import AdminTabs from "../components/AdminTabs";
 
 const ICON: Record<string, string> = { signals: "◆", best_trade: "▲", win_streak: "⚡", all_targets: "◎", best_week: "★", green_weeks: "▣",
   win_rate_30d: "%", bot: "⚙", radar_star: "✦", proven_edges: "✓", live: "◷" };
@@ -144,8 +145,10 @@ export default function Achievements() {
 
   return (
     <div className="space-y-4">
-      <PageHeader title="Achievements"
-        actions={<button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>} />
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <AdminTabs family="share" />
+        <button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>
+      </div>
       {!list.length && <p className="panel p-4 text-sm text-mute">No achievements yet.</p>}
       <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((a) => (

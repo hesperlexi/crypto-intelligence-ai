@@ -83,7 +83,8 @@ const NAV = [
   ["/settings", "Settings"],
 ] as const;
 // owner-only tools: marketing material and system health
-const ADMIN_NAV = [["/report", "Weekly report"], ["/achievements", "Achievements"], ["/health", "Health"], ["/rich", "Hesper Challenge"], ["/guardian", "Trade Guardian"], ["/lab", "Performance Lab"]] as const;
+// v2.60: Control room = Health · Trade Guardian · Performance Lab, Share kit = Weekly report · Achievements (AdminTabs)
+const ADMIN_NAV = [["/health", "Control room"], ["/rich", "Hesper Challenge"], ["/report", "Share kit"]] as const;
 // research tools (also reachable from Results → Tools): one "Tools" menu on desktop, one group in the phone More sheet
 const TOOLS_NAV = [["/scanner", "Scanner"], ["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);

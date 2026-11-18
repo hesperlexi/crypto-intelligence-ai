@@ -9,6 +9,7 @@ import { Badge, PageHeader, Segmented, Tile } from "../components/kit";
 import { Empty, ErrorBox } from "../components/ui";
 import { useApi } from "../lib/api";
 import { ago, isNum } from "../lib/format";
+import AdminTabs from "../components/AdminTabs";
 
 type St = { n: number; win_rate?: number; avg_r?: number; total_r?: number; profit_factor?: number | null; max_dd_r?: number; best_r?: number; worst_r?: number };
 type Grp = St & { key: string };
@@ -25,6 +26,7 @@ export default function Lab() {
   const v = q.data;
   return (
     <div className="xeno space-y-4">
+      <AdminTabs family="control" />
       <PageHeader title="Performance Lab" sub={v ? `Net R after fees · since ${v.since ? new Date(v.since).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "the restart"} · updated ${ago(v.generated_at)}` : undefined} />
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}
       {!v && !q.error && <div className="skeleton h-96 rounded-xl" />}
