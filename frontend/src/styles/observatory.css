@@ -442,3 +442,8 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .sc-more[aria-expanded="true"] { border-color: rgb(var(--accent) / 0.3); }
 .sc-details { animation: obs-rise .24s var(--ease-out); }
 @media (prefers-reduced-motion: reduce) { .sc-details { animation: none; } }
+
+/* v2.59 top bar price chips */
+.tb-price { display:inline-flex; align-items:baseline; gap:.4rem; padding:.3rem .6rem; border-radius:999px; border:1px solid var(--hair); background:rgb(var(--glass)/.03); font-size:.75rem; white-space:nowrap; transition:border-color var(--t-fast); }
+.tb-price b { font-size:.8125rem; font-weight:600; color:rgb(var(--text)); }
+.tb-price:hover { border-color:rgb(var(--accent)/.45); }

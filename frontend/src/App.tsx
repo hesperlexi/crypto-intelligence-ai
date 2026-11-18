@@ -19,7 +19,7 @@ import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 import { AnimatedLogo, HeroLogo } from "./components/Logo";
 import SiteFooter, { TRUST_LINKS } from "./components/SiteFooter";
 import { AdminOnly, BootLoader, ErrorBoundary, NavIcon, NotFound, RouteSkeleton, useFocusTrap } from "./components/Shell";
-import { AlertsBell, LiveChip, NavGroup, PageTitle, ProfileMenu, Sidebar } from "./components/AppNav";
+import { AlertsBell, LiveChip, NavGroup, PageTitle, PriceChips, ProfileMenu, Sidebar, ThemeToggle } from "./components/AppNav";
 import { ModeSwitch } from "./lib/mode";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
@@ -176,6 +176,9 @@ function Toasts() {
   );
 }
 
+/** v2.59: the price tape only where prices are the point (Home, Signals, Trade). */
+const TAPE_PATHS = new Set(["/", "/signals", "/paper"]);
+
 export default function App() {
   const loc = useLocation();
   const trust = TRUST[loc.pathname.replace(/\/+$/, "") || "/"];
@@ -308,7 +311,7 @@ function Shell({ user }: { user: User }) {
     { title: "Markets", items: [COMMAND, NAV[3], NAV[4]] },
     { title: "Tools", items: [...TOOLS_NAV], fold: true },
     { title: "Account", items: [NAV[6], NAV[7], NAV[8]] },
-    ...(admin ? [{ title: "Admin", items: [...ADMIN_NAV, ["/users", "Users"] as const] }] : []),
+    ...(admin ? [{ title: "Admin", items: [...ADMIN_NAV, ["/users", "Users"] as const], fold: true, icon: "/guardian" }] : []),
   ], [admin]);
   const sideCounts = useMemo<Record<string, number>>(() => ({ "/alerts": unread, "/users": pending }), [unread, pending]);
   const brand = (wrap = false) => (
@@ -337,6 +340,7 @@ function Shell({ user }: { user: User }) {
                 <InstallButton compact />
                 <AppearanceButton />
                 <span className="mx-1 hidden h-6 w-px bg-glass/10 lg:block" aria-hidden="true" />
+                <PriceChips className="hidden min-[1400px]:flex" />
                 <LiveChip />
                 <AlertsBell unread={unread} />
                 <ProfileMenu user={user} admin={admin} username={sessionName} />
@@ -353,7 +357,7 @@ function Shell({ user }: { user: User }) {
             <div className="flex items-center gap-2">
               <ModeSwitch className="hidden sm:inline-flex" />
               <InstallButton compact />
-              <AppearanceButton />
+              <span className="hidden sm:inline-flex"><AppearanceButton /></span>
               <StatusPill user={user} />
             </div>
           </div>
@@ -373,7 +377,7 @@ function Shell({ user }: { user: User }) {
           </nav>
         </header>
         <AppChromeBanner />
-        <TickerTape />
+        {TAPE_PATHS.has(loc.pathname) && <TickerTape />}
         {!admin && <RenewBanner />}
         <main className={`mx-auto w-full ${width} flex-1 px-3 py-4 sm:px-4`}>
           <div key={loc.pathname} className="page-enter route-fade">
@@ -453,6 +457,7 @@ function Shell({ user }: { user: User }) {
                 </div>
               ))}
             </div>
+            <div className="mt-2 border-t border-glass/[0.06] px-2 pt-2"><ThemeToggle collapsed={false} /></div>
             <div className="mt-2 flex flex-wrap items-center justify-between gap-2 border-t border-glass/[0.06] px-2 pt-2 text-xs text-mute">
               <span>View</span><ModeSwitch />
             </div>

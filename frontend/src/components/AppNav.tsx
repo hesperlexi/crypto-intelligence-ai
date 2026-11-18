@@ -11,14 +11,14 @@ import { useApi } from "../lib/api";
 import { useAppearance } from "../lib/appearance";
 import { auth } from "../lib/firebase";
 import { ago, fmtDate } from "../lib/format";
-import { useLive } from "../lib/live";
+import { useLive, useTickerThrottled } from "../lib/live";
 import { useMyRecord } from "../lib/membership";
 import { BRAND } from "../lib/brand";
 import { AnimatedLogo } from "./Logo";
 import { Badge } from "./kit";
 
 export type NavItem = readonly [string, string];
-export interface NavGroup { title: string; items: NavItem[]; fold?: boolean }
+export interface NavGroup { title: string; items: NavItem[]; fold?: boolean; icon?: string }
 
 /* ---- icons (24-unit paths, stroke) --------------------------------------------------------------------------- */
 const ICON: Record<string, string> = {
@@ -106,7 +106,7 @@ function SideLink({ to, label, collapsed, count }: { to: string; label: string; 
 }
 
 /** Light ↔ dark in one click: Ivory, or back to the last dark theme used (Midnight Gold by default). */
-function ThemeToggle({ collapsed }: { collapsed: boolean }) {
+export function ThemeToggle({ collapsed }: { collapsed: boolean }) {
   const { a, resolved, set } = useAppearance();
   const light = resolved === "light";
   const flip = () => {
@@ -162,7 +162,8 @@ export const Sidebar = memo(function Sidebar({ groups, counts, collapsed, onTogg
             <div key={g.title || i} className="flex flex-col gap-0.5">
               {g.title && !collapsed && (g.fold ? (
                 <button type="button" className="side-group justify-between" aria-expanded={open} onClick={() => toggleFold(g.title)}>
-                  <span className="flex items-center gap-3"><Ico name="tools" />{g.title}</span>
+                  <span className="flex items-center gap-3"><Ico name={g.icon ?? "tools"} />{g.title}</span>
+                  {!open && g.items.some(([to]) => counts[to]) && <span className="num ml-auto mr-1 rounded-full bg-accent/15 px-1.5 text-xs font-bold leading-5 text-accent">{g.items.reduce((n, [to]) => n + (counts[to] ?? 0), 0)}</span>}
                   <Ico name="chevron" size={14} className={`transition-transform ${open ? "rotate-180" : ""}`} />
                 </button>
               ) : <div className="side-group-title">{g.title}</div>)}
@@ -315,8 +316,25 @@ export function PageTitle() {
       <span className="tb-icon"><Ico name={icon} size={20} /></span>
       <div className="min-w-0">
         <div className="truncate text-base font-semibold leading-tight tracking-tight">{title}</div>
-        <div className="tb-crumb truncate">{sub}</div>
+        <div className="tb-crumb truncate min-[1400px]:hidden">{sub}</div>
       </div>
     </div>
   );
+}
+
+/** v2.59 top bar: BTC and ETH live from the price socket (no Firestore reads), 1 update a second each. */
+function PriceChip({ sym }: { sym: string }) {
+  const t = useTickerThrottled(sym, 1000);
+  const ch = t?.change_pct;
+  const up = typeof ch === "number" && ch >= 0;
+  return (
+    <Link to={`/asset/${sym.split("/")[0].toLowerCase()}`} className="tb-price" title={`${sym.split("/")[0]} live price`}>
+      <span className="text-mute">{sym.split("/")[0]}</span>
+      <b className="num">{typeof t?.last === "number" ? t.last.toLocaleString("en-US", { maximumFractionDigits: t.last >= 1000 ? 0 : 2 }) : "–"}</b>
+      {typeof ch === "number" && <span className={`num ${up ? "text-bull" : "text-bear"}`}>{up ? "+" : ""}{ch.toFixed(2)}%</span>}
+    </Link>
+  );
+}
+export function PriceChips({ className = "" }: { className?: string }) {
+  return <div className={`items-center gap-1.5 ${className}`}><PriceChip sym="BTC/USDT" /><PriceChip sym="ETH/USDT" /></div>;
 }
