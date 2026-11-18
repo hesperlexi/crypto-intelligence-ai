@@ -19,7 +19,7 @@ import { APP_VERSION, BUILD_ID, COPYRIGHT } from "./lib/version";
 import { AnimatedLogo, HeroLogo } from "./components/Logo";
 import SiteFooter, { TRUST_LINKS } from "./components/SiteFooter";
 import { AdminOnly, BootLoader, ErrorBoundary, NavIcon, NotFound, RouteSkeleton, useFocusTrap } from "./components/Shell";
-import { AlertsBell, LiveChip, NavGroup, PageTitle, PriceChips, ProfileMenu, Sidebar, ThemeToggle } from "./components/AppNav";
+import { AlertsBell, LiveChip, NavGroup, PriceChips, ProfileMenu, Sidebar, ThemeToggle } from "./components/AppNav";
 import { ModeSwitch } from "./lib/mode";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
@@ -333,14 +333,14 @@ function Shell({ user }: { user: User }) {
         {side && (
           <header className="glass-bar tb-premium sticky top-0 z-40 hidden border-b lg:block">
             <div className={`mx-auto flex ${width} items-center justify-between gap-4 px-5 py-2.5`}>
-              <PageTitle />
+              {/* v2.60: no page title here (the page has its own heading, the sidebar the brand): live prices instead */}
+              {TAPE_PATHS.has(loc.pathname) ? <span /> : <PriceChips className="flex min-w-0" />}
               <div className="flex shrink-0 items-center gap-2.5">
                 <span className="tb-safe" title="This application never places real orders">Analysis only</span>
                 <ModeSwitch className="hidden xl:inline-flex" />
                 <InstallButton compact />
                 <AppearanceButton />
                 <span className="mx-1 hidden h-6 w-px bg-glass/10 lg:block" aria-hidden="true" />
-                <PriceChips className="hidden min-[1400px]:flex" />
                 <LiveChip />
                 <AlertsBell unread={unread} />
                 <ProfileMenu user={user} admin={admin} username={sessionName} />
