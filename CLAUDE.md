@@ -1067,3 +1067,6 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   (direction light, AI reason `.sc-reason`, age, coin rail `.sig-pick`, glowing `ptrack`); Command Centre `MissionStrip`,
   galaxy constellations / orbit lights / hologram `.cc-holo`; charts: faint grid, gold dashed crosshair, Geist
   (`chartColors` gridV/cross/crossBg); `TabStrip` = `.obs-tabs`; `kit.TickFlash` live price flash; coin page planet header.
+  Batch 5: Results outcome pills `.res-pill` + row edges `.res-row-*` + form stats `.rb-formstats`; Trade `.obs-buy/.obs-sell`;
+  Community feed + rail (practice leaders from `views/leaderboard`, posting limits). Hesper Challenge page layout untouched
+  (owner likes it; only shared colours apply). Live 18 Nov 2026.
