@@ -95,11 +95,11 @@ export default function CandleChart({ candles, overlays, show = NO_KEYS, lines =
     const cc = chartColors();
     const chart = createChart(el.current, {
       autoSize: true,
-      layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: cc.text, fontSize: 11 },
-      grid: { vertLines: { color: cc.grid }, horzLines: { color: cc.grid } },
+      layout: { background: { type: ColorType.Solid, color: "transparent" }, textColor: cc.text, fontSize: 11, fontFamily: "Geist, Inter, ui-sans-serif, system-ui, sans-serif" },
+      grid: { vertLines: { color: cc.gridV }, horzLines: { color: cc.grid } },
       rightPriceScale: { borderColor: cc.border },
       timeScale: { borderColor: cc.border, timeVisible: true, secondsVisible: false },
-      crosshair: { mode: CrosshairMode.Normal },
+      crosshair: { mode: CrosshairMode.Normal, vertLine: { color: cc.cross, style: LineStyle.Dashed, width: 1, labelBackgroundColor: cc.crossBg }, horzLine: { color: cc.cross, style: LineStyle.Dashed, width: 1, labelBackgroundColor: cc.crossBg } },
     });
     chartRef.current = chart;
     const last = candles[candles.length - 1];

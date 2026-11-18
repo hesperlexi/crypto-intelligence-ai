@@ -104,7 +104,8 @@ export function chartColors() {
   const css = getComputedStyle(document.documentElement);
   const v = (n: string, alpha = 1) => `rgba(${css.getPropertyValue(n).trim().split(/\s+/).join(",")},${alpha})`;
   return {
-    text: v("--mute"), grid: v("--line", 0.45), border: v("--line"), bg: v("--ink"),
+    text: v("--mute"), grid: v("--glass", 0.05), gridV: v("--glass", 0.025), border: v("--glass", 0.1), bg: v("--ink"),
+    cross: v("--accent", 0.55), crossBg: v("--raised"),
     bull: v("--bull"), bear: v("--bear"), bullSoft: (a: number) => v("--bull", a), bearSoft: (a: number) => v("--bear", a),
     accent: v("--accent"), warn: v("--warn"), ai: v("--ai"), mute: v("--mute"),
   };

@@ -8,6 +8,7 @@ import { Link } from "react-router-dom";
 import { base, DASH, fmtPctRaw, fmtPrice, isNum, slug } from "../lib/format";
 import { useTickerThrottled } from "../lib/live";
 import { CoinAvatar } from "./Polish";
+import { TickFlash } from "./kit";
 
 const TAU = Math.PI * 2;
 function arc(cx: number, cy: number, r: number, a0: number, a1: number) {
@@ -84,7 +85,7 @@ function DialCentre() {
   return (
     <div className="deck-dial-centre" aria-live="off">
       <span className="text-xs text-mute">Bitcoin</span>
-      <span className="num text-xl font-semibold tracking-tight">{isNum(t?.last) ? `$${fmtPrice(t!.last)}` : DASH}</span>
+      <TickFlash value={t?.last} className="num text-xl font-semibold tracking-tight">{isNum(t?.last) ? `$${fmtPrice(t!.last)}` : DASH}</TickFlash>
       <span className={`num text-xs font-medium ${!isNum(ch) ? "text-mute" : ch >= 0 ? "text-bull" : "text-bear"}`}>{isNum(ch) ? `${ch >= 0 ? "▲" : "▼"} ${fmtPctRaw(ch)}` : ""}</span>
     </div>
   );

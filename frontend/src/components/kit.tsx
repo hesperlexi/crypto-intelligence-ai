@@ -6,7 +6,7 @@
 //   Chip       one standalone toggle / filter pill (News sources, coin filters)
 // Type scale: 12 / 14 / 16 / 20 / 28 px (text-xs / sm / base / xl / 2xl). Nothing below 12 px on phones.
 // Touch: every control is at least 44 px tall on phones and touch screens (index.css), compact on desktop.
-import { ReactNode } from "react";
+import { ReactNode, useRef } from "react";
 import { Link } from "react-router-dom";
 
 export type Tone = "bull" | "bear" | "warn" | "mute" | "accent" | "ai" | "text";
@@ -86,10 +86,10 @@ export function TabStrip<T extends string>({ value, options, onChange, label, cl
   value: T; options: readonly (readonly [T, ReactNode])[]; onChange: (v: T) => void; label?: string; className?: string;
 }) {
   return (
-    <div className={`flex gap-1 overflow-x-auto border-b border-glass/[0.08] ${className}`} role="tablist" aria-label={label}>
+    <div className={`obs-tabs flex gap-1 overflow-x-auto ${className}`} role="tablist" aria-label={label}>
       {options.map(([k, l]) => (
         <button key={k} type="button" role="tab" aria-selected={value === k} onClick={() => onChange(k)}
-          className={`-mb-px min-h-[44px] whitespace-nowrap border-b-2 px-3 text-sm transition-colors ${value === k ? "border-accent font-semibold text-text" : "border-transparent text-mute hover:text-text"}`}>{l}</button>
+          className={`obs-tab ${value === k ? "is-on" : ""}`}>{l}</button>
       ))}
     </div>
   );
@@ -107,4 +107,15 @@ export function PageHeader({ title, sub, actions, className = "" }: { title: Rea
       {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
     </header>
   );
+}
+
+/** v2.56: a live figure that lights green / red for a moment when it moves (CSS .tick-up / .tick-down; off under
+ *  reduced motion). `value` drives the direction; `children` is what is shown (formatted). */
+export function TickFlash({ value, children, className = "" }: { value: number | null | undefined; children: ReactNode; className?: string }) {
+  const prev = useRef<number | null | undefined>(value);
+  const dir = useRef<"" | "tick-up" | "tick-down">("");
+  const n = useRef(0);
+  if (value != null && prev.current != null && value !== prev.current) { dir.current = value > prev.current ? "tick-up" : "tick-down"; n.current++; }
+  prev.current = value;
+  return <span key={n.current} className={`${dir.current} ${className}`}>{children}</span>;
 }

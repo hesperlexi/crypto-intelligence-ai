@@ -1,6 +1,7 @@
 import { isFutOnly } from "../lib/binance";
 import { useEffect, useMemo, useState } from "react";
 import { CoinAvatar } from "../components/Polish";
+import { TickFlash } from "../components/kit";
 import { useIsAdmin } from "../lib/session";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import TVChart from "../components/TVChart";
@@ -76,7 +77,7 @@ export default function Asset() {
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
             <div className="flex flex-wrap items-center gap-2.5">
-              <CoinAvatar symbol={symbol} size={34} />
+              <span className="asset-planet" aria-hidden="true"><CoinAvatar symbol={symbol} size={40} /></span>
               <h1 className="page-title">{symbol}</h1>
               {ok && <RegimeBadge regime={a.regime.regime} />}
               {ok && <SignalBadge signal={a.signal.signal} />}
@@ -84,7 +85,7 @@ export default function Asset() {
                 title="Get an alert with entry, stop-loss and take-profits when a trade signal appears">🔔 Alert me</Link>
             </div>
             <div className="mt-2 flex flex-wrap items-baseline gap-x-6 gap-y-1">
-              <span className="figure font-display text-4xl sm:text-5xl">{fmtPrice(price)}</span>
+              <TickFlash value={price} className="figure font-display text-4xl sm:text-5xl">{fmtPrice(price)}</TickFlash>
               <span className={`num ${tone(tk?.change_pct)}`}>{fmtPctRaw(tk?.change_pct)} 24h</span>
               <span className="num text-sm text-mute">Vol {fmtCompact(tk?.quote_volume)} USDT</span>
               {isNum(tk?.spread_bps) && <span className="num text-sm text-mute">Spread {fmtNum(tk?.spread_bps, 2)} bps</span>}
