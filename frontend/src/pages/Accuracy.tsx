@@ -56,9 +56,6 @@ export default function Accuracy() {
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="section-title">Forecast accuracy</h2>
-        </div>
         <div className="flex flex-wrap items-center gap-2">
           <SymbolSelect value={symbol} onChange={(v) => set("symbol", slug(v))} symbols={symbols.length ? symbols : [symbol]} />
           <TfTabs value={tf} onChange={(v) => set("tf", v)} />

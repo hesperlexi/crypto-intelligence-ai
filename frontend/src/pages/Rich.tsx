@@ -317,7 +317,7 @@ export default function Rich({ embedded = false }: { embedded?: boolean }) {
       {admin && !embedded ? (
         <PageHeader title="Hesper Challenge"
           actions={<><Visibility />{v?.current && <StopRun run={v.current.run} onDone={q.reload} />}{v?.current && <Share v={v} balance={live.balance} />}</>} />
-      ) : (
+      ) : embedded ? null : (
         <h2 className="text-lg font-semibold"><span className="text-accent">Hesper Challenge</span></h2>
       )}
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}

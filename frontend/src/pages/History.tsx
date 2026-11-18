@@ -20,9 +20,6 @@ export default function History() {
   const shown = useMemo(() => f.apply(all), [all, f.apply]);   // eslint-disable-line react-hooks/exhaustive-deps
   return (
     <div className="space-y-4">
-      <div>
-        <h2 className="section-title">Signal log</h2>
-      </div>
       {h.error && <ErrorBox error={h.error} retry={h.reload} />}
       {sum && (
         <Card title="Tracked trade signals">
