@@ -312,11 +312,11 @@ export function PageTitle() {
   const [title, sub] = pageTitle(loc.pathname);
   const icon = loc.pathname === "/" ? "/" : (Object.keys(ICON).find((k) => k !== "/" && k.startsWith("/") && loc.pathname.startsWith(k)) ?? "/");
   return (
-    <div className="flex min-w-0 items-center gap-3">
+    <div className="flex shrink-0 items-center gap-3">
       <span className="tb-icon"><Ico name={icon} size={20} /></span>
       <div className="min-w-0">
-        <div className="truncate text-base font-semibold leading-tight tracking-tight">{title}</div>
-        <div className="tb-crumb truncate min-[1400px]:hidden">{sub}</div>
+        <div className="tb-title truncate">{title}</div>
+        <div className="tb-crumb truncate">{sub}</div>
       </div>
     </div>
   );

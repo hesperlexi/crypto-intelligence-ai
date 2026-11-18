@@ -159,7 +159,6 @@ export default function TradeTerminal() {
         <OrderForm symbol={symbol} market={market} d={d} act={act} />
       </div>
 
-      {market === "futures" && <PracticeBadges d={d} />}
       <section className="panel p-0">
         <TabStrip label="Your trades" value={tab} onChange={setTab} className="px-2 pt-2"
           options={[["positions", `${market === "futures" ? "Positions" : "Holdings"} (${positions.length})`], ["orders", `Open orders (${orders.length})`], ["history", "Order history"], ["assets", "Assets"]] as const} />
@@ -171,6 +170,8 @@ export default function TradeTerminal() {
             <Assets d={d} market={market} act={act} />}
         </div>
       </section>
+      {/* v2.60: badges after your trades (positions first on phones) */}
+      {market === "futures" && <PracticeBadges d={d} />}
       {d && detail && <PositionDrawer market={market} d={d} id={detail} act={act} onPair={showPair} onClose={() => setDetail(null)} />}
     </div>
     </StreamCtx.Provider>
@@ -286,13 +287,16 @@ function ChartPanel({ symbol, market, positions, orders, tf, setTf }: { symbol: 
   }, [positions, orders, symbol, market, ct.lines]);
   return (
     <section className="panel min-h-[360px] p-0">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-2 py-1.5">
-        <Segmented label="Chart timeframe" value={tf} onChange={setTf} options={CHART_TFS} className="!flex-nowrap" />
-        {!pro && <ToolChips tools={ct.tools} flip={ct.flip} aTf={ct.aTf} />}
-        <span className="ml-auto flex items-center gap-2">
-          <span className="hidden text-xs text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your levels are on the chart"}</span>
-          <Segmented label="Chart type" strong className="!flex-nowrap" value={pro ? "pro" : "ai"} onChange={(v) => setPro(v === "pro")} options={[["ai", "AI"], ["pro", "Pro"]] as const} />
-        </span>
+      <div className="space-y-1.5 border-b border-glass/[0.06] px-2 py-1.5">
+        {/* row 1: timeframe | AI / Pro chart · row 2: chart tools (one line, slides sideways on phones) */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="tt-tools min-w-0"><Segmented label="Chart timeframe" value={tf} onChange={setTf} options={CHART_TFS} className="!flex-nowrap" /></div>
+          <span className="flex shrink-0 items-center gap-2">
+            <span className="hidden text-xs text-mute xl:inline">{pro ? "TradingView tools; your levels are on the AI chart" : "your levels are on the chart"}</span>
+            <Segmented label="Chart type" strong className="!flex-nowrap" value={pro ? "pro" : "ai"} onChange={(v) => setPro(v === "pro")} options={[["ai", "AI"], ["pro", "Pro"]] as const} />
+          </span>
+        </div>
+        {!pro && <div className="tt-tools"><ToolChips tools={ct.tools} flip={ct.flip} aTf={ct.aTf} /></div>}
       </div>
       {pro ? <div className="p-1"><TVChart symbol={symbol} market={market} tf={tf} height={380} /></div>
         : st?.error ? <p className="p-4 text-sm text-bear">Chart unavailable: {st.error}</p>

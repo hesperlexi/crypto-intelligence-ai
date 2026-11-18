@@ -464,3 +464,29 @@ header.tb-premium > :last-child::after, .obs-horizon {
   .asset-side .sc-head [title="When this call was published"] { display:none; }
   .asset-side .sc-head > div:last-child { flex-direction:column; align-items:flex-end; gap:.375rem; }
 }
+
+/* v2.60 Trade page: chart tools in one row (scrolls sideways on phones), practice badges as a strip on phones */
+.tt-tools { display:flex; align-items:center; gap:.5rem; min-width:0; overflow-x:auto; scrollbar-width:none; }
+.tt-tools::-webkit-scrollbar { display:none; }
+.tt-tools [aria-label="Chart tools"] { flex-wrap:nowrap; }
+.tt-tools .chip { white-space:nowrap; }
+@media (max-width:767px) {
+  .tt-tools { width:100%; flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:2px; }
+  .tt-tools::-webkit-scrollbar { display:none; }
+  .tt-tools [aria-label="Chart tools"] { flex-wrap:nowrap; }
+  .tt-tools .chip { white-space:nowrap; }
+  section[aria-label="Practice badges"] ul { display:flex; overflow-x:auto; scroll-snap-type:x mandatory; scrollbar-width:none; }
+  section[aria-label="Practice badges"] ul::-webkit-scrollbar { display:none; }
+  section[aria-label="Practice badges"] li { flex:0 0 46%; scroll-snap-align:start; }
+}
+
+/* v2.60 (owner): on computers with the sidebar the page title sits in the top bar; the page keeps only its controls */
+.tb-title { font-family: var(--font-display, "Sora"), "Geist", sans-serif; font-size: 1.25rem; font-weight: 600; line-height: 1.2; letter-spacing: -0.015em; color: rgb(var(--text)); }
+@media (min-width: 1024px) {
+  .nav-side .page-head .page-title, .nav-side .page-head .page-sub { display: none; }
+  .nav-side .page-head > div:first-child:not(:has(> :not(.page-title):not(.page-sub))) { display: none; }
+  .nav-side .page-head { padding-bottom: 0; margin-bottom: 0; justify-content: flex-start; }
+  .nav-side .page-head::after { display: none; }
+  .nav-side .page-head:not(:has(> div:not(:first-child))) { display: none; }
+  .nav-side .page-head:not(:has(> div:not(:first-child))) + * { margin-top: 0 !important; }
+}
