@@ -30,7 +30,8 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
     for (let i = n - 1; i >= 0; i--) { closes[i] = c; c = c / (1 + rets[i]); }
     const t0 = Math.floor(Date.now() / ms) * ms - (n - 1) * ms;
     return json(closes.map((cl, i) => { const o = i ? closes[i - 1] : cl / (1 + rets[0]); const hi = Math.max(o, cl) * (1 + rnd() * vol * 0.6), lo = Math.min(o, cl) * (1 - rnd() * vol * 0.6);
-      return [t0 + i * ms, String(o), String(hi), String(lo), String(cl), String(1000 + rnd() * 4000), t0 + (i + 1) * ms - 1]; }));
+      const qv = (1000 + rnd() * 4000) * cl, tb = qv * (0.42 + rnd() * 0.16 + ([...k].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 7 - 3) * 0.006);
+      return [t0 + i * ms, String(o), String(hi), String(lo), String(cl), String(1000 + rnd() * 4000), t0 + (i + 1) * ms - 1, String(qv), 100, "0", String(tb)]; }));
   }
   if (p.endsWith("/ticker/price")) return json(Object.keys(bySym).map((k) => ({ symbol: k, price: String(bySym[k].p) })));
   if (p.endsWith("/premiumIndex")) return json(Object.keys(bySym).map((k) => ({ symbol: k, lastFundingRate: "0.0001", nextFundingTime: Date.now() + 3e6, markPrice: String(bySym[k].p), indexPrice: String(bySym[k].p) })));
@@ -43,6 +44,26 @@ class OfflineSocket extends EventTarget {
   constructor(url: string) { super(); this.url = url; setTimeout(() => this.onclose?.({}), 50); }
   send() {} close() {}
 }
-(window as any).WebSocket = OfflineSocket;
+// Money flow page (preview only): a sample trade / liquidation / funding stream so the picture can be checked offline
+class FlowSocket extends EventTarget {
+  readyState = 1; url: string; onclose: any = null; onerror: any = null; onmessage: any = null; onopen: any = null;
+  send() {}
+  constructor(url: string) {
+    super(); this.url = url;
+    const syms = ["BTCUSDT", "ETHUSDT", "SOLUSDT", "PAXGUSDT"], px: Record<string, number> = { BTCUSDT: 68420, ETHUSDT: 2468, SOLUSDT: 168.4, PAXGUSDT: 2741 };
+    const emit = (data: any) => this.onmessage?.({ data: JSON.stringify({ data }) });
+    const t = setInterval(() => {
+      for (let i = 0; i < 6; i++) {
+        const s = syms[Math.floor(Math.random() * 4)], p = px[s], usd = Math.exp(Math.random() * 9 + 4) * (s === "BTCUSDT" ? 2 : 1);
+        emit({ e: "aggTrade", s, p: String(p), q: String(usd / p), m: Math.random() < 0.5, T: Date.now() });
+      }
+      if (Math.random() < 0.04) { const s = syms[Math.floor(Math.random() * 4)]; emit({ e: "forceOrder", E: Date.now(), o: { s, S: Math.random() < 0.6 ? "SELL" : "BUY", ap: String(px[s]), z: String(20000 / px[s]), T: Date.now() } }); }
+      if (Math.random() < 0.1) for (const s of syms) emit({ e: "markPriceUpdate", s, r: String((Math.random() - 0.35) * 0.0004), T: Date.now() + 3e6 });
+    }, 120);
+    (this as any).close = () => clearInterval(t);
+  }
+}
+(window as any).WebSocket = function (url: string) { return /forceOrder/.test(url) ? new FlowSocket(url) : new OfflineSocket(url); } as any;
+Object.assign((window as any).WebSocket, { CONNECTING: 0, OPEN: 1, CLOSING: 2, CLOSED: 3 });
 
 void import("../src/main");

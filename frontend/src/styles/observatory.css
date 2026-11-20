@@ -526,3 +526,52 @@ header.tb-premium > :last-child::after, .obs-horizon {
   .askai-panel { height: min(72vh, 560px); }
 }
 @media (prefers-reduced-motion: reduce) { .askai-panel, .askai-typing span { animation: none; } }
+
+/* v2.62 Money flow */
+.mf-hero { padding: 0; overflow: hidden; }
+.mf-head { display: flex; align-items: center; justify-content: space-between; gap: .75rem; padding: .9rem 1.1rem .4rem; }
+.mf-live { width: .55rem; height: .55rem; border-radius: 999px; background: rgb(var(--mute)); }
+.mf-live.is-on { background: rgb(var(--bull)); box-shadow: 0 0 0 3px rgb(var(--bull) / .18); animation: mf-pulse 1.6s infinite; }
+@keyframes mf-pulse { 50% { box-shadow: 0 0 0 6px rgb(var(--bull) / 0); } }
+.mf-river { margin: 0 .25rem; }
+.mf-row { position: absolute; left: 0; right: 0; display: flex; align-items: center; justify-content: space-between; pointer-events: none; padding: 0 .9rem; }
+.mf-label { pointer-events: auto; display: flex; flex-direction: column; gap: .1rem; font-size: .875rem; line-height: 1.25; }
+.mf-label b { font-weight: 600; }
+.mf-label .num { font-size: .8125rem; color: rgb(var(--mute)); }
+.mf-tally { display: flex; flex-direction: column; align-items: flex-end; font-size: .8125rem; font-weight: 600; line-height: 1.35; font-variant-numeric: tabular-nums; }
+.mf-legend { display: flex; flex-wrap: wrap; justify-content: center; gap: .4rem 1rem; padding: .35rem 1rem .8rem; font-size: .75rem; }
+.mf-legend i { display: inline-block; width: .5rem; height: .5rem; border-radius: 999px; margin-right: .3rem; vertical-align: 1px; }
+.mf-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border-top: 1px solid var(--hair); }
+.mf-stats > div { display: flex; flex-direction: column; gap: .2rem; padding: .9rem 1.1rem; min-width: 0; }
+.mf-stats > div + div { border-left: 1px solid var(--hair); }
+.mf-stats b { font-size: 1.5rem; font-weight: 600; letter-spacing: -.02em; }
+.mf-k { font-size: .8125rem; color: rgb(var(--mute)); }
+.mf-s { font-size: .75rem; color: rgb(var(--mute)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.mf-list { display: flex; flex-direction: column; gap: .35rem; }
+@media (min-width: 1024px) { .mf-list { min-height: 22.5rem; } }
+.mf-item .truncate { min-width: 0; }
+.mf-item { display: flex; align-items: center; gap: .6rem; padding: .45rem .6rem; border-radius: 10px; font-size: .875rem; border: 1px solid var(--hair); border-left-width: 3px; animation: obs-rise .25s var(--ease-out); }
+.mf-item.is-buy { border-left-color: rgb(var(--bull)); } .mf-item.is-sell { border-left-color: rgb(var(--bear)); } .mf-item.is-liq { border-left-color: rgb(var(--warn)); }
+.mf-fund { display: flex; align-items: center; gap: .75rem; }
+.mf-fund-track { position: relative; flex: 1; height: .6rem; border-radius: 999px; background: rgb(var(--glass) / .06); overflow: hidden; }
+.mf-fund-mid { position: absolute; left: 50%; top: -2px; bottom: -2px; width: 1px; background: rgb(var(--glass) / .3); }
+.mf-fund-bar { position: absolute; top: 0; bottom: 0; border-radius: 999px; transition: width .6s var(--ease-out); }
+.mf-fund-bar.is-pos { background: linear-gradient(90deg, rgb(var(--bull) / .4), rgb(var(--bull))); }
+.mf-fund-bar.is-neg { background: linear-gradient(270deg, rgb(var(--bear) / .4), rgb(var(--bear))); }
+.nf-text { font-size: 12px; }
+@media (max-width: 639px) { .nf-text { font-size: 10.5px; } }
+.nf-text { font-weight: 600; fill: rgb(var(--text)); }
+.nf-num { font-variant-numeric: tabular-nums; }
+.nf-ribbon { transition: opacity var(--t-fast); } .nf-ribbon:hover { opacity: .8; }
+@media (max-width: 639px) {
+  .mf-row { padding: 0 .6rem; align-items: flex-start; padding-top: .35rem; }
+  .mf-label { font-size: .75rem; } .mf-label .num { font-size: .75rem; }
+  .mf-tally { font-size: .75rem; }
+  .mf-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .mf-stats > div:nth-child(3) { border-left: 0; }
+  .mf-stats > div:nth-child(n+3) { border-top: 1px solid var(--hair); }
+  .mf-stats b { font-size: 1.2rem; }
+  .mf-s { white-space: normal; }
+}
+@media (prefers-reduced-motion: reduce) { .mf-live.is-on, .mf-item { animation: none; } }
+@media (max-width: 767px) { .askai-fab { width: 48px; height: 48px; padding: 0; justify-content: center; } .askai-fab span { display: none; } }
