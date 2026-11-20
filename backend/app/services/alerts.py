@@ -32,6 +32,8 @@ ALERT_TYPES = {
     "SIGNAL_CLOSED": "A call ends early: stopped out, time limit, closed by the admin, or entry never reached",
     "SIGNAL_UPDATES": "My signals: entry, TP1, TP2, TP3 and stop / early close of each call (param: events)",
     "MOOD_CHANGE": "Market mood flips between bullish and bearish (4H regimes across the watchlist)",
+    # v2.62: sent by app.flow_watch (every ~20 s, OKX order flow): a burst of big trades or a wave of forced closes
+    "BIG_MONEY": "Big money moves: a burst of large buy / sell trades or a wave of forced closes on a coin (push)",
 }
 
 

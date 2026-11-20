@@ -1093,3 +1093,27 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   phone badge strip. Admin menu = Control room (`/health`; tabs Health · Trade Guardian · Performance Lab) · Hesper
   Challenge · Share kit (`/report`; tabs Weekly report · Achievements) · Users (`components/AdminTabs.tsx`,
   `ADMIN_ALIASES` light the sidebar entry). Inter no longer loaded (Geist; canvases too).
+- **v2.61 Ask Cintel** (owner, 18-20 Nov 2026): member AI chat = Cloudflare Worker `chat-worker/` (free plan, deployed by
+  `chat-worker.yml` with repo secrets `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `CHAT_GEMINI_API_KEY` (own Gemini
+  project); KV `cia-chat`; address https://cia-chat.cryptointelai.workers.dev). Verifies the Firebase ID token (Google
+  JWKs), checks membership by reading `users/{uid}` via Firestore REST with the member's own token (+ forwarded App Check
+  token), caches the role 30 min in KV, daily caps MEMBER_DAILY 20 / ADMIN_DAILY 100 / GLOBAL_DAILY 400 (Dubai day). Gemini
+  answers ONLY from the page's figures sent by the app (`lib/chat.ts pageContext`), no advice / predictions; model list
+  `GEMINI_MODEL` tried in order on 404/429/500/503 (gemini-2.5-flash is closed to new keys), working one remembered.
+  `/diag` = Gemini check + model list + last problem (no keys). UI `components/AskAI.tsx` ("✦ Ask Cintel", round on
+  phones); `VITE_CHAT_URL`, `VITE_CHAT_MEMBERS=0` = owner only while testing. `deploy.yml` concurrency = newest run wins.
+- **v2.62 Money flow** (owner, 20 Nov 2026): page `/flow` (`pages/Flow.tsx`, `components/MoneyFlow.tsx`), all from Binance
+  futures public streams / REST in the browser (no Firestore): `FlowRiver` canvas (aggTrade: buyers in green from the left,
+  sellers out red to the right, forceOrder bursts amber), `FlowStats`, `WhaleBalance` + `WhaleWatch` / `WipeOuts` (calm
+  lists: merged per coin/side, new rows every 4 s, pause on hover / button), `LiquidityMap` (futures depth 1000, 40 price
+  bands, walls, 30 s), `FundingBars` (markPrice), `NetFlowSankey` (24 h taker-buy vs total quote volume of 1h klines, moving
+  dots). Preview mocks in `dev/preview.tsx` (FlowSocket, depth, kline taker fields).
+- **v2.62 order-flow recorder + big-money alerts** (`backend/app/flow_watch.py`, thread `start_flow` in
+  `scripts/engine_loop.py` every 20 s, `FLOW_WATCH=0` off): OKX public trades / books / liquidations of watchlist coins with
+  an OKX USDT swap (`mkt_okx_support.ct_val`) → own SQLite `backend/data/flow.db` (`flow_5m`, `book_5m`, `liq_5m`,
+  `flow_alerts`; state `flow_state.json`; 120 days) - research data, NOT used by calls until tested (known_at = bucket
+  end). Whale size = clamp(24h USD volume × 2e-5, 25K, 500K). Alerts type `BIG_MONEY` (rules + `alerts.ALERT_TYPES` +
+  Alerts page preset "Big money moves"): whale burst (net ≥ 8× whale and ≥ 6× the 24 h median, ≥ 3 big trades) or
+  forced-close wave (≥ max(10× whale, 6× 24 h average)); 45 min cooldown per coin/kind; push only (url `/flow`); price
+  after 15 m / 1 h / 4 h stored → `flow_watch.stats` in Health `engine.flow_alerts`. Plan (owner approved): after ~4-6
+  weeks test flow / book / liquidation features with the research replay and switch on only where they help.

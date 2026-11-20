@@ -296,6 +296,27 @@ def watch_status() -> dict[str, Any]:
         return {}
 
 
+def flow_status() -> dict[str, Any]:
+    """v2.62 order-flow recorder (app.flow_watch): last pass, coins recorded, recent errors, alerts and how often the
+    price followed them (read from its own files; nothing is published while there are fewer than 20 alerts)."""
+    try:
+        from pathlib import Path as _P
+        url = settings.database_url
+        if not url.startswith("sqlite:///"):
+            return {}
+        folder = _P(url.replace("sqlite:///", "")).parent
+        import json as _json
+        f = folder / "flow_state.json"
+        st = _json.loads(f.read_text()) if f.exists() else {}
+        out: dict[str, Any] = {"flow_last_at": st.get("at"), "flow_coins": st.get("coins"), "flow_errors": len(st.get("errors") or [])} if st else {}
+        if (folder / "flow.db").exists():
+            from . import flow_watch
+            out["flow_alerts"] = flow_watch.stats(flow_watch.FlowDB(str(folder / "flow.db")))
+        return out
+    except Exception:
+        return {}
+
+
 HESPER_AUDIENCE_EVERY_S = 1800
 
 
@@ -1161,7 +1182,7 @@ PUSH_TITLES = {"NEW_SIGNAL": "New signal", "TRADE_SETUP": "Trade signal", "BUY_S
                # v2.16 call events and market mood
                "ENTRY_REACHED": "Entry reached", "TARGET_REACHED": "TP1 hit", "TP2_REACHED": "TP2 hit",
                "TP3_REACHED": "TP3 hit", "SIGNAL_CLOSED": "Signal closed", "STOP_REACHED": "Stop hit",
-               "MOOD_CHANGE": "Market mood changed"}
+               "MOOD_CHANGE": "Market mood changed", "BIG_MONEY": "Big money move"}
 
 
 def push_message(ev: dict[str, Any], owner: str | None = None) -> dict[str, str]:
@@ -1475,7 +1496,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "data_host": getattr(rt.provider, "host_used", None),
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
-    engine.update(watch_status())                # v2.31 fast price watch: last pass, coins priced, early pushes sent
+    engine.update(watch_status())
+    engine.update(flow_status())                 # v2.62 order-flow recorder + big-money alerts                # v2.31 fast price watch: last pass, coins priced, early pushes sent
     engine["firestore_writes_today"] = sink.writes_today()     # Firebase free plan: 20,000 a day (engine writes only)
     engine["firestore_write_budget"] = sink.DAILY_BUDGET
     engine["firestore_reads_today"] = sink.reads_today()       # free plan: 50,000 reads a day (engine reads only)

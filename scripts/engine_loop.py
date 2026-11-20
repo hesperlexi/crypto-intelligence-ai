@@ -78,6 +78,29 @@ def start_watch(stop_at: float) -> None:
         threading.Thread(target=loop, daemon=True).start()
 
 
+FLOW_EVERY_S = 20       # v2.62 order-flow recorder + big-money alerts (backend/app/flow_watch.py, OKX public data)
+
+
+def start_flow(stop_at: float) -> None:
+    """Runs `python -m app.flow_watch` every FLOW_EVERY_S in a background thread. It writes only its own flow.db and
+    reads the engine database read-only, so it never blocks a tick. FLOW_WATCH=0 turns it off."""
+    import threading
+
+    def loop() -> None:
+        while time.time() < stop_at:
+            t = time.time()
+            try:
+                r = subprocess.run([sys.executable, "-m", "app.flow_watch"], capture_output=True, text=True, timeout=60)
+                out = (r.stdout or "").strip()
+                if out:
+                    print(out[-400:], flush=True)
+            except Exception as exc:
+                print(f"flow: pass skipped ({type(exc).__name__})", flush=True)
+            time.sleep(max(1.0, FLOW_EVERY_S - (time.time() - t)))
+    if os.environ.get("FLOW_WATCH", "1") != "0":
+        threading.Thread(target=loop, daemon=True).start()
+
+
 ENGINE_REF = "engine-ok"      # tag moved by deploy.yml only after the tests passed on main (v2.13)
 
 
@@ -162,6 +185,7 @@ def main() -> None:
     written = int(open(count_file).read() or 0) if count_file and os.path.exists(count_file) else 0
     end = time.time() + a.minutes * 60
     start_watch(end)
+    start_flow(end)
     n = 0
     while True:
         if merge_waiting():

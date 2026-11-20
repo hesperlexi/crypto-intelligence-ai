@@ -7,7 +7,7 @@
 //   FlowStats, WhaleWatch, FundingBars   tiles, big-trade list and funding thermometer from the same feed.
 //   NetFlowSankey 24 h net taker flow per watched coin (1h futures klines: taker-buy quote volume vs total), net sellers
 //                 on the left, net buyers on the right of a centre bar.
-import { useEffect, useRef, useState } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { raceSocket } from "../lib/ws";
 import { base, fmtCompact, fmtPctRaw, fmtPrice, isNum, slug } from "../lib/format";
@@ -15,10 +15,10 @@ import { useTickerThrottled } from "../lib/live";
 import { CoinAvatar } from "./Polish";
 
 export const FLOW: { sym: string; stream: string; label: string; whale: number; color: string }[] = [
-  { sym: "BTC/USDT", stream: "btcusdt", label: "Bitcoin", whale: 100_000, color: "247 147 26" },
-  { sym: "ETH/USDT", stream: "ethusdt", label: "Ether", whale: 50_000, color: "98 126 234" },
-  { sym: "SOL/USDT", stream: "solusdt", label: "Solana", whale: 25_000, color: "153 69 255" },
-  { sym: "PAXG/USDT", stream: "paxgusdt", label: "Gold", whale: 25_000, color: "212 175 55" },
+  { sym: "BTC/USDT", stream: "btcusdt", label: "Bitcoin", whale: 250_000, color: "247 147 26" },
+  { sym: "ETH/USDT", stream: "ethusdt", label: "Ether", whale: 150_000, color: "98 126 234" },
+  { sym: "SOL/USDT", stream: "solusdt", label: "Solana", whale: 50_000, color: "153 69 255" },
+  { sym: "PAXG/USDT", stream: "paxgusdt", label: "Gold", whale: 50_000, color: "212 175 55" },
 ];
 const BY_STREAM = Object.fromEntries(FLOW.map((f) => [f.stream.toUpperCase(), f]));
 
@@ -252,42 +252,100 @@ export function FlowStats({ feed }: { feed: Feed }) {
   );
 }
 
-export function WhaleWatch({ feed }: { feed: Feed }) {
-  const [list, setList] = useState<Trade[]>([]);
-  useEffect(() => feed.sub((t) => {
-    if (!t) return;
-    const f = FLOW.find((x) => x.sym === t.s);
-    if (f && t.usd >= f.whale) setList((l) => [t, ...l].slice(0, 8));
-  }), [feed]);
+// v2.62 (owner: "too fast, hard to track"): the two lists are calm. Trades of the same coin and side close together are
+// merged into one row, new rows arrive at most once every RELEASE_MS, and nothing moves while the pointer / finger is
+// on the list or it is paused - new rows wait behind a "Show N new" button instead.
+const RELEASE_MS = 4000;
+interface Row { id: number; s: string; buy: boolean; usd: number; n: number; p: number; t: number; liq?: boolean }
+let rowId = 0;
+
+function useCalmList(merge_ms: number) {
+  const [rows, setRows] = useState<Row[]>([]);
+  const [held, setHeld] = useState(false);
+  const [waiting, setWaiting] = useState(0);
+  const pending = useRef<Row[]>([]);
+  const heldRef = useRef(false);
+  heldRef.current = held;
+  const add = (r: Omit<Row, "id" | "n">) => {
+    const q = pending.current, last = q[0];
+    if (last && last.s === r.s && last.buy === r.buy && last.liq === r.liq && r.t - last.t <= merge_ms) {
+      last.usd += r.usd; last.n += 1; last.t = r.t; last.p = r.p;
+    } else q.unshift({ ...r, id: ++rowId, n: 1 });
+    if (q.length > 20) q.length = 20;
+  };
+  const release = () => {
+    const q = pending.current; if (!q.length) return;
+    pending.current = [];
+    setRows((cur) => {
+      const top = cur[0], next = [...q];
+      const tail = next[next.length - 1];
+      // the oldest new row continues the current top row when it is the same coin / side and close in time
+      if (top && tail && top.s === tail.s && top.buy === tail.buy && top.liq === tail.liq && tail.t - top.t <= merge_ms) {
+        next[next.length - 1] = { ...tail, usd: tail.usd + top.usd, n: tail.n + top.n, id: top.id };
+        return [...next, ...cur.slice(1)].slice(0, 8);
+      }
+      return [...next, ...cur].slice(0, 8);
+    });
+    setWaiting(0);
+  };
+  useEffect(() => {
+    const iv = window.setInterval(() => { if (heldRef.current) setWaiting(pending.current.length); else release(); }, RELEASE_MS);
+    return () => window.clearInterval(iv);
+  }, []);
+  return { rows, add, held, setHeld, waiting, release };
+}
+
+function CalmList({ list, empty, render }: { list: ReturnType<typeof useCalmList>; empty: string; render: (r: Row) => ReactNode }) {
+  const [paused, setPaused] = useState(false);
+  const hover = useRef(false);
+  const sync = () => list.setHeld(paused || hover.current);
+  useEffect(sync, [paused]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <div className="mf-list">
-      {list.length === 0 && <p className="text-sm text-mute">Waiting for a big trade: $100K+ Bitcoin, $50K+ Ether, $25K+ Solana or gold.</p>}
-      {list.map((t, i) => (
-        <div key={`${t.t}-${i}`} className={`mf-item ${t.buy ? "is-buy" : "is-sell"}`}>
-          <CoinAvatar symbol={t.s} size={20} />
-          <span className="min-w-0 flex-1 truncate"><b>{t.buy ? "Bought" : "Sold"}</b> {FLOW.find((f) => f.sym === t.s)?.label} at ${fmtPrice(t.p)}</span>
-          <b className={`num ${t.buy ? "text-bull" : "text-bear"}`}>${fmtCompact(t.usd)}</b>
-          <span className="num w-16 text-right text-xs text-mute">{ago(t.t)}</span>
-        </div>
-      ))}
+    <div className="mf-list" onPointerEnter={() => { hover.current = true; sync(); }} onPointerLeave={() => { hover.current = false; sync(); }}>
+      <div className="flex items-center justify-between gap-2 text-xs text-mute">
+        <span>{list.held ? (list.waiting ? `${list.waiting} new waiting` : "Paused") : "Updates every few seconds"}</span>
+        <span className="flex items-center gap-1.5">
+          {list.held && list.waiting > 0 && <button type="button" className="btn px-2 py-0.5 text-xs" onClick={list.release}>Show new</button>}
+          <button type="button" className="btn px-2 py-0.5 text-xs" aria-pressed={paused} onClick={() => setPaused((p) => !p)}>{paused ? "Resume" : "Pause"}</button>
+        </span>
+      </div>
+      {list.rows.length === 0 && <p className="text-sm text-mute">{empty}</p>}
+      {list.rows.map((r) => <div key={r.id} className={`mf-item ${r.liq ? "is-liq" : r.buy ? "is-buy" : "is-sell"}`}>{render(r)}</div>)}
     </div>
   );
 }
 
-export function WipeOuts({ feed }: { feed: Feed }) {
-  const list = feed.liqs.slice(0, 8);
+export function WhaleWatch({ feed }: { feed: Feed }) {
+  const list = useCalmList(8000);
+  useEffect(() => feed.sub((t) => {
+    if (!t) return;
+    const f = FLOW.find((x) => x.sym === t.s);
+    if (f && t.usd >= f.whale) list.add({ s: t.s, buy: t.buy, usd: t.usd, p: t.p, t: t.t });
+  }), [feed]); // eslint-disable-line react-hooks/exhaustive-deps
   return (
-    <div className="mf-list">
-      {list.length === 0 && <p className="text-sm text-mute">No forced closes yet since you opened this page. They appear here the moment the exchange reports one.</p>}
-      {list.map((l, i) => (
-        <div key={`${l.t}-${i}`} className="mf-item is-liq">
-          <CoinAvatar symbol={l.s} size={20} />
-          <span className="min-w-0 flex-1 truncate"><b>{l.longWiped ? "Rise-bet" : "Fall-bet"}</b> wiped out · {FLOW.find((f) => f.sym === l.s)?.label} at ${fmtPrice(l.p)}</span>
-          <b className="num text-warn">${fmtCompact(l.usd)}</b>
-          <span className="num w-16 text-right text-xs text-mute">{ago(l.t)}</span>
-        </div>
-      ))}
-    </div>
+    <CalmList list={list} empty="Waiting for a big trade: $250K+ Bitcoin, $150K+ Ether, $50K+ Solana or gold."
+      render={(r) => (<>
+        <CoinAvatar symbol={r.s} size={20} />
+        <span className="min-w-0 flex-1 truncate"><b>{r.buy ? "Bought" : "Sold"}</b> {FLOW.find((f) => f.sym === r.s)?.label} at ${fmtPrice(r.p)}{r.n > 1 ? <span className="text-mute"> · {r.n} trades</span> : null}</span>
+        <b className={`num ${r.buy ? "text-bull" : "text-bear"}`}>${fmtCompact(r.usd)}</b>
+        <span className="num w-16 text-right text-xs text-mute">{ago(r.t)}</span>
+      </>)} />
+  );
+}
+
+export function WipeOuts({ feed }: { feed: Feed }) {
+  const list = useCalmList(15000);
+  useEffect(() => feed.sub((_, l) => {
+    if (l) list.add({ s: l.s, buy: !l.longWiped, usd: l.usd, p: l.p, t: l.t, liq: true });
+  }), [feed]); // eslint-disable-line react-hooks/exhaustive-deps
+  return (
+    <CalmList list={list} empty="No forced closes yet since you opened this page. They appear here as the exchange reports them."
+      render={(r) => (<>
+        <CoinAvatar symbol={r.s} size={20} />
+        <span className="min-w-0 flex-1 truncate"><b>{r.buy ? "Fall-bets" : "Rise-bets"}</b> wiped out · {FLOW.find((f) => f.sym === r.s)?.label}{r.n > 1 ? <span className="text-mute"> · {r.n} closes</span> : null}</span>
+        <b className="num text-warn">${fmtCompact(r.usd)}</b>
+        <span className="num w-16 text-right text-xs text-mute">{ago(r.t)}</span>
+      </>)} />
   );
 }
 

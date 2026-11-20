@@ -25,6 +25,7 @@ const LABEL: Record<string, string> = {
   SIGNAL_CLOSED: "Signal closed early (stop, time limit, admin close)",
   STOP_REACHED: "Stop hit",
   MOOD_CHANGE: "Market mood change (bullish ↔ bearish)",
+  BIG_MONEY: "Big money moves (whale bursts, forced-close waves)",
   // v2.17: no confidence % for members; older alerts of this kind keep working and read like this
   CONFIDENCE_ABOVE: "AI view passes your alert level (older alert)",
 };
@@ -32,17 +33,18 @@ const LABEL: Record<string, string> = {
 const HIDDEN_TYPES = new Set(["CONFIDENCE_ABOVE"]);
 // the condition list does not depend on the member's own alerts document (new members have none yet)
 const BASE_TYPES = ["TRADE_SETUP", "SIGNAL_UPDATES", "ENTRY_REACHED", "TARGET_REACHED", "TP2_REACHED", "TP3_REACHED", "SIGNAL_CLOSED",
-  "STOP_REACHED", "MOOD_CHANGE", "BUY_SIGNAL", "SELL_SIGNAL", "BULLISH_REGIME", "BEARISH_REGIME", "BREAKOUT", "BREAKDOWN",
+  "STOP_REACHED", "MOOD_CHANGE", "BIG_MONEY", "BUY_SIGNAL", "SELL_SIGNAL", "BULLISH_REGIME", "BEARISH_REGIME", "BREAKOUT", "BREAKDOWN",
   "VOLATILITY_SPIKE", "PRICE_ABOVE", "PRICE_BELOW"];
 const TRADE_TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
 const EVENT_TFS = ["all", ...TRADE_TFS] as const;
 // event alerts work on every coin (ALL/USDT) or one coin, every timeframe ("all") or one
-const EVENT_TYPES = new Set(["SIGNAL_UPDATES", "ENTRY_REACHED", "TP2_REACHED", "TP3_REACHED", "SIGNAL_CLOSED"]);
+const EVENT_TYPES = new Set(["SIGNAL_UPDATES", "ENTRY_REACHED", "TP2_REACHED", "TP3_REACHED", "SIGNAL_CLOSED", "BIG_MONEY"]);
 const ALL = "ALL/USDT";
 const EVENTS = [["new", "New signal"], ["entry", "Entry"], ["tp1", "TP1"], ["tp2", "TP2"], ["tp3", "TP3"], ["closed", "Stop / closed"]] as const;
 const PRESETS = [
   { key: "signals", label: "My signals: new / entry / TP / SL", type: "SIGNAL_UPDATES", symbol: ALL, tf: "all", hint: "Every public call: when it is published, entry filled, each target, stop or early close." },
   { key: "mood", label: "Market mood change", type: "MOOD_CHANGE", symbol: ALL, tf: "4h", hint: "When the watchlist's 4H mood flips between bullish and bearish." },
+  { key: "bigmoney", label: "Big money moves", type: "BIG_MONEY", symbol: ALL, tf: "all", hint: "A sudden burst of large buy or sell trades, or a wave of forced closes, on one of your coins. Shows what is happening, not a forecast." },
 ] as const;
 const coinLabel = (s: string) => (s === ALL ? "All coins" : s);
 
