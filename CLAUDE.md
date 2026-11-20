@@ -1101,7 +1101,7 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   answers ONLY from the page's figures sent by the app (`lib/chat.ts pageContext`), no advice / predictions; model list
   `GEMINI_MODEL` tried in order on 404/429/500/503 (gemini-2.5-flash is closed to new keys), working one remembered.
   `/diag` = Gemini check + model list + last problem (no keys). UI `components/AskAI.tsx` ("✦ Ask Cintel", round on
-  phones); `VITE_CHAT_URL`, `VITE_CHAT_MEMBERS=0` = owner only while testing. `deploy.yml` concurrency = newest run wins.
+  phones); `VITE_CHAT_URL`, `VITE_CHAT_MEMBERS=1` = members (live 21 Nov 2026; 0 = owner only). `deploy.yml` concurrency = newest run wins.
 - **v2.62 Money flow** (owner, 20 Nov 2026): page `/flow` (`pages/Flow.tsx`, `components/MoneyFlow.tsx`), all from Binance
   futures public streams / REST in the browser (no Firestore): `FlowRiver` canvas (aggTrade: buyers in green from the left,
   sellers out red to the right, forceOrder bursts amber), `FlowStats`, `WhaleBalance` + `WhaleWatch` / `WipeOuts` (calm
