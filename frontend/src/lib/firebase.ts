@@ -35,15 +35,16 @@ export async function dropLocalCache(): Promise<void> {
 }
 export const googleProvider = new GoogleAuthProvider();
 
-// Firebase App Check (reCAPTCHA v3): only switched on when a site key is provided at build time
+// Firebase App Check (v2.62: reCAPTCHA Enterprise / "Fraud Defense" provider - Google retired the Classic v3 provider for
+// new App Check registrations; the same site key was migrated to Google Cloud, so it is used as an Enterprise key): only switched on when a site key is provided at build time
 // (VITE_APPCHECK_SITE_KEY). Without it nothing loads and nothing changes. Enforcement is turned on in the
 // Firebase console, never here, so the Android app and older clients keep working while tokens are monitored.
 const appCheckKey = import.meta.env.VITE_APPCHECK_SITE_KEY as string | undefined;
 type AC = { getToken: (a: any, force?: boolean) => Promise<{ token: string }>; inst: any };
 const appCheckReady: Promise<AC | null> = appCheckKey
   ? import("firebase/app-check")
-    .then(({ initializeAppCheck, ReCaptchaV3Provider, getToken }) => ({
-      getToken, inst: initializeAppCheck(app, { provider: new ReCaptchaV3Provider(appCheckKey), isTokenAutoRefreshEnabled: true }),
+    .then(({ initializeAppCheck, ReCaptchaEnterpriseProvider, getToken }) => ({
+      getToken, inst: initializeAppCheck(app, { provider: new ReCaptchaEnterpriseProvider(appCheckKey), isTokenAutoRefreshEnabled: true }),
     }))
     .catch(() => null)
   : Promise.resolve(null);
