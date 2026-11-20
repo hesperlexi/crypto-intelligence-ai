@@ -575,3 +575,18 @@ header.tb-premium > :last-child::after, .obs-horizon {
 }
 @media (prefers-reduced-motion: reduce) { .mf-live.is-on, .mf-item { animation: none; } }
 @media (max-width: 767px) { .askai-fab { width: 48px; height: 48px; padding: 0; justify-content: center; } .askai-fab span { display: none; } }
+.mf-whalebar { display: flex; flex-direction: column; gap: .45rem; padding: .75rem .85rem; border-radius: 12px; border: 1px solid var(--hair); background: rgb(var(--glass) / .025); }
+.mf-split { display: flex; height: .55rem; border-radius: 999px; overflow: hidden; background: rgb(var(--glass) / .06); }
+.mf-split .is-buy { background: rgb(var(--bull)); transition: width .6s var(--ease-out); }
+.mf-split .is-sell { background: rgb(var(--bear)); transition: width .6s var(--ease-out); }
+.lq-map { display: flex; flex-direction: column; gap: 1px; }
+.lq-row { display: grid; grid-template-columns: 6.5rem minmax(0, 1fr) 9.5rem; align-items: center; gap: .6rem; height: 1.15rem; font-size: .75rem; }
+.lq-row.is-mid { border-top: 1px dashed rgb(var(--accent) / .7); border-bottom: 1px dashed rgb(var(--accent) / .7); background: rgb(var(--accent) / .06); }
+.lq-price { text-align: right; color: rgb(var(--mute)); }
+.lq-row.is-mid .lq-price { color: rgb(var(--accent)); font-weight: 600; }
+.lq-bar-wrap { height: 100%; display: flex; align-items: center; }
+.lq-bar { height: 70%; border-radius: 0 4px 4px 0; }
+.lq-bar.is-bid { background: linear-gradient(90deg, rgb(var(--bull) / .5), rgb(var(--bull))); }
+.lq-bar.is-ask { background: linear-gradient(90deg, rgb(var(--bear) / .5), rgb(var(--bear))); }
+.lq-val { white-space: nowrap; color: rgb(var(--mute)); }
+@media (max-width: 639px) { .lq-row { grid-template-columns: 4.6rem minmax(0, 1fr) 6.2rem; gap: .4rem; font-size: .75rem; } .lq-val b { display: none; } .lq-bar.is-wall { box-shadow: 0 0 0 1px rgb(var(--text) / .5); } }

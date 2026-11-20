@@ -33,6 +33,12 @@ window.fetch = async (input: RequestInfo | URL, init?: RequestInit) => {
       const qv = (1000 + rnd() * 4000) * cl, tb = qv * (0.42 + rnd() * 0.16 + ([...k].reduce((a, ch) => a + ch.charCodeAt(0), 0) % 7 - 3) * 0.006);
       return [t0 + i * ms, String(o), String(hi), String(lo), String(cl), String(1000 + rnd() * 4000), t0 + (i + 1) * ms - 1, String(qv), 100, "0", String(tb)]; }));
   }
+  if (p.endsWith("/depth")) {
+    const k = u.searchParams.get("symbol") ?? "BTCUSDT", x = bySym[k]; if (!x) return json({ bids: [], asks: [] });
+    let seed = [...k].reduce((a, c) => a + c.charCodeAt(0), 0); const rnd = () => { seed = (seed * 9301 + 49297) % 233280; return seed / 233280; };
+    const tick = x.p * 0.00005, side = (dir: number) => Array.from({ length: 1000 }, (_, i) => [String(x.p + dir * (i + 1) * tick * 0.6), String((rnd() ** 4) * (i % 97 === 0 ? 400 : 30) / Math.sqrt(x.p / 100) )]);
+    return json({ bids: side(-1), asks: side(1) });
+  }
   if (p.endsWith("/ticker/price")) return json(Object.keys(bySym).map((k) => ({ symbol: k, price: String(bySym[k].p) })));
   if (p.endsWith("/premiumIndex")) return json(Object.keys(bySym).map((k) => ({ symbol: k, lastFundingRate: "0.0001", nextFundingTime: Date.now() + 3e6, markPrice: String(bySym[k].p), indexPrice: String(bySym[k].p) })));
   return json([]);

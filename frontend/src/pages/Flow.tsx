@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { PageHeader } from "../components/kit";
 import { Card } from "../components/ui";
-import { FlowRiver, FlowStats, FundingBars, NetFlowSankey, useFlowFeed, WhaleWatch, WipeOuts } from "../components/MoneyFlow";
+import { FlowRiver, FlowStats, FundingBars, LiquidityMap, NetFlowSankey, useFlowFeed, WhaleBalance, WhaleWatch, WipeOuts } from "../components/MoneyFlow";
 import { useApi } from "../lib/api";
 
 export default function Flow() {
@@ -30,9 +30,11 @@ export default function Flow() {
       </section>
 
       <div className="grid-even grid gap-4 lg:grid-cols-2">
-        <Card title="Whale watch" right={<span className="text-xs text-mute">big trades, live</span>}><WhaleWatch feed={feed} /></Card>
+        <Card title="Whale watch" right={<span className="text-xs text-mute">big trades, live</span>}><WhaleBalance feed={feed} /><div className="mt-3"><WhaleWatch feed={feed} /></div></Card>
         <Card title="Wipe-outs" right={<span className="text-xs text-mute">forced closes since you opened the page</span>}><WipeOuts feed={feed} /></Card>
       </div>
+
+      <Card title="Liquidity map" right={<span className="text-xs text-mute">where the waiting orders sit</span>}><LiquidityMap feed={feed} /></Card>
 
       <div className="grid-even grid gap-4 lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <Card title="Where money moved, 24 hours" right={<span className="text-xs text-mute">buy minus sell volume · your coins</span>}>
