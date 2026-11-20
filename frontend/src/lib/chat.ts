@@ -2,7 +2,7 @@
 // question goes with the figures of the page the member is on (read once when the question is sent, from documents the
 // page already listens to), so the assistant explains what is on screen and nothing else. Free plan: 0 extra Firestore
 // writes; the worker checks membership with the member's own sign-in and keeps a daily cap.
-import { auth } from "./firebase";
+import { appCheckToken, auth } from "./firebase";
 import { getOnce } from "./api";
 import { BUILD_ID } from "./version";
 
@@ -100,9 +100,10 @@ export async function askAI(question: string, history: Turn[], pathname: string,
   }
   const token = await auth.currentUser?.getIdToken();
   if (!token) throw new Error("Please sign in again.");
+  const ac = await appCheckToken();
   const r = await fetch(`${CHAT_URL}/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(ac ? { "X-Firebase-AppCheck": ac } : {}) },
     body: JSON.stringify({ question, page: ctx.page, context: JSON.stringify(slim(ctx.data)).slice(0, 14000), history: history.slice(-6) }),
   }).catch(() => null);
   if (!r) throw new Error("No connection to the assistant. Check your internet and try again.");

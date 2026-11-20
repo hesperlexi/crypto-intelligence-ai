@@ -39,12 +39,17 @@ export const googleProvider = new GoogleAuthProvider();
 // (VITE_APPCHECK_SITE_KEY). Without it nothing loads and nothing changes. Enforcement is turned on in the
 // Firebase console, never here, so the Android app and older clients keep working while tokens are monitored.
 const appCheckKey = import.meta.env.VITE_APPCHECK_SITE_KEY as string | undefined;
-if (appCheckKey) {
-  import("firebase/app-check")
-    .then(({ initializeAppCheck, ReCaptchaV3Provider }) => {
-      initializeAppCheck(app, { provider: new ReCaptchaV3Provider(appCheckKey), isTokenAutoRefreshEnabled: true });
-    })
-    .catch(() => {});
+type AC = { getToken: (a: any, force?: boolean) => Promise<{ token: string }>; inst: any };
+const appCheckReady: Promise<AC | null> = appCheckKey
+  ? import("firebase/app-check")
+    .then(({ initializeAppCheck, ReCaptchaV3Provider, getToken }) => ({
+      getToken, inst: initializeAppCheck(app, { provider: new ReCaptchaV3Provider(appCheckKey), isTokenAutoRefreshEnabled: true }),
+    }))
+    .catch(() => null)
+  : Promise.resolve(null);
+/** v2.61: the App Check token for calls outside the Firebase SDK (the Ask Cintel worker forwards it to Firestore), or null. */
+export async function appCheckToken(): Promise<string | null> {
+  try { const ac = await appCheckReady; return ac ? (await ac.getToken(ac.inst, false)).token : null; } catch { return null; }
 }
 
 // Google Analytics for Firebase (page views and basic usage), loaded after start so it never delays the first screen.

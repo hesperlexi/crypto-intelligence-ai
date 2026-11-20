@@ -46,7 +46,7 @@ function cors(origin: string | null, env: Env): Record<string, string> {
   return {
     "Access-Control-Allow-Origin": ok ? origin! : "https://cryptointelai.com",
     "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
-    "Access-Control-Allow-Headers": "Authorization, Content-Type",
+    "Access-Control-Allow-Headers": "Authorization, Content-Type, X-Firebase-AppCheck",
     "Access-Control-Max-Age": "86400",
     Vary: "Origin",
   };
@@ -91,7 +91,7 @@ async function verify(token: string, project: string): Promise<any | null> {
 }
 
 /** member | admin | null — from the person's own users/{uid} record (read with their token), cached 30 min. */
-async function roleOf(claims: any, token: string, env: Env): Promise<"admin" | "member" | null> {
+async function roleOf(claims: any, token: string, env: Env, appCheck: string | null): Promise<"admin" | "member" | null> {
   const email = String(claims.email ?? "").toLowerCase();
   if (email && claims.email_verified && env.ADMIN_EMAILS.toLowerCase().split(/[,\s;]+/).filter(Boolean).includes(email)) return "admin";
   if (claims.firebase?.sign_in_provider === "password" && !claims.email_verified) return null;
@@ -99,7 +99,7 @@ async function roleOf(claims: any, token: string, env: Env): Promise<"admin" | "
   const cached = await env.KV.get(ck);
   if (cached) return cached === "member" ? "member" : null;
   const r = await fetch(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/users/${claims.sub}`,
-    { headers: { Authorization: `Bearer ${token}` } });
+    { headers: { Authorization: `Bearer ${token}`, ...(appCheck ? { "X-Firebase-AppCheck": appCheck } : {}) } });
   let role: "member" | "none" = "none";
   if (r.ok) {
     const f = ((await r.json()) as any).fields ?? {};
@@ -194,7 +194,7 @@ export default {
     const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
     const claims = token ? await verify(token, env.FIREBASE_PROJECT) : null;
     if (!claims) { if (token) await note(env, "token not accepted"); return json({ error: "Please sign in again." }, 401, h); }
-    const role = await roleOf(claims, token, env);
+    const role = await roleOf(claims, token, env, req.headers.get("X-Firebase-AppCheck"));
     if (!role) return json({ error: "The assistant is for active members." }, 403, h);
 
     let b: any;
