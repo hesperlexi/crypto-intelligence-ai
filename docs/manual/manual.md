@@ -260,7 +260,7 @@ Stop-loss, take-profit, liquidation and limit orders are checked on every 15-min
 - **Margin per trade** (USDT).
 - **Leverage:** *Suggested by the signal (safest)*, or 1x–20x (capped so liquidation stays beyond the stop). **15M auto-trades always use the engine's 10–50x.**
 - **Timeframes** (15M to 3D), **grade A only** or **A and B**, and **Take profit at** Target 1, 2 or 3.
-- **Max open trades: up to 3**, and at most **6 new trades a day**.
+- **Max open trades: up to 10**, and at most **20 new trades a day**.
 - Max trades in the same direction, bigger size on stronger signals, all coins or only your own, and a notification for each trade.
 
 Press **Save settings**. Inside the entry zone the trade opens at market; otherwise a limit order waits at the entry and is cancelled after 6 candles if it never fills. If a signal flips, only a trade from the **same timeframe** is closed and reversed; otherwise the new call is skipped. Auto-trades are marked **AUTO**; **Auto-trade activity** lists what was placed or skipped and why.
