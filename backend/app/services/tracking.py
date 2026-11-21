@@ -452,6 +452,8 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
                "decision_reason": a.get("decision_reason"), "grade": a.get("grade"),
                "runner": _runner_for(setup.get("runner"), pl) if tradable else None,
                "entry_rule": pl.get("entry_rule") if pl else None}
+    if a.get("risk_shadow"):                  # v2.65 shadow risk controller (never blocks; weekly check-up compares)
+        payload["risk_shadow"] = a["risk_shadow"]
     if a.get("filter_bypassed"):              # v2.64: a trade filter would have blocked it (FILTER_OFF_TFS); watched
         payload["filter_bypassed"] = True
     if tradable:

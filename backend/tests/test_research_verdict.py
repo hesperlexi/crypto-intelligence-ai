@@ -34,3 +34,12 @@ def test_btc_shock_blocks_alt_longs_after_a_drop():
     tr = [_t(5, 1.0), _t(5, 1.0, sym="BTC/USDT"), _t(5, 1.0, side=-1), _t(9, 1.0)]
     out = RR.btc_shock(tr, bts, bclose, 3.0)
     assert [(t["sym"], t["side"], t["ts"]) for t in out] == [("BTC/USDT", 1, 5 * H), ("ETH/USDT", -1, 5 * H), ("ETH/USDT", 1, 9 * H)]
+
+
+def test_risk_shadow_never_blocks_and_stays_private():
+    from app.services import analysis, risk_shadow
+    from .test_hesper import _rt
+    rt = _rt()
+    out = risk_shadow.assess(rt, "BTC/USDT", now=1_800_000_000_000)
+    assert out["would_block"] is False and out["volatile"] is None
+    assert "risk_shadow" not in analysis.public_view({"risk_shadow": out, "decision": "BUY"})

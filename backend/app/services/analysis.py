@@ -57,6 +57,15 @@ FILTER_OFF_MIN_CLOSED = 10      # safety net: after this many closed calls the f
 FILTER_OFF_CHECK_S = 600
 
 
+def _risk_shadow(rt: Any, symbol: str) -> dict[str, Any] | None:
+    """v2.65 shadow risk controller (services/risk_shadow.py): recorded on the call, never blocks."""
+    try:
+        from . import risk_shadow
+        return risk_shadow.assess(rt, symbol)
+    except Exception:
+        return None
+
+
 def filter_off(rt: Any, timeframe: str) -> bool:
     """v2.64 safety net (owner: "we don't need bad results"): the trade filters stay off on a FILTER_OFF_TFS timeframe only
     while the published calls they would have blocked are not losing. Once >= FILTER_OFF_MIN_CLOSED of them closed with an
@@ -97,7 +106,7 @@ def filter_off(rt: Any, timeframe: str) -> bool:
     return True
 
 # fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
-PRIVATE_FIELDS = ("demo",)
+PRIVATE_FIELDS = ("demo", "risk_shadow", "filter_bypassed")   # v2.65: shadow fields stay engine-side
 
 
 def public_view(a: dict[str, Any]) -> dict[str, Any]:
@@ -623,6 +632,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         "stale": stale,
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
         "filter_bypassed": bool(filter_bypassed and decision in TRADE_DECISIONS),
+        "risk_shadow": _risk_shadow(rt, symbol) if (decision in TRADE_DECISIONS and live and bundle is None) else None,
         "safety": safety_state,
         "grade": grade, "demo": demo, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
         "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"), "filter2": filter2,

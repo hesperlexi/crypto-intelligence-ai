@@ -1151,3 +1151,15 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
   skill > 0 in only 14 % of 1d series): one-time flag `demo_1d_v264` (in `MIGRATION_FLAGS`) removes the public 1d bots and adds
   `futures-demo-ab-1d` (grade A, reset_token v264). Open 1d calls run to their end. tests/conftest.py sets `DEMO_ONLY_TFS=""`
   for the older policy tests; `tests/test_demo_1d_v264.py` covers the migration. Signals 1D tab note "demo only".
+
+## v2.65 audit + risk controller study (21 Nov 2026)
+- Audit doc (Claude Docs) "Crypto Intelligence AI — Engine Audit (21 Nov 2026)": inventory, evidence, plan, rejected ideas.
+- `app/research_verdict.py`: ONE verdict for every study (same unseen calls; PASS = better in both halves, drawdown ≤ 15 %
+  deeper, week-block bootstrap ≥ 80 %, ≥ 100 calls differ, else INCONCLUSIVE / FAIL). `research_caps.collect` returns the
+  live-guarded test calls. `app/research_risk.py` (workflow `research-risk.yml`, `research-results/results/risk-*.json`):
+  BTC-shock pause (rarely triggers), daily / weekly loss stops, correlation-weighted BTC exposure caps (FAIL: −15 to −21R),
+  4h abnormal-volatility pause, regime split. Best: volatility pause + loss stop 3R / 6R: +34.1R → +48.4R, drawdown
+  37.4R → 31.9R, both halves better, bootstrap 98 %, but 86 calls differ → INCONCLUSIVE.
+- Hence SHADOW mode: `services/risk_shadow.py` records `risk_shadow` {volatile, day_r, week_r, loss_stop, would_block} in
+  every published call's payload (never blocks; `analysis.PRIVATE_FIELDS` keeps it and `filter_bypassed` out of member
+  views). The weekly check-up compares would_block calls with the rest and promotes only on proof.
