@@ -43,3 +43,13 @@ def test_risk_shadow_never_blocks_and_stays_private():
     out = risk_shadow.assess(rt, "BTC/USDT", now=1_800_000_000_000)
     assert out["would_block"] is False and out["volatile"] is None
     assert "risk_shadow" not in analysis.public_view({"risk_shadow": out, "decision": "BUY"})
+
+
+def test_veto_blocks_on_loss_stop(monkeypatch):
+    from app.services import risk_shadow
+    from .test_hesper import _rt
+    rt = _rt()
+    risk_shadow._cache.clear()
+    monkeypatch.setattr(risk_shadow, "loss_sums", lambda rt, now: (-3.2, -3.2))
+    out = risk_shadow.assess(rt, "BTC/USDT", now=1_800_000_000_000, timeframe="1h")
+    assert out["would_block"] and out["loss_stop"] and "loss limit" in out["reason"]

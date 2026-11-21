@@ -1168,3 +1168,18 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
   `trainer.register`); drift / calibration are display-only; the 15m/1h/4h blocking filter is the per-model v1 trade filter
   (on in 46 of those 129 models; pooled filter2 is off there, on only 12h / 1d); regime ensemble weights used by 137 models,
   never compared with plain weights. v2.65 plan in the doc (7 changes, each behind `research_verdict`).
+
+## v2.65 capital-protection veto + champion/challenger (21 Nov 2026, live)
+- Study `app/research_v265.py` (workflow `research-v265.yml`, `research-results/results/v265-latest.json`): the veto
+  package (drift + abnormal volatility + loss stop 3R day / 6R week) PASSES `research_verdict` on 886 unseen calls:
+  +34.9R → +53.2R, max drawdown 37.4R → 30.0R, worst streak 14 → 11, profit factor 1.13 → 1.23, both halves better
+  (15.9 → 30.0, 19.0 → 23.2), bootstrap 98 % (5th pct +3.8R), 113 calls differ. Each rule alone was INCONCLUSIVE.
+  The per-model trade filter v1 cannot be replayed (contexts carry no feature matrix): INCONCLUSIVE, judged on live data.
+- Live: `services/risk_shadow.assess(rt, symbol, timeframe=)` (volatile, loss stop, `drift` = last 100 resolved live
+  forecasts vs the bundle's OOS hit rate, block below ref − 2 se) applied LAST in `analysis.analyze` (after safety / news /
+  stale, before demo-only) to every live call → NO TRADE flag "CAPITAL PROTECTION" (in `proof_checks.FLAGS`, so blocked
+  calls are followed in `rejected_signals`). Env `RISK_VETO=0` turns it off (assessment still recorded in `risk_shadow`).
+- Champion / challenger wired (`services/training._challenge` → bundle `challenger` → `bundle_record` →
+  `trainer.register`/`activate_or_hold`; log setting `challenger_log`, last 400). Shadow by default
+  (`CHALLENGER_ENFORCE=0`: every retrain still goes live); turn on after a week of logs shows sensible refusals.
+  `save_bundle` caches only an activated bundle. Tests `tests/test_challenger_v265.py`. `ENGINE_VERSION` 2.65.0.

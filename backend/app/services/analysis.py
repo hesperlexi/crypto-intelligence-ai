@@ -57,11 +57,14 @@ FILTER_OFF_MIN_CLOSED = 10      # safety net: after this many closed calls the f
 FILTER_OFF_CHECK_S = 600
 
 
-def _risk_shadow(rt: Any, symbol: str) -> dict[str, Any] | None:
-    """v2.65 shadow risk controller (services/risk_shadow.py): recorded on the call, never blocks."""
+RISK_VETO = os.environ.get("RISK_VETO", "1") != "0"
+
+
+def _risk_shadow(rt: Any, symbol: str, timeframe: str | None = None) -> dict[str, Any] | None:
+    """v2.65 capital-protection assessment (services/risk_shadow.py); `would_block` = the veto's verdict."""
     try:
         from . import risk_shadow
-        return risk_shadow.assess(rt, symbol)
+        return risk_shadow.assess(rt, symbol, timeframe=timeframe)
     except Exception:
         return None
 
@@ -605,6 +608,12 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         flags.append("STALE DATA")
         if decision != "INSUFFICIENT DATA":
             decision, why, grade = "NO TRADE", "market data is stale", None
+    # v2.65 capital-protection veto: last word over every live call (record, demo bots, Hesper, Last Stand, auto-trade)
+    risk_check = _risk_shadow(rt, symbol, timeframe) if (decision in TRADE_DECISIONS and live and bundle is None) else None
+    if RISK_VETO and risk_check and risk_check.get("would_block") and decision in TRADE_DECISIONS:
+        decision, grade = "NO TRADE", None
+        why = f"capital protection: {risk_check.get('reason')}"
+        flags.append("CAPITAL PROTECTION")
     demo = None
     if decision in TRADE_DECISIONS and timeframe in DEMO_ONLY_TFS and live and bundle is None and as_of is None:
         # v2.8: the demo bots may take it (their own grade rule applies); it is never published or recorded as a signal
@@ -632,7 +641,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         "stale": stale,
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
         "filter_bypassed": bool(filter_bypassed and decision in TRADE_DECISIONS),
-        "risk_shadow": _risk_shadow(rt, symbol) if (decision in TRADE_DECISIONS and live and bundle is None) else None,
+        "risk_shadow": risk_check,
         "safety": safety_state,
         "grade": grade, "demo": demo, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
         "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"), "filter2": filter2,

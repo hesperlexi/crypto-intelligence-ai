@@ -73,7 +73,7 @@ def _clamp(v: float, lo: float, hi: float) -> float:
     return float(min(hi, max(lo, v)))
 
 
-ENGINE_VERSION = "2.6.0"
+ENGINE_VERSION = "2.65.0"
 # hard limits for the trade-management parameters (env values and AI suggestions are clamped into these)
 LIMITS = {
     "giveback_arm_r": (0.3, 1.0), "giveback_frac": (0.3, 0.7), "trail_atr_k": (1.0, 4.0),
