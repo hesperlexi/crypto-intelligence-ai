@@ -34,8 +34,8 @@ MIN_LEV = F.MIN_LEVERAGE
 START_BALANCE = 1_000.0              # v2.14: new practice accounts start with $1,000 virtual USDT (was 10,000)
 TAKES = {"tp1": 0, "tp2": 1, "tp3": 2}
 # v2.4 testing mode: each member's auto-trade holds at most 3 trades at a time and opens at most 6 new ones a day
-MAX_OPEN_CAP = 3
-MAX_NEW_PER_DAY = 6
+MAX_OPEN_CAP = 10           # v2.64 (owner, 21 Nov 2026: "let's see more trades"; testing-mode 3 / 6 before)
+MAX_NEW_PER_DAY = 20
 DEFAULTS = {"enabled": False, "margin": 100.0, "leverage": "signal", "timeframes": ["1h", "4h"], "grades": "AB",
             "take": "tp2", "max_open": 3, "coins": "all", "notify": True, "scale": True, "max_same_side": 3}
 

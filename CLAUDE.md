@@ -1136,3 +1136,7 @@ Live check (`app/guard15_live.py`, workflow `guard15-live.yml`, `research-result
 cap 59 (+0.29R), bigger-trend 6 (all lost). `analysis.FILTER_OFF_TFS` "15m": neither trade filter (per-series nor filter2)
 blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and the same-side cap stay. Re-check with
 `guard15-live.yml` in ~1 week; the cap needs a replay before any change.
+- v2.64 also: auto-trade up to 10 open / 20 new a day (`autopaper.MAX_OPEN_CAP` / `MAX_NEW_PER_DAY`, UI `AUTO_MAX_OPEN`);
+  number boxes in Auto-trade settings use `NumField` (free typing, clamped on leaving the box - before, every keystroke was
+  clamped so a box could not be cleared). Cap study `app/research_caps.py` (workflow `research-caps.yml`, results
+  `research-results/results/caps-*.json`). 1d / 3d stay public for now (1d live 3 of 3 won; 3d publishes nothing).

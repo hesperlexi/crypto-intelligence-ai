@@ -9,6 +9,24 @@ import { myUid } from "../lib/session";
 import { Info } from "./ui";
 
 export const AUTO_MAX_LEV = 20;      // v2.13 (owner): auto-trade never above 20x (the engine caps it too)
+export const AUTO_MAX_OPEN = 10;     // v2.64: up to 10 open auto-trades, 20 new a day (engine: autopaper.MAX_OPEN_CAP / MAX_NEW_PER_DAY)
+
+/** A number box you can clear and retype freely; the value is checked (and clamped) when you leave the box. */
+function NumField({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
+  const [txt, setTxt] = useState(String(value));
+  const [focus, setFocus] = useState(false);
+  useEffect(() => { if (!focus) setTxt(String(value)); }, [value, focus]);
+  const commit = (t: string) => {
+    const n = Number(t);
+    const v = t.trim() === "" || !Number.isFinite(n) ? value : Math.max(min, Math.min(max, n));
+    setTxt(String(v));
+    if (v !== value) onChange(v);
+  };
+  return <input className="input mt-1" type="text" inputMode="decimal" value={txt} aria-valuemin={min} aria-valuemax={max}
+    onChange={(e) => { setTxt(e.target.value); const n = Number(e.target.value); if (e.target.value.trim() !== "" && Number.isFinite(n) && n >= min && n <= max) onChange(n); }}
+    onFocus={() => setFocus(true)} onBlur={(e) => { setFocus(false); commit(e.target.value); }} />;
+}
+
 const clampLev = (l: any): number | "signal" => (l === "signal" || l == null ? "signal" : Math.max(1, Math.min(AUTO_MAX_LEV, Math.round(Number(l) || 1))));
 const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 3, coins: "all", notify: true, scale: true, max_same_side: 3 };
 type S = typeof DEF;
@@ -47,7 +65,7 @@ export default function AutoTrade() {
       {open && (
         <div className="grid gap-3 border-t border-glass/[0.06] px-4 py-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <label className="block"><span className="text-xs text-mute">Margin per trade (USDT)</span>
-            <input className="input mt-1" type="number" min={1} step={10} value={s.margin} onChange={(e) => setS({ ...s, margin: Math.max(1, Number(e.target.value) || 0) })} /></label>
+            <NumField value={s.margin} min={1} max={100000} onChange={(n) => setS({ ...s, margin: n })} /></label>
           <label className="block"><span className="text-xs text-mute">Leverage</span>
             <select className="input mt-1" value={String(s.leverage)} onChange={(e) => setS({ ...s, leverage: e.target.value === "signal" ? "signal" : Number(e.target.value) })}>
               <option value="signal">Suggested by the signal (safest)</option>
@@ -63,14 +81,14 @@ export default function AutoTrade() {
             <select className="input mt-1" value={s.take} onChange={(e) => setS({ ...s, take: e.target.value })}>
               <option value="tp1">Target 1 (quick, more wins)</option><option value="tp2">Target 2 (balanced)</option><option value="tp3">Target 3 (let it run)</option>
             </select></label>
-          <label className="block"><span className="text-xs text-mute">Max open trades (up to 3, 6 new a day)</span>
-            <input className="input mt-1" type="number" min={1} max={3} value={s.max_open} onChange={(e) => setS({ ...s, max_open: Math.max(1, Math.min(3, Number(e.target.value) || 1)) })} /></label>
+          <label className="block"><span className="text-xs text-mute">Max open trades (up to {AUTO_MAX_OPEN}, 20 new a day)</span>
+            <NumField value={s.max_open} min={1} max={AUTO_MAX_OPEN} onChange={(n) => setS({ ...s, max_open: Math.round(n) })} /></label>
           <label className="block"><span className="text-xs text-mute">Coins</span>
             <select className="input mt-1" value={s.coins} onChange={(e) => setS({ ...s, coins: e.target.value })}>
               <option value="all">All coins</option><option value="mine">Only my own coins</option>
             </select></label>
           <label className="block"><span className="text-xs text-mute">Max trades in the same direction</span>
-            <input className="input mt-1" type="number" min={1} max={50} value={s.max_same_side} onChange={(e) => setS({ ...s, max_same_side: Math.max(1, Math.min(50, Number(e.target.value) || 1)) })} /></label>
+            <NumField value={s.max_same_side} min={1} max={50} onChange={(n) => setS({ ...s, max_same_side: Math.round(n) })} /></label>
           <label className="flex items-center gap-2 self-end pb-2 text-sm" title="Grade A trades use 1.2x your margin, grade B 0.8x, up to 1.5x when the trade filter rates the setup highly"><input type="checkbox" checked={s.scale} onChange={(e) => setS({ ...s, scale: e.target.checked })} />Bigger size on stronger signals</label>
           <label className="flex items-center gap-2 self-end pb-2 text-sm"><input type="checkbox" checked={s.notify} onChange={(e) => setS({ ...s, notify: e.target.checked })} />Notify me on each auto-trade</label>
           <div className="sm:col-span-2 lg:col-span-4 flex flex-wrap items-center justify-between gap-2">
