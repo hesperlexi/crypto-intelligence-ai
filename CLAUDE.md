@@ -1198,3 +1198,11 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
 with `markdown` attr) → `python scripts/build_manual.py` (dark/gold design, Sora + Inter, 2-pass clickable contents with
 page numbers via pypdf) → `frontend/public/manual.pdf`. Screenshots `docs/manual/img/v3/` (m-* = phone). Owner rule: no prices,
 payment details or changing limits in the manual (point to the website / Settings → Membership). Old version in `docs/manual/legacy/`.
+
+## v2.66 premium instruments (owner, 21 Nov 2026, frontend only)
+`components/Instruments.tsx`: `CoinBead` (real coin logo as an SVG sphere; GOLD = "Au", initials when no logo), `OrbitDial`
+(Home hero, replaces `Deck.MarketDial`: logos around a gold-rimmed dial grouped bull → neutral → bear, names radial,
+Fear & Greed arc, BTC live centre; hover shows that coin), `SonarScope` (Market intelligence card, replaces `Xeno.MarketRadar`:
+up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 strongest per side labelled). Command Centre
+`Universe` = tilted solar system (BTC logo sun with corona, 5 logo planets, beams, starfield with faded edges). CSS `.ins-*`,
+`.uv-*` in observatory.css (motion off under reduced motion). Preview seed has 29 coins on dashboard rows.
