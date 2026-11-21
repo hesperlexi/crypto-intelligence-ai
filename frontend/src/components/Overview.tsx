@@ -27,7 +27,7 @@ import { AiTag, Empty, Info } from "./ui";
 
 const CandleChart = lazy(() => import("./CandleChart"));
 import { ToolChips, useChartTools } from "./ChartTools";
-import { MarketRadar } from "./Xeno";
+import { SonarScope } from "./Instruments";
 const BTC = "BTC/USDT";
 const H1_LIMIT = 200;                 // 1h candles: sparkline (24), rolling volatility (7 days) and the 1H chart, one request
 
@@ -274,7 +274,7 @@ export function AiBriefCard({ b, loading, rows }: { b: any; loading: boolean; ro
       )}
       {(rows ?? []).length > 0 && (
         <div className="mt-auto flex flex-1 items-end justify-center border-t border-glass/[0.06] pt-3">
-          <MarketRadar rows={rows} size={240} />
+          <SonarScope rows={rows} size={300} />
         </div>
       )}
     </section>

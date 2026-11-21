@@ -4,7 +4,8 @@
 //   Signals page's calls), views/track_record (open calls), views/market_context + context (alt strength, Fear & Greed),
 //   views/health (mission control; already open in the header), the coin's analysis view for the scan (1 read per coin
 //   picked). Correlations from public Binance 1h candles in the browser (no Firebase).
-import { lazy, ReactNode, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, ReactNode, Suspense, useEffect, useId, useMemo, useState } from "react";
+import { BeadDefs, CoinBead } from "../components/Instruments";
 import { Link } from "react-router-dom";
 import { Segmented } from "../components/kit";
 import { CoinAvatar } from "../components/Polish";
@@ -292,9 +293,10 @@ const rets = (c: any[] | null) => (c ?? []).map((k, i, a) => (i ? Math.log(k[4] 
 const week = (c: any[] | null) => (c && c.length > 1 ? (c[c.length - 1][4] / c[0][4] - 1) * 100 : null);
 
 function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: any; mc: any; onSel: (s: string) => void; tf: string }) {
-  // v2.46 redesign: a solar system - BTC as the gold sun, the five biggest coins as planets on their own orbits; the
-  // closer a planet orbits, the more it moved with Bitcoin (7-day hourly correlation); a light beam flows along each
-  // link; planet size = 7-day move size, colour = up / down.
+  // v2.66 (owner, 21 Nov 2026: "make it premium"): a tilted solar system. BTC = the sun (its own logo in a gold corona);
+  // the five biggest coins as logo planets: the closer the orbit, the more it moved with Bitcoin over 7 days (hourly
+  // correlation); planet size = size of the 7-day move; glow + label colour = up / down. Same data as v2.46.
+  const id = useId().replace(/:/g, "");
   const btc = useKlines("BTC/USDT", "1h", 168, 900_000);
   const k = [useKlines(peers[0] ?? "ETH/USDT", "1h", 168, 900_000), useKlines(peers[1] ?? "SOL/USDT", "1h", 168, 900_000), useKlines(peers[2] ?? "BNB/USDT", "1h", 168, 900_000),
     useKlines(peers[3] ?? "XRP/USDT", "1h", 168, 900_000), useKlines(peers[4] ?? "DOGE/USDT", "1h", 168, 900_000)];
@@ -302,50 +304,83 @@ function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: a
   const nodes = peers.slice(0, 5).map((s, i) => ({ s, c: corr(rb, rets(k[i].data)), w: week(k[i].data) }));
   const alt = mc?.altseason?.value;
   const bw = week(btc.data);
-  const W = 360, H = 270, C = { x: 180, y: 132 };
+  const W = 520, H = 330, C = { x: 260, y: 150 }, TX = 1.75, TY = 0.42;
+  const ORB = [62, 98, 134];
+  const stars = useMemo(() => { let x = 7; const r = () => ((x = (x * 9301 + 49297) % 233280) / 233280); return Array.from({ length: 70 }, () => ({ x: r() * W, y: r() * H, s: 0.3 + r() * 1.1, d: r() * 4 })); }, []);
   const maxW = Math.max(1, ...nodes.map((n) => Math.abs(n.w ?? 0)));
+  // fixed slots around the ellipse (degrees; 90 = front): back-left, back-right, front-left, front-right, front
+  const SLOTS = [205, 335, 155, 25, 90];
+  const placed = nodes.map((n, i) => {
+    const c = isNum(n.c) ? Math.max(0, Math.min(1, n.c)) : 0.3;
+    const orb = ORB[2] - c * (ORB[2] - ORB[0]);
+    const a = (SLOTS[i] * Math.PI) / 180;
+    const x = C.x + orb * TX * Math.cos(a), y = C.y + orb * TY * Math.sin(a) * 2.1;
+    const depth = (Math.sin(a) + 1) / 2;                       // 0 back … 1 front
+    const r = (12 + 7 * (Math.abs(n.w ?? 0) / maxW)) * (0.82 + 0.3 * depth);
+    return { ...n, c, orb, x, y, r, depth, up: (n.w ?? 0) >= 0 };
+  }).sort((a, b) => a.depth - b.depth);
+  const ring = (r: number, half: "back" | "front") => {
+    const rx = r * TX, ry = r * TY * 2.1;
+    return half === "back" ? `M${C.x - rx} ${C.y} A${rx} ${ry} 0 0 1 ${C.x + rx} ${C.y}` : `M${C.x - rx} ${C.y} A${rx} ${ry} 0 0 0 ${C.x + rx} ${C.y}`;
+  };
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className="flex flex-1 items-center"><svg viewBox={`0 0 ${W} ${H}`} className="mx-auto w-full max-w-[480px]" role="group" aria-label="Bitcoin and the five biggest coins: a closer orbit means the coin moved more with Bitcoin over 7 days">
+      <div className="uv-stage flex flex-1 items-center"><svg viewBox={`0 0 ${W} ${H}`} className="mx-auto w-full max-w-[560px]" role="group" aria-label="Bitcoin and the five biggest coins: a closer orbit means the coin moved more with Bitcoin over 7 days">
+        <BeadDefs id={id} />
         <defs>
-          <radialGradient id="un-sun"><stop offset="0%" stopColor="rgb(var(--accent) / 0.55)" /><stop offset="55%" stopColor="rgb(var(--accent) / 0.12)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
+          <radialGradient id={`${id}-neb1`} cx="30%" cy="35%" r="60%"><stop offset="0%" stopColor="rgb(var(--ai) / 0.16)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0)" /></radialGradient>
+          <radialGradient id={`${id}-neb2`} cx="78%" cy="70%" r="55%"><stop offset="0%" stopColor="rgb(var(--accent) / 0.12)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
+          <radialGradient id={`${id}-corona`}><stop offset="0%" stopColor="#fff1c4" stopOpacity="0.75" /><stop offset="22%" stopColor="#f0b90b" stopOpacity="0.45" /><stop offset="55%" stopColor="#f0b90b" stopOpacity="0.1" /><stop offset="100%" stopColor="#f0b90b" stopOpacity="0" /></radialGradient>
+          <radialGradient id={`${id}-fade`} cx="50%" cy="48%" r="58%"><stop offset="55%" stopColor="#fff" /><stop offset="100%" stopColor="#000" /></radialGradient>
+          <mask id={`${id}-mask`}><rect width={W} height={H} fill={`url(#${id}-fade)`} /></mask>
+          <linearGradient id={`${id}-orb`} x1="0" x2="1"><stop offset="0%" stopColor="rgb(var(--accent) / 0.05)" /><stop offset="50%" stopColor="rgb(var(--accent) / 0.55)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0.05)" /></linearGradient>
         </defs>
-        <circle cx={C.x} cy={C.y} r="78" fill="url(#un-sun)" />
-        {[58, 86, 114].map((r, i) => <ellipse key={r} cx={C.x} cy={C.y} rx={r * 1.35} ry={r * 0.82} fill="none" stroke={`rgb(var(--accent) / ${0.3 - i * 0.07})`} strokeDasharray="2 6" />)}
-        {nodes.map((n, i) => {
-          const c = isNum(n.c) ? Math.max(0, Math.min(1, n.c)) : 0.3;
-          const r = 114 - c * 56;                          // stronger link = inner orbit
-          const a = (i * 72 - 100) * (Math.PI / 180);
-          const x = C.x + r * 1.35 * Math.cos(a), y = C.y + r * 0.82 * Math.sin(a);
-          const size = 11 + 8 * (Math.abs(n.w ?? 0) / maxW);
-          const up = (n.w ?? 0) >= 0;
-          return (
-            <g key={n.s} className="cc-planet" tabIndex={0} role="button" onClick={() => onSel(n.s)} onKeyDown={(e) => { if (e.key === "Enter") onSel(n.s); }}
-              aria-label={`${name(n.s)}: ${pct(n.w)} in 7 days, moves with Bitcoin ${isNum(n.c) ? Math.round(n.c * 100) + "%" : "unknown"}`}>
-              <line x1={C.x} y1={C.y} x2={x} y2={y} stroke="rgb(var(--accent) / 0.25)" strokeWidth="1" />
-              <line x1={C.x} y1={C.y} x2={x} y2={y} stroke="rgb(var(--accent) / 0.85)" strokeWidth={1 + c * 2.5} strokeDasharray="3 14" className="un-flow" />
-              <circle cx={x} cy={y} r={size + 5} fill={up ? "rgb(var(--bull) / 0.12)" : "rgb(var(--bear) / 0.12)"} />
-              <circle cx={x} cy={y} r={size} fill={up ? "url(#cc-up)" : "url(#cc-dn)"} />
-              <text x={x} y={y + size + 15} textAnchor="middle" fontSize="12" fontWeight="700" fill="rgb(var(--text))">{name(n.s)}</text>
-              <text x={x} y={y + size + 29} textAnchor="middle" fontSize="12" fill={up ? UP : DN}>{pct(n.w)}{isNum(n.c) ? ` · ${Math.round(n.c * 100)}%` : ""}</text>
+        <g mask={`url(#${id}-mask)`}>
+          <rect width={W} height={H} fill={`url(#${id}-neb1)`} /><rect width={W} height={H} fill={`url(#${id}-neb2)`} />
+          {stars.map((t, i) => <circle key={i} cx={t.x} cy={t.y} r={t.s} fill="#fff" opacity={0.5} className={i % 4 ? undefined : "cosmos-twinkle"} style={i % 4 ? undefined : { animationDelay: `${t.d}s` }} />)}
+        </g>
+        {/* back halves of the orbits, behind the sun */}
+        {ORB.map((r) => <path key={`b${r}`} d={ring(r, "back")} fill="none" stroke="rgb(var(--accent) / 0.16)" strokeDasharray="1 5" />)}
+        {/* the sun: corona, rotating rays, BTC */}
+        <circle cx={C.x} cy={C.y} r={86} fill={`url(#${id}-corona)`} className="uv-float" style={{ transformOrigin: `${C.x}px ${C.y}px` }} />
+        <g className="uv-spin" style={{ transformOrigin: `${C.x}px ${C.y}px` }}>
+          <circle cx={C.x} cy={C.y} r={40} fill="none" stroke="#f0b90b" strokeOpacity={0.35} strokeWidth={7} strokeDasharray="1.2 6.5" />
+        </g>
+        <circle cx={C.x} cy={C.y} r={31} fill="url(#cc-gold)" />
+        <CoinBead id={id} symbol="BTC/USDT" x={C.x} y={C.y} r={24} tone="#f0b90b" ring={1.2} />
+        {/* front halves */}
+        {ORB.map((r) => <path key={`f${r}`} d={ring(r, "front")} fill="none" stroke={`url(#${id}-orb)`} strokeWidth={1} />)}
+        {/* beams + planets, back to front */}
+        {placed.map((n) => (
+          <g key={n.s} className="cc-planet" tabIndex={0} role="button" onClick={() => onSel(n.s)} onKeyDown={(e) => { if (e.key === "Enter") onSel(n.s); }}
+            aria-label={`${name(n.s)}: ${pct(n.w)} in 7 days, moves with Bitcoin ${isNum(n.c) ? Math.round(n.c * 100) + "%" : "unknown"}`}>
+            <line x1={C.x} y1={C.y} x2={n.x} y2={n.y} stroke={n.up ? "rgb(var(--bull) / 0.18)" : "rgb(var(--bear) / 0.18)"} strokeWidth={1} />
+            <line x1={C.x} y1={C.y} x2={n.x} y2={n.y} stroke="rgb(var(--accent) / 0.85)" strokeWidth={0.8 + n.c * 2.2} strokeDasharray="2 12" strokeLinecap="round" className="un-flow" />
+            <g className="uv-float" style={{ animationDelay: `${n.depth * 2}s`, transformOrigin: `${n.x}px ${n.y}px` }}>
+              <CoinBead id={id} symbol={n.s} x={n.x} y={n.y} r={n.r} tone={n.up ? UP : DN} ring={1.6} />
             </g>
-          );
-        })}
-        <circle cx={C.x} cy={C.y} r="28" fill="url(#cc-gold)" />
-        <text x={C.x} y={C.y + 1} textAnchor="middle" fontSize="13" fontWeight="800" fill="#1a1408">BTC</text>
-        <text x={C.x} y={C.y + 15} textAnchor="middle" fontSize="11" fontWeight="700" fill="#3a2a05">{pct(bw)}</text>
+            <g transform={`translate(${n.x} ${n.y + n.r + 9})`}>
+              <rect x={-44} y={0} width={88} height={30} rx={8} fill="rgb(var(--ink) / 0.78)" stroke={n.up ? "rgb(var(--bull) / 0.4)" : "rgb(var(--bear) / 0.4)"} strokeWidth={0.7} />
+              <text x={0} y={12.5} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="rgb(var(--text))">{name(n.s)} <tspan fill={n.up ? UP : DN}>{pct(n.w)}</tspan></text>
+              <text x={0} y={24} textAnchor="middle" fontSize="8.5" fill="rgb(var(--mute))">{isNum(n.c) ? `${Math.round(n.c * 100)}% with BTC` : "—"}</text>
+            </g>
+          </g>
+        ))}
+        <g transform={`translate(${C.x} ${C.y - 58})`}>
+          <rect x={-40} y={-11} width={80} height={20} rx={10} fill="rgb(var(--ink) / 0.8)" stroke="rgb(var(--accent) / 0.55)" strokeWidth={0.7} />
+          <text x={0} y={3.5} textAnchor="middle" fontSize="10" fontWeight="700" fill="rgb(var(--accent))">BTC {pct(bw)}</text>
+        </g>
       </svg></div>
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div className="cc-cell"><div className="text-mute">Breadth · {tf.toUpperCase()}</div><div className="text-sm font-semibold"><span className="text-bull">{status?.bull ?? "—"} ▲</span> <span className="text-bear">{status?.bear ?? "—"} ▼</span></div></div>
         <div className="cc-cell"><div className="text-mute">Alt strength</div><div className="text-sm font-semibold">{isNum(alt) ? `${Math.round(alt)} / 100` : "—"}</div></div>
         <div className="cc-cell"><div className="text-mute">BTC · 7 days</div><div className={`text-sm font-semibold ${(bw ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(bw)}</div></div>
       </div>
-      <p className="text-xs text-mute">Closer orbit and thicker beam = moved more with Bitcoin (%, hourly, 7 days). Planet size = 7-day move.</p>
+      <p className="text-xs text-mute">Closer orbit and brighter beam = moved more with Bitcoin (7 days). Bigger planet = bigger 7-day move.</p>
     </div>
   );
 }
 
-/* ---------------------------------------------------------------- mission control */
 function Mission({ health, connected }: { health: any; connected: boolean }) {
   const e = health?.engine ?? {};
   const last = e.last_tick_finished;

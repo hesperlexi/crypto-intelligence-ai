@@ -94,6 +94,10 @@ function futuresRows(tf: string) {
 
 function dashboard(tf: string) {
   const rows = COINS.map(([symbol, price, ch], i) => ({ symbol, status: "OK", price, change_24h_pct: ch, regime: REG[i], signal: SIG[i], score: 40 + ((i * 17) % 50), decision: DEC[i], confidence: 0.55 + (i % 4) * 0.04, grade: DEC[i] !== "NO TRADE" ? "A" : null }));
+  // preview: a full-size watchlist (29 coins) so the dial / sonar can be judged at real density
+  const EXTRA = ["PEPE", "ENA", "GALA", "TRX", "UNI", "LINK", "ADA", "SUI", "DOT", "NEAR", "BCH", "HBAR", "SHIB", "BONK", "APT", "RARE", "ANTHROPIC", "MSTR", "ETC"];
+  EXTRA.forEach((b, j) => rows.push({ symbol: `${b}/USDT`, status: "OK", price: 1 + j, change_24h_pct: ((j * 7) % 13) - 8, regime: j % 6 === 0 ? "BULL" : j % 5 === 0 ? "NEUTRAL" : "BEAR",
+    signal: j % 6 === 0 ? "BUY" : j % 5 === 0 ? "HOLD" : j % 3 === 0 ? "SELL" : "HOLD", score: 25 + ((j * 23) % 70), decision: "NO TRADE", confidence: 0.5, grade: null }));
   const HZ = ["15M", "1H", "4H", "12H", "24H", "3D"];
   return {
     timeframe: tf,

@@ -590,3 +590,23 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .lq-bar.is-ask { background: linear-gradient(90deg, rgb(var(--bear) / .5), rgb(var(--bear))); }
 .lq-val { white-space: nowrap; color: rgb(var(--mute)); }
 @media (max-width: 639px) { .lq-row { grid-template-columns: 4.6rem minmax(0, 1fr) 6.2rem; gap: .4rem; font-size: .75rem; } .lq-val b { display: none; } .lq-bar.is-wall { box-shadow: 0 0 0 1px rgb(var(--text) / .5); } }
+
+/* v2.66 premium instruments (components/Instruments.tsx) */
+.ins-dial { position: relative; margin: 0 auto; width: 340px; max-width: 100%; }
+.ins-dial svg { display: block; width: 100%; height: auto; overflow: visible; }
+.ins-dial-centre { position: absolute; left: 0; right: 0; top: 0; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; pointer-events: none; }
+.ins-cap { margin-top: 0.25rem; display: flex; flex-direction: column; align-items: center; gap: 2px; font-size: 0.8125rem; text-align: center; }
+.ins-bead, .ins-blip { cursor: pointer; outline: none; }
+.ins-bead:focus-visible circle:last-of-type, .ins-blip:focus-visible circle { stroke: rgb(var(--accent)); stroke-width: 2; }
+.ins-glint { animation: xeno-spin 14s linear infinite; }
+.ins-sweep { animation: xeno-spin 7s linear infinite; }
+.ins-pulse { animation: ins-pulse 3.2s ease-in-out infinite; }
+@keyframes ins-pulse { 0%, 100% { transform: scale(0.85); opacity: 0.35; } 50% { transform: scale(1.25); opacity: 0.9; } }
+.ins-sonar svg { display: block; width: 100%; height: auto; overflow: visible; }
+@media (min-width: 900px) { .deck-hero-grid { grid-template-columns: minmax(0, 1fr) 340px; } }
+@media (max-width: 899px) { .ins-dial { width: 320px; } }
+@media (prefers-reduced-motion: reduce) { .ins-glint, .ins-sweep, .ins-pulse, .uv-float, .uv-spin { animation: none; } }
+.uv-float { animation: uv-float 6s ease-in-out infinite; }
+@keyframes uv-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2.5px); } }
+.uv-spin { animation: xeno-spin 60s linear infinite; }
+@media (max-width: 420px) { .ins-dial { width: 286px; } }

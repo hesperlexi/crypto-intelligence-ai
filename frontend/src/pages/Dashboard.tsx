@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
 import { FirstWeekGuide } from "../components/TodayPulse";
-import { MarketDial, OpportunityBoard } from "../components/Deck";
+import { OpportunityBoard } from "../components/Deck";
+import { OrbitDial } from "../components/Instruments";
 import { SignalJourneys } from "../components/CommandPlus";
 import { BriefingPanel } from "../components/Polish";
 import { AiBriefCard, BtcCard, BtcChartCard, GlobalStatusCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
@@ -49,7 +50,7 @@ export default function Dashboard() {
       <section className="panel panel-hero deck-hero p-4 sm:p-6" aria-label="Market today">
         <div className="deck-hero-grid">
           <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} track={track.data} />
-          <MarketDial rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
+          <OrbitDial rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
         </div>
         <div className="ov-strip mt-5 grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4">
           <BtcCard />
