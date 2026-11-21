@@ -53,6 +53,48 @@ DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "")      # v2.12: none (1d / 3d were demo-
 # v2.64 (21 Nov 2026, live check guard15-live.json): since 16 Nov the AI trade filters blocked 67 of 67 15m calls that
 # reached them, 72 % won, +0.38R avg net. On these timeframes neither trade filter blocks; the scores are still kept.
 FILTER_OFF_TFS = _tfs("FILTER_OFF_TFS", "15m")
+FILTER_OFF_MIN_CLOSED = 10      # safety net: after this many closed calls the filter would have blocked ...
+FILTER_OFF_CHECK_S = 600
+
+
+def filter_off(rt: Any, timeframe: str) -> bool:
+    """v2.64 safety net (owner: "we don't need bad results"): the trade filters stay off on a FILTER_OFF_TFS timeframe only
+    while the published calls they would have blocked are not losing. Once >= FILTER_OFF_MIN_CLOSED of them closed with an
+    average net R below 0, the filters block again on that timeframe for good (setting `filter_off_revoked|TF`, shown on
+    Health; clear it by hand to retry). Checked at most every FILTER_OFF_CHECK_S."""
+    if timeframe not in FILTER_OFF_TFS:
+        return False
+    db = rt.db
+    if db.get_setting(f"filter_off_revoked|{timeframe}", None):
+        return False
+    key = f"filter_off_since|{timeframe}"
+    since = db.get_setting(key, None)
+    now = int(time.time() * 1000)
+    if not since:
+        db.set_setting(key, now)
+        return True
+    chk = db.get_setting(f"filter_off_check|{timeframe}", None) or {}
+    if now - int(chk.get("at") or 0) < FILTER_OFF_CHECK_S * 1000:
+        return True
+    from . import tracking
+    closed = tuple(tracking.CLOSED_STATUSES)
+    rows = db.query(f"SELECT * FROM signals WHERE timeframe = ? AND created_at >= ? AND status IN ({','.join('?' * len(closed))}) "
+                    "AND payload LIKE '%\"filter_bypassed\": true%'", (timeframe, int(since), *closed))
+    rs = []
+    for r in rows:
+        if r.get("fill_status") == "NOT_FILLED":
+            continue
+        net, e, st = tracking.net_pct(r), r.get("entry"), r.get("stop")
+        if net is not None and e and st:
+            risk = abs(float(e) - float(st)) / float(e) * 100
+            if risk > 0:
+                rs.append(net / risk)
+    avg = sum(rs) / len(rs) if rs else None
+    db.set_setting(f"filter_off_check|{timeframe}", {"at": now, "closed": len(rs), "avg_r": avg})
+    if len(rs) >= FILTER_OFF_MIN_CLOSED and avg is not None and avg < 0:
+        db.set_setting(f"filter_off_revoked|{timeframe}", {"at": now, "closed": len(rs), "avg_r": avg})
+        return False
+    return True
 
 # fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
 PRIVATE_FIELDS = ("demo",)
@@ -372,10 +414,14 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     # trade filter: the model's own record of which setups reach their targets before the stop
     tf_view = (fc or {}).get("trade_filter") if fc.get("available") else None
     filter_score = None
+    filter_bypassed = False
     if tf_view and decision in TRADE_DECISIONS:
         tside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
         filter_score = tf_view["p_long"] if tside > 0 else tf_view["p_short"]
-        if filter_score < tf_view["threshold"] and timeframe not in FILTER_OFF_TFS:
+        bypass = live and bundle is None and as_of is None and filter_off(rt, timeframe)
+        if filter_score < tf_view["threshold"] and bypass:
+            filter_bypassed = True
+        if filter_score < tf_view["threshold"] and not bypass:
             decision, why = "NO TRADE", (f"the trade filter scores this setup {filter_score:.0%}, below the "
                                          f"{tf_view['threshold']:.0%} bar at which past setups paid off")
             grade = None
@@ -402,7 +448,10 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 sc = TF2.score(f2, row)
                 if sc is not None:
                     filter2 = {"score": sc, "threshold": f2["threshold"]}
-                    if sc < f2["threshold"] and timeframe not in FILTER_OFF_TFS:
+                    bypass2 = live and as_of is None and filter_off(rt, timeframe)
+                    if sc < f2["threshold"] and bypass2:
+                        filter_bypassed = True
+                    if sc < f2["threshold"] and not bypass2:
                         decision, grade = "NO TRADE", None
                         why = (f"the {timeframe.upper()} trade filter scores this call {sc:.0%}, below the {f2['threshold']:.0%} "
                                "bar at which comparable past calls paid off")
@@ -573,6 +622,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             "range_compression": bool(last["range_compression"])},
         "stale": stale,
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
+        "filter_bypassed": bool(filter_bypassed and decision in TRADE_DECISIONS),
         "safety": safety_state,
         "grade": grade, "demo": demo, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
         "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"), "filter2": filter2,

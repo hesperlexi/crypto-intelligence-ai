@@ -1140,3 +1140,7 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
   number boxes in Auto-trade settings use `NumField` (free typing, clamped on leaving the box - before, every keystroke was
   clamped so a box could not be cleared). Cap study `app/research_caps.py` (workflow `research-caps.yml`, results
   `research-results/results/caps-*.json`). 1d / 3d stay public for now (1d live 3 of 3 won; 3d publishes nothing).
+- v2.64 safety net (owner: "we don't need bad results"): `analysis.filter_off(rt, tf)` - the 15m filters stay off only while
+  the published calls they would have blocked (payload `filter_bypassed`) are not losing; ≥10 closed with avg net R < 0 →
+  filters block again for good (setting `filter_off_revoked|TF`; Health `engine.filter_off`). Replays (as_of) keep the
+  filters on. Test `tests/test_filter_off.py`.

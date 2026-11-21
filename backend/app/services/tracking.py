@@ -452,6 +452,8 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
                "decision_reason": a.get("decision_reason"), "grade": a.get("grade"),
                "runner": _runner_for(setup.get("runner"), pl) if tradable else None,
                "entry_rule": pl.get("entry_rule") if pl else None}
+    if a.get("filter_bypassed"):              # v2.64: a trade filter would have blocked it (FILTER_OFF_TFS); watched
+        payload["filter_bypassed"] = True
     if tradable:
         from ..engine.futures import signal_leverage
         payload.update({"manage": manage_params(db), "live_price": a.get("price"),

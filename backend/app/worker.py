@@ -1539,6 +1539,13 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
     engine.update(watch_status())
+    try:                                        # v2.64 15m trade-filter safety net (analysis.filter_off)
+        from .services.analysis import FILTER_OFF_TFS
+        engine["filter_off"] = {tf: {"since": rt.db.get_setting(f"filter_off_since|{tf}", None),
+                                     "check": rt.db.get_setting(f"filter_off_check|{tf}", None),
+                                     "revoked": rt.db.get_setting(f"filter_off_revoked|{tf}", None)} for tf in FILTER_OFF_TFS}
+    except Exception:
+        pass
     engine.update(flow_status())                 # v2.62 order-flow recorder + big-money alerts                # v2.31 fast price watch: last pass, coins priced, early pushes sent
     engine["firestore_writes_today"] = sink.writes_today()     # Firebase free plan: 20,000 a day (engine writes only)
     engine["firestore_write_budget"] = sink.DAILY_BUDGET
