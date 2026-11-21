@@ -23,7 +23,8 @@ MIGRATIONS: dict[str, list[tuple[str, str]]] = {
             ("peak_pct", "DOUBLE PRECISION"), ("exit_reason", "TEXT"), ("managed", "INTEGER"), ("atr", "DOUBLE PRECISION"),
             ("app_version", "TEXT"), ("engine_version", "TEXT"),
             # v2.13 net results (services/tracking.py: return_pct - cost_pct - funding_pct)
-            ("return_net_pct", "DOUBLE PRECISION"), ("cost_pct", "DOUBLE PRECISION"), ("funding_pct", "DOUBLE PRECISION")]
+            ("return_net_pct", "DOUBLE PRECISION"), ("cost_pct", "DOUBLE PRECISION"), ("funding_pct", "DOUBLE PRECISION"),
+            ("trough_r", "DOUBLE PRECISION")]          # v2.65 worst move against the call (adverse excursion, R)
     for table in ("signals", "shadow_signals", "scalp_signals", "held_signals", "rejected_signals")
 }
 # v2.22 Hesper open-ended runs: the $1,000 milestone time of a run

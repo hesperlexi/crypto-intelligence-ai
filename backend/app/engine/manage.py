@@ -62,7 +62,7 @@ def new_state(side: int, entry: float, stop: float, atr: float | None = None) ->
     """Serializable management state of one position (bots keep it inside their JSON state)."""
     risk = abs(float(entry) - float(stop))
     return {"side": int(side), "entry": float(entry), "risk": risk, "atr": float(atr) if atr else None,
-            "peak_r": 0.0, "extreme_close": None, "trail": None, "time_checked": False}
+            "peak_r": 0.0, "trough_r": 0.0, "extreme_close": None, "trail": None, "time_checked": False}
 
 
 def r_of(st: dict[str, Any], price: float) -> float:
@@ -202,7 +202,10 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
             stop_hit, closed_ts = True, ts
             stop_px = stop_fill(side, level, op, gap=not fill_candle)
             events.append({"ts": ts, "type": "stop", "price": stop_px})
+            st["trough_r"] = min(st.get("trough_r", 0.0), r_of(st, stop_px))      # v2.65 worst move (adverse excursion)
             break
+        # v2.65 worst move against the call while it was open (the fill candle: only its close is known to be after the fill)
+        st["trough_r"] = min(st.get("trough_r", 0.0), r_of(st, cl if fill_candle else (lo if side > 0 else hi)))
         gb = None if fill_candle else giveback_exit(st, op, hi, lo, p, hit[0])
         if gb is not None:
             managed_exit_px, closed_ts, exit_reason = gb, ts, "giveback"
@@ -242,7 +245,7 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
         events.append({"ts": closed_ts, "type": "admin_close", "price": managed_exit_px})
     if not rows:
         return {"status": "OPEN", "hits": hit, "stop_hit": False, "exit_reason": None, "exit_price": None, "legs": [],
-                "return_pct": None, "return_r": None, "peak_r": 0.0, "peak_pct": 0.0, "closed_ts": None, "managed": 0,
+                "return_pct": None, "return_r": None, "peak_r": 0.0, "peak_pct": 0.0, "trough_r": 0.0, "closed_ts": None, "managed": 0,
                 "events": []}
     expired = closed_ts is None and complete
     last_close = rows[-1][4]              # expiry exits at the last close of the path (only used when nothing else fired)
@@ -287,7 +290,8 @@ def follow(side: int, entry: float, stop: float, tps: list[float], path: Iterabl
     return {"status": status, "hits": hit, "stop_hit": stop_hit, "exit_reason": exit_reason if status != "OPEN" else None,
             "exit_price": exit_price, "legs": legs, "return_pct": ret,
             "return_r": ret / risk_pct if risk_pct else None, "peak_r": st["peak_r"],
-            "peak_pct": st["peak_r"] * risk_pct, "closed_ts": closed_ts if status != "OPEN" else None,
+            "peak_pct": st["peak_r"] * risk_pct, "trough_r": st.get("trough_r", 0.0),
+            "closed_ts": closed_ts if status != "OPEN" else None,
             "managed": managed if status != "OPEN" else 0, "events": events}
 
 

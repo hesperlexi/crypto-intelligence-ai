@@ -54,7 +54,7 @@ def test_a2_market_calls_enter_at_the_live_price_and_are_filled():
     assert s["tp3"] == pytest.approx(101.3 + 2 * d)
     rule = loads(s["payload"])["entry_rule"]
     assert rule["mode"] == "market" and rule["ideal_entry"] == 100.0
-    assert s["engine_version"] == "2.6.0" and s["app_version"] == "2.1.0"
+    assert s["engine_version"] == __import__("app.config", fromlist=["x"]).ENGINE_VERSION and s["app_version"] == "2.1.0"
     assert loads(s["payload"])["live_price"] == 101.3
 
 

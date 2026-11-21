@@ -1183,3 +1183,5 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
   `trainer.register`/`activate_or_hold`; log setting `challenger_log`, last 400). Shadow by default
   (`CHALLENGER_ENFORCE=0`: every retrain still goes live); turn on after a week of logs shows sensible refusals.
   `save_bundle` caches only an activated bundle. Tests `tests/test_challenger_v265.py`. `ENGINE_VERSION` 2.65.0.
+- v2.65 worst move per call: `engine/manage.follow` tracks `trough_r` (worst R against the call while open; fill candle =
+  its close; a stop = the stop fill) → column `trough_r` (`db.MIGRATIONS`, every signal-like table) via `tracking.TRACKED`.

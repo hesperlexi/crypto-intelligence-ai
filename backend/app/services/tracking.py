@@ -808,7 +808,7 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
             win_covered = len(after) and int(after["ts"].iloc[-1]) + pms >= win_end
             if bi is not None or win_covered or (wall_over and len(after)):
                 out.update(status="NOT_FILLED", fill_status="NOT_FILLED", closed_at=win_end, return_pct=None,
-                           exit_reason=None, managed=0, peak_r=None, peak_pct=None)
+                           exit_reason=None, managed=0, peak_r=None, peak_pct=None, trough_r=None)
                 out["events"].append({"rule": "not_confirmed", "inputs": {"level": lvl, "window_bars": settings.fill_window_bars}})
             return out
         new_entry = float(cl[ci])
@@ -830,7 +830,7 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
             win_covered = int(after["ts"].iloc[-1]) + pms >= win_end
             if win_covered or (wall_over and len(after)):
                 out.update(status="NOT_FILLED", fill_status="NOT_FILLED", closed_at=win_end, return_pct=None,
-                           exit_reason=None, managed=0, peak_r=None, peak_pct=None)
+                           exit_reason=None, managed=0, peak_r=None, peak_pct=None, trough_r=None)
                 out["events"].append({"rule": "not_filled", "inputs": {"entry": entry, "window_bars": settings.fill_window_bars}})
             return out
         path = after.iloc[idx:]
@@ -856,7 +856,8 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
                                    res["closed_ts"], res["events"], bool(run.get("on")))
     out.update(status=res["status"], tp1_hit=int(res["hits"][0]), tp2_hit=int(res["hits"][1]), tp3_hit=int(res["hits"][2]),
                stop_hit=int(res["stop_hit"]), closed_at=res["closed_ts"], return_pct=res["return_pct"],
-               peak_r=res["peak_r"], peak_pct=res["peak_pct"], exit_reason=res["exit_reason"], managed=res["managed"])
+               peak_r=res["peak_r"], peak_pct=res["peak_pct"], trough_r=res.get("trough_r"), exit_reason=res["exit_reason"],
+               managed=res["managed"])
     if res["status"] != "OPEN":
         out["events"].append({"rule": f"exit_{res['exit_reason'] or res['status'].lower()}",
                               "inputs": {"status": res["status"], "exit_price": res["exit_price"],
@@ -867,7 +868,7 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
 
 
 TRACKED = ("return_net_pct", "cost_pct", "funding_pct", "status", "tp1_hit", "tp2_hit", "tp3_hit", "stop_hit", "closed_at", "return_pct", "fill_status", "filled_at",
-           "peak_r", "peak_pct", "exit_reason", "managed",
+           "peak_r", "peak_pct", "trough_r", "exit_reason", "managed",
            "entry", "tp1", "tp2", "tp3")       # v2.6: set once, at a confirmation fill (the actual entry)
 
 
