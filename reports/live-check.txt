@@ -1,5 +1,5 @@
-deployed: {"version":"2.1.0","build":"3db8b52-202611210755"}
-live:     {"version":"2.1.0","build":"3db8b52-202611210755"}
+deployed: {"version":"2.1.0","build":"7ac47ca-202611210823"}
+live:     {"version":"2.1.0","build":"7ac47ca-202611210823"}
 
 == /
 HTTP/2 200 
@@ -26,8 +26,8 @@ HTTP/2 200
 cache-control: no-cache
 content-type: image/png
 == manifest icons
-"src": "/icons/icon-192.png?v=3db8b52-202611210755"
-"src": "/icons/icon-512.png?v=3db8b52-202611210755"
-"src": "/icons/maskable-192.png?v=3db8b52-202611210755"
+"src": "/icons/icon-192.png?v=7ac47ca-202611210823"
+"src": "/icons/icon-512.png?v=7ac47ca-202611210823"
+"src": "/icons/maskable-192.png?v=7ac47ca-202611210823"
 == update check present in the bundle
-frontend/dist/assets/index-PnDj1ljc.js
+frontend/dist/assets/index-PJWhySac.js
