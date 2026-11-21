@@ -1129,3 +1129,10 @@ no new doc/rule). Pushes titled "Last Stand · run #N". Share images (`lib/hespe
 drawRunCard) for both challenges, each with "Post to Telegram" (`lib/telegramShare.ts`: JPEG into `owner/telegram_drafts`,
 then job `telegram_post`). Tests `tests/test_laststand.py`.
 Last Stand leverage (v2.63b, owner "a bit aggressive"): up to 50x on every timeframe, liquidation 1.15x the stop distance beyond the entry (`LastStand.MAX_LEVERAGE`, `LIQ_BUFFER`; Hesper stays 25x / 1.5x). The stop still comes first.
+
+## v2.64 15m trade filters off (21 Nov 2026, Claude's call at the owner's request "decide, I want best results")
+Live check (`app/guard15_live.py`, workflow `guard15-live.yml`, `research-results/results/guard15-live.json`): since 16 Nov
+0 of 152 15m calls were published; the AI trade filters ("FILTERED") blocked 67 (72 % won, +0.38R avg net), the same-side
+cap 59 (+0.29R), bigger-trend 6 (all lost). `analysis.FILTER_OFF_TFS` "15m": neither trade filter (per-series nor filter2)
+blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and the same-side cap stay. Re-check with
+`guard15-live.yml` in ~1 week; the cap needs a replay before any change.

@@ -50,6 +50,9 @@ PAUSED_TFS = _tfs("PAUSED_TFS", "")      # v2.10 (1 Nov 2026): 1d / 3d moved to 
 A_ONLY_TFS = _tfs("A_ONLY_TFS", "15m,1h,1d,3d")   # v2.42: 15m back to grade A only (owner, 16 Nov 2026)
 # demo-only timeframes: the public decision is NO TRADE ("DEMO BOTS ONLY"); the call the demo bots may take is in `demo`
 DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "")      # v2.12: none (1d / 3d were demo-only in v2.10 - v2.11)
+# v2.64 (21 Nov 2026, live check guard15-live.json): since 16 Nov the AI trade filters blocked 67 of 67 15m calls that
+# reached them, 72 % won, +0.38R avg net. On these timeframes neither trade filter blocks; the scores are still kept.
+FILTER_OFF_TFS = _tfs("FILTER_OFF_TFS", "15m")
 
 # fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
 PRIVATE_FIELDS = ("demo",)
@@ -372,7 +375,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     if tf_view and decision in TRADE_DECISIONS:
         tside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
         filter_score = tf_view["p_long"] if tside > 0 else tf_view["p_short"]
-        if filter_score < tf_view["threshold"]:
+        if filter_score < tf_view["threshold"] and timeframe not in FILTER_OFF_TFS:
             decision, why = "NO TRADE", (f"the trade filter scores this setup {filter_score:.0%}, below the "
                                          f"{tf_view['threshold']:.0%} bar at which past setups paid off")
             grade = None
@@ -399,7 +402,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 sc = TF2.score(f2, row)
                 if sc is not None:
                     filter2 = {"score": sc, "threshold": f2["threshold"]}
-                    if sc < f2["threshold"]:
+                    if sc < f2["threshold"] and timeframe not in FILTER_OFF_TFS:
                         decision, grade = "NO TRADE", None
                         why = (f"the {timeframe.upper()} trade filter scores this call {sc:.0%}, below the {f2['threshold']:.0%} "
                                "bar at which comparable past calls paid off")
