@@ -99,28 +99,16 @@ Each card answers two questions: **what does it do**, and **how does it help you
 <ol class="steps" markdown>
 <li markdown>**Open the app.** Go to **cryptointelai.com** on your phone or computer.</li>
 <li markdown>**Create your account.** Press **Continue with Google**, or **Sign up with email**. With email, choose a password of at least 8 characters, then open the confirmation email and tap its link.</li>
-<li markdown>**Choose a membership.** Pick a plan, pay in USDT with Binance or MEXC, and upload your payment screenshot. The app opens as soon as your payment is approved.</li>
+<li markdown>**Choose a membership.** Pick a plan, pay as shown in the app, and upload your payment screenshot. The app opens as soon as your payment is approved.</li>
 <li markdown>**Install it on your phone.** Android: **Settings → Install the app → Download the Android app (APK)** (needs Google Chrome). iPhone: open the site in **Safari → Share → Add to Home Screen**.</li>
 <li markdown>**Turn on notifications.** **Settings → Notifications → Turn on notifications**, then **Send a test notification**.</li>
 <li markdown>**Pick your view.** **Beginner** shows the essentials; **Pro** shows every number. Switch at the top of the screen, in **More** on phones, or in **Settings → View mode**.</li>
 </ol>
 
-<div class="pair" markdown>
 ![Sign-in page](img/v3/signin.jpg)
-![Membership: choose a plan and how to pay](img/v3/membership.jpg)
-</div>
-
-### Membership plans
-
-| Plan | Price | Per month |
-| --- | --- | --- |
-| 1 month | **15 USDT** | 15.00 USDT |
-| 3 months | **40 USDT** | 13.33 USDT |
-| 6 months | **70 USDT** | 11.67 USDT |
-| 1 year | **130 USDT** | 10.83 USDT |
 
 <div class="tip" markdown>
-**Pay in USDT only** and send the **exact amount**. With Binance, scan the QR code shown in the app. With MEXC, use an internal transfer to UID **00183657**. Then upload the screenshot of your payment.
+**Plans and prices.** Current membership plans, prices and payment options are always shown on **cryptointelai.com** and in the app under **Settings → Membership**.
 </div>
 
 ## Your dashboard {#dashboard data-kicker="04" data-line="The home screen: the market at a glance"}
@@ -198,7 +186,7 @@ A **signal** is a trade idea with a full plan. It never tells you that a trade w
 </div>
 
 <div class="pro" markdown>
-**Want to know more? Pro users.** Pro view shows the AI's direction lean, the reward-to-risk ratio, the suggested leverage with the liquidation price, and the extra checks each idea passed. 15-minute and 1-hour signals are grade A only; 1-day ideas currently go to the demo bots only while they are tested.
+**Want to know more? Pro users.** Pro view shows the AI's direction lean, the reward-to-risk ratio, the suggested leverage with the liquidation price, and the extra checks each idea passed.
 </div>
 
 ## The coin page {#coin data-kicker="06" data-line="Everything about one coin on one screen"}
@@ -319,7 +307,7 @@ Auto-trade copies the app's signals into your **practice futures account**, even
 <li markdown>**Open the settings:** press **Settings** on the panel.</li>
 <li markdown>**Choose signal grades:** **Grade A only** (fewer, stronger) or **Grade A and B** (more trades).</li>
 <li markdown>**Choose timeframes:** tap the ones you want, for example 1H and 4H.</li>
-<li markdown>**Set the size:** the margin per trade in virtual USDT, the leverage (the signal's suggestion is the safest), where to take profit, and how many trades may be open at once (up to 10, at most 20 new a day).</li>
+<li markdown>**Set the size:** the margin per trade in virtual USDT, the leverage (the signal's suggestion is the safest), where to take profit, and how many trades may be open at once (the app shows the limits).</li>
 <li markdown>**Save** and press **Turn on**.</li>
 <li markdown>**Review:** open **Auto-trade activity** on the panel to see every trade it placed or skipped, and why.</li>
 <li markdown>**Turn it off** any time with **Turn off**. Open trades stay until they reach their stop or target.</li>
@@ -453,7 +441,7 @@ You don't need to watch the app all day. Let alerts do the watching.
 Use the same method as the first time (Google or email). With email, confirm your address first, or press **Forgot password?**.
 
 **My membership is not active yet.**
-Approval is done by hand after your payment screenshot arrives. Check that you sent the exact amount in USDT. Still waiting after a few hours? Contact support.
+Approval is done by hand after your payment screenshot arrives. Check that you sent the exact amount shown in the app. Still waiting after a few hours? Contact support.
 
 **I see no signals.**
 Most of the time the market has no good setup; that is normal. Try **All** timeframes and the **Active** filter on Signals.
