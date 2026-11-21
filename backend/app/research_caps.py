@@ -20,6 +20,12 @@ from .research_ideas import Profiles, _cap, _curve, _masked
 
 
 def replay(db_url: str, budget_s: float) -> dict[str, Any]:
+    trades, skipped, t0, _rt = collect(db_url, budget_s)
+    return summarize(trades, skipped, t0)
+
+
+def collect(db_url: str, budget_s: float) -> tuple[list[dict[str, Any]], list[str], float, Any]:
+    """The live-guarded out-of-sample test calls of every series (before any cap), with the runtime used."""
     from . import research_engine as RE
     from . import research_v213 as V
     from .db import Database
@@ -71,6 +77,10 @@ def replay(db_url: str, budget_s: float) -> dict[str, Any]:
         dd = _masked(d, m)
         tr = V._with_funding(ctx, dd, SP.run_series(ctx, paths, test, dd, entry_mode="old", news=news))
         trades += [{**t, "side": int(dd["side"][t["j"]]), "tf": tf, "sym": s} for t in tr]
+    return trades, skipped, t0, rt
+
+
+def summarize(trades: list[dict[str, Any]], skipped: list[str], t0: float) -> dict[str, Any]:
     variants = {"cap8_live": _cap(trades, 8, False), "cap12": _cap(trades, 12, False), "cap16": _cap(trades, 16, False),
                 "cap24": _cap(trades, 24, False), "cap8_per_tf": _cap(trades, 8, True), "no_cap": list(trades)}
     mid = float(np.median([t["ts"] for t in trades])) if trades else 0.0
