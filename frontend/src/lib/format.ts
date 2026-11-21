@@ -7,14 +7,21 @@ export function isNum(v: unknown): v is number {
 /** Price with decimals adapted to magnitude (BTC 2dp, DOGE 5dp, ...). */
 export function fmtPrice(v: unknown): string {
   if (!isNum(v)) return DASH;
-  const a = Math.abs(v);
-  const d = a >= 1000 ? 2 : a >= 100 ? 2 : a >= 1 ? 3 : a >= 0.1 ? 4 : a >= 0.01 ? 5 : 6;
+  const d = pricePrecision(v);
   return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
 }
 
+/** Decimals for a price. v2.65: tiny prices (BONK, PEPE, SHIB ...) keep 4 significant digits after their leading zeros
+ *  (0.00002153, not 0.000022), so entry, stop and targets never look the same. */
 export function pricePrecision(v: number): number {
   const a = Math.abs(v);
-  return a >= 100 ? 2 : a >= 1 ? 3 : a >= 0.1 ? 4 : a >= 0.01 ? 5 : 6;
+  if (a >= 100) return 2;
+  if (a >= 1) return 3;
+  if (a >= 0.1) return 4;
+  if (a >= 0.01) return 5;
+  if (!(a > 0)) return 6;
+  const zeros = Math.floor(-Math.log10(a));            // 0.00002153 -> 4 zeros after the point
+  return Math.min(12, zeros + 4);
 }
 
 /** `v` is a fraction (0.0123 -> +1.23%). */

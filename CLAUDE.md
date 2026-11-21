@@ -1185,3 +1185,4 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
   `save_bundle` caches only an activated bundle. Tests `tests/test_challenger_v265.py`. `ENGINE_VERSION` 2.65.0.
 - v2.65 worst move per call: `engine/manage.follow` tracks `trough_r` (worst R against the call while open; fill candle =
   its close; a stop = the stop fill) → column `trough_r` (`db.MIGRATIONS`, every signal-like table) via `tracking.TRACKED`.
+- v2.65 tiny prices (owner: BONK TP/SL unreadable): `format.pricePrecision` keeps 4 significant digits after the leading zeros below 0.01 (0.00002153, max 12 decimals) - used by `fmtPrice`, charts and the adjust inputs; `hesperCard.fmtPx` uses it too.

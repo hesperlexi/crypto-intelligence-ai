@@ -1,7 +1,7 @@
 // Admin share image of the Hesper Challenge (views/hesper), drawn in the browser with the premium kit (lib/luxCard.ts).
 // Nothing is uploaded or posted: the admin downloads the PNG.
 import { curveChart, figure, foil, L, luxBackground, luxBrand, luxFooter, luxReady, sora, statRow, txt } from "./luxCard";
-import { isNum } from "./format";
+import { fmtPrice, isNum } from "./format";
 
 export const usd = (v: unknown, d = 2) => (isNum(v) ? `$${v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d })}` : "—");
 
@@ -199,6 +199,5 @@ export async function drawRunCard(cv: HTMLCanvasElement, title: string, r: any, 
 
 function fmtPx(v: unknown) {
   if (!isNum(v)) return "—";
-  const d = v >= 1000 ? 1 : v >= 10 ? 2 : v >= 1 ? 3 : 5;
-  return v.toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d });
+  return v >= 1000 ? v.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 }) : fmtPrice(v);
 }
