@@ -1147,3 +1147,7 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
 - v2.64 same-side cap 8 → 12 (`combo_gates.SAME_SIDE_CAP`), from `research-results/results/caps-latest.json` (886 test
   calls): total +15.1R → +34.1R, better in both halves (4.0 → 16.6, 11.2 → 17.5), avg 0.027 → 0.049R, max drawdown
   32.6R → 37.4R. Cap 24 / none earned more (+53R) but drawdown 49R - not taken. 1d negative in every variant (−0.10 to −0.15R, 28 calls).
+- v2.64 1d demo-only again (`analysis.DEMO_ONLY_TFS` default "1d"; replay −0.10 to −0.15R in every cap variant, ensemble
+  skill > 0 in only 14 % of 1d series): one-time flag `demo_1d_v264` (in `MIGRATION_FLAGS`) removes the public 1d bots and adds
+  `futures-demo-ab-1d` (grade A, reset_token v264). Open 1d calls run to their end. tests/conftest.py sets `DEMO_ONLY_TFS=""`
+  for the older policy tests; `tests/test_demo_1d_v264.py` covers the migration. Signals 1D tab note "demo only".

@@ -21,7 +21,7 @@ const TF_OPTIONS = [...SIG_TFS, "all"] as const;
 const TF_NOTES: Partial<Record<string, readonly [string, string]>> = {
   "15m": ["grade A", "15M: grade A calls only"],
   "1h": ["grade A", "1H: grade A calls only"],
-  "1d": ["grade A", "1D: grade A calls only"],
+  "1d": ["demo only", "1D: demo bots only (not public), the models are not proven yet"],
   "3d": ["grade A", "3D: grade A calls only"],
 };
 const DOT = { bull: "bg-bull", bear: "bg-bear", wait: "bg-glass/30" } as const;

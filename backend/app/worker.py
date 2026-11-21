@@ -419,7 +419,7 @@ def alert_row(a: Any, inactive: set[str] | frozenset = frozenset()) -> tuple | N
 # and on a database that looks brand new (no signals and no migration flag at all) every historical migration is marked
 # done instead of run. A NEW migration must add its flag here.
 MIGRATION_FLAGS = (
-    "retire_bstocks_v232", "auto_call_new_v230", "drop_inline_proofs_v1", "testing_v24", "testing_v24b", "watchlist_majors_v2", "gold_paxg_v21", "support_email_v23",
+    "demo_1d_v264", "retire_bstocks_v232", "auto_call_new_v230", "drop_inline_proofs_v1", "testing_v24", "testing_v24b", "watchlist_majors_v2", "gold_paxg_v21", "support_email_v23",
     "fresh_start_v23", "pause_15m_v26", "tf_policy_v28", "demo_1d3d_v210", "scalping_v1", "public_15m_v211",
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
@@ -838,6 +838,20 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/bots", {**doc, "bots": keep, "defaults_added": seen, "updated_at": now_ms()})
                 notes["public_1d3d_v212"] = {"removed": sorted(demo_ids & {b.get("id") for b in doc["bots"]}), "added": added}
         rt.db.set_setting("public_1d3d_v212", True)
+    # v2.64 (21 Nov 2026): 1d demo-only again -> its public bots go, the 1d demo bot comes back (once; removing it sticks)
+    if not rt.db.get_setting("demo_1d_v264", False):
+        from .services.analysis import DEMO_ONLY_TFS
+        from .services.bots import DEMO_BOTS
+        if "1d" in DEMO_ONLY_TFS:
+            doc = sink.get("config/bots") or {}
+            if isinstance(doc.get("bots"), list):
+                keep = [b for b in doc["bots"] if not (b.get("timeframe") == "1d" and not b.get("demo_only"))]
+                add = [{**dict(b), "grades": "A", "name": str(b.get("name") or "").replace("grades A+B", "grade A"),
+                        "reset_token": "v264"} for b in DEMO_BOTS if b["timeframe"] == "1d"
+                       and not any(k.get("id") == b["id"] for k in keep)]
+                sink.set("config/bots", {**doc, "bots": keep + add, "updated_at": now_ms()})
+                notes["demo_1d_v264"] = {"removed": [b.get("id") for b in doc["bots"] if b not in keep], "added": [b["id"] for b in add]}
+        rt.db.set_setting("demo_1d_v264", True)
     # v2.42 (owner, 16 Nov 2026, testing mode with free test members): the 15m grade-B test (v2.40, 15-16 Nov) was
     # stopped; its calls are left out of the record and disclosed on Results with their own figures (views.excluded_tests)
     if not rt.db.get_setting("exclude_15m_b_v242", False):

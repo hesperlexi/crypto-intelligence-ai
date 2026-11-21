@@ -4,3 +4,4 @@ import os
 
 os.environ.setdefault("TEST_BOT_TP08", "0")
 os.environ.setdefault("ADD_MSTR", "0")          # v2.49 one-time MSTR watchlist addition: tests/test_futures_only_v249.py
+os.environ.setdefault("DEMO_ONLY_TFS", "")     # v2.64 1d demo-only: older policy tests check the v2.12 line-up; tests/test_demo_1d_v264.py

@@ -49,7 +49,7 @@ PAUSED_TFS = _tfs("PAUSED_TFS", "")      # v2.10 (1 Nov 2026): 1d / 3d moved to 
 # v2.11 (2 Nov 2026): 15m public, grade A only; v2.12 (2 Nov 2026): 1d / 3d public too, grade A only
 A_ONLY_TFS = _tfs("A_ONLY_TFS", "15m,1h,1d,3d")   # v2.42: 15m back to grade A only (owner, 16 Nov 2026)
 # demo-only timeframes: the public decision is NO TRADE ("DEMO BOTS ONLY"); the call the demo bots may take is in `demo`
-DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "")      # v2.12: none (1d / 3d were demo-only in v2.10 - v2.11)
+DEMO_ONLY_TFS = _tfs("DEMO_ONLY_TFS", "1d")    # v2.64 (21 Nov 2026): 1d demo-only again (replay −0.10 to −0.15R in every cap variant; weak models)
 # v2.64 (21 Nov 2026, live check guard15-live.json): since 16 Nov the AI trade filters blocked 67 of 67 15m calls that
 # reached them, 72 % won, +0.38R avg net. On these timeframes neither trade filter blocks; the scores are still kept.
 FILTER_OFF_TFS = _tfs("FILTER_OFF_TFS", "15m")
