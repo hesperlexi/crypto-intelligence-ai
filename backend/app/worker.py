@@ -339,6 +339,15 @@ def hesper_members(rt: Runtime, sink: BaseSink, force: bool = False) -> list[str
     return uids
 
 
+def publish_hesper(rt: Runtime, sink: BaseSink) -> None:
+    """views/hesper: the Hesper Challenge, with Last Stand (v2.63) inside the same document (same readers, no new
+    document or rule)."""
+    hv = hesper.view(rt)
+    lv = hesper.view(rt, hesper.LastStand)
+    hv["laststand"] = lv
+    sink.view("hesper", hv, min_interval_s=900, core=[hesper.core(hv), hesper.core(lv)])
+
+
 def coin_busy(rt: Runtime, sym: str) -> bool:
     """True while anything still runs on the coin: a record call (open or waiting for entry), a bot position / order,
     or the Hesper Challenge trade / order."""
@@ -348,8 +357,11 @@ def coin_busy(rt: Runtime, sym: str) -> bool:
         st = loads(r["state"], {}) or {}
         if any(q.get("symbol") == sym for q in (st.get("positions") or []) + (st.get("pending") or [])):
             return True
-    hs = rt.db.get_setting(hesper.STATE_KEY, None) or {}
-    return any(q.get("symbol") == sym for q in (hs.get("positions") or []) + (hs.get("pending") or []))
+    for c in hesper.CHALLENGES:            # v2.63: Hesper Challenge and Last Stand
+        hs = rt.db.get_setting(c.STATE_KEY, None) or {}
+        if any(q.get("symbol") == sym for q in (hs.get("positions") or []) + (hs.get("pending") or [])):
+            return True
+    return False
 
 
 def retire_coins(rt: Runtime, sink: BaseSink, doc: dict[str, Any]) -> tuple[dict[str, Any], list[str]]:
@@ -1017,8 +1029,7 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
         res = hesper.Hesper(rt).stop_run(by=str(job.get("by") or ""))       # v2.23: stops only; "Start new run" next
         if sink is not None:
             try:
-                hv = hesper.view(rt)               # the new run number changes `core`, so it goes out at once
-                sink.view("hesper", hv, min_interval_s=900, core=hesper.core(hv))
+                publish_hesper(rt, sink)           # the new run number changes `core`, so it goes out at once
             except Exception:
                 pass
         return res
@@ -1033,8 +1044,39 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
         res = hesper.Hesper(rt).start_new(amount, by=str(job.get("by") or ""))
         if sink is not None:
             try:
-                hv = hesper.view(rt)
-                sink.view("hesper", hv, min_interval_s=900, core=hesper.core(hv))
+                publish_hesper(rt, sink)
+            except Exception:
+                pass
+        return res
+    if kind in ("laststand_start", "laststand_close", "laststand_stop"):
+        # v2.63 Last Stand (admin only): start a run with any amount / close its trade (all or 50%) / end the run
+        if not job.get("_admin"):
+            raise PermissionError("only the admin can run Last Stand")
+        ls = hesper.LastStand(rt)
+        by = str(job.get("by") or "")
+        if kind == "laststand_start":
+            try:
+                amount = float(p.get("amount"))
+            except (TypeError, ValueError):
+                raise ValueError("enter a starting amount in USDT") from None
+            res = ls.start_new(amount, by=by)
+        elif kind == "laststand_stop":
+            res = ls.stop_run(by=by)
+        else:
+            try:
+                fraction = float(p.get("fraction", 1))
+            except (TypeError, ValueError):
+                raise ValueError("choose Close all or Close 50%") from None
+            res = ls.admin_close(fraction, by=by)
+            ev = res.pop("event", None)
+            if ev and sink is not None:
+                try:
+                    sink.send_push(hesper.push_messages([ev], hesper_members(rt, sink)))
+                except Exception:
+                    pass
+        if sink is not None:
+            try:
+                publish_hesper(rt, sink)
             except Exception:
                 pass
         return res
@@ -1121,7 +1163,7 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             result = run_job(rt, job, deadline, sink)
             sink.set(f"jobs/{jid}", {"status": "done", "json": dumps(result), "finished_at": now_ms()}, merge=True)
         except Exception as exc:
-            plain = job.get("type") in ("adjust_signal", "guardian_dismiss", "hold_signal", "hesper_new_run", "hesper_start_run") and isinstance(exc, (PermissionError, ValueError))
+            plain = job.get("type") in ("adjust_signal", "guardian_dismiss", "hold_signal", "hesper_new_run", "hesper_start_run", "laststand_start", "laststand_close", "laststand_stop") and isinstance(exc, (PermissionError, ValueError))
             if not plain:
                 log.exception("job %s failed", jid)
             # adjust_signal refusals carry a plain-language reason for the admin (no exception class name)
@@ -1258,8 +1300,7 @@ def publish(rt: Runtime, sink: BaseSink, engine: dict[str, Any], now: int, analy
             rt.record_error("scalping view", exc)
     # Road to Rich (admin only, one document; skipped in lean mode). Never blocks the rest of the publish.
     try:
-        hv = hesper.view(rt)
-        sink.view("hesper", hv, min_interval_s=900, core=hesper.core(hv))
+        publish_hesper(rt, sink)
     except Exception as exc:
         rt.record_error("hesper view", exc)
     for tf in views.FUTURES_TIMEFRAMES:
@@ -1460,6 +1501,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # Road to Rich (admin, 2 Nov 2026): Hesper's all-in demo runs - its own step and tables, after the bots
     hesper_events = step("hesper", lambda: hesper.Hesper(rt).run(started)) or []
+    hesper_events += step("laststand", lambda: hesper.LastStand(rt).run(started)) or []    # v2.63
     detail["hesper"] = len(hesper_events)
     if hesper_events:            # v2.30: the admin (and members when the challenge is shown to them) get a push
         detail["hesper_push"] = step("hesper_push", lambda: sink.send_push(

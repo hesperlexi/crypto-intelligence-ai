@@ -451,7 +451,8 @@ class BotEngine:
                         break
                     px = max(op, tp) if side > 0 else min(op, tp)
                     split = TP_SPLIT if len(pos["targets"]) == len(TP_SPLIT) else [1 / len(pos["targets"])] * len(pos["targets"])
-                    leg = pos["qty_open"] if pos["tp_hit"] == len(pos["targets"]) - 1 else pos["qty"] * split[pos["tp_hit"]]
+                    leg = pos["qty_open"] if pos["tp_hit"] == len(pos["targets"]) - 1 else (
+                        pos["qty"] * split[pos["tp_hit"]] * float(pos.get("leg_scale") or 1.0))   # v2.63 Last Stand half close
                     self._reduce(state, pos, min(leg, pos["qty_open"]), px, True)
                     pos["tp_hit"] += 1
                     if pos["tp_hit"] == 1:

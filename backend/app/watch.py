@@ -160,11 +160,21 @@ def call_messages(db: Any, prices: dict[str, float], sent: dict[str, int]) -> li
 # ---- Hesper Challenge ----------------------------------------------------------------------------------------------
 def hesper_messages(db: Any, prices: dict[str, float], sent: dict[str, int]) -> list[tuple[str, dict[str, str]]]:
     from .services import hesper as H
-    st = db.get_setting(H.STATE_KEY, None) or {}
+    out = []
+    for c in H.CHALLENGES:            # v2.63: Hesper Challenge and Last Stand
+        out += _challenge_messages(db, prices, sent, c)
+    return out
+
+
+def _challenge_messages(db: Any, prices: dict[str, float], sent: dict[str, int], cls: Any) -> list[tuple[str, dict[str, str]]]:
+    from .services import hesper as H
+    st = db.get_setting(cls.STATE_KEY, None) or {}
     if not st or st.get("idle"):
         return []
     run = st.get("run")
-    head = f"Hesper Challenge · run #{run}" if run else "Hesper Challenge"
+    head = f"{cls.TITLE} · run #{run}" if run else cls.TITLE
+    pre = "h" if cls.BOT_ID == H.BOT_ID else cls.BOT_ID          # keys / tags of the Hesper Challenge unchanged
+    tagp = "hesper" if cls.BOT_ID == H.BOT_ID else cls.BOT_ID
     found: list[tuple[str, str, str]] = []           # (key, tag, body)
     for q in st.get("positions") or []:
         p = prices.get(q.get("symbol"))
@@ -175,27 +185,28 @@ def hesper_messages(db: Any, prices: dict[str, float], sent: dict[str, int]) -> 
         hit = int(q.get("tp_hit") or 0)
         for n, lvl in enumerate(q.get("targets") or [], 1):
             if n > hit and _reached(side, p, lvl, toward_profit=True):
-                found.append((f"h:{q['id']}:tp{n}", f"hesper-{run}-tp-{coin}-{n}",
+                found.append((f"{pre}:{q['id']}:tp{n}", f"{tagp}-{run}-tp-{coin}-{n}",
                               f"{name}: price touched TP{n} {_px(lvl)}. {CONFIRM}"))
         if q.get("stop") is not None and _reached(side, p, q["stop"], toward_profit=False):
             what = "the stop" if not hit else "the break-even stop" if hit == 1 else "the stop at TP1 (profit kept)"
-            found.append((f"h:{q['id']}:stop", f"hesper-{run}-close-{coin}-",
+            found.append((f"{pre}:{q['id']}:stop", f"{tagp}-{run}-close-{coin}-",
                           f"{name}: price touched {what} {_px(q['stop'])}. The trade closes at the candle close."))
     for o in st.get("pending") or []:
         p = prices.get(o.get("symbol"))
         side = 1 if (o.get("side") or 0) > 0 else -1
         if p is not None and _reached(side, p, o.get("limit"), toward_profit=False):
             coin = _coin(o["symbol"])
-            found.append((f"h:{o['id']}:fill", f"hesper-{run}-fill-{coin}-",
+            found.append((f"{pre}:{o['id']}:fill", f"{tagp}-{run}-fill-{coin}-",
                           f"{coin}: price reached the entry order {_px(o['limit'])}. {CONFIRM}"))
     members = [u for u in (db.get_setting("hesper_push_members", None) or []) if isinstance(u, str)]
     out = []
     for key, tag, body in found:
         if key in sent:
             continue
-        base = {"title": head, "body": body, "url": H.PUSH_URL, "tag": tag}
+        url, murl = (H.PUSH_URL, H.MEMBER_URL) if pre == "h" else (f"{H.PUSH_URL}?c={pre}", f"{H.MEMBER_URL}&c={pre}")
+        base = {"title": head, "body": body, "url": url, "tag": tag}
         out.append((key, base))
-        out += [(key, {**base, "uid": u, "url": H.MEMBER_URL}) for u in members]
+        out += [(key, {**base, "uid": u, "url": murl}) for u in members]
     return out
 
 
@@ -241,8 +252,9 @@ def fetch_prices(symbols: list[str]) -> dict[str, float]:
 def watched_symbols(db: Any) -> list[str]:
     from .services import hesper as H
     syms = [r["symbol"] for r in db.query("SELECT DISTINCT symbol FROM signals WHERE status = 'OPEN' AND side != 0")]
-    st = db.get_setting(H.STATE_KEY, None) or {}
-    syms += [q.get("symbol") for q in (st.get("positions") or []) + (st.get("pending") or []) if q.get("symbol")]
+    for c in H.CHALLENGES:
+        st = db.get_setting(c.STATE_KEY, None) or {}
+        syms += [q.get("symbol") for q in (st.get("positions") or []) + (st.get("pending") or []) if q.get("symbol")]
     return [s for s in syms if s]
 
 

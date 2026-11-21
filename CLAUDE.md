@@ -1117,3 +1117,14 @@ free + separate Gemini key, reads only on-page data, member sign-in check, daily
   forced-close wave (≥ max(10× whale, 6× 24 h average)); 45 min cooldown per coin/kind; push only (url `/flow`); price
   after 15 m / 1 h / 4 h stored → `flow_watch.stats` in Health `engine.flow_alerts`. Plan (owner approved): after ~4-6
   weeks test flow / book / liquidation features with the research replay and switch on only where they help.
+
+## v2.63 Last Stand (owner, 21 Nov 2026)
+`services/hesper.LastStand(Hesper)`: a second all-in run inside the Hesper Challenge page (switch "Main run | Last Stand",
+`/rich?c=laststand`, members `/results?tab=challenge&c=laststand`). Same calls/rules as Hesper, own state `laststand_state`,
+tables `laststand_runs` / `laststand_trades`. Never starts by itself (`AUTO_START`/`AUTO_RESTART` False): the admin starts
+each run with any amount ≥ $5 (job `laststand_start`), ends it (`laststand_stop`), or closes its trade (`laststand_close`
+{fraction 1 | 0.5}, `admin_close`; half close sets `leg_scale` so TP legs take 50/25/25 of what is left - bots.py reads it,
+default 1). After a liquidation it waits for the admin. Published inside `views/hesper` as `laststand` (`worker.publish_hesper`,
+no new doc/rule). Pushes titled "Last Stand · run #N". Share images (`lib/hesperCard.ts` drawLastStandCard / drawTradeCard /
+drawRunCard) for both challenges, each with "Post to Telegram" (`lib/telegramShare.ts`: JPEG into `owner/telegram_drafts`,
+then job `telegram_post`). Tests `tests/test_laststand.py`.

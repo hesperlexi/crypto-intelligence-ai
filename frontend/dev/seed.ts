@@ -695,6 +695,49 @@ function hesper() {
       avg_trades_per_run: done.reduce((a, r) => a + r.trades, 0) / done.length, fastest_success: { run: fastest.run, ms: fastest.ended_at - fastest.started_at, trades: fastest.trades },
       fewest_trades_success: { run: fastest.run, trades: fastest.trades }, trades: trades.length, wins: trades.filter((x) => x.pnl > 0).length, streak: { kind: "win", n: 3 } },
     runs: [...runs].reverse(), trades: [...trades].reverse(), curves, label: "Demo · virtual money · not financial advice",
+    laststand: laststand(),
+  };
+}
+
+/** v2.63 Last Stand inside views/hesper: two liquidated runs and a live one that started from $10. */
+function laststand() {
+  const coins = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "BNB/USDT", "DOGE/USDT"];
+  const plan: [string, string | null, number, [number, string][]][] = [
+    ["FAIL", "liquidated", 10, [[48, "TP3"], [31, "TP2"], [-100, "liquidated"]]],
+    ["FAIL", "liquidated", 25, [[-52, "stop"], [64, "TP3"], [22, "closed by admin"], [-100, "liquidated"]]],
+    ["RUNNING", null, 10, [[57, "TP3"], [41, "TP2"], [-38, "stop"], [62, "TP3"], [18, "closed by admin"]]],
+  ];
+  const runs: any[] = [], trades: any[] = [], curves: Record<string, number[][]> = {};
+  let t = NOW - 6 * D, k = 0;
+  plan.forEach(([result, reason, start, seq], ri) => {
+    const run = ri + 1, t0 = t;
+    let bal = start, peak = start, wins = 0;
+    const pts: number[][] = [[t0, start]];
+    for (const [roi, ex] of seq) {
+      const symbol = coins[k % coins.length], px = PRICES[symbol].p, side = k % 3 === 1 ? -1 : 1, lev = [25, 20, 25, 18][k % 4];
+      const margin = bal * 0.995, pnl = margin * roi / 100, opened = t + H, closed = opened + (3 + (k % 4) * 3) * H;
+      trades.push({ id: `ls${k}`, run, symbol, timeframe: ["1h", "4h", "15m"][k % 3], side, leverage: lev, opened_at: opened, closed_at: closed, entry: px,
+        exit: px * (1 + side * roi / lev / 100), margin, pnl, roi_pct: roi, exit_reason: ex, tp_hit: ex.startsWith("TP") ? Number(ex[2]) : 0,
+        balance_before: bal, balance_after: bal + pnl, fees: margin * lev * 0.001, funding: 0 });
+      bal += pnl; peak = Math.max(peak, bal); if (pnl > 0) wins += 1; pts.push([closed, bal]); t = closed; k += 1;
+    }
+    runs.push({ run, started_at: t0, ended_at: result === "RUNNING" ? null : t, result, reason, start_balance: start, end_balance: result === "RUNNING" ? null : bal,
+      peak, trades: seq.length, wins, best_trade: null, goal_reached_at: null });
+    curves[String(run)] = pts; t += 5 * H;
+  });
+  const cur = runs[runs.length - 1], cash = trades[trades.length - 1].balance_after;
+  const eth = PRICES["ETH/USDT"].p, entry = eth * 0.994, lev = 25, margin = cash * 0.995, qty = margin * lev / entry;
+  return {
+    id: "laststand", name: "Last Stand", title: "Last Stand", auto_restart: false, min_start: 5, since: runs[0].started_at, start: 10, goal: 100,
+    max_leverage: 25, min_balance: 1, started: true, idle: false, generated_at: NOW, open_ended: true,
+    current: { run: cur.run, started_at: cur.started_at, cash: cash - margin, balance: cash * 1.07, peak: cur.peak, trades: cur.trades, wins: cur.wins, updated_at: NOW - 3 * 60_000,
+      start_balance: 10, goal: 100, goal_reached_at: null, pending: null,
+      open: { id: "lsopen", symbol: "ETH/USDT", timeframe: "1h", side: 1, entry, stop: entry * 0.985, stop0: entry * 0.985, targets: [entry * 1.015, entry * 1.025, entry * 1.035], tp_hit: 0,
+        leverage: lev, qty, qty_open: qty, margin, coll: entry / lev, liq: entry * (1 - 1 / lev + 0.005), realized: -margin * 0.012, opened_at: NOW - 3 * H,
+        signal_id: "s-eth", confidence: 0.66, horizon_bars: 200, run_target: null, balance_before: cash, admin_partials: 0 } },
+    score: { runs: 3, finished: 2, failures: 2, liquidations: 2, busted: 0, stopped: 0, successes: 0, milestones: 0, trades: trades.length,
+      wins: trades.filter((x) => x.pnl > 0).length, streak: { kind: "win", n: 2 }, best_peak: { run: 3, peak: cur.peak }, all_time_peak: cur.peak },
+    runs: [...runs].reverse(), trades: [...trades].reverse(), curves, label: "Demo · virtual money · not financial advice",
   };
 }
 

@@ -448,6 +448,48 @@ CREATE TABLE IF NOT EXISTS hesper_trades (
 );
 CREATE INDEX IF NOT EXISTS ix_hesper_trades_run ON hesper_trades (run, closed_at);
 
+-- v2.63 Last Stand (admin, 21 Nov 2026, services/hesper.LastStand): a second all-in run inside the Hesper Challenge,
+-- any starting amount, admin close all / 50%, runs until liquidated. Same columns as the Hesper tables.
+CREATE TABLE IF NOT EXISTS laststand_runs (
+  run INTEGER PRIMARY KEY,
+  started_at BIGINT NOT NULL,
+  ended_at BIGINT,
+  result TEXT NOT NULL DEFAULT 'RUNNING',   -- RUNNING | SUCCESS (old goal end) | FAIL | STOPPED (v2.22, by the admin)
+  reason TEXT,                              -- goal | liquidated | busted | stopped
+  start_balance DOUBLE PRECISION NOT NULL,
+  end_balance DOUBLE PRECISION,
+  peak DOUBLE PRECISION NOT NULL,
+  trades INTEGER NOT NULL DEFAULT 0,
+  wins INTEGER NOT NULL DEFAULT 0,
+  best_trade TEXT,
+  goal_reached_at BIGINT
+);
+CREATE TABLE IF NOT EXISTS laststand_trades (
+  id TEXT PRIMARY KEY,
+  run INTEGER NOT NULL,
+  signal_id TEXT,
+  symbol TEXT NOT NULL,
+  timeframe TEXT NOT NULL,
+  side INTEGER NOT NULL,
+  leverage DOUBLE PRECISION NOT NULL,
+  opened_at BIGINT NOT NULL,
+  closed_at BIGINT NOT NULL,
+  entry DOUBLE PRECISION NOT NULL,
+  exit DOUBLE PRECISION NOT NULL,
+  qty DOUBLE PRECISION NOT NULL,
+  margin DOUBLE PRECISION NOT NULL,
+  pnl DOUBLE PRECISION NOT NULL,
+  fees DOUBLE PRECISION NOT NULL,
+  funding DOUBLE PRECISION NOT NULL,
+  roi_pct DOUBLE PRECISION,
+  exit_reason TEXT NOT NULL,
+  tp_hit INTEGER NOT NULL DEFAULT 0,
+  balance_before DOUBLE PRECISION NOT NULL,
+  balance_after DOUBLE PRECISION NOT NULL,
+  info TEXT
+);
+CREATE INDEX IF NOT EXISTS ix_laststand_trades_run ON laststand_trades (run, closed_at);
+
 -- v2.16 practice leaderboard (3 Nov 2026, services/leaderboard.py). One row per member and calendar month (Dubai time):
 -- the first reading of their futures practice account in the month (start_*) and the latest one (last_json). Deposits
 -- ("Add funds") are taken out of the return. Winners are decided at the first run after the month ends; never changed.

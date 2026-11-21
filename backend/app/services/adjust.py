@@ -260,7 +260,13 @@ def close(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
 def _hesper(rt: Any, method: str, *args: Any) -> int:
     """Road to Rich: Hesper holds the call too -> same change (best effort; the record change stands)."""
     try:
-        from .hesper import Hesper
-        return getattr(Hesper(rt), method)(*args)
+        from .hesper import CHALLENGES
     except Exception:
         return 0
+    n = 0
+    for c in CHALLENGES:              # v2.63: the Hesper Challenge and Last Stand may both hold the call
+        try:
+            n += int(getattr(c(rt), method)(*args) or 0)
+        except Exception:
+            pass
+    return n

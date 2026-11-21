@@ -76,43 +76,52 @@ def _start_of(state: dict[str, Any] | None) -> float:
     return float((state or {}).get("start_balance") or START_BALANCE)
 
 
-def _trade_cfg(tf: str, horizon: int, lev: float) -> dict[str, Any]:
+def _trade_cfg(tf: str, horizon: int, lev: float, bot_id: str = BOT_ID, name: str = NAME) -> dict[str, Any]:
     """The bot config `_manage_decision` follows the current trade with (one trade at a time)."""
-    return {"id": BOT_ID, "name": NAME, "mode": "decision", "timeframe": tf, "symbols": "all", "market": "futures",
+    return {"id": bot_id, "name": name, "mode": "decision", "timeframe": tf, "symbols": "all", "market": "futures",
             "safe_leverage": True, "leverage": float(lev), "max_hold_bars": int(horizon), "grades": "".join(GRADES),
             "pending_bars": PENDING_BARS, "allow_short": True, "starting_balance": START_BALANCE}
 
 
 class Hesper(BotEngine):
+    # v2.63: one class per challenge (Hesper Challenge, Last Stand); each has its own state, flag and tables
+    BOT_ID, NAME, TITLE = BOT_ID, NAME, "Hesper Challenge"
+    STATE_KEY, FLAG, SINCE = STATE_KEY, FLAG, SINCE
+    RUNS, TRADES = "hesper_runs", "hesper_trades"
+    AUTO_START = True            # run 1 starts by itself (one time)
+    AUTO_RESTART = True          # after a liquidation / bust the next run starts at once with the same amount
+    MIN_START, MAX_START = 10.0, 1_000_000.0
+
     def __init__(self, rt: Runtime):
         super().__init__(rt)
 
     # ---- state -------------------------------------------------------------------------------------------
     def load(self) -> dict[str, Any] | None:
-        st = self.db.get_setting(STATE_KEY, None)
+        st = self.db.get_setting(self.STATE_KEY, None)
         return st if isinstance(st, dict) else None
 
     def save(self, state: dict[str, Any]) -> None:
-        self.db.set_setting(STATE_KEY, state)
+        self.db.set_setting(self.STATE_KEY, state)
 
-    def start(self, now: int) -> dict[str, Any]:
-        """One-time start (flag `hesper_v1`): run 1 at $100 from now. Never restarted afterwards."""
+    def start(self, now: int) -> dict[str, Any] | None:
+        """One-time start (flag `hesper_v1`): run 1 at $100 from now. Never restarted afterwards. Last Stand
+        (AUTO_START False) waits for the admin's first "Start run" instead (None until then)."""
         state = self.load()
-        if state is not None:
+        if state is not None or not self.AUTO_START:
             return state
-        if not self.db.get_setting(SINCE, None):
-            self.db.set_setting(SINCE, now)
-        last = self.db.one("SELECT MAX(run) AS n FROM hesper_runs")
+        if not self.db.get_setting(self.SINCE, None):
+            self.db.set_setting(self.SINCE, now)
+        last = self.db.one(f"SELECT MAX(run) AS n FROM {self.RUNS}")
         run = int((last or {}).get("n") or 0) + 1
         state = _fresh_state(run, now)
         self._insert_run(state)
-        self.db.set_setting(FLAG, True)
+        self.db.set_setting(self.FLAG, True)
         self.save(state)
         return state
 
     def _insert_run(self, state: dict[str, Any]) -> None:
         st = _start_of(state)
-        self.db.execute("INSERT INTO hesper_runs (run, started_at, result, start_balance, peak, trades, wins) "
+        self.db.execute(f"INSERT INTO {self.RUNS} (run, started_at, result, start_balance, peak, trades, wins) "
                         "VALUES (?, ?, 'RUNNING', ?, ?, 0, 0) ON CONFLICT (run) DO NOTHING",
                         (state["run"], state["started_at"], st, st))
 
@@ -123,7 +132,7 @@ class Hesper(BotEngine):
     def run(self, now: int | None = None) -> list[dict[str, Any]]:
         now = now_ms() if now is None else now
         state = self.start(now)
-        if state.get("idle"):                  # v2.23: stopped by the admin, waiting for "Start new run"
+        if not state or state.get("idle"):                  # v2.23: stopped by the admin, waiting for "Start new run"
             return []
         events: list[dict[str, Any]] = []
         self._funding(state, now)
@@ -139,7 +148,7 @@ class Hesper(BotEngine):
             for q in state["positions"]:
                 for n in range(before.get(q["id"], 0) + 1, int(q.get("tp_hit") or 0) + 1):
                     if q["id"] in before:
-                        events.append({"bot": BOT_ID, "type": "tp", "symbol": q["symbol"], "tp": n,
+                        events.append({"bot": self.BOT_ID, "type": "tp", "symbol": q["symbol"], "tp": n,
                                        "side": q.get("side"), "run": state["run"]})
         if not state["positions"] and not state["pending"]:
             state["trade_cfg"] = None
@@ -147,6 +156,8 @@ class Hesper(BotEngine):
             if ended:
                 events.append(ended)
                 state = self.load() or state
+                if state.get("idle"):          # v2.63 Last Stand: waits for the admin's next "Start run"
+                    return events
             events += self._enter(state, now)
         for e in events:
             e.setdefault("run", state["run"])
@@ -164,15 +175,15 @@ class Hesper(BotEngine):
         if state.get("goal_reached_at") or float(state.get("equity", state["cash"])) < goal - 1e-9:
             return None
         state["goal_reached_at"] = int(now)
-        self.db.execute("UPDATE hesper_runs SET goal_reached_at = ? WHERE run = ? AND result = 'RUNNING' "
+        self.db.execute(f"UPDATE {self.RUNS} SET goal_reached_at = ? WHERE run = ? AND result = 'RUNNING' "
                         "AND goal_reached_at IS NULL", (int(now), state["run"]))
-        return {"bot": BOT_ID, "type": "goal_reached", "run": state["run"], "balance": float(state["equity"])}
+        return {"bot": self.BOT_ID, "type": "goal_reached", "run": state["run"], "balance": float(state["equity"])}
 
     def _finish(self, state: dict[str, Any], now: int, result: str, reason: str, at: int, start_next: bool = True) -> None:
         """Close the run's row (result / reason / balance). An automatic end (liquidated / busted) starts the next run
         at once with the same starting amount; an admin stop (v2.23) leaves the challenge idle until "Start new run"."""
         cash = float(state["cash"])
-        self.db.execute("UPDATE hesper_runs SET ended_at = ?, result = ?, reason = ?, end_balance = ?, peak = ?, "
+        self.db.execute(f"UPDATE {self.RUNS} SET ended_at = ?, result = ?, reason = ?, end_balance = ?, peak = ?, "
                         "trades = ?, wins = ? WHERE run = ? AND result = 'RUNNING'",
                         (at, result, reason, cash, max(float(state["peak"]), cash), state["trades"], state["wins"],
                          state["run"]))
@@ -190,18 +201,18 @@ class Hesper(BotEngine):
         """v2.23 admin "Start new run" after a stop, with the starting amount the admin chose."""
         now = now_ms() if now is None else now
         amount = float(amount)
-        if not (MIN_START <= amount <= MAX_START):
-            raise ValueError(f"the starting amount must be between {MIN_START:,.0f} and {MAX_START:,.0f} USDT")
+        if not (self.MIN_START <= amount <= self.MAX_START):
+            raise ValueError(f"the starting amount must be between {self.MIN_START:,.0f} and {self.MAX_START:,.0f} USDT")
         state = self.load()
         if state is not None and not state.get("idle"):
             raise ValueError(f"run #{state['run']} is still running; stop it first")
-        last = self.db.one("SELECT MAX(run) AS n FROM hesper_runs")
+        last = self.db.one(f"SELECT MAX(run) AS n FROM {self.RUNS}")
         run = int((last or {}).get("n") or 0) + 1
         nxt = _fresh_state(run, now, amount)
         nxt["taken"] = list((state or {}).get("taken") or [])
-        if not self.db.get_setting(SINCE, None):
-            self.db.set_setting(SINCE, now)
-        self.db.set_setting(FLAG, True)
+        if not self.db.get_setting(self.SINCE, None):
+            self.db.set_setting(self.SINCE, now)
+        self.db.set_setting(self.FLAG, True)
         self._insert_run(nxt)
         self.save(nxt)
         return {"run": run, "start_balance": amount, "goal": goal_of(amount), "by": by}
@@ -213,7 +224,7 @@ class Hesper(BotEngine):
         now = now_ms() if now is None else now
         state = self.load()
         if state is None:
-            raise ValueError("the Hesper challenge has not started yet")
+            raise ValueError(f"the {self.TITLE} has not started yet")
         if state.get("idle"):
             raise ValueError(f"run #{state['run']} has already ended")
         closed = []
@@ -221,7 +232,7 @@ class Hesper(BotEngine):
             px = self._price(pos["symbol"]) or pos["entry"]
             if pos["qty_open"] > 0:
                 self._reduce(state, pos, pos["qty_open"], float(px), False)
-            closed.append(self._close_trade(BOT_ID, state, pos, now, "stopped by admin"))
+            closed.append(self._close_trade(self.BOT_ID, state, pos, now, "stopped by admin"))
         for o in list(state.get("pending") or []):
             state["cash"] = state.get("cash", 0.0) + o.get("reserved", 0.0)
         state["pending"] = []
@@ -242,8 +253,8 @@ class Hesper(BotEngine):
             result, reason = "FAIL", "busted"
         else:
             return None
-        self._finish(state, now, result, reason, int(state.get("end_at") or now))
-        return {"bot": BOT_ID, "type": "run_end", "run": state["run"], "result": result, "reason": reason,
+        self._finish(state, now, result, reason, int(state.get("end_at") or now), start_next=self.AUTO_RESTART)
+        return {"bot": self.BOT_ID, "type": "run_end", "restart": self.AUTO_RESTART, "run": state["run"], "result": result, "reason": reason,
                 "balance": cash}
 
     # ---- entries ---------------------------------------------------------------------------------------------
@@ -311,7 +322,7 @@ class Hesper(BotEngine):
         run = p.get("runner") or {}
         if run.get("on") and run.get("target"):
             info["run_target"] = float(run["target"])
-        cfg = _trade_cfg(tf, horizon, lev)
+        cfg = _trade_cfg(tf, horizon, lev, self.BOT_ID, self.NAME)
         state["taken"] = (list(state.get("taken") or []) + [r["id"]])[-50:]
         state["last_entry_bar"][sym] = r["bar_ts"]
         if pullback:
@@ -322,12 +333,12 @@ class Hesper(BotEngine):
                                      "info": info, "last_check": _first_full(now),
                                      "expires_at": now + PENDING_BARS * tf_ms(tf)})
             state["trade_cfg"] = cfg
-            return {"bot": BOT_ID, "type": "limit", "symbol": sym, "price": entry, "signal_id": r["id"]}
+            return {"bot": self.BOT_ID, "type": "limit", "symbol": sym, "price": entry, "signal_id": r["id"]}
         pos = self._open(state, sym, side, px, qty, now, info, stop, targets, lev=lev, cfg=cfg)
         if not pos:
             return None
         state["trade_cfg"] = cfg
-        return {"bot": BOT_ID, "type": "open", "symbol": sym, "side": side, "price": pos["entry"], "leverage": lev,
+        return {"bot": self.BOT_ID, "type": "open", "symbol": sym, "side": side, "price": pos["entry"], "leverage": lev,
                 "signal_id": r["id"]}
 
     # ---- closes -----------------------------------------------------------------------------------------------
@@ -350,14 +361,14 @@ class Hesper(BotEngine):
                                 "decision": info.get("decision"), "liquidation_price": pos.get("liq"),
                                 "stop0": pos.get("stop0"), "targets": pos.get("targets"),
                                 "run_target": info.get("run_target"), "horizon_bars": info.get("horizon_bars")})}
-        self.db.execute(f"INSERT INTO hesper_trades ({', '.join(trade)}) VALUES ({', '.join('?' * len(trade))}) "
+        self.db.execute(f"INSERT INTO {self.TRADES} ({', '.join(trade)}) VALUES ({', '.join('?' * len(trade))}) "
                         "ON CONFLICT (id) DO NOTHING", list(trade.values()))
         state["trades"] = int(state.get("trades", 0)) + 1
         state["wins"] = int(state.get("wins", 0)) + (1 if pnl > 0 else 0)
         state["peak"] = max(float(state.get("peak", _start_of(state))), bal)
-        best = self.db.one("SELECT id, symbol, timeframe, pnl, roi_pct FROM hesper_trades WHERE run = ? "
+        best = self.db.one(f"SELECT id, symbol, timeframe, pnl, roi_pct FROM {self.TRADES} WHERE run = ? "
                            "ORDER BY pnl DESC LIMIT 1", (trade["run"],))
-        self.db.execute("UPDATE hesper_runs SET trades = ?, wins = ?, peak = ?, best_trade = ? "
+        self.db.execute(f"UPDATE {self.RUNS} SET trades = ?, wins = ?, peak = ?, best_trade = ? "
                         "WHERE run = ? AND result = 'RUNNING'",
                         (state["trades"], state["wins"], state["peak"], dumps(best) if best else None, trade["run"]))
         state["end_at"] = int(now)
@@ -400,6 +411,69 @@ class Hesper(BotEngine):
             self.save(state)
         return n
 
+    # ---- v2.63 admin "Close all" / "Close 50%" on the challenge's own trade (never the call, never the other run) ----
+    def admin_close(self, fraction: float, now: int | None = None, by: str = "", px: float | None = None) -> dict[str, Any]:
+        """Close the open trade now at the engine's price: all of it (fraction 1) or half of what is still open
+        (0.5). The run goes on. A half close scales the remaining target legs so TP1-3 still take 50 / 25 / 25 of what
+        is left. "Close all" also cancels a waiting entry order."""
+        now = now_ms() if now is None else now
+        fraction = float(fraction)
+        if fraction not in (0.5, 1.0):
+            raise ValueError("choose Close all or Close 50%")
+        state = self.load()
+        if not state or state.get("idle"):
+            raise ValueError("no run in progress")
+        pos = (state.get("positions") or [None])[0]
+        if pos is None:
+            pend = list(state.get("pending") or [])
+            if pend and fraction == 1.0:
+                for o in pend:
+                    state["cash"] = state.get("cash", 0.0) + o.get("reserved", 0.0)
+                state["pending"], state["trade_cfg"] = [], None
+                self.save(state)
+                return {"cancelled_order": True, "balance": round(float(state["cash"]), 2), "by": by}
+            raise ValueError("no open trade to close" + (" (an entry order is waiting: use Close all to cancel it)" if pend else ""))
+        price = float(px if px is not None else (self._price(pos["symbol"]) or pos["entry"]))
+        left = float(pos["qty_open"])
+        if fraction == 1.0 or left * 0.5 * price < 1.0:          # half of a dust position: close it all
+            self._reduce(state, pos, left, price, False)
+            t = self._close_trade(self.BOT_ID, state, pos, now, "closed by admin")
+            state["trade_cfg"] = None
+            state["equity"] = self.equity(state)
+            self.save(state)
+            return {"closed": "all", "symbol": pos["symbol"], "price": price, "pnl": round(t["pnl"], 4),
+                    "balance": round(float(state["cash"]), 2), "by": by,
+                    "event": {"bot": self.BOT_ID, "type": "close", "symbol": pos["symbol"], "reason": "closed by admin",
+                              "pnl": t["pnl"], "run": state["run"], "balance": float(state["cash"])}}
+        before = float(pos["realized"])
+        self._reduce(state, pos, left * 0.5, price, False)
+        pos["leg_scale"] = float(pos.get("leg_scale") or 1.0) * 0.5
+        pos["admin_partials"] = list(pos.get("admin_partials") or []) + [{"at": int(now), "price": price, "share": 0.5}]
+        state["equity"] = self.equity(state)
+        self.save(state)
+        part = float(pos["realized"]) - before
+        return {"closed": "half", "symbol": pos["symbol"], "price": price, "pnl": round(part, 4),
+                "balance": round(float(state["equity"]), 2), "by": by,
+                "event": {"bot": self.BOT_ID, "type": "partial", "symbol": pos["symbol"], "pnl": part,
+                          "run": state["run"], "side": pos.get("side")}}
+
+
+class LastStand(Hesper):
+    """v2.63 (owner, 21 Nov 2026): a second all-in run inside the Hesper Challenge page. Same calls and rules as the
+    Hesper Challenge (fresh public grade-A calls, all-in, one trade at a time), its own account and record. The admin
+    starts each run with any amount, can close its trade (all / 50%), and the run goes on until it is liquidated (or too
+    small to trade). Nothing starts by itself: after a liquidation it waits for the admin's next "Start run"."""
+    BOT_ID, NAME, TITLE = "laststand", "Last Stand", "Last Stand"
+    STATE_KEY, FLAG, SINCE = "laststand_state", "laststand_v1", "laststand_since"
+    RUNS, TRADES = "laststand_runs", "laststand_trades"
+    AUTO_START = False
+    AUTO_RESTART = False
+    MIN_START, MAX_START = 5.0, 1_000_000.0
+
+
+CHALLENGES = (Hesper, LastStand)
+BY_ID = {c.BOT_ID: c for c in CHALLENGES}
+
 
 def _first_full(now: int) -> int:
     from .bots import _first_full_candle
@@ -427,16 +501,17 @@ def _trade_row(t: dict[str, Any]) -> dict[str, Any]:
                                   "balance_after", "fees", "funding")}
 
 
-def view(rt: Any) -> dict[str, Any]:
+def view(rt: Any, cls: type[Hesper] = Hesper) -> dict[str, Any]:
     db = rt.db
-    st = db.get_setting(STATE_KEY, None)
-    since = db.get_setting(SINCE, None)
+    st = db.get_setting(cls.STATE_KEY, None)
+    since = db.get_setting(cls.SINCE, None)
     start = _start_of(st if isinstance(st, dict) else None)
-    base = {"name": NAME, "since": since, "start": start, "goal": float((st or {}).get("goal") or goal_of(start)) if isinstance(st, dict) else goal_of(start),
+    base = {"id": cls.BOT_ID, "name": cls.NAME, "title": cls.TITLE, "auto_restart": cls.AUTO_RESTART,
+            "min_start": cls.MIN_START, "since": since, "start": start, "goal": float((st or {}).get("goal") or goal_of(start)) if isinstance(st, dict) else goal_of(start),
             "max_leverage": MAX_LEVERAGE, "idle": bool(isinstance(st, dict) and st.get("idle")),
             "policy": {"timeframes": list(F.POLICY_TFS), "min": F.MIN_LEVERAGE, "max": F.POLICY_MAX_LEVERAGE},
             "min_balance": MIN_BALANCE, "started": bool(st), "generated_at": now_ms()}
-    runs = db.query("SELECT * FROM hesper_runs ORDER BY run DESC")
+    runs = db.query(f"SELECT * FROM {cls.RUNS} ORDER BY run DESC")
     for r in runs:
         r["best_trade"] = loads(r.get("best_trade"), None)
     done = [r for r in runs if r["result"] != "RUNNING"]
@@ -445,7 +520,7 @@ def view(rt: Any) -> dict[str, Any]:
     stopped = [r for r in done if r["result"] == "STOPPED"]
     # v2.22: a run "made it" when it reached the $1,000 milestone (old SUCCESS runs, or goal_reached_at on newer ones)
     reached = [r for r in runs if r["result"] == "SUCCESS" or r.get("goal_reached_at")]
-    all_trades = db.query("SELECT * FROM hesper_trades ORDER BY closed_at DESC, id DESC")
+    all_trades = db.query(f"SELECT * FROM {cls.TRADES} ORDER BY closed_at DESC, id DESC")
     best_run = max(runs, key=lambda r: r["peak"]) if runs else None
     fastest = min(succ, key=lambda r: (r["ended_at"] - r["started_at"], r["trades"])) if succ else None
     fewest = min(succ, key=lambda r: (r["trades"], r["ended_at"] - r["started_at"])) if succ else None
@@ -479,7 +554,8 @@ def view(rt: Any) -> dict[str, Any]:
                                "coll": pos.get("coll"), "liq": pos.get("liq"), "realized": pos.get("realized"),
                                "opened_at": pos["opened_at"], "signal_id": i.get("signal_id"),
                                "confidence": i.get("confidence"), "horizon_bars": i.get("horizon_bars"),
-                               "run_target": i.get("run_target"), "balance_before": i.get("balance_before")}
+                               "run_target": i.get("run_target"), "balance_before": i.get("balance_before"),
+                               "admin_partials": len(pos.get("admin_partials") or [])}
         elif pend:
             i = pend.get("info") or {}
             current["pending"] = {"id": pend.get("id"), "symbol": pend["symbol"], "timeframe": i.get("timeframe"),
@@ -541,7 +617,8 @@ def _usd(v: Any) -> str:
 def push_text(ev: dict[str, Any]) -> tuple[str, str] | None:
     """(title, body) of one challenge event, or None for an event that is not worth a notification."""
     t, coin, run = ev.get("type"), _coin(ev.get("symbol")), ev.get("run")
-    head = f"Hesper Challenge · run #{run}" if run else "Hesper Challenge"
+    title = (BY_ID.get(str(ev.get("bot") or "")) or Hesper).TITLE
+    head = f"{title} · run #{run}" if run else title
     side = "LONG" if (ev.get("side") or 0) > 0 else "SHORT"
     if t == "open":
         lev = f", {float(ev['leverage']):g}x" if ev.get("leverage") else ""
@@ -562,9 +639,13 @@ def push_text(ev: dict[str, Any]) -> tuple[str, str] | None:
         return head, f"{coin} closed {'+' if pnl >= 0 else '-'}{_usd(abs(pnl))}" + (f" ({why})." if why else ".") + bal
     if t == "run_end":
         why = {"liquidated": "liquidated", "busted": "balance too low to trade"}.get(ev.get("reason"), ev.get("reason") or "ended")
-        return head, f"Run ended: {why}. Final balance {_usd(ev.get('balance'))}. The next run starts now."
+        nxt = "The next run starts now." if ev.get("restart", True) else "Start the next run when you're ready."
+        return head, f"Run ended: {why}. Final balance {_usd(ev.get('balance'))}. {nxt}"
     if t == "goal_reached":
-        return head, f"Goal reached! Balance {_usd(ev.get('balance'))}. The run keeps going."
+        return head, f"10x reached! Balance {_usd(ev.get('balance'))}. The run keeps going."
+    if t == "partial":
+        pnl = float(ev.get("pnl") or 0)
+        return head, f"{coin}: half of the trade closed by the admin, {'+' if pnl >= 0 else '-'}{_usd(abs(pnl))}. The rest stays open."
     return None
 
 
@@ -575,8 +656,10 @@ def push_messages(events: list[dict[str, Any]], member_uids: list[str] | tuple[s
         tb = push_text(ev)
         if not tb:
             continue
-        base = {"title": tb[0], "body": tb[1], "url": PUSH_URL,
-                "tag": f"hesper-{ev.get('run')}-{ev.get('type')}-{_coin(ev.get('symbol'))}-{ev.get('tp') or ''}"}
+        bot = str(ev.get("bot") or BOT_ID)
+        base = {"title": tb[0], "body": tb[1], "url": PUSH_URL if bot == BOT_ID else f"{PUSH_URL}?c={bot}",
+                "tag": f"{'hesper' if bot == BOT_ID else bot}-{ev.get('run')}-{ev.get('type')}-{_coin(ev.get('symbol'))}-{ev.get('tp') or ''}"}
         out.append(dict(base))
-        out += [{**base, "uid": uid, "url": MEMBER_URL} for uid in member_uids]
+        murl = MEMBER_URL if bot == BOT_ID else f"{MEMBER_URL}&c={bot}"
+        out += [{**base, "uid": uid, "url": murl} for uid in member_uids]
     return out
