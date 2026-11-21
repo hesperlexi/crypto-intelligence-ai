@@ -1,0 +1,19 @@
+{
+ "mexc_matches": [
+  "ANTHROPIC_USDT"
+ ],
+ "mexc_ANTHROPIC_USDT_1h": {
+  "bars": 2001,
+  "first": 1788048000,
+  "last": 1795248000,
+  "last_close": 86.76
+ },
+ "mexc_ANTHROPIC_USDT_1d": {
+  "bars": 222,
+  "first": 1776124800
+ },
+ "okx_matches": [
+  "ANTHROPIC-USDT-SWAP"
+ ],
+ "binance_fapi": "blocked"
+}
