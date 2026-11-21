@@ -57,6 +57,8 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
         bundle = trainer.train_bundle(symbol, timeframe, frame, btc, fast=fast, progress=progress, htf=htf, deriv=deriv)
         bundle.setdefault("extras", {})["deriv_gate"] = gate
         bundle["extras"]["htf_gate"] = htf_gate_res
+        status.update(progress=0.93, message="comparing with the live model")
+        bundle["challenger"] = _challenge(rt, symbol, timeframe, frame, btc, bundle)
         status.update(progress=0.95, message="saving")
         trainer.save_bundle(bundle, rt.db)
         rt.analysis_cache.clear()
@@ -71,6 +73,28 @@ def train_one(rt: Runtime, symbol: str, timeframe: str, fast: bool = False) -> d
         rt.record_error(f"train {symbol} {timeframe}", exc)
         status.update(state="failed", error=error_text(exc, 300), message="failed", finished_at=now_ms())
     return status
+
+
+def _challenge(rt: Runtime, symbol: str, timeframe: str, frame: Any, btc: Any, bundle: dict[str, Any]) -> dict[str, Any]:
+    """v2.65 champion / challenger (ml/challenger.py, built in v2 but never called): the new model against the live one on
+    bars neither trained on. The decision travels with the bundle; trainer.activate_or_hold applies it."""
+    try:
+        old = trainer.load_bundle(symbol, timeframe, rt.db)
+        if old is None:
+            return {"activate": True, "basis": "first model"}
+        from ..features.dataset import make_dataset
+        from ..ml import challenger
+        hf = _try_frame(rt, symbol, HTF_OF[timeframe]) if timeframe in HTF_OF else None
+        try:
+            dv = rt.deriv_frame(symbol)
+        except Exception:
+            dv = None
+        ds = make_dataset(frame, btc, htf=hf, deriv=dv)      # superset of features: either model takes what it needs
+        out = challenger.compare(old, bundle, ds)
+        return {**{k: (float(v) if isinstance(v, (int, float)) and not isinstance(v, bool) else v) for k, v in out.items()},
+                "old_version": old.get("version")}
+    except Exception as exc:          # the comparison never stops a release
+        return {"activate": True, "basis": f"compare failed: {error_text(exc, 120)}"}
 
 
 def _try_frame(rt: Runtime, symbol: str, timeframe: str):

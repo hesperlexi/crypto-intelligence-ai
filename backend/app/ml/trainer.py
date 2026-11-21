@@ -372,8 +372,8 @@ def save_bundle(bundle: dict[str, Any], db: Database) -> str:
     Path(settings.model_dir).mkdir(parents=True, exist_ok=True)
     path = str(Path(settings.model_dir) / f"{bundle['version']}.joblib")
     joblib.dump(bundle, path, compress=3)
-    register(bundle_record(bundle), path, db)
-    _cache[f"{bundle['symbol']}|{bundle['timeframe']}"] = bundle
+    if register(bundle_record(bundle), path, db):        # v2.65: a held challenger is never served from the cache
+        _cache[f"{bundle['symbol']}|{bundle['timeframe']}"] = bundle
     return path
 
 
@@ -387,18 +387,45 @@ def bundle_record(bundle: dict[str, Any]) -> dict[str, Any]:
             "created_at": int(bundle["created_at"]), "data_start": bundle["data_start"], "data_end": bundle["data_end"],
             "n_samples": int(bundle["n_samples"]), "n_oos": int(bundle["n_oos"]),
             "edge_confirmed": int(bundle["edge"]["edge_confirmed"]), "summary": _summary(bundle), "metrics": metrics,
-            "gates": {k: v for k, v in (bundle.get("extras") or {}).items() if k in ("htf_gate", "deriv_gate") and v}}
+            "gates": {k: v for k, v in (bundle.get("extras") or {}).items() if k in ("htf_gate", "deriv_gate") and v},
+            "challenger": bundle.get("challenger")}
 
 
-def register(rec: dict[str, Any], path: str, db: Database) -> None:
-    db.execute("UPDATE model_versions SET active = 0 WHERE symbol = ? AND timeframe = ?", (rec["symbol"], rec["timeframe"]))
+def register(rec: dict[str, Any], path: str, db: Database) -> bool:
+    activate = activate_or_hold(rec, db)
+    if activate:
+        db.execute("UPDATE model_versions SET active = 0 WHERE symbol = ? AND timeframe = ?", (rec["symbol"], rec["timeframe"]))
     db.execute(
         "INSERT INTO model_versions (id, symbol, timeframe, created_at, data_start, data_end, n_samples, n_oos, "
-        "edge_confirmed, active, path, summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)",
+        "edge_confirmed, active, path, summary) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (rec["version"], rec["symbol"], rec["timeframe"], rec["created_at"], rec["data_start"], rec["data_end"],
-         rec["n_samples"], rec["n_oos"], rec["edge_confirmed"], path, dumps(rec["summary"])))
+         rec["n_samples"], rec["n_oos"], rec["edge_confirmed"], 1 if activate else 0, path, dumps(rec["summary"])))
     db.executemany("INSERT INTO model_metrics (model_version_id, model, metric, value) VALUES (?, ?, ?, ?)",
                    [(rec["version"], m, k, v) for m, k, v in rec["metrics"]])
+    return activate
+
+
+CHALLENGER_LOG = "challenger_log"
+
+
+def activate_or_hold(rec: dict[str, Any], db: Database) -> bool:
+    """v2.65 champion / challenger. Every decision is logged (setting `challenger_log`, last 400). While
+    `settings.challenger_enforce` is off (shadow, the default until the log proves it), every new model still goes live;
+    when on, a new model that is clearly worse than the live one on shared unseen bars is stored inactive (the live
+    model stays; the file is kept 7 days like any inactive version)."""
+    ch = rec.get("challenger") or {}
+    enforce = bool(settings.challenger_enforce)
+    activate = True if not ch else bool(ch.get("activate", True)) or not enforce
+    try:
+        log_ = list(db.get_setting(CHALLENGER_LOG, None) or [])[-399:]
+        log_.append({"at": int(time.time() * 1000), "symbol": rec.get("symbol"), "tf": rec.get("timeframe"),
+                     "version": rec.get("version"), "old": ch.get("old_version"), "verdict": ch.get("activate", True),
+                     "basis": ch.get("basis"), "enforced": enforce, "activated": activate,
+                     **{k: ch.get(k) for k in ("bars", "brier_new", "brier_old", "hit_new", "hit_old") if k in ch}})
+        db.set_setting(CHALLENGER_LOG, log_)
+    except Exception:
+        pass
+    return activate
 
 
 def import_bundle(rec: dict[str, Any], file: str, db: Database) -> bool:

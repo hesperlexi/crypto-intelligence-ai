@@ -20,6 +20,7 @@ from .research_ideas import _cap
 from .research_verdict import curve, verdict
 
 WINDOW = 100
+REASONS: dict[str, int] = {}
 
 
 def _hook(rt: Any, sym: str, tf: str, ctx: Any, tune: np.ndarray, test: np.ndarray, trades: list[dict[str, Any]]) -> None:
@@ -32,6 +33,8 @@ def _hook(rt: Any, sym: str, tf: str, ctx: Any, tune: np.ndarray, test: np.ndarr
         f = TF.train(ctx.X[ti], ctx.P[ti], ctx.rows[ti], ind["high"].to_numpy(float), ind["low"].to_numpy(float),
                      ind["close"].to_numpy(float), ind["atr"].to_numpy(float), _cost())
         on = bool(f.get("enabled") and f.get("model") is not None)
+        why = "on" if on else str(f.get("reason") or "off").split(" labelled")[0][:40]
+        REASONS[why] = REASONS.get(why, 0) + 1
         for t in trades:
             j = int(t["j"])
             t["v1_on"] = on
@@ -75,15 +78,23 @@ def _slim(v):
 
 def run(db_url: str, budget_s: float) -> dict[str, Any]:
     trades, skipped, t0, _rt = collect(db_url, budget_s, hook=_hook)
+    from .research_risk import loss_stop, regime_of
+    cache: dict = {}
+    for t in trades:
+        t["volatile"] = regime_of(_rt, t["sym"], int(t["ts"]), cache).endswith("_volatile")
     live = _cap(trades, 12, False)                                                 # today, without any v1 filter
     with_v1 = _cap([t for t in trades if not t.get("v1_block")], 12, False)
     with_drift = _cap([t for t in trades if not t.get("drift_block")], 12, False)
+    calm_drift = [t for t in trades if not t.get("drift_block") and not t["volatile"]]
+    veto = loss_stop(_cap(calm_drift, 12, False), 3, 6)          # the capital-protection package: drift + volatility + loss stop
     v1_series = len({(t["sym"], t["tf"]) for t in trades if t.get("v1_on")})
     return {"ok": True, "calls": len(trades), "seconds": round(time.time() - t0, 1), "skipped": skipped[:20],
             "skipped_n": len(skipped),
             "trade_filter_v1": {"series_with_filter_on": v1_series, "blocked": sum(1 for t in trades if t.get("v1_block")),
                                 "overall_remove_filter": _slim(verdict(with_v1, live)),
                                 "by_tf_remove_filter": {k: _slim(v) for k, v in _by_tf(with_v1, live).items()}},
+            "v1_train_outcomes": REASONS,
+            "veto_package": {"overall": _slim(verdict(live, veto)), "by_tf": {k: _slim(v) for k, v in _by_tf(live, veto).items()}},
             "drift_downgrade": {"blocked": sum(1 for t in trades if t.get("drift_block")),
                                 "overall": _slim(verdict(live, with_drift)),
                                 "by_tf": {k: _slim(v) for k, v in _by_tf(live, with_drift).items()}}}
