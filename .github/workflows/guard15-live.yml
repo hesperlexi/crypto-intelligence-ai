@@ -1,0 +1,53 @@
+name: Guard15 live check (read-only)
+# Replays the Hesper Challenge's real trades with Last Stand's leverage (backend/app/laststand_whatif.py). Restores the
+# engine state cache read-only (never saved back); the JSON goes to the research-results branch.
+on:
+  workflow_dispatch:
+    inputs:
+      start:
+        description: "split from (ms)"
+        default: "1794787200000"
+jobs:
+  whatif:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: backend/requirements-worker.txt
+      - run: pip install -r requirements-worker.txt
+      - name: Restore the engine state (read-only copy; never saved back)
+        id: state
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-none
+          restore-keys: engine-state-
+      - name: Run
+        run: |
+          mkdir -p ../out
+          python -m app.guard15_live --since-ms "${{ github.event.inputs.start }}" --out ../out/guard15-live.json 2> ../err.txt \
+            || python3 -c "import json; print(json.dumps({'ok': False, 'reason': open('../err.txt').read()[-1500:]}))" > ../out/guard15-live.json
+          head -c 3000 ../out/guard15-live.json
+      - name: Commit to research-results
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3; do
+            rm -rf ../rr; git worktree prune
+            git fetch --depth 1 origin research-results
+            git worktree add ../rr FETCH_HEAD
+            git -C ../rr checkout -B research-results
+            mkdir -p ../rr/results && cp out/* ../rr/results/
+            (cd ../rr && git add results && { git commit -m "Guard15 live check" || exit 0; } && git push origin HEAD:research-results) && break
+            sleep 10
+          done
