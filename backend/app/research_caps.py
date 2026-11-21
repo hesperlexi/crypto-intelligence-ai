@@ -24,7 +24,7 @@ def replay(db_url: str, budget_s: float) -> dict[str, Any]:
     return summarize(trades, skipped, t0)
 
 
-def collect(db_url: str, budget_s: float) -> tuple[list[dict[str, Any]], list[str], float, Any]:
+def collect(db_url: str, budget_s: float, hook: Any = None) -> tuple[list[dict[str, Any]], list[str], float, Any]:
     """The live-guarded out-of-sample test calls of every series (before any cap), with the runtime used."""
     from . import research_engine as RE
     from . import research_v213 as V
@@ -76,7 +76,13 @@ def collect(db_url: str, budget_s: float) -> tuple[list[dict[str, Any]], list[st
             m &= (d["grade"] == "A")
         dd = _masked(d, m)
         tr = V._with_funding(ctx, dd, SP.run_series(ctx, paths, test, dd, entry_mode="old", news=news))
-        trades += [{**t, "side": int(dd["side"][t["j"]]), "tf": tf, "sym": s} for t in tr]
+        new = [{**t, "side": int(dd["side"][t["j"]]), "tf": tf, "sym": s} for t in tr]
+        if hook is not None:
+            try:
+                hook(rt, s, tf, ctx, tune, test, new)
+            except Exception as exc:          # a study hook never stops the replay
+                skipped.append(f"{s} {tf}: hook {type(exc).__name__}")
+        trades += new
     return trades, skipped, t0, rt
 
 
