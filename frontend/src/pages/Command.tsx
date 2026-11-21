@@ -309,7 +309,7 @@ function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: a
   const stars = useMemo(() => { let x = 7; const r = () => ((x = (x * 9301 + 49297) % 233280) / 233280); return Array.from({ length: 70 }, () => ({ x: r() * W, y: r() * H, s: 0.3 + r() * 1.1, d: r() * 4 })); }, []);
   const maxW = Math.max(1, ...nodes.map((n) => Math.abs(n.w ?? 0)));
   // fixed slots around the ellipse (degrees; 90 = front): back-left, back-right, front-left, front-right, front
-  const SLOTS = [205, 335, 155, 25, 90];
+  const SLOTS = [222, 318, 138, 42, 90];
   const placed = nodes.map((n, i) => {
     const c = isNum(n.c) ? Math.max(0, Math.min(1, n.c)) : 0.3;
     const orb = ORB[2] - c * (ORB[2] - ORB[0]);
@@ -359,13 +359,21 @@ function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: a
             <g className="uv-float" style={{ animationDelay: `${n.depth * 2}s`, transformOrigin: `${n.x}px ${n.y}px` }}>
               <CoinBead id={id} symbol={n.s} x={n.x} y={n.y} r={n.r} tone={n.up ? UP : DN} ring={1.6} />
             </g>
-            <g transform={`translate(${n.x} ${n.y + n.r + 9})`}>
-              <rect x={-44} y={0} width={88} height={30} rx={8} fill="rgb(var(--ink) / 0.78)" stroke={n.up ? "rgb(var(--bull) / 0.4)" : "rgb(var(--bear) / 0.4)"} strokeWidth={0.7} />
-              <text x={0} y={12.5} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="rgb(var(--text))">{name(n.s)} <tspan fill={n.up ? UP : DN}>{pct(n.w)}</tspan></text>
-              <text x={0} y={24} textAnchor="middle" fontSize="8.5" fill="rgb(var(--mute))">{isNum(n.c) ? `${Math.round(n.c * 100)}% with BTC` : "—"}</text>
-            </g>
           </g>
         ))}
+        {/* labels on top of everything, beside the planet on the outer side (below for the front one) */}
+        {placed.map((n) => {
+          let side = n.x < C.x - 20 ? -1 : n.x > C.x + 20 ? 1 : 0;
+          if (side && (n.x + side * (n.r + 50) < 46 || n.x + side * (n.r + 50) > W - 46)) side = 0;   // no room beside: below
+          const lx = side === 0 ? n.x : n.x + side * (n.r + 50), ly = side === 0 ? n.y + n.r + 9 : n.y - 15;
+          return (
+            <g key={`l${n.s}`} transform={`translate(${lx} ${ly})`} pointerEvents="none">
+              <rect x={-44} y={0} width={88} height={30} rx={8} fill="rgb(var(--ink) / 0.92)" stroke={n.up ? "rgb(var(--bull) / 0.5)" : "rgb(var(--bear) / 0.5)"} strokeWidth={0.8} />
+              <text x={0} y={12.5} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="rgb(var(--text))">{name(n.s).length > 8 ? name(n.s).slice(0, 7) + "…" : name(n.s)} <tspan fill={n.up ? UP : DN}>{pct(n.w)}</tspan></text>
+              <text x={0} y={24} textAnchor="middle" fontSize="8.5" fill="rgb(var(--text) / 0.7)">{isNum(n.c) ? `${Math.round(n.c * 100)}% with BTC` : "—"}</text>
+            </g>
+          );
+        })}
         <g transform={`translate(${C.x} ${C.y - 58})`}>
           <rect x={-40} y={-11} width={80} height={20} rx={10} fill="rgb(var(--ink) / 0.8)" stroke="rgb(var(--accent) / 0.55)" strokeWidth={0.7} />
           <text x={0} y={3.5} textAnchor="middle" fontSize="10" fontWeight="700" fill="rgb(var(--accent))">BTC {pct(bw)}</text>

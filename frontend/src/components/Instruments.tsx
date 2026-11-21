@@ -75,15 +75,15 @@ export const OrbitDial = memo(function OrbitDial({ rows, fg, fgLabel, status }: 
     .map((x) => ({ x, v: leanOf(x) }))
     .sort((a, b) => b.v - a.v || (b.x.score ?? 0) - (a.x.score ?? 0)), [rows]);
   const n = Math.max(1, list.length);
-  const C = 180, RB = 116, RL = 133;
+  const C = 180, RB = 140;
   const step = TAU / n;
-  const beadR = Math.max(5, Math.min(9.5, (RB * step) / 2 - 3));
+  const beadR = Math.max(6, Math.min(13, (RB * step) / 2 - 2.5));
   const start = -Math.PI / 2;
   const ang = (i: number) => start + (i + 0.5) * step;
   // background bands per group
   const groups: { v: number; i0: number; i1: number }[] = [];
   list.forEach((p, i) => { const g = p.v > 0 ? 1 : p.v < 0 ? -1 : 0; const last = groups[groups.length - 1]; if (last && last.v === g) last.i1 = i; else groups.push({ v: g, i0: i, i1: i }); });
-  const f0 = Math.PI * 0.75, f1 = Math.PI * 2.25, RF = 92;
+  const f0 = Math.PI * 0.75, f1 = Math.PI * 2.25, RF = 106;
   const fv = isNum(fg) ? Math.max(0, Math.min(100, fg)) : null;
   const fa = fv == null ? null : f0 + (f1 - f0) * (fv / 100);
   const bull = status?.bull ?? list.filter((p) => p.v > 0).length;
@@ -123,17 +123,13 @@ export const OrbitDial = memo(function OrbitDial({ rows, fg, fgLabel, status }: 
         {/* coins */}
         {list.map((p, i) => {
           const a = ang(i), x = C + RB * Math.cos(a), y = C + RB * Math.sin(a);
-          const left = Math.cos(a) < -0.001;
-          const deg = (a * 180) / Math.PI + (left ? 180 : 0);
-          const lx = C + RL * Math.cos(a), ly = C + RL * Math.sin(a);
           const b = base(p.x.symbol);
           const on = hover?.symbol === p.x.symbol;
           return (
             <Link key={p.x.symbol} to={`/asset/${slug(p.x.symbol)}`} className="ins-bead" aria-label={`${b}: ${words(p.v)}`}
               onMouseEnter={() => setHover(p.x)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(p.x)} onBlur={() => setHover(null)}>
               <CoinBead id={id} symbol={p.x.symbol} x={x} y={y} r={on ? beadR + 1.5 : beadR} tone={toneOf(p.v)} ring={Math.abs(p.v) >= 1 ? 1.8 : 1} />
-              <text x={lx} y={ly} transform={`rotate(${deg.toFixed(1)} ${lx.toFixed(1)} ${ly.toFixed(1)})`} textAnchor={left ? "end" : "start"} dominantBaseline="central"
-                fontSize="9" fontWeight={on ? 800 : 600} letterSpacing="0.3" fill={on ? "rgb(var(--text))" : "rgb(var(--text) / 0.72)"}>{b.length > 7 ? b.slice(0, 6) + "…" : b}</text>
+              <title>{`${b} · ${words(p.v)}`}</title>
             </Link>
           );
         })}
