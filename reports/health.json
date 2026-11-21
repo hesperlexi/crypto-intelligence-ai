@@ -1,0 +1,88 @@
+{
+ "status": "DEGRADED",
+ "generated_min_ago": 4.3,
+ "market_data": {
+  "status": "OK",
+  "transport": "engine snapshot (website streams live prices)",
+  "last_update_ms": 1795250713185,
+  "age_s": 176.231,
+  "reconnects": 0,
+  "last_error": null,
+  "quality_pct": 100.0,
+  "stale_series": 2,
+  "has_error": false
+ },
+ "exchange": {
+  "name": "binance",
+  "errors": 0,
+  "last_error": null,
+  "last_ok_ms": 1795250826032,
+  "clock_skew_ms": 0,
+  "status": "OK",
+  "has_error": false
+ },
+ "database": {
+  "ok": true,
+  "engine": "sqlite"
+ },
+ "engine": {
+  "last_tick_finished": 1795250826395,
+  "last_tick_seconds": 122.0,
+  "failed_steps": [],
+  "data_host": "https://data-api.binance.vision",
+  "ticks": 7226
+ },
+ "series_total": 116,
+ "series_not_ok": 4,
+ "not_ok": [
+  {
+   "symbol": "ANT/USDT",
+   "timeframe": "15m",
+   "status": "NO DATA",
+   "candles": 0,
+   "missing": 0,
+   "misaligned": null,
+   "malformed": 0,
+   "quality_pct": null,
+   "age_s": null,
+   "gaps": []
+  },
+  {
+   "symbol": "ANT/USDT",
+   "timeframe": "1h",
+   "status": "NO DATA",
+   "candles": 0,
+   "missing": 0,
+   "misaligned": null,
+   "malformed": 0,
+   "quality_pct": null,
+   "age_s": null,
+   "gaps": []
+  },
+  {
+   "symbol": "ANT/USDT",
+   "timeframe": "4h",
+   "status": "STALE",
+   "candles": 5969,
+   "missing": 0,
+   "misaligned": 0,
+   "malformed": 0,
+   "quality_pct": 100.0,
+   "age_s": 86849289.4,
+   "gaps": []
+  },
+  {
+   "symbol": "ANT/USDT",
+   "timeframe": "1d",
+   "status": "STALE",
+   "candles": 1287,
+   "missing": 0,
+   "misaligned": 0,
+   "malformed": 0,
+   "quality_pct": 100.0,
+   "age_s": 86777289.4,
+   "gaps": []
+  }
+ ],
+ "recent_errors_count": 0
+}
