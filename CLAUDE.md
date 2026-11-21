@@ -1163,3 +1163,8 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
 - Hence SHADOW mode: `services/risk_shadow.py` records `risk_shadow` {volatile, day_r, week_r, loss_stop, would_block} in
   every published call's payload (never blocks; `analysis.PRIVATE_FIELDS` keeps it and `filter_bypassed` out of member
   views). The weekly check-up compares would_block calls with the rest and promotes only on proof.
+- Deep audit (21 Nov, doc tab "Deep audit v2.64"; live counts `app/audit_usage.py`, workflow `audit-usage.yml` →
+  `research-results/results/usage-latest.json`): `ml/challenger.py` is NEVER called (every retrain goes live via
+  `trainer.register`); drift / calibration are display-only; the 15m/1h/4h blocking filter is the per-model v1 trade filter
+  (on in 46 of those 129 models; pooled filter2 is off there, on only 12h / 1d); regime ensemble weights used by 137 models,
+  never compared with plain weights. v2.65 plan in the doc (7 changes, each behind `research_verdict`).
