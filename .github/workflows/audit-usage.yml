@@ -1,0 +1,80 @@
+name: Audit live usage (read-only)
+
+# Read-only risk study (backend/app/research_risk.py): BTC-shock pause, daily / weekly loss stops and correlated-exposure
+# caps on the models' unseen calls vs the live system, judged by research_verdict (PASS / FAIL / INCONCLUSIVE), plus a
+# regime split. Restores the engine state cache only (never saved back); results go to research-results/results/usage-*.json.
+on:
+  workflow_dispatch:
+    inputs:
+      budget:
+        description: "seconds for the replay part"
+        default: "14400"
+
+concurrency:
+  group: audit-usage
+  cancel-in-progress: true
+
+jobs:
+  research:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: write          # commit the JSON results to the research-results branch
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            backend/requirements-worker.txt
+            backend/requirements-torch.txt
+      - run: pip install -r requirements-worker.txt
+      - name: Install PyTorch (CPU) so saved models with LSTM / GRU / Transformer members load
+        run: pip install -r requirements-torch.txt || echo "::warning::torch not installed"
+      - name: Restore the engine state (read-only copy; never saved back)
+        id: state
+        uses: actions/cache/restore@v4
+        with:
+          path: backend/data
+          key: engine-state-none
+          restore-keys: engine-state-
+      - name: Run the research
+        env:
+          DATABASE_URL: sqlite:///./data/crypto_ai.db
+        run: |
+          mkdir -p ../out
+          stamp=$(date -u +%Y%m%dT%H%M%SZ)
+          if [ -z "${{ steps.state.outputs.cache-matched-key }}" ] || [ ! -f data/crypto_ai.db ]; then
+            printf '{"ok": false, "command": "usage", "reason": "engine state cache not restored", "commit": "%s"}\n' "${GITHUB_SHA}" > ../out/usage-latest.json
+          else
+            python -m app.audit_usage --out ../out/usage-latest.json > /dev/null 2> ../err.txt \
+              || python3 -c "import json,sys; print(json.dumps({'ok': False, 'command': 'usage', 'reason': open('../err.txt').read()[-1500:]}))" > ../out/usage-latest.json
+          fi
+          cp ../out/usage-latest.json ../out/usage-$stamp.json
+          echo "cache key: ${{ steps.state.outputs.cache-matched-key }}" > ../out/usage-source.txt
+          echo "commit: ${GITHUB_SHA}" >> ../out/usage-source.txt
+      - name: Commit the results to the research-results branch
+        working-directory: .
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3; do
+            rm -rf ../rr; git worktree prune
+            if git ls-remote --exit-code --heads origin research-results >/dev/null 2>&1; then
+              git fetch --depth 1 origin research-results
+              git worktree add ../rr FETCH_HEAD
+              git -C ../rr checkout -B research-results
+            else
+              git worktree add --detach ../rr
+              git -C ../rr checkout --orphan research-results
+              git -C ../rr rm -rf --quiet . || true
+            fi
+            mkdir -p ../rr/results
+            cp out/* ../rr/results/
+            (cd ../rr && git add results && { git commit -m "Usage audit for ${GITHUB_SHA::7}" || exit 0; } && git push origin HEAD:research-results) && break
+            sleep 10
+          done
