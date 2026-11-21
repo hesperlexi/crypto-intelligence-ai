@@ -24,6 +24,7 @@ training and wins_today never see it. It only reads `signals`. Admin-only view `
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from ..data.base import tf_ms
@@ -301,14 +302,9 @@ class Hesper(BotEngine):
         entry = float(r["entry"]) if pullback else px
         if side * (entry - stop) <= 0:
             return None
-        # v2.14: the engine's leverage (10-50x from stop distance, coin tier, grade); too wide for 10x -> not taken
-        if F.in_policy(tf):          # v2.14 (15m): the engine's 10-50x; too wide for 10x -> not taken
-            el = F.engine_leverage(entry, stop, r.get("symbol"), (r.get("payload") or {}).get("grade") or "A", tf)
-            if el is None:
-                return None
-            lev = float(el)
-        else:                        # v2.13: up to 25x, lowered so liquidation sits 1.5x the stop distance away
-            lev = float(min(MAX_LEVERAGE, F.safe_leverage(entry, stop, MAX_LEVERAGE, symbol=r.get("symbol"))))
+        lev = self._leverage(entry, stop, r, tf)
+        if lev is None:
+            return None
         fee_rate = F.FUTURES_FEE_RATE
         qty = float(state["cash"]) * ALL_IN / (entry * (1 / lev + fee_rate))
         if qty <= 0:
@@ -340,6 +336,14 @@ class Hesper(BotEngine):
         state["trade_cfg"] = cfg
         return {"bot": self.BOT_ID, "type": "open", "symbol": sym, "side": side, "price": pos["entry"], "leverage": lev,
                 "signal_id": r["id"]}
+
+    def _leverage(self, entry: float, stop: float, r: dict[str, Any], tf: str) -> float | None:
+        # v2.14: the engine's leverage (10-50x from stop distance, coin tier, grade); too wide for 10x -> not taken
+        if F.in_policy(tf):          # v2.14 (15m): the engine's 10-50x; too wide for 10x -> not taken
+            el = F.engine_leverage(entry, stop, r.get("symbol"), (r.get("payload") or {}).get("grade") or "A", tf)
+            return None if el is None else float(el)
+        # v2.13: up to 25x, lowered so liquidation sits 1.5x the stop distance away
+        return float(min(MAX_LEVERAGE, F.safe_leverage(entry, stop, MAX_LEVERAGE, symbol=r.get("symbol"))))
 
     # ---- closes -----------------------------------------------------------------------------------------------
     def _close_trade(self, bot_id: str, state: dict[str, Any], pos: dict[str, Any], now: int, reason: str,
@@ -469,6 +473,19 @@ class LastStand(Hesper):
     AUTO_START = False
     AUTO_RESTART = False
     MIN_START, MAX_START = 5.0, 1_000_000.0
+    # v2.63b (owner: "a bit aggressive, we use a very little amount"): up to 50x on every timeframe, liquidation only
+    # LIQ_BUFFER x the stop distance beyond the entry (Hesper: 1.5x, max 25x). The stop still comes before liquidation.
+    MAX_LEVERAGE = 50
+    LIQ_BUFFER = 1.15
+
+    def _leverage(self, entry: float, stop: float, r: dict[str, Any], tf: str) -> float | None:
+        dist = abs(entry - stop) / entry if entry else 0.0
+        if dist <= 0:
+            return None
+        m = F.maintenance_rate(r.get("symbol"))
+        fee = F.FUTURES_FEE_RATE
+        lev = math.floor(1 / (self.LIQ_BUFFER * dist * (1 + m + fee) + m + fee))
+        return float(max(1, min(self.MAX_LEVERAGE, lev)))
 
 
 CHALLENGES = (Hesper, LastStand)

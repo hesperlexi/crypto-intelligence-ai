@@ -100,3 +100,14 @@ def test_push_urls_and_tags_keep_hesper_unchanged():
     assert m[1]["url"] == "/results?tab=challenge&c=laststand"
     h = H.push_messages([{"bot": "hesper", "type": "open", "symbol": "BTC/USDT", "side": 1, "price": 1, "run": 2}])
     assert h[0]["title"] == "Hesper Challenge · run #2" and h[0]["url"] == "/rich" and h[0]["tag"].startswith("hesper-2")
+
+
+def test_last_stand_leverage_is_more_aggressive_but_stop_before_liquidation(quiet):
+    from app.engine import futures as F
+    for stop in (98.0, 99.0, 97.0, 99.6):
+        r = {"symbol": "BTC/USDT", "payload": {"grade": "A"}}
+        ls = H.LastStand.__new__(H.LastStand)._leverage(100.0, stop, r, "1h")
+        hz = H.Hesper.__new__(H.Hesper)._leverage(100.0, stop, r, "1h")
+        assert ls >= hz and ls <= 50
+        assert F.liquidation_price(100.0, 1, ls, symbol="BTC/USDT") < stop        # the stop fills first
+    assert H.LastStand.__new__(H.LastStand)._leverage(100.0, 98.0, {"symbol": "BTC/USDT"}, "1h") > 25

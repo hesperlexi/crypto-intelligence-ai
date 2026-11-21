@@ -1128,3 +1128,4 @@ default 1). After a liquidation it waits for the admin. Published inside `views/
 no new doc/rule). Pushes titled "Last Stand · run #N". Share images (`lib/hesperCard.ts` drawLastStandCard / drawTradeCard /
 drawRunCard) for both challenges, each with "Post to Telegram" (`lib/telegramShare.ts`: JPEG into `owner/telegram_drafts`,
 then job `telegram_post`). Tests `tests/test_laststand.py`.
+Last Stand leverage (v2.63b, owner "a bit aggressive"): up to 50x on every timeframe, liquidation 1.15x the stop distance beyond the entry (`LastStand.MAX_LEVERAGE`, `LIQ_BUFFER`; Hesper stays 25x / 1.5x). The stop still comes first.
