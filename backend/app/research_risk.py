@@ -140,10 +140,14 @@ def run(db_url: str, budget_s: float) -> dict[str, Any]:
         variants[f"loss_stop_{d}_{w}"] = loss_stop(base, d, w)
     for cap in (6.0, 8.0, 10.0):
         variants[f"corr_cap_{cap:g}"] = corr_cap(trades, corr_of, cap)
-    results = {k: verdict(base, v) for k, v in variants.items()}
     cache: dict = {}
-    for t in base:
+    for t in trades:
         t["regime"] = regime_of(rt, t["sym"], int(t["ts"]), cache)
+    # v2.65b: no new call while the coin's 4h ATR14 is above 1.5 x its ATR100 (abnormal volatility)
+    calm = [t for t in trades if not t["regime"].endswith("_volatile")]
+    variants["no_volatile"] = _cap(calm, 12, False)
+    variants["no_volatile_loss_stop_3_6"] = loss_stop(_cap(calm, 12, False), 3, 6)
+    results = {k: verdict(base, v) for k, v in variants.items()}
     mid = float(np.median([t["ts"] for t in base])) if base else 0
     regimes: dict[str, Any] = {}
     for tf in sorted({t["tf"] for t in base}):
