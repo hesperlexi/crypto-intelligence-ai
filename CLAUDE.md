@@ -1144,3 +1144,6 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
   the published calls they would have blocked (payload `filter_bypassed`) are not losing; ≥10 closed with avg net R < 0 →
   filters block again for good (setting `filter_off_revoked|TF`; Health `engine.filter_off`). Replays (as_of) keep the
   filters on. Test `tests/test_filter_off.py`.
+- v2.64 same-side cap 8 → 12 (`combo_gates.SAME_SIDE_CAP`), from `research-results/results/caps-latest.json` (886 test
+  calls): total +15.1R → +34.1R, better in both halves (4.0 → 16.6, 11.2 → 17.5), avg 0.027 → 0.049R, max drawdown
+  32.6R → 37.4R. Cap 24 / none earned more (+53R) but drawdown 49R - not taken. 1d negative in every variant (−0.10 to −0.15R, 28 calls).

@@ -19,7 +19,7 @@ VP_ON = os.environ.get("VP_FILTER", "1") != "0"
 VP_LOOKBACK, VP_BINS, VP_AREA, VP_K = 200, 50, 0.70, 0.5
 FEE_FILTER_TFS = tuple(t.strip() for t in os.environ.get("FEE_FILTER_TFS", "1h,4h").split(",") if t.strip())
 FEE_MIN_STOP_PCT = float(os.environ.get("FEE_MIN_STOP_PCT", "1.5"))
-SAME_SIDE_CAP = int(os.environ.get("SAME_SIDE_CAP", "8"))          # 0 = off
+SAME_SIDE_CAP = int(os.environ.get("SAME_SIDE_CAP", "12"))         # 0 = off; v2.64: 8 -> 12 (caps study 21 Nov 2026)
 
 
 def profile(h: np.ndarray, l: np.ndarray, c: np.ndarray, v: np.ndarray) -> dict[str, float] | None:
