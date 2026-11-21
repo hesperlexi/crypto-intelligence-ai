@@ -8,7 +8,7 @@ let good = 0;
 
 export const bsym = (symbol: string) => symbol.replace("/", "").toUpperCase();
 /** v2.49: coins with signals but no Binance spot market (MSTR stock perpetual): charts / book / prices from USDⓈ-M futures. */
-export const FUT_ONLY_PAIRS = new Set(["MSTRUSDT"]);
+export const FUT_ONLY_PAIRS = new Set(["MSTRUSDT", "ANTHROPICUSDT"]);   // v2.65 Anthropic pre-IPO perpetual
 export const isFutOnly = (symbol: string) => FUT_ONLY_PAIRS.has(bsym(symbol));
 
 async function get<T = any>(path: string, hosts = REST): Promise<T> {

@@ -36,7 +36,7 @@ const StreamCtx = createContext<StreamState | null>(null);
 export const GOLD = "XAUT/USDT";
 // v2.46 (owner, 16 Nov 2026): Strategy (MicroStrategy) stock perpetual, MSTRUSDT on Binance USDⓈ-M (also on MEXC) -
 // futures only, like gold: live chart, order book and demo trading. MSTR has AI signals since v2.49 (MEXC candles).
-const FUT_ONLY: Record<string, string> = { [GOLD]: "GOLD", "MSTR/USDT": "STOCK" };
+const FUT_ONLY: Record<string, string> = { [GOLD]: "GOLD", "MSTR/USDT": "STOCK", "ANTHROPIC/USDT": "PRE-IPO" };
 const isGold = (s: string) => s in FUT_ONLY;            // any futures-only pair (name kept: used across this file)
 
 function useFutOnlyListed(): string[] {
@@ -196,7 +196,7 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket, onFutures }: { s
         <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-glass/[0.05]">
           <CoinAvatar symbol={symbol} size={30} />
           <span className="text-left"><span className="font-display block text-lg font-bold leading-none">{base(symbol)}<span className="text-mute">/USDT</span></span>
-            <span className="text-xs text-mute">{FUT_ONLY[symbol] === "GOLD" ? "Gold · Perpetual · USDT-M" : FUT_ONLY[symbol] === "STOCK" ? "Stock · Perpetual · USDT-M" : market === "futures" ? "Perpetual · USDT-M" : "Spot"}</span></span>
+            <span className="text-xs text-mute">{FUT_ONLY[symbol] === "GOLD" ? "Gold · Perpetual · USDT-M" : FUT_ONLY[symbol] === "STOCK" ? "Stock · Perpetual · USDT-M" : FUT_ONLY[symbol] === "PRE-IPO" ? "Pre-IPO · Perpetual · USDT-M" : market === "futures" ? "Perpetual · USDT-M" : "Spot"}</span></span>
           <span className="text-mute" aria-hidden="true">▾</span>
         </button>
         {open && (
@@ -238,7 +238,7 @@ function SignalStrip({ symbol, market }: { symbol: string; market: Mkt }) {
   const r = (v.data?.rows ?? []).find((x: any) => x.symbol === symbol);
   if (FUT_ONLY[symbol] === "GOLD") return <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">Gold (XAUT) is for live charts and demo trading. The AI does not make signals for it.</div>;
   // v2.49: MSTR has AI signals (engine candles from MEXC futures); until its first analysis is out, say so
-  if (!r) return FUT_ONLY[symbol] === "STOCK" ? <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">MSTR (Strategy stock perpetual): the AI is learning this coin. Signals appear here once its first analysis is published.</div> : null;
+  if (!r) return FUT_ONLY[symbol] === "STOCK" || FUT_ONLY[symbol] === "PRE-IPO" ? <div className="rounded-xl border border-glass/10 bg-glass/[0.03] px-3 py-2 text-xs text-mute">{FUT_ONLY[symbol] === "STOCK" ? "MSTR (Strategy stock perpetual)" : "Anthropic (pre-IPO perpetual)"}: the AI is learning this coin. Signals appear here once its first analysis is published.</div> : null;
   const vd = verdictOf(r, market);
   const p = r.plan;
   const usable = vd.tone !== "wait" && p && (market === "futures" || p.side === "LONG");

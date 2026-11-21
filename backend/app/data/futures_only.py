@@ -17,7 +17,8 @@ import requests
 
 from ..redact import redact
 
-FUT_ONLY: dict[str, str] = {"MSTR/USDT": "MSTRSTOCK_USDT"}      # app symbol -> MEXC contract
+FUT_ONLY: dict[str, str] = {"MSTR/USDT": "MSTRSTOCK_USDT",       # app symbol -> MEXC contract
+                            "ANTHROPIC/USDT": "ANTHROPIC_USDT"}  # v2.65 Anthropic pre-IPO perpetual (MEXC since 14 Apr 2026)
 MEXC = "https://contract.mexc.com/api/v1/contract"
 NATIVE = {"1m": "Min1", "5m": "Min5", "15m": "Min15", "30m": "Min30", "1h": "Min60", "4h": "Hour4", "1d": "Day1",
           "1w": "Week1"}

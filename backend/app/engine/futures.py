@@ -41,7 +41,7 @@ CARD_BUFFER = 1.5                    # liquidation at least 1.5x the stop distan
 MIN_BUFFER = 1.5                     # v2.13: no safe leverage is ever computed with a smaller buffer
 # v2.13: approximate Binance USDT-M tier-1 maintenance margin rates (see the module doc)
 MAINTENANCE_TIERS = {
-    "BTC": 0.004, "ETH": 0.004,
+    "BTC": 0.004, "ETH": 0.004, "ANTHROPIC": 0.025,      # v2.65 pre-IPO perpetual: thin, treated like stock perps
     "BNB": 0.005, "SOL": 0.005, "XRP": 0.005, "LTC": 0.005, "ADA": 0.005, "LINK": 0.005, "DOT": 0.005,
     "AVAX": 0.01, "AAVE": 0.01, "TRX": 0.01, "BCH": 0.01, "ATOM": 0.01, "NEAR": 0.01, "TON": 0.01, "GRAM": 0.01,
     "DOGE": 0.02, "SHIB": 0.02, "PEPE": 0.02, "1000PEPE": 0.02, "1000SHIB": 0.02, "WIF": 0.02, "BONK": 0.02,

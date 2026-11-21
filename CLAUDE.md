@@ -1186,3 +1186,9 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
 - v2.65 worst move per call: `engine/manage.follow` tracks `trough_r` (worst R against the call while open; fill candle =
   its close; a stop = the stop fill) → column `trough_r` (`db.MIGRATIONS`, every signal-like table) via `tracking.TRACKED`.
 - v2.65 tiny prices (owner: BONK TP/SL unreadable): `format.pricePrecision` keeps 4 significant digits after the leading zeros below 0.01 (0.00002153, max 12 decimals) - used by `fmtPrice`, charts and the adjust inputs; `hesperCard.fmtPx` uses it too.
+- v2.65 Anthropic (owner, 21 Nov 2026: ANT/USDT - Aragon, delisted 2023 - had been added by mistake for "Anthropic"):
+  `futures_only.FUT_ONLY["ANTHROPIC/USDT"] = "ANTHROPIC_USDT"` (MEXC pre-IPO perpetual since 14 Apr 2026; probe
+  `anthropic-probe.yml` → `reports/anthropic-probe.json`: 222 daily bars, OKX also lists it, Binance USDⓈ-M ANTHROPICUSDT
+  since 2 Jun 2026). One-time flag `anthropic_v265` (in `MIGRATION_FLAGS`, gated by `ADD_MSTR` like MSTR) replaces ANT/USDT
+  with ANTHROPIC/USDT in `config/watchlist`. Margin tier 2.5 % (engine + `paperFutures`). Frontend `FUT_ONLY_PAIRS`
+  ANTHROPICUSDT, Trade label "PRE-IPO". Signals only where its nightly models prove an edge. Test `tests/test_anthropic_v265.py`.
