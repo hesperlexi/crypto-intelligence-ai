@@ -1192,3 +1192,9 @@ blocks on 15m; scores are still computed. Bigger-trend, costs, grade A only and 
   since 2 Jun 2026). One-time flag `anthropic_v265` (in `MIGRATION_FLAGS`, gated by `ADD_MSTR` like MSTR) replaces ANT/USDT
   with ANTHROPIC/USDT in `config/watchlist`. Margin tier 2.5 % (engine + `paperFutures`). Frontend `FUT_ONLY_PAIRS`
   ANTHROPICUSDT, Trade label "PRE-IPO". Signals only where its nightly models prove an edge. Test `tests/test_anthropic_v265.py`.
+
+## Manual v3 (21 Nov 2026)
+`docs/manual/manual.md` (16 sections, `## Title {#id data-kicker="NN" data-line="..."}`, HTML blocks `cards/steps/tip/note/pro/pair/glossary/faq`
+with `markdown` attr) → `python scripts/build_manual.py` (dark/gold design, Sora + Inter, 2-pass clickable contents with
+page numbers via pypdf) → `frontend/public/manual.pdf`. Screenshots `docs/manual/img/v3/` (m-* = phone). Owner rule: no prices,
+payment details or changing limits in the manual (point to the website / Settings → Membership). Old version in `docs/manual/legacy/`.
