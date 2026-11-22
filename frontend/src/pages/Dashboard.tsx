@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import MyCoins from "../components/MyCoins";
 import { FirstWeekGuide } from "../components/TodayPulse";
+import WelcomeTour from "../components/WelcomeTour";
 import { OpportunityBoard } from "../components/Deck";
 import { OrbitDial } from "../components/Instruments";
 import { SignalDeck } from "../components/CommandPlus";
@@ -61,6 +62,7 @@ export default function Dashboard() {
       </section>
 
       <FirstWeekGuide />
+      <WelcomeTour />
       {/* row 2: what is running (live journeys) beside what is setting up (the opportunity board) */}
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <Card title={<>Live signals <span className="num font-normal text-mute">· {openCount}</span></>}

@@ -659,3 +659,35 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .sl-now.is-down { border-color: rgb(var(--bear)); box-shadow: 0 0 10px rgb(var(--bear)); }
 @media (max-width: 639px) { .sl-row { grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "id r" "line next"; row-gap: 4px; } .sl-id { grid-area: id; } .sl-r { grid-area: r; } .sl-line { grid-area: line; } .sl-next { grid-area: next; } }
 
+/* v2.68 Why this signal? */
+.why-sig-btn { display: inline-flex; align-items: center; gap: 8px; font-size: 0.8125rem; font-weight: 600; color: rgb(var(--ai)); padding: 4px 0; }
+.why-sig-btn:hover { text-decoration: underline; }
+.why-sig-dot { display: inline-flex; width: 18px; height: 18px; align-items: center; justify-content: center; border-radius: 99px; font-size: 11px; font-weight: 800;
+  color: rgb(var(--ink)); background: rgb(var(--ai)); box-shadow: 0 0 10px rgb(var(--ai) / 0.6); }
+.why-sig-panel { margin-top: 8px; display: grid; gap: 12px; padding: 14px 16px; border-radius: 14px; border: 1px solid rgb(var(--ai) / 0.28);
+  background: linear-gradient(180deg, rgb(var(--ai) / 0.08), rgb(var(--ai) / 0.02)); }
+.why-sig-panel h4 { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.02em; color: rgb(var(--ai)); margin-bottom: 4px; }
+.why-sig-panel ul { display: grid; gap: 4px; }
+.why-sig-panel li { position: relative; padding-left: 14px; font-size: 0.875rem; line-height: 1.45; color: rgb(var(--text) / 0.9); }
+.why-sig-panel li::before { content: ""; position: absolute; left: 2px; top: 0.6em; width: 5px; height: 5px; border-radius: 9px; background: rgb(var(--ai) / 0.7); }
+.why-sig-ai { font-size: 0.875rem; line-height: 1.45; }
+@media (min-width: 900px) { .why-sig-panel { grid-template-columns: 1fr 1fr 1fr; } .why-sig-panel > p { grid-column: 1 / -1; } }
+/* v2.68 welcome tour */
+.tour-back { position: fixed; inset: 0; z-index: 80; display: flex; align-items: center; justify-content: center; padding: 16px; background: rgb(0 0 0 / 0.62); backdrop-filter: blur(6px); }
+.tour-card { position: relative; width: min(440px, 100%); padding: 22px 22px 18px; border-radius: 20px; text-align: center;
+  border: 1px solid rgb(var(--accent) / 0.35); background: radial-gradient(120% 70% at 50% 0%, rgb(var(--accent) / 0.12), transparent 60%), rgb(var(--panel));
+  box-shadow: 0 30px 80px rgb(0 0 0 / 0.55); animation: tour-in 0.35s ease; }
+@keyframes tour-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
+.tour-skip { position: absolute; right: 14px; top: 12px; font-size: 0.8125rem; color: rgb(var(--mute)); }
+.tour-skip:hover { color: rgb(var(--text)); }
+.tour-art { height: 132px; display: flex; align-items: center; justify-content: center; margin: 8px 0 6px; }
+.tour-art svg { height: 100%; width: auto; max-width: 100%; }
+.tour-step { font-size: 0.75rem; color: rgb(var(--accent)); font-weight: 700; }
+.tour-title { font-family: Sora, Geist, sans-serif; font-size: 1.25rem; font-weight: 700; margin-top: 4px; }
+.tour-text { margin-top: 8px; font-size: 0.9375rem; line-height: 1.5; color: rgb(var(--text) / 0.85); }
+.tour-dots { display: flex; justify-content: center; gap: 6px; margin: 14px 0 12px; }
+.tour-dots i { width: 7px; height: 7px; border-radius: 9px; background: rgb(var(--glass) / 0.2); transition: width 0.25s; }
+.tour-dots i.on { width: 22px; background: rgb(var(--accent)); }
+.tour-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.tour-actions .btn:disabled { opacity: 0.4; }
+@media (prefers-reduced-motion: reduce) { .tour-card { animation: none; } }

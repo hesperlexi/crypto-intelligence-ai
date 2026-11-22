@@ -12,6 +12,7 @@ import { Explain, PLAIN, useIsPro } from "../lib/mode";
 import { useIsAdmin } from "../lib/session";
 import { TradeProgress, WhyChips } from "./Premium";
 import ShareSignal from "./ShareSignal";
+import WhySignal from "./WhySignal";
 
 export type Market = "spot" | "futures";
 type Tone = "bull" | "bear" | "wait";
@@ -194,6 +195,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
             <div className="mt-3 space-y-2">
               <WhyChips r={r} />
               {r.decision_basis && <p className="sc-reason"><span className="ai-tag mr-1.5 inline-flex rounded px-1.5 py-0.5 text-xs font-semibold">AI</span>{r.decision_basis}</p>}
+              {!compact && <WhySignal r={r} plan={plan} px={px} />}
               {isNum(plan.entry) && isNum(plan.stop) && (plan.targets?.length ?? 0) > 0 && (
                 <TradeProgress side={side} entry={plan.entry} stop={plan.stop} targets={(plan.targets ?? []).map((t: any) => t.price)} px={px}
                   hits={({ TP1: 1, TP2: 2, TP3: 3 } as Record<string, number>)[call?.status === "OPEN" ? "" : String(call?.status ?? "")] ?? (isNum(call?.tp_hits) ? call.tp_hits : 0)} />

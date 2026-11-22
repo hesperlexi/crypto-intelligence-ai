@@ -1,6 +1,8 @@
 import { ModeSwitch, useMode } from "../lib/mode";
 import { SITE_HOST } from "../lib/brand";
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { openTour } from "../components/WelcomeTour";
 import { SymbolSelect, TfTabs, useMeta, useSymbols } from "../components/Pickers";
 import { AppearancePanel } from "../components/AppearancePanel";
 import { PageHeader } from "../components/kit";
@@ -168,6 +170,7 @@ function PageHead() {
 }
 
 function ManualCard() {
+  const nav = useNavigate();
   const href = `/manual.pdf?v=${BUILD_ID}`;
   return (
     <Card title="User manual">
@@ -178,6 +181,7 @@ function ManualCard() {
       <div className="mt-3 flex flex-wrap gap-2">
         <a className="btn btn-primary" href={href} target="_blank" rel="noopener">Open manual</a>
         <a className="btn" href={href} download="Crypto-Intelligence-AI-User-Manual.pdf">Download PDF</a>
+        <button type="button" className="btn" onClick={() => { nav("/"); setTimeout(openTour, 300); }}>Take the tour</button>
         {SHOW_APP_DEMO && <a className="btn" href={mediaUrl("/demo.mp4")} target="_blank" rel="noopener">▶ Demo video</a>}
       </div>
     </Card>
