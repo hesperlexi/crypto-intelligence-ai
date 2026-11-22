@@ -1286,3 +1286,10 @@ CSS `.mb-*`, `.ib-*`, `.ctx-notes` in observatory.css. Phones: board row = coin 
   `futures_only.load_extra`); none on MEXC → rejected as before. `views/meta` watchlist rows carry `fut: true`; frontend
   `binance.markFutOnly` (from meta + `listedPairs` in `live.tsx`, `futVer` restarts the spot stream). Search matches tickers
   only (no names). Test `tests/test_futures_add_v272.py`.
+
+## v2.74 Command Centre = Observatory (owner's pick of 3 concepts, 22 Nov 2026; mockups in session only)
+Order: MissionStrip · galaxy (`Galaxy`, desktop W 960 / KX 1.5) beside `Readout` (glass panel `.cc-readout`: planet under
+the pointer else the locked one - price, call + grade from the chosen TF's futures row, trend, RSI, volume, AI lean,
+AI note, "Deep-space scan") · "Signals in flight" one card (`Radar` | `SignalJourneys`, `.cc-flight`) · Universe | Mission
+control (`.cc-forces`, Mission = one-column list) · Market heat (full width) · Deep-space scan · Coin vs coin. `Core`
+card removed (the readout covers it). v2.73: the planet card no longer floats over the galaxy.
