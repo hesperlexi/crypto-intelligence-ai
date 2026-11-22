@@ -13,6 +13,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { usePageAwake } from "./awake";
 export { usePageAwake } from "./awake";
 import * as binance from "./binance";
+import { edgeEligible, edgeView } from "./edge";
 import { auth, db } from "./firebase";
 import * as paper from "./paper";
 import * as paperFutures from "./paperFutures";
@@ -37,11 +38,13 @@ const toSymbol = (s: string) => {
 const slugOf = (s: string) => toSymbol(s).replace("/", "");
 
 function view(name: string, map: (v: any) => any = (v) => v): Sub {
-  return (cb, err) => onSnapshot(doc(db, "views", name), (s) => {
+  const fs: Sub = (cb, err) => onSnapshot(doc(db, "views", name), (s) => {
     const d = s.data();
     if (!d?.json) return err(new ApiError(404, NOT_READY));
     try { cb(map(JSON.parse(d.json))); } catch (e) { err(e as Error); }
   }, (e) => err(new ApiError(403, permissionHint(e))));
+  // v2.67: member views come from the Cloudflare edge (no Firestore reads); Firestore stays the fallback
+  return edgeEligible(name) ? edgeView(name, map, fs) : fs;
 }
 
 function permissionHint(e: Error): string {

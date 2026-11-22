@@ -158,7 +158,13 @@ function trackRecord() {
   runnerRow.runner = { on: true, rr: 4, target: runnerRow.entry * (1 - 4 * 0.018) };
   const runRow = mk("SOL/USDT", "1h", "LONG", "A", 3, 0.008, { peak_pct: 1.1,
     ai: { rationale: "Sample advisor note for the preview: momentum is rising with the 4h trend; the main risk is the resistance just above target 2.", regime: "trending up" } });
-  sigs.unshift(runnerRow, tp1Row, pendRow, runRow);
+  // v2.67 preview: a full board (14 running) so the journeys show 12 + "2 more"
+  const extraOpen = [
+    mk("BNB/USDT", "4h", "LONG", "A", 5, 0.012, { tp1_hit: 1 }), mk("DOGE/USDT", "15m", "SHORT", "A", 0.6, 0.006), mk("LTC/USDT", "1h", "LONG", "A", 2, -0.009),
+    mk("AAVE/USDT", "4h", "SHORT", "A", 7, -0.025, { tp1_hit: 1, tp2_hit: 1 }), mk("AVAX/USDT", "4h", "SHORT", "B", 4, 0.004), mk("PAXG/USDT", "12h", "LONG", "A", 20, 0.003),
+    mk("BTC/USDT", "15m", "SHORT", "A", 0.4, -0.002), mk("ETH/USDT", "4h", "LONG", "B", 11, -0.014), mk("SOL/USDT", "15m", "SHORT", "A", 0.8, 0.011), mk("XRP/USDT", "4h", "LONG", "A", 3, 0.016),
+  ].map((r, i) => ({ ...r, id: `${r.id}-x${i}` }));
+  sigs.unshift(runnerRow, tp1Row, pendRow, runRow, ...extraOpen);
   const closed = sigs.filter((x) => x.status !== "OPEN").map((x) => x.return_pct as number);
   let acc = 0;
   let accRoi = 0;

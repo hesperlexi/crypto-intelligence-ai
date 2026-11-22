@@ -6,7 +6,7 @@ import MyCoins from "../components/MyCoins";
 import { FirstWeekGuide } from "../components/TodayPulse";
 import { OpportunityBoard } from "../components/Deck";
 import { OrbitDial } from "../components/Instruments";
-import { SignalJourneys } from "../components/CommandPlus";
+import { SignalDeck } from "../components/CommandPlus";
 import { BriefingPanel } from "../components/Polish";
 import { AiBriefCard, BtcCard, BtcChartCard, GlobalStatusCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
 import { useIsAdmin, useSession } from "../lib/session";
@@ -65,7 +65,7 @@ export default function Dashboard() {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
         <Card title={<>Live signals <span className="num font-normal text-mute">· {openCount}</span></>}
           right={<Link to="/results?tab=track" className="text-xs font-medium text-accent hover:underline">Track record ›</Link>} className="deck-fill">
-          <SignalJourneys track={track.data} />
+          <SignalDeck track={track.data} />
         </Card>
         <Card title="Opportunity board" right={<span className="text-xs text-mute">4H · passes every check</span>} className="deck-fill">
           <OpportunityBoard rows={dash4.data?.opportunities} />

@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import json
 import os
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -21,6 +22,30 @@ from .db import Database, dumps
 from .redact import error_text
 
 MAX_DOC_BYTES = 1_000_000
+
+# v2.67 edge views (owner, 22 Nov 2026: "reduce the load on Firebase, connect Cloudflare free"). Views every active
+# member may read are ALSO sent to the Cloudflare Worker (chat-worker/, Durable Object storage); the app reads them there
+# and keeps Firestore only as the fallback. While the edge works, those views go to Firestore at most every
+# EDGE_FS_EVERY_S (a call change - `core` - still goes at once), which saves most of the daily Firestore writes.
+# Must match EDGE_RE in chat-worker/src/index.ts and EDGE_VIEWS in frontend/src/lib/edge.ts.
+EDGE_RE = re.compile(r"^(health|meta|track_record|market_context|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$")
+EDGE_URL = os.environ.get("EDGE_URL", "https://cia-chat.cryptointelai.workers.dev").rstrip("/")
+EDGE_FS_EVERY_S = int(os.environ.get("EDGE_FS_EVERY_S", "900"))
+EDGE_HEALTHY_MS = 30 * 60_000
+EDGE_CHUNK_BYTES = 450_000
+
+
+def edge_key() -> str:
+    """The Worker's ingest key, derived from the Firebase key exactly like .github/workflows/chat-worker.yml does."""
+    if os.environ.get("EDGE", "1") == "0":
+        return ""
+    raw = os.environ.get("FIREBASE_SERVICE_ACCOUNT", "")
+    return hashlib.sha256(f"cia-edge-v1|{raw}".encode()).hexdigest() if raw else ""
+
+
+def family(name: str) -> str:
+    """views family for the write counter: analysis_BTCUSDT_4h -> analysis, dashboard_4h -> dashboard."""
+    return re.sub(r"_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w)$|_(15m|1h|4h|12h|1d|3d)$", "", name)
 
 
 class QuotaBlocked(RuntimeError):
@@ -35,8 +60,10 @@ class BaseSink:
     def __init__(self, db: Database | None = None):
         self.db = db
         self.pending: dict[str, dict[str, Any]] = {}
+        self.edge_pending: dict[str, dict[str, Any]] = {}
         self.writes = 0
         self.skipped = 0
+        self.edge_sent = 0
 
     # -- daily write budget -------------------------------------------------------------------------------
     # The Firebase free plan allows 20,000 document writes a day (the day restarts at midnight US Pacific time).
@@ -71,6 +98,22 @@ class BaseSink:
             b = self._budget()
             b["n"] = int(b.get("n", 0)) + n
             self.db.set_setting("fs_writes", b)
+        except Exception:
+            pass
+
+    def _count_families(self, paths: list[str]) -> None:
+        """v2.67: writes per view family today (Health: which documents use the free quota)."""
+        if self.db is None or not paths:
+            return
+        try:
+            day, _ = self.quota_day()
+            b = self.db.get_setting("fs_writes_by", None) or {}
+            if b.get("day") != day:
+                b = {"day": day, "n": {}}
+            for p in paths:
+                f = family(p.split("/", 1)[1]) if p.startswith("views/") else p.split("/", 1)[0]
+                b["n"][f] = int(b["n"].get(f, 0)) + 1
+            self.db.set_setting("fs_writes_by", b)
         except Exception:
             pass
 
@@ -203,19 +246,106 @@ class BaseSink:
             stable = {k: v for k, v in payload.items() if k not in volatile}
         digest = hashlib.sha1(dumps(stable).encode()).hexdigest()
         core_digest = hashlib.sha1(dumps(core).encode()).hexdigest() if core is not None else None
+        edge = self.edge_on() and EDGE_RE.match(name) is not None and len(text.encode()) <= MAX_DOC_BYTES
+        if edge:
+            self._edge_table()
+            erow = self.db.one("SELECT hash FROM edge_published WHERE doc_id = ?", (name,))
+            if not erow or erow["hash"] != digest:
+                self.edge_pending[name] = {"json": text, "at": _now(), "etag": digest[:16], "hash": digest}
         if self.db is not None:
             self._core_column()
             row = self.db.one("SELECT hash, ts, core FROM published WHERE doc_id = ?", (name,))
             if row and row["hash"] == digest:
                 self.skipped += 1
                 return
-            wait = max(min_interval_s, self.LEAN_EVERY_S if self.lean else 0)
+            wait = max(min_interval_s, self.LEAN_EVERY_S if self.lean else 0,
+                       EDGE_FS_EVERY_S if edge and self.edge_healthy() else 0)
             if row and wait and _now() - int(row["ts"]) < wait * 1000 and (core_digest is None or row["core"] == core_digest):
                 self.deferred = getattr(self, "deferred", 0) + 1
                 return
         self.pending[f"views/{name}"] = {"json": text, "updated_at": _now(), "_hash": digest, "_core": core_digest}
 
+    # -- edge views (v2.67) -----------------------------------------------------------------------------------------
+    def edge_on(self) -> bool:
+        return self.db is not None and bool(edge_key()) and getattr(self, "EDGE_ENABLED", True)
+
+    def _edge_table(self) -> None:
+        if getattr(self, "_edge_ok", False) or self.db is None:
+            return
+        self.db.execute("CREATE TABLE IF NOT EXISTS edge_published (doc_id TEXT PRIMARY KEY, hash TEXT NOT NULL, ts INTEGER NOT NULL)")
+        self._edge_ok = True
+
+    def edge_status(self) -> dict[str, Any]:
+        return (self.db.get_setting("edge_status", None) if self.db is not None else None) or {}
+
+    def edge_healthy(self) -> bool:
+        st = self.edge_status()
+        return int(st.get("ok_at") or 0) > _now() - EDGE_HEALTHY_MS and int(st.get("ok_at") or 0) >= int(st.get("fail_at") or 0)
+
+    def _edge_post(self, rows: list[dict[str, Any]]) -> None:
+        import requests
+        r = requests.post(f"{EDGE_URL}/ingest", data=json.dumps(rows, separators=(",", ":")),
+                          headers={"X-Edge-Key": edge_key(), "Content-Type": "application/json"}, timeout=25)
+        if r.status_code != 200:
+            raise RuntimeError(f"edge ingest {r.status_code}: {r.text[:120]}")
+
+    def _edge_probe(self, row: dict[str, Any]) -> None:
+        import requests
+        r = requests.get(f"{EDGE_URL}/v", params={"n": row["name"]}, headers={"X-Edge-Key": edge_key()}, timeout=20)
+        got = (r.json().get("views") or {}).get(row["name"]) or {} if r.status_code == 200 else {}
+        if got.get("etag") != row["etag"]:
+            raise RuntimeError(f"edge read check failed ({r.status_code})")
+
+    def flush_edge(self) -> int:
+        """Send the queued edge views in small chunks (the Worker's free plan allows little CPU per request). A failure
+        marks the edge unhealthy, so Firestore gets every change again until the edge works (nothing goes stale)."""
+        if not self.edge_pending or not self.edge_on():
+            self.edge_pending.clear()
+            return 0
+        self._edge_table()
+        items = [{"name": n, "json": v["json"], "at": v["at"], "etag": v["etag"]} for n, v in self.edge_pending.items()]
+        chunk: list[dict[str, Any]] = []
+        size = 0
+        sent: list[dict[str, Any]] = []
+        st = self.edge_status()
+        day, _ = self.quota_day()
+        try:
+            for it in items + [None]:                      # None = flush the last chunk
+                n = len(it["json"]) + 120 if it else 0
+                if chunk and (it is None or size + n > EDGE_CHUNK_BYTES):
+                    self._edge_post(chunk)
+                    sent += chunk
+                    chunk, size = [], 0
+                if it:
+                    chunk.append(it)
+                    size += n
+            if sent and _now() - int(st.get("probe_at") or 0) > 600_000:
+                self._edge_probe(sent[-1])                 # the read path really serves what was sent
+                st["probe_at"] = _now()
+            st["ok_at"] = _now()
+            st["last_error"] = None
+        except Exception as exc:
+            st["fail_at"] = _now()
+            st["last_error"] = error_text(exc)[:200]
+        if sent:
+            self.db.executemany("INSERT INTO edge_published (doc_id, hash, ts) VALUES (?, ?, ?) ON CONFLICT (doc_id) DO UPDATE SET hash = excluded.hash, ts = excluded.ts",
+                                [(x["name"], self.edge_pending[x["name"]]["hash"], _now()) for x in sent])
+        if st.get("day") != day:
+            st["day"], st["sent_today"] = day, 0
+        st["sent_today"] = int(st.get("sent_today") or 0) + len(sent)
+        try:
+            self.db.set_setting("edge_status", st)
+        except Exception:
+            pass
+        self.edge_sent += len(sent)
+        self.edge_pending.clear()
+        return len(sent)
+
     def flush(self) -> int:
+        try:
+            self.flush_edge()
+        except Exception:
+            self.edge_pending.clear()
         if not self.pending:
             return 0
         if self.blocked():                             # quota used up today: keep everything for after the reset
@@ -240,6 +370,7 @@ class BaseSink:
         n = len(docs)
         self.writes += n
         self._count(n)
+        self._count_families(list(docs))
         self.pending.clear()
         return n
 

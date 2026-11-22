@@ -67,6 +67,13 @@ jobs:
           npx wrangler deploy --var "ADMIN_EMAILS:${ADMIN_EMAILS}" 2>&1 | tee deploy.log | grep -v -i token || { tail -20 deploy.log | grep -v -i token | sed 's/^/::error::/'; exit 1; }
           curl -sS -X POST -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" -H "Content-Type: application/json" -d '{"enabled":true}' \
             "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/cia-chat/subdomain" | jq -c '.success' 
+      - name: Edge key (v2.67; derived from the Firebase key, the engine derives the same one - never printed)
+        if: steps.chk.outputs.go == '1'
+        env:
+          FSA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          if [ -z "$FSA" ]; then echo "::warning::no Firebase key - edge views off"; exit 0; fi
+          printf '%s' "cia-edge-v1|$FSA" | sha256sum | cut -c1-64 | tr -d '\n' | npx wrangler secret put EDGE_KEY >/dev/null && echo "edge key set"
       - name: Gemini key
         if: steps.chk.outputs.go == '1'
         env:
@@ -81,4 +88,4 @@ jobs:
           echo "$url" >> "$GITHUB_STEP_SUMMARY"
           # a brand-new workers.dev address needs a few minutes for its certificate
           h=""; for i in $(seq 1 40); do h=$(curl -s -m 10 "$url/health" || true); [ -n "$h" ] && break; sleep 15; done
-          echo "::notice::chat url $url health ${h:-no answer yet} chat-no-token $(curl -s -m 10 -X POST "$url/chat" -d '{}' || true) diag $(curl -s -m 90 "$url/diag" || echo timeout)"
+          echo "::notice::chat url $url health ${h:-no answer yet} chat-no-token $(curl -s -m 10 -X POST "$url/chat" -d '{}' || true) diag $(curl -s -m 90 "$url/diag" || echo timeout) edge $(curl -s -m 20 "$url/edge-health" || echo timeout)"

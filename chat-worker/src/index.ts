@@ -12,6 +12,8 @@
 
 export interface Env {
   KV: KVNamespace;
+  VIEWS: DurableObjectNamespace;
+  EDGE_KEY: string;
   GEMINI_API_KEY: string;
   GEMINI_MODEL: string;
   FIREBASE_PROJECT: string;
@@ -96,8 +98,10 @@ async function roleOf(claims: any, token: string, env: Env, appCheck: string | n
   if (email && claims.email_verified && env.ADMIN_EMAILS.toLowerCase().split(/[,\s;]+/).filter(Boolean).includes(email)) return "admin";
   if (claims.firebase?.sign_in_provider === "password" && !claims.email_verified) return null;
   const ck = `role:${claims.sub}`;
+  const hit = ROLES.get(claims.sub);
+  if (hit && hit.until > Date.now()) return hit.role === "member" ? "member" : null;
   const cached = await env.KV.get(ck);
-  if (cached) return cached === "member" ? "member" : null;
+  if (cached) { await keepRole(claims.sub, cached, env, false); return cached === "member" ? "member" : null; }
   const r = await fetch(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/users/${claims.sub}`,
     { headers: { Authorization: `Bearer ${token}`, ...(appCheck ? { "X-Firebase-AppCheck": appCheck } : {}) } });
   let role: "member" | "none" = "none";
@@ -108,8 +112,15 @@ async function roleOf(claims: any, token: string, env: Env, appCheck: string | n
     if (status === "approved" && (!exp || exp > Date.now())) role = "member";
   }
   if (role !== "member") await note(env, `not a member: users read ${r.status}`);
-  await env.KV.put(ck, role, { expirationTtl: 1800 });
+  await keepRole(claims.sub, role, env, true);
   return role === "member" ? "member" : null;
+}
+
+// v2.67: role cache in memory first (KV: 1,000 writes a day on the free plan; one per person per 2 h is kept)
+const ROLES = new Map<string, { role: string; until: number }>();
+async function keepRole(uid: string, role: string, env: Env, write: boolean) {
+  ROLES.set(uid, { role, until: Date.now() + 300_000 });
+  if (write) { try { await env.KV.put(`role:${uid}`, role, { expirationTtl: 7200 }); } catch { /* KV daily write limit: memory still works */ } }   // one KV write per person per 2 h
 }
 
 const dubaiDay = () => new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10);
@@ -188,6 +199,9 @@ export default {
       }
       return json({ models, gemini: gem, admins: env.ADMIN_EMAILS.split(/[,\s;]+/).filter(Boolean).length, last: JSON.parse((await env.KV.get("diag:last")) ?? "null") }, 200, h);
     }
+    if (url.pathname === "/ingest" && req.method === "POST") return ingest(req, env);
+    if (url.pathname === "/v" && req.method === "GET") return views(req, url, env, h);
+    if (url.pathname === "/edge-health") return edgeHealth(env, h);
     if (url.pathname !== "/chat" || req.method !== "POST") return json({ error: "Not found" }, 404, h);
     if (!env.GEMINI_API_KEY) return json({ error: "The assistant is not set up yet." }, 503, h);
 
@@ -211,3 +225,128 @@ export default {
     return json({ answer, left: s.left }, 200, h);
   },
 };
+
+// ======================================================================================================================
+// v2.67 EDGE VIEWS (owner, 22 Nov 2026: "reduce the load on Firebase, connect Cloudflare free").
+// The engine sends every changed member view here (POST /ingest, key derived from its Firebase key); they are kept in a
+// Durable Object with SQLite storage (free plan: 100k writes / 5M reads a day). Members' apps read them with GET /v
+// (signed-in, active members only - same check as the chat), served from Cloudflare's cache for 20 s, so 1 or 1,000
+// members cost the same. Firestore keeps a slower copy as the fallback; the app falls back to it on any problem.
+// Only views every active member may read are accepted (never admin-only or per-person documents).
+const EDGE_RE = /^(health|meta|track_record|market_context|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$/;
+const EDGE_TTL_S = 20;
+const MAX_NAMES = 40;
+
+async function ingest(req: Request, env: Env): Promise<Response> {
+  // the body is passed to the Durable Object unread (the free plan allows 10 ms of CPU per request; the engine sends
+  // small chunks of at most ~0.5 MB); rows = [{name, json, at, etag}]
+  const key = req.headers.get("X-Edge-Key") ?? "";
+  if (!env.EDGE_KEY || key.length < 32 || key !== env.EDGE_KEY) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
+  const stub = env.VIEWS.get(env.VIEWS.idFromName("views"));
+  const r = await stub.fetch("https://do/put", { method: "POST", body: req.body });
+  return new Response(await r.text(), { status: r.status, headers: { "Content-Type": "application/json" } });
+}
+
+/** GET /v?n=a,b,c&e=etagA,etagB,etagC  ->  { "views": { a: {etag, at, data} | {same: 1} | {none: 1} }, "at": ms }.
+ *  Built by joining text (no JSON parsing of the views, to stay inside the free plan's CPU time). The Cache API does
+ *  nothing on workers.dev, so each Worker instance keeps the views it served in memory for EDGE_TTL_S; misses are
+ *  fetched from the Durable Object in ONE call. */
+const MEM = new Map<string, { etag: string; at: number; body: string; until: number }>();
+async function views(req: Request, url: URL, env: Env, h: Record<string, string>): Promise<Response> {
+  // the engine checks the read path with its own key (same views, no member data involved)
+  const engineProbe = !!env.EDGE_KEY && (req.headers.get("X-Edge-Key") ?? "") === env.EDGE_KEY;
+  if (!engineProbe) {
+    const token = (req.headers.get("Authorization") ?? "").replace(/^Bearer\s+/i, "");
+    const claims = token ? await verifyCached(token, env.FIREBASE_PROJECT) : null;
+    if (!claims) return json({ error: "sign in" }, 401, h);
+    const role = await roleOf(claims, token, env, req.headers.get("X-Firebase-AppCheck"));
+    if (!role) return json({ error: "members only" }, 403, h);
+  }
+  const raw = (url.searchParams.get("n") ?? "").split(","), et = (url.searchParams.get("e") ?? "").split(",");
+  const tags = new Map(raw.map((x, i) => [x.trim(), et[i] ?? ""]));
+  const names = [...new Set(raw.map((x) => x.trim()).filter((x) => EDGE_RE.test(x)))].slice(0, MAX_NAMES);
+  const now = Date.now();
+  const miss = names.filter((n) => !((MEM.get(n)?.until ?? 0) > now));
+  if (miss.length) {
+    const stub = env.VIEWS.get(env.VIEWS.idFromName("views"));
+    const d = await stub.fetch(`https://do/get?n=${encodeURIComponent(miss.join(","))}`);
+    const text = d.ok ? await d.text() : "";
+    const got = new Set<string>();
+    for (const rec of text.split("\u0000")) {
+      if (!rec) continue;
+      const i1 = rec.indexOf("\u0001"), i2 = rec.indexOf("\u0001", i1 + 1), i3 = rec.indexOf("\u0001", i2 + 1);
+      if (i1 < 0 || i2 < 0 || i3 < 0) continue;
+      const n = rec.slice(0, i1);
+      MEM.set(n, { etag: rec.slice(i1 + 1, i2), at: Number(rec.slice(i2 + 1, i3)) || 0, body: rec.slice(i3 + 1), until: now + EDGE_TTL_S * 1000 });
+      got.add(n);
+    }
+    if (d.ok) for (const n of miss) if (!got.has(n)) MEM.set(n, { etag: "", at: 0, body: "", until: now + EDGE_TTL_S * 1000 });
+    if (MEM.size > 600) for (const [k, v] of MEM) if (v.until < now) MEM.delete(k);
+  }
+  const parts: string[] = [];
+  for (const n of names) {
+    const m = MEM.get(n);
+    if (!m || !m.body || !m.etag) parts.push(`${JSON.stringify(n)}:{"none":1}`);
+    else if (tags.get(n) === m.etag) parts.push(`${JSON.stringify(n)}:{"same":1}`);
+    else parts.push(`${JSON.stringify(n)}:{"etag":${JSON.stringify(m.etag)},"at":${m.at},"data":${m.body}}`);
+  }
+  return new Response(`{"views":{${parts.join(",")}},"at":${now}}`, { status: 200, headers: { ...h, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+async function edgeHealth(env: Env, h: Record<string, string>): Promise<Response> {
+  try {
+    const stub = env.VIEWS.get(env.VIEWS.idFromName("views"));
+    const r = await stub.fetch("https://do/stats");
+    return json({ ok: r.ok, ...(r.ok ? ((await r.json()) as object) : {}) }, 200, h);
+  } catch (e) { return json({ ok: false, error: String(e).slice(0, 200) }, 200, h); }
+}
+
+const TOKENS = new Map<string, { claims: any; until: number }>();
+async function verifyCached(token: string, project: string) {
+  const t = TOKENS.get(token);
+  if (t && t.until > Date.now() && t.claims.exp * 1000 > Date.now()) return t.claims;
+  const c = await verify(token, project);
+  if (c) { if (TOKENS.size > 2000) TOKENS.clear(); TOKENS.set(token, { claims: c, until: Date.now() + 300_000 }); }
+  return c;
+}
+
+/** One Durable Object holds every edge view (SQLite storage: one row per view). */
+export class ViewStore {
+  sql: SqlStorage;
+  constructor(readonly state: DurableObjectState, _env: Env) {
+    this.sql = state.storage.sql;
+    this.sql.exec("CREATE TABLE IF NOT EXISTS views (name TEXT PRIMARY KEY, json TEXT NOT NULL, at INTEGER NOT NULL, etag TEXT NOT NULL)");
+  }
+  async fetch(req: Request): Promise<Response> {
+    const u = new URL(req.url);
+    if (u.pathname === "/put") {
+      const rows: { name: string; json: string; at: number; etag: string }[] = await req.json();
+      let n = 0;
+      for (const r of Array.isArray(rows) ? rows : []) {
+        if (!r || !EDGE_RE.test(r.name) || typeof r.json !== "string" || !r.etag) continue;
+        this.sql.exec("INSERT INTO views (name, json, at, etag) VALUES (?, ?, ?, ?) ON CONFLICT(name) DO UPDATE SET json = excluded.json, at = excluded.at, etag = excluded.etag",
+          r.name, r.json, Number(r.at) || Date.now(), String(r.etag).slice(0, 40));
+        n++;
+      }
+      this.sql.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v INTEGER)");
+      this.sql.exec("INSERT INTO meta (k, v) VALUES ('last_put', ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v", Date.now());
+      return Response.json({ ok: true, stored: n });
+    }
+    if (u.pathname === "/get") {
+      // records "name \u0001 etag \u0001 at \u0001 json", separated by \u0000 (neither can appear raw in JSON text)
+      const out: string[] = [];
+      for (const n of (u.searchParams.get("n") ?? "").split(",").slice(0, MAX_NAMES)) {
+        const row = this.sql.exec("SELECT json, at, etag FROM views WHERE name = ?", n).toArray()[0] as any;
+        if (row) out.push(`${n}\u0001${row.etag}\u0001${row.at}\u0001${row.json}`);
+      }
+      return new Response(out.join("\u0000"), { headers: { "Content-Type": "text/plain; charset=utf-8" } });
+    }
+    if (u.pathname === "/stats") {
+      const row = this.sql.exec("SELECT COUNT(*) AS n, MAX(at) AS newest FROM views").toArray()[0] as any;
+      this.sql.exec("CREATE TABLE IF NOT EXISTS meta (k TEXT PRIMARY KEY, v INTEGER)");
+      const lp = this.sql.exec("SELECT v FROM meta WHERE k = 'last_put'").toArray()[0] as any;
+      return Response.json({ views: row?.n ?? 0, newest: row?.newest ?? null, last_put: lp?.v ?? null });
+    }
+    return new Response("not found", { status: 404 });
+  }
+}

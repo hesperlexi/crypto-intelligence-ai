@@ -17,3 +17,12 @@ ADMIN_EMAILS = ""
 [[kv_namespaces]]
 binding = "KV"
 id = "__KV_ID__"
+
+# v2.67 edge views: one Durable Object with SQLite storage (free plan)
+[[durable_objects.bindings]]
+name = "VIEWS"
+class_name = "ViewStore"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ViewStore"]

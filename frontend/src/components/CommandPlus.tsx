@@ -9,61 +9,177 @@ import { useLive } from "../lib/live";
 import { ago, base, fmtPrice, isNum, slug } from "../lib/format";
 import { stopNow } from "./RecordDetails";
 import { Ring } from "./Premium";
+import { CoinAvatar } from "./Polish";
 
 const name = (s: string) => (base(s) === "PAXG" ? "GOLD" : base(s));
 const pct = (v: number | null | undefined, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 const clamp = (v: number, a = 0, b = 1) => Math.max(a, Math.min(b, v));
 
 /* ---------------------------------------------------------------- live signal journeys */
-/** Each running record call as a journey from its stop to TP3: entry, targets (lit when hit), the stop in force and
- *  the live price as a moving craft; published / filled times underneath. */
+// v2.67 (owner, 22 Nov 2026): the same-side cap is 12, so up to 12 running calls are shown (the rest behind a link), and
+// the two places get their own premium look: Command Centre = "flight corridors" (one lane per call), Home = "gauges"
+// (one arc instrument per call). Both read only views/track_record (already open) and the live price socket.
+export const JOURNEY_MAX = 12;
+
+type Leg = {
+  x: any; s: 1 | -1; tps: number[]; hits: boolean[]; at: (p: number) => number; px?: number; pending: boolean;
+  sNow?: number; r: number | null; e: number; c: number; up: boolean; next: number; toNext: number | null; label: string;
+};
+
+function legOf(x: any, px: number | undefined): Leg {
+  const s: 1 | -1 = x.side === "SHORT" ? -1 : 1;
+  const tps = [x.tp1, x.tp2, x.tp3].filter(isNum) as number[];
+  const end = x.runner?.on && isNum(x.runner.target) ? x.runner.target : tps[tps.length - 1];
+  const span = s * (end - x.stop);
+  const at = (p: number) => (span > 0 ? clamp((s * (p - x.stop)) / span) : 0);
+  const pending = x.fill_status === "PENDING";
+  const sNow = stopNow(x)?.price;
+  const hits = [x.tp1_hit, x.tp2_hit, x.tp3_hit].map(Boolean);
+  const r = isNum(px) && !pending && x.entry !== x.stop ? (s * (px - x.entry)) / Math.abs(x.entry - x.stop) : null;
+  const e = at(x.entry), c = isNum(px) && !pending ? at(px) : e;
+  const next = tps.findIndex((_t, k) => !hits[k]);
+  const toNext = next >= 0 && isNum(px) ? (s * (tps[next] - px) / px) * 100 : null;
+  const label = pending ? "waiting for entry" : next < 0 ? "all targets hit" : isNum(toNext) ? `TP${next + 1} in ${Math.abs(toNext).toFixed(2)}%` : `TP${next + 1} next`;
+  return { x, s, tps, hits, at, px, pending, sNow, r, e, c, up: r == null || r >= 0, next, toNext, label };
+}
+
+function useOpenCalls(track: any) {
+  const all: any[] = (track?.live?.signals ?? []).filter((x: any) => x.status === "OPEN");
+  return { shown: all.slice(0, JOURNEY_MAX), more: Math.max(0, all.length - JOURNEY_MAX), total: all.length };
+}
+
+const Empty = () => <p className="py-6 text-center text-sm text-mute">No signals running right now. New calls appear here the moment they open.</p>;
+const More = ({ n }: { n: number }) => (n > 0 ? <Link to="/results?tab=track" className="mt-2 block text-center text-xs font-medium text-accent hover:underline">+{n} more running · see all in Results</Link> : null);
+const rTxt = (r: number | null) => (r == null ? "—" : `${r >= 0 ? "+" : ""}${r.toFixed(2)}R`);
+
+/** Command Centre (owner's pick, 22 Nov 2026): one slim row per running call - coin, a thin line with the entry (gold)
+ *  and target dots (lit when hit), the live price dot and its trail from the entry, the result in R and the next target.
+ *  Summary strip on top; best progress first. */
 export function SignalJourneys({ track }: { track: any }) {
-  // v2.55 (owner: "too big, make it more interesting"): one slim lane per call, two lanes side by side on computers.
-  // Stop zone red, profit zone toward the targets; a comet (live price) with a glowing trail from the entry, a light
-  // pulse running along the trail, targets as diamonds that flare once hit, and the next target's distance on the right.
   const { tickers } = useLive();
-  const open: any[] = (track?.live?.signals ?? []).filter((x: any) => x.status === "OPEN").slice(0, 8);
-  if (!open.length) return <p className="py-6 text-center text-sm text-mute">No signals running right now. New calls appear here the moment they open.</p>;
+  const { shown, more, total } = useOpenCalls(track);
+  if (!total) return <Empty />;
+  const legs = shown.map((x) => legOf(x, tickers[x.symbol]?.last ?? undefined)).sort((a, b) => (b.r ?? -99) - (a.r ?? -99));
+  const live = legs.filter((l) => l.r != null);
+  const green = live.filter((l) => (l.r ?? 0) >= 0).length;
+  const avg = live.length ? live.reduce((t, l) => t + (l.r ?? 0), 0) / live.length : null;
+  const hitCount = legs.reduce((t, l) => t + l.hits.filter(Boolean).length, 0);
   return (
-    <ul className="sj-list h-full">
-      {open.map((x) => {
-        const s = x.side === "SHORT" ? -1 : 1;
-        const tps = [x.tp1, x.tp2, x.tp3].filter(isNum);
-        const end = x.runner?.on && isNum(x.runner.target) ? x.runner.target : tps[tps.length - 1];
-        const span = s * (end - x.stop);
-        const at = (p: number) => (span > 0 ? clamp((s * (p - x.stop)) / span) : 0);
-        const px = tickers[x.symbol]?.last;
-        const pending = x.fill_status === "PENDING";
-        const sNow = stopNow(x)?.price;
-        const hits = [x.tp1_hit, x.tp2_hit, x.tp3_hit];
-        const r = isNum(px) && x.entry !== x.stop ? (s * (px - x.entry)) / Math.abs(x.entry - x.stop) : null;
-        const e = at(x.entry) * 100, c = isNum(px) ? at(px) * 100 : e;
-        const up = r == null || r >= 0;
-        const next = tps.findIndex((t, k) => !hits[k]);
-        const toNext = next >= 0 && isNum(px) ? (s * (tps[next] - px) / px) * 100 : null;
-        return (
-          <li key={x.id ?? `${x.symbol}${x.created_at}`} className="sj-lane">
-            <Link to={`/asset/${slug(x.symbol)}?tf=${x.timeframe}`} className="sj-name" title={`opened ${ago(x.filled_at ?? x.created_at)}`}>
-              <b>{name(x.symbol)}</b>
-              <span className={`text-xs font-semibold ${s > 0 ? "text-bull" : "text-bear"}`}>{s > 0 ? "▲ LONG" : "▼ SHORT"} <span className="text-mute">{String(x.timeframe).toUpperCase()}</span></span>
-            </Link>
-            <div className="sj-track" aria-label={`${name(x.symbol)} ${s > 0 ? "long" : "short"}: ${pending ? "waiting for entry" : r == null ? "no live price" : `${r.toFixed(2)}R`}, ${hits.filter(Boolean).length} of ${tps.length} targets hit`}>
-              <span className="sj-risk" style={{ width: `${e}%` }} />
-              <span className="sj-reward" style={{ left: `${e}%` }} />
-              {!pending && isNum(px) && <span className={`sj-trail ${up ? "" : "is-down"}`} style={{ left: `${Math.min(e, c)}%`, width: `${Math.abs(c - e)}%` }} />}
-              {isNum(sNow) && sNow !== x.stop && <span className="sj-stopnow" style={{ left: `${at(sNow) * 100}%` }} title={`Stop moved to ${fmtPrice(sNow)}`} />}
-              <span className="sj-entry" style={{ left: `${e}%` }} title={`Entry ${fmtPrice(x.entry)}`} />
-              {tps.map((t, k) => <span key={k} className={`sj-tp ${hits[k] ? "is-hit" : ""} ${k === next ? "is-next" : ""}`} style={{ left: `${at(t) * 100}%` }} title={`TP${k + 1} ${fmtPrice(t)}${hits[k] ? " · hit" : ""}`} />)}
-              {isNum(px) && !pending && <span className={`sj-comet ${up ? "" : "is-down"} ${c < e ? "to-left" : ""}`} style={{ left: `${c}%` }} />}
-            </div>
-            <div className="sj-out">
-              <span className={`num text-sm font-semibold ${r == null || pending ? "text-mute" : up ? "text-bull" : "text-bear"}`}>{pending ? "waiting" : r == null ? "—" : `${r >= 0 ? "+" : ""}${r.toFixed(2)}R`}</span>
-              <span className="text-xs text-mute">{pending ? "for entry" : next < 0 ? "all targets hit" : isNum(toNext) ? `TP${next + 1} in ${Math.abs(toNext).toFixed(2)}%` : `TP${next + 1} next`}</span>
-            </div>
-          </li>
-        );
-      })}
-    </ul>
+    <div className="fc-wrap">
+      <div className="fc-sum">
+        <span><b className="num">{total}</b> running</span>
+        <span><b className="num text-bull">{green}</b> in profit</span>
+        <span><b className="num text-bear">{live.length - green}</b> below entry</span>
+        <span>avg <b className={`num ${(avg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{rTxt(avg)}</b></span>
+        <span><b className="num text-accent">{hitCount}</b> targets hit</span>
+      </div>
+      <ul className="sl-list">{legs.map((l) => <DeckRow key={l.x.id ?? `${l.x.symbol}${l.x.created_at}`} l={l} />)}</ul>
+      <More n={more} />
+    </div>
+  );
+}
+
+/** Home (owner's pick, 22 Nov 2026): one arc gauge per running call. Left end = stop, right end = last target; red arc =
+ *  risk, gold/green arc = room to the targets; the live price is the glowing needle tip, the filled arc runs from the
+ *  entry to it; target diamonds light up when hit. */
+export function SignalDeck({ track }: { track: any }) {
+  const { tickers } = useLive();
+  const { shown, more, total } = useOpenCalls(track);
+  if (!total) return <Empty />;
+  return (
+    <div>
+      <ul className="gd-grid">
+        {shown.map((x) => <Gauge key={x.id ?? `${x.symbol}${x.created_at}`} l={legOf(x, tickers[x.symbol]?.last ?? undefined)} />)}
+      </ul>
+      <More n={more} />
+    </div>
+  );
+}
+
+function Gauge({ l }: { l: Leg }) {
+  const { x } = l;
+  const W = 168, cx = 84, cy = 80, R = 62;
+  const pt = (t: number, rr = R) => { const a = Math.PI * (1 - t); return [cx + rr * Math.cos(a), cy - rr * Math.sin(a)] as const; };
+  const arc = (t0: number, t1: number, rr = R) => {
+    if (t1 - t0 < 0.002) return "";
+    const [x0, y0] = pt(t0, rr), [x1, y1] = pt(t1, rr);
+    return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${rr} ${rr} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+  };
+  const tone = l.r == null ? "rgb(var(--mute))" : l.up ? "rgb(var(--bull))" : "rgb(var(--bear))";
+  const [nx, ny] = pt(l.c);
+  const st = l.at(isNum(l.sNow) ? l.sNow : x.stop), nt = l.next >= 0 ? l.at(l.tps[l.next]) : 1;
+  const hp = nt > st ? (l.c - st) / (nt - st) : 0;
+  const status: [string, string] = l.pending ? ["Waiting", "mute"] : l.r == null ? ["—", "mute"] : l.next < 0 ? ["All targets hit", "bull"]
+    : hp >= 0.5 ? ["Healthy", "bull"] : hp >= 0.25 ? ["Watch", "warn"] : ["At risk", "bear"];
+  const gid = `gd${String(x.id ?? x.symbol).replace(/[^\w]/g, "")}`;
+  return (
+    <li className={`gd-tile ${l.r == null ? "" : l.up ? "is-up" : "is-down"}`}>
+      <Link to={`/asset/${slug(x.symbol)}?tf=${x.timeframe}`} className="gd-head">
+        <CoinAvatar symbol={x.symbol} size={22} />
+        <b className="truncate">{name(x.symbol)}</b>
+        <span className={`gd-side ${l.s > 0 ? "is-long" : "is-short"}`}>{l.s > 0 ? "LONG" : "SHORT"}</span>
+        <span className="gd-tf">{String(x.timeframe).toUpperCase()}</span>
+      </Link>
+      <svg viewBox={`0 0 ${W} 96`} className="gd-svg" role="img" aria-label={`${name(x.symbol)}: ${l.pending ? "waiting for entry" : rTxt(l.r)}, ${l.hits.filter(Boolean).length} of ${l.tps.length} targets hit`}>
+        <defs>
+          <linearGradient id={`${gid}-rk`} x1="0" x2="1"><stop offset="0" stopColor="rgb(var(--bear))" stopOpacity="0.9" /><stop offset="1" stopColor="rgb(var(--bear))" stopOpacity="0.25" /></linearGradient>
+          <linearGradient id={`${gid}-rw`} x1="0" x2="1"><stop offset="0" stopColor="rgb(var(--accent))" stopOpacity="0.35" /><stop offset="1" stopColor="rgb(var(--bull))" stopOpacity="0.55" /></linearGradient>
+          <filter id={`${gid}-gl`} x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.2" /></filter>
+        </defs>
+        {Array.from({ length: 31 }, (_, i) => { const t = i / 30, [a1, b1] = pt(t, R + 9), [a2, b2] = pt(t, R + (i % 5 ? 11 : 13)); return <line key={i} x1={a1} y1={b1} x2={a2} y2={b2} stroke="rgb(var(--glass) / 0.22)" strokeWidth={i % 5 ? 0.6 : 1} />; })}
+        <path d={arc(0, 1)} stroke="rgb(var(--glass) / 0.08)" strokeWidth={9} fill="none" strokeLinecap="round" />
+        <path d={arc(0, l.e)} stroke={`url(#${gid}-rk)`} strokeWidth={4} fill="none" strokeLinecap="round" />
+        <path d={arc(l.e, 1)} stroke={`url(#${gid}-rw)`} strokeWidth={4} fill="none" strokeLinecap="round" />
+        {!l.pending && l.r != null && <>
+          <path d={arc(Math.min(l.e, l.c), Math.max(l.e, l.c))} stroke={tone} strokeWidth={8} fill="none" strokeLinecap="round" opacity={0.35} filter={`url(#${gid}-gl)`} />
+          <path d={arc(Math.min(l.e, l.c), Math.max(l.e, l.c))} stroke={tone} strokeWidth={4} fill="none" strokeLinecap="round" />
+        </>}
+        {(() => { const [a1, b1] = pt(l.e, R - 8), [a2, b2] = pt(l.e, R + 7); return <line x1={a1} y1={b1} x2={a2} y2={b2} stroke="rgb(var(--accent))" strokeWidth={2} strokeLinecap="round" />; })()}
+        {isNum(l.sNow) && l.sNow !== x.stop && (() => { const [a1, b1] = pt(l.at(l.sNow), R - 7), [a2, b2] = pt(l.at(l.sNow), R + 6); return <line x1={a1} y1={b1} x2={a2} y2={b2} stroke="rgb(var(--warn))" strokeWidth={2} strokeLinecap="round" />; })()}
+        {l.tps.map((t, k) => { const [a, b] = pt(l.at(t)); return (
+          <g key={k}>
+            <rect x={a - 3.6} y={b - 3.6} width={7.2} height={7.2} transform={`rotate(45 ${a} ${b})`} fill={l.hits[k] ? "rgb(var(--bull))" : "rgb(var(--panel))"} stroke="rgb(var(--bull))" strokeWidth={1.4}
+              className={!l.hits[k] && k === l.next ? "gd-next" : undefined} />
+            {l.hits[k] && <rect x={a - 3.6} y={b - 3.6} width={7.2} height={7.2} transform={`rotate(45 ${a} ${b})`} fill="rgb(var(--bull))" filter={`url(#${gid}-gl)`} />}
+          </g>); })}
+        {!l.pending && isNum(l.px) && <>
+          <line x1={cx} y1={cy} x2={nx} y2={ny} stroke={tone} strokeOpacity={0.35} strokeWidth={1} strokeDasharray="2 3" />
+          <circle cx={nx} cy={ny} r={7.5} fill={tone} opacity={0.35} filter={`url(#${gid}-gl)`} className="gd-pulse" style={{ transformBox: "fill-box", transformOrigin: "center" }} />
+          <circle cx={nx} cy={ny} r={4} fill="#fff" stroke={tone} strokeWidth={2} />
+        </>}
+        <text x={cx} y={cy - 12} textAnchor="middle" fontSize="19" fontWeight="700" className="num" fill={tone}>{l.pending ? "waiting" : rTxt(l.r)}</text>
+        <text x={cx} y={cy + 2} textAnchor="middle" fontSize="9.5" fill="rgb(var(--mute))">{l.pending ? "for entry" : l.label}</text>
+        <text x={cx - R} y={cy + 13} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="rgb(var(--bear) / 0.85)">SL</text>
+        <text x={cx + R} y={cy + 13} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="rgb(var(--bull) / 0.85)">TP{l.tps.length}</text>
+      </svg>
+      <div className="gd-foot">
+        <span className={`gd-status is-${status[1]}`}>{status[0]}</span>
+        <span className="text-mute">{ago(x.filled_at ?? x.created_at)}</span>
+      </div>
+    </li>
+  );
+}
+
+/** Command Centre row: one slim line per running call. */
+function DeckRow({ l }: { l: Leg }) {
+  const { x } = l;
+  return (
+    <li className={`sl-row ${l.r == null ? "" : l.up ? "is-up" : "is-down"}`}>
+      <Link to={`/asset/${slug(x.symbol)}?tf=${x.timeframe}`} className="sl-id">
+        <CoinAvatar symbol={x.symbol} size={24} />
+        <b className="truncate">{name(x.symbol)}</b>
+        <span className={`sl-side ${l.s > 0 ? "text-bull" : "text-bear"}`}>{l.s > 0 ? "▲" : "▼"} {String(x.timeframe).toUpperCase()}</span>
+      </Link>
+      <div className="sl-line">
+        <span className="sl-base" />
+        {!l.pending && l.r != null && <span className={`sl-fill ${l.up ? "" : "is-down"}`} style={{ left: `${Math.min(l.e, l.c) * 100}%`, width: `${Math.abs(l.c - l.e) * 100}%` }} />}
+        <span className="sl-dot sl-e" style={{ left: `${l.e * 100}%` }} />
+        {l.tps.map((t, k) => <span key={k} className={`sl-dot ${l.hits[k] ? "is-hit" : ""}`} style={{ left: `${l.at(t) * 100}%` }} />)}
+        {!l.pending && isNum(l.px) && <span className={`sl-now ${l.up ? "" : "is-down"}`} style={{ left: `${l.c * 100}%` }} />}
+      </div>
+      <span className={`num sl-r ${l.r == null ? "text-mute" : l.up ? "text-bull" : "text-bear"}`}>{l.pending ? "waiting" : rTxt(l.r)}</span>
+      <span className="sl-next text-xs text-mute">{l.pending ? "for entry" : l.label}</span>
+    </li>
   );
 }
 

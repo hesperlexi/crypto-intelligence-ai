@@ -1584,6 +1584,14 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     engine["firestore_engine_budget"] = sink.engine_budget()           # the engine goes lean at this count
     engine["firestore_free_limit"] = 20000
     engine["firestore_lean"] = sink.lean
+    try:                                                         # v2.67 edge views + which documents use the writes
+        es = sink.edge_status() if hasattr(sink, "edge_status") else {}
+        engine["edge"] = {"on": bool(getattr(sink, "edge_on", lambda: False)()), "healthy": bool(getattr(sink, "edge_healthy", lambda: False)()),
+                          "ok_at": es.get("ok_at"), "fail_at": es.get("fail_at"), "sent_today": es.get("sent_today"), "error": es.get("last_error")}
+        wb = rt.db.get_setting("fs_writes_by", None) or {}
+        engine["firestore_writes_by"] = dict(sorted((wb.get("n") or {}).items(), key=lambda kv: -kv[1])[:12])
+    except Exception:
+        pass
     step("publish", lambda: publish(rt, sink, engine, started, analyses))
     if analyses:
         res = step("auto_paper", lambda: _auto_paper(rt, sink, analyses))

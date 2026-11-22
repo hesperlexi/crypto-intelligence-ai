@@ -1206,3 +1206,22 @@ Fear & Greed arc, BTC live centre; hover shows that coin), `SonarScope` (Market 
 up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 strongest per side labelled). Command Centre
 `Universe` = tilted solar system (BTC logo sun with corona, 5 logo planets, beams, starfield with faded edges). CSS `.ins-*`,
 `.uv-*` in observatory.css (motion off under reduced motion). Preview seed has 29 coins on dashboard rows.
+
+## v2.67 signal journeys + Cloudflare edge views (owner, 22 Nov 2026)
+- Journeys show up to 12 running calls (`CommandPlus.JOURNEY_MAX`, same-side cap is 12) + "+N more" → Results. Owner picked:
+  Home = `SignalDeck` arc gauges (`.gd-*`: SL left → last TP right, risk arc red, entry tick gold, target diamonds lit when
+  hit, live price needle, Healthy / Watch / At risk); Command Centre = `SignalJourneys` summary strip (`.fc-sum`) + slim rows
+  (`DeckRow`, `.sl-*`: entry dot gold, target dots, price dot + trail, R, next target; best first). Shared `legOf`.
+- **Edge views** (free Cloudflare, to cut Firestore reads AND writes): engine `sinks.BaseSink.view` also queues every
+  member view matching `sinks.EDGE_RE` (same regex in `chat-worker/src/index.ts` and `frontend/src/lib/edge.ts`; a test
+  checks) → `flush_edge` POSTs chunks ≤ 450 KB to `<EDGE_URL>/ingest` (header `X-Edge-Key` = sha256("cia-edge-v1|" +
+  FIREBASE_SERVICE_ACCOUNT), set as Worker secret `EDGE_KEY` by `chat-worker.yml`) → Durable Object `ViewStore` (SQLite, free
+  plan). Table `edge_published` (hash per view). Every 10 min the engine reads one view back (`_edge_probe`). While the edge
+  is healthy (`edge_status.ok_at` < 30 min, no later fail) those views go to Firestore at most every `EDGE_FS_EVERY_S` (900 s;
+  a changed `core` still at once); any failure → every change to Firestore again. `EDGE=0` turns it off. Health
+  `engine.edge` + `engine.firestore_writes_by` (writes per view family today, setting `fs_writes_by`).
+- Worker `GET /v?n=a,b&e=etags` (Firebase token + member check as the chat; role cached in memory + KV 2 h; views kept in
+  isolate memory 20 s; responses assembled as text - free plan CPU) → `{views: {name: {etag, at, data}|{same}|{none}}}`;
+  `/edge-health`. App: `lib/edge.ts` `edgeView` used by `api.view()` for eligible names: one batched poll every 30 s while
+  visible; on 401/403/network/none that view (or all) falls back to the Firestore listener (retry after 5 min). Kill switch
+  localStorage `cia-edge-off=1` / `VITE_EDGE_VIEWS=0`. Off in preview. Cloudflare token has no D1 / R2 rights (cf-probe.yml).
