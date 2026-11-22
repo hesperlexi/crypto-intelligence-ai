@@ -7,6 +7,12 @@ on:
       start:
         description: "split from (ms)"
         default: "1793784369962"
+      until:
+        description: "split to (ms)"
+        default: "1000000000000000"
+      name:
+        description: "result file name"
+        default: "filters-live"
 jobs:
   whatif:
     runs-on: ubuntu-latest
@@ -34,9 +40,9 @@ jobs:
       - name: Run
         run: |
           mkdir -p ../out
-          python -m app.filters_live --since-ms "${{ github.event.inputs.start }}" --out ../out/filters-live.json 2> ../err.txt \
-            || python3 -c "import json; print(json.dumps({'ok': False, 'reason': open('../err.txt').read()[-1500:]}))" > ../out/filters-live.json
-          head -c 3000 ../out/filters-live.json
+          python -m app.filters_live --since-ms "${{ github.event.inputs.start }}" --until-ms "${{ github.event.inputs.until }}" --out "../out/${{ github.event.inputs.name }}.json" 2> ../err.txt \
+            || python3 -c "import json; print(json.dumps({'ok': False, 'reason': open('../err.txt').read()[-1500:]}))" > "../out/${{ github.event.inputs.name }}.json"
+          head -c 3000 "../out/${{ github.event.inputs.name }}.json"
       - name: Commit to research-results
         working-directory: .
         run: |
