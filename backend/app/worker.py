@@ -1602,7 +1602,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         rt.db.set_setting("market_turn_at", now_ms())
     # v2.75 members' market extras (open interest, funding, liquidation map estimate, options / volatility, traditional
     # markets, token unlocks) -> views/derivs, hourly; skipped in lean mode
-    if fetch_context and not sink.lean() and now_ms() - int(rt.db.get_setting("market_extras_at", 0) or 0) >= market_extras.EVERY_S * 1000 - 120_000:
+    if fetch_context and not sink.lean and now_ms() - int(rt.db.get_setting("market_extras_at", 0) or 0) >= market_extras.EVERY_S * 1000 - 120_000:
         detail["market_extras"] = step("market_extras", lambda: market_extras.publish(rt, sink))
         rt.db.set_setting("market_extras_at", now_ms())
     # v2.25 Performance Lab (admin, read-only study of the record): every 2 h, its own step
