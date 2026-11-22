@@ -134,7 +134,7 @@ def _stats(tr: list[dict[str, Any]]) -> dict[str, Any]:
     return c
 
 
-def replay(db_url: str, budget_s: float) -> dict[str, Any]:
+def replay(db_url: str, budget_s: float, raw: bool = False) -> dict[str, Any]:
     from . import research_engine as RE
     from . import research_v213 as V
     from .config import MODEL_TIMEFRAMES
@@ -206,6 +206,8 @@ def replay(db_url: str, budget_s: float) -> dict[str, Any]:
             S.follow, S.ladder, SP.HORIZON_BARS = orig_follow, orig_ladder, orig_h
     finally:
         S.follow, S.ladder, SP.HORIZON_BARS = orig_follow, orig_ladder, orig_h
+    if raw:                                    # v2.68 per-coin study: the trades themselves
+        return {"res": res, "skipped": skipped, "seconds": round(time.time() - t0, 1)}
     out: dict[str, Any] = {}
     for name, parts in res.items():
         out[name] = {}

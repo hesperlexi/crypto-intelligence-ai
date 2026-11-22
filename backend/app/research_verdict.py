@@ -38,7 +38,9 @@ def _key(t: dict[str, Any]) -> tuple:
     return (t.get("sym"), t.get("tf"), int(t["ts"]))
 
 
-def verdict(base: list[dict[str, Any]], new: list[dict[str, Any]], seed: int = 7, n_boot: int = 2000) -> dict[str, Any]:
+def verdict(base: list[dict[str, Any]], new: list[dict[str, Any]], seed: int = 7, n_boot: int = 2000,
+            affected: int | None = None) -> dict[str, Any]:
+    """affected: number of calls that differ, when the study changes outcomes of the same calls (e.g. exits)."""
     if not base:
         return {"verdict": "INCONCLUSIVE", "reason": "no calls"}
     mid = float(np.median([t["ts"] for t in base]))
@@ -47,7 +49,7 @@ def verdict(base: list[dict[str, Any]], new: list[dict[str, Any]], seed: int = 7
         halves[name] = {"base": curve([t for t in base if cond(t)]), "new": curve([t for t in new if cond(t)])}
     cb, cn = curve(base), curve(new)
     kb, kn = {_key(t) for t in base}, {_key(t) for t in new}
-    affected = len(kb ^ kn)
+    affected = len(kb ^ kn) if affected is None else affected
     t0 = min(t["ts"] for t in base)
     wk = lambda t: int((t["ts"] - t0) // WEEK_MS)   # noqa: E731
     weeks = sorted({wk(t) for t in base} | {wk(t) for t in new})
