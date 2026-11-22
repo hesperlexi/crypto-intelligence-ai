@@ -59,7 +59,7 @@ type Filter = "all" | "bull" | "bear" | "pinned";
 export default function MarketBoard({ d, tf, onTf, loading }: { d: any; tf: string; onTf: (tf: string) => void; loading?: boolean }) {
   const rows = useRows(d);
   const { tickers } = useLive();
-  const [view, setView] = useState<"table" | "heat">(() => { try { return localStorage.getItem("cia-board-view") === "heat" ? "heat" : "table"; } catch { return "table"; } });
+  const [view, setView] = useState<"table" | "heat">(() => { try { return localStorage.getItem("cia-board-view") === "table" ? "table" : "heat"; } catch { return "heat"; } });   // v2.71: heatmap by default (owner)
   const [sort, setSort] = useState<Sort>("list");
   const [filter, setFilter] = useState<Filter>("all");
   const [all, setAll] = useState(false);
@@ -200,14 +200,21 @@ function Heat({ rows }: { rows: Row[] }) {
 
 const HeatTile = memo(function HeatTile({ r }: { r: Row }) {
   const t = useTickerThrottled(r.symbol, 2000);
-  const ch = t?.change_pct ?? r.change;
-  const a = isNum(ch) ? Math.min(0.62, 0.1 + Math.abs(ch) / 11) : 0;
-  const bg = !isNum(ch) ? undefined : ch >= 0 ? `rgb(var(--bull) / ${a})` : `rgb(var(--bear) / ${a})`;
+  const ch = t?.change_pct ?? r.change, px = t?.last ?? r.price;
+  // v2.71 crystal tile: the colour strength follows the size of the move; sheen, edge light and glow come from CSS
+  const a = isNum(ch) ? Math.min(0.58, 0.12 + Math.abs(ch) / 12) : 0;
+  const tone = !isNum(ch) ? "flat" : ch >= 0 ? "up" : "down";
   const [rg, rl] = regimeOf(r.regime);
   return (
-    <Link to={`/asset/${slug(r.symbol)}`} className="mb-tile" style={{ background: bg }}>
-      <span className="mb-tile-top"><b>{base(r.symbol)}</b>{(r.pinned || r.mine) && <span className="mb-star">★</span>}</span>
-      <span className="num mb-tile-pct">{isNum(ch) ? fmtPctRaw(ch) : DASH}</span>
+    <Link to={`/asset/${slug(r.symbol)}`} className={`mb-tile mb-tile-${tone}`} style={{ ["--t" as any]: a }}>
+      <span className="mb-tile-top">
+        <CoinAvatar symbol={r.symbol} size={22} />
+        <b className="truncate">{base(r.symbol)}</b>{(r.pinned || r.mine) && <span className="mb-star">★</span>}
+      </span>
+      <span className="mb-tile-mid">
+        <span className="num mb-tile-pct">{isNum(ch) ? fmtPctRaw(ch) : DASH}</span>
+        <span className="num mb-tile-px">{isNum(px) ? fmtPrice(px) : DASH}</span>
+      </span>
       <span className="mb-tile-foot"><i className={`mb-dot mb-dot-${rl}`} aria-hidden="true" />{rg}</span>
     </Link>
   );

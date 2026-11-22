@@ -1274,6 +1274,7 @@ Top risks, Forecast table, Heatmap): row = coin (★ pinned / mine) · live pric
 `regimeOf` + 5-segment strength) · signal · AI outlook bars 15M-24H (faint = no edge) · watch (risks); TF switch, view
 Table | Heatmap (localStorage `cia-board-view`; heat tiles flex so the last row ends level), filters All / Uptrend /
 Downtrend / Pinned, sort by header (Coin / 24h / Trend), first 12 + "Show all", "Manage coins" = `MyCoins startEdit`.
+**v2.71 (owner):** heatmap is the default view; crystal tiles (`.mb-tile` tinted glass by move size `--t`, top sheen, bright edge, coloured glow, Sora figures) with the live price beside the 24h %; tiles `flex 1 1 12rem` (30 coins = even rows).
 `IntelBrief` replaces `AiBriefCard` + sonar (mood, headline, breadth bar from `market_status`, 3 facts, leaders /
 laggards 24h, "Read full briefing"). Home order: hero · live signals · opportunity board · BTC chart + brief · board ·
 performance / activity / market context · Market insights. `GlobalStatusCard` and the "More market detail" fold removed.
