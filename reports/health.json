@@ -1,14 +1,14 @@
 {
  "status": "LIVE",
- "generated_min_ago": 1.1,
+ "generated_min_ago": 4.1,
  "market_data": {
   "status": "OK",
   "transport": "engine snapshot (website streams live prices)",
-  "last_update_ms": 1795344203061,
-  "age_s": 190.216,
+  "last_update_ms": 1795345167170,
+  "age_s": 187.994,
   "reconnects": 0,
   "last_error": null,
-  "quality_pct": 99.867,
+  "quality_pct": 99.992,
   "stale_series": 0,
   "has_error": false
  },
@@ -16,7 +16,7 @@
   "name": "binance",
   "errors": 0,
   "last_error": null,
-  "last_ok_ms": 1795344324675,
+  "last_ok_ms": 1795345287138,
   "clock_skew_ms": 0,
   "status": "OK",
   "has_error": false
@@ -26,13 +26,13 @@
   "engine": "sqlite"
  },
  "engine": {
-  "last_tick_finished": 1795344325013,
-  "last_tick_seconds": 137.5,
+  "last_tick_finished": 1795345287228,
+  "last_tick_seconds": 132.2,
   "failed_steps": [],
   "data_host": "https://data-api.binance.vision",
-  "ticks": 7504,
-  "firestore_writes_today": 1440,
-  "firestore_reads_today": 1050,
+  "ticks": 7508,
+  "firestore_writes_today": 1481,
+  "firestore_reads_today": 1186,
   "firestore_member_reserve": 240,
   "firestore_engine_budget": 14760,
   "firestore_lean": false,
@@ -40,72 +40,72 @@
   "edge": {
    "on": true,
    "healthy": true,
-   "ok_at": 1795344155103,
+   "ok_at": 1795345124893,
    "fail_at": null,
-   "sent_today": 5508,
+   "sent_today": 6044,
    "error": null
   },
   "firestore_writes_by": {
-   "analysis": 668,
+   "analysis": 678,
    "perf": 239,
    "models": 78,
    "dashboard": 52,
    "futures": 36,
-   "guardian": 32,
-   "health_admin": 23,
-   "hesper": 10,
+   "guardian": 34,
+   "health_admin": 27,
+   "hesper": 11,
    "models_status": 9,
    "performance": 9,
    "signals": 9,
    "replay_ranges": 9
   },
   "step_seconds": {
-   "analyses": 81.4,
-   "bots": 16.2,
-   "candles": 13.0,
-   "snapshot": 11.8,
-   "crowd": 6.8,
+   "analyses": 81.3,
+   "bots": 13.8,
+   "snapshot": 10.9,
+   "candles": 10.2,
+   "crowd": 7.1,
    "rejected_outcomes": 2.4,
    "guardian": 1.7,
    "outcomes": 1.4,
-   "config": 0.8,
-   "bootstrap": 0.7,
-   "derivs": 0.4,
-   "context": 0.3
+   "config": 1.1,
+   "news_sentiment": 0.7,
+   "bootstrap": 0.6,
+   "news": 0.3
   },
   "step_seconds_avg": {
-   "analyses": 95.1,
-   "bots": 14.4,
-   "candles": 11.2,
-   "snapshot": 10.8,
-   "bootstrap": 3.9,
-   "market_data": 3.0,
-   "guardian": 2.3,
+   "analyses": 91.7,
+   "bots": 14.0,
+   "candles": 11.3,
+   "snapshot": 10.9,
+   "market_data": 4.6,
+   "bootstrap": 3.1,
+   "crowd": 2.8,
+   "guardian": 2.4,
    "outcomes": 2.1,
    "rejected_outcomes": 2.1,
-   "crowd": 1.2,
-   "config": 1.1,
+   "config": 1.0,
    "news": 0.4,
    "context": 0.3,
-   "derivs": 0.3,
-   "market_turn": 0.3
+   "market_turn": 0.3,
+   "derivs": 0.2
   },
   "step_seconds_max": {
    "analyses": 135.0,
    "bootstrap": 39.6,
-   "market_data": 35.8,
+   "market_data": 37.2,
    "candles": 25.6,
    "bots": 18.9,
    "snapshot": 11.8,
    "guardian": 8.9,
-   "crowd": 7.8
+   "crowd": 8.7
   },
-  "round_seconds_avg": 149.4,
+  "round_seconds_avg": 148.0,
   "round_seconds_max": 191.8,
-  "rounds_measured": 12
+  "rounds_measured": 16
  },
  "series_total": 120,
- "series_not_ok": 7,
+ "series_not_ok": 3,
  "not_ok": [
   {
    "symbol": "XAG/USDT",
@@ -116,7 +116,7 @@
    "misaligned": 0,
    "malformed": 0,
    "quality_pct": 98.476,
-   "age_s": -806.7,
+   "age_s": 155.2,
    "gaps": [
     {
      "from": 1767222000000,
@@ -144,7 +144,7 @@
    "misaligned": 0,
    "malformed": 0,
    "quality_pct": 98.477,
-   "age_s": -4406.7,
+   "age_s": -3444.8,
    "gaps": [
     {
      "from": 1767211200000,
@@ -172,7 +172,7 @@
    "misaligned": 0,
    "malformed": 0,
    "quality_pct": 98.48,
-   "age_s": -47606.7,
+   "age_s": -46644.8,
    "gaps": [
     {
      "from": 1767139200000,
@@ -190,54 +190,6 @@
      "missing": 2
     }
    ]
-  },
-  {
-   "symbol": "ANTHROPIC/USDT",
-   "timeframe": "15m",
-   "status": "DEGRADED",
-   "candles": 21340,
-   "missing": 0,
-   "misaligned": 0,
-   "malformed": 1929,
-   "quality_pct": 90.961,
-   "age_s": 93.3,
-   "gaps": []
-  },
-  {
-   "symbol": "ANTHROPIC/USDT",
-   "timeframe": "1h",
-   "status": "DEGRADED",
-   "candles": 5336,
-   "missing": 0,
-   "misaligned": 0,
-   "malformed": 332,
-   "quality_pct": 93.778,
-   "age_s": -806.7,
-   "gaps": []
-  },
-  {
-   "symbol": "ANTHROPIC/USDT",
-   "timeframe": "4h",
-   "status": "DEGRADED",
-   "candles": 1335,
-   "missing": 0,
-   "misaligned": 0,
-   "malformed": 49,
-   "quality_pct": 96.33,
-   "age_s": -4406.7,
-   "gaps": []
-  },
-  {
-   "symbol": "ANTHROPIC/USDT",
-   "timeframe": "1d",
-   "status": "DEGRADED",
-   "candles": 223,
-   "missing": 0,
-   "misaligned": 0,
-   "malformed": 5,
-   "quality_pct": 97.758,
-   "age_s": -47606.7,
-   "gaps": []
   }
  ],
  "recent_errors_count": 0
