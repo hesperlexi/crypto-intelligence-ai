@@ -1,0 +1,67 @@
+{
+ "mexc_matches": [
+  "SILVER_USDT",
+  "SILVER_USDC",
+  "SILVER_USD1"
+ ],
+ "mexc_SILVER_USDT_Min15": {
+  "bars": 2000,
+  "first": 1793543400,
+  "last": 1795342500,
+  "last_close": 41.64
+ },
+ "mexc_SILVER_USDT_Day1": {
+  "bars": 324,
+  "first": 1766966400,
+  "last": 1795305600,
+  "last_close": 41.64
+ },
+ "mexc_SILVER_USDT_detail": {
+  "contractSize": 0.01,
+  "displayNameEn": "SILVER(XAG)_USDT PERPETUAL",
+  "state": 0,
+  "createTime": 1766977977000
+ },
+ "mexc_SILVER_USDC_Min15": {
+  "bars": 2000,
+  "first": 1793543400,
+  "last": 1795342500,
+  "last_close": 41.63
+ },
+ "mexc_SILVER_USDC_Day1": {
+  "bars": 295,
+  "first": 1769904000,
+  "last": 1795305600,
+  "last_close": 41.63
+ },
+ "mexc_SILVER_USDC_detail": {
+  "contractSize": 0.01,
+  "displayNameEn": "SILVER(XAG)_USDC PERPETUAL",
+  "state": 0,
+  "createTime": 1769921248000
+ },
+ "mexc_SILVER_USD1_Min15": {
+  "bars": 2000,
+  "first": 1793543400,
+  "last": 1795342500,
+  "last_close": 41.57
+ },
+ "mexc_SILVER_USD1_Day1": {
+  "bars": 210,
+  "first": 1777248000,
+  "last": 1795305600,
+  "last_close": 41.57
+ },
+ "mexc_SILVER_USD1_detail": {
+  "contractSize": 0.01,
+  "displayNameEn": "SILVER(XAG)_USD1 PERPETUAL",
+  "state": 0,
+  "createTime": 1777284161000
+ },
+ "binance_spot_XAGUSDT": 400,
+ "okx_matches": [
+  "XAG-USDT-SWAP"
+ ],
+ "binance_fapi": 451,
+ "hl_matches": []
+}
