@@ -1566,6 +1566,22 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                               "data_host": getattr(rt.provider, "host_used", None),
                               "failed_steps": [k for k, v in detail["steps"].items() if not v["ok"]]})
     engine["ticks"] += 1                     # include this cycle (it is recorded after publishing)
+    try:                                        # v2.68 where a round's time goes (admin Health only): this round + last 48
+        secs = {k: v.get("seconds") for k, v in detail["steps"].items() if v.get("ok") and v.get("seconds") is not None}
+        hist = (rt.db.get_setting("step_times", None) or [])[-47:] + [{"at": started, "total": round(time.time() - t0, 1), "s": secs}]
+        rt.db.set_setting("step_times", hist)
+        tot: dict[str, list[float]] = {}
+        for h in hist:
+            for k, v in (h.get("s") or {}).items():
+                tot.setdefault(k, []).append(float(v))
+        engine["step_seconds"] = dict(sorted(secs.items(), key=lambda kv: -kv[1])[:12])
+        engine["step_seconds_avg"] = dict(sorted(((k, round(sum(v) / len(hist), 1)) for k, v in tot.items()), key=lambda kv: -kv[1])[:15])
+        engine["step_seconds_max"] = dict(sorted(((k, max(v)) for k, v in tot.items()), key=lambda kv: -kv[1])[:8])
+        engine["round_seconds_avg"] = round(sum(h["total"] for h in hist) / len(hist), 1)
+        engine["round_seconds_max"] = max(h["total"] for h in hist)
+        engine["rounds_measured"] = len(hist)
+    except Exception:
+        pass
     engine.update(watch_status())
     try:                                        # v2.64 15m trade-filter safety net (analysis.filter_off)
         from .services.analysis import FILTER_OFF_TFS

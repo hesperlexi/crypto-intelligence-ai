@@ -12,7 +12,7 @@ bad = [s for s in series if s.get("status") != "OK"]
 out = {
     "status": h.get("status"), "generated_min_ago": round((now - (h.get("generated_at") or now)) / 60000, 1),
     "market_data": h.get("market_data"), "exchange": h.get("exchange"), "database": h.get("database"),
-    "engine": {k: (h.get("engine") or {}).get(k) for k in ("last_tick_finished", "last_tick_seconds", "failed_steps", "data_host", "ticks", "firestore_writes_today", "firestore_reads_today", "firestore_member_reserve", "firestore_engine_budget", "firestore_lean", "firestore_members_active", "edge", "firestore_writes_by")},
+    "engine": {k: (h.get("engine") or {}).get(k) for k in ("last_tick_finished", "last_tick_seconds", "failed_steps", "data_host", "ticks", "firestore_writes_today", "firestore_reads_today", "firestore_member_reserve", "firestore_engine_budget", "firestore_lean", "firestore_members_active", "edge", "firestore_writes_by", "step_seconds", "step_seconds_avg", "step_seconds_max", "round_seconds_avg", "round_seconds_max", "rounds_measured")},
     "series_total": len(series), "series_not_ok": len(bad),
     "not_ok": [{k: s.get(k) for k in ("symbol", "timeframe", "status", "candles", "missing", "misaligned", "malformed", "quality_pct", "age_s", "gaps")} for s in bad][:60],
     "recent_errors_count": h.get("recent_errors_count"),     # texts are admin-only (views/health_errors), never in public reports
