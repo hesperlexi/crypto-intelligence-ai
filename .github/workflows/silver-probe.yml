@@ -1,0 +1,23 @@
+name: Silver data probe (manual, read-only)
+# Can the engine's runner reach MSTR perpetual candles (MEXC futures, Binance futures / archive)? Counts only -> reports/silver-probe.json
+on:
+  workflow_dispatch:
+  push:
+    branches: [ai-chat]
+    paths: [".github/workflows/silver-probe.yml", "scripts/silver_probe.py", "backend/app/data/futures_only.py"]
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install --quiet -r backend/requirements-worker.txt
+      - run: python scripts/silver_probe.py > /tmp/silver.json; cat /tmp/silver.json
+      - run: |
+          git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
+          git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
+          cp /tmp/silver.json reports/silver-probe.json && git add reports && git commit -qm "silver probe" && (for i in 1 2 3 4 5; do git pull -q --rebase origin reports && git push -q origin reports && break; sleep $((i*4)); done)
