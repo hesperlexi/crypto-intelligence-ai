@@ -1,0 +1,16 @@
+# Read-only: which Cloudflare storage the API token may use (D1, R2, KV). Prints success flags and error codes only.
+name: cf-probe
+on: { workflow_dispatch: {} }
+permissions: { contents: read }
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    env:
+      T: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      A: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - run: |
+          for p in d1/database r2/buckets storage/kv/namespaces workers/scripts; do
+            r=$(curl -sS -H "Authorization: Bearer $T" "https://api.cloudflare.com/client/v4/accounts/$A/$p")
+            echo "::notice::$p success=$(echo "$r" | jq -c .success) errors=$(echo "$r" | jq -c '[.errors[]?|{code,message}]') count=$(echo "$r" | jq -c '(.result|length) // 0')"
+          done
