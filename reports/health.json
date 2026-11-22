@@ -1,14 +1,14 @@
 {
  "status": "LIVE",
- "generated_min_ago": 1.4,
+ "generated_min_ago": 1.1,
  "market_data": {
   "status": "OK",
   "transport": "engine snapshot (website streams live prices)",
-  "last_update_ms": 1795342094447,
-  "age_s": 233.201,
+  "last_update_ms": 1795344203061,
+  "age_s": 190.216,
   "reconnects": 0,
   "last_error": null,
-  "quality_pct": 99.873,
+  "quality_pct": 99.867,
   "stale_series": 0,
   "has_error": false
  },
@@ -16,8 +16,8 @@
   "name": "binance",
   "errors": 0,
   "last_error": null,
-  "last_ok_ms": 1795342258439,
-  "clock_skew_ms": -1,
+  "last_ok_ms": 1795344324675,
+  "clock_skew_ms": 0,
   "status": "OK",
   "has_error": false
  },
@@ -26,13 +26,13 @@
   "engine": "sqlite"
  },
  "engine": {
-  "last_tick_finished": 1795342258695,
-  "last_tick_seconds": 175.5,
+  "last_tick_finished": 1795344325013,
+  "last_tick_seconds": 137.5,
   "failed_steps": [],
   "data_host": "https://data-api.binance.vision",
-  "ticks": 7497,
-  "firestore_writes_today": 1269,
-  "firestore_reads_today": 818,
+  "ticks": 7504,
+  "firestore_writes_today": 1440,
+  "firestore_reads_today": 1050,
   "firestore_member_reserve": 240,
   "firestore_engine_budget": 14760,
   "firestore_lean": false,
@@ -40,83 +40,167 @@
   "edge": {
    "on": true,
    "healthy": true,
-   "ok_at": 1795342050156,
+   "ok_at": 1795344155103,
    "fail_at": null,
-   "sent_today": 4330,
+   "sent_today": 5508,
    "error": null
   },
   "firestore_writes_by": {
-   "analysis": 603,
-   "perf": 233,
-   "models": 64,
-   "dashboard": 43,
-   "futures": 33,
-   "guardian": 25,
-   "health_admin": 16,
-   "models_status": 8,
-   "performance": 8,
-   "signals": 8,
-   "replay_ranges": 8,
-   "bots": 8
+   "analysis": 668,
+   "perf": 239,
+   "models": 78,
+   "dashboard": 52,
+   "futures": 36,
+   "guardian": 32,
+   "health_admin": 23,
+   "hesper": 10,
+   "models_status": 9,
+   "performance": 9,
+   "signals": 9,
+   "replay_ranges": 9
   },
   "step_seconds": {
-   "analyses": 134.2,
-   "bots": 12.7,
-   "snapshot": 10.6,
-   "candles": 9.6,
+   "analyses": 81.4,
+   "bots": 16.2,
+   "candles": 13.0,
+   "snapshot": 11.8,
+   "crowd": 6.8,
    "rejected_outcomes": 2.4,
    "guardian": 1.7,
    "outcomes": 1.4,
    "config": 0.8,
    "bootstrap": 0.7,
-   "news": 0.4,
-   "context": 0.3,
-   "derivs": 0.2
+   "derivs": 0.4,
+   "context": 0.3
   },
   "step_seconds_avg": {
-   "analyses": 102.8,
-   "bots": 14.3,
-   "snapshot": 10.7,
-   "candles": 9.6,
-   "market_data": 7.2,
-   "guardian": 3.1,
-   "outcomes": 2.4,
+   "analyses": 95.1,
+   "bots": 14.4,
+   "candles": 11.2,
+   "snapshot": 10.8,
+   "bootstrap": 3.9,
+   "market_data": 3.0,
+   "guardian": 2.3,
+   "outcomes": 2.1,
    "rejected_outcomes": 2.1,
-   "config": 1.0,
-   "bootstrap": 0.6,
-   "news_sentiment": 0.5,
+   "crowd": 1.2,
+   "config": 1.1,
    "news": 0.4,
-   "market_turn": 0.4,
    "context": 0.3,
-   "derivs": 0.2
+   "derivs": 0.3,
+   "market_turn": 0.3
   },
   "step_seconds_max": {
    "analyses": 135.0,
+   "bootstrap": 39.6,
    "market_data": 35.8,
+   "candles": 25.6,
    "bots": 18.9,
-   "snapshot": 10.8,
-   "candles": 9.7,
+   "snapshot": 11.8,
    "guardian": 8.9,
-   "outcomes": 4.6,
-   "rejected_outcomes": 2.9
+   "crowd": 7.8
   },
-  "round_seconds_avg": 156.1,
-  "round_seconds_max": 187.9,
-  "rounds_measured": 5
+  "round_seconds_avg": 149.4,
+  "round_seconds_max": 191.8,
+  "rounds_measured": 12
  },
- "series_total": 116,
- "series_not_ok": 4,
+ "series_total": 120,
+ "series_not_ok": 7,
  "not_ok": [
+  {
+   "symbol": "XAG/USDT",
+   "timeframe": "1h",
+   "status": "DEGRADED",
+   "candles": 7756,
+   "missing": 120,
+   "misaligned": 0,
+   "malformed": 0,
+   "quality_pct": 98.476,
+   "age_s": -806.7,
+   "gaps": [
+    {
+     "from": 1767222000000,
+     "to": 1767312000000,
+     "missing": 24
+    },
+    {
+     "from": 1767394800000,
+     "to": 1767571200000,
+     "missing": 48
+    },
+    {
+     "from": 1767999600000,
+     "to": 1768176000000,
+     "missing": 48
+    }
+   ]
+  },
+  {
+   "symbol": "XAG/USDT",
+   "timeframe": "4h",
+   "status": "DEGRADED",
+   "candles": 1940,
+   "missing": 30,
+   "misaligned": 0,
+   "malformed": 0,
+   "quality_pct": 98.477,
+   "age_s": -4406.7,
+   "gaps": [
+    {
+     "from": 1767211200000,
+     "to": 1767312000000,
+     "missing": 6
+    },
+    {
+     "from": 1767384000000,
+     "to": 1767571200000,
+     "missing": 12
+    },
+    {
+     "from": 1767988800000,
+     "to": 1768176000000,
+     "missing": 12
+    }
+   ]
+  },
+  {
+   "symbol": "XAG/USDT",
+   "timeframe": "1d",
+   "status": "DEGRADED",
+   "candles": 324,
+   "missing": 5,
+   "misaligned": 0,
+   "malformed": 0,
+   "quality_pct": 98.48,
+   "age_s": -47606.7,
+   "gaps": [
+    {
+     "from": 1767139200000,
+     "to": 1767312000000,
+     "missing": 1
+    },
+    {
+     "from": 1767312000000,
+     "to": 1767571200000,
+     "missing": 2
+    },
+    {
+     "from": 1767916800000,
+     "to": 1768176000000,
+     "missing": 2
+    }
+   ]
+  },
   {
    "symbol": "ANTHROPIC/USDT",
    "timeframe": "15m",
    "status": "DEGRADED",
-   "candles": 21338,
+   "candles": 21340,
    "missing": 0,
    "misaligned": 0,
    "malformed": 1929,
-   "quality_pct": 90.96,
-   "age_s": -172.4,
+   "quality_pct": 90.961,
+   "age_s": 93.3,
    "gaps": []
   },
   {
@@ -128,7 +212,7 @@
    "misaligned": 0,
    "malformed": 332,
    "quality_pct": 93.778,
-   "age_s": -2872.4,
+   "age_s": -806.7,
    "gaps": []
   },
   {
@@ -140,7 +224,7 @@
    "misaligned": 0,
    "malformed": 49,
    "quality_pct": 96.33,
-   "age_s": -6472.4,
+   "age_s": -4406.7,
    "gaps": []
   },
   {
@@ -152,7 +236,7 @@
    "misaligned": 0,
    "malformed": 5,
    "quality_pct": 97.758,
-   "age_s": -49672.4,
+   "age_s": -47606.7,
    "gaps": []
   }
  ],
