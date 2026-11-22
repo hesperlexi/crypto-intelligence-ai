@@ -6,15 +6,15 @@
  ],
  "mexc_SILVER_USDT_Min15": {
   "bars": 2000,
-  "first": 1793544300,
-  "last": 1795343400,
-  "last_close": 41.64
+  "first": 1793549700,
+  "last": 1795348800,
+  "last_close": 41.76
  },
  "mexc_SILVER_USDT_Day1": {
   "bars": 324,
   "first": 1766966400,
   "last": 1795305600,
-  "last_close": 41.64
+  "last_close": 41.76
  },
  "mexc_SILVER_USDT_detail": {
   "contractSize": 0.01,
@@ -24,15 +24,15 @@
  },
  "mexc_SILVER_USDC_Min15": {
   "bars": 2000,
-  "first": 1793544300,
-  "last": 1795343400,
-  "last_close": 41.64
+  "first": 1793549700,
+  "last": 1795348800,
+  "last_close": 41.75
  },
  "mexc_SILVER_USDC_Day1": {
   "bars": 295,
   "first": 1769904000,
   "last": 1795305600,
-  "last_close": 41.64
+  "last_close": 41.75
  },
  "mexc_SILVER_USDC_detail": {
   "contractSize": 0.01,
@@ -42,15 +42,15 @@
  },
  "mexc_SILVER_USD1_Min15": {
   "bars": 2000,
-  "first": 1793544300,
-  "last": 1795343400,
-  "last_close": 41.56
+  "first": 1793549700,
+  "last": 1795348800,
+  "last_close": 41.75
  },
  "mexc_SILVER_USD1_Day1": {
   "bars": 210,
   "first": 1777248000,
   "last": 1795305600,
-  "last_close": 41.56
+  "last_close": 41.75
  },
  "mexc_SILVER_USD1_detail": {
   "contractSize": 0.01,
