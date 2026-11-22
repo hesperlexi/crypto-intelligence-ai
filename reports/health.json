@@ -1,6 +1,6 @@
 {
  "status": "LIVE",
- "generated_min_ago": 8.3,
+ "generated_min_ago": 12.3,
  "market_data": {
   "status": "OK",
   "transport": "engine snapshot (website streams live prices)",
