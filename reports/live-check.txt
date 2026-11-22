@@ -1,5 +1,5 @@
-deployed: {"version":"2.1.0","build":"6a9e470-202611221215"}
-live:     {"version":"2.1.0","build":"6a9e470-202611221215"}
+deployed: {"version":"2.1.0","build":"f7f3f29-202611221231"}
+live:     {"version":"2.1.0","build":"f7f3f29-202611221231"}
 
 == /
 HTTP/2 200 
@@ -26,8 +26,8 @@ HTTP/2 200
 cache-control: no-cache
 content-type: image/png
 == manifest icons
-"src": "/icons/icon-192.png?v=6a9e470-202611221215"
-"src": "/icons/icon-512.png?v=6a9e470-202611221215"
-"src": "/icons/maskable-192.png?v=6a9e470-202611221215"
+"src": "/icons/icon-192.png?v=f7f3f29-202611221231"
+"src": "/icons/icon-512.png?v=f7f3f29-202611221231"
+"src": "/icons/maskable-192.png?v=f7f3f29-202611221231"
 == update check present in the bundle
-frontend/dist/assets/index-CGtsbp4f.js
+frontend/dist/assets/index-CiMo186V.js
