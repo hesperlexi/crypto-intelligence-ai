@@ -32,9 +32,9 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
   const bw = W - 2 * M, bh = 10, p = progressOf(bal, start, goal);
   g.fillStyle = "rgba(245,241,230,0.08)"; g.beginPath(); g.roundRect(M, y, bw, bh, bh / 2); g.fill();
   if (p > 0) {
-    g.save(); g.shadowColor = "rgba(240,185,11,0.8)"; g.shadowBlur = 18; g.fillStyle = foil(g, M, 0, M + bw, 0);
+    g.save(); g.shadowColor = "rgba(217,180,95,0.8)"; g.shadowBlur = 18; g.fillStyle = foil(g, M, 0, M + bw, 0);
     g.beginPath(); g.roundRect(M, y, Math.max(bh, bw * p), bh, bh / 2); g.fill();
-    g.fillStyle = "#fff1c4"; g.beginPath(); g.arc(M + Math.max(bh, bw * p), y + bh / 2, 9, 0, Math.PI * 2); g.fill(); g.restore();
+    g.fillStyle = "#f2dfa6"; g.beginPath(); g.arc(M + Math.max(bh, bw * p), y + bh / 2, 9, 0, Math.PI * 2); g.fill(); g.restore();
   }
   txt(g, usd(start, 0), M, y + 42, { w: 600, px: 19, color: L.mute });
   txt(g, `${Math.round(p * 100)}% of the way to ${usd(goal, 0)}`, W / 2, y + 42, { w: 600, px: 19, color: L.text, align: "center" });

@@ -1,51 +1,58 @@
-"""Image cards for the Telegram channel: every post is a branded 1200x675 picture with the app logo.
+"""Share images for Telegram and social posts: one design family (v2.77, owner brief 22 Nov 2026).
 
-v2.38 premium (owner, 15 Nov 2026: "the new cards are not generating for telegram"): the website's share-image look -
-warm black with a diagonal gold beam, grain, sepia logo watermark, vignette, gold-foil frame with diamonds, spaced Sora
-brand line, foil-outlined kind tag, gain figures in gold foil (losses plain red), hairline panels. Before that, v2.35: gold dust starfield, one faint gold orbit with a satellite,
-gold HUD corner brackets, panels with a gold top light, the result inside two orbit rings with satellites, a context
-tag ("AI · REAL RECORD" / "FREE SIGNAL" / "BRIEFING"). Base v2.6 design: black + gold, radial gold glow, the real logo top-left, a glowing hero number (ROI on margin at the
-signal card's suggested leverage; the price move beside it), aligned label/value grids on an 8 px grid. All text
-is placed with baseline anchors and measured with textbbox / textlength so columns line up exactly.
-Plain Pillow drawing, fonts (Inter, SIL Open Font Licence) and the logo ship in app/assets. Each function returns
-PNG bytes (palette-quantised, ~100 KB: Telegram drafts keep up to 6 cards in one 1 MB Firestore document).
-The numbers on a card are exactly the ones in the caption under it (the real record), wins and losses alike.
+v2.77 "Midnight & gold": every card is a 1080 x 1350 portrait (4:5 - fills a phone screen in Telegram and fits an Instagram
+feed post). Deep midnight-navy background with a cool light top right and a faint warm light bottom left, one thin gold orbit
+arc (the logo's orbit) as the only decoration, a hairline frame with short gold corner marks. Same header on every card (logo,
+spaced wordmark, one context line, the card's kind in a gold-outlined tag) and the same footer (site, note, brand line).
+Type: Sora for titles and figures, Inter for text. Colour rules: gold only for brand marks, the entry and key labels; green =
+a gain / a reached target, red = a loss / the stop, silver for supporting text. Signature element: the TRADE RAIL (stop ->
+entry -> TP1-3, reached points lit) on signal and result cards - the app's own picture of a trade.
+
+Cards: result_card / win_card (one closed signal, win or loss), wins_card (wins of the day / week, with the losses count),
+weekly_card, week7_card, teaser_card (a free signal), briefing_card (AI market briefing with the mood dial), news_card
+(high-impact release heads-up). The numbers on a card are exactly the ones in the caption (the real record), wins and losses
+alike. Each function returns PNG bytes (palette-quantised; Telegram drafts keep up to 6 cards in one 1 MB document).
 """
 from __future__ import annotations
 
 import io
+import math
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
-
 from .. import brand
 from ..pricefmt import fmt_price
 
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
-W, H = 1200, 675
-M = 56                                   # outer margin (8 px grid)
-BG_TOP, BG_BOT = (16, 14, 10), (4, 4, 6)       # warm black (owner, 14 Nov 2026: keep the gold-black theme)
-GOLD = (240, 185, 11)
-GOLD_SOFT = (199, 160, 64)
-GREEN = (22, 199, 132)
-RED = (234, 57, 67)
-WHITE = (242, 242, 240)
-MUTED = (150, 146, 136)
-LINE = (58, 50, 34)
-PANEL = (20, 18, 14)
-PANEL_HI = (30, 26, 18)
-AI = (255, 214, 107)                     # v2.35 accents stay in the gold family (light gold)
-INK = (8, 8, 10)
+W, H = 1080, 1350
+M = 72                                       # outer margin
+INK = (6, 9, 17)                             # midnight near-black
+NAVY = (12, 19, 36)
+PANEL = (15, 22, 38)                         # charcoal-navy surface
+PANEL_HI = (21, 30, 50)
+LINE = (38, 50, 78)                          # hairline
+GOLD = (217, 180, 95)                        # controlled gold (brand marks, entry, key labels)
+GOLD_LIGHT = (242, 223, 166)
+GOLD_DIM = (120, 98, 52)
+WHITE = (244, 246, 251)
+SILVER = (156, 166, 186)
+MUTED = (110, 120, 142)
+GREEN = (52, 201, 139)
+RED = (232, 97, 106)
+COOL = (70, 110, 190)
+GOLD_SOFT = GOLD                              # old names kept for callers
+AI = GOLD_LIGHT
 
 SITE_TEXT = brand.DISPLAY_URL
-_fonts: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}
+_fonts: dict[tuple[str, str, int], ImageFont.FreeTypeFont] = {}
 
 
 def _f(weight: str, size: int) -> ImageFont.FreeTypeFont:
-    key = (weight, size)
+    """Inter (text)."""
+    key = ("inter", weight, size)
     if key not in _fonts:
         try:
             _fonts[key] = ImageFont.truetype(str(ASSETS / "fonts" / f"Inter-{weight}.otf"), size)
@@ -54,73 +61,29 @@ def _f(weight: str, size: int) -> ImageFont.FreeTypeFont:
     return _fonts[key]
 
 
-_sora_cache: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}
-
-
 def _s(weight: str, size: int) -> ImageFont.FreeTypeFont:
-    """v2.38 Sora (variable font, SIL OFL; the website's display face) for brand, titles and big figures."""
-    key = (weight, size)
-    if key not in _sora_cache:
+    """Sora (titles, figures)."""
+    key = ("sora", weight, size)
+    if key not in _fonts:
         try:
             f = ImageFont.truetype(str(ASSETS / "fonts" / "Sora.ttf"), size)
             f.set_variation_by_name(weight)
-            _sora_cache[key] = f
+            _fonts[key] = f
         except Exception:
-            _sora_cache[key] = _f("ExtraBold" if weight in ("ExtraBold", "Bold") else "SemiBold", size)
-    return _sora_cache[key]
+            _fonts[key] = _f("ExtraBold" if weight in ("ExtraBold", "Bold") else "SemiBold", size)
+    return _fonts[key]
 
 
-FOIL = ((0.0, (156, 111, 10)), (0.28, (240, 185, 11)), (0.5, (255, 241, 196)), (0.7, (231, 174, 23)), (1.0, (143, 101, 10)))
-
-
-def _foil_img(w: int, h: int, diag: bool = True) -> Image.Image:
-    """Metallic gold gradient (the website's foil) of size w x h."""
-    import numpy as np
-    xs = np.linspace(0, 1, w)[None, :] * (0.75 if diag else 1.0)
-    ys = np.linspace(0, 1, h)[:, None] * (0.25 if diag else 0.0)
-    t = np.clip(xs + ys, 0, 1)
-    out = np.zeros((h, w, 3), float)
-    stops = FOIL
-    for (t0, c0), (t1, c1) in zip(stops[:-1], stops[1:]):
-        m = (t >= t0) & (t <= t1)
-        k = ((t - t0) / (t1 - t0))[m]
-        for ch in range(3):
-            out[..., ch][m] = c0[ch] + (c1[ch] - c0[ch]) * k
-    return Image.fromarray(out.astype("uint8"), "RGB")
-
-
-def _foil_text(img: Image.Image, xy, text: str, font: ImageFont.FreeTypeFont, anchor: str = "ls", glow: bool = True) -> int:
-    """Text filled with gold foil (and a soft gold glow). Returns the text width."""
-    mask = Image.new("L", img.size, 0)
-    md = ImageDraw.Draw(mask)
-    md.text(xy, text, font=font, fill=255, anchor=anchor)
-    box = mask.getbbox()
-    if not box:
-        return 0
-    if glow:
-        _glow(img, lambda m: m.text(xy, text, font=font, fill=255, anchor=anchor), GOLD, max(5, font.size // 9), 0.55)
-    x0, y0, x1, y1 = box
-    img.paste(_foil_img(x1 - x0, y1 - y0), (x0, y0), mask.crop(box))
-    return x1 - x0
-
-
-def _spaced(d: ImageDraw.ImageDraw, xy, text: str, font, fill, track: float) -> int:
-    """Letter-spaced capitals (the brand line)."""
-    x, y = xy
-    for ch in text:
-        d.text((x, y), ch, font=font, fill=fill, anchor="ls")
-        x += d.textlength(ch, font=font) + track
-    return int(x - xy[0])
-
+# ---- formatting -----------------------------------------------------------------------------------------------
 
 def coin(sym: str) -> str:
-    b = sym.split("/")[0]
-    return "GOLD" if b == "PAXG" else b
+    b = str(sym).split("/")[0]
+    return {"PAXG": "GOLD", "XAG": "SILVER"}.get(b, b)
 
 
 def pair(sym: str) -> str:
     c = coin(sym)
-    return c if c == "GOLD" else f"{c} / USDT"
+    return c if c in ("GOLD", "SILVER") else f"{c} / USDT"
 
 
 def px(v: float | None) -> str:
@@ -149,10 +112,18 @@ def pct(v: float, dp: int = 2) -> str:
     return f"{v:+,.{dp}f}%"
 
 
+def _num(v: Any) -> float | None:
+    try:
+        f = float(v)
+        return f if math.isfinite(f) else None
+    except (TypeError, ValueError):
+        return None
+
+
 # ---- drawing primitives ---------------------------------------------------------------------------------------
 
 def _cap(font: ImageFont.FreeTypeFont) -> int:
-    """Cap height: used to centre capital text optically inside pills and rows."""
+    """Cap height: centres capitals optically inside pills and rows."""
     return -font.getbbox("H", anchor="ls")[1]
 
 
@@ -160,14 +131,28 @@ def _tw(d: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont) -> int:
     return int(round(d.textlength(text, font=font)))
 
 
-def _fit(d: ImageDraw.ImageDraw, text: str, weight: str, size: int, max_w: int) -> ImageFont.FreeTypeFont:
-    while size > 14 and d.textlength(text, font=_f(weight, size)) > max_w:
+def _fit(d: ImageDraw.ImageDraw, text: str, weight: str, size: int, max_w: int, sora: bool = False) -> ImageFont.FreeTypeFont:
+    mk = _s if sora else _f
+    while size > 14 and d.textlength(text, font=mk(weight, size)) > max_w:
         size -= 2
-    return _f(weight, size)
+    return mk(weight, size)
+
+
+def _spaced(d: ImageDraw.ImageDraw, xy, text: str, font, fill, track: float, anchor: str = "ls") -> int:
+    """Letter-spaced capitals. anchor 'ls' (left) or 'rs' (right end at x)."""
+    width = sum(d.textlength(ch, font=font) + track for ch in text) - track
+    x, y = xy
+    if anchor == "rs":
+        x -= width
+    elif anchor == "ms":
+        x -= width / 2
+    for ch in text:
+        d.text((x, y), ch, font=font, fill=fill, anchor="ls")
+        x += d.textlength(ch, font=font) + track
+    return int(width)
 
 
 def _glow(img: Image.Image, draw_fn, color, radius: int, strength: float = 1.0) -> None:
-    """Soft coloured glow: draw the shape on a mask, blur it, tint it onto the image."""
     mask = Image.new("L", img.size, 0)
     draw_fn(ImageDraw.Draw(mask))
     mask = mask.filter(ImageFilter.GaussianBlur(radius))
@@ -176,394 +161,254 @@ def _glow(img: Image.Image, draw_fn, color, radius: int, strength: float = 1.0) 
     img.paste(Image.new("RGB", img.size, color), (0, 0), mask)
 
 
-def _radial(img: Image.Image, cx: int, cy: int, rx: int, ry: int, color, alpha: int) -> None:
-    """Elliptical glow fading smoothly to nothing at its edge (no visible box)."""
-    import numpy as np
-    yy, xx = np.mgrid[0:img.height, 0:img.width]
-    r = np.sqrt(((xx - cx) / rx) ** 2 + ((yy - cy) / ry) ** 2)
-    a = np.clip(1 - r, 0, 1) ** 2 * alpha
-    mask = Image.fromarray(a.astype("uint8"), "L")
-    img.paste(Image.new("RGB", img.size, color), (0, 0), mask)
+def _grad_text(img: Image.Image, xy, text: str, font, top, bottom, anchor: str = "ls") -> int:
+    """Text filled with a soft vertical gradient (figures)."""
+    mask = Image.new("L", img.size, 0)
+    ImageDraw.Draw(mask).text(xy, text, font=font, fill=255, anchor=anchor)
+    box = mask.getbbox()
+    if not box:
+        return 0
+    x0, y0, x1, y1 = box
+    h = max(1, y1 - y0)
+    grad = Image.new("RGB", (x1 - x0, h))
+    gd = ImageDraw.Draw(grad)
+    for i in range(h):
+        t = i / h
+        gd.line([(0, i), (x1 - x0, i)], fill=tuple(int(top[c] + (bottom[c] - top[c]) * t) for c in range(3)))
+    img.paste(grad, (x0, y0), mask.crop(box))
+    return x1 - x0
 
 
-def _panel(d: ImageDraw.ImageDraw, box, fill=PANEL, outline=LINE, r: int = 24, width: int = 2) -> None:
-    """v2.38 premium panel: near-black glass, a hairline gold edge and a short foil accent on the top edge."""
-    d.rounded_rectangle(box, radius=r, fill=fill, outline=outline, width=1)
-    x0, y0, x1, _ = box
-    cx = (x0 + x1) // 2
-    d.line([(cx - 40, y0), (cx + 40, y0)], fill=(240, 200, 90), width=2)
+def _figure(img: Image.Image, xy, value: float, font, anchor: str = "ls", text: str | None = None) -> int:
+    """A result figure: green for a gain, red for a loss, white for nothing - a soft glow, never neon."""
+    t = text if text is not None else pct(value)
+    col = GREEN if value > 0 else RED if value < 0 else WHITE
+    top = tuple(min(255, int(c + (255 - c) * 0.45)) for c in col)
+    _glow(img, lambda m: m.text(xy, t, font=font, fill=255, anchor=anchor), col, max(8, font.size // 7), 0.35 if value >= 0 else 0.22)
+    return _grad_text(img, xy, t, font, top, col, anchor)
 
 
-def _pill(d: ImageDraw.ImageDraw, x: int, y: int, text: str, fg, bg, size: int = 20, h: int = 40,
-          outline=None, align: str = "left", w: int | None = None) -> int:
-    """Pill of height h (fixed width w, else fitted) with its top-left (top-right for align='right') at x, y.
-    Returns the far x edge."""
+def _pill(d: ImageDraw.ImageDraw, x: int, y: int, text: str, fg, bg=None, outline=None, size: int = 17, h: int = 40,
+          align: str = "left", w: int | None = None, track: float = 2.0) -> int:
+    """Pill with spaced capitals; top-left (top-right for align='right') at x, y. Returns the far x edge."""
     fn = _f("Bold", size)
-    w = max(w or 0, _tw(d, text, fn) + 2 * 18)
+    tw = sum(d.textlength(ch, font=fn) + track for ch in text) - track
+    w = max(w or 0, int(tw) + 2 * 18)
     x0 = x if align == "left" else x - w
-    d.rounded_rectangle((x0, y, x0 + w, y + h), radius=h // 2, fill=bg, outline=outline, width=2 if outline else 0)
-    d.text((x0 + w / 2, y + h / 2 + _cap(fn) / 2), text, font=fn, fill=fg, anchor="ms")
+    d.rounded_rectangle((x0, y, x0 + w, y + h), radius=h // 2, fill=bg, outline=outline, width=1 if outline else 0)
+    _spaced(d, (x0 + w / 2, y + h / 2 + _cap(fn) / 2), text, fn, fg, track, anchor="ms")
     return x0 + w if align == "left" else x0
 
 
-def _side_pill(d, x, y, side: str, size: int = 20, h: int = 40, w: int | None = None) -> int:
+def _side_pill(d, x, y, side: str, **kw) -> int:
     col = GREEN if side == "LONG" else RED
-    return _pill(d, x, y, side, INK, col, size, h, w=w)
+    return _pill(d, x, y, side, col, bg=tuple(int(c * 0.16 + INK[i] * 0.84) for i, c in enumerate(col)), outline=col, **kw)
 
 
-def _chip(d, x, y, text, size: int = 20, h: int = 40, align: str = "left", w: int | None = None) -> int:
-    return _pill(d, x, y, text, GOLD, PANEL_HI, size, h, outline=GOLD_SOFT, align=align, w=w)
+def _chip(d, x, y, text, **kw) -> int:
+    return _pill(d, x, y, text, SILVER, bg=PANEL_HI, outline=LINE, **kw)
+
+
+def _gold_chip(d, x, y, text, **kw) -> int:
+    return _pill(d, x, y, text, GOLD, bg=(30, 27, 20), outline=GOLD_DIM, **kw)
+
+
+def _panel(d: ImageDraw.ImageDraw, box, fill=PANEL, outline=LINE, r: int = 22) -> None:
+    d.rounded_rectangle(box, radius=r, fill=fill, outline=outline, width=1)
+
+
+def _label(d, xy, text, size: int = 15, fill=SILVER, anchor: str = "ls") -> int:
+    return _spaced(d, xy, text.upper(), _f("SemiBold", size), fill, 2.2, anchor=anchor)
 
 
 def _background(img: Image.Image) -> None:
-    """v2.38 premium background (same as the website's share images): warm black, a diagonal beam of gold light, a gold
-    glow top right, the round logo artwork as a faint sepia watermark, fine gold grain and a vignette."""
     import numpy as np
     yy, xx = np.mgrid[0:H, 0:W].astype(float)
-    t = np.clip((xx * 0.3 + yy) / (W * 0.3 + H), 0, 1)
-    base = np.stack([21 - 16 * t, 18 - 13 * t, 12 - 7 * t], -1)
-    # diagonal beam from the top left
-    ang = 0.62
-    dist = np.abs((xx - W * 0.15) * np.cos(ang) + (yy + H * 0.05) * np.sin(ang) - 0) * 0
-    u = (xx - W * 0.15) * np.cos(ang) - (yy + H * 0.05) * np.sin(ang)
-    beam = np.exp(-(u / (W * 0.10)) ** 2) * 0.075
-    glow = np.clip(1 - np.hypot(xx - W * 0.85, yy - H * 0.12) / (W * 0.6), 0, 1) ** 2 * 0.10
-    gold = np.array([240, 185, 11], float)
-    arr = base + (beam + glow)[..., None] * gold
-    vig = np.clip((np.hypot(xx - W / 2, yy - H / 2) - min(W, H) * 0.35) / (max(W, H) * 0.75), 0, 1) * 0.55
+    t = yy / H
+    base = np.stack([12 - 7 * t, 18 - 10 * t, 34 - 18 * t], -1)
+    cool = np.clip(1 - np.hypot(xx - W * 0.92, yy - H * 0.05) / (W * 0.95), 0, 1) ** 2
+    warm = np.clip(1 - np.hypot(xx - W * 0.0, yy - H * 1.0) / (W * 0.85), 0, 1) ** 2
+    arr = base + cool[..., None] * np.array([26, 44, 82]) * 0.85 + warm[..., None] * np.array([60, 44, 14]) * 0.45
+    vig = np.clip((np.hypot(xx - W / 2, yy - H / 2) - W * 0.45) / (W * 0.9), 0, 1) * 0.5
     arr = arr * (1 - vig[..., None])
-    rng = np.random.default_rng(3)
-    grain = (rng.random((H, W)) < 1 / 260)
-    arr[grain] = arr[grain] * 0.9 + gold * 0.08
     img.paste(Image.fromarray(np.clip(arr, 0, 255).astype("uint8"), "RGB"))
-    try:
-        art = Image.open(ASSETS / "logo-art.png").convert("RGBA")
-        s_ = int(W * 0.62)
-        art = art.resize((s_, s_), Image.LANCZOS).rotate(10, resample=Image.BICUBIC)
-        g = art.convert("L")
-        sep = Image.merge("RGB", (g.point(lambda v: min(255, int(v * 1.0))), g.point(lambda v: int(v * 0.82)), g.point(lambda v: int(v * 0.55))))
-        mask = Image.new("L", (s_, s_), 0)
-        ImageDraw.Draw(mask).ellipse((0, 0, s_ - 1, s_ - 1), fill=12)
-        img.paste(sep, (W - int(s_ * 0.62), H - int(s_ * 0.70)), mask)
-    except OSError:
-        pass
-    del dist
+    d = ImageDraw.Draw(img, "RGBA")
+    # the orbit: one thin gold ellipse arc off the right edge, a small satellite on it
+    cx, cy, rx, ry = W * 1.02, H * 0.40, W * 0.62, W * 0.36
+    d.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), outline=(217, 180, 95, 26), width=2)
+    d.ellipse((cx - rx * 0.78, cy - ry * 0.78, cx + rx * 0.78, cy + ry * 0.78), outline=(120, 150, 210, 20), width=1)
+    rng2 = np.random.default_rng(11)                            # a few faint stars
+    for _ in range(70):
+        x, y = rng2.random() * W, rng2.random() * H
+        r = 0.6 + rng2.random() * 1.1
+        d.ellipse((x - r, y - r, x + r, y + r), fill=(200, 210, 235, int(25 + rng2.random() * 55)))
 
 
 def _frame(img: Image.Image) -> None:
-    """Gold-foil frame with a faint inner line and small diamonds top and bottom centre."""
-    o = 22
-    mask = Image.new("L", img.size, 0)
-    ImageDraw.Draw(mask).rounded_rectangle((o, o, W - 1 - o, H - 1 - o), radius=24, outline=255, width=3)
-    img.paste(_foil_img(W, H), (0, 0), mask)
     d = ImageDraw.Draw(img)
-    d.rounded_rectangle((o + 9, o + 9, W - 1 - o - 9, H - 1 - o - 9), radius=18, outline=(60, 48, 20), width=1)
-    dm = Image.new("L", img.size, 0)
-    dd = ImageDraw.Draw(dm)
-    for x, y in ((W // 2, o + 1), (W // 2, H - 1 - o)):
-        dd.polygon([(x, y - 7), (x + 7, y), (x, y + 7), (x - 7, y)], fill=255)
-    img.paste(_foil_img(W, H), (0, 0), dm)
+    o = 26
+    d.rounded_rectangle((o, o, W - 1 - o, H - 1 - o), radius=28, outline=(34, 45, 72), width=1)
+    r, L_ = 28, 40
+    d.arc((o, o, o + 2 * r, o + 2 * r), 180, 270, fill=GOLD, width=2)
+    d.line([(o + r, o), (o + r + L_, o)], fill=GOLD, width=2)
+    d.line([(o, o + r), (o, o + r + L_)], fill=GOLD, width=2)
+    x1, y1 = W - 1 - o, H - 1 - o
+    d.arc((x1 - 2 * r, y1 - 2 * r, x1, y1), 0, 90, fill=GOLD, width=2)
+    d.line([(x1 - r, y1), (x1 - r - L_, y1)], fill=GOLD, width=2)
+    d.line([(x1, y1 - r), (x1, y1 - r - L_)], fill=GOLD, width=2)
 
 
 def _base(title: str, tag: str = "REAL RECORD") -> tuple[Image.Image, ImageDraw.ImageDraw]:
-    img = Image.new("RGB", (W, H), BG_BOT)
+    """Background, frame and the header: logo, spaced wordmark, one context line, the card's kind."""
+    img = Image.new("RGB", (W, H), INK)
     _background(img)
     _frame(img)
-    ls = 60
+    ls, y0 = 64, 66
     try:
         logo = Image.open(ASSETS / "logo.png").convert("RGBA").resize((ls, ls), Image.LANCZOS)
         mask = Image.new("L", logo.size, 0)
-        ImageDraw.Draw(mask).rounded_rectangle((0, 0, ls - 1, ls - 1), radius=14, fill=255)
+        ImageDraw.Draw(mask).ellipse((0, 0, ls - 1, ls - 1), fill=255)
         logo.putalpha(Image.composite(logo.getchannel("A"), Image.new("L", logo.size, 0), mask))
-        _glow(img, lambda m: m.rounded_rectangle((M, 44, M + ls, 44 + ls), radius=14, fill=150), GOLD, 14, 0.8)
-        img.paste(logo, (M, 44), logo)
+        _glow(img, lambda m: m.ellipse((M - 2, y0 - 2, M + ls + 2, y0 + ls + 2), fill=120), GOLD, 12, 0.5)
+        img.paste(logo, (M, y0), logo)
+        ImageDraw.Draw(img).ellipse((M - 1, y0 - 1, M + ls, y0 + ls), outline=GOLD_DIM, width=1)
     except OSError:
         pass
     d = ImageDraw.Draw(img)
     tx = M + ls + 20
-    _spaced(d, (tx, 70), "CRYPTO INTELLIGENCE AI", _s("Bold", 19), WHITE, 4)
-    d.text((tx, 98), title, font=_fit(d, title, "SemiBold", 19, 560), fill=GOLD_SOFT, anchor="ls")
-    # the card's kind, in a foil-outlined pill (spaced capitals)
-    tag = tag.replace("AI  ·  ", "").strip()
-    tf = _s("Bold", 14)
-    tw = int(sum(d.textlength(ch, font=tf) + 3 for ch in tag)) + 40
-    pm = Image.new("L", img.size, 0)
-    ImageDraw.Draw(pm).rounded_rectangle((W - M - tw, 52, W - M, 88), radius=18, outline=255, width=2)
-    img.paste(_foil_img(W, H), (0, 0), pm)
-    d = ImageDraw.Draw(img)
-    _spaced(d, (W - M - tw + 20, 75), tag, tf, GOLD, 3)
+    _spaced(d, (tx, y0 + 28), "CRYPTO INTELLIGENCE AI", _s("Bold", 19), WHITE, 4.2)
+    d.text((tx, y0 + 56), title, font=_fit(d, title, "Medium", 18, W - 2 * M - ls - 20 - 230), fill=SILVER, anchor="ls")
+    tag = tag.replace("AI  ·  ", "").strip().upper()
+    _pill(d, W - M, y0 + 12, tag, GOLD, bg=(22, 22, 24), outline=GOLD_DIM, size=14, h=38, align="right", track=2.6)
+    # hairline under the header: gold fading into navy
+    for i in range(W - 2 * M):
+        k = max(0.0, 1 - i / (W - 2 * M) * 1.4)
+        c = tuple(int(LINE[j] + (GOLD[j] - LINE[j]) * k) for j in range(3))
+        d.point((M + i, 168), fill=c)
     return img, d
 
 
 def _footer(d: ImageDraw.ImageDraw, note: str = "Analysis only, not financial advice", img: Image.Image | None = None) -> None:
-    y = 578
-    d.line([(M, y), (W - M, y)], fill=(70, 58, 26), width=1)
-    d.line([(M, y), (M + 170, y)], fill=GOLD, width=3)
-    if img is not None:
-        _foil_text(img, (M, y + 38), SITE_TEXT, _s("Bold", 23), glow=False)
-        d = ImageDraw.Draw(img)
-    else:
-        d.text((M, y + 38), SITE_TEXT, font=_s("Bold", 23), fill=GOLD, anchor="ls")
-    fn = _fit(d, note, "Medium", 18, W - 2 * M - 380)
-    d.text((W - M, y + 38), note, font=fn, fill=MUTED, anchor="rs")
-    small = _fit(d, brand.FOOTER, "Medium", 13, W - 2 * M)
-    d.text((M, y + 62), brand.FOOTER, font=small, fill=(110, 104, 92), anchor="ls")
-
-
-def _rows(d: ImageDraw.ImageDraw, box, rows: list[tuple[str, str, Any]], label_size: int = 18,
-          value_size: int = 28) -> None:
-    """Label / value list: labels left, values right, all on one baseline per row, hairlines between rows."""
-    x0, y0, x1, y1 = box
-    _panel(d, box)
-    pad = 32
-    rh = (y1 - y0) / len(rows)
-    lf = _f("SemiBold", label_size)
-    for i, (k, v, col) in enumerate(rows):
-        top = y0 + rh * i
-        vf = _fit(d, v, "Bold", value_size, int((x1 - x0) - 2 * pad - _tw(d, k.upper(), lf) - 24))
-        base = top + rh / 2 + _cap(vf) / 2
-        d.text((x0 + pad, base), k.upper(), font=lf, fill=MUTED, anchor="ls")
-        d.text((x1 - pad, base), v, font=vf, fill=col, anchor="rs")
-        if i:
-            d.line([(x0 + pad, top), (x1 - pad, top)], fill=LINE, width=1)
-
-
-def _hero(img: Image.Image, box, value: float, lev: int | None, price: float, sub: str | None = None,
-          label: str | None = None) -> None:
-    """v2.38 the big result: a gold-foil figure for a gain (plain red for a loss, never dressed up) in a hairline box
-    with foil corner marks; ROI on margin (or the price move, labelled, when there is no leverage)."""
-    d = ImageDraw.Draw(img)
-    x0, y0, x1, y1 = box
-    good = value > 0
-    col = GOLD if good else RED
-    cx = (x0 + x1) // 2
-    d.rounded_rectangle(box, radius=26, fill=(13, 12, 9), outline=(70, 58, 26), width=1)
-    _radial(img, cx, (y0 + y1) // 2, (x1 - x0) // 2, (y1 - y0) // 2, col, 30 if good else 36)
-    d = ImageDraw.Draw(img)
-    for (hx, hy, dx, dy) in ((x0, y0, 1, 1), (x1, y0, -1, 1), (x0, y1, 1, -1), (x1, y1, -1, -1)):
-        d.line([(hx + dx * 14, hy), (hx + dx * 40, hy)], fill=GOLD, width=3)
-        d.line([(hx, hy + dy * 14), (hx, hy + dy * 40)], fill=GOLD, width=3)
-    lab = label or ("ROI on margin" if lev else "Price move")
-    labf = _f("SemiBold", 21)
-    big = pct(value)
-    fb = _s("ExtraBold", 112)
-    while fb.size > 40 and d.textlength(big, font=fb) > (x1 - x0) - 64:
-        fb = _s("ExtraBold", fb.size - 6)
-    subf = _fit(d, sub, "Medium", 17, (x1 - x0) - 48) if sub else None
-    parts = [_cap(labf), 34, _cap(fb)] + ([32, 40] if lev else []) + ([28, _cap(subf)] if sub else [])
-    y = y0 + ((y1 - y0) - sum(parts)) / 2
-    d.text((cx, y + _cap(labf)), lab, font=labf, fill=GOLD_SOFT, anchor="ms")
-    base = y + _cap(labf) + 34 + _cap(fb)
-    if good:
-        _foil_text(img, (cx, base), big, fb, anchor="ms")
-    else:
-        _glow(img, lambda m: m.text((cx, base), big, font=fb, fill=255, anchor="ms"), RED, 16, 1.2)
-        ImageDraw.Draw(img).text((cx, base), big, font=fb, fill=RED, anchor="ms")
-    d = ImageDraw.Draw(img)
-    y = base
-    if lev:
-        y += 32
-        lf = _f("Bold", 20)
-        chip = f"{lev}x margin"
-        mv = f"{pct(price)} after fees"
-        mf = _f("Medium", 22)
-        tot = _tw(d, chip, lf) + 36 + 16 + _tw(d, mv, mf)
-        e = _chip(d, int(cx - tot / 2), int(y), chip)
-        d.text((e + 16, y + 20 + _cap(mf) / 2), mv, font=mf, fill=WHITE, anchor="ls")
-        y += 40
-    if sub:
-        d.text((cx, y + 28 + _cap(subf)), sub, font=subf, fill=MUTED, anchor="ms")
+    y = H - 150
+    d.line([(M, y), (W - M, y)], fill=LINE, width=1)
+    d.line([(M, y), (M + 120, y)], fill=GOLD, width=2)
+    d.text((M, y + 52), SITE_TEXT, font=_s("Bold", 26), fill=WHITE, anchor="ls")
+    d.text((W - M, y + 52), note, font=_fit(d, note, "Medium", 18, W - 2 * M - 400), fill=SILVER, anchor="rs")
+    d.text((M, y + 88), brand.FOOTER, font=_fit(d, brand.FOOTER, "Medium", 15, W - 2 * M), fill=MUTED, anchor="ls")
 
 
 def _png(img: Image.Image) -> bytes:
     buf = io.BytesIO()
-    img.quantize(256, method=Image.Quantize.MEDIANCUT, dither=Image.Dither.FLOYDSTEINBERG).save(buf, "PNG", optimize=True)
+    # k-means refinement keeps the small brand colours (red / green figures) exact in the 256-colour palette
+    img.quantize(256, method=Image.Quantize.MEDIANCUT, kmeans=3, dither=Image.Dither.FLOYDSTEINBERG).save(buf, "PNG", optimize=True)
     return buf.getvalue()
 
 
-TARGET = {"TP1": "TARGET 1 HIT", "TP2": "TARGET 2 HIT", "TP3": "ALL TARGETS HIT", "STOPPED": "STOPPED OUT",
-          "EXPIRED": "CLOSED AT TIME LIMIT"}
-def _label(x: dict[str, Any], default: str) -> str:
-    """Result label; a call the admin closed at market says so (v2.8)."""
-    if x.get("exit_reason") == "admin_close":
-        return "CLOSED BY ADMIN"
-    return TARGET.get(str(x.get("status") or ""), default)
-
-
-HIT = {"TP1": "TP1", "TP2": "TP1 · TP2", "TP3": "TP1 · TP2 · TP3"}
-
-
-# ---- cards ----------------------------------------------------------------------------------------------------
-
-def result_card(w: dict[str, Any]) -> bytes:
-    """One closed signal, win or loss, in the same clean layout."""
-    val, lev, price = result(w)
-    win = float(w["return_pct"]) > 0
-    img, d = _base("Signal closed in profit" if win else "Signal closed at a loss")
-    side = _side(w["side"])
-    status = str(w.get("status") or "")
-    lw = 528                                                # left column 56..584, right column 616..1144
-    y = 144
-    x = _pill(d, M, y, _label(w, "CLOSED IN PROFIT" if win else "CLOSED"), INK, GREEN if win else RED)
-    x = _side_pill(d, x + 12, y, side)
-    _chip(d, x + 12, y, str(w["timeframe"]).upper())
-    name = pair(w["symbol"])
-    nf = _fit(d, name, "ExtraBold", 72, lw)
-    d.text((M, 264), name, font=nf, fill=WHITE, anchor="ls")
-    exit_lbl = "Closed at"
-    rows = [("Entry", px(w.get("entry")), WHITE), (exit_lbl, px(w.get("exit_price")), WHITE),
-            ("Targets hit", HIT.get(status, "none"), GREEN if status in HIT else MUTED),
-            ("Held", str(w.get("held") or "—"), WHITE)]
-    _rows(d, (M, 304, M + lw, 552), rows)
-    _hero(img, (616, 144, W - M, 552), val, lev, price, "half at TP1, a quarter at TP2 and TP3 · after fees")
+def _rail(img: Image.Image, box, side: str, levels: dict[str, float | None], hit: set[str], price: float | None = None,
+          exit_at: float | None = None, show_prices: bool = True) -> None:
+    """The trade rail: stop -> entry -> TP1-3 on one line (always drawn left = stop, right = last target), positions by
+    price when the levels are known; reached points lit green, the stop red when hit, the entry gold."""
     d = ImageDraw.Draw(img)
-    _footer(d, img=img)
-    return _png(img)
-
-
-def win_card(w: dict[str, Any]) -> bytes:
-    """One closed winning signal (the per-win Telegram post)."""
-    return result_card(w)
-
-
-def wins_card(wins: list[dict[str, Any]], period: str = "today", closed: int | None = None,
-              losses: int | None = None) -> bytes:
-    """Best winning signals of the day (or week), up to 5 rows, with the window's loss count beside them."""
-    img, d = _base("Wins of the " + ("day" if period == "today" else "week"))
-    rows = wins[:5]
-    n = len(wins)
-    d.text((M, 196), f"{n} winning signal{'s' if n != 1 else ''}", font=_f("ExtraBold", 48), fill=WHITE, anchor="ls")
-    if closed is not None and losses is not None:
-        sub = f"{closed} closed {'today' if period == 'today' else 'this week'} · {losses} loss{'es' if losses != 1 else ''} · every result is public"
+    x0, y0, x1, y1 = box
+    keys = [k for k in ("stop", "entry", "tp1", "tp2", "tp3") if _num(levels.get(k)) is not None]
+    if "entry" not in keys:
+        keys = ["stop", "entry", "tp1", "tp2", "tp3"]
+        pos = {k: i / 4 for i, k in enumerate(keys)}
     else:
-        sub = "every result, wins and losses, is public in the app"
-    d.text((M, 232), sub, font=_f("Medium", 20), fill=MUTED, anchor="ls")
-    best = max((result(x)[0] for x in wins), default=0.0)
-    lev_any = any(result(x)[1] for x in wins)
-    d.text((W - M, 160), "BEST ROI ON MARGIN" if lev_any else "BEST PRICE MOVE", font=_f("Bold", 18), fill=GOLD, anchor="rs")
-    bf = _s("ExtraBold", 56)
-    bt = pct(best)
-    _foil_text(img, (W - M, 224), bt, bf, anchor="rs")
-    d = ImageDraw.Draw(img)
-    # table: COIN | SIDE | TF | RESULT | PRICE | ROI (right edge)
-    x0, x1 = M, W - M
-    cols = {"coin": x0 + 28, "side": x0 + 228, "tf": x0 + 360, "res": x0 + 470, "price": x1 - 300, "roi": x1 - 28}
-    hy = 280
-    hf = _f("SemiBold", 15)
-    for k, lab, anc in (("coin", "COIN", "ls"), ("side", "SIDE", "ls"), ("tf", "TF", "ls"), ("res", "RESULT", "ls"),
-                        ("price", "PRICE MOVE", "rs"), ("roi", "ROI · LEVERAGE", "rs")):
-        d.text((cols[k], hy), lab, font=hf, fill=MUTED, anchor=anc)
-    y, rh = 292, 52
-    for i, x in enumerate(rows):
-        top = y + i * (rh + 0)
-        if i % 2 == 0:
-            d.rounded_rectangle((x0, top + 3, x1, top + rh - 3), radius=14, fill=PANEL, outline=LINE, width=1)
-        mid = top + rh / 2
-        side = _side(x["side"])
-        cf = _fit(d, coin(x["symbol"]), "Bold", 26, 190)
-        d.text((cols["coin"], mid + _cap(cf) / 2), coin(x["symbol"]), font=cf, fill=WHITE, anchor="ls")
-        _side_pill(d, cols["side"], int(mid - 15), side, 15, 30, w=96)
-        _chip(d, cols["tf"], int(mid - 15), str(x["timeframe"]).upper(), 15, 30, w=72)
-        rf = _f("Medium", 19)
-        d.text((cols["res"], mid + _cap(rf) / 2), _label(x, "IN PROFIT").title(), font=rf,
-               fill=MUTED, anchor="ls")
-        val, lev, price = result(x)
-        d.text((cols["price"], mid + _cap(rf) / 2), pct(price), font=rf, fill=WHITE, anchor="rs")
-        vf = _f("ExtraBold", 26)
-        vt = pct(val)
-        d.text((cols["roi"] - 76, mid + _cap(vf) / 2), vt, font=vf, fill=GREEN if val > 0 else RED, anchor="rs")
-        if lev:
-            _chip(d, cols["roi"], int(mid - 15), f"{lev}x", 15, 30, align="right", w=60)
+        s = 1 if side == "LONG" else -1
+        vals = {k: float(levels[k]) * s for k in keys}
+        lo, hi = min(vals.values()), max(vals.values())
+        span = (hi - lo) or 1.0
+        pos = {k: (vals[k] - lo) / span for k in keys}
+        # keep labels apart: at least 13 % between neighbours, in order
+        order = sorted(keys, key=lambda k: pos[k])
+        for i in range(1, len(order)):
+            pos[order[i]] = max(pos[order[i]], pos[order[i - 1]] + 0.13)
+        top = pos[order[-1]]
+        if top > 1:
+            for k in keys:
+                pos[k] = pos[k] / top
+    ly = (y0 + y1) // 2 - 14
+    X = lambda p: x0 + 14 + p * (x1 - x0 - 28)                  # noqa: E731
+    ex = X(pos.get("entry", 0.25))
+    d.line([(X(0), ly), (X(1), ly)], fill=LINE, width=4)
+    d.line([(X(0), ly), (ex, ly)], fill=(90, 44, 52), width=4)            # risk side
+    reached = [k for k in ("tp1", "tp2", "tp3") if k in hit and k in pos]
+    if reached:
+        far = max(pos[k] for k in reached)
+        _glow(img, lambda m: m.line([(ex, ly), (X(far), ly)], fill=200, width=8), GREEN, 7, 0.5)
+        d = ImageDraw.Draw(img)
+        d.line([(ex, ly), (X(far), ly)], fill=GREEN, width=4)
+    if "stop" in hit and "stop" in pos:
+        d.line([(X(pos["stop"]), ly), (ex, ly)], fill=RED, width=4)
+    names = {"stop": "STOP", "entry": "ENTRY", "tp1": "TP1", "tp2": "TP2", "tp3": "TP3"}
+    lf = _f("Bold", 14)
+    pf = _f("SemiBold", 17)
+    for k, p in pos.items():
+        x = X(p)
+        if k == "entry":
+            d.polygon([(x, ly - 13), (x + 13, ly), (x, ly + 13), (x - 13, ly)], fill=GOLD, outline=GOLD_LIGHT)
+            col = GOLD
         else:
-            d.text((cols["roi"] - 30, mid + _cap(hf) / 2), "price", font=hf, fill=MUTED, anchor="ms")
-    if n > len(rows):
-        d.text((x1 - 28, 292 + 5 * rh + 22), f"+ {n - len(rows)} more in the app", font=_f("Medium", 16), fill=MUTED, anchor="rs")
-    _footer(d, img=img)
-    return _png(img)
+            on = k in hit
+            col = (RED if k == "stop" else GREEN) if on else (RED if k == "stop" else SILVER)
+            r = 11 if on else 9
+            d.ellipse((x - r, ly - r, x + r, ly + r), fill=col if on else INK, outline=col, width=3)
+            if on and k != "stop":
+                d.line([(x - 5, ly), (x - 1, ly + 4), (x + 6, ly - 4)], fill=INK, width=3)
+        _spaced(d, (x, ly - 28), names[k], lf, col, 1.6, anchor="ms")
+        if show_prices and _num(levels.get(k)) is not None:
+            v = px(levels[k])
+            pf_ = pf if d.textlength(v, font=pf) < 150 else _f("SemiBold", 14)
+            d.text((x, ly + 40), v, font=pf_, fill=WHITE if k == "entry" else SILVER, anchor="ms")
 
 
-def weekly_card(r: dict[str, Any]) -> bytes:
-    """Last week's totals (wins AND losses) and best trades."""
-    f = lambda ms: datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%d %b")  # noqa: E731
-    img, d = _base(f"Weekly results · {f(r['week_start'])} – {f(r['week_end'] - 1)}")
-    tot_price = float(r["total_return_pct"])
-    roi = r.get("total_roi_pct")
-    _hero(img, (M, 136, 584, 400), float(roi) if roi is not None else tot_price, None, tot_price,
-          (f"{pct(tot_price)} after fees · " if roi is not None else "") + f"{r.get('closed', 0)} closed signals, all counted",
-          "TOTAL ROI ON MARGIN" if roi is not None else "TOTAL PRICE MOVE")
-    d = ImageDraw.Draw(img)
-    kp = [("Wins", str(r["wins"]), GREEN), ("Losses", str(r["losses"]), RED),
-          ("Win rate", f"{float(r['win_rate'] or 0):.0%}", WHITE)]
-    gx, gw, gap = 616, (W - M - 616 - 2 * 16) // 3, 16
-    for i, (k, v, c) in enumerate(kp):
-        bx = gx + i * (gw + gap)
-        _panel(d, (bx, 136, bx + gw, 400))
-        d.text((bx + gw / 2, 192), k.upper(), font=_f("SemiBold", 17), fill=MUTED, anchor="ms")
-        vf = _fit(d, v, "ExtraBold", 72, gw - 32)
-        d.text((bx + gw / 2, 300), v, font=vf, fill=c, anchor="ms")
-    best = [t for t in (r.get("best") or []) if float(t["return_pct"]) > 0][:3]
-    if best:
-        d.text((M, 436), "TOP SIGNALS", font=_f("SemiBold", 16), fill=MUTED, anchor="ls")
-        cw = (W - 2 * M - 2 * 16) // 3
-        for i, t in enumerate(best):
-            bx = M + i * (cw + 16)
-            _panel(d, (bx, 452, bx + cw, 560), r=18)
-            nf = _fit(d, coin(t["symbol"]), "Bold", 28, cw - 200)
-            d.text((bx + 24, 496), coin(t["symbol"]), font=nf, fill=WHITE, anchor="ls")
-            d.text((bx + 24, 532), f"{_side(t['side'])} · {str(t['timeframe']).upper()}", font=_f("Medium", 17),
-                   fill=GREEN if _side(t["side"]) == "LONG" else RED, anchor="ls")
-            val, lev, price = result(t)
-            vt = pct(val)
-            d.text((bx + cw - 24, 496), vt, font=_fit(d, vt, "ExtraBold", 30, 180), fill=GREEN, anchor="rs")
-            d.text((bx + cw - 24, 532), f"{lev}x · {pct(price)} after fees" if lev else "after fees", font=_f("Medium", 16),
-                   fill=MUTED, anchor="rs")
-    _footer(d, "Past results don't guarantee future results", img=img)
-    return _png(img)
-
-
-def teaser_card(s: dict[str, Any], mins: int) -> bytes:
-    """A free grade-A call that members received at least an hour earlier."""
-    img, d = _base(f"Free signal · members got it {mins // 60} h {mins % 60:02d} min ago", "AI  ·  FREE SIGNAL")
-    side = _side(s["side"])
-    y = 144
-    x = _pill(d, M, y, "GRADE A", INK, GOLD)
-    x = _side_pill(d, x + 12, y, side)
-    x = _chip(d, x + 12, y, str(s["timeframe"]).upper())
-    from ..engine.futures import signal_leverage
-    from ..engine.futures import in_policy
-    lev = s.get("leverage") or signal_leverage(s.get("entry"), s.get("stop"), symbol=s.get("symbol"),
-                                               grade=s.get("grade") or "A", timeframe=s.get("timeframe"))
-    if lev:
-        _chip(d, x + 12, y, f"{lev}x {'BY ENGINE' if in_policy(s.get('timeframe')) else 'SUGGESTED'}")
-    name = pair(s["symbol"])
-    d.text((M, 290), name, font=_fit(d, name, "ExtraBold", 84, W - 2 * M), fill=WHITE, anchor="ls")
-    cells = [("Entry", px(s.get("entry")), WHITE), ("Stop-loss", px(s.get("stop")), RED),
-             ("Target 1", px(s.get("tp1")), GREEN), ("Target 2", px(s.get("tp2")), GREEN),
-             ("Target 3", px(s.get("tp3")), GREEN)]
-    gap = 16
-    cw = (W - 2 * M - 4 * gap) // 5
-    vals = [v for _, v, _ in cells]
-    size = 34                                              # one value size for all five cells, so they line up
-    while size > 16 and any(d.textlength(v, font=_f("Bold", size)) > cw - 40 for v in vals):
-        size -= 2
+def _stat_grid(d, box, cells: list[tuple[str, str, Any]], cols: int = 2) -> None:
+    """Hairline grid of label / value cells."""
+    x0, y0, x1, y1 = box
+    _panel(d, box)
+    rows = math.ceil(len(cells) / cols)
+    cw, rh = (x1 - x0) / cols, (y1 - y0) / rows
     for i, (k, v, c) in enumerate(cells):
-        bx = M + i * (cw + gap)
-        _panel(d, (bx, 352, bx + cw, 512), r=20)
-        if i == 0:
-            _glow(img, lambda m: m.rounded_rectangle((bx, 352, bx + cw, 512), radius=20, outline=200, width=3), GOLD, 8)
-            d = ImageDraw.Draw(img)
-        d.text((bx + 20, 400), k.upper(), font=_f("SemiBold", 16), fill=MUTED, anchor="ls")
-        d.text((bx + 20, 468), v, font=_f("Bold", size), fill=c, anchor="ls")
-    d.text((M, 552), "Members get every signal the moment it appears, with phone alerts.", font=_f("Medium", 20),
-           fill=MUTED, anchor="ls")
-    _footer(d, "Not financial advice · prices may have moved", img=img)
-    return _png(img)
+        cx, cy = x0 + (i % cols) * cw, y0 + (i // cols) * rh
+        if i % cols:
+            d.line([(cx, cy + 18), (cx, cy + rh - 18)], fill=LINE, width=1)
+        if i >= cols:
+            d.line([(cx + 18, cy), (cx + cw - 18, cy)], fill=LINE, width=1)
+        _label(d, (cx + 28, cy + rh / 2 - 12), k, 14)
+        d.text((cx + 28, cy + rh / 2 + 26), v, font=_fit(d, v, "SemiBold", 30, int(cw - 56), sora=True), fill=c, anchor="ls")
 
 
-# ---- v2.16 funnel cards -------------------------------------------------------------------------------------------
+def _curve(img: Image.Image, box, values: list[float], baseline: float = 0.0) -> None:
+    """Running total line: green above the baseline, red below, soft fill, end dot."""
+    vals = [v for v in (_num(x) for x in values) if v is not None]
+    if len(vals) < 2:
+        return
+    d = ImageDraw.Draw(img, "RGBA")
+    x0, y0, x1, y1 = box
+    lo, hi = min(vals + [baseline]), max(vals + [baseline])
+    span = (hi - lo) or 1.0
+    X = lambda i: x0 + i / (len(vals) - 1) * (x1 - x0)          # noqa: E731
+    Y = lambda v: y1 - (v - lo) / span * (y1 - y0)              # noqa: E731
+    by = Y(baseline)
+    d.line([(x0, by), (x1, by)], fill=(156, 166, 186, 70), width=1)
+    pts = [(X(i), Y(v)) for i, v in enumerate(vals)]
+    for i in range(len(pts) - 1):
+        (ax, ay), (bx, bys) = pts[i], pts[i + 1]
+        up = (vals[i] + vals[i + 1]) / 2 >= baseline
+        col = GREEN if up else RED
+        d.polygon([(ax, ay), (bx, bys), (bx, by), (ax, by)], fill=col + (34,))
+    for i in range(len(pts) - 1):
+        up = (vals[i] + vals[i + 1]) / 2 >= baseline
+        d.line([pts[i], pts[i + 1]], fill=(GREEN if up else RED) + (255,), width=4)
+    ex, ey = pts[-1]
+    end = GREEN if vals[-1] >= baseline else RED
+    d.ellipse((ex - 9, ey - 9, ex + 9, ey + 9), fill=end + (255,), outline=WHITE + (255,), width=2)
+
+
 def _wrap(d: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_w: int) -> list[str]:
     lines, cur = [], ""
-    for w in text.split():
+    for w in str(text).split():
         t = f"{cur} {w}".strip()
         if cur and d.textlength(t, font=font) > max_w:
             lines.append(cur)
@@ -575,57 +420,352 @@ def _wrap(d: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, max_w
     return lines
 
 
-def week7_card(r: dict[str, Any], now: int) -> bytes:
-    """Last 7 days of the public record after fees: closed count, win rate, average, best / worst, sample-size note."""
-    f = lambda ms: datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%d %b")  # noqa: E731
-    img, d = _base(f"Last 7 days · {f(now - 7 * 86_400_000)} – {f(now)} · after fees")
-    n = int(r.get("closed") or 0)
-    avg = float(r["avg_return_pct"]) if r.get("avg_return_pct") is not None else 0.0
-    _hero(img, (M, 136, 584, 400), avg, None, avg, f"{n} closed signal{'s' if n != 1 else ''}, wins and losses",
-          "AVERAGE PER SIGNAL")
+def _coin_title(d, img, y: int, sym: str, max_w: int = W - 2 * M) -> int:
+    """Ticker large in white, '/ USDT' small in silver beside it. Returns the baseline y."""
+    c = coin(sym)
+    f = _fit(d, c, "ExtraBold", 118, max_w - 170, sora=True)
+    d.text((M, y), c, font=f, fill=WHITE, anchor="ls")
+    if c not in ("GOLD", "SILVER"):
+        d.text((M + _tw(d, c, f) + 16, y), "/ USDT", font=_s("SemiBold", 30), fill=SILVER, anchor="ls")
+    return y
+
+
+TARGET = {"TP1": "TARGET 1 HIT", "TP2": "TARGET 2 HIT", "TP3": "ALL TARGETS HIT", "STOPPED": "STOPPED OUT",
+          "EXPIRED": "CLOSED AT TIME LIMIT"}
+HIT = {"TP1": "TP1", "TP2": "TP1 · TP2", "TP3": "TP1 · TP2 · TP3"}
+
+
+def _status_label(x: dict[str, Any], default: str) -> str:
+    """Result label; a call the admin closed at market says so (v2.8)."""
+    if x.get("exit_reason") == "admin_close":
+        return "CLOSED BY ADMIN"
+    return TARGET.get(str(x.get("status") or ""), default)
+
+
+# ---- cards ----------------------------------------------------------------------------------------------------
+
+def result_card(w: dict[str, Any]) -> bytes:
+    """One closed signal, win or loss, in the same layout (losses are never dressed up)."""
+    val, lev, price = result(w)
+    win = float(w["return_pct"]) > 0
+    status = str(w.get("status") or "")
+    img, d = _base("Signal closed in profit" if win else "Signal closed at a loss", "REAL RECORD")
+    side = _side(w["side"])
+    y = 214
+    lab = _status_label(w, "CLOSED IN PROFIT" if win else "CLOSED")
+    col = GREEN if win else RED
+    x = _pill(d, M, y, lab, col, bg=tuple(int(c * 0.16 + INK[i] * 0.84) for i, c in enumerate(col)), outline=col)
+    x = _side_pill(d, x + 12, y, side)
+    _chip(d, x + 12, y, str(w["timeframe"]).upper())
+    _coin_title(d, img, 388, w["symbol"])
+    # hero
+    _label(d, (M, 474), "ROI on margin" if lev else "Price move after fees", 16, GOLD)
+    fb = _s("ExtraBold", 168)
+    while fb.size > 60 and d.textlength(pct(val), font=fb) > W - 2 * M:
+        fb = _s("ExtraBold", fb.size - 8)
+    _figure(img, (M - 4, 636), val, fb)
     d = ImageDraw.Draw(img)
-    kp = [("Closed", str(n), WHITE), ("Wins", str(r.get("wins") or 0), GREEN),
-          ("Win rate", f"{float(r['win_rate']):.0%}" if r.get("win_rate") is not None else "—", WHITE)]
-    gx, gw, gap = 616, (W - M - 616 - 2 * 16) // 3, 16
-    for i, (k, v, c) in enumerate(kp):
-        bx = gx + i * (gw + gap)
-        _panel(d, (bx, 136, bx + gw, 400))
-        d.text((bx + gw / 2, 192), k.upper(), font=_f("SemiBold", 17), fill=MUTED, anchor="ms")
-        d.text((bx + gw / 2, 300), v, font=_fit(d, v, "ExtraBold", 72, gw - 32), fill=c, anchor="ms")
-    cw = (W - 2 * M - 16) // 2
-    for i, (lab, x) in enumerate((("BEST", r.get("best")), ("WORST", r.get("worst")))):
-        bx = M + i * (cw + 16)
-        _panel(d, (bx, 420, bx + cw, 500), r=18)
-        d.text((bx + 24, 468), lab, font=_f("SemiBold", 16), fill=MUTED, anchor="ls")
-        if x:
-            name = f"{coin(x['symbol'])} {_side(x['side'])} · {str(x['timeframe']).upper()}"
-            d.text((bx + 110, 468), name, font=_fit(d, name, "Bold", 24, cw - 300), fill=WHITE, anchor="ls")
-            v = pct(float(x["return_pct"]))
-            d.text((bx + cw - 24, 470), v, font=_f("ExtraBold", 28), fill=GREEN if x["return_pct"] > 0 else RED, anchor="rs")
-    note = r.get("sample_note") or "Equal size per signal · price move after a 0.15% round trip and funding · no leverage"
-    d.text((M, 548), note, font=_fit(d, note, "Medium", 19, W - 2 * M), fill=GOLD_SOFT if r.get("sample_note") else MUTED, anchor="ls")
+    sub = f"{lev}x margin  ·  {pct(price)} price move after fees" if lev else "half at TP1, a quarter at TP2 and TP3"
+    d.text((M, 690), sub, font=_f("Medium", 24), fill=SILVER, anchor="ls")
+    # rail
+    hit = {"TP1": {"tp1"}, "TP2": {"tp1", "tp2"}, "TP3": {"tp1", "tp2", "tp3"}}.get(status, set())
+    if status == "STOPPED" or (not win and status not in HIT):
+        hit = hit | ({"stop"} if status == "STOPPED" else set())
+    _panel(d, (M, 736, W - M, 900))
+    _rail(img, (M + 36, 752, W - M - 36, 900), side, {k: w.get(k) for k in ("stop", "entry", "tp1", "tp2", "tp3")}, hit)
+    d = ImageDraw.Draw(img)
+    _stat_grid(d, (M, 924, W - M, 1164), [("Entry", px(w.get("entry")), WHITE), ("Closed at", px(w.get("exit_price")), WHITE),
+                                           ("Targets hit", HIT.get(status, "none"), GREEN if status in HIT else SILVER),
+                                           ("Held", str(w.get("held") or "—"), WHITE)])
+    _footer(d, "Wins and losses are all public", img=img)
+    return _png(img)
+
+
+def win_card(w: dict[str, Any]) -> bytes:
+    """One closed winning signal (the per-win Telegram post)."""
+    return result_card(w)
+
+
+def wins_card(wins: list[dict[str, Any]], period: str = "today", closed: int | None = None,
+              losses: int | None = None) -> bytes:
+    """Best winning signals of the day (or week), up to 6 rows, with the window's loss count beside them."""
+    img, d = _base("Wins of the " + ("day" if period == "today" else "week"), "REAL RECORD")
+    n = len(wins)
+    d.text((M, 290), f"{n} win{'s' if n != 1 else ''}", font=_s("ExtraBold", 96), fill=WHITE, anchor="ls")
+    if closed is not None and losses is not None:
+        sub = f"{closed} closed {'today' if period == 'today' else 'this week'}  ·  {losses} loss{'es' if losses != 1 else ''}  ·  every result is public"
+    else:
+        sub = "Every result, wins and losses, is public in the app"
+    d.text((M, 340), sub, font=_fit(d, sub, "Medium", 22, W - 2 * M), fill=SILVER, anchor="ls")
+    best = max((result(x)[0] for x in wins), default=0.0)
+    lev_any = any(result(x)[1] for x in wins)
+    _label(d, (W - M, 198 + 20), "Best ROI" if lev_any else "Best move", 14, GOLD, anchor="rs")
+    _figure(img, (W - M, 290), best, _s("ExtraBold", 56), anchor="rs")
+    d = ImageDraw.Draw(img)
+    rows = wins[:6]
+    tally = closed is not None and losses is not None
+    bottom = 1010 if tally else 1170
+    top, gap = 392, 12
+    rh = int(max(96, min(128, (bottom - top) / max(1, len(rows)) - gap)))
+    for i, x in enumerate(rows):
+        y = top + i * (rh + gap)
+        _panel(d, (M, y, W - M, y + rh), fill=PANEL if i % 2 == 0 else (13, 19, 33))
+        side = _side(x["side"])
+        d.rounded_rectangle((M, y + 18, M + 5, y + rh - 18), radius=2, fill=GREEN if side == "LONG" else RED)
+        cf = _fit(d, coin(x["symbol"]), "Bold", 36, 220, sora=True)
+        mid = y + rh / 2
+        d.text((M + 32, mid - 2), coin(x["symbol"]), font=cf, fill=WHITE, anchor="ls")
+        sl = f"{side}  ·  {str(x['timeframe']).upper()}  ·  {_status_label(x, 'IN PROFIT').title()}"
+        d.text((M + 32, mid + 32), sl, font=_f("Medium", 19), fill=SILVER, anchor="ls")
+        val, lev, price = result(x)
+        _figure(img, (W - M - 28, mid + 4), val, _s("ExtraBold", 40), anchor="rs")
+        d = ImageDraw.Draw(img)
+        d.text((W - M - 28, mid + 34), (f"{lev}x  ·  {pct(price)} move" if lev else "price move after fees"),
+               font=_f("Medium", 17), fill=SILVER, anchor="rs")
+    if n > len(rows):
+        d.text((W - M, top + len(rows) * (rh + gap) + 14), f"+ {n - len(rows)} more in the app", font=_f("Medium", 18), fill=SILVER, anchor="rs")
+    if tally:                               # the whole window, losses included
+        _stat_grid(d, (M, 1040, W - M, 1164), [("Closed", str(closed), WHITE), ("Wins", str(max(0, closed - losses)), GREEN),
+                                               ("Losses", str(losses), RED)], cols=3)
+    _footer(d, "After fees · leverage magnifies losses", img=img)
+    return _png(img)
+
+
+def _week_range(r: dict[str, Any]) -> str:
+    f = lambda ms: datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%d %b")  # noqa: E731
+    return f"{f(r['week_start'])} – {f(r['week_end'] - 1)}"
+
+
+def weekly_card(r: dict[str, Any]) -> bytes:
+    """Last week's totals (wins AND losses), the running total and the best trades."""
+    img, d = _base(f"Weekly results  ·  {_week_range(r)}", "WEEKLY REPORT")
+    tot_price = float(r["total_return_pct"])
+    roi = r.get("total_roi_pct")
+    head = float(roi) if roi is not None else tot_price
+    _label(d, (M, 238), "Total ROI on margin" if roi is not None else "Total price move", 16, GOLD)
+    fb = _s("ExtraBold", 150)
+    while fb.size > 60 and d.textlength(pct(head), font=fb) > W - 2 * M:
+        fb = _s("ExtraBold", fb.size - 8)
+    _figure(img, (M - 4, 390), head, fb)
+    d = ImageDraw.Draw(img)
+    sub = (f"{pct(tot_price)} price move after fees  ·  " if roi is not None else "") + f"{r.get('closed', 0)} closed signals, all counted"
+    d.text((M, 440), sub, font=_fit(d, sub, "Medium", 22, W - 2 * M), fill=SILVER, anchor="ls")
+    curve = r.get("curve") or []
+    if len(curve) >= 2:
+        _panel(d, (M, 480, W - M, 720))
+        _label(d, (M + 28, 520), "Running total through the week", 13)
+        _curve(img, (M + 28, 540, W - M - 28, 696), [c if not isinstance(c, dict) else c.get("v", c.get("value")) for c in curve])
+        d = ImageDraw.Draw(img)
+        ys = 744
+    else:
+        ys = 492
+    cells = [("Closed", str(r.get("closed", 0)), WHITE), ("Wins", str(r["wins"]), GREEN), ("Losses", str(r["losses"]), RED),
+             ("Win rate", f"{float(r['win_rate'] or 0):.0%}", WHITE)]
+    _stat_grid(d, (M, ys, W - M, ys + 150), cells, cols=4)
+    best = [t for t in (r.get("best") or []) if float(t["return_pct"]) > 0][:3]
+    y = ys + 196
+    if best:
+        _label(d, (M, y), "Top signals", 14, GOLD)
+        y += 22
+        rh = max(64, min(96, (H - 176 - y) // max(1, len(best)) - 10))
+        for t in best:
+            _panel(d, (M, y, W - M, y + rh), r=18)
+            side = _side(t["side"])
+            d.text((M + 28, y + rh / 2 + 11), coin(t["symbol"]), font=_s("Bold", 30), fill=WHITE, anchor="ls")
+            d.text((M + 220, y + rh / 2 + 8), f"{side}  ·  {str(t['timeframe']).upper()}", font=_f("Medium", 19),
+                   fill=GREEN if side == "LONG" else RED, anchor="ls")
+            val, lev, price = result(t)
+            _figure(img, (W - M - 28, y + rh / 2 + 12), val, _s("ExtraBold", 32), anchor="rs")
+            d = ImageDraw.Draw(img)
+            y += rh + 10
     _footer(d, "Past results don't guarantee future results", img=img)
     return _png(img)
 
 
+def teaser_card(s: dict[str, Any], mins: int) -> bytes:
+    """A free grade-A call that members received earlier (levels shown: it is the free sample)."""
+    side = _side(s["side"])
+    img, d = _base(f"Members got this {mins // 60} h {mins % 60:02d} min ago", "FREE SIGNAL")
+    from ..engine.futures import in_policy, signal_leverage
+    lev = s.get("leverage") or signal_leverage(s.get("entry"), s.get("stop"), symbol=s.get("symbol"),
+                                               grade=s.get("grade") or "A", timeframe=s.get("timeframe"))
+    y = 214
+    x = _gold_chip(d, M, y, f"GRADE {s.get('grade') or 'A'}")
+    x = _chip(d, x + 12, y, str(s["timeframe"]).upper())
+    if lev:
+        _chip(d, x + 12, y, f"{lev}x {'BY ENGINE' if in_policy(s.get('timeframe')) else 'SUGGESTED'}")
+    _coin_title(d, img, 388, s["symbol"])
+    col = GREEN if side == "LONG" else RED
+    act = "GO LONG" if side == "LONG" else "GO SHORT"
+    af = _s("ExtraBold", 72)
+    tri = ([(M, 492), (M + 52, 492), (M + 26, 446)] if side == "LONG" else [(M, 446), (M + 52, 446), (M + 26, 492)])
+    _glow(img, lambda m: (m.polygon(tri, fill=255), m.text((M + 72, 500), act, font=af, fill=255, anchor="ls")), col, 12, 0.35)
+    d = ImageDraw.Draw(img)
+    d.polygon(tri, fill=col)
+    d.text((M + 72, 500), act, font=af, fill=col, anchor="ls")
+    d.text((M, 548), "The AI's trend reading and its forecast agree on this one.", font=_f("Medium", 22), fill=SILVER, anchor="ls")
+    _panel(d, (M, 592, W - M, 756))
+    _rail(img, (M + 36, 608, W - M - 36, 756), side, {k: s.get(k) for k in ("stop", "entry", "tp1", "tp2", "tp3")}, set())
+    d = ImageDraw.Draw(img)
+    cells = [("Entry", px(s.get("entry")), GOLD), ("Stop-loss", px(s.get("stop")), RED), ("Target 1 · close 50%", px(s.get("tp1")), GREEN),
+             ("Target 2 · close 25%", px(s.get("tp2")), GREEN), ("Target 3 · close 25%", px(s.get("tp3")), GREEN),
+             ("Leverage", f"{lev}x" if lev else "—", WHITE)]
+    _stat_grid(d, (M, 780, W - M, 1110), cells, cols=2)
+    d.text((M, 1150), "Members get every signal the moment it appears, with phone alerts.", font=_f("Medium", 20), fill=SILVER, anchor="ls")
+    _footer(d, "Not financial advice · prices may have moved", img=img)
+    return _png(img)
+
+
+def week7_card(r: dict[str, Any], now: int) -> bytes:
+    """Last 7 days of the public record after fees: closed count, win rate, average, best / worst, sample-size note."""
+    f = lambda ms: datetime.fromtimestamp(ms / 1000, timezone.utc).strftime("%d %b")  # noqa: E731
+    img, d = _base(f"Last 7 days  ·  {f(now - 7 * 86_400_000)} – {f(now)}  ·  after fees", "7-DAY RECORD")
+    n = int(r.get("closed") or 0)
+    avg = float(r["avg_return_pct"]) if r.get("avg_return_pct") is not None else 0.0
+    _label(d, (M, 238), "Average per signal", 16, GOLD)
+    _figure(img, (M - 4, 390), avg, _s("ExtraBold", 150))
+    d = ImageDraw.Draw(img)
+    d.text((M, 440), f"{n} closed signal{'s' if n != 1 else ''}, wins and losses  ·  price move after fees", font=_f("Medium", 22),
+           fill=SILVER, anchor="ls")
+    wr = f"{float(r['win_rate']):.0%}" if r.get("win_rate") is not None else "—"
+    _stat_grid(d, (M, 492, W - M, 642), [("Closed", str(n), WHITE), ("Wins", str(r.get("wins") or 0), GREEN),
+                                          ("Losses", str(max(0, n - int(r.get("wins") or 0))), RED), ("Win rate", wr, WHITE)], cols=4)
+    # win-rate ring + best / worst
+    cx, cy, rr = M + 150, 860, 120
+    d.ellipse((cx - rr, cy - rr, cx + rr, cy + rr), outline=LINE, width=16)
+    if r.get("win_rate") is not None:
+        d.arc((cx - rr, cy - rr, cx + rr, cy + rr), -90, -90 + 360 * float(r["win_rate"]), fill=GREEN, width=16)
+    d.text((cx, cy + 14), wr, font=_s("ExtraBold", 48), fill=WHITE, anchor="ms")
+    d.text((cx, cy + 50), "won", font=_f("Medium", 19), fill=SILVER, anchor="ms")
+    bx = M + 340
+    for i, (lab, x) in enumerate((("Best", r.get("best")), ("Worst", r.get("worst")))):
+        y = 730 + i * 140
+        _panel(d, (bx, y, W - M, y + 120), r=18)
+        _label(d, (bx + 26, y + 40), lab, 13, GOLD if i == 0 else SILVER)
+        if x:
+            name = f"{coin(x['symbol'])} {_side(x['side'])} · {str(x['timeframe']).upper()}"
+            d.text((bx + 26, y + 88), name, font=_fit(d, name, "Bold", 26, 300, sora=True), fill=WHITE, anchor="ls")
+            _figure(img, (W - M - 26, y + 88), float(x["return_pct"]), _s("ExtraBold", 36), anchor="rs")
+            d = ImageDraw.Draw(img)
+        else:
+            d.text((bx + 26, y + 88), "—", font=_s("Bold", 26), fill=SILVER, anchor="ls")
+    note = r.get("sample_note") or "Equal size per signal · price move after a 0.15% round trip and funding · no leverage"
+    for i, ln in enumerate(_wrap(d, note, _f("Medium", 19), W - 2 * M)[:2]):
+        d.text((M, 1060 + i * 30), ln, font=_f("Medium", 19), fill=GOLD if r.get("sample_note") else SILVER, anchor="ls")
+    _footer(d, "Past results don't guarantee future results", img=img)
+    return _png(img)
+
+
+def _dial(img: Image.Image, cx: int, cy: int, r: int, value: float) -> None:
+    """Mood dial: half ring red (bearish) -> silver -> green (bullish), gold needle at value in [-1, 1]."""
+    d = ImageDraw.Draw(img)
+    steps = 60
+    for i in range(steps):
+        a0 = 180 + i * 180 / steps
+        a1 = a0 + 180 / steps + 0.6
+        t = i / (steps - 1)
+        if t < 0.5:
+            k = t / 0.5
+            c = tuple(int(RED[j] + (SILVER[j] * 0.55 - RED[j]) * k) for j in range(3))
+        else:
+            k = (t - 0.5) / 0.5
+            c = tuple(int(SILVER[j] * 0.55 + (GREEN[j] - SILVER[j] * 0.55) * k) for j in range(3))
+        d.arc((cx - r, cy - r, cx + r, cy + r), a0, a1, fill=c, width=18)
+    for i in range(11):
+        a = math.radians(180 + i * 18)
+        d.line([(cx + (r - 34) * math.cos(a), cy + (r - 34) * math.sin(a)), (cx + (r - 26) * math.cos(a), cy + (r - 26) * math.sin(a))],
+               fill=MUTED, width=2)
+    a = math.radians(270 + 90 * max(-1.0, min(1.0, value)))
+    tip = (cx + (r - 40) * math.cos(a), cy + (r - 40) * math.sin(a))
+    _glow(img, lambda m: m.line([(cx, cy), tip], fill=220, width=8), GOLD, 6, 0.5)
+    d = ImageDraw.Draw(img)
+    d.line([(cx, cy), tip], fill=GOLD_LIGHT, width=5)
+    d.ellipse((cx - 14, cy - 14, cx + 14, cy + 14), fill=GOLD, outline=GOLD_LIGHT, width=2)
+    d.text((cx - r, cy + 40), "Bearish", font=_f("SemiBold", 17), fill=RED, anchor="ms")
+    d.text((cx + r, cy + 40), "Bullish", font=_f("SemiBold", 17), fill=GREEN, anchor="ms")
+
+
 def briefing_card(b: dict[str, Any]) -> bytes:
-    """The market briefing: mood pill, the text, and the bullet facts."""
+    """The AI market briefing: mood dial, the text and the bullet facts."""
     at = int(b.get("at") or 0)
-    when = datetime.fromtimestamp(at / 1000, timezone.utc).strftime("%d %b %H:%M UTC") if at else ""
-    img, d = _base(f"Market briefing · {when}", "AI  ·  BRIEFING")
-    mood = {"BULL": ("LEANING BULLISH", GREEN), "BEAR": ("LEANING BEARISH", RED)}.get(str(b.get("mood")), ("MIXED", GOLD))
-    x = _pill(d, M, 136, mood[0], INK, mood[1])
+    when = datetime.fromtimestamp(at / 1000, timezone.utc).strftime("%d %b  ·  %H:%M UTC") if at else ""
+    img, d = _base(f"Market briefing  ·  {when}", "AI BRIEFING")
+    mood = str(b.get("mood") or "")
+    word, col, val = {"BULL": ("Leaning bullish", GREEN, 0.55), "BEAR": ("Leaning bearish", RED, -0.55)}.get(mood, ("Mixed", GOLD, 0.0))
+    br = ((b.get("facts") or {}).get("breadth") or {}) if isinstance(b.get("facts"), dict) else {}
+    try:                                    # needle = share of coins above their 4H EMA50 (-1 none .. +1 all)
+        of = float(br.get("of") or 0)
+        if of > 0:
+            val = max(-1.0, min(1.0, 2 * float(br.get("above_ema50_4h") or 0) / of - 1))
+    except (TypeError, ValueError, AttributeError):
+        pass
+    _label(d, (M, 238), "Market mood", 16, GOLD)
+    d.text((M, 318), word, font=_s("ExtraBold", 66), fill=col, anchor="ls")
     if b.get("source") == "ai":
-        _chip(d, x + 12, 136, "AI SUMMARY")
-    body = _f("Medium", 24)
-    lines = _wrap(d, str(b.get("text") or ""), body, W - 2 * M)[:7]
-    y = 222
+        _chip(d, M, 350, "AI SUMMARY")
+    _dial(img, W - M - 190, 400, 176, val)
+    d = ImageDraw.Draw(img)
+    body = _f("Medium", 30)
+    lines = _wrap(d, str(b.get("text") or ""), body, W - 2 * M)[:8]
+    y = 540
     for ln in lines:
         d.text((M, y), ln, font=body, fill=WHITE, anchor="ls")
-        y += 34
-    y += 8
-    for t in (b.get("bullets") or [])[: max(0, (566 - y) // 30)]:
-        d.text((M, y), "•  " + t, font=_fit(d, "•  " + t, "SemiBold", 19, W - 2 * M), fill=GOLD_SOFT, anchor="ls")
-        y += 30
+        y += 46
+    bullets = [_wrap(d, str(t), _f("SemiBold", 23), W - 2 * M - 92)[:2] for t in (b.get("bullets") or [])[:5]]
+    if bullets:
+        need = sum(32 * len(x) + 26 for x in bullets) + 70
+        top = max(y + 20, 1170 - need)
+        _panel(d, (M, top, W - M, 1170))
+        _label(d, (M + 32, top + 46), "Key facts", 13, GOLD)
+        yy = top + 92
+        for ln in bullets:
+            d.rectangle((M + 34, yy - 14, M + 42, yy - 6), fill=GOLD)
+            for j, part in enumerate(ln):
+                d.text((M + 62, yy + j * 32), part, font=_f("SemiBold", 23), fill=WHITE if j == 0 else SILVER, anchor="ls")
+            yy += 32 * len(ln) + 26
     _footer(d, "Context, not advice", img=img)
+    return _png(img)
+
+
+def news_card(m: dict[str, Any]) -> bytes:
+    """High-impact US release heads-up: countdown, the release, what it usually means, the signal pause."""
+    img, d = _base("Economic calendar  ·  United States", "HIGH-IMPACT NEWS")
+    at = int(_num(m.get("at")) or 0)
+    mins = int(_num(m.get("mins")) or 0)
+    event = str(m.get("event") or m.get("title") or "High-impact release")
+    _label(d, (M, 238), "Releasing in", 16, GOLD)
+    d.text((M, 390), f"{mins} min" if mins else "Now", font=_s("ExtraBold", 150), fill=WHITE, anchor="ls")
+    if at:
+        d.text((M, 444), datetime.fromtimestamp(at / 1000, timezone.utc).strftime("%H:%M UTC  ·  %a %d %b"), font=_f("Medium", 24),
+               fill=SILVER, anchor="ls")
+    # impact meter
+    _label(d, (W - M, 238), "Impact", 14, SILVER, anchor="rs")
+    for i in range(3):
+        x = W - M - (2 - i) * 34 - 24
+        d.rounded_rectangle((x, 330 - (i + 1) * 26, x + 24, 330), radius=5, fill=RED)
+    d.text((W - M, 366), "High", font=_s("Bold", 26), fill=RED, anchor="rs")
+    _panel(d, (M, 496, W - M, 720))
+    _label(d, (M + 32, 546), "The release", 13, GOLD)
+    for j, ln in enumerate(_wrap(d, event, _s("Bold", 44), W - 2 * M - 64)[:2]):
+        d.text((M + 32, 610 + j * 54), ln, font=_s("Bold", 44), fill=WHITE, anchor="ls")
+    why = str(m.get("why") or "").strip() or "Big US data releases often move Bitcoin and the whole market both ways within minutes."
+    _label(d, (M, 784), "Why it matters", 14, GOLD)
+    y = 830
+    for ln in _wrap(d, why, _f("Medium", 26), W - 2 * M)[:4]:
+        d.text((M, y), ln, font=_f("Medium", 26), fill=WHITE, anchor="ls")
+        y += 38
+    # signal pause strip: -45 min ... release ... +30 min
+    y = max(y + 30, 1010)
+    _label(d, (M, y), "New signals pause around it", 14, SILVER)
+    bx0, bx1, by = M, W - M, y + 50
+    d.rounded_rectangle((bx0, by - 6, bx1, by + 6), radius=6, fill=PANEL_HI)
+    px0 = bx0 + (bx1 - bx0) * 0.12
+    px1 = bx0 + (bx1 - bx0) * 0.88
+    rel = px0 + (px1 - px0) * 45 / 75
+    d.rounded_rectangle((px0, by - 6, px1, by + 6), radius=6, fill=(90, 44, 52))
+    d.ellipse((rel - 12, by - 12, rel + 12, by + 12), fill=RED, outline=WHITE, width=2)
+    d.text((px0, by + 40), "−45 min", font=_f("SemiBold", 18), fill=SILVER, anchor="ms")
+    d.text((rel, by + 40), "release", font=_f("SemiBold", 18), fill=WHITE, anchor="ms")
+    d.text((px1, by + 40), "+30 min", font=_f("SemiBold", 18), fill=SILVER, anchor="ms")
+    _footer(d, "Calendar fact, not advice", img=img)
     return _png(img)

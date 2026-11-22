@@ -1325,3 +1325,19 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   `cia-home-details`). Demo bots: compact cards (5 key figures, "Details" opens the rest, remembered `cia-bot-open-<id>`).
 - Landing: "Tools beside every signal" (calculator, futures data, liquidation map; drawings are illustrations);
   Wins of the day rows end level (`WinsToday.evenCut`: two left-over cards share the last row, a lone one is left out at that width).
+
+## v2.77 share images "Midnight & gold" (owner brief, 22 Nov 2026)
+- One design family for every share image. Telegram cards `services/cards.py` (Pillow) are now 1080 x 1350 (4:5):
+  midnight-navy background (cool light top right, faint warm light bottom left), one thin gold orbit arc, faint stars,
+  hairline frame with gold corner marks, header = round logo + spaced wordmark + context line + gold-outlined kind tag +
+  gold→navy hairline, footer = site + note + brand line. Gold only for brand marks / entry / key labels; gains green,
+  losses red (`_figure`, never dressed up), silver text. Signature = the trade rail (`_rail`: stop → entry → TP1-3,
+  reached points lit). PNG palette with k-means refine (`_png`, ~70-85 KB; no grain - grain made 600 KB).
+  Cards: result/win, wins (+ closed/wins/losses tally), weekly (running total curve), week7 (win-rate ring), teaser
+  (GO LONG / SHORT + rail + levels), briefing (mood dial from breadth above 4H EMA50 + key facts panel), NEW `news_card`
+  (countdown, impact meter, why it matters, the −45/+30 min signal pause) - `telegram.post_news` now sends it as a photo;
+  `news.due_notifications` items carry `event`, `at`, `mins`, `why` (strings). `win_item` carries stop / tp1-3 for the rail.
+- Website share images use the same identity through `lib/luxCard.ts` (palette `L`, `luxBackground`, `luxBrand`,
+  `figure` green/red (+ `gold` option), `curveChart` green/red, `luxFooter`); weekly report, achievements, Hesper /
+  Last Stand cards inherit it. `ShareSignal` redrawn: pills, coin, move since entry, rail without prices with the live
+  "now" dot, "How it is managed" (runner calls: nothing closes before 1:4). Hard-coded old golds swapped in share canvases.

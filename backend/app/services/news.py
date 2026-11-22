@@ -129,6 +129,8 @@ def due_notifications(db: Database, now: int | None = None, lead_min: int = 30) 
         db.execute("UPDATE econ_events SET notified_at = ? WHERE id = ?", (now, r["id"]))
         mins = max(1, round((r["ts"] - now) / 60_000))
         out.append({"title": f"High-impact news in {mins} min", "url": "/news", "tag": f"econ-{r['id']}", "broadcast": "1",
+                    # v2.77 for the Telegram image card (strings: push data must be text)
+                    "event": str(r["title"]), "at": str(r["ts"]), "mins": str(mins), "why": explain(r["title"]) or "",
                     "body": f"US {r['title']} at {datetime.utcfromtimestamp(r['ts'] / 1000):%H:%M} UTC. "
                             f"Expect volatility; new signals pause until 30 min after. {explain(r['title']) or ''}".strip()})
     return out

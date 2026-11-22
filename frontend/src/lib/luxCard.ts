@@ -1,12 +1,15 @@
-// v2.37 premium share images (owner, 14 Nov 2026: "a premium look that attracts users"): weekly report, achievements,
+// v2.37 premium share images (restyled v2.77, see L below) (owner, 14 Nov 2026: "a premium look that attracts users"): weekly report, achievements,
 // Hesper Challenge. Private-bank black and gold: warm black with a diagonal gold light, fine gold grain, the round logo
 // artwork as a faint watermark, a gold-foil frame, Sora display figures filled with a metallic gold gradient (losses stay
 // red), an editorial left-aligned layout with hairline dividers instead of boxes. Numbers are exactly the page's.
 import { SITE_HOST } from "./brand";
 
+// v2.77 "Midnight & gold" (owner brief, 22 Nov 2026): the same family as the Telegram cards (backend services/cards.py) -
+// midnight-navy background with a cool light top right and a faint warm light bottom left, one thin gold orbit arc, a hairline
+// frame with gold corner marks, controlled gold only for brand marks and key labels, green gains / red losses, silver text.
 export const L = {
-  gold: "#f0b90b", soft: "#c9a24a", text: "#f5f1e6", mute: "#a39c8c", dim: "#76705f", bull: "#16c784", bear: "#f6465d",
-  line: "rgba(240,185,11,0.18)", hair: "rgba(245,241,230,0.10)",
+  gold: "#d9b45f", soft: "#d9b45f", light: "#f2dfa6", text: "#f4f6fb", mute: "#9ca6ba", dim: "#6e788e", bull: "#34c98b", bear: "#e8616a",
+  line: "rgba(38,50,78,1)", hair: "rgba(156,166,186,0.16)", panel: "#0f1626",
 };
 type G = CanvasRenderingContext2D;
 
@@ -38,8 +41,8 @@ function img(src: string): Promise<HTMLImageElement | null> {
 /** Metallic gold for large figures and the frame. */
 export function foil(g: G, x0: number, y0: number, x1: number, y1: number): CanvasGradient {
   const gr = g.createLinearGradient(x0, y0, x1, y1);
-  gr.addColorStop(0, "#9c6f0a"); gr.addColorStop(0.28, "#f0b90b"); gr.addColorStop(0.5, "#fff1c4");
-  gr.addColorStop(0.7, "#e7ae17"); gr.addColorStop(1, "#8f650a");
+  gr.addColorStop(0, "#a8873f"); gr.addColorStop(0.35, "#d9b45f"); gr.addColorStop(0.55, "#f2dfa6");
+  gr.addColorStop(0.75, "#d0aa55"); gr.addColorStop(1, "#9a7a38");
   return gr;
 }
 
@@ -62,79 +65,73 @@ export function txt(g: G, t: string, x: number, y: number, o: { f?: (w: number, 
   return w;
 }
 
-/** Background, grain, watermark and the gold-foil frame. */
+/** Background (midnight navy, cool / warm lights, the orbit, faint stars) and the hairline frame with gold corner marks. */
 export async function luxBackground(g: G, W: number, H: number) {
-  const bg = g.createLinearGradient(0, 0, W * 0.3, H);
-  bg.addColorStop(0, "#15120c"); bg.addColorStop(0.55, "#0a0907"); bg.addColorStop(1, "#050505");
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#0c1222"); bg.addColorStop(1, "#05080f");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  // a diagonal beam of warm light from the top left
-  g.save();
-  g.translate(W * 0.15, -H * 0.05); g.rotate(0.62);
-  const beam = g.createLinearGradient(-W * 0.18, 0, W * 0.18, 0);
-  beam.addColorStop(0, "rgba(240,185,11,0)"); beam.addColorStop(0.5, "rgba(240,185,11,0.075)"); beam.addColorStop(1, "rgba(240,185,11,0)");
-  g.fillStyle = beam; g.fillRect(-W * 0.18, -H, W * 0.36, H * 3);
-  g.restore();
-  const glow = g.createRadialGradient(W * 0.85, H * 0.12, 0, W * 0.85, H * 0.12, W * 0.6);
-  glow.addColorStop(0, "rgba(240,185,11,0.10)"); glow.addColorStop(1, "rgba(240,185,11,0)");
-  g.fillStyle = glow; g.fillRect(0, 0, W, H);
-  // watermark: the round logo artwork, very faint, bottom right
-  const art = await img("/brand/logo-art-384.webp");
-  if (art) {
-    const s = W * 0.74;
-    g.save(); g.globalAlpha = 0.04; g.filter = "grayscale(1) sepia(1)"; g.translate(W - s * 0.36, H - s * 0.42); g.rotate(-0.18);
-    g.beginPath(); g.arc(0, 0, s / 2, 0, Math.PI * 2); g.clip(); g.drawImage(art, -s / 2, -s / 2, s, s); g.restore();
-  }
-  // fine gold grain
-  let seed = 3;
-  const r = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
-  g.save();
-  for (let i = 0; i < (W * H) / 260; i++) {
-    g.globalAlpha = 0.03 + r() * 0.06;
-    g.fillStyle = r() < 0.5 ? "#f0b90b" : "#fff1c4";
-    g.fillRect(r() * W, r() * H, 1, 1);
-  }
-  g.restore();
-  // vignette
-  const v = g.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
-  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.55)");
+  const cool = g.createRadialGradient(W * 0.92, H * 0.05, 0, W * 0.92, H * 0.05, W * 0.95);
+  cool.addColorStop(0, "rgba(26,44,82,0.85)"); cool.addColorStop(1, "rgba(26,44,82,0)");
+  g.fillStyle = cool; g.fillRect(0, 0, W, H);
+  const warm = g.createRadialGradient(0, H, 0, 0, H, W * 0.85);
+  warm.addColorStop(0, "rgba(60,44,14,0.45)"); warm.addColorStop(1, "rgba(60,44,14,0)");
+  g.fillStyle = warm; g.fillRect(0, 0, W, H);
+  const v = g.createRadialGradient(W / 2, H / 2, W * 0.45, W / 2, H / 2, Math.max(W, H) * 0.85);
+  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.45)");
   g.fillStyle = v; g.fillRect(0, 0, W, H);
-  // frame: gold foil line, a faint inner line, small diamonds at the corners
-  const o = 30;
+  // the orbit: one thin gold ellipse off the right edge and a fainter cool one inside it
   g.save();
-  g.strokeStyle = foil(g, 0, 0, W, H); g.lineWidth = 2.5;
-  g.beginPath(); g.roundRect(o, o, W - 2 * o, H - 2 * o, 26); g.stroke();
-  g.strokeStyle = "rgba(240,185,11,0.16)"; g.lineWidth = 1;
-  g.beginPath(); g.roundRect(o + 10, o + 10, W - 2 * o - 20, H - 2 * o - 20, 20); g.stroke();
-  g.fillStyle = foil(g, 0, 0, W, H);
-  for (const [x, y] of [[W / 2, o], [W / 2, H - o]]) {
-    g.beginPath(); g.moveTo(x, y - 7); g.lineTo(x + 7, y); g.lineTo(x, y + 7); g.lineTo(x - 7, y); g.closePath(); g.fill();
+  g.strokeStyle = "rgba(217,180,95,0.10)"; g.lineWidth = 2;
+  g.beginPath(); g.ellipse(W * 1.02, H * 0.40, W * 0.62, W * 0.36, 0, 0, Math.PI * 2); g.stroke();
+  g.strokeStyle = "rgba(120,150,210,0.08)"; g.lineWidth = 1;
+  g.beginPath(); g.ellipse(W * 1.02, H * 0.40, W * 0.48, W * 0.28, 0, 0, Math.PI * 2); g.stroke();
+  let seed = 11;
+  const r = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
+  for (let i = 0; i < 70; i++) {
+    g.globalAlpha = 0.1 + r() * 0.22; g.fillStyle = "#c8d2eb";
+    g.beginPath(); g.arc(r() * W, r() * H, 0.6 + r() * 1.1, 0, Math.PI * 2); g.fill();
   }
+  g.restore();
+  // frame: hairline, gold marks hugging the top-left and bottom-right corners
+  const o = 26, rad = 28, len = 40 * (W / 1080);
+  g.save();
+  g.strokeStyle = "rgba(34,45,72,1)"; g.lineWidth = 1;
+  g.beginPath(); g.roundRect(o, o, W - 2 * o, H - 2 * o, rad); g.stroke();
+  g.strokeStyle = L.gold; g.lineWidth = 2;
+  g.beginPath(); g.moveTo(o, o + rad + len); g.lineTo(o, o + rad); g.arc(o + rad, o + rad, rad, Math.PI, Math.PI * 1.5); g.lineTo(o + rad + len, o); g.stroke();
+  const x1 = W - o, y1 = H - o;
+  g.beginPath(); g.moveTo(x1, y1 - rad - len); g.lineTo(x1, y1 - rad); g.arc(x1 - rad, y1 - rad, rad, 0, Math.PI * 0.5); g.lineTo(x1 - rad - len, y1); g.stroke();
   g.restore();
 }
 
 /** Brand line (logo + spaced name) and a tag on the right. Returns the y below it. */
 export async function luxBrand(g: G, W: number, M: number, top: number, tag: string): Promise<number> {
   const logo = await img("/brand/logo-192.png");
-  const s = 60;
+  const s = 64;
   if (logo) {
-    g.save(); g.shadowColor = "rgba(240,185,11,0.5)"; g.shadowBlur = 24;
-    g.beginPath(); g.roundRect(M, top, s, s, 14); g.fillStyle = "#000"; g.fill(); g.restore();
-    g.save(); g.beginPath(); g.roundRect(M, top, s, s, 14); g.clip(); g.drawImage(logo, M, top, s, s); g.restore();
+    g.save(); g.shadowColor = "rgba(217,180,95,0.45)"; g.shadowBlur = 20;
+    g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.fillStyle = "#000"; g.fill(); g.restore();
+    g.save(); g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.clip(); g.drawImage(logo, M, top, s, s); g.restore();
+    g.save(); g.strokeStyle = "rgba(120,98,52,1)"; g.lineWidth = 1; g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.stroke(); g.restore();
   }
-  txt(g, "CRYPTO INTELLIGENCE AI", M + s + 22, top + 26, { f: sora, w: 700, px: 20, track: 4, color: L.text });
-  txt(g, SITE_HOST, M + s + 22, top + 52, { w: 500, px: 17, color: L.soft, track: 1 });
+  txt(g, "CRYPTO INTELLIGENCE AI", M + s + 20, top + 28, { f: sora, w: 700, px: 19, track: 4.2, color: L.text });
+  txt(g, SITE_HOST, M + s + 20, top + 56, { w: 500, px: 18, color: L.mute });
   g.save();
-  g.font = sora(700, 15); spaced(g, 3);
+  g.font = sora(700, 14); spaced(g, 2.6);
   const tw = g.measureText(tag).width + 40;
-  g.strokeStyle = foil(g, W - M - tw, top, W - M, top + 40); g.lineWidth = 1.5;
-  g.beginPath(); g.roundRect(W - M - tw, top + 10, tw, 38, 19); g.stroke();
+  g.fillStyle = "#161618"; g.strokeStyle = "rgba(120,98,52,1)"; g.lineWidth = 1;
+  g.beginPath(); g.roundRect(W - M - tw, top + 12, tw, 38, 19); g.fill(); g.stroke();
   g.restore();
-  txt(g, tag, W - M - tw / 2, top + 35, { f: sora, w: 700, px: 15, track: 3, color: L.gold, align: "center" });
+  txt(g, tag, W - M - tw / 2, top + 36, { f: sora, w: 700, px: 14, track: 2.6, color: L.gold, align: "center" });
+  // hairline under the header: gold fading into navy
+  const hl = g.createLinearGradient(M, 0, W - M, 0);
+  hl.addColorStop(0, "rgba(217,180,95,0.9)"); hl.addColorStop(0.7, "rgba(38,50,78,1)"); hl.addColorStop(1, "rgba(38,50,78,1)");
+  g.fillStyle = hl; g.fillRect(M, top + s + 18, W - 2 * M, 1);
   return top + s;
 }
 
-/** A big figure: metallic gold when it is good news, plain red when it is not (losses are never dressed up). */
-export function figure(g: G, t: string, x: number, y: number, px: number, good: boolean, o: { align?: CanvasTextAlign; maxW?: number } = {}) {
+/** A big figure: green for a gain, red for a loss (never dressed up), soft glow, light-to-full gradient. */
+export function figure(g: G, t: string, x: number, y: number, px: number, good: boolean, o: { align?: CanvasTextAlign; maxW?: number; gold?: boolean } = {}) {
   g.save();
   g.font = sora(800, px);
   let size = px;
@@ -142,8 +139,12 @@ export function figure(g: G, t: string, x: number, y: number, px: number, good: 
   const w = g.measureText(t).width;
   const x0 = o.align === "center" ? x - w / 2 : o.align === "right" ? x - w : x;
   g.textAlign = "left"; g.textBaseline = "alphabetic";
-  g.shadowColor = good ? "rgba(240,185,11,0.45)" : "rgba(246,70,93,0.45)"; g.shadowBlur = size * 0.35;
-  g.fillStyle = good ? foil(g, x0, y - size, x0 + w, y) : L.bear;
+  const [top, bot, glow] = o.gold ? ["#f2dfa6", "#d9b45f", "rgba(217,180,95,0.35)"]
+    : good ? ["#9be6c6", "#34c98b", "rgba(52,201,139,0.35)"] : ["#f3b0b5", "#e8616a", "rgba(232,97,106,0.25)"];
+  const gr = g.createLinearGradient(0, y - size * 0.75, 0, y);
+  gr.addColorStop(0, top); gr.addColorStop(1, bot);
+  g.shadowColor = glow; g.shadowBlur = size * 0.22;
+  g.fillStyle = gr;
   g.fillText(t, x0, y);
   g.restore();
   return { w, px: size };
@@ -154,7 +155,7 @@ export function curveChart(g: G, x: number, y: number, w: number, h: number, pts
   if (pts.length < 2) return;
   const lo = Math.min(0, ...pts), hi = Math.max(0, ...pts), span = hi - lo || 1;
   const X = (i: number) => x + (i / (pts.length - 1)) * w, Y = (v: number) => y + h - ((v - lo) / span) * h;
-  const col = good ? "240,185,11" : "246,70,93";
+  const col = good ? "52,201,139" : "232,97,106";
   g.save();
   g.setLineDash([4, 8]); g.strokeStyle = L.hair; g.lineWidth = 1.5;
   g.beginPath(); g.moveTo(x, Y(0)); g.lineTo(x + w, Y(0)); g.stroke(); g.setLineDash([]);
@@ -163,10 +164,10 @@ export function curveChart(g: G, x: number, y: number, w: number, h: number, pts
   g.beginPath(); g.moveTo(X(0), Y(0)); pts.forEach((v, i) => g.lineTo(X(i), Y(v))); g.lineTo(X(pts.length - 1), Y(0)); g.closePath();
   g.fillStyle = area; g.fill();
   g.beginPath(); pts.forEach((v, i) => (i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))));
-  g.strokeStyle = good ? foil(g, x, 0, x + w, 0) : L.bear; g.lineWidth = 4; g.lineJoin = "round";
-  g.shadowColor = `rgba(${col},0.7)`; g.shadowBlur = 16; g.stroke();
+  g.strokeStyle = good ? L.bull : L.bear; g.lineWidth = 4; g.lineJoin = "round";
+  g.shadowColor = `rgba(${col},0.5)`; g.shadowBlur = 10; g.stroke();
   const ex = X(pts.length - 1), ey = Y(pts[pts.length - 1]);
-  g.fillStyle = good ? "#fff1c4" : L.bear; g.shadowBlur = 24;
+  g.fillStyle = good ? L.bull : L.bear; g.shadowBlur = 12;
   g.beginPath(); g.arc(ex, ey, 7, 0, Math.PI * 2); g.fill();
   g.strokeStyle = `rgba(${col},0.5)`; g.lineWidth = 2; g.shadowBlur = 0;
   g.beginPath(); g.arc(ex, ey, 14, 0, Math.PI * 2); g.stroke();
@@ -185,12 +186,12 @@ export function statRow(g: G, x: number, y: number, w: number, items: [string, s
   });
 }
 
-/** Footer: a gold hairline, a call to action in foil, small print. */
+/** Footer: hairline with a short gold segment, the call to action in white, small print. */
 export function luxFooter(g: G, W: number, M: number, top: number, cta: string, small: string[]) {
-  g.fillStyle = L.line; g.fillRect(M, top, W - 2 * M, 1.5);
-  g.fillStyle = foil(g, M, 0, M + 180, 0); g.fillRect(M, top - 1, 180, 3);
-  txt(g, cta, M, top + 46, { f: sora, w: 700, px: 26, color: foil(g, M, top, M + 600, top + 40), maxW: W - 2 * M });
-  small.forEach((s, k) => txt(g, s, M, top + 80 + k * 24, { w: 500, px: 16, color: L.dim, maxW: W - 2 * M }));
+  g.fillStyle = L.line; g.fillRect(M, top, W - 2 * M, 1);
+  g.fillStyle = L.gold; g.fillRect(M, top - 0.5, 120, 2);
+  txt(g, cta, M, top + 48, { f: sora, w: 700, px: 26, color: L.text, maxW: W - 2 * M });
+  small.forEach((s, k) => txt(g, s, M, top + 82 + k * 24, { w: 500, px: 16, color: L.dim, maxW: W - 2 * M }));
 }
 
 /** Word-wrap in the given font to maxW, at most n lines (last one ellipsised). */

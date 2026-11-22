@@ -6,9 +6,9 @@
 import { SITE_HOST } from "./brand";
 
 export const C = {
-  gold: "#f0b90b", goldSoft: "rgba(240,185,11,0.6)", bull: "#0ecb81", bear: "#f6465d", text: "#f2f2f0", mute: "#9a958a",
-  dim: "#6f6a60", line: "rgba(240,185,11,0.16)", panel: "rgba(255,255,255,0.035)", panelHi: "rgba(240,185,11,0.08)", ink: "#08080a",
-  ai: "#ffd66b",
+  gold: "#d9b45f", goldSoft: "rgba(217,180,95,0.6)", bull: "#34c98b", bear: "#e8616a", text: "#f2f2f0", mute: "#9a958a",
+  dim: "#6f6a60", line: "rgba(217,180,95,0.16)", panel: "rgba(255,255,255,0.035)", panelHi: "rgba(217,180,95,0.08)", ink: "#08080a",
+  ai: "#f2dfa6",
 };
 export const M = 72;                                                  // outer margin
 
@@ -76,7 +76,7 @@ export function panel(g: G, x: number, y: number, w: number, h: number, o: { r?:
   g.strokeStyle = o.stroke ?? C.line; g.lineWidth = o.lw ?? 2; g.stroke();
   if (!o.fill) {                                   // glass: a thin cyan light along the top edge
     const lg = g.createLinearGradient(x + r, 0, x + w - r, 0);
-    lg.addColorStop(0, "rgba(240,185,11,0)"); lg.addColorStop(0.5, "rgba(240,185,11,0.45)"); lg.addColorStop(1, "rgba(240,185,11,0)");
+    lg.addColorStop(0, "rgba(217,180,95,0)"); lg.addColorStop(0.5, "rgba(217,180,95,0.45)"); lg.addColorStop(1, "rgba(217,180,95,0)");
     g.fillStyle = lg; g.fillRect(x + r, y + 1, w - 2 * r, 1.5);
   }
 }
@@ -122,8 +122,8 @@ export function backdrop(g: G, W: number, H: number) {
   const bg = g.createLinearGradient(0, 0, 0, H);
   bg.addColorStop(0, "#14110b"); bg.addColorStop(1, "#040406");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  radial(g, W * 0.12, 70, W * 0.62, "rgba(240,185,11,0.16)");
-  radial(g, W * 0.88, H * 0.55, W * 0.7, "rgba(240,185,11,0.09)");
+  radial(g, W * 0.12, 70, W * 0.62, "rgba(217,180,95,0.16)");
+  radial(g, W * 0.88, H * 0.55, W * 0.7, "rgba(217,180,95,0.09)");
   let s = 7;
   const rnd = () => ((s = (s * 9301 + 49297) % 233280) / 233280);
   for (let i = 0; i < Math.round((W * H) / 4200); i++) {
@@ -132,15 +132,15 @@ export function backdrop(g: G, W: number, H: number) {
     g.save();
     g.globalAlpha = 0.25 + rnd() * 0.5;
     g.fillStyle = big ? "#ffecb4" : "#cdb27a";
-    if (big) { g.shadowColor = "#f0b90b"; g.shadowBlur = 8; g.globalAlpha = 0.95; }
+    if (big) { g.shadowColor = "#d9b45f"; g.shadowBlur = 8; g.globalAlpha = 0.95; }
     g.beginPath(); g.arc(x, y, big ? 1.8 : r, 0, Math.PI * 2); g.fill();
     g.restore();
   }
   g.save();
   g.translate(W * 0.72, H * 0.5); g.rotate(-0.24);
-  g.strokeStyle = "rgba(240,185,11,0.14)"; g.lineWidth = 2;
+  g.strokeStyle = "rgba(217,180,95,0.14)"; g.lineWidth = 2;
   g.beginPath(); g.ellipse(0, 0, W * 0.55, H * 0.22, 0, 0, Math.PI * 2); g.stroke();
-  g.fillStyle = "#ffd66b"; g.shadowColor = "#f0b90b"; g.shadowBlur = 16;
+  g.fillStyle = "#f2dfa6"; g.shadowColor = "#d9b45f"; g.shadowBlur = 16;
   g.beginPath(); g.arc(Math.cos(3.6) * W * 0.55, Math.sin(3.6) * H * 0.22, 4, 0, Math.PI * 2); g.fill();
   g.restore();
   const L = 64, o = 18;
@@ -148,7 +148,7 @@ export function backdrop(g: G, W: number, H: number) {
   for (const [x, y, dx, dy] of [[o, o, 1, 1], [W - o, o, -1, 1], [o, H - o, 1, -1], [W - o, H - o, -1, -1]]) {
     g.beginPath(); g.moveTo(x + dx * L, y); g.lineTo(x, y); g.lineTo(x, y + dy * L); g.stroke();
   }
-  rrect(g, o + 12, o + 12, W - 2 * o - 24, H - 2 * o - 24, 30); g.strokeStyle = "rgba(240,185,11,0.16)"; g.lineWidth = 1.5; g.stroke();
+  rrect(g, o + 12, o + 12, W - 2 * o - 24, H - 2 * o - 24, 30); g.strokeStyle = "rgba(217,180,95,0.16)"; g.lineWidth = 1.5; g.stroke();
 }
 
 /** Logo + brand name + gold subtitle, top-left. Returns the y below the header. */
@@ -157,7 +157,7 @@ export async function header(g: G, subtitle: string, top = 64, tagText = "AI  ·
   const s = 80;
   if (logo) {
     g.save();
-    g.shadowColor = "rgba(240,185,11,0.55)"; g.shadowBlur = 28;
+    g.shadowColor = "rgba(217,180,95,0.55)"; g.shadowBlur = 28;
     rrect(g, M, top, s, s, 20); g.fillStyle = "#000"; g.fill();
     g.restore();
     g.save(); rrect(g, M, top, s, s, 20); g.clip(); g.drawImage(logo, M, top, s, s); g.restore();

@@ -166,7 +166,7 @@ def win_item(r: dict[str, Any]) -> dict[str, Any]:
     return {"symbol": r["symbol"], "timeframe": r["timeframe"], "side": "LONG" if r["side"] > 0 else "SHORT",
             # v2.13: the result after fees (round trip + funding); the price return before fees beside it
             "status": r["status"], "return_pct": float(net_pct(r)), "gross_return_pct": float(r["return_pct"]),
-            "entry": r.get("entry"),
+            "entry": r.get("entry"), "stop": r.get("stop"), "tp1": r.get("tp1"), "tp2": r.get("tp2"), "tp3": r.get("tp3"),
             "exit_price": target, "held": _held((r.get("closed_at") or 0) - (r.get("created_at") or 0)),
             **margin_fields(r)}
 
@@ -612,7 +612,7 @@ def post_news(sink, items: list[dict[str, Any]], session: Any = None) -> dict[st
     sent, errors = 0, []
     for m in items:
         try:
-            send(cfg, news_text(m), session)
+            send_photo(cfg, _card("news_card", m), news_text(m), session)      # v2.77: as an image card
             sent += 1
         except Exception as exc:
             errors.append(redact(f"news: {exc}")[:200])

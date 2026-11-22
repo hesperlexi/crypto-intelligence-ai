@@ -89,7 +89,7 @@ async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
     g.save();
     g.strokeStyle = foil(g, M, cy, W - M, cy + 300); g.lineWidth = 2;
     g.beginPath(); g.roundRect(M, cy, W - 2 * M, 300, 28); g.stroke();
-    g.fillStyle = "rgba(240,185,11,0.05)"; g.fill();
+    g.fillStyle = "rgba(217,180,95,0.05)"; g.fill();
     g.restore();
     txt(g, "Get the next signals live", M + 44, cy + 78, { f: sora, w: 800, px: 44, color: foil(g, M, cy, W - M, cy + 80) });
     ["Long and short calls with entry, stop and three targets", "Phone alerts, demo trading, weekly reports", "Every result public, losses included"].forEach((t, k) =>

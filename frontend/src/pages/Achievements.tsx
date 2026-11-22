@@ -16,13 +16,13 @@ const iconOf = (id: string) => ICON[Object.keys(ICON).find((k) => id.startsWith(
 
 function medal(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, icon: string) {
   g.save();
-  g.shadowColor = "rgba(240,185,11,0.55)"; g.shadowBlur = r * 0.5;
+  g.shadowColor = "rgba(217,180,95,0.55)"; g.shadowBlur = r * 0.5;
   const ring = foil(g, cx - r, cy - r, cx + r, cy + r);
   g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = ring; g.fill();
   g.restore();
   const inner = g.createRadialGradient(cx, cy - r * 0.3, 0, cx, cy, r * 0.84); inner.addColorStop(0, "#221c10"); inner.addColorStop(1, "#0b0a08");
   g.beginPath(); g.arc(cx, cy, r * 0.84, 0, Math.PI * 2); g.fillStyle = inner; g.fill();
-  g.beginPath(); g.arc(cx, cy, r * 0.84, 0, Math.PI * 2); g.strokeStyle = "rgba(240,185,11,0.35)"; g.lineWidth = 2; g.stroke();
+  g.beginPath(); g.arc(cx, cy, r * 0.84, 0, Math.PI * 2); g.strokeStyle = "rgba(217,180,95,0.35)"; g.lineWidth = 2; g.stroke();
   // icon glyph centred by its measured box, not the font's line box
   g.font = font(800, r * 0.8); g.textAlign = "center"; g.textBaseline = "alphabetic";
   const m = g.measureText(icon);
@@ -31,7 +31,7 @@ function medal(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, i
   g.textAlign = "left";
   // v2.35: the logo's language around the medal - a gold tick ring and a tilted light-gold orbit with a satellite
   g.save();
-  g.strokeStyle = "rgba(240,185,11,0.75)"; g.lineCap = "round";
+  g.strokeStyle = "rgba(217,180,95,0.75)"; g.lineCap = "round";
   for (let k = 0; k < 48; k++) {
     const a = (k / 48) * Math.PI * 2, r0 = r * 1.14, r1 = r * (k % 4 === 0 ? 1.24 : 1.2);
     g.lineWidth = k % 4 === 0 ? 3 : 2;
@@ -40,7 +40,7 @@ function medal(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, i
   g.translate(cx, cy); g.rotate(-0.38);
   g.strokeStyle = "rgba(255,214,107,0.55)"; g.lineWidth = Math.max(1.5, r / 50);
   g.beginPath(); g.ellipse(0, 0, r * 1.75, r * 0.5, 0, 0, Math.PI * 2); g.stroke();
-  g.fillStyle = "#fff1c4"; g.shadowColor = C.gold; g.shadowBlur = 18;
+  g.fillStyle = "#f2dfa6"; g.shadowColor = C.gold; g.shadowBlur = 18;
   g.beginPath(); g.arc(Math.cos(-0.5) * r * 1.75, Math.sin(-0.5) * r * 0.5, Math.max(3, r / 17), 0, Math.PI * 2); g.fill();
   g.restore();
 }
