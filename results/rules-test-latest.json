@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-22T08:18:17.793Z",
-  "sha": "a5803fbf53850c9f50f23324943ac1e6471aeb5f",
-  "total": 142,
-  "passed": 142,
+  "at": "2026-11-22T08:35:43.882Z",
+  "sha": "57de590d69f02a3ea0206d7c27a118f12bdbf5a8",
+  "total": 143,
+  "passed": 143,
   "failed": 0,
   "results": [
     {
@@ -435,6 +435,10 @@
     },
     {
       "name": "health_errors: pending and signed-out people cannot read it",
+      "ok": true
+    },
+    {
+      "name": "health_admin: only the admin reads the full status (v2.68)",
       "ok": true
     },
     {
