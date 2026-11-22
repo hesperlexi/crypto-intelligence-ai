@@ -1,0 +1,189 @@
+{
+ "ok": true,
+ "since": 1795249800000,
+ "until": 1000000000000000,
+ "tf": {
+  "12h": {
+   "published": {
+    "calls": 0,
+    "n": 0
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 0
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "FILTERED": {
+     "blocked": 1,
+     "n": 0
+    }
+   },
+   "rejected_all": {
+    "blocked": 1,
+    "n": 0
+   }
+  },
+  "15m": {
+   "published": {
+    "calls": 2,
+    "n": 2,
+    "win_rate": 1.0,
+    "avg_r": 0.3426,
+    "total_r": 0.69
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 2,
+     "win_rate": 1.0,
+     "avg_r": 0.3426,
+     "total_r": 0.69
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "AGAINST BIGGER TREND": {
+     "blocked": 2,
+     "n": 1,
+     "win_rate": 1.0,
+     "avg_r": 1.0401,
+     "total_r": 1.04
+    },
+    "GRADE A ONLY": {
+     "blocked": 28,
+     "n": 24,
+     "win_rate": 0.417,
+     "avg_r": -0.302,
+     "total_r": -7.25
+    },
+    "TARGET TOO SMALL FOR COSTS": {
+     "blocked": 2,
+     "n": 2,
+     "win_rate": 1.0,
+     "avg_r": 1.1889,
+     "total_r": 2.38
+    },
+    "TOO MANY SAME-SIDE CALLS": {
+     "blocked": 3,
+     "n": 0
+    },
+    "VOLUME WALL AHEAD": {
+     "blocked": 2,
+     "n": 2,
+     "win_rate": 0.0,
+     "avg_r": -1.0776,
+     "total_r": -2.16
+    }
+   },
+   "rejected_all": {
+    "blocked": 37,
+    "n": 29,
+    "win_rate": 0.448,
+    "avg_r": -0.2064,
+    "total_r": -5.99
+   }
+  },
+  "1d": {
+   "published": {
+    "calls": 0,
+    "n": 0
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 0
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "VOLUME WALL AHEAD": {
+     "blocked": 1,
+     "n": 0
+    }
+   },
+   "rejected_all": {
+    "blocked": 1,
+    "n": 0
+   }
+  },
+  "1h": {
+   "published": {
+    "calls": 0,
+    "n": 0
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 0
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "CAPITAL PROTECTION": {
+     "blocked": 1,
+     "n": 1,
+     "win_rate": 0.0,
+     "avg_r": -1.0544,
+     "total_r": -1.05
+    },
+    "FILTERED": {
+     "blocked": 4,
+     "n": 2,
+     "win_rate": 0.0,
+     "avg_r": -1.172,
+     "total_r": -2.34
+    },
+    "GRADE A ONLY": {
+     "blocked": 9,
+     "n": 0
+    },
+    "STOP TOO TIGHT FOR FEES": {
+     "blocked": 1,
+     "n": 0
+    }
+   },
+   "rejected_all": {
+    "blocked": 15,
+    "n": 3,
+    "win_rate": 0.0,
+    "avg_r": -1.1328,
+    "total_r": -3.4
+   }
+  },
+  "4h": {
+   "published": {
+    "calls": 7,
+    "n": 0
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 0
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "FILTERED": {
+     "blocked": 2,
+     "n": 0
+    },
+    "TOO MANY SAME-SIDE CALLS": {
+     "blocked": 1,
+     "n": 0
+    }
+   },
+   "rejected_all": {
+    "blocked": 3,
+    "n": 0
+   }
+  }
+ }
+}
