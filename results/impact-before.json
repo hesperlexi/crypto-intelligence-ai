@@ -1,0 +1,335 @@
+{
+ "ok": true,
+ "since": 1794645000000,
+ "until": 1795249800000,
+ "tf": {
+  "12h": {
+   "published": {
+    "calls": 3,
+    "n": 3,
+    "win_rate": 1.0,
+    "avg_r": 0.3357,
+    "total_r": 1.01
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 1,
+     "win_rate": 1.0,
+     "avg_r": 0.3045,
+     "total_r": 0.3
+    },
+    "B": {
+     "n": 2,
+     "win_rate": 1.0,
+     "avg_r": 0.3513,
+     "total_r": 0.7
+    }
+   },
+   "rejected_by_filter": {
+    "FILTERED": {
+     "blocked": 14,
+     "n": 1,
+     "win_rate": 1.0,
+     "avg_r": 1.048,
+     "total_r": 1.05
+    },
+    "TOO MANY SAME-SIDE CALLS": {
+     "blocked": 5,
+     "n": 2,
+     "win_rate": 1.0,
+     "avg_r": 1.3969,
+     "total_r": 2.79
+    }
+   },
+   "rejected_all": {
+    "blocked": 19,
+    "n": 3,
+    "win_rate": 1.0,
+    "avg_r": 1.2806,
+    "total_r": 3.84
+   }
+  },
+  "15m": {
+   "published": {
+    "calls": 6,
+    "n": 6,
+    "win_rate": 0.167,
+    "avg_r": -0.6816,
+    "total_r": -4.09
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 2,
+     "win_rate": 0.5,
+     "avg_r": 0.2662,
+     "total_r": 0.53
+    },
+    "B": {
+     "n": 4,
+     "win_rate": 0.0,
+     "avg_r": -1.1555,
+     "total_r": -4.62
+    }
+   },
+   "rejected_by_filter": {
+    "AGAINST BIGGER TREND": {
+     "blocked": 6,
+     "n": 6,
+     "win_rate": 0.0,
+     "avg_r": -1.0689,
+     "total_r": -6.41
+    },
+    "FILTERED": {
+     "blocked": 78,
+     "n": 78,
+     "win_rate": 0.692,
+     "avg_r": 0.2997,
+     "total_r": 23.38
+    },
+    "GRADE A ONLY": {
+     "blocked": 17,
+     "n": 17,
+     "win_rate": 0.765,
+     "avg_r": 0.4145,
+     "total_r": 7.05
+    },
+    "STOP TOO WIDE": {
+     "blocked": 1,
+     "n": 1,
+     "win_rate": 0.0,
+     "avg_r": -1.0106,
+     "total_r": -1.01
+    },
+    "TARGET TOO SMALL FOR COSTS": {
+     "blocked": 5,
+     "n": 5,
+     "win_rate": 0.6,
+     "avg_r": 0.1894,
+     "total_r": 0.95
+    },
+    "TOO MANY SAME-SIDE CALLS": {
+     "blocked": 66,
+     "n": 66,
+     "win_rate": 0.652,
+     "avg_r": 0.2239,
+     "total_r": 14.77
+    },
+    "VOLUME WALL AHEAD": {
+     "blocked": 14,
+     "n": 13,
+     "win_rate": 0.615,
+     "avg_r": 0.1397,
+     "total_r": 1.82
+    }
+   },
+   "rejected_all": {
+    "blocked": 187,
+    "n": 186,
+    "win_rate": 0.651,
+    "avg_r": 0.2179,
+    "total_r": 40.54
+   }
+  },
+  "1d": {
+   "published": {
+    "calls": 3,
+    "n": 2,
+    "win_rate": 1.0,
+    "avg_r": 0.2261,
+    "total_r": 0.45
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 2,
+     "win_rate": 1.0,
+     "avg_r": 0.2261,
+     "total_r": 0.45
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "FILTERED": {
+     "blocked": 2,
+     "n": 0
+    },
+    "GRADE A ONLY": {
+     "blocked": 2,
+     "n": 0
+    },
+    "TOO MANY SAME-SIDE CALLS": {
+     "blocked": 6,
+     "n": 0
+    },
+    "VOLUME WALL AHEAD": {
+     "blocked": 1,
+     "n": 0
+    }
+   },
+   "rejected_all": {
+    "blocked": 11,
+    "n": 0
+   }
+  },
+  "1h": {
+   "published": {
+    "calls": 1,
+    "n": 1,
+    "win_rate": 1.0,
+    "avg_r": 1.0457,
+    "total_r": 1.05
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 1,
+     "win_rate": 1.0,
+     "avg_r": 1.0457,
+     "total_r": 1.05
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "AGAINST BIGGER TREND": {
+     "blocked": 1,
+     "n": 1,
+     "win_rate": 1.0,
+     "avg_r": 0.3779,
+     "total_r": 0.38
+    },
+    "FILTERED": {
+     "blocked": 13,
+     "n": 11,
+     "win_rate": 0.818,
+     "avg_r": 0.707,
+     "total_r": 7.78
+    },
+    "GRADE A ONLY": {
+     "blocked": 10,
+     "n": 10,
+     "win_rate": 1.0,
+     "avg_r": 1.1182,
+     "total_r": 11.18
+    },
+    "STOP TOO TIGHT FOR FEES": {
+     "blocked": 3,
+     "n": 3,
+     "win_rate": 0.333,
+     "avg_r": -0.264,
+     "total_r": -0.79
+    },
+    "TARGET TOO SMALL FOR COSTS": {
+     "blocked": 1,
+     "n": 1,
+     "win_rate": 0.0,
+     "avg_r": -1.3547,
+     "total_r": -1.35
+    },
+    "TOO MANY SAME-SIDE CALLS": {
+     "blocked": 42,
+     "n": 39,
+     "win_rate": 0.718,
+     "avg_r": 0.3866,
+     "total_r": 15.08
+    },
+    "VOLUME WALL AHEAD": {
+     "blocked": 10,
+     "n": 9,
+     "win_rate": 0.778,
+     "avg_r": 0.5223,
+     "total_r": 4.7
+    }
+   },
+   "rejected_all": {
+    "blocked": 80,
+    "n": 74,
+    "win_rate": 0.757,
+    "avg_r": 0.4996,
+    "total_r": 36.97
+   }
+  },
+  "3d": {
+   "published": {
+    "calls": 0,
+    "n": 0
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 0
+    },
+    "B": {
+     "n": 0
+    }
+   },
+   "rejected_by_filter": {
+    "GRADE A ONLY": {
+     "blocked": 1,
+     "n": 0
+    }
+   },
+   "rejected_all": {
+    "blocked": 1,
+    "n": 0
+   }
+  },
+  "4h": {
+   "published": {
+    "calls": 24,
+    "n": 21,
+    "win_rate": 0.905,
+    "avg_r": 0.391,
+    "total_r": 8.21
+   },
+   "published_by_grade": {
+    "A": {
+     "n": 0
+    },
+    "B": {
+     "n": 21,
+     "win_rate": 0.905,
+     "avg_r": 0.391,
+     "total_r": 8.21
+    }
+   },
+   "rejected_by_filter": {
+    "FILTERED": {
+     "blocked": 8,
+     "n": 6,
+     "win_rate": 1.0,
+     "avg_r": 1.0854,
+     "total_r": 6.51
+    },
+    "STOP TOO TIGHT FOR FEES": {
+     "blocked": 1,
+     "n": 1,
+     "win_rate": 1.0,
+     "avg_r": 0.3411,
+     "total_r": 0.34
+    },
+    "TOO MANY SAME-SIDE CALLS": {
+     "blocked": 21,
+     "n": 18,
+     "win_rate": 0.833,
+     "avg_r": 0.926,
+     "total_r": 16.67
+    },
+    "VOLUME WALL AHEAD": {
+     "blocked": 4,
+     "n": 3,
+     "win_rate": 1.0,
+     "avg_r": 1.3739,
+     "total_r": 4.12
+    }
+   },
+   "rejected_all": {
+    "blocked": 34,
+    "n": 28,
+    "win_rate": 0.893,
+    "avg_r": 0.9873,
+    "total_r": 27.64
+   }
+  }
+ }
+}
