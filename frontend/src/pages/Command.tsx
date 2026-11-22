@@ -101,20 +101,21 @@ function Galaxy({ rows, open, sel, onSel, onScan, tf }: { rows: any[]; open: Set
           );
         })}
       </svg>
-      {/* hologram readout of the planet under the pointer (or the one locked on) */}
-      {shown && (
-        <div className="cc-holo" aria-live="polite">
-          <div className="flex items-center gap-2"><CoinAvatar symbol={shown.r.symbol} size={22} /><b className="font-display text-base">{name(shown.r.symbol)}</b>
-            <span className={`ml-auto text-xs font-semibold ${shown.dir > 0 ? "text-bull" : shown.dir < 0 ? "text-bear" : "text-mute"}`}>{shown.dir > 0 ? "▲ Long call" : shown.dir < 0 ? "▼ Short call" : "No call"} · {tf.toUpperCase()}</span></div>
-          <div className="num mt-1.5 text-xl font-semibold">{fmtPrice(tickers[shown.r.symbol]?.last ?? shown.r.price)} <span className={`text-sm ${(shown.chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(shown.chg)}</span></div>
-          <div className="mt-1.5 grid grid-cols-3 gap-2 text-xs">
-            <span><span className="block text-mute">Trend</span>{shown.r.trend_label ?? "—"}</span>
-            <span><span className="block text-mute">RSI</span><span className="num">{isNum(shown.r.rsi) ? shown.r.rsi.toFixed(0) : "—"}</span></span>
-            <span><span className="block text-mute">Volume</span><span className="num">{isNum(shown.r.quote_volume_24h) ? fmtCompact(shown.r.quote_volume_24h) : "—"}</span></span>
-          </div>
-          <button type="button" className="btn btn-sm mt-2.5 w-full" onClick={() => { onSel(shown.r.symbol); onScan(); }}>Deep-space scan ↓</button>
-        </div>
-      )}
+      {/* v2.73 (owner: the card covered planets): the readout of the planet under the pointer (or the one locked on) is a
+          strip under the drawing, never on top of it */}
+      <div className="cc-holo" aria-live="polite">
+        {shown ? (
+          <>
+            <span className="cc-holo-id"><CoinAvatar symbol={shown.r.symbol} size={26} /><b className="font-display text-base">{name(shown.r.symbol)}</b>
+              <span className={`text-xs font-semibold ${shown.dir > 0 ? "text-bull" : shown.dir < 0 ? "text-bear" : "text-mute"}`}>{shown.dir > 0 ? "▲ Long call" : shown.dir < 0 ? "▼ Short call" : "No call"} · {tf.toUpperCase()}</span></span>
+            <span className="num cc-holo-px">{fmtPrice(tickers[shown.r.symbol]?.last ?? shown.r.price)} <span className={`text-sm ${(shown.chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(shown.chg)}</span></span>
+            <span className="cc-holo-k"><span>Trend</span>{shown.r.trend_label ?? "—"}</span>
+            <span className="cc-holo-k"><span>RSI</span><b className="num font-normal">{isNum(shown.r.rsi) ? shown.r.rsi.toFixed(0) : "—"}</b></span>
+            <span className="cc-holo-k"><span>Volume 24h</span><b className="num font-normal">{isNum(shown.r.quote_volume_24h) ? fmtCompact(shown.r.quote_volume_24h) : "—"}</b></span>
+            <button type="button" className="btn btn-sm cc-holo-btn" onClick={() => { onSel(shown.r.symbol); onScan(); }}>Deep-space scan ↓</button>
+          </>
+        ) : <span className="text-sm text-mute">Point at or tap a planet to read it.</span>}
+      </div>
     </div>
   );
 }
