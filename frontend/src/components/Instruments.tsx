@@ -10,7 +10,7 @@ import { base, DASH, fmtPctRaw, fmtPrice, isNum, slug } from "../lib/format";
 import { useTickerThrottled } from "../lib/live";
 import { TickFlash } from "./kit";
 
-const ICONS = "https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@0.18.1/svg/color";
+const ICONS = "/coins";   // v2.75: self-hosted (spothq/cryptocurrency-icons 0.18.1, CC0) - no third-party request per logo
 const MISSING = new Set<string>();
 const TAU = Math.PI * 2;
 const BULL = "rgb(var(--bull))", BEAR = "rgb(var(--bear))", GLASS = "rgb(var(--glass) / 0.35)";

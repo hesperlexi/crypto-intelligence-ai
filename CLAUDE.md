@@ -1293,3 +1293,23 @@ the pointer else the locked one - price, call + grade from the chosen TF's futur
 AI note, "Deep-space scan") · "Signals in flight" one card (`Radar` | `SignalJourneys`, `.cc-flight`) · Universe | Mission
 control (`.cc-forces`, Mission = one-column list) · Market heat (full width) · Deep-space scan · Coin vs coin. `Core`
 card removed (the readout covers it). v2.73: the planet card no longer floats over the galaxy.
+
+## v2.75 "all 15" (owner, 22 Nov 2026)
+- **`views/derivs`** (`services/market_extras.py`, worker step `market_extras` hourly, setting `market_extras_at`, skipped
+  in lean mode; member-readable, not on the edge list): per coin from data already recorded (`mkt_okx` OI / L-S / taker,
+  `mkt_liq`, `derivs` funding_1h → `funding_8h_pct`, 7 daily points per 8 h); `liq_maps` (ESTIMATE, top 6 coins by OI:
+  OI rises over 7 d = new positions at that hour's close, split by taker buy share, leverage mix `LEVERAGE_MIX`, levels the
+  price has crossed since dropped, 40 bins ±15 %); `volatility` (Deribit public: DVOL BTC/ETH, options put/call OI, max
+  pain of the next expiry with ≥10 % of the largest expiry's OI); `macro` (Yahoo chart API: S&P 500, Nasdaq, DXY, gold,
+  US 10y + BTC–S&P 30-day daily-return correlation; stooq is blocked on the runners); `unlocks` (DefiLlama free datasets
+  `defillama-datasets.llama.fi/emissions/<slug>`, `UNLOCK_SLUGS` checked on the runner; the api.llama.fi endpoint is paid).
+  Probe `data-probe.yml` → `reports/data-probe.json`. Tests `tests/test_market_extras_v275.py`.
+- UI `components/Derivs.tsx`: `CoinDerivatives` (coin page: OI, crowd long %, taker buys, funding + 7-day bars, 24 h
+  liquidations, `LiqMap`), `VolOptionsCard` + `MacroCard` (Overview row after Market insights), `UnlocksList` (Overview
+  Market context card), `BoardFutures` (Market board "Futures" column ≥ 1280 px). Coin page cards get the crystal look.
+- `components/SizeCalc.tsx` position-size calculator ("Size it" on active signal cards; "Position-size calculator" in the
+  Trade journal; inputs remembered in localStorage `cia-calc`; liquidation = `paperFutures.liqPrice`). `components/TradeJournal.tsx`
+  on Trade (futures): month summaries + last closed practice trades with private notes (localStorage `cia-journal-<uid>`, no writes).
+- Speed: coin logos self-hosted `public/coins/*.svg` (spothq/cryptocurrency-icons 0.18.1, CC0; `/coins/**` cached 30 days);
+  Command Centre loads only the chosen timeframe's futures board until "Signals in flight" is near (IntersectionObserver).
+- Phone galaxy: names only for the 6 biggest coins, coins with a running call and the locked one.

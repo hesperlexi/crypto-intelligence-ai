@@ -8,6 +8,7 @@ import { OrbitDial } from "../components/Instruments";
 import { SignalDeck } from "../components/CommandPlus";
 import { BriefingPanel } from "../components/Polish";
 import MarketBoard, { IntelBrief } from "../components/MarketBoard";
+import { MacroCard, UnlocksList, VolOptionsCard } from "../components/Derivs";
 import { BtcCard, BtcChartCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
 import { useIsAdmin, useSession } from "../lib/session";
 import NewsBanner, { countdown } from "../components/NewsBanner";
@@ -89,12 +90,19 @@ export default function Dashboard() {
             )}
             <ComingUp />
             <RadarMini />
+            <UnlocksList />
           </Card>
         </div>
       </div>
 
       {/* dominance, altcoin season, market pulse, top headline */}
       <MarketInsights />
+
+      {/* v2.75: options / volatility beside the traditional markets (views/derivs) */}
+      <div className="grid-even grid gap-4 lg:grid-cols-2">
+        <VolOptionsCard />
+        <MacroCard />
+      </div>
     </div>
   );
 }

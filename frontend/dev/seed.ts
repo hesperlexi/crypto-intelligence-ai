@@ -521,6 +521,7 @@ export function seed(): Record<string, any> {
     "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
     "views/market_context": v(marketContext()),
     "views/coin_reports": v(coinReports()),
+    "views/derivs": v(derivs()),
     ...alertsFor("u_member"),
     ...alertsFor("owner"),
     "views/cross_asset_1d": v({ observations: ["BTC dominance rising: large caps lead, altcoins lag.", "7 of 10 tracked coins are above their 50-day average."] }),
@@ -930,4 +931,34 @@ function perfLab() {
     hold_h: { median: 9.5, max: 71 }, exits: { stop: 18, target: 30, breakeven: 9, time_limit: 4, admin_close: 3 },
     proof: { rejected: { n: 31, closed: 24, total_r: -6.4, avg_r: -0.27, verdict: "saving money" }, calibration: { warnings: [] } },
   };
+}
+
+// v2.75 views/derivs sample (open interest, funding, liquidation map estimate, options / volatility, macro, unlocks)
+function derivs() {
+  const H = 3_600_000, D = 86_400_000;
+  const coins: any = {};
+  COINS.forEach(([symbol, price, ch], i) => {
+    coins[symbol] = { oi_usd: [9.8e9, 5.1e9, 6.2e8, 1.1e9, 2.4e9, 9.5e8, 1.6e8, 2.2e8, 3.1e8, 1.2e8][i] ?? 1e8, oi_chg_24h: ((i * 7) % 11) - 4 + ch / 2,
+      oi_series: Array.from({ length: 48 }, (_, k) => 1e9 * (1 + 0.04 * Math.sin(k / 6 + i) + k * 0.001)),
+      ls_ratio: 1 + ((i * 3) % 7) / 10, long_pct: 50 + ((i * 9) % 25) - 8, taker_buy_pct: 50 + ((i * 7) % 15) - 6,
+      liq_24h: { long: 2e6 * (i + 1), short: 1.4e6 * (10 - i) }, funding_8h_pct: [0.0102, 0.0087, -0.0031, 0.0141, 0.031, 0.0063, 0.0098, -0.0012, 0.0055, 0.0011][i] ?? 0.01,
+      funding_days: Array.from({ length: 7 }, (_, k) => [NOW - (7 - k) * D, 0.004 + 0.008 * Math.sin(k + i) ]) };
+  });
+  const map = (price: number) => {
+    const longs = Array.from({ length: 40 }, (_, k) => (k < 20 ? Math.round(4e6 * Math.exp(-((k - 13) ** 2) / 8) + 6e5 * ((k * 7) % 5)) : 0));
+    const shorts = Array.from({ length: 40 }, (_, k) => (k >= 20 ? Math.round(3.2e6 * Math.exp(-((k - 27) ** 2) / 10) + 5e5 * ((k * 3) % 4)) : 0));
+    return { price, low: price * 0.85, high: price * 1.15, longs, shorts, note: "estimate" };
+  };
+  return { generated_at: NOW, coins, liq_maps: { "BTC/USDT": map(68420.5), "ETH/USDT": map(2468.12), "SOL/USDT": map(168.42) },
+    volatility: { source: "Deribit", dvol: { BTC: { value: 56.4, chg_24h: 2.1, series: [51, 52.4, 50.8, 53.1, 54.6, 54.3, 55.0, 56.4] }, ETH: { value: 71.2, chg_24h: -1.3, series: [68, 70.1, 72.5, 73.0, 72.1, 71.6, 72.5, 71.2] } },
+      options: { BTC: { put_call: 0.71, oi_coins: 412000, max_pain: 66000, expiry: NOW + 5 * D, underlying: 68420 }, ETH: { put_call: 0.86, oi_coins: 3100000, max_pain: 2500, expiry: NOW + 5 * D, underlying: 2468 } } },
+    macro: { source: "Yahoo Finance (delayed)",
+      SPX: { name: "S&P 500", value: 6910.4, chg_1d: 0.42, series: Array.from({ length: 22 }, (_, k) => 6700 + k * 9 + 30 * Math.sin(k)), btc_corr_30d: 0.54 },
+      NDX: { name: "Nasdaq", value: 23810.2, chg_1d: 0.71, series: Array.from({ length: 22 }, (_, k) => 23000 + k * 35 + 90 * Math.sin(k / 2)) },
+      DXY: { name: "Dollar index", value: 104.21, chg_1d: -0.18, series: Array.from({ length: 22 }, (_, k) => 105 - k * 0.04 + 0.2 * Math.sin(k)) },
+      GOLD: { name: "Gold", value: 2741.2, chg_1d: 0.22, series: Array.from({ length: 22 }, (_, k) => 2650 + k * 4 + 15 * Math.sin(k / 3)) },
+      US10Y: { name: "US 10-year yield", value: 4.31, chg_1d: -0.6, series: Array.from({ length: 22 }, (_, k) => 4.45 - k * 0.006 + 0.03 * Math.sin(k)) } },
+    unlocks: [{ coin: "SUI", tokens_30d: 6.4e7, pct_of_unlocked: 2.1, next_at: NOW + 9 * D }, { coin: "APT", tokens_30d: 1.13e7, pct_of_unlocked: 1.4, next_at: NOW + 12 * D },
+      { coin: "ENA", tokens_30d: 1.7e8, pct_of_unlocked: 0.9, next_at: NOW + 3 * D }, { coin: "AVAX", tokens_30d: 1.6e6, pct_of_unlocked: 0.4, next_at: NOW + 20 * D }],
+    core: { coins: 10, maps: 3 } };
 }

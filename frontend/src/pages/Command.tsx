@@ -4,7 +4,7 @@
 //   Signals page's calls), views/track_record (open calls), views/market_context + context (alt strength, Fear & Greed),
 //   views/health (mission control; already open in the header), the coin's analysis view for the scan (1 read per coin
 //   picked). Correlations from public Binance 1h candles in the browser (no Firebase).
-import { lazy, ReactNode, Suspense, useEffect, useId, useMemo, useState } from "react";
+import { lazy, ReactNode, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
 import { BeadDefs, CoinBead } from "../components/Instruments";
 import { Link } from "react-router-dom";
 import { Segmented } from "../components/kit";
@@ -63,7 +63,7 @@ function Galaxy({ rows, open, sel, onSel, onHover }: { rows: any[]; open: Set<st
     const size = (narrow ? 7 : 9) + (narrow ? 9 : 15) * Math.sqrt((r.quote_volume_24h ?? 0) / maxV);
     const sig = String(r.signal ?? "");
     const dir = /BUY|LONG/.test(sig) ? 1 : /SELL|SHORT/.test(sig) ? -1 : 0;
-    return { r, a, x: C.x + RAD[ti] * KX * Math.cos(a), y: C.y + RAD[ti] * Math.sin(a) * KY, size, chg, sig: open.has(r.symbol), dir };
+    return { r, a, ti, x: C.x + RAD[ti] * KX * Math.cos(a), y: C.y + RAD[ti] * Math.sin(a) * KY, size, chg, sig: open.has(r.symbol), dir };
   }));
   // v2.56 signal constellations: coins with a call in the same direction joined by a faint line (in orbit order)
   const chain = (d: 1 | -1) => planets.filter((p) => p.dir === d).sort((p, q) => p.a - q.a);
@@ -94,8 +94,12 @@ function Galaxy({ rows, open, sel, onSel, onHover }: { rows: any[]; open: Set<st
               {on && <circle cx={p.x} cy={p.y} r={p.size + 13} fill="none" stroke="#fff1c4" strokeWidth="1.5" className="cc-lock" />}
               {p.sig && <circle cx={p.x} cy={p.y} r={p.size + 7} fill="none" stroke={GOLD} strokeWidth="2" strokeDasharray="4 3" />}
               <circle cx={p.x} cy={p.y} r={p.size} fill={name(p.r.symbol) === "GOLD" || p.r.symbol.startsWith("PAXG") ? "url(#cc-gold)" : (p.chg ?? 0) >= 0 ? "url(#cc-up)" : "url(#cc-dn)"} />
-              <text x={p.x} y={p.y + p.size + 15} textAnchor="middle" fontSize="13" fontWeight="600" fill="rgb(var(--text))">{name(p.r.symbol)}</text>
-              <text x={p.x} y={p.y + p.size + 29} textAnchor="middle" fontSize="12" fill={(p.chg ?? 0) >= 0 ? UP : DN}>{pct(p.chg)}</text>
+              {/* v2.75 phones: with 30 coins the outer ring's names collided - there only the 6 biggest, coins with a running
+                  call and the one locked on are named (every planet still reads out when tapped) */}
+              {(!narrow || p.ti < 2 || on || p.sig) && <>
+                <text x={p.x} y={p.y + p.size + 15} textAnchor="middle" fontSize="13" fontWeight="600" fill="rgb(var(--text))">{name(p.r.symbol)}</text>
+                <text x={p.x} y={p.y + p.size + 29} textAnchor="middle" fontSize="12" fill={(p.chg ?? 0) >= 0 ? UP : DN}>{pct(p.chg)}</text>
+              </>}
             </g>
           );
         })}
@@ -486,7 +490,17 @@ export default function Command() {
   const [tf, setTfRaw] = useState<string>(() => { try { const t = localStorage.getItem("cia-cc-tf"); return t && (TFS as readonly string[]).includes(t) ? t : "4h"; } catch { return "4h"; } });
   const setTf = (t: string) => { setTfRaw(t); try { localStorage.setItem("cia-cc-tf", t); } catch { /* ignore */ } };
   const dash = useApi<any>(`/dashboard?timeframe=${tf}`, 60000);
-  const boards = TFS.map((t) => useApi<any>(`/futures?timeframe=${t}`)); // fixed list: stable hooks
+  // v2.75: only the chosen timeframe's board loads at once; the other five wait until "Signals in flight" is near
+  const flightRef = useRef<HTMLElement | null>(null);
+  const [flightSeen, setFlightSeen] = useState(false);
+  useEffect(() => {
+    const el = flightRef.current;
+    if (flightSeen || !el || typeof IntersectionObserver === "undefined") { if (!flightSeen && typeof IntersectionObserver === "undefined") setFlightSeen(true); return; }
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { setFlightSeen(true); io.disconnect(); } }, { rootMargin: "400px" });
+    io.observe(el);
+    return () => io.disconnect();
+  });
+  const boards = TFS.map((t) => useApi<any>(t === tf || flightSeen ? `/futures?timeframe=${t}` : null)); // fixed list: stable hooks
   const track = useApi<any>("/track-record");
   const mc = useApi<any>("/market-context");
   const health = useApi<any>(isAdmin() ? "/system/admin" : "/system/health");
@@ -523,7 +537,7 @@ export default function Command() {
           onScan={() => { setSel(shown); scan(); }} />
       </div>
       {/* signals in flight: the timeframe radar beside the journeys, one card */}
-      <section className="cc-panel cc-flight" aria-label="Signals in flight">
+      <section ref={flightRef} className="cc-panel cc-flight" aria-label="Signals in flight">
         <div className="cc-flight-radar">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Signals in flight</h2><span className="text-xs text-mute">by timeframe</span></div>
           <div className="flex flex-1 flex-col justify-center"><Radar boards={boards.map((b) => b.data?.rows ?? [])} onSel={pick} tf={tf} /></div>

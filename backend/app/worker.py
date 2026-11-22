@@ -35,6 +35,7 @@ from .services import leaderboard, referrals
 from .services import guardian
 from .services import market_data, turn_detector
 from .services import perf_lab
+from .services import market_extras
 from .services import coin_scorecard
 from .services import ai_advisor, alerts, sentiment, analysis, autopaper, backtests, health, market, market_insights, membership, news, radar, telegram, replay, scanner, tracking, training
 from .services.bots import DEFAULT_BOTS, BotEngine
@@ -1599,6 +1600,11 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         detail["market_data"] = step("market_data", lambda: market_data.run(rt.db, rt.symbols()))
         detail["market_turn"] = step("market_turn", lambda: turn_detector.publish(rt, sink, rt.symbols()))
         rt.db.set_setting("market_turn_at", now_ms())
+    # v2.75 members' market extras (open interest, funding, liquidation map estimate, options / volatility, traditional
+    # markets, token unlocks) -> views/derivs, hourly; skipped in lean mode
+    if fetch_context and not sink.lean() and now_ms() - int(rt.db.get_setting("market_extras_at", 0) or 0) >= market_extras.EVERY_S * 1000 - 120_000:
+        detail["market_extras"] = step("market_extras", lambda: market_extras.publish(rt, sink))
+        rt.db.set_setting("market_extras_at", now_ms())
     # v2.25 Performance Lab (admin, read-only study of the record): every 2 h, its own step
     if now_ms() - int(rt.db.get_setting("perf_lab_at", 0) or 0) >= perf_lab.EVERY_S * 1000 - 120_000:
         detail["perf_lab"] = step("perf_lab", lambda: perf_lab.publish(rt, sink))

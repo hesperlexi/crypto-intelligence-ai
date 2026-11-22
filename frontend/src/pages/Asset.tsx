@@ -14,6 +14,7 @@ import { Badge, Card, Check, Empty, ErrorBox, isNotReady, FlagList, Loading, Met
 import TradeCall, { Market, verdictOf } from "../components/TradeCall";
 import CoinReport from "../components/CoinReport";
 import CoinPassport from "../components/CoinPassport";
+import { CoinDerivatives } from "../components/Derivs";
 import { post, useApi } from "../lib/api";
 import { DASH, fmtCompact, fmtNum, fmtPct, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, slug, tone } from "../lib/format";
 import { useTicker } from "../lib/live";
@@ -169,6 +170,7 @@ export default function Asset() {
       <div ref={sideRef} className="asset-side"><AssetCall symbol={symbol} tf={tf} />{!hasCall && <CoinReport symbol={symbol} narrow />}</div>
       </div>
       <CoinPassport symbol={symbol} analysis={a} />
+      <CoinDerivatives symbol={symbol} />
 
       {ok && (
         <>

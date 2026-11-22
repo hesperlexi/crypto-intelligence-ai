@@ -13,6 +13,7 @@ import { Segmented } from "./kit";
 import MyCoins from "./MyCoins";
 import { CoinAvatar } from "./Polish";
 import { Empty } from "./ui";
+import { BoardFutures, useDerivs } from "./Derivs";
 
 const HZ = ["15M", "1H", "4H", "12H", "24H"] as const;
 const TFS = [["15m", "15M"], ["1h", "1H"], ["4h", "4H"], ["12h", "12H"], ["1d", "1D"], ["3d", "3D"]] as const;
@@ -58,6 +59,7 @@ type Filter = "all" | "bull" | "bear" | "pinned";
 
 export default function MarketBoard({ d, tf, onTf, loading }: { d: any; tf: string; onTf: (tf: string) => void; loading?: boolean }) {
   const rows = useRows(d);
+  const dv = useDerivs().data;                     // v2.75 open interest / funding column
   const { tickers } = useLive();
   const [view, setView] = useState<"table" | "heat">(() => { try { return localStorage.getItem("cia-board-view") === "table" ? "table" : "heat"; } catch { return "heat"; } });   // v2.71: heatmap by default (owner)
   const [sort, setSort] = useState<Sort>("list");
@@ -117,9 +119,10 @@ export default function MarketBoard({ d, tf, onTf, loading }: { d: any; tf: stri
             <span role="columnheader">{head("trend", "Trend")}</span>
             <span role="columnheader" className="mb-hide-sm">Signal</span>
             <span role="columnheader" className="mb-hide-md" title="AI expected move for 15M, 1H, 4H, 12H and 24H: up bars above the line, down below; faint = no proven edge">AI outlook <span className="mb-hz">15M → 24H</span></span>
+            <span role="columnheader" className="mb-hide-lg">Futures</span>
             <span role="columnheader" className="mb-hide-lg">Watch</span>
           </div>
-          {shown.map((r) => <BoardRow key={r.symbol} r={r} />)}
+          {shown.map((r) => <BoardRow key={r.symbol} r={r} dv={dv} />)}
         </div>
       )}
       {view === "table" && list.length > FIRST && (
@@ -134,7 +137,7 @@ function trendScore(r: Row) {
   return (l === "bull" ? 1 : l === "bear" ? -1 : 0) * (1 + (r.strength ?? 0)) + (r.regime?.startsWith("STRONG") ? 0.5 * (l === "bull" ? 1 : -1) : 0);
 }
 
-const BoardRow = memo(function BoardRow({ r }: { r: Row }) {
+const BoardRow = memo(function BoardRow({ r, dv }: { r: Row; dv?: any }) {
   const t = useTickerThrottled(r.symbol, 1000);
   const px = t?.last ?? r.price, ch = t?.change_pct ?? r.change;
   const [rg, rl] = regimeOf(r.regime);
@@ -151,6 +154,7 @@ const BoardRow = memo(function BoardRow({ r }: { r: Row }) {
       <span className="mb-trend" role="cell"><i className={`mb-dot mb-dot-${rl}`} aria-hidden="true" /><span className="min-w-0"><span className="mb-trend-w">{rg}</span><Strength v={r.strength} lean={rl} /></span></span>
       <span className={`mb-hide-sm mb-sig ${leanCls[sl]}`} role="cell">{sg}</span>
       <span className="mb-hide-md" role="cell"><Outlook hz={r.hz} /></span>
+      <span className="mb-hide-lg" role="cell"><BoardFutures symbol={r.symbol} d={dv} /></span>
       <span className="mb-hide-lg mb-watch" role="cell">{r.risk ? riskText(r.risk) : ""}</span>
     </Link>
   );

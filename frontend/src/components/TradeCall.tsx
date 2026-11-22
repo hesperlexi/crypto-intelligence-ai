@@ -1,4 +1,5 @@
 // One clear answer per coin: go long, go short, buy, sell or wait, at which prices, with what risk.
+import { SizeCalcButton } from "./SizeCalc";
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { DASH, ago, base, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, isGoldSignal } from "../lib/format";
@@ -321,8 +322,9 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
         </div>)}
         {!pro && v.tone !== "wait" && r.grade && <Explain>{PLAIN.grade}</Explain>}
 
-        <div className="grid grid-cols-[1fr_auto_auto_auto] gap-2 pt-1">
+        <div className={`grid gap-2 pt-1 ${active && plan ? "grid-cols-[1fr_auto_auto_auto_auto]" : "grid-cols-[1fr_auto_auto_auto]"}`}>
           <button className={`btn ${active ? "btn-primary" : ""}`} onClick={paper}>{active ? "Practise this trade" : "Paper trade"}</button>
+          {active && plan && <SizeCalcButton seed={{ symbol: r.symbol, side, entry: plan.entry, stop: plan.stop, targets: (plan.targets ?? []).map((t: any) => t.price), lev: market === "futures" ? plan.suggested_leverage : 1 }} />}
           <Link className="btn px-3" to={`/alerts?symbol=${encodeURIComponent(r.symbol)}&timeframe=${r.timeframe ?? "4h"}&market=${market}`} aria-label="Set an alert" title="Alert me when a setup appears">
             <svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8a6 6 0 10-12 0c0 7-3 9-3 9h18s-3-2-3-9" /><path d="M13.7 21a2 2 0 01-3.4 0" /></svg>
           </Link>

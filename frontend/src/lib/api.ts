@@ -145,6 +145,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "system": return p[1] === "errors" ? view("health_errors") : p[1] === "admin" ? view("health_admin") : view("health");
     case "context": return view("context");
     case "market-context": return view("market_context");
+    case "derivs": return view("derivs");                   // v2.75 open interest, funding, liquidation map, options, macro, unlocks
     // v2.16 AI coin reports: one document for all coins (views/coin_reports); /coin-reports/<slug> picks one coin
     case "coin-reports": return p[1] ? view("coin_reports", (d) => (d?.reports ?? {})[toSymbol(p[1])] ?? null) : view("coin_reports");
     case "news": return view("news");

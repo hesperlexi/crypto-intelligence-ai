@@ -3,6 +3,7 @@
 // Virtual money only: nothing is ever sent to an exchange.
 import { PracticeBadges } from "./CommandPlus";
 import PracticeCoach from "./PracticeCoach";
+import TradeJournal from "./TradeJournal";
 import { Burst } from "./Premium";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
@@ -173,6 +174,7 @@ export default function TradeTerminal() {
       </section>
       {/* v2.60: badges after your trades (positions first on phones) */}
       {market === "futures" && <PracticeCoach d={d} />}
+      {market === "futures" && <TradeJournal d={d} />}
       {market === "futures" && <PracticeBadges d={d} />}
       {d && detail && <PositionDrawer market={market} d={d} id={detail} act={act} onPair={showPair} onClose={() => setDetail(null)} />}
     </div>

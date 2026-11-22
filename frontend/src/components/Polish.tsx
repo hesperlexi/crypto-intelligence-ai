@@ -6,7 +6,7 @@ import { ago, base, fmtPctRaw, fmtPrice, slug } from "../lib/format";
 import { Badge } from "./kit";
 import { useLive } from "../lib/live";
 
-const ICONS = "https://cdn.jsdelivr.net/gh/spothq/cryptocurrency-icons@0.18.1/svg/color";
+const ICONS = "/coins";   // v2.75: self-hosted (spothq/cryptocurrency-icons 0.18.1, CC0) - no third-party request per logo
 
 function hue(s: string) {
   let h = 0;
