@@ -1,25 +1,27 @@
-"""Read-only: which free data sources can the engine's runner reach? Counts / samples only."""
+"""Read-only: structure of DefiLlama's free emissions datasets + which of our coins have one."""
 import json, requests
 out = {}
-def get(u, **p):
+def get(u):
     try:
-        r = requests.get(u, params=p, timeout=15, headers={"User-Agent": "Mozilla/5.0 cia-probe"})
-        return r.status_code, r
-    except Exception as e:
-        return 0, str(e)[:120]
-s, r = get("https://www.deribit.com/api/v2/public/get_volatility_index_data", currency="BTC", resolution="3600", start_timestamp=1795000000000, end_timestamp=1795340000000)
-out["deribit_dvol"] = [s, (r.json()["result"]["data"][-1] if s == 200 else str(r)[:80])]
-s, r = get("https://www.deribit.com/api/v2/public/get_book_summary_by_currency", currency="BTC", kind="option")
-out["deribit_options"] = [s, len(r.json()["result"]) if s == 200 else str(r)[:80]]
-if s == 200: out["deribit_option_sample"] = {k: r.json()["result"][0].get(k) for k in ("instrument_name", "open_interest", "underlying_price")}
-for sym in ("^spx", "dx.f", "xauusd", "^ndq", "us10y.b"):
-    s, r = get("https://stooq.com/q/d/l/", s=sym, i="d")
-    out[f"stooq_{sym}"] = [s, (r.text.strip().splitlines()[-1] if s == 200 else str(r)[:80])]
-s, r = get("https://query1.finance.yahoo.com/v8/finance/chart/%5EGSPC", range="5d", interval="1d")
-out["yahoo"] = [s, (str(r.json()["chart"]["result"][0]["meta"].get("regularMarketPrice")) if s == 200 else str(getattr(r, "text", r))[:80])]
-for u in ("https://api.llama.fi/emissions", "https://defillama-datasets.llama.fi/emissions/arbitrum", "https://api.llama.fi/emission/arbitrum"):
-    s, r = get(u)
-    out[u] = [s, (r.text[:160] if s else str(r)[:80])]
-s, r = get("https://www.okx.com/api/v5/rubik/stat/contracts/open-interest-volume", ccy="BTC", period="1H")
-out["okx_oi"] = [s, (r.json().get("data", [[]])[0] if s == 200 else str(r)[:80])]
+        r = requests.get(u, timeout=20, headers={"User-Agent": "Mozilla/5.0 cia-probe"}); return r.status_code, r
+    except Exception as e: return 0, str(e)[:100]
+s, r = get("https://defillama-datasets.llama.fi/emissions/arbitrum")
+if s == 200:
+    j = r.json()
+    out["top_keys"] = list(j.keys())
+    for k, v in j.items():
+        if isinstance(v, dict): out[f"keys:{k}"] = {kk: (str(vv)[:160]) for kk, vv in list(v.items())[:12]}
+        elif isinstance(v, list): out[f"list:{k}"] = str(v[:2])[:400]
+        else: out[f"val:{k}"] = str(v)[:160]
+slugs = ["sui", "aptos", "avalanche", "ethena", "polkadot", "cardano", "chainlink", "near", "uniswap", "aave", "sei", "hbar", "hedera",
+         "pepe", "gala", "bonk", "ethereum-classic", "tron", "dogecoin", "solana", "xrp", "litecoin", "binance-coin", "bnb", "worldcoin", "pyth-network", "jupiter", "starknet", "optimism", "celestia", "hyperliquid", "ondo-finance", "pudgy-penguins", "zcash", "rare"]
+have = {}
+for sl in slugs:
+    s, r = get(f"https://defillama-datasets.llama.fi/emissions/{sl}")
+    have[sl] = s
+out["slugs"] = have
+s, r = get("https://query1.finance.yahoo.com/v8/finance/chart/DX-Y.NYB?range=1mo&interval=1d")
+out["yahoo_dxy"] = [s, str(r.json()["chart"]["result"][0]["meta"].get("regularMarketPrice")) if s == 200 else ""]
+s, r = get("https://query1.finance.yahoo.com/v8/finance/chart/%5ETNX?range=5d&interval=1d")
+out["yahoo_tnx"] = [s, str(r.json()["chart"]["result"][0]["meta"].get("regularMarketPrice")) if s == 200 else ""]
 print(json.dumps(out, indent=1, default=str))
