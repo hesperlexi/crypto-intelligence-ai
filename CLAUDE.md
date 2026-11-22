@@ -1279,3 +1279,10 @@ Downtrend / Pinned, sort by header (Coin / 24h / Trend), first 12 + "Show all", 
 laggards 24h, "Read full briefing"). Home order: hero · live signals · opportunity board · BTC chart + brief · board ·
 performance / activity / market context · Market insights. `GlobalStatusCard` and the "More market detail" fold removed.
 CSS `.mb-*`, `.ib-*`, `.ctx-notes` in observatory.css. Phones: board row = coin (signal · trend) | price | 24h.
+- **v2.72 futures-only coins from the website** (owner: "we are displaying futures, so why not?"): Manage coins search shows
+  Binance spot hits AND USDⓈ-M perpetuals with no spot pair ("+ X · futures"; `binance.searchFuturesOnly`); `POST /watchlist`
+  accepts either. Engine `worker.add_futures_only` (in `sync_config` when spot search misses): `futures_only.mexc_contract_for`
+  (MEXC `<BASE>_USDT`, state 0) → `FUT_ONLY` + setting `fut_only_extra` (loaded by `Runtime` and `watch.py` via
+  `futures_only.load_extra`); none on MEXC → rejected as before. `views/meta` watchlist rows carry `fut: true`; frontend
+  `binance.markFutOnly` (from meta + `listedPairs` in `live.tsx`, `futVer` restarts the spot stream). Search matches tickers
+  only (no names). Test `tests/test_futures_add_v272.py`.

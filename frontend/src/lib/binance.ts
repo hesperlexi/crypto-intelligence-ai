@@ -10,6 +10,12 @@ export const bsym = (symbol: string) => symbol.replace("/", "").toUpperCase();
 /** v2.49: coins with signals but no Binance spot market (MSTR stock perpetual): charts / book / prices from USDⓈ-M futures. */
 export const FUT_ONLY_PAIRS = new Set(["MSTRUSDT", "ANTHROPICUSDT", "XAGUSDT"]);   // v2.69 silver perpetual (watch only)   // v2.65 Anthropic pre-IPO perpetual
 export const isFutOnly = (symbol: string) => FUT_ONLY_PAIRS.has(bsym(symbol));
+/** v2.72: coins the admin added that have no Binance spot market (prices / charts from USDⓈ-M futures). True when new. */
+export function markFutOnly(symbols: string[]): boolean {
+  let added = false;
+  for (const s of symbols) { const b = bsym(s); if (!FUT_ONLY_PAIRS.has(b)) { FUT_ONLY_PAIRS.add(b); added = true; } }
+  return added;
+}
 
 async function get<T = any>(path: string, hosts = REST): Promise<T> {
   let last: unknown = null;

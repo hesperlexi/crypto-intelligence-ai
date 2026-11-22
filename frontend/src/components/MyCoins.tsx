@@ -1,8 +1,8 @@
 import { doc, setDoc } from "firebase/firestore";
-import FutOnlyHits from "./FutOnlyHits";
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, del, post, put, useApi } from "../lib/api";
+import { markFutOnly, searchFuturesOnly } from "../lib/binance";
 import { db } from "../lib/firebase";
 import { base, fmtPctRaw, fmtPrice, slug } from "../lib/format";
 import { useLimits } from "../lib/limits";
@@ -22,6 +22,7 @@ export default function MyCoins({ rows, startEdit = false, onDone }: { rows?: an
   const [edit, setEdit] = useState(startEdit);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<string[] | null>(null);
+  const [futHits, setFutHits] = useState<string[]>([]);       // v2.72: futures-only coins can be added too
   const [msg, setMsg] = useState<string | null>(null);
   const list: { symbol: string; pinned: number; mine?: boolean }[] = [...(meta.data?.watchlist ?? [])]
     .sort((a, b) => b.pinned - a.pinned || Number(!!b.mine) - Number(!!a.mine));
@@ -35,11 +36,17 @@ export default function MyCoins({ rows, startEdit = false, onDone }: { rows?: an
   const search = async () => {
     const q = query.trim();
     if (!q) return;
-    try { setResults((await api<any>(`/search?q=${encodeURIComponent(q)}`)).results); setMsg(null); } catch (e: any) { setMsg(e.message); }
+    try {
+      const [spot, fut] = await Promise.all([api<any>(`/search?q=${encodeURIComponent(q)}`).then((r) => r.results as string[]).catch(() => [] as string[]),
+        searchFuturesOnly(q).catch(() => [] as string[])]);
+      setResults(spot); setFutHits(fut); setMsg(spot.length || fut.length ? null : `No coin matching "${q}" on Binance. Search by its ticker (for example SOL), not the full name.`);
+    } catch (e: any) { setMsg(e.message); }
   };
-  const add = (s: string) => admin
-    ? act(() => post("/watchlist", { symbol: s }), `${s} added for everyone. Prices show now; forecasts follow within the next engine runs.`)
-    : act(() => saveMine([...mine, s], MY_COIN_LIMIT), `${s} added to your coins. Live price now; signals and AI forecasts arrive within about 15–30 minutes.`);
+  const add = (s: string, fut = false) => { if (fut) markFutOnly([s]); return admin
+    ? act(() => post("/watchlist", { symbol: s }), fut
+      ? `${s} added for everyone (futures only). The engine follows it on MEXC futures; forecasts follow after its first training.`
+      : `${s} added for everyone. Prices show now; forecasts follow within the next engine runs.`)
+    : act(() => saveMine([...mine, s], MY_COIN_LIMIT), `${s} added to your coins. Live price now; signals and AI forecasts arrive within about 15–30 minutes.`); };
   const remove = (s: string, own: boolean) => own
     ? act(() => saveMine(mine.filter((x) => x !== s), MY_COIN_LIMIT), `${s} removed from your coins.`)
     : act(() => del(`/watchlist/${slug(s)}`), `${s} removed`);
@@ -63,10 +70,14 @@ export default function MyCoins({ rows, startEdit = false, onDone }: { rows?: an
                   + {s}
                 </button>
               ))}
-              {!results.length && <span className="text-sm text-mute">No spot USDT market found on Binance</span>}
+              {futHits.map((s) => (
+                <button key={s} className="btn px-2.5 py-1 text-xs hover:border-accent/60" disabled={list.some((w) => w.symbol === s) || full} onClick={() => add(s, true)}
+                  title="Binance futures only: the engine follows it on MEXC futures">
+                  + {s} <span className="text-mute">· futures</span>
+                </button>
+              ))}
             </div>
           )}
-          {results && <FutOnlyHits query={query.trim()} />}
           <p className="text-xs text-mute">
             {admin ? "Tracked for everyone. ★ pins, ✕ removes."
               : full ? `${MY_COIN_LIMIT} of ${MY_COIN_LIMIT} coins. Remove one with ✕ to add another.`

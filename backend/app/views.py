@@ -29,7 +29,7 @@ def slug(symbol: str) -> str:
 def meta(rt: Runtime, engine: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "app": "Crypto Intelligence AI", "mode": "ANALYSIS ONLY", "exchange": rt.exchange,
-        "watchlist": rt.watchlist(), "timeframes": TIMEFRAMES, "asset_timeframes": ASSET_TIMEFRAMES,
+        "watchlist": _with_fut(rt.watchlist()), "timeframes": TIMEFRAMES, "asset_timeframes": ASSET_TIMEFRAMES,
         "model_timeframes": MODEL_TIMEFRAMES, "mtf_timeframes": MTF_TIMEFRAMES, "horizons": HORIZONS,
         "strategies": {k: {"label": v["label"], "params": v["params"]} for k, v in STRATEGIES.items()},
         "alert_types": alerts.ALERT_TYPES, "models": model_status(),
@@ -834,3 +834,10 @@ def scalping_core(v: dict[str, Any]) -> Any:
             ((v.get("backfill") or {}).get("state"), (v.get("backfill") or {}).get("rebuilt")),
             [(x["id"], x["status"], x.get("fill_status"), x.get("tp1_hit"), x.get("tp2_hit")) for x in v.get("open") or []],
             ((v.get("bot") or {}).get("trades"), (v.get("bot") or {}).get("open_positions"))]
+
+
+def _with_fut(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """v2.72: watchlist rows flag coins with no Binance spot market (`fut`), so the website takes their prices and charts
+    from Binance USDⓈ-M futures."""
+    from .data.futures_only import FUT_ONLY
+    return [{**i, "fut": True} if str(i.get("symbol", "")).upper() in FUT_ONLY else i for i in items]

@@ -19,6 +19,8 @@ USER = "local"   # single local user; the schema already carries user_id for mul
 class Runtime:
     def __init__(self, db: Database | None = None, provider: Any = None):
         self.db = db or get_db()
+        from ..data.futures_only import load_extra
+        load_extra(self.db.get_setting)          # v2.72: futures-only coins added from the website
         self.store = CandleStore(self.db)
         self.provider = provider
         self.derivatives: Any = None

@@ -296,6 +296,8 @@ def main() -> None:
     except Exception:
         sent = {}
     db = ReadOnlyDB(path)
+    from .data.futures_only import load_extra
+    load_extra(db.get_setting)                  # v2.72: futures-only coins added from the website
     syms = watched_symbols(db)
     prices = fetch_prices(syms)
     msgs, sent = once(db, sent, prices)

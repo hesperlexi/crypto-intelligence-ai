@@ -29,6 +29,36 @@ STEP_MS = {"1m": 60_000, "5m": 300_000, "15m": 900_000, "30m": 1_800_000, "1h": 
 WINDOW = 1000                    # candles asked per request (MEXC answers up to 2000)
 
 
+EXTRA_KEY = "fut_only_extra"       # v2.72: coins added from the website that have no Binance spot market {symbol: contract}
+
+
+def load_extra(get_setting) -> dict[str, str]:
+    """v2.72: futures-only coins the admin added (setting EXTRA_KEY) join FUT_ONLY in this process."""
+    try:
+        extra = get_setting(EXTRA_KEY, None) or {}
+    except Exception:
+        return {}
+    for sym, contract in extra.items():
+        if isinstance(sym, str) and isinstance(contract, str) and sym.upper() not in FUT_ONLY:
+            FUT_ONLY[sym.upper()] = contract
+    return extra
+
+
+def mexc_contract_for(symbol: str, session: Any = None, timeout: float = 15.0) -> str | None:
+    """v2.72: the MEXC USDT perpetual for a coin with no Binance spot market ('HYPE/USDT' -> 'HYPE_USDT'), or None."""
+    base_ = symbol.upper().split("/")[0]
+    want = f"{base_}_USDT"
+    try:
+        r = (session or requests).get(f"{MEXC}/detail", params={"symbol": want}, timeout=timeout)
+        j = r.json()
+        d = j.get("data") if isinstance(j, dict) and j.get("success") else None
+        if isinstance(d, dict) and d.get("symbol") == want and int(d.get("state") or 0) == 0:
+            return want
+    except Exception:
+        return None
+    return None
+
+
 def is_fut_only(symbol: str) -> bool:
     return symbol.upper() in FUT_ONLY
 

@@ -1,6 +1,6 @@
 import { doc, onSnapshot } from "firebase/firestore";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
-import { bsym, futures24h, isFutOnly, listedPairs, tickers as restTickers, toTicker } from "./binance";
+import { bsym, futures24h, isFutOnly, listedPairs, markFutOnly, tickers as restTickers, toTicker } from "./binance";
 
 /** v2.55 (owner, 18 Nov 2026: "no compromise on live prices"): every device streams every trade, phones too.
  *  The old battery saver (one price per coin per second) is only on when localStorage "cia-live-lite" = "1". */
@@ -89,8 +89,12 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   useEffect(() => (!awake ? undefined : onSnapshot(doc(db, "views", "meta"), (s) => {
     const t = s.data()?.updated_at;
     if (t) setRefreshAt(t);
-    if (!symbols.length && s.data()?.json) {
-      try { setSymbols((JSON.parse(s.data()!.json).watchlist ?? []).map((w: any) => w.symbol)); } catch { /* ignore */ }
+    if (s.data()?.json) {
+      try {
+        const wl: any[] = JSON.parse(s.data()!.json).watchlist ?? [];
+        if (markFutOnly(wl.filter((w) => w.fut).map((w) => w.symbol))) setFutVer((v) => v + 1);   // v2.72
+        if (!symbols.length) setSymbols(wl.map((w: any) => w.symbol));
+      } catch { /* ignore */ }
     }
   }, () => {})), [awake]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -112,6 +116,16 @@ export function LiveProvider({ children }: { children: ReactNode }) {
   const [online, setOnline] = useState(typeof navigator === "undefined" ? true : navigator.onLine);
   const all = [...new Set([...symbols, ...mine])];
   const key = all.join(",");
+  // v2.72: a coin with a Binance perpetual but no spot pair (added from the website) leaves the spot stream at once
+  const [futVer, setFutVer] = useState(0);
+  useEffect(() => {
+    if (!key) return;
+    listedPairs().then((l) => {
+      if (!l.spot.size || !l.fut.size) return;
+      const only = key.split(",").filter((s) => !l.spot.has(bsym(s)) && l.fut.has(bsym(s)));
+      if (markFutOnly(only)) setFutVer((v) => v + 1);
+    }).catch(() => {});
+  }, [key]);
   useEffect(() => {
     const on = () => setOnline(true), off = () => setOnline(false);
     window.addEventListener("online", on); window.addEventListener("offline", off);
@@ -202,7 +216,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
       window.removeEventListener("online", wake); window.removeEventListener("focus", wake);
       race?.close();
     };
-  }, [key]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [key, futVer]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Futures layer: the signals, bots and the Trade page all use the perpetual's price, which differs slightly from
   // spot, so every page shows that price too. Every trade (aggTrade) moves it; 24h change / volume come from the

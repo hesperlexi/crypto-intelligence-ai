@@ -704,6 +704,10 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 ok = sym in asyncio.run(rt.provider.search_markets(sym.split("/")[0], 50))
             except Exception:
                 ok = True            # lookup failed: accept, candle sync will report a bad symbol
+            if not ok:
+                ok = add_futures_only(rt, sym)   # v2.72: no Binance spot market -> MEXC USDT perpetual, like silver
+                if ok:
+                    notes.setdefault("futures_only_added", []).append(sym)
             if ok:
                 rt.add_symbol(sym)
             else:
@@ -1218,6 +1222,24 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
                 sink.delete(f"jobs/{jid}")
         rt.db.set_setting("jobs_cleanup_at", now_ms())
     return n
+
+
+def add_futures_only(rt: Runtime, symbol: str) -> bool:
+    """v2.72 (owner: "we are displaying futures, so why not?"): a coin added from the website with no Binance spot market
+    is followed on its MEXC USDT perpetual (candles, ticker, book) when MEXC lists one; remembered in setting
+    `fut_only_extra` so every process (ticks, the fast price watch) knows it. False when MEXC has none."""
+    from .data import futures_only as F
+    sym = symbol.upper()
+    if sym in F.FUT_ONLY:
+        return True
+    contract = F.mexc_contract_for(sym)
+    if not contract:
+        return False
+    extra = dict(rt.db.get_setting(F.EXTRA_KEY, None) or {})
+    extra[sym] = contract
+    rt.db.set_setting(F.EXTRA_KEY, extra)
+    F.FUT_ONLY[sym] = contract
+    return True
 
 
 def clean_mexc_candles(rt: Runtime) -> int:

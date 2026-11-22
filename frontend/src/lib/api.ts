@@ -312,7 +312,9 @@ export async function api<T = any>(path: string, init?: { method?: string; body?
       case "POST /watchlist": {
         const s = toSymbol(body.symbol);
         const found = await binance.search(s.split("/")[0]);
-        if (!found.includes(s)) throw new ApiError(404, `${s} is not listed on Binance`);
+        // v2.72: futures-only coins too (Binance perpetual, no spot pair) - the engine follows them on MEXC
+        if (!found.includes(s) && !(await binance.searchFuturesOnly(s.split("/")[0])).includes(s))
+          throw new ApiError(404, `${s} is not listed on Binance (spot or futures)`);
         const list = await watchlist();
         if (!list.some((w) => w.symbol === s)) list.push({ symbol: s, pinned: false });
         return (await saveWatchlist(list)) as T;
