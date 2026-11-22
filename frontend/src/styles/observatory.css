@@ -691,3 +691,17 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .tour-actions { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
 .tour-actions .btn:disabled { opacity: 0.4; }
 @media (prefers-reduced-motion: reduce) { .tour-card { animation: none; } }
+/* v2.68 practice coach */
+.coach-grid { display: grid; gap: 14px; }
+@media (min-width: 900px) { .coach-grid { grid-template-columns: 1.3fr 1fr; } }
+.coach-last, .coach-habits { padding: 12px 14px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.08); background: rgb(var(--glass) / 0.02); }
+.coach-notes { margin-top: 10px; display: grid; gap: 6px; }
+.coach-notes li { position: relative; padding: 8px 10px 8px 30px; border-radius: 10px; font-size: 0.875rem; line-height: 1.45; background: rgb(var(--glass) / 0.03); }
+.coach-notes li::before { position: absolute; left: 10px; top: 8px; font-weight: 800; }
+.coach-notes li.is-good::before { content: "✓"; color: rgb(var(--bull)); }
+.coach-notes li.is-info::before { content: "i"; color: rgb(var(--ai)); }
+.coach-notes li.is-warn::before { content: "!"; color: rgb(var(--warn)); }
+.coach-notes li.is-bad::before { content: "✕"; color: rgb(var(--bear)); }
+.coach-notes li.is-warn { background: rgb(var(--warn) / 0.07); } .coach-notes li.is-bad { background: rgb(var(--bear) / 0.08); }
+.coach-habits dl { margin-top: 8px; display: grid; grid-template-columns: 1fr auto; gap: 6px 12px; font-size: 0.875rem; }
+.coach-habits dt { color: rgb(var(--mute)); } .coach-habits dd { text-align: right; font-weight: 600; }

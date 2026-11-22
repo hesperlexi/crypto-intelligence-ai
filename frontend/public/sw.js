@@ -19,11 +19,14 @@ self.addEventListener("fetch", (e) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith("/__/")) return;   // never touch data or auth
   if (req.mode === "navigate" && !/\.[a-z0-9]+$/i.test(url.pathname)) {   // files such as /manual.pdf are left to the browser
-    // pages: network first (always the newest deploy), cached shell when offline
-    e.respondWith(fetch(req, { cache: "no-store" }).then((res) => {
+    // pages: network first (always the newest deploy); v2.68: on a slow network the saved shell is shown after 2.5 s
+    // (the network answer still refreshes the saved copy for next time), and offline the saved shell at once
+    const net = fetch(req, { cache: "no-store" }).then((res) => {
       if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put("/index.html", copy)); }
       return res;
-    }).catch(() => caches.match("/index.html")));
+    });
+    const slow = new Promise((ok) => setTimeout(ok, 2500)).then(() => caches.match("/index.html")).then((hit) => hit || net);
+    e.respondWith(Promise.race([net.catch(() => caches.match("/index.html")), slow]));
     return;
   }
   if (url.pathname.startsWith("/assets/")) {
