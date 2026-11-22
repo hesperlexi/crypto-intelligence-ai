@@ -73,7 +73,7 @@ function FundingBars({ days }: { days: [number, number][] }) {
 
 /** Liquidation map (estimate): where forced closes would cluster around the price. */
 function LiqMap({ m }: { m: any }) {
-  const n = m.longs.length, W = 600, H = 150, bw = W / n;
+  const n = m.longs.length, W = 1000, H = 150, bw = W / n;   // wide drawing: about 170 px tall on a computer
   const max = Math.max(1, ...m.longs, ...m.shorts);
   const px = ((m.price - m.low) / (m.high - m.low)) * W;
   const big = (arr: number[]) => { const i = arr.indexOf(Math.max(...arr)); return m.low + (i + 0.5) * ((m.high - m.low) / n); };
@@ -83,7 +83,7 @@ function LiqMap({ m }: { m: any }) {
         <h3 className="text-sm font-semibold">Liquidation map <span className="font-normal text-mute">· estimate</span></h3>
         <span className="text-xs text-mute">biggest long cluster <b className="num text-bear">{fmtPrice(big(m.longs))}</b> · short cluster <b className="num text-bull">{fmtPrice(big(m.shorts))}</b></span>
       </div>
-      <svg viewBox={`0 0 ${W} ${H + 18}`} className="mt-2 w-full" role="img" aria-label="Estimated liquidation levels around the price">
+      <svg viewBox={`0 0 ${W} ${H + 18}`} className="mt-2 w-full max-h-[220px]" role="img" aria-label="Estimated liquidation levels around the price">
         {m.longs.map((v: number, i: number) => v > 0 && <rect key={`l${i}`} x={i * bw + 1} y={H - (v / max) * H} width={bw - 2} height={(v / max) * H} rx="2" fill="rgb(var(--bear))" opacity={0.35 + 0.6 * (v / max)} />)}
         {m.shorts.map((v: number, i: number) => v > 0 && <rect key={`s${i}`} x={i * bw + 1} y={H - (v / max) * H} width={bw - 2} height={(v / max) * H} rx="2" fill="rgb(var(--bull))" opacity={0.35 + 0.6 * (v / max)} />)}
         <line x1={px} x2={px} y1="0" y2={H} stroke="rgb(var(--accent))" strokeWidth="1.5" strokeDasharray="3 3" />
