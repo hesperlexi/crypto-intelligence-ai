@@ -397,6 +397,33 @@ def track_record(rt: Runtime, bot_report: dict[str, Any] | None = None, limit: i
     return out
 
 
+# ---- v2.68 public results page (owner, 22 Nov 2026: shareable in Telegram / ads) -------------------------------------
+def public_record(tr: dict[str, Any]) -> dict[str, Any]:
+    """views/public_record (readable by anyone, page /record): the record's summary after fees, per timeframe, the last
+    7 days, a daily running total and the last 30 CLOSED calls (coin, timeframe, side, how it ended, net %). Never an open
+    call, never entry / stop / targets, never grades or anything a member pays for. Built from track_record, so the
+    numbers are the same as on Results."""
+    live = tr.get("live") or {}
+    closed = [x for x in (live.get("signals") or []) if x.get("status") in tracking.CLOSED_STATUSES and x.get("return_pct") is not None]
+    day: dict[str, float] = {}
+    from datetime import datetime, timedelta, timezone
+    dubai = timezone(timedelta(hours=4))
+    for c in live.get("curve") or []:
+        day[datetime.fromtimestamp(int(c["ts"]) / 1000, dubai).strftime("%Y-%m-%d")] = round(float(c["cum_return_pct"]), 3)
+    keep = ("closed", "win_rate", "avg_return_pct", "total_return_pct", "profit_factor", "best_pct", "worst_pct")
+    slim = lambda s: {k: (s or {}).get(k) for k in keep}                                   # noqa: E731
+    return {"generated_at": now_ms(), "since": tr.get("record_since") or tr.get("since"), "restart": tr.get("restart"),
+            "net": True, "summary": slim(live.get("summary")), "open": live.get("open"),
+            "by_timeframe": {tf: slim(v) for tf, v in (live.get("by_timeframe") or {}).items()},
+            "last_7d": {k: (tr.get("last_7d") or {}).get(k) for k in ("closed", "wins", "losses", "win_rate", "total_return_pct", "avg_return_pct")},
+            "daily": [{"day": d, "cum": v} for d, v in sorted(day.items())][-120:],
+            "recent": [{"symbol": x["symbol"], "timeframe": x["timeframe"], "side": x["side"], "status": x["status"],
+                        "net_pct": x.get("return_pct"), "closed_at": x.get("closed_at")}
+                       for x in sorted(closed, key=lambda x: x.get("closed_at") or 0, reverse=True)[:30]],
+            "withdrawn": tr.get("withdrawn"), "excluded_tests": tr.get("excluded_tests"),
+            "method": ((tr.get("method") or {}).get("live"))}
+
+
 # ---- v2.16 last 7 days (Results card + weekly Telegram card) ----------------------------------------------------
 MIN_SAMPLE = 30
 

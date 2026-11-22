@@ -204,7 +204,7 @@ service cloud.firestore {
     // health_admin (full engine status: writes, budgets, bots, safeguards - v2.68) and health_errors (raw engine error texts, v2.13) and guardian (v2.19 Trade Guardian recommendations) and market_turn (v2.22 market turn detector) and perf_lab (v2.25 Performance Lab) are admin only;
     // everything else is for members
     match /views/{id} {
-      allow read: if id == 'wins_today'
+      allow read: if id == 'wins_today' || id == 'public_record'
         || (id == 'scalping' && (isAdmin() || (isMember() && scalpingForMembers())))
         || (id == 'hesper' && (isAdmin() || (isMember() && hesperForMembers())))
         || (id == 'health_errors' && isAdmin())

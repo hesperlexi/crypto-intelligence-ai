@@ -6,10 +6,11 @@ import { Link } from "react-router-dom";
 import { BRAND } from "../lib/brand";
 import { AnimatedLogo } from "../components/Logo";
 import SiteFooter, { TRUST_LINKS } from "../components/SiteFooter";
+import PublicRecord from "../components/PublicRecord";
 
 export const LAST_UPDATED = "31 Oct 2026";
-export type TrustKind = "about" | "contact" | "terms" | "risk";
-export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk" };
+export type TrustKind = "about" | "contact" | "terms" | "risk" | "record";
+export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/record": "record" };
 
 const Mail = () => <a className="text-accent hover:underline" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>;
 
@@ -95,6 +96,7 @@ function Risk() {
 
 const PAGES: Record<TrustKind, [string, () => JSX.Element]> = {
   about: ["About", About], contact: ["Contact", Contact], terms: ["Terms of Use", Terms], risk: ["Risk Disclosure", Risk],
+  record: ["Our results", PublicRecord],
 };
 
 /** The page body (used inside the app shell). */
@@ -104,7 +106,7 @@ export function TrustContent({ kind }: { kind: TrustKind }) {
   return (
     <article className="panel panel-hero mx-auto max-w-3xl p-6 text-[15px] leading-[1.7] text-mute sm:p-10">
       <h1 className="font-display text-3xl font-semibold tracking-[-0.025em] text-text">{title}</h1>
-      <p className="mt-2 text-xs">Last updated {LAST_UPDATED}</p>
+      {kind !== "record" && <p className="mt-2 text-xs">Last updated {LAST_UPDATED}</p>}
       <div className="trust-body mt-6 max-w-[68ch]">
         <Body />
       </div>

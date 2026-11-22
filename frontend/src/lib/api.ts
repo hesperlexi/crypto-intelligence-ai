@@ -166,6 +166,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "alert-events": return view(`alerts_u_${myUid()}`);
     case "radar": return view("radar");
     case "wins-today": return view("wins_today");
+    case "public-record": return view("public_record");     // v2.68 public results page (readable signed out)
     case "weekly-report": return view("weekly_report");
     case "cross-asset": return view("cross_asset_1d");
     case "signals": return view("signals");

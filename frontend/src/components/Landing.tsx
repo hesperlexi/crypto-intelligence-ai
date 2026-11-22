@@ -11,6 +11,7 @@ import { auth, googleProvider } from "../lib/firebase";
 import { base, fmtPctRaw, fmtPrice } from "../lib/format";
 import { useMembershipConfig } from "../lib/membership";
 import WinsToday from "./WinsToday";
+import LandingProof from "./LandingProof";
 import TelegramLink from "./TelegramLink";
 import { BUILD_ID } from "../lib/version";
 import { mediaUrl, SHOW_APP_DEMO } from "../lib/media";
@@ -226,6 +227,8 @@ export default function Landing({ error }: { error: string | null }) {
 
         {/* wins of the day */}
         <WinsToday />
+        {/* v2.68 the whole record in one strip + how one signal plays out */}
+        <LandingProof />
 
         <SignalWave className="h-8 w-full" />
 

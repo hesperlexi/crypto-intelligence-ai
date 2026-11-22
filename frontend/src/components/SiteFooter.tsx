@@ -10,6 +10,7 @@ import { TELEGRAM_URL } from "./TelegramLink";
 import { APK_URL } from "../lib/push";
 
 export const TRUST_LINKS: [string, string][] = [
+  ["/record", "Our results"],
   ["/about", "About"],
   ["/contact", "Contact"],
   ["/terms", "Terms"],

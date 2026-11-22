@@ -112,6 +112,18 @@ function dashboard(tf: string) {
   };
 }
 
+function publicRecord() {
+  const t: any = trackRecord();
+  const closed = (t.live.signals as any[]).filter((x) => x.status !== "OPEN" && x.return_pct != null);
+  const daily: any[] = []; let acc = 0;
+  for (let i = 20; i >= 0; i--) { acc += Math.sin(i * 1.7) * 0.8 + 0.25; daily.push({ day: new Date(NOW - i * D).toISOString().slice(0, 10), cum: +acc.toFixed(2) }); }
+  return { generated_at: NOW, since: t.record_since, restart: t.restart, net: true, summary: t.live.summary, open: 4,
+    by_timeframe: { "15m": { closed: 9, win_rate: 0.67, total_return_pct: 2.1 }, "1h": { closed: 6, win_rate: 0.5, total_return_pct: -0.4 }, "4h": { closed: 11, win_rate: 0.64, total_return_pct: 4.9 }, "12h": { closed: 3, win_rate: 0.67, total_return_pct: 1.2 } },
+    last_7d: t.last_7d, daily,
+    recent: closed.slice(0, 12).map((x) => ({ symbol: x.symbol, timeframe: x.timeframe, side: x.side, status: x.status, net_pct: x.return_pct, closed_at: x.closed_at })),
+    method: "Every trade signal the engine published, followed candle by candle; results after fees." };
+}
+
 function trackRecord() {
   const sigs = [
     ["SOL/USDT", "4h", "LONG", "A", "TP2", 2.31], ["BTC/USDT", "1h", "LONG", "A", "TP1", 0.84], ["ETH/USDT", "4h", "SHORT", "B", "STOPPED", -1.62],
@@ -470,6 +482,7 @@ export function seed(): Record<string, any> {
     "config/limits": { member_coin_limit: 5, member_coins_max: 0 },
     "views/meta": v({ watchlist: COINS.map(([s], i) => ({ symbol: s, pinned: i < 2 ? 1 : 0 })), policy: { min_confidence: 0.55, min_model_agreement: 0.6, min_risk_reward: 1.25, require_edge_for_ml: true, require_edge_for_trade: true, edge_alpha: 0.05 }, costs: { fee_rate: 0.001, slippage_bps: 2, spread_bps: 1 } }),
     "views/track_record": v(trackRecord()),
+    "views/public_record": v(publicRecord()),
     "views/wins_today": v({ period: "today", window_hours: 24, closed: 7, losses: 2, wins: [
       { symbol: "XRP/USDT", timeframe: "1h", side: "LONG", entry: 0.5081, status: "TP3", return_pct: 3.12, leverage: 10, roi_pct: 31.2, closed_at: NOW - 2 * H, target: 0.5292 },
       { symbol: "SOL/USDT", timeframe: "4h", side: "LONG", entry: 164.1, status: "TP2", return_pct: 2.31, leverage: 10, roi_pct: 23.1, closed_at: NOW - 5 * H, target: 168.9 },
