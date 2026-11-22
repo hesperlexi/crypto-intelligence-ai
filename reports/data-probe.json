@@ -1,65 +1,94 @@
 {
- "deribit_dvol": [
-  200,
-  [
-   1795338000000,
-   57.68,
-   57.68,
-   56.41,
-   56.41
-  ]
+ "top_keys": [
+  "documentedData",
+  "metadata",
+  "name",
+  "gecko_id",
+  "defillamaIds",
+  "categories",
+  "protocolCategory",
+  "chainName",
+  "pId",
+  "unlockUsdChart",
+  "supplyMetrics"
  ],
- "deribit_options": [
-  200,
-  1012
- ],
- "deribit_option_sample": {
-  "instrument_name": "BTC-26MAR27-40000-C",
-  "open_interest": 104.1,
-  "underlying_price": 61742.9
+ "keys:documentedData": {
+  "data": "[{'label': 'Airdrop', 'data': [{'timestamp': 1679529600, 'unlocked': 0, 'rawEmission': 0, 'burned': 0}, {'timestamp': 1679616000, 'unlocked': 1162000000, 'rawEm",
+  "tokenAllocation": "{'current': {'noncirculating': 20.4, 'airdrop': 19.4, 'privateSale': 23.7, 'insiders': 36.5}, 'final': {'noncirculating': 17.9, 'airdrop': 17, 'privateSale': 25"
  },
- "stooq_^spx": [
-  0,
-  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
- ],
- "stooq_dx.f": [
-  0,
-  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
- ],
- "stooq_xauusd": [
-  0,
-  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
- ],
- "stooq_^ndq": [
-  0,
-  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
- ],
- "stooq_us10y.b": [
-  0,
-  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
- ],
- "yahoo": [
+ "keys:metadata": {
+  "token": "arbitrum:0x912ce59144191c1204e64559fe8253a0e49e6548",
+  "protocolIds": "['2785']",
+  "events": "[{'description': 'A cliff of {tokens[0]} tokens was unlocked from Airdrop on {timestamp}', 'timestamp': 1679533271, 'noOfTokens': [1162000000], 'category': 'air",
+  "notes": "['The Arbitrum DAO Treasury tracks the ARB outflows of the DAO treasury address: 0xF3FC178157fb3c87548bAA86F9d24BA38E649B58']",
+  "chain": "arbitrum",
+  "total": "10000000000",
+  "overrideMaxSupply": "True",
+  "unlockEvents": "[{'timestamp': 1679533271, 'cliffAllocations': [{'recipient': 'Airdrop', 'category': 'airdrop', 'unlockType': 'cliff', 'amount': 1162000000}, {'recipient': 'Dao"
+ },
+ "val:name": "Arbitrum",
+ "val:gecko_id": "None",
+ "list:defillamaIds": "['2785']",
+ "keys:categories": {
+  "noncirculating": "['Arbitrum DAO Treasury']",
+  "airdrop": "['Airdrop', 'DAOs in Arbitrum']",
+  "privateSale": "['Investors']",
+  "insiders": "['Team, Contributors & Advisors']"
+ },
+ "val:protocolCategory": "Canonical Bridge",
+ "val:chainName": "Arbitrum",
+ "val:pId": "2785",
+ "list:unlockUsdChart": "[]",
+ "keys:supplyMetrics": {
+  "maxSupply": "10000000000",
+  "adjustedSupply": "10000000000",
+  "tbdAmount": "0",
+  "incentiveAmount": "0",
+  "nonIncentiveAmount": "10000000000"
+ },
+ "slugs": {
+  "sui": 200,
+  "aptos": 200,
+  "avalanche": 200,
+  "ethena": 200,
+  "polkadot": 404,
+  "cardano": 404,
+  "chainlink": 200,
+  "near": 200,
+  "uniswap": 200,
+  "aave": 200,
+  "sei": 200,
+  "hbar": 404,
+  "hedera": 200,
+  "pepe": 404,
+  "gala": 404,
+  "bonk": 404,
+  "ethereum-classic": 404,
+  "tron": 200,
+  "dogecoin": 200,
+  "solana": 200,
+  "xrp": 404,
+  "litecoin": 200,
+  "binance-coin": 404,
+  "bnb": 404,
+  "worldcoin": 200,
+  "pyth-network": 200,
+  "jupiter": 200,
+  "starknet": 200,
+  "optimism": 404,
+  "celestia": 200,
+  "hyperliquid": 200,
+  "ondo-finance": 200,
+  "pudgy-penguins": 200,
+  "zcash": 404,
+  "rare": 404
+ },
+ "yahoo_dxy": [
   200,
-  "6910.39"
+  "103.84"
  ],
- "https://api.llama.fi/emissions": [
-  402,
-  "Upgrade to the paid API plan at https://defillama.com/subscription"
- ],
- "https://defillama-datasets.llama.fi/emissions/arbitrum": [
+ "yahoo_tnx": [
   200,
-  "{\"documentedData\":{\"data\":[{\"label\":\"Airdrop\",\"data\":[{\"timestamp\":1679529600,\"unlocked\":0,\"rawEmission\":0,\"burned\":0},{\"timestamp\":1679616000,\"unlocked\":116200"
- ],
- "https://api.llama.fi/emission/arbitrum": [
-  402,
-  "Upgrade to the paid API plan at https://defillama.com/subscription"
- ],
- "okx_oi": [
-  200,
-  [
-   "1795352400000",
-   "2823177047.9633",
-   "845788207.0407"
-  ]
+  "4.912"
  ]
 }
