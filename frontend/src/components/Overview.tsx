@@ -509,7 +509,7 @@ export function PerformanceCard({ track, loading }: { track: any; loading: boole
     <div className="min-w-0"><div className="text-xs text-mute">{k}</div><div className={`num mt-0.5 truncate text-lg font-semibold ${cls}`}>{v}</div></div>
   );
   return (
-    <section className="panel min-w-0 p-3.5 sm:p-4">
+    <section className="panel flex min-w-0 flex-col p-3.5 sm:p-4">
       <CardHead icon={<Ico name="/achievements" size={16} />} title="Performance overview"
         right={<Segmented value={win} options={[["all", "Since restart"], ["7d", "7 days"]] as const} onChange={setWin} label="Period" />} />
       {!track && loading ? <div className="skeleton h-24 rounded" /> : (
@@ -521,7 +521,7 @@ export function PerformanceCard({ track, loading }: { track: any; loading: boole
             {tile("Profit factor", isNum(pf) && n ? pf.toFixed(2) : win === "7d" ? <span className="text-sm font-normal text-mute">all-time only</span> : DASH)}
           </div>
           {win === "all" && curve.length > 2 && (
-            <div className="mt-3"><Sparkline values={curve} split={0} className="h-14 w-full" label="Cumulative net return of closed calls" />
+            <div className="mt-3 flex min-h-[3.5rem] flex-1 flex-col"><Sparkline values={curve} split={0} className="min-h-[3.5rem] w-full flex-1" label="Cumulative net return of closed calls" />
               <div className="mt-0.5 text-xs text-mute">Cumulative net return, closed calls in order</div></div>
           )}
           <p className={`mt-3 text-xs ${n < 30 ? "text-warn" : "text-mute"}`}>

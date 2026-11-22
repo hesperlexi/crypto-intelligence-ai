@@ -16,10 +16,10 @@ export async function saveMine(list: string[], limit: number) {
 }
 
 /** Live price tiles for the shared coins plus the member's own coins, with add / remove / pin in place. */
-export default function MyCoins({ rows }: { rows?: any[] }) {
+export default function MyCoins({ rows, startEdit = false, onDone }: { rows?: any[]; startEdit?: boolean; onDone?: () => void }) {
   const admin = useIsAdmin();
   const meta = useApi<any>("/meta");
-  const [edit, setEdit] = useState(false);
+  const [edit, setEdit] = useState(startEdit);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<string[] | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -46,7 +46,7 @@ export default function MyCoins({ rows }: { rows?: any[] }) {
 
   return (
     <Card title="My coins" right={
-      <button className={`btn px-2.5 py-1 text-xs ${edit ? "btn-on" : ""}`} onClick={() => { setEdit((v) => !v); setResults(null); setMsg(null); }}>
+      <button className={`btn px-2.5 py-1 text-xs ${edit ? "btn-on" : ""}`} onClick={() => { if (edit && onDone) onDone(); setEdit((v) => !v); setResults(null); setMsg(null); }}>
         {edit ? "Done" : admin ? "+ Add / edit" : `+ Add coin · ${mine.length}/${MY_COIN_LIMIT}`}
       </button>}>
       {edit && (

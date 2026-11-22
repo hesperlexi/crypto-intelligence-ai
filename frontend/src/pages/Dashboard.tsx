@@ -1,32 +1,19 @@
-import FearGreed from "../components/FearGreed";
 import MarketInsights from "../components/MarketInsights";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import MyCoins from "../components/MyCoins";
 import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
 import { OpportunityBoard } from "../components/Deck";
 import { OrbitDial } from "../components/Instruments";
 import { SignalDeck } from "../components/CommandPlus";
 import { BriefingPanel } from "../components/Polish";
-import { AiBriefCard, BtcCard, BtcChartCard, GlobalStatusCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
+import MarketBoard, { IntelBrief } from "../components/MarketBoard";
+import { BtcCard, BtcChartCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
 import { useIsAdmin, useSession } from "../lib/session";
 import NewsBanner, { countdown } from "../components/NewsBanner";
-import { TfTabs } from "../components/Pickers";
-import { Badge, Card, Empty, ErrorBox, Loading, Meter, Note, RegimeBadge, regimeTone, SignalBadge } from "../components/ui";
+import { Card, ErrorBox } from "../components/ui";
 import { useApi } from "../lib/api";
-import { base, DASH, fmtPct, fmtPctRaw, fmtPrice, fmtProb, isNum, slug, tone } from "../lib/format";
-import { RoiFigure } from "../components/SignalExtras";
-import { useLive } from "../lib/live";
-import { useIsPro } from "../lib/mode";
-
-const HORIZONS = ["15M", "1H", "4H", "12H", "24H", "3D"];
-
-function heatColor(pct: number | null | undefined): string {
-  if (!isNum(pct)) return "rgba(111,126,145,0.12)";
-  const a = Math.min(0.55, 0.1 + Math.abs(pct) / 12);
-  return pct >= 0 ? `rgba(14,203,129,${a})` : `rgba(246,70,93,${a})`;
-}
+import { base, isNum, slug, tone } from "../lib/format";
 
 export default function Dashboard() {
   const admin = useIsAdmin();
@@ -75,77 +62,39 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {/* row 3: BTC chart + AI market intelligence (the v2.16 briefing) */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
+      {/* row 3: BTC chart beside the market intelligence brief (v2.70: headline, breadth, facts, leaders / laggards) */}
+      <div className="ov-pair grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <BtcChartCard />
-        <AiBriefCard b={briefing} loading={mc.loading} rows={dash4.data?.rows} />
+        <IntelBrief b={briefing} loading={mc.loading} rows={dash4.data?.rows} status={status4} />
       </div>
 
-      {/* row 4: market status · performance (+ Trade Guardian for the admin) · recent activity, equal heights */}
+      {/* row 4 (v2.70): ONE market board - coins, trend, signal, AI outlook, watch notes; table or heatmap */}
+      {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
+      <MarketBoard d={d} tf={tf} onTf={setTf} loading={dash.loading} />
+
+      {/* row 5: performance (+ Trade Guardian for the admin) · recent activity · market context, equal heights */}
       <div className="grid-even grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <GlobalStatusCard mc={mc.data} ctx={ctx.data} />
         <div className="ov-stack flex min-w-0 flex-col gap-4">
           {admin && <GuardianCard />}
           <PerformanceCard track={track.data} loading={track.loading} />
         </div>
-        <div className="lg:col-span-2 xl:col-span-1"><RecentActivityCard track={track.data} briefing={briefing} /></div>
-      </div>
-
-      {/* everything Home had before v2.20, below the overview */}
-      <SectionHead title="Market overview" sub={<>{tf.toUpperCase()} timeframe<Refreshed /></>} right={<TfTabs value={tf} onChange={setTf} />} />
-      {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
-      {!d && dash.loading && <Loading what="Loading market overview" />}
-
-      <MyCoins rows={d?.rows} />
-      <MoreDetail>
-      <div className="grid-even grid gap-4 xl:grid-cols-2">
-        <div className="ov-stack flex min-w-0 flex-col gap-4">
-        <Card title="Market regime" right={<span className="text-xs text-mute">{(d?.regimes ?? []).length} coins</span>}>
-          <div className="-mr-2 max-h-[34rem] space-y-3 overflow-y-auto pr-2">
-            {(d?.regimes ?? []).map((r: any) => (
-              <div key={r.symbol} className="grid grid-cols-[3.5rem_minmax(0,1fr)_3rem] items-center gap-3 text-sm">
-                <Link to={`/asset/${slug(r.symbol)}`} className="tap-h inline-flex items-center font-medium hover:text-accent">{base(r.symbol)}</Link>
-                <div><RegimeBadge regime={r.regime} /><div className="mt-1"><Meter value={r.confidence} tone={regimeTone(r.regime)} /></div></div>
-                <span className="num text-right text-mute" title="Share of regime inputs that agree">{fmtProb(r.confidence)}</span>
-              </div>
-            ))}
-            {!d?.regimes?.length && <Empty>No regimes yet: candles are still loading</Empty>}
-          </div>
-        </Card>
-        </div>
-        <div className="ov-stack flex min-w-0 flex-col gap-4">
-        <Card title="Market context" right={<span className="text-xs text-mute">cross-asset · coming up · radar</span>}>
-          {sentiment?.divergence && <div className="mb-2"><Badge tone="warn">{sentiment.divergence}</Badge></div>}
-          {(cross.data?.observations ?? []).length > 0 && (
-            <ul className="space-y-1.5">
-              {(cross.data?.observations ?? []).map((o: string) => (
-                <li key={o} className="flex gap-2 rounded-lg bg-glass/[0.03] px-2.5 py-1.5 text-sm text-text"><span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-accent" aria-hidden="true" />{o}</li>
-              ))}
-            </ul>
-          )}
-          <ComingUp />
-          <RadarMini />
-        </Card>
-        <Card title="Top risks">
-          {d?.risks?.length ? d.risks.map((r: any, i: number) => (
-            <div key={i} className="flex items-center justify-between gap-3 border-b border-line/50 px-2 py-2 text-sm last:border-0">
-              <span className="font-medium">{base(r.symbol)}</span><span className="text-right text-warn">{r.risk}</span>
-            </div>
-          )) : <Empty>No elevated risks flagged</Empty>}
-        </Card>
+        <RecentActivityCard track={track.data} briefing={briefing} />
+        <div className="lg:col-span-2 xl:col-span-1">
+          <Card title="Market context" className="h-full">
+            {sentiment?.divergence && <p className="mb-2 text-sm text-warn">{sentiment.divergence}</p>}
+            {(cross.data?.observations ?? []).length > 0 && (
+              <ul className="ctx-notes">
+                {(cross.data?.observations ?? []).map((o: string) => <li key={o}>{o}</li>)}
+              </ul>
+            )}
+            <ComingUp />
+            <RadarMini />
+          </Card>
         </div>
       </div>
 
-      {/* directly below the Fear & Greed row: dominance, altcoin season, market pulse, top headline */}
+      {/* dominance, altcoin season, market pulse, top headline */}
       <MarketInsights />
-
-      <SectionHead title="Models & forecasts" />
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
-        <ForecastCard rows={d?.forecast_table} />
-        <HeatmapCard rows={d?.heatmap} />
-      </div>
-
-      </MoreDetail>
     </div>
   );
 }
@@ -205,148 +154,13 @@ function TodayLine({ track }: { track?: any }) {
   );
 }
 
-function Refreshed() {
-  const { refreshAt } = useLive();
-  return <>{refreshAt ? " · refreshed just now" : ""}</>;
-}
-
-/** The older, deeper Home sections: shown by default, can be folded away (remembered on this device). */
-function MoreDetail({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(() => { try { return localStorage.getItem("cia-home-detail") !== "0"; } catch { return true; } });
-  const flip = () => setOpen((v) => { try { localStorage.setItem("cia-home-detail", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
-  return (
-    <>
-      <button type="button" onClick={flip} aria-expanded={open} aria-controls="home-more" className="btn btn-sm w-full justify-center sm:w-auto">
-        {open ? "Hide market detail ▴" : "More market detail ▾"}
-      </button>
-      {open && <div id="home-more" className="space-y-5">{children}</div>}
-    </>
-  );
-}
-
-function TopSignals({ d }: { d: any }) {
-  const pro = useIsPro();
-  return (
-    <Card title="Top signals">
-      <div className="space-y-2">
-        {(d?.top_signals ?? []).map((s: any) => (
-          <Link key={s.symbol} to={`/asset/${slug(s.symbol)}`} className={`grid min-h-[44px] items-center gap-3 rounded-lg px-2 py-1.5 text-sm hover:bg-glass/[0.05] ${pro ? "grid-cols-[3.5rem_minmax(0,1fr)_3.5rem]" : "grid-cols-[3.5rem_minmax(0,1fr)]"}`}>
-            <span className="font-medium">{base(s.symbol)}</span>
-            {/* call and decision as two chips that wrap instead of one clipped line */}
-            <span className="flex min-w-0 flex-wrap items-center gap-1.5"><SignalBadge signal={s.signal} />{s.decision && <Badge tone="mute">→ {s.decision}</Badge>}</span>
-            {pro && <span className="num text-right text-mute" title="Signal score">{isNum(s.score) ? `${s.score.toFixed(0)}/100` : DASH}</span>}
-          </Link>
-        ))}
-        {!d?.top_signals?.length && <Empty>No signals yet</Empty>}
-      </div>
-      <WinsMini />
-    </Card>
-  );
-}
-
-/** Forecast table (own component: it follows live prices, so a tick re-renders only this card). */
-function ForecastCard({ rows }: { rows?: any[] }) {
-  const { tickers } = useLive();
-  return (
-    <Card ai title="Forecast table — expected return per horizon">
-      <div className="table-wrap">
-        <table className="grid-table">
-          <thead><tr><th>Asset</th><th className="text-right">Current</th>{HORIZONS.map((h) => <th key={h} className="text-right">{h}</th>)}</tr></thead>
-          <tbody>
-            {(rows ?? []).map((r: any) => (
-              <tr key={r.symbol}>
-                <td><Link to={`/asset/${slug(r.symbol)}`} className="tap-h inline-flex items-center font-medium hover:text-accent">{base(r.symbol)}</Link></td>
-                <td className="num text-right">{fmtPrice(tickers[r.symbol]?.last ?? r.price)}</td>
-                {HORIZONS.map((h) => {
-                  const c = r.horizons[h];
-                  return isNum(c?.expected_return) ? (
-                    <td key={h} className={`num text-right ${tone(c.expected_return)}`} title={`P(up) ${fmtProb(c.p_up)}${c.edge_confirmed ? "" : " · no confirmed edge"}`}>
-                      {fmtPct(c.expected_return)}{!c.edge_confirmed && <span className="text-mute">*</span>}
-                    </td>
-                  ) : <td key={h} className="text-right text-xs text-mute">{c?.status === "INSUFFICIENT DATA" ? "insufficient data" : c?.status === "MODEL NOT TRAINED" ? "not trained" : DASH}</td>;
-                })}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-      <Note>* No proven edge for that model.</Note>
-    </Card>
-  );
-}
-
-function HeatmapCard({ rows }: { rows?: any[] }) {
-  const { tickers } = useLive();
-  return (
-    <Card title="Market heatmap — 24h change" className="card-fill">
-      <div className="heat-grid grid h-full auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
-        {(rows ?? []).map((h: any) => {
-          const ch = tickers[h.symbol]?.change_pct ?? h.change_24h_pct;
-          return (
-            <Link key={h.symbol} to={`/asset/${slug(h.symbol)}`} className="flex flex-col justify-between rounded-xl border border-glass/10 p-3 transition-colors hover:border-accent/50" style={{ background: heatColor(ch) }}>
-              <div className="flex items-center justify-between"><span className="font-semibold">{base(h.symbol)}</span><span className="num text-sm font-semibold">{fmtPctRaw(ch)}</span></div>
-              <div className="mt-1.5 flex flex-wrap gap-1 text-xs uppercase tracking-wide text-text/80">
-                {h.signal && <span className="rounded-full bg-ink/40 px-2 py-0.5">{h.signal}</span>}
-                {h.regime && <span className="rounded-full bg-ink/40 px-2 py-0.5">{h.regime}</span>}
-              </div>
-            </Link>
-          );
-        })}
-      </div>
-    </Card>
-  );
-}
-
-
-/** Section header used down the Home page: title, one line of context, optional controls on the right. */
-function SectionHead({ title, sub, right }: { title: string; sub?: React.ReactNode; right?: React.ReactNode }) {
-  return (
-    <div className="flex flex-wrap items-end justify-between gap-3 border-b border-glass/[0.07] pb-3 pt-3">
-      <div className="min-w-0">
-        <h2 className="section-title">{title}</h2>
-        {sub && <p className="mt-1 text-sm text-mute">{sub}</p>}
-      </div>
-      {right}
-    </div>
-  );
-}
-
 /* ---- extra dashboard sections (they keep the three cards in this row the same height) ---------------------- */
 function MiniHead({ title, to }: { title: string; to: string }) {
   return (
     <div className="mb-2 mt-4 flex items-center justify-between border-t border-glass/[0.06] pt-3">
-      <span className="text-xs font-semibold uppercase tracking-wide text-mute">{title}</span>
-      <Link to={to} className="tap-h inline-flex items-center text-xs text-accent hover:underline">See all →</Link>
+      <span className="text-sm font-medium text-text">{title}</span>
+      <Link to={to} className="tap-h inline-flex items-center text-xs text-accent hover:underline">See all</Link>
     </div>
-  );
-}
-
-/** Signals that hit their targets in the last 24 hours (else this week). */
-function WinsMini() {
-  const v = useApi<any>("/wins-today", 60_000);
-  const wins: any[] = (v.data?.wins ?? []).slice(0, 5);
-  const label: Record<string, string> = { TP1: "TP1", TP2: "TP2", TP3: "TP3" };
-  return (
-    <>
-      <MiniHead title={v.data?.period === "today" ? "Wins today" : "Wins this week"} to="/results" />
-      {wins.length ? (
-        <ul className="space-y-1.5">
-          {wins.map((w, i) => (
-            <li key={i} className="flex items-center justify-between gap-2 rounded-md bg-bull/[0.06] px-2 py-1.5 text-sm">
-              <span className="flex min-w-0 items-center gap-2">
-                <span className="font-medium">{base(w.symbol)}</span>
-                <span className={`text-xs font-bold ${w.side === "LONG" ? "text-bull" : "text-bear"}`}>{w.side}</span>
-                <span className="text-xs uppercase text-mute">{w.timeframe}</span>
-              </span>
-              <span className="flex items-center gap-2">
-                <span className="rounded bg-bull/15 px-1.5 text-xs font-bold text-bull">{label[w.status] ?? "WIN"}</span>
-                <RoiFigure x={w} size="sm" label={false} align="left" />
-              </span>
-            </li>
-          ))}
-        </ul>
-      ) : <p className="text-xs text-mute">No wins yet in this period.</p>}
-    </>
   );
 }
 
@@ -357,7 +171,7 @@ function ComingUp() {
   const evs: any[] = (v.data?.calendar ?? []).filter((e: any) => e.impact === "High" && e.ts > now - 30 * 60_000).slice(0, 3);
   return (
     <>
-      <MiniHead title="Coming up · US data" to="/news" />
+      <MiniHead title="Coming up: US data" to="/news" />
       {evs.length ? (
         <ul className="space-y-1.5">
           {evs.map((e, i) => (
@@ -379,7 +193,7 @@ function RadarMini() {
   if (!picks.length) return null;
   return (
     <>
-      <MiniHead title="Radar · beating the market" to="/radar" />
+      <MiniHead title="Beating the market (radar)" to="/radar" />
       <ul className="space-y-1.5">
         {picks.map((p) => (
           <li key={p.symbol} className="flex items-center justify-between gap-2 text-sm">
