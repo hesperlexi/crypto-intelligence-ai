@@ -1232,3 +1232,21 @@ up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 str
   engine.last_tick_finished, market_data status/quality, models_summary {active, newest}); the full status is
   `views/health_admin` (admin only in the rules + rules test). Health page reads `/system/admin`; Command Centre Mission
   control shows "Free-plan budget" and "Errors" only to the admin. Scripts read health_admin first.
+
+## v2.68 member features + slot reserve (owner, 22 Nov 2026)
+- `components/WhySignal.tsx` "Why this signal?" under the reason chips (why / what would cancel it / main risk; from the
+  analysis row + coin report read only when opened). `components/WelcomeTour.tsx` 5 steps, once per account
+  (localStorage `cia-tour-<uid>`, `?tour=1`, Settings → "Take the tour" = event `cia-tour`). `components/PracticeCoach.tsx`
+  on Trade (futures): last closed trade review + habits of the last 20 (own practice account only).
+- Public results page `/record` (Trust kind "record", footer link "Our results"): `views/public_record` (`views.public_record`
+  from track_record, min 1800 s; rules: public read) - summary, by TF, last 7 days, daily running total, last 30 CLOSED
+  calls (no open calls, no levels, no grades). Landing `components/LandingProof.tsx`: record strip + "How one signal plays out".
+- Speed: Google Fonts load non-blocking (`media=print` swap); `sw.js` shows the saved shell after 2.5 s on slow networks.
+- Home: Live signals full width (gauges 6 per row ≥ 1280 px), Opportunity board below as a wide grid; heatmap last tile
+  fills its row (`.heat-grid`). Signals list rows get the slim progress rail (`.sig-rail`).
+- Same-side limit reserve (`combo_gates.SAME_SIDE_RESERVE`, env `SAME_SIDE_RESERVE=0` off): when 12 same-side calls run,
+  a timeframe with none on that side may still open one. Slot study `research_slots.py` (workflow `research-slots.yml`):
+  reserve +32.8R → +34.2R, drawdown same, 27 calls differ (INCONCLUSIVE, owner's request, no harm seen); per-TF caps
+  4/5 FAILED (4h cut by a third). Per-coin exits study `research_exits_coin.py` (`research-exits-coin.yml`): FAIL
+  (+56.3R → +48.3R) - live exits unchanged. `research_verdict.verdict(..., affected=)` for same-call outcome changes.
+- Engine round timings: Health admin `engine.step_seconds(_avg/_max)`, `round_seconds_avg/max` (setting `step_times`, last 48).

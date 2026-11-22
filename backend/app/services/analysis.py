@@ -512,7 +512,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             atr_now = 0.0
         for flag, reason in (("VOLUME WALL AHEAD", CG.vp_block(fr.df, nside, float(price), atr_now)),
                              ("STOP TOO TIGHT FOR FEES", CG.fee_block(timeframe, float(price), setup.get("stop"))),
-                             ("TOO MANY SAME-SIDE CALLS", CG.cap_block(rt.db, nside))):
+                             ("TOO MANY SAME-SIDE CALLS", CG.cap_block(rt.db, nside, timeframe))):
             if reason:
                 decision, grade, why = "NO TRADE", None, reason
                 flags.append(flag)

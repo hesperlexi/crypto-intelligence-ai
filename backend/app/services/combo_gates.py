@@ -71,9 +71,29 @@ def fee_block(timeframe: str, price: float, stop: float | None) -> str | None:
     return None
 
 
-def cap_block(db: Any, side: int) -> str | None:
+# v2.68 (owner, 22 Nov 2026: "the longer timeframes take the quota - keep a free slot for each timeframe"): a timeframe
+# with NO running call on that side may still open one when the limit is full. Slot study (research_slots.py,
+# research-results/results/slots-latest.json, 904 unseen calls): +32.8R -> +34.2R, max drawdown unchanged (41.5R), only 27
+# calls differ (too few to prove: INCONCLUSIVE); per-timeframe caps (4 or 5 each, total 12 / 16 / 20) FAILED - they
+# helped 15m / 1h / 12h but cut 4h, the strongest timeframe, by a third. Env SAME_SIDE_RESERVE=0 turns the reserve off.
+SAME_SIDE_RESERVE = os.environ.get("SAME_SIDE_RESERVE", "1") != "0"
+
+
+def cap_block(db: Any, side: int, timeframe: str | None = None) -> str | None:
     if SAME_SIDE_CAP <= 0:
         return None
+    row = db.one("SELECT COUNT(*) AS n FROM signals WHERE status = 'OPEN' AND side = ? "
+                 "AND (fill_status IS NULL OR fill_status = 'FILLED')", (int(side),))
+    n = int((row or {}).get("n") or 0)
+    if n >= SAME_SIDE_CAP:
+        if SAME_SIDE_RESERVE and timeframe:
+            mine = db.one("SELECT COUNT(*) AS n FROM signals WHERE status = 'OPEN' AND side = ? AND timeframe = ? "
+                          "AND (fill_status IS NULL OR fill_status = 'FILLED')", (int(side), timeframe))
+            if not int((mine or {}).get("n") or 0):
+                return None                      # this timeframe's reserved slot
+        return (f"{n} {'long' if side > 0 else 'short'} calls are already running (limit {SAME_SIDE_CAP}): one market "
+                "move could hit them all together")
+    return None
     row = db.one("SELECT COUNT(*) AS n FROM signals WHERE status = 'OPEN' AND side = ? "
                  "AND (fill_status IS NULL OR fill_status = 'FILLED')", (int(side),))
     n = int((row or {}).get("n") or 0)
