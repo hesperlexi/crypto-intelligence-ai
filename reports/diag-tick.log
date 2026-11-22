@@ -1,0 +1,53 @@
+2026-11-22 15:05:20,530 INFO httpx: HTTP Request: GET https://api.coingecko.com/api/v3/global "HTTP/1.1 200 OK"
+2026-11-22 15:05:20,663 INFO httpx: HTTP Request: GET https://api.alternative.me/fng/?limit=30 "HTTP/1.1 200 OK"
+2026-11-22 15:05:43,146 INFO engine: trained XAG/USDT 1d: skipped
+2026-11-22 15:05:43,209 INFO engine: trained XAG/USDT 3d: skipped
+2026-11-22 15:05:43,304 INFO engine: trained ENA/USDT 3d: skipped
+2026-11-22 15:05:43,400 INFO engine: trained WIF/USDT 3d: skipped
+2026-11-22 15:05:43,495 INFO engine: trained BONK/USDT 3d: skipped
+2026-11-22 15:05:43,591 INFO engine: trained SEI/USDT 3d: skipped
+2026-11-22 15:05:43,684 INFO engine: trained MSTR/USDT 3d: skipped
+2026-11-22 15:05:43,778 INFO engine: trained ANTHROPIC/USDT 1d: skipped
+2026-11-22 15:05:43,795 INFO engine: trained ANTHROPIC/USDT 3d: skipped
+2026-11-22 15:05:44,052 INFO engine: trained HYPE/USDT 4h: skipped
+2026-11-22 15:05:44,170 INFO engine: trained HYPE/USDT 12h: skipped
+2026-11-22 15:05:44,171 INFO engine: trained HYPE/USDT 1d: skipped
+2026-11-22 15:05:44,172 INFO engine: trained HYPE/USDT 3d: skipped
+Timeout (0:02:00)!
+Thread 0x00007cc8fb54c6c0 (most recent call first):
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/worker.py", line 1485 in watch
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/threading.py", line 1012 in run
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/threading.py", line 1075 in _bootstrap_inner
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/threading.py", line 1032 in _bootstrap
+
+Thread 0x00007cc924ea1bc0 (most recent call first):
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/xgboost/core.py", line 2706 in inplace_predict
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/xgboost/core.py", line 569 in inner_f
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/xgboost/sklearn.py", line 1508 in predict
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/xgboost/core.py", line 569 in inner_f
+  File "/opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/xgboost/sklearn.py", line 1972 in predict_proba
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/models.py", line 34 in proba3
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/models.py", line 47 in predict_with_context
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py", line 279 in predict
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py", line 166 in model_forecast
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py", line 225 in horizon_forecasts
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py", line 678 in analyze
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/worker.py", line 1562 in analyse
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/worker.py", line 1499 in step
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/worker.py", line 1568 in tick
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/worker.py", line 1895 in main
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/../scripts/diag_tick.py", line 13 in <module>
+Traceback (most recent call last):
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/../scripts/diag_tick.py", line 13, in <module>
+    main()
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/worker.py", line 1895, in main
+    out = tick(rt, sink, a.budget or 600)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/worker.py", line 1605, in tick
+    if fetch_context and not sink.lean() and now_ms() - int(rt.db.get_setting("market_extras_at", 0) or 0) >= market_extras.EVERY_S * 1000 - 120_000:
+                             ^^^^^^^^^^^
+TypeError: 'bool' object is not callable
+Timeout (0:02:00)!
+Thread 0x00007cc924ea1bc0 (most recent call first):
+  <no Python frame>
+exit 1
