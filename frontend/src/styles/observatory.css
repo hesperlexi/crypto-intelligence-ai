@@ -739,3 +739,14 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .lp-steps li.is-bull .lp-dot { background: rgb(var(--bull)); box-shadow: 0 0 18px rgb(var(--bull) / 0.5); }
 .lp-steps li.is-ai .lp-dot { background: rgb(var(--ai)); box-shadow: 0 0 18px rgb(var(--ai) / 0.5); }
 .lp-steps h3 { margin-top: 10px; font-weight: 600; } .lp-steps p { margin-top: 4px; font-size: 0.875rem; line-height: 1.5; color: rgb(var(--mute)); }
+.sig-rail { margin: 6px 4px 4px 0; }
+/* v2.68 heatmap: the last tile fills its row whatever the coin count */
+.heat-grid > :last-child:nth-child(2n+1) { grid-column: span 2; }
+@media (min-width: 640px) and (max-width: 1279px), (min-width: 1536px) {
+  .heat-grid > :last-child:nth-child(2n+1) { grid-column: auto; }
+  .heat-grid > :last-child:nth-child(3n+2) { grid-column: span 2; }
+  .heat-grid > :last-child:nth-child(3n+1) { grid-column: span 3; }
+}
+@media (min-width: 900px) { .deck-wide .deck-board { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 8px 12px; } }
+@media (min-width: 1280px) { .gd-grid { grid-template-columns: repeat(auto-fill, minmax(172px, 1fr)); } }
+.gd-foot { white-space: nowrap; gap: 6px; } .gd-foot > span:last-child { overflow: hidden; text-overflow: ellipsis; }

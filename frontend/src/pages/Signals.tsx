@@ -259,8 +259,28 @@ function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Mar
     : <span key="p" className={`num font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`} title="Live price move">{fmtPctRaw(pnl, 2)} price</span>);
   if (c && c.status !== "OPEN" && isNum(c.return_pct)) items.push(<span key="r" className="inline-flex items-center"><RoiFigure x={c} size="sm" label={false} align="left" /></span>);
   if (risk) items.push(<span key="k" className={risk.level === "Low" ? "text-bull" : risk.level === "Medium" ? "text-warn" : "text-bear"} title={`If the stop is hit: about ${risk.lossAtStop.toFixed(1)}% of the position's margin`}>{risk.level} risk</span>);
+  // v2.68 Signals refresh: the same slim progress line as Command Centre (stop → entry → TP1-3, live price dot)
+  const rail = show && p && isNum(p.entry) && isNum(p.stop) && (p.targets?.length ?? 0) > 0 ? (() => {
+    const sd = p.side === "SHORT" ? -1 : 1;
+    const tps: number[] = (p.targets ?? []).map((t: any) => t.price).filter(isNum);
+    const span = sd * (tps[tps.length - 1] - p.stop);
+    const at = (v: number) => (span > 0 ? Math.max(0, Math.min(1, (sd * (v - p.stop)) / span)) : 0);
+    const e = at(p.entry), live = c?.status === "OPEN" && c.fill_status !== "PENDING" && isNum(px);
+    const cx = live ? at(px!) : e, up = cx >= e;
+    const hits = isNum(c?.tp_hits) ? c.tp_hits : 0;
+    return (
+      <div className="sl-line sig-rail" aria-hidden="true">
+        <span className="sl-base" />
+        {live && <span className={`sl-fill ${up ? "" : "is-down"}`} style={{ left: `${Math.min(e, cx) * 100}%`, width: `${Math.abs(cx - e) * 100}%` }} />}
+        <span className="sl-dot sl-e" style={{ left: `${e * 100}%` }} />
+        {tps.map((t, k) => <span key={k} className={`sl-dot ${k < hits ? "is-hit" : ""}`} style={{ left: `${at(t) * 100}%` }} />)}
+        {live && <span className={`sl-now ${up ? "" : "is-down"}`} style={{ left: `${cx * 100}%` }} />}
+      </div>
+    );
+  })() : null;
   return (
     <>
+    {rail}
     <div className="mt-0.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-xs">
       {items.map((it, i) => <span key={i} className="inline-flex items-center gap-1.5">{i > 0 && <span className="text-mute/50" aria-hidden="true">·</span>}{it}</span>)}
     </div>

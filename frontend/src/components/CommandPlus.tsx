@@ -109,7 +109,7 @@ function Gauge({ l }: { l: Leg }) {
   const [nx, ny] = pt(l.c);
   const st = l.at(isNum(l.sNow) ? l.sNow : x.stop), nt = l.next >= 0 ? l.at(l.tps[l.next]) : 1;
   const hp = nt > st ? (l.c - st) / (nt - st) : 0;
-  const status: [string, string] = l.pending ? ["Waiting", "mute"] : l.r == null ? ["—", "mute"] : l.next < 0 ? ["All targets hit", "bull"]
+  const status: [string, string] = l.pending ? ["Waiting", "mute"] : l.r == null ? ["—", "mute"] : l.next < 0 ? ["All hit", "bull"]
     : hp >= 0.5 ? ["Healthy", "bull"] : hp >= 0.25 ? ["Watch", "warn"] : ["At risk", "bear"];
   const gid = `gd${String(x.id ?? x.symbol).replace(/[^\w]/g, "")}`;
   return (
@@ -118,7 +118,6 @@ function Gauge({ l }: { l: Leg }) {
         <CoinAvatar symbol={x.symbol} size={22} />
         <b className="truncate">{name(x.symbol)}</b>
         <span className={`gd-side ${l.s > 0 ? "is-long" : "is-short"}`}>{l.s > 0 ? "LONG" : "SHORT"}</span>
-        <span className="gd-tf">{String(x.timeframe).toUpperCase()}</span>
       </Link>
       <svg viewBox={`0 0 ${W} 96`} className="gd-svg" role="img" aria-label={`${name(x.symbol)}: ${l.pending ? "waiting for entry" : rTxt(l.r)}, ${l.hits.filter(Boolean).length} of ${l.tps.length} targets hit`}>
         <defs>
@@ -154,7 +153,7 @@ function Gauge({ l }: { l: Leg }) {
       </svg>
       <div className="gd-foot">
         <span className={`gd-status is-${status[1]}`}>{status[0]}</span>
-        <span className="text-mute">{ago(x.filled_at ?? x.created_at)}</span>
+        <span className="text-mute"><b className="gd-tf">{String(x.timeframe).toUpperCase()}</b> {ago(x.filled_at ?? x.created_at)}</span>
       </div>
     </li>
   );

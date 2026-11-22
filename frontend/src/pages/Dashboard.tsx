@@ -64,12 +64,13 @@ export default function Dashboard() {
       <FirstWeekGuide />
       <WelcomeTour />
       {/* row 2: what is running (live journeys) beside what is setting up (the opportunity board) */}
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1.45fr)_minmax(0,1fr)]">
+      {/* v2.68: the 12 signal gauges take the full width; the opportunity board sits below as a wide strip (no hollow column) */}
+      <div className="grid gap-4">
         <Card title={<>Live signals <span className="num font-normal text-mute">· {openCount}</span></>}
           right={<Link to="/results?tab=track" className="text-xs font-medium text-accent hover:underline">Track record ›</Link>} className="deck-fill">
           <SignalDeck track={track.data} />
         </Card>
-        <Card title="Opportunity board" right={<span className="text-xs text-mute">4H · passes every check</span>} className="deck-fill">
+        <Card title="Opportunity board" right={<span className="text-xs text-mute">4H · passes every check</span>} className="deck-fill deck-wide">
           <OpportunityBoard rows={dash4.data?.opportunities} />
         </Card>
       </div>
@@ -278,7 +279,7 @@ function HeatmapCard({ rows }: { rows?: any[] }) {
   const { tickers } = useLive();
   return (
     <Card title="Market heatmap — 24h change" className="card-fill">
-      <div className="grid h-full auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
+      <div className="heat-grid grid h-full auto-rows-fr grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-2 2xl:grid-cols-3">
         {(rows ?? []).map((h: any) => {
           const ch = tickers[h.symbol]?.change_pct ?? h.change_24h_pct;
           return (
