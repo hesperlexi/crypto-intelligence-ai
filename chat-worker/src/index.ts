@@ -3,9 +3,9 @@
 // POST /chat  { question, page, context, history }   Authorization: Bearer <Firebase ID token>
 //   1. The Firebase ID token is verified here (RS256 against Google's public keys, audience = the project).
 //   2. Membership is checked by reading users/{uid} through the Firestore REST API WITH THE MEMBER'S OWN TOKEN (the
-//      rules already let a person read their own record), cached 30 min in KV, so most questions cost no Firestore read.
+//      rules already let a person read their own record), cached in memory + the Durable Object (v2.68), so most questions cost no Firestore read.
 //      Admins = ADMIN_EMAILS. Pending / expired / blocked accounts are refused.
-//   3. Daily caps in KV: per person (MEMBER_DAILY / ADMIN_DAILY) and for everyone together (GLOBAL_DAILY), Dubai day.
+//   3. Daily caps in the Durable Object (v2.68; KV allows only 1,000 writes a day): per person (MEMBER_DAILY / ADMIN_DAILY) and for everyone together (GLOBAL_DAILY), Dubai day.
 //   4. Gemini answers ONLY from `context` = the figures already on the member's screen, sent by the app. It has no
 //      other data, never gives financial advice, never invents numbers. Advisory text only; it changes nothing.
 // GET /health → {ok}. Nothing is stored except the counters and the membership cache (no questions, no answers).
@@ -100,7 +100,7 @@ async function roleOf(claims: any, token: string, env: Env, appCheck: string | n
   const ck = `role:${claims.sub}`;
   const hit = ROLES.get(claims.sub);
   if (hit && hit.until > Date.now()) return hit.role === "member" ? "member" : null;
-  const cached = await env.KV.get(ck);
+  const cached = await store(env, "get", { k: ck });
   if (cached) { await keepRole(claims.sub, cached, env, false); return cached === "member" ? "member" : null; }
   const r = await fetch(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/users/${claims.sub}`,
     { headers: { Authorization: `Bearer ${token}`, ...(appCheck ? { "X-Firebase-AppCheck": appCheck } : {}) } });
@@ -120,22 +120,30 @@ async function roleOf(claims: any, token: string, env: Env, appCheck: string | n
 const ROLES = new Map<string, { role: string; until: number }>();
 async function keepRole(uid: string, role: string, env: Env, write: boolean) {
   ROLES.set(uid, { role, until: Date.now() + 300_000 });
-  if (write) { try { await env.KV.put(`role:${uid}`, role, { expirationTtl: 7200 }); } catch { /* KV daily write limit: memory still works */ } }   // one KV write per person per 2 h
+  if (write) { try { await store(env, "put", { k: `role:${uid}`, v: role, ttl: 7200 }); } catch { /* memory still works */ } }   // v2.68: in the Durable Object, not KV
 }
 
 const dubaiDay = () => new Date(Date.now() + 4 * 3600_000).toISOString().slice(0, 10);
 
 /** Counts one question; false when the person's or everyone's daily limit is reached. */
 async function spend(uid: string, admin: boolean, env: Env): Promise<{ ok: boolean; left: number; why?: string }> {
+  // v2.68: the daily counters live in the Durable Object (100,000 writes a day on the free plan; KV allows only 1,000)
   const day = dubaiDay();
-  const mine = `n:${day}:${uid}`, all = `n:${day}:all`;
-  const [m, a] = await Promise.all([env.KV.get(mine), env.KV.get(all)]);
   const cap = Number(admin ? env.ADMIN_DAILY : env.MEMBER_DAILY) || 20;
-  const n = Number(m ?? 0), g = Number(a ?? 0);
-  if (n >= cap) return { ok: false, left: 0, why: `You've used today's ${cap} questions. The count resets at midnight (Dubai time).` };
-  if (g >= (Number(env.GLOBAL_DAILY) || 400)) return { ok: false, left: cap - n, why: "The assistant is resting for today (daily limit for everyone reached). Please try again tomorrow." };
-  await Promise.all([env.KV.put(mine, String(n + 1), { expirationTtl: 172800 }), env.KV.put(all, String(g + 1), { expirationTtl: 172800 })]);
-  return { ok: true, left: cap - n - 1 };
+  const gcap = Number(env.GLOBAL_DAILY) || 400;
+  const r = JSON.parse((await store(env, "spend", { mine: `n:${day}:${uid}`, all: `n:${day}:all`, cap, gcap })) ?? "{}");
+  if (r.why === "mine") return { ok: false, left: 0, why: `You've used today's ${cap} questions. The count resets at midnight (Dubai time).` };
+  if (r.why === "all") return { ok: false, left: Math.max(0, cap - (r.n ?? 0)), why: "The assistant is resting for today (daily limit for everyone reached). Please try again tomorrow." };
+  return { ok: true, left: Math.max(0, cap - (r.n ?? 0)) };
+}
+
+/** Small key-value notes kept in the Durable Object (roles, chat counters). */
+async function store(env: Env, op: "get" | "put" | "spend", body: Record<string, unknown>): Promise<string | null> {
+  const stub = env.VIEWS.get(env.VIEWS.idFromName("views"));
+  const r = await stub.fetch(`https://do/kv/${op}`, { method: "POST", body: JSON.stringify(body) });
+  if (!r.ok) throw new Error(`store ${op} ${r.status}`);
+  const t = await r.text();
+  return op === "get" ? (t || null) : t;
 }
 
 /** Calls the first model in GEMINI_MODEL (comma list) that exists for this key; remembers the working one 1 day.
@@ -148,7 +156,7 @@ async function gemini(env: Env, body: unknown): Promise<Response> {
       method: "POST", headers: { "Content-Type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY }, body: JSON.stringify(body),
     });
     // gone (404), busy (503 / 500) or out of free quota (429): try the next name
-    if (![404, 429, 500, 503].includes(r.status)) { if (r.ok) await env.KV.put("diag:model", m, { expirationTtl: 86400 }); return r; }
+    if (![404, 429, 500, 503].includes(r.status)) { if (r.ok && m !== names[0]) await env.KV.put("diag:model", m, { expirationTtl: 86400 }); return r; }
     last = r;
   }
   return last ?? new Response("no model", { status: 404 });
@@ -319,6 +327,24 @@ export class ViewStore {
   }
   async fetch(req: Request): Promise<Response> {
     const u = new URL(req.url);
+    if (u.pathname.startsWith("/kv/")) {
+      this.sql.exec("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, exp INTEGER NOT NULL)");
+      const b: any = await req.json();
+      const now = Date.now();
+      const get = (k: string) => (this.sql.exec("SELECT v FROM kv WHERE k = ? AND exp > ?", k, now).toArray()[0] as any)?.v ?? null;
+      const put = (k: string, v: string, ttl: number) => this.sql.exec("INSERT INTO kv (k, v, exp) VALUES (?, ?, ?) ON CONFLICT(k) DO UPDATE SET v = excluded.v, exp = excluded.exp", k, v, now + ttl * 1000);
+      if (u.pathname === "/kv/get") return new Response(get(String(b.k)) ?? "");
+      if (u.pathname === "/kv/put") { put(String(b.k), String(b.v), Number(b.ttl) || 3600); return new Response("ok"); }
+      if (u.pathname === "/kv/spend") {
+        const n = Number(get(String(b.mine)) ?? 0), g = Number(get(String(b.all)) ?? 0);
+        if (n >= Number(b.cap)) return Response.json({ ok: false, why: "mine", n });
+        if (g >= Number(b.gcap)) return Response.json({ ok: false, why: "all", n });
+        put(String(b.mine), String(n + 1), 172800); put(String(b.all), String(g + 1), 172800);
+        if (Math.random() < 0.02) this.sql.exec("DELETE FROM kv WHERE exp < ?", now);
+        return Response.json({ ok: true, n: n + 1 });
+      }
+      return new Response("not found", { status: 404 });
+    }
     if (u.pathname === "/put") {
       const rows: { name: string; json: string; at: number; etag: string }[] = await req.json();
       let n = 0;

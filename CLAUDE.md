@@ -1225,3 +1225,6 @@ up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 str
   `/edge-health`. App: `lib/edge.ts` `edgeView` used by `api.view()` for eligible names: one batched poll every 30 s while
   visible; on 401/403/network/none that view (or all) falls back to the Firestore listener (retry after 5 min). Kill switch
   localStorage `cia-edge-off=1` / `VITE_EDGE_VIEWS=0`. Off in preview. Cloudflare token has no D1 / R2 rights (cf-probe.yml).
+- v2.68 (22 Nov 2026): the Worker's chat counters and role cache moved from KV (1,000 writes/day free, per account) to the
+  Durable Object (`/kv/get|put|spend`, table `kv`); KV keeps only the diag notes (model memo written only when it changes).
+  One Worker on purpose: Cloudflare's free limits are per account, so a second worker adds no room.
