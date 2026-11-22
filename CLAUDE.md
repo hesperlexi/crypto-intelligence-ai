@@ -1267,3 +1267,14 @@ up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 str
 - Writes: `sinks.EDGE_FS_EVERY_S` 900 → **3600** (measured 22 Nov: ~13.8K writes/day pace with 900 - the Firestore backup
   copies of analysis_/perf_ views were the bulk). Engine cycle 5 → **4 min** (`engine_loop.EVERY_S`, env `ENGINE_EVERY_S`;
   rounds avg 156 s, max 188 s; analyses ~103 s of it). `worker.SCHEDULE_MIN` 4.
+
+## v2.70 Overview redesign (owner, 22 Nov 2026: "doesn't look premium")
+`components/MarketBoard.tsx`: `MarketBoard` = ONE board for every watchlist coin (replaces My coins tiles, Market regime,
+Top risks, Forecast table, Heatmap): row = coin (★ pinned / mine) · live price · 24h (tint by size) · trend (regime words
+`regimeOf` + 5-segment strength) · signal · AI outlook bars 15M-24H (faint = no edge) · watch (risks); TF switch, view
+Table | Heatmap (localStorage `cia-board-view`; heat tiles flex so the last row ends level), filters All / Uptrend /
+Downtrend / Pinned, sort by header (Coin / 24h / Trend), first 12 + "Show all", "Manage coins" = `MyCoins startEdit`.
+`IntelBrief` replaces `AiBriefCard` + sonar (mood, headline, breadth bar from `market_status`, 3 facts, leaders /
+laggards 24h, "Read full briefing"). Home order: hero · live signals · opportunity board · BTC chart + brief · board ·
+performance / activity / market context · Market insights. `GlobalStatusCard` and the "More market detail" fold removed.
+CSS `.mb-*`, `.ib-*`, `.ctx-notes` in observatory.css. Phones: board row = coin (signal · trend) | price | 24h.
