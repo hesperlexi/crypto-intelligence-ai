@@ -1,6 +1,6 @@
 {
  "status": "LIVE",
- "generated_min_ago": 8.9,
+ "generated_min_ago": 10.1,
  "market_data": {
   "status": "OK",
   "transport": "engine snapshot (website streams live prices)",
@@ -36,8 +36,9 @@
   "firestore_member_reserve": 300,
   "firestore_engine_budget": 14700,
   "firestore_lean": false,
-  "members_seen_24h": null,
-  "presence_estimate": null
+  "firestore_members_active": 5,
+  "edge": null,
+  "firestore_writes_by": null
  },
  "series_total": 116,
  "series_not_ok": 4,
