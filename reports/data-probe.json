@@ -1,0 +1,65 @@
+{
+ "deribit_dvol": [
+  200,
+  [
+   1795338000000,
+   57.68,
+   57.68,
+   56.41,
+   56.41
+  ]
+ ],
+ "deribit_options": [
+  200,
+  1012
+ ],
+ "deribit_option_sample": {
+  "instrument_name": "BTC-26MAR27-40000-C",
+  "open_interest": 104.1,
+  "underlying_price": 61742.9
+ },
+ "stooq_^spx": [
+  0,
+  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
+ ],
+ "stooq_dx.f": [
+  0,
+  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
+ ],
+ "stooq_xauusd": [
+  0,
+  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
+ ],
+ "stooq_^ndq": [
+  0,
+  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
+ ],
+ "stooq_us10y.b": [
+  0,
+  "HTTPSConnectionPool(host='stooq.com', port=443): Max retries exceeded with url: "
+ ],
+ "yahoo": [
+  200,
+  "6910.39"
+ ],
+ "https://api.llama.fi/emissions": [
+  402,
+  "Upgrade to the paid API plan at https://defillama.com/subscription"
+ ],
+ "https://defillama-datasets.llama.fi/emissions/arbitrum": [
+  200,
+  "{\"documentedData\":{\"data\":[{\"label\":\"Airdrop\",\"data\":[{\"timestamp\":1679529600,\"unlocked\":0,\"rawEmission\":0,\"burned\":0},{\"timestamp\":1679616000,\"unlocked\":116200"
+ ],
+ "https://api.llama.fi/emission/arbitrum": [
+  402,
+  "Upgrade to the paid API plan at https://defillama.com/subscription"
+ ],
+ "okx_oi": [
+  200,
+  [
+   "1795352400000",
+   "2823177047.9633",
+   "845788207.0407"
+  ]
+ ]
+}
