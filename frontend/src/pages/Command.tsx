@@ -16,7 +16,7 @@ import { useKlines } from "../lib/klines";
 import LazyMount from "../components/LazyMount";
 import { CoinCompare, SignalJourneys } from "../components/CommandPlus";
 const MarketGlobe = lazy(() => import("../components/MarketGlobe"));
-import { useLive, useTicker } from "../lib/live";
+import { useLive, useTicker, useTickerThrottled } from "../lib/live";
 import { ago, base, fmtCompact, fmtPrice, isNum, slug } from "../lib/format";
 
 const TFS = ["15m", "1h", "4h", "12h", "1d", "3d"] as const;
@@ -47,11 +47,11 @@ function useNarrow() {
   return n;
 }
 
-function Galaxy({ rows, open, sel, onSel, onScan, tf }: { rows: any[]; open: Set<string>; sel: string; onSel: (s: string) => void; onScan: () => void; tf: string }) {
+function Galaxy({ rows, open, sel, onSel, onHover }: { rows: any[]; open: Set<string>; sel: string; onSel: (s: string) => void; onHover: (s: string | null) => void }) {
   const { tickers } = useLive();
   const narrow = useNarrow();                    // phones: a tighter drawing so labels stay readable
   // v2.55 (owner): the galaxy has the whole first row on computers, so the orbits are stretched wide (KX)
-  const W = narrow ? 400 : 1100, H = narrow ? 430 : 600, KX = narrow ? 1 : 1.75, KY = narrow ? 0.92 : 0.95;
+  const W = narrow ? 400 : 960, H = narrow ? 430 : 600, KX = narrow ? 1 : 1.5, KY = narrow ? 0.92 : 0.95;   // v2.74: narrower beside the readout
   const C = { x: W / 2, y: H / 2 };
   const ranked = [...rows].sort((a, b) => (b.quote_volume_24h ?? 0) - (a.quote_volume_24h ?? 0));
   const maxV = Math.max(1, ...ranked.map((r) => r.quote_volume_24h ?? 0));
@@ -69,8 +69,7 @@ function Galaxy({ rows, open, sel, onSel, onScan, tf }: { rows: any[]; open: Set
   const chain = (d: 1 | -1) => planets.filter((p) => p.dir === d).sort((p, q) => p.a - q.a);
   const line = (ps: typeof planets) => ps.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
   const longs = chain(1), shorts = chain(-1);
-  const [hover, setHover] = useState<string | null>(null);
-  const shown = planets.find((p) => p.r.symbol === (hover ?? sel));
+  const setHover = onHover;
   return (
     <div className="cc-galaxy">
       <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Crypto galaxy: every coin you watch as a planet">
@@ -101,24 +100,36 @@ function Galaxy({ rows, open, sel, onSel, onScan, tf }: { rows: any[]; open: Set
           );
         })}
       </svg>
-      {/* v2.73 (owner: the card covered planets): the readout of the planet under the pointer (or the one locked on) is a
-          strip under the drawing, never on top of it */}
-      <div className="cc-holo" aria-live="polite">
-        {shown ? (
-          <>
-            <span className="cc-holo-id"><CoinAvatar symbol={shown.r.symbol} size={26} /><b className="font-display text-base">{name(shown.r.symbol)}</b>
-              <span className={`text-xs font-semibold ${shown.dir > 0 ? "text-bull" : shown.dir < 0 ? "text-bear" : "text-mute"}`}>{shown.dir > 0 ? "▲ Long call" : shown.dir < 0 ? "▼ Short call" : "No call"} · {tf.toUpperCase()}</span></span>
-            <span className="num cc-holo-px">{fmtPrice(tickers[shown.r.symbol]?.last ?? shown.r.price)} <span className={`text-sm ${(shown.chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(shown.chg)}</span></span>
-            <span className="cc-holo-k"><span>Trend</span>{shown.r.trend_label ?? "—"}</span>
-            <span className="cc-holo-k"><span>RSI</span><b className="num font-normal">{isNum(shown.r.rsi) ? shown.r.rsi.toFixed(0) : "—"}</b></span>
-            <span className="cc-holo-k"><span>Volume 24h</span><b className="num font-normal">{isNum(shown.r.quote_volume_24h) ? fmtCompact(shown.r.quote_volume_24h) : "—"}</b></span>
-            <button type="button" className="btn btn-sm cc-holo-btn" onClick={() => { onSel(shown.r.symbol); onScan(); }}>Deep-space scan ↓</button>
-          </>
-        ) : <span className="text-sm text-mute">Point at or tap a planet to read it.</span>}
-      </div>
     </div>
   );
 }
+
+/** v2.74 Observatory (owner, 22 Nov 2026): the readout beside the galaxy - the planet under the pointer, else the one
+ *  locked on. Never drawn over the galaxy. */
+function Readout({ symbol, row, f, tf, onScan }: { symbol: string; row: any; f: any; tf: string; onScan: () => void }) {
+  const t = useTickerThrottled(symbol, 1000);
+  const px = t?.last ?? row?.price, chg = t?.change_pct ?? row?.change_24h_pct;
+  const side = f?.side ?? 0, grade = f?.grade;
+  const up = isNum(f?.p_up) ? Math.round(f.p_up * 100) : null, dn = isNum(f?.p_down) ? Math.round(f.p_down * 100) : null;
+  return (
+    <section className="cc-readout" aria-live="polite" aria-label={`Readout: ${name(symbol)}`}>
+      <div className="flex items-center gap-3"><CoinAvatar symbol={symbol} size={44} />
+        <div className="min-w-0"><div className="font-display text-[22px] font-semibold leading-tight">{name(symbol)}</div><div className="text-sm text-mute">Locked on · tap a planet</div></div></div>
+      <div><span className="font-display num text-[34px] font-semibold tracking-tight">{isNum(px) ? fmtPrice(px) : "—"}</span> <span className={`num font-semibold ${(chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(chg)}</span></div>
+      <span className={`cc-ro-call ${side > 0 ? "is-long" : side < 0 ? "is-short" : ""}`}>{side > 0 ? "▲ Long call" : side < 0 ? "▼ Short call" : "No call now"} · {tf.toUpperCase()}{side && grade ? ` · grade ${grade}` : ""}</span>
+      <dl className="cc-ro-grid">
+        <div><dt>Trend</dt><dd>{row?.trend_label ?? regimeWord(row?.regime)}</dd></div>
+        <div><dt>RSI 14</dt><dd className="num">{isNum(row?.rsi) ? row.rsi.toFixed(0) : "—"}</dd></div>
+        <div><dt>Volume 24h</dt><dd className="num">{isNum(row?.quote_volume_24h) ? fmtCompact(row.quote_volume_24h) : "—"}</dd></div>
+        <div><dt>AI lean</dt><dd className={up != null && dn != null ? (up > dn ? "text-bull" : up < dn ? "text-bear" : "") : ""}>{up != null && dn != null ? (up >= dn ? `${up}% up` : `${dn}% down`) : "—"}</dd></div>
+      </dl>
+      {(f?.ai?.rationale || f?.decision_basis || f?.decision_reason) && <p className="cc-ro-note">{f?.ai?.rationale ?? f?.decision_basis ?? f?.decision_reason}</p>}
+      <button type="button" className="btn btn-primary mt-auto w-full" onClick={onScan}>Deep-space scan</button>
+    </section>
+  );
+}
+
+const regimeWord = (r?: string) => (!r ? "—" : r.charAt(0) + r.slice(1).toLowerCase());
 
 /** v2.58 (owner, 18 Nov 2026): the galaxy's centre is the brand itself - the round logo artwork as a planet: lit from
  *  the upper left, a gold atmosphere, a tilted ring that passes behind and in front of it, a small moon on the ring. */
@@ -243,45 +254,6 @@ function Radar({ boards, onSel, tf }: { boards: any[][]; onSel: (s: string) => v
 }
 
 /* ---------------------------------------------------------------- AI core */
-function Core({ row, f4, status, ctx, health, tf }: { row: any; f4: any; status: any; ctx: any; health: any; tf: string }) {
-  const T = tf.toUpperCase();
-  const mood = status?.status;
-  const moodWord = mood === "BULL" ? "Leaning bullish" : mood === "BEAR" ? "Leaning bearish" : "Mixed";
-  const last = health?.engine?.last_tick_finished;
-  const fresh = isNum(last) && Date.now() - last < 15 * 60_000;
-  const side = callOf(f4);
-  const flags: string[] = (row?.flags ?? []).slice(0, 3);
-  const fg = ctx?.sentiment?.value;
-  return (
-    <div className="space-y-3">
-      <div className="flex items-center gap-4">
-        <svg viewBox="0 0 120 120" width="96" height="96" aria-hidden="true">
-          <circle cx="60" cy="60" r="56" fill="url(#cc-glow)" />
-          <g className="cc-ring" style={{ transformOrigin: "60px 60px" }}><circle cx="60" cy="60" r="48" fill="none" stroke="#f0b90b" strokeWidth="2" strokeDasharray="40 14 6 14" /></g>
-          <circle cx="60" cy="60" r="26" fill="url(#cc-gold)" />
-          <text x="60" y="66" textAnchor="middle" fontSize="16" fontWeight="800" fill="#1a1408">AI</text>
-        </svg>
-        <div className="min-w-0">
-          <h2 className="font-display text-xl font-semibold">Intelligence core</h2>
-          <p className="text-sm text-mute">What the engine sees for <b className="text-text">{row ? name(row.symbol) : "—"}</b></p>
-          <p className={`mt-1 text-xs ${fresh ? "text-bull" : "text-warn"}`}>{isNum(last) ? `Engine data ${ago(last)}` : "Engine time unknown"}</p>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 gap-2">
-        <div className="cc-cell"><div className="text-xs text-mute">Market · {T}</div><div className={`font-semibold ${mood === "BULL" ? "text-bull" : mood === "BEAR" ? "text-bear" : ""}`}>{moodWord}</div><div className="text-xs text-mute">{status ? `${status.bull} bull · ${status.bear} bear of ${status.assets}` : "—"}</div></div>
-        <div className="cc-cell"><div className="text-xs text-mute">{row ? `${name(row.symbol)} trend · ${T}` : "Trend"}</div><div className="font-semibold">{row?.trend_label ?? "—"}</div><div className="text-xs text-mute">{row?.regime ? String(row.regime).replace(/_/g, " ").toLowerCase() : "—"}</div></div>
-        <div className="cc-cell"><div className="text-xs text-mute">AI lean · up / down</div><div className="num font-semibold">{isNum(row?.p_up) ? <><span className="text-bull">{Math.round(row.p_up * 100)}%</span> / <span className="text-bear">{Math.round(row.p_down * 100)}%</span></> : "no model yet"}</div><div className="text-xs text-mute">{T}, calibrated</div></div>
-        <div className="cc-cell"><div className="text-xs text-mute">Call · {T}</div><div className={`font-semibold ${side > 0 ? "text-bull" : side < 0 ? "text-bear" : "text-mute"}`}>{side > 0 ? "LONG" : side < 0 ? "SHORT" : "No trade"}{side && f4?.grade ? ` · grade ${f4.grade}` : ""}</div><div className="text-xs text-mute">{isNum(fg) ? `Fear & Greed ${fg}` : "—"}</div></div>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div><div className="text-xs font-semibold tracking-wide text-bull">SUPPORTS</div><p className="mt-1 text-sm">{side && f4?.decision_basis ? f4.decision_basis : row?.mtf_alignment ? `Timeframes aligned: ${row.mtf_alignment}` : "Nothing strong right now."}</p></div>
-        <div><div className="text-xs font-semibold tracking-wide text-bear">WEAKENS</div><p className="mt-1 text-sm">{[f4?.news_risk?.title ? `${f4.news_risk.title} ${f4.news_risk.when ?? ""}` : null, !side && f4?.decision_reason ? f4.decision_reason : null, ...flags].filter(Boolean).join(" · ") || "No warning flags."}</p></div>
-      </div>
-    </div>
-  );
-}
-
-/* ---------------------------------------------------------------- universe */
 function corr(a: number[], b: number[]) {
   const n = Math.min(a.length, b.length);
   if (n < 20) return null;
@@ -411,7 +383,7 @@ function Mission({ health, connected }: { health: any; connected: boolean }) {
     ["Errors · recent", errs ? `${errs} logged by the engine` : "None logged", String(errs), errs ? warn : ok]] as [string, string, string, string][]),
   ];
   return (
-    <ul className="grid h-full auto-rows-fr gap-2 sm:grid-cols-2">
+    <ul className="grid h-full auto-rows-fr gap-2">
       {rows.map(([k, sub, st, c]) => (
         <li key={k} className="cc-row">
           <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: c, boxShadow: `0 0 0 4px color-mix(in srgb, ${c} 18%, transparent)` }} />
@@ -517,17 +489,18 @@ export default function Command() {
   const boards = TFS.map((t) => useApi<any>(`/futures?timeframe=${t}`)); // fixed list: stable hooks
   const track = useApi<any>("/track-record");
   const mc = useApi<any>("/market-context");
-  const ctx = useApi<any>("/context", 600000);
   const health = useApi<any>(isAdmin() ? "/system/admin" : "/system/health");
   const news = useApi<any>("/news", 300_000);
   const { connected } = useLive();
   const rows: any[] = (dash.data?.rows ?? []).filter((r: any) => r.status === "OK");
   const open = useMemo(() => new Set<string>((track.data?.live?.signals ?? []).filter((x: any) => x.status === "OPEN" && x.timeframe === tf).map((x: any) => x.symbol)), [track.data, tf]);
   const [sel, setSel] = useState<string | null>(null);
+  const [hover, setHover] = useState<string | null>(null);
   const scan = () => window.setTimeout(() => document.getElementById("cc-scan")?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
   const pick = (s: string) => { setSel(s); scan(); };
   const focus = sel ?? [...open][0] ?? rows[0]?.symbol ?? "BTC/USDT";
   const row = rows.find((r) => r.symbol === focus);
+  const shown = hover ?? focus;
   const f4 = (boards[TFS.indexOf(tf as any)]?.data?.rows ?? []).find((r: any) => r.symbol === focus);
   const peers = rows.map((r) => r.symbol).filter((s) => s !== "BTC/USDT" && base(s) !== "PAXG")
     .sort((a, b) => (rows.find((r) => r.symbol === b)?.quote_volume_24h ?? 0) - (rows.find((r) => r.symbol === a)?.quote_volume_24h ?? 0)).slice(0, 5);
@@ -537,53 +510,51 @@ export default function Command() {
     <div className="cc-page space-y-4">
       <Defs />
       <MissionStrip tf={tf} setTf={setTf} status={dash.data?.market_status} open={track.data} health={health.data} connected={connected} />
-      {/* row 1 (owner, 18 Nov 2026): the galaxy on its own */}
-      <section className="cc-panel p-4 sm:p-5" aria-label="Crypto galaxy">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <div><h2 className="font-display text-xl font-semibold">Crypto galaxy</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a planet to scan it.</p></div>
-          <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● up 24h</span><span className="text-bear">● down 24h</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
-        </div>
-        <Galaxy rows={rows} open={open} sel={focus} onSel={setSel} onScan={scan} tf={tf} />
-      </section>
-      {/* row 2: what the engine sees beside the system status, same height */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="cc-panel p-4 sm:p-5" aria-label="AI intelligence core">
-          <Core row={row} f4={f4} status={dash.data?.market_status} ctx={ctx.data} health={health.data} tf={tf} />
+      {/* v2.74 Observatory (owner's pick, 22 Nov 2026): galaxy beside its readout */}
+      <div className="cc-row1">
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Crypto galaxy">
+          <div className="flex flex-wrap items-baseline justify-between gap-2">
+            <div><h2 className="font-display text-xl font-semibold">Crypto galaxy</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a planet to read it.</p></div>
+            <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● up 24h</span><span className="text-bear">● down 24h</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
+          </div>
+          <div className="flex flex-1 items-center [&>*]:w-full"><Galaxy rows={rows} open={open} sel={focus} onSel={setSel} onHover={setHover} /></div>
         </section>
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Mission control">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Mission control</h2><span className="text-xs text-mute">real system status</span></div>
-          <div className="mt-3 flex-1"><Mission health={health.data} connected={connected} /></div>
-        </section>
+        <Readout symbol={shown} row={rows.find((r) => r.symbol === shown)} f={(boards[TFS.indexOf(tf as any)]?.data?.rows ?? []).find((r: any) => r.symbol === shown)} tf={tf}
+          onScan={() => { setSel(shown); scan(); }} />
       </div>
-      {/* row 3: radar beside the market universe; footers pinned so the bottoms line up */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Opportunity radar">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Opportunity radar</h2><span className="text-xs text-mute">closer = stronger</span></div>
+      {/* signals in flight: the timeframe radar beside the journeys, one card */}
+      <section className="cc-panel cc-flight" aria-label="Signals in flight">
+        <div className="cc-flight-radar">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Signals in flight</h2><span className="text-xs text-mute">by timeframe</span></div>
           <div className="flex flex-1 flex-col justify-center"><Radar boards={boards.map((b) => b.data?.rows ?? [])} onSel={pick} tf={tf} /></div>
-          <div className="mt-3 flex flex-wrap justify-center gap-3 text-xs text-mute"><span className="text-bull">● long</span><span className="text-bear">● short</span><span className="text-accent">◎ grade A</span><span>lit slice = live calls</span></div>
-        </section>
+          <div className="mt-3 flex flex-wrap justify-center gap-3 text-xs text-mute"><span className="text-bull">● long</span><span className="text-bear">● short</span><span className="text-accent">◎ grade A</span></div>
+        </div>
+        <div className="cc-flight-lanes">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
+          <div className="mt-3 flex-1"><SignalJourneys track={track.data} /></div>
+        </div>
+      </section>
+      {/* market forces: universe beside mission control, then the globe full width */}
+      <div className="cc-forces">
         <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Market universe">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market universe</h2><span className="text-xs text-mute">7 days</span></div>
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market universe</h2><span className="text-xs text-mute">moves with BTC · 7 days</span></div>
           <Universe peers={peers} status={dash.data?.market_status} mc={mc.data} onSel={pick} tf={tf} />
         </section>
-      </div>
-      {/* row 4: running signals beside coin vs coin; then the globe */}
-      <div className="grid gap-4 xl:grid-cols-2">
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Live signal journeys">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signal journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
-          <div className="mt-3 flex-1"><SignalJourneys track={track.data} /></div>
-        </section>
-        <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Coin vs coin</h2><span className="text-xs text-mute">pick up to 3</span></div>
-          <div className="mt-3"><LazyMount height={320}><CoinCompare rows={rows} /></LazyMount></div>
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Mission control">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Mission control</h2><span className="text-xs text-mute">live status</span></div>
+          <div className="mt-3 flex-1"><Mission health={health.data} connected={connected} /></div>
         </section>
       </div>
       <section className="cc-panel p-4 sm:p-5" aria-label="Market heat globe">
         <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
-        <div className="mt-3"><LazyMount height={380}><Suspense fallback={<div className="skeleton h-[360px] rounded-xl" />}><MarketGlobe news={news.data} /></Suspense></LazyMount></div>
+        <div className="mt-3 flex-1"><LazyMount height={380}><Suspense fallback={<div className="skeleton h-[360px] rounded-xl" />}><MarketGlobe news={news.data} /></Suspense></LazyMount></div>
       </section>
       <section id="cc-scan" className="cc-panel cc-scan scroll-mt-20 p-4 sm:p-6" aria-label={`Deep-space scan of ${name(focus)}`}>
         <Scan symbol={focus} row={row} f4={f4} tf={tf} />
+      </section>
+      <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
+        <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Coin vs coin</h2><span className="text-xs text-mute">pick up to 3</span></div>
+        <div className="mt-3"><LazyMount height={320}><CoinCompare rows={rows} /></LazyMount></div>
       </section>
     </div>
   );
