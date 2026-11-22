@@ -26,7 +26,7 @@ import sys
 import time
 import urllib.request
 
-EVERY_S = 300
+EVERY_S = int(os.environ.get("ENGINE_EVERY_S", "240"))   # v2.69: 4 min (rounds ~2.6 min, max ~3.1)
 SLOW_EVERY_S = 600
 WRITE_SOFT_CAP = 3000
 COUNT_FILE_SUFFIX = ".writes"

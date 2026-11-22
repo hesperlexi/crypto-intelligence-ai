@@ -403,7 +403,7 @@ function Mission({ health, connected }: { health: any; connected: boolean }) {
   const ok = "rgb(var(--bull))", warn = "rgb(var(--warn))", bad = "rgb(var(--bear))";
   const rows: [string, string, string, string][] = [
     ["Live prices", connected ? "Streaming from Binance" : "Reconnecting…", connected ? "Live" : "Waiting", connected ? ok : warn],
-    ["Signal engine", isNum(last) ? `Last cycle ${ago(last)} · every 5 min` : "No cycle seen yet", age == null ? "Unknown" : age < 15 ? "Running" : age < 75 ? "Late" : "Stopped", age == null ? warn : age < 15 ? ok : age < 75 ? warn : bad],
+    ["Signal engine", isNum(last) ? `Last cycle ${ago(last)} · every 4 min` : "No cycle seen yet", age == null ? "Unknown" : age < 15 ? "Running" : age < 75 ? "Late" : "Stopped", age == null ? warn : age < 15 ? ok : age < 75 ? warn : bad],
     ["AI models", `${active} active${newest ? ` · newest ${ago(newest)}` : ""}`, active ? "Ready" : "Training", active ? ok : warn],
     ["Market data", health?.market_data?.status ? `Feed ${String(health.market_data.status).toLowerCase()}${isNum(health.market_data.quality_pct) ? ` · ${health.market_data.quality_pct}% complete` : ""}` : "—", health?.status ?? "—", health?.status === "LIVE" ? ok : health?.status === "DOWN" ? bad : warn],
     ...(!admin ? [] : [["Free-plan budget", isNum(writes) ? `${writes.toLocaleString()} of ${Number(budget).toLocaleString()} writes today` : "—", isNum(writes) ? `${Math.round((writes / budget) * 100)}%` : "—", isNum(writes) && writes / budget > 0.9 ? warn : ok],

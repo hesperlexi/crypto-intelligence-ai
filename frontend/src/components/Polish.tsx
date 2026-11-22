@@ -29,6 +29,12 @@ export function CoinAvatar({ symbol, size = 34 }: { symbol: string; size?: numbe
         style={{ width: size, height: size, fontSize: size * 0.38, color: "#3b2a00", background: "radial-gradient(circle at 35% 30%, #fff1b8, #f0b90b 55%, #b8860b)" }}>Au</span>
     );
   }
+  if (b === "SILVER") {
+    return (
+      <span aria-hidden="true" className="flex shrink-0 items-center justify-center rounded-full font-bold ring-1 ring-[#b9c0c8]/40"
+        style={{ width: size, height: size, fontSize: size * 0.38, color: "#262b31", background: "radial-gradient(circle at 35% 30%, #ffffff, #b9c0c8 55%, #6b727b)" }}>Ag</span>
+    );
+  }
   if (!failed) {
     return <img src={`${ICONS}/${b.toLowerCase()}.svg`} alt="" width={size} height={size} loading="lazy" onError={() => { MISSING_ICONS.add(b); setFailed(true); }}
       className="shrink-0 rounded-full bg-glass/[0.04] ring-1 ring-glass/10" style={{ width: size, height: size }} />;

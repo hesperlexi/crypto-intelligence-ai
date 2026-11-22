@@ -38,6 +38,7 @@ export function BeadDefs({ id }: { id: string }) {
       <clipPath id={`${id}-round`} clipPathUnits="objectBoundingBox"><circle cx="0.5" cy="0.5" r="0.5" /></clipPath>
       <radialGradient id={`${id}-shade`} cx="35%" cy="30%" r="75%"><stop offset="0%" stopColor="#fff" stopOpacity="0.32" /><stop offset="45%" stopColor="#fff" stopOpacity="0" /><stop offset="100%" stopColor="#000" stopOpacity="0.55" /></radialGradient>
       <radialGradient id={`${id}-gold`} cx="35%" cy="30%"><stop offset="0%" stopColor="#fff1b8" /><stop offset="55%" stopColor="#f0b90b" /><stop offset="100%" stopColor="#8a6408" /></radialGradient>
+      <radialGradient id={`${id}-silver`} cx="35%" cy="30%"><stop offset="0%" stopColor="#ffffff" /><stop offset="55%" stopColor="#b9c0c8" /><stop offset="100%" stopColor="#5d646d" /></radialGradient>
       <filter id={`${id}-glow`} x="-80%" y="-80%" width="260%" height="260%"><feGaussianBlur stdDeviation="2.4" /></filter>
     </defs>
   );
@@ -53,6 +54,9 @@ export function CoinBead({ id, symbol, x, y, r, tone, ring = 1.4, shade = true }
       {b === "GOLD" ? <>
         <circle cx={x} cy={y} r={r} fill={`url(#${id}-gold)`} />
         <text x={x} y={y + r * 0.34} textAnchor="middle" fontSize={r * 0.95} fontWeight="800" fill="#3b2a00">Au</text>
+      </> : b === "SILVER" ? <>
+        <circle cx={x} cy={y} r={r} fill={`url(#${id}-silver)`} />
+        <text x={x} y={y + r * 0.34} textAnchor="middle" fontSize={r * 0.95} fontWeight="800" fill="#262b31">Ag</text>
       </> : failed ? <>
         <circle cx={x} cy={y} r={r} fill={`hsl(${h} 62% 42%)`} />
         <text x={x} y={y + r * 0.32} textAnchor="middle" fontSize={r * (b.length > 3 ? 0.62 : 0.8)} fontWeight="700" fill="#fff">{b.slice(0, 3)}</text>

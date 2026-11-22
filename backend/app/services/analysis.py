@@ -36,6 +36,10 @@ ONE_CALL_TFS = ("15m",)
 # timeframes whose trade calls are paused (owner decision 30 Oct 2026: 15m lost money on unseen data, -0.17R per trade);
 # v2.32 (owner, 14 Nov 2026): Binance bStocks (tokenized shares) not tradable on MEXC / most accounts: no new calls,
 # removed from the watchlist once nothing runs on them (worker.retire_coins, flag RETIRE_FLAG)
+# v2.69 (owner, 22 Nov 2026): watch-only coins - the call is worked out and shown for study (`watch`), but it is never
+# published as a signal, traded by bots / Hesper / auto-trade, or counted in the record; followed privately in
+# `rejected_signals` (flag WATCH ONLY) so the admin can see how its calls would have done
+WATCH_ONLY_COINS = tuple(c.strip() for c in os.environ.get("WATCH_ONLY_COINS", "XAG/USDT").split(",") if c.strip())
 RETIRING_COINS = tuple(c.strip() for c in os.environ.get("RETIRING_COINS", "MSTRB/USDT,SPCXB/USDT").split(",") if c.strip())
 RETIRE_FLAG = "retire_bstocks_v232"
 # the analysis, chart and forecast still run, only no trade call is issued. Env PAUSED_TFS, comma separated ("" = none).
@@ -110,6 +114,15 @@ def filter_off(rt: Any, timeframe: str) -> bool:
 
 # fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
 PRIVATE_FIELDS = ("demo", "risk_shadow", "filter_bypassed")   # v2.65: shadow fields stay engine-side
+
+
+def watch_gate(symbol: str, decision: str, grade: str | None) -> tuple[dict[str, Any] | None, tuple[str, str | None, str]]:
+    """v2.69: a trade call on a watch-only coin -> (the call kept for display, (NO TRADE, None, reason));
+    anything else -> (None, unchanged)."""
+    if decision in TRADE_DECISIONS and symbol in WATCH_ONLY_COINS:
+        return ({"decision": decision, "grade": grade},
+                ("NO TRADE", None, "watch only: this call is shown for study - not traded by the bots and not counted in the results"))
+    return None, (decision, grade, "")
 
 
 def public_view(a: dict[str, Any]) -> dict[str, Any]:
@@ -614,6 +627,12 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         decision, grade = "NO TRADE", None
         why = f"capital protection: {risk_check.get('reason')}"
         flags.append("CAPITAL PROTECTION")
+    watch = None
+    if live and bundle is None and as_of is None:
+        watch, held = watch_gate(symbol, decision, grade)
+        if watch:
+            decision, grade, why = held
+            flags.append("WATCH ONLY")
     demo = None
     if decision in TRADE_DECISIONS and timeframe in DEMO_ONLY_TFS and live and bundle is None and as_of is None:
         # v2.8: the demo bots may take it (their own grade rule applies); it is never published or recorded as a signal
@@ -643,7 +662,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         "filter_bypassed": bool(filter_bypassed and decision in TRADE_DECISIONS),
         "risk_shadow": risk_check,
         "safety": safety_state,
-        "grade": grade, "demo": demo, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
+        "grade": grade, "demo": demo, "watch": watch, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
         "filter_score": filter_score, "filter_threshold": (tf_view or {}).get("threshold"), "filter2": filter2,
         "series_policy": spol if (spol.get("blocked") or spol.get("conf_b") is not None) else None,
         "confidence": confidence, "confidence_detail": conf_detail,

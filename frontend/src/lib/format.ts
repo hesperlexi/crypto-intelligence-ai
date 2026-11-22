@@ -83,7 +83,7 @@ export function slug(symbol: string): string {
 /** Coin name for display. PAXG (one token = one troy ounce of gold, tracks XAU/USD) is shown as GOLD. */
 export function base(symbol: string): string {
   const b = symbol.split("/")[0];
-  return b === "PAXG" ? "GOLD" : b;
+  return b === "PAXG" ? "GOLD" : b === "XAG" ? "SILVER" : b;   // v2.69 silver perpetual shown as SILVER
 }
 export const isGoldSignal = (symbol?: string | null) => !!symbol && symbol.startsWith("PAXG/");
 

@@ -241,7 +241,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
   const sigs = [...openSigs].sort((a, b) => (sigSort === "oldest" ? 1 : -1) * ((a.created_at ?? 0) - (b.created_at ?? 0))).slice(0, 5);
 
   const sources: { name: string; sub: string; at: unknown; level: Level }[] = [
-    { name: "Engine cycle", sub: `every ${e.schedule_minutes ?? 5} min`, at: e.last_tick_finished, level: engineLevel },
+    { name: "Engine cycle", sub: `every ${e.schedule_minutes ?? 4} min`, at: e.last_tick_finished, level: engineLevel },
     { name: "Candles (Binance spot)", sub: e.data_host?.replace("https://", "") ?? "market data", at: md.last_update_ms ?? ex.last_ok_ms, level: mdLevel },
     { name: "Live prices (this browser)", sub: feed?.transport ?? "Binance WebSocket", at: feed?.last_update_ms, level: connected ? "ok" : "warn" },
     { name: "Futures funding", sub: fundSrc || "bots report", at: bots?.generated_at, level: futLevel },
@@ -443,7 +443,7 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
           <div className="grid gap-x-8 md:grid-cols-2">
             <div>
               <Row k="Last cycle" v={e.last_tick_finished ? ago(e.last_tick_finished) : "not run yet"} className={tickAge != null && tickAge > 45 * MIN ? "text-warn" : ""} />
-              <Row k="Runs every" v={`${e.schedule_minutes ?? 5} min · ${e.ticks ?? 0} cycles so far`} />
+              <Row k="Runs every" v={`${e.schedule_minutes ?? 4} min · ${e.ticks ?? 0} cycles so far`} />
               <Row k="Cycle duration" v={isNum(e.last_tick_seconds) ? `${e.last_tick_seconds}s` : DASH} />
               <Row k="Failed steps" v={failed.length ? failed.join(", ") : "none"} className={failed.length ? "text-warn" : ""} />
               <Row k="Last training run" v={e.last_train?.finished_at ? ago(e.last_train.finished_at) : "not yet"} />

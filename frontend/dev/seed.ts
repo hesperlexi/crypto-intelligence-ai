@@ -62,7 +62,7 @@ function plan(price: number, side: 1 | -1, valid = true, runner = false) {
 function futuresRows(tf: string) {
   // vary the sample calls by timeframe so the Signals "All" list looks like a real mix
   const k = Math.max(0, ["4h", "15m", "1h", "12h", "1d", "3d"].indexOf(tf));
-  return COINS.map(([symbol, price], i) => {
+  const rows = COINS.map(([symbol, price], i) => {
     const d = DEC[(i + 3 * k) % DEC.length];
     const side = d === "SELL" ? -1 : d.startsWith("BUY") ? 1 : 0;
     const p_up = side > 0 ? 0.58 : side < 0 ? 0.24 : 0.41, p_down = side < 0 ? 0.55 : side > 0 ? 0.21 : 0.37;
@@ -90,12 +90,19 @@ function futuresRows(tf: string) {
     }
     return row;
   });
+  // v2.69 silver: watch only - the engine's call is shown, side stays 0 (never traded or counted)
+  rows.push({ symbol: "XAG/USDT", status: "OK", timeframe: tf, price: 41.64, action: "NO TRADE", side: 0, decision: "NO TRADE",
+    decision_reason: "watch only: this call is shown for study - not traded by the bots and not counted in the results",
+    lean: "LONG", p_up: 0.57, p_down: 0.22, p_neutral: 0.21, confidence: 0.6, grade: null, regime: "BULL", signal: "BUY",
+    funding_rate: 0.0001, record_status: null, stale: false, call: null, watch: { action: "LONG", side: 1, grade: "A" },
+    plan: plan(41.64, 1, true, false) } as any);
+  return rows;
 }
 
 function dashboard(tf: string) {
   const rows = COINS.map(([symbol, price, ch], i) => ({ symbol, status: "OK", price, change_24h_pct: ch, regime: REG[i], signal: SIG[i], score: 40 + ((i * 17) % 50), decision: DEC[i], confidence: 0.55 + (i % 4) * 0.04, grade: DEC[i] !== "NO TRADE" ? "A" : null }));
   // preview: a full-size watchlist (29 coins) so the dial / sonar can be judged at real density
-  const EXTRA = ["PEPE", "ENA", "GALA", "TRX", "UNI", "LINK", "ADA", "SUI", "DOT", "NEAR", "BCH", "HBAR", "SHIB", "BONK", "APT", "RARE", "ANTHROPIC", "MSTR", "ETC"];
+  const EXTRA = ["PEPE", "ENA", "GALA", "TRX", "UNI", "LINK", "ADA", "SUI", "DOT", "NEAR", "BCH", "HBAR", "SHIB", "BONK", "APT", "RARE", "ANTHROPIC", "MSTR", "ETC", "XAG"];
   EXTRA.forEach((b, j) => rows.push({ symbol: `${b}/USDT`, status: "OK", price: 1 + j, change_24h_pct: ((j * 7) % 13) - 8, regime: j % 6 === 0 ? "BULL" : j % 5 === 0 ? "NEUTRAL" : "BEAR",
     signal: j % 6 === 0 ? "BUY" : j % 5 === 0 ? "HOLD" : j % 3 === 0 ? "SELL" : "HOLD", score: 25 + ((j * 23) % 70), decision: "NO TRADE", confidence: 0.5, grade: null }));
   const HZ = ["15M", "1H", "4H", "12H", "24H", "3D"];

@@ -44,7 +44,7 @@ from . import views
 from .redact import error_text, install_logging_redaction, redact
 
 log = logging.getLogger("engine")
-SCHEDULE_MIN = 5
+SCHEDULE_MIN = 4
 HOURLY_TFS = {"12h", "1d", "3d", "1w"}
 
 
@@ -110,6 +110,7 @@ MAJOR_COINS = ["BTC/USDT", "ETH/USDT", "XRP/USDT", "BNB/USDT", "SOL/USDT", "DOGE
 # (Binance: Toncoin TON -> Gram GRAM, trading as GRAM/USDT from 2026-07-02)
 RENAMED = {"TON/USDT": "GRAM/USDT"}
 MSTR = "MSTR/USDT"           # v2.49 Strategy Inc. stock perpetual (futures only, data/futures_only.py)
+SILVER = "XAG/USDT"          # v2.69 silver (XAG) perpetual, MEXC SILVER_USDT; watch only (analysis.WATCH_ONLY_COINS)
 ANTHROPIC = "ANTHROPIC/USDT" # v2.65 Anthropic pre-IPO perpetual (futures only, MEXC ANTHROPIC_USDT)
 GOLD = "PAXG/USDT"           # gold (tracks XAU/USD); added to the watchlist once in v2.1
 MEMBER_COIN_LIMIT = 5        # default: coins one member can add for themselves (admin can change: config/limits)
@@ -425,7 +426,7 @@ MIGRATION_FLAGS = (
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
-    "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265",
+    "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -659,6 +660,15 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/watchlist", doc)
                 notes["anthropic_v265"] = {"added": ANTHROPIC, "removed_ant": "ANT/USDT" in names}
             rt.db.set_setting("anthropic_v265", True)
+        if not rt.db.get_setting("silver_v269", False) and os.environ.get("ADD_MSTR", "1") != "0":
+            # v2.69 (owner, 22 Nov 2026): silver on the list to study its calls and direction; pinned so the coin
+            # scorecard never suggests removing it. Watch only: never traded by bots / auto-trade, never in the record.
+            have = {norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]}
+            if SILVER not in have:
+                doc = {**doc, "symbols": list(doc["symbols"]) + [{"symbol": SILVER, "pinned": True}], "updated_at": now_ms()}
+                sink.set("config/watchlist", doc)
+                notes["silver_v269"] = SILVER
+            rt.db.set_setting("silver_v269", True)
         # renamed coins: rewrite the watchlist once so the website shows the new name too
         names = [norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]]
         if any(n in RENAMED for n in names):

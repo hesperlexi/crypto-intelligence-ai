@@ -63,7 +63,7 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
 
 // ---- v2.63: Last Stand card, and one card per closed trade / finished run (both challenges) ------------------------
 
-const coinOf = (s: unknown) => { const x = String(s ?? ""); return x.startsWith("PAXG") ? "GOLD" : x.split("/")[0]; };
+const coinOf = (s: unknown) => { const x = String(s ?? ""); return x.startsWith("PAXG") ? "GOLD" : x.startsWith("XAG/") ? "SILVER" : x.split("/")[0]; };
 const signed = (v: unknown) => (isNum(v) ? `${v >= 0 ? "+" : "−"}${usd(Math.abs(v))}` : "—");
 const pctTxt = (v: unknown, d = 0) => (isNum(v) ? `${v >= 0 ? "+" : "−"}${Math.abs(v).toFixed(d)}%` : "—");
 export const lasted = (ms: unknown) => {

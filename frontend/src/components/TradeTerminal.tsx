@@ -37,7 +37,7 @@ const StreamCtx = createContext<StreamState | null>(null);
 export const GOLD = "XAUT/USDT";
 // v2.46 (owner, 16 Nov 2026): Strategy (MicroStrategy) stock perpetual, MSTRUSDT on Binance USDⓈ-M (also on MEXC) -
 // futures only, like gold: live chart, order book and demo trading. MSTR has AI signals since v2.49 (MEXC candles).
-const FUT_ONLY: Record<string, string> = { [GOLD]: "GOLD", "MSTR/USDT": "STOCK", "ANTHROPIC/USDT": "PRE-IPO" };
+const FUT_ONLY: Record<string, string> = { [GOLD]: "GOLD", "MSTR/USDT": "STOCK", "ANTHROPIC/USDT": "PRE-IPO", "XAG/USDT": "SILVER" };
 const isGold = (s: string) => s in FUT_ONLY;            // any futures-only pair (name kept: used across this file)
 
 function useFutOnlyListed(): string[] {

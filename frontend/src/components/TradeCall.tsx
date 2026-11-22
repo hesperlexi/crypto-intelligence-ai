@@ -36,6 +36,13 @@ export function GradeBadge({ grade, small = false }: { grade?: string | null; sm
 
 export function verdictOf(r: any, market: Market): Verdict {
   const p = r?.plan;
+  // v2.69 watch-only coin (silver): the engine's call is shown for study, never traded or counted (`side` stays 0)
+  const w = r?.watch;
+  if (w && p?.valid && (market === "futures" || w.side > 0)) {
+    const long = w.side > 0;
+    return { label: "WATCH", tone: long ? "bull" : "bear",   // the ▲ / ▼ arrow gives the side (a longer pill overlaps the price on phones)
+      headline: `Watch only: the AI would go ${w.action === "LONG ON PULLBACK" ? "long after a small dip" : long ? "long" : "short"}` };
+  }
   if (market === "futures") {
     if (r?.side > 0 && p?.valid) return r.action === "LONG ON PULLBACK"
       ? { label: "LONG ON PULLBACK", tone: "bull", headline: "Wait for a small dip, then open a LONG" }
@@ -172,12 +179,15 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
           </div>
         </Link>
         <div className="flex shrink-0 flex-col items-end gap-1.5 sm:flex-row sm:items-center sm:gap-2">
-          {v.tone !== "wait" && <GradeBadge grade={r.grade} small />}
+          {v.tone !== "wait" && <GradeBadge grade={r.grade ?? r.watch?.grade} small />}
           <span className={`sc-side sc-side-${v.tone}`}>{v.tone === "bull" ? "▲ " : v.tone === "bear" ? "▼ " : ""}{v.label}</span>
         </div>
       </header>
 
       <div className="space-y-3.5 p-4 sm:p-5">
+        {r.watch && v.tone !== "wait" && (
+          <div className="sc-alert sc-alert-warn" role="note">Watch only, for study: the bots and auto-trade don't take it, and it isn't counted in the results.</div>
+        )}
         {r.stale === true && (
           <div className="sc-alert sc-alert-warn font-semibold" role="status">Data delayed — no trade</div>
         )}

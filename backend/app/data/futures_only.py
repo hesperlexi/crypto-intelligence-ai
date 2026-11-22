@@ -18,7 +18,8 @@ import requests
 from ..redact import redact
 
 FUT_ONLY: dict[str, str] = {"MSTR/USDT": "MSTRSTOCK_USDT",       # app symbol -> MEXC contract
-                            "ANTHROPIC/USDT": "ANTHROPIC_USDT"}  # v2.65 Anthropic pre-IPO perpetual (MEXC since 14 Apr 2026)
+                            "ANTHROPIC/USDT": "ANTHROPIC_USDT",  # v2.65 Anthropic pre-IPO perpetual (MEXC since 14 Apr 2026)
+                            "XAG/USDT": "SILVER_USDT"}           # v2.69 silver perpetual (MEXC since 29 Dec 2025), watch only
 MEXC = "https://contract.mexc.com/api/v1/contract"
 NATIVE = {"1m": "Min1", "5m": "Min5", "15m": "Min15", "30m": "Min30", "1h": "Min60", "4h": "Hour4", "1d": "Day1",
           "1w": "Week1"}
@@ -36,8 +37,13 @@ def mexc_rows(data: dict[str, Any], size: float) -> list[list[float]]:
     """MEXC column arrays -> [[open ms, o, h, l, c, base volume]] (volume in contracts x contract size)."""
     t = data.get("time") or []
     o, h, l, c, v = (data.get(k) or [] for k in ("open", "high", "low", "close", "vol"))
-    return [[int(t[i]) * 1000, float(o[i]), float(h[i]), float(l[i]), float(c[i]), float(v[i]) * size]
-            for i in range(min(len(t), len(o), len(h), len(l), len(c), len(v)))]
+    # v2.69: thin MEXC contracts (ANTHROPIC ~9% of 15m bars) report a high below the open/close or a low above it;
+    # the high / low are widened to cover the open and close, as exchanges' own candles always do
+    out = []
+    for i in range(min(len(t), len(o), len(h), len(l), len(c), len(v))):
+        oo, hh, ll, cc = float(o[i]), float(h[i]), float(l[i]), float(c[i])
+        out.append([int(t[i]) * 1000, oo, max(hh, oo, cc), min(ll, oo, cc), cc, max(float(v[i]), 0.0) * size])
+    return out
 
 
 def aggregate(rows: list[list[float]], step: int, n: int, now: int | None = None) -> list[list[float]]:

@@ -1250,3 +1250,19 @@ up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 str
   4/5 FAILED (4h cut by a third). Per-coin exits study `research_exits_coin.py` (`research-exits-coin.yml`): FAIL
   (+56.3R → +48.3R) - live exits unchanged. `research_verdict.verdict(..., affected=)` for same-call outcome changes.
 - Engine round timings: Health admin `engine.step_seconds(_avg/_max)`, `round_seconds_avg/max` (setting `step_times`, last 48).
+
+## v2.69 silver watch-only + write / timing fixes (owner, 22 Nov 2026)
+- **Silver** = app symbol `XAG/USDT` (shown as SILVER, "Ag" bead/avatar; browser charts = Binance USDⓈ-M XAGUSDT, Pro chart
+  FOREXCOM:XAGUSD), engine candles from MEXC `SILVER_USDT` (`futures_only.FUT_ONLY`, since 29 Dec 2025; probe
+  `silver-probe.yml` → `reports/silver-probe.json`). Added once, **pinned** (scorecard never suggests removal), flag
+  `silver_v269` (in `MIGRATION_FLAGS`, gated by `ADD_MSTR`). Margin tier 2 %.
+- **Watch only** (`analysis.WATCH_ONLY_COINS`, env, default "XAG/USDT"; `analysis.watch_gate`): a live trade call becomes
+  NO TRADE flag "WATCH ONLY" with the call kept in `watch` {decision, grade} → never in `signals` / record / performance,
+  bots, Hesper, Last Stand, auto-trade, alerts, Telegram, same-side cap. Applied before the demo-only step. Followed privately
+  in `rejected_signals` (flag "WATCH ONLY" in `proof_checks.FLAGS`) → Trade Guardian filter board shows how its calls did.
+  `futures_view` adds `watch` {action, side, grade} (row `side` stays 0); `TradeCall.verdictOf` shows "▲ WATCH" /
+  "Watch only: the AI would go long" + amber note, with the plan levels. Tests `tests/test_silver_v269.py`.
+- MEXC candles: `mexc_rows` widens high / low to cover open / close (ANTHROPIC had ~9 % malformed 15m bars), volume ≥ 0.
+- Writes: `sinks.EDGE_FS_EVERY_S` 900 → **3600** (measured 22 Nov: ~13.8K writes/day pace with 900 - the Firestore backup
+  copies of analysis_/perf_ views were the bulk). Engine cycle 5 → **4 min** (`engine_loop.EVERY_S`, env `ENGINE_EVERY_S`;
+  rounds avg 156 s, max 188 s; analyses ~103 s of it). `worker.SCHEDULE_MIN` 4.
