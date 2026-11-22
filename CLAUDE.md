@@ -1228,3 +1228,7 @@ up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 str
 - v2.68 (22 Nov 2026): the Worker's chat counters and role cache moved from KV (1,000 writes/day free, per account) to the
   Durable Object (`/kv/get|put|spend`, table `kv`); KV keeps only the diag notes (model memo written only when it changes).
   One Worker on purpose: Cloudflare's free limits are per account, so a second worker adds no room.
+- v2.68 health split (owner: members must not see plan / writes): `views/health` = `health.member_view` (status, generated_at,
+  engine.last_tick_finished, market_data status/quality, models_summary {active, newest}); the full status is
+  `views/health_admin` (admin only in the rules + rules test). Health page reads `/system/admin`; Command Centre Mission
+  control shows "Free-plan budget" and "Errors" only to the admin. Scripts read health_admin first.

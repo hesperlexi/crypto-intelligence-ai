@@ -1372,7 +1372,8 @@ def publish_status(rt: Runtime, sink: BaseSink, engine: dict[str, Any]) -> None:
     except Exception:
         h["safety"] = []
     public, admin = health.split_errors(h)        # v2.13: raw errors only in the admin-only view
-    sink.view("health", public, volatile=())
+    sink.view(health.ADMIN_VIEW, public, volatile=())                 # v2.68: the full status, admin only
+    sink.view("health", health.member_view(public), volatile=())      # members: engine age, feed, models ready
     sink.view(health.ERRORS_VIEW, admin, volatile=("generated_at",))   # written only when the errors change
     sink.view("meta", views.meta(rt, engine), volatile=())
 

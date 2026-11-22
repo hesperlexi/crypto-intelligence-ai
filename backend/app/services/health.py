@@ -73,6 +73,25 @@ def report(rt: Runtime, full: bool = True) -> dict[str, Any]:
 ERRORS_VIEW = "health_errors"        # views/health_errors: admin only (firestore rules); views/health stays member-readable
 
 
+ADMIN_VIEW = "health_admin"
+
+
+def member_view(public: dict[str, Any]) -> dict[str, Any]:
+    """v2.68 (owner: "why are we showing the health details to members? especially the plan and writes"): members get
+    only what the app shows them - engine running / late, feed status, how many AI models are ready. Writes, reads,
+    budgets, plan limits, bots, safeguards, Cloudflare, errors and everything else are in the admin-only views/health_admin."""
+    e = public.get("engine") or {}
+    md = public.get("market_data") or {}
+    models = public.get("models") or []
+    return {
+        "status": public.get("status"), "generated_at": public.get("generated_at"),
+        "engine": {"last_tick_finished": e.get("last_tick_finished")},
+        "market_data": {"status": md.get("status"), "quality_pct": md.get("quality_pct")},
+        "models_summary": {"active": sum(1 for m in models if m.get("version")),
+                           "newest": max([m.get("trained_at") or 0 for m in models] or [0]) or None},
+    }
+
+
 def split_errors(h: dict[str, Any]) -> tuple[dict[str, Any], dict[str, Any]]:
     """(member-readable health, admin-only error detail). Raw error texts (recent engine errors, the exchange / feed's
     last error, model training messages) go only to the admin view; members see that there is an error, not its text.

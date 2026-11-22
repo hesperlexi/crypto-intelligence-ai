@@ -4,7 +4,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore
 
 firebase_admin.initialize_app(credentials.Certificate(json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])), {"projectId": "crypapp-6a9b9"})
-doc = firestore.client().document("views/health").get().to_dict() or {}
+doc = firestore.client().document("views/health_admin").get().to_dict() or firestore.client().document("views/health").get().to_dict() or {}
 h = json.loads(doc.get("json") or "{}")
 now = time.time() * 1000
 series = h.get("series") or []

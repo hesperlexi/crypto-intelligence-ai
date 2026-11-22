@@ -114,7 +114,7 @@ function useViewDoc(name: string): any {
 type Service = { id: string; name: string; level: Level; line: string; target: string };
 
 export default function Health() {
-  const h = useApi<any>("/system/health", 10000);
+  const h = useApi<any>("/system/admin", 10000);
   // raw error texts live in an admin-only document (v2.13); the Health page is admin-only, so it reads both
   const he = useApi<any>("/system/errors", 30000);
   const tr = useApi<any>("/track-record");

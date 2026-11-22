@@ -11,6 +11,7 @@ import { Segmented } from "../components/kit";
 import { CoinAvatar } from "../components/Polish";
 import { ErrorBox, Loading } from "../components/ui";
 import { useApi } from "../lib/api";
+import { isAdmin } from "../lib/session";
 import { useKlines } from "../lib/klines";
 import LazyMount from "../components/LazyMount";
 import { CoinCompare, SignalJourneys } from "../components/CommandPlus";
@@ -394,8 +395,9 @@ function Mission({ health, connected }: { health: any; connected: boolean }) {
   const last = e.last_tick_finished;
   const age = isNum(last) ? (Date.now() - last) / 60_000 : null;
   const models: any[] = health?.models ?? [];
-  const active = models.filter((m) => m.version).length;
-  const newest = Math.max(0, ...models.map((m) => m.trained_at ?? 0));
+  const active = health?.models_summary?.active ?? models.filter((m) => m.version).length;
+  const newest = health?.models_summary?.newest ?? Math.max(0, ...models.map((m) => m.trained_at ?? 0));
+  const admin = isAdmin();                                   // v2.68: plan budget and errors are for the owner only
   const writes = e.firestore_writes_today, budget = isNum(e.firestore_free_limit) ? e.firestore_free_limit : 20000;
   const errs = health?.recent_errors_count ?? 0;
   const ok = "rgb(var(--bull))", warn = "rgb(var(--warn))", bad = "rgb(var(--bear))";
@@ -404,8 +406,8 @@ function Mission({ health, connected }: { health: any; connected: boolean }) {
     ["Signal engine", isNum(last) ? `Last cycle ${ago(last)} · every 5 min` : "No cycle seen yet", age == null ? "Unknown" : age < 15 ? "Running" : age < 75 ? "Late" : "Stopped", age == null ? warn : age < 15 ? ok : age < 75 ? warn : bad],
     ["AI models", `${active} active${newest ? ` · newest ${ago(newest)}` : ""}`, active ? "Ready" : "Training", active ? ok : warn],
     ["Market data", health?.market_data?.status ? `Feed ${String(health.market_data.status).toLowerCase()}${isNum(health.market_data.quality_pct) ? ` · ${health.market_data.quality_pct}% complete` : ""}` : "—", health?.status ?? "—", health?.status === "LIVE" ? ok : health?.status === "DOWN" ? bad : warn],
-    ["Free-plan budget", isNum(writes) ? `${writes.toLocaleString()} of ${Number(budget).toLocaleString()} writes today` : "—", isNum(writes) ? `${Math.round((writes / budget) * 100)}%` : "—", isNum(writes) && writes / budget > 0.9 ? warn : ok],
-    ["Errors · recent", errs ? `${errs} logged by the engine` : "None logged", String(errs), errs ? warn : ok],
+    ...(!admin ? [] : [["Free-plan budget", isNum(writes) ? `${writes.toLocaleString()} of ${Number(budget).toLocaleString()} writes today` : "—", isNum(writes) ? `${Math.round((writes / budget) * 100)}%` : "—", isNum(writes) && writes / budget > 0.9 ? warn : ok],
+    ["Errors · recent", errs ? `${errs} logged by the engine` : "None logged", String(errs), errs ? warn : ok]] as [string, string, string, string][]),
   ];
   return (
     <ul className="grid h-full auto-rows-fr gap-2 sm:grid-cols-2">
@@ -515,7 +517,7 @@ export default function Command() {
   const track = useApi<any>("/track-record");
   const mc = useApi<any>("/market-context");
   const ctx = useApi<any>("/context", 600000);
-  const health = useApi<any>("/system/health");
+  const health = useApi<any>(isAdmin() ? "/system/admin" : "/system/health");
   const news = useApi<any>("/news", 300_000);
   const { connected } = useLive();
   const rows: any[] = (dash.data?.rows ?? []).filter((r: any) => r.status === "OK");

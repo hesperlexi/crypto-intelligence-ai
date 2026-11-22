@@ -35,12 +35,13 @@ def test_engine_cycle_publishes_views_runs_jobs_and_bots():
                  "alerts", "backtests", "bots", "settings", "models_status", "replay_ranges", "cross_asset_1d"):
         assert _view(sink, name) is not None, name
     assert sink.get("config/bots")["bots"] and sink.get("config/watchlist")["symbols"]
-    assert _view(sink, "health")["engine"]["ticks"] == 1
+    assert _view(sink, "health_admin")["engine"]["ticks"] == 1
     # the demo bots' held-back call never reaches a published analysis view
     import pathlib
     for f in (pathlib.Path(sink.root) / "views").glob("analysis_*.json"):
         assert "demo" not in json.loads(json.loads(f.read_text())["json"]), f.name
-    assert "firestore_engine_budget" in _view(sink, "health")["engine"]
+    assert "firestore_engine_budget" in _view(sink, "health_admin")["engine"]
+    assert "firestore_writes_today" not in _view(sink, "health")["engine"]          # v2.68: members never see the plan / writes
 
     # the website edits configuration and queues work
     sink.set("config/watchlist", {"symbols": [{"symbol": "BTC/USDT", "pinned": True}, {"symbol": "ETH/USDT"},

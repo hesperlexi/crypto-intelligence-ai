@@ -141,7 +141,8 @@ function resolve(path: string, refreshMs: number): Sub {
     case "models": return p[1] === "status" ? view("models_status") : view(`models_${slugOf(p[1])}_${tf}`);
     case "performance": return p[1] ? view(`perf_${slugOf(p[1])}_${tf}`) : view("performance");
     // views/health is member-readable (header engine chip); raw error texts are admin only (views/health_errors, v2.13)
-    case "system": return p[1] === "errors" ? view("health_errors") : view("health");
+    // v2.68: members get a slim views/health (engine age, feed, models ready); the full status is admin only (health_admin)
+    case "system": return p[1] === "errors" ? view("health_errors") : p[1] === "admin" ? view("health_admin") : view("health");
     case "context": return view("context");
     case "market-context": return view("market_context");
     // v2.16 AI coin reports: one document for all coins (views/coin_reports); /coin-reports/<slug> picks one coin

@@ -24,7 +24,7 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
 # size of every published view (what the website downloads), largest first
 out["view_sizes_kb"] = sorted(((d.id, round(len((d.to_dict() or {}).get("json") or "") / 1024, 1)) for d in fs.collection("views").stream()),
                               key=lambda x: -x[1])[:25]
-h = fs.document("views/health").get().to_dict()
+h = fs.document("views/health_admin").get().to_dict() or fs.document("views/health").get().to_dict()
 hj = json.loads(h["json"]) if h else {}
 out["health"] = {"status": hj.get("status"), "engine": {k: v for k, v in (hj.get("engine") or {}).items()
                                                          if not isinstance(v, (list, dict)) or k in ("failed_steps",)},

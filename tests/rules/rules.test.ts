@@ -587,6 +587,12 @@ async function main() {
     await assertFails(readView(as("p1", "p1@example.com"), "health_errors"));
     await assertFails(readView(env.unauthenticatedContext().firestore() as unknown as Firestore, "health_errors"));
   });
+  await test("health_admin: only the admin reads the full status (v2.68)", async () => {
+    await seed({ ...member, "views/health_admin": { json: "{}", updated_at: NOW() } });
+    await assertSucceeds(readView(admin(), "health_admin"));
+    await assertFails(readView(as("m1", "m1@example.com"), "health_admin"));
+    await assertFails(readView(env.unauthenticatedContext().firestore() as unknown as Firestore, "health_admin"));
+  });
   await test("admin/migrations: members cannot read or write it", async () => {
     await seed({ ...member, "admin/migrations": { flags: { fresh_start_v23: true } } });
     const { getDoc } = await import("firebase/firestore");
