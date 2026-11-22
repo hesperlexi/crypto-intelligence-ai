@@ -42,3 +42,18 @@ def test_card_shows_the_watch_call_but_nothing_can_trade_it():
 
 def test_firestore_copy_hourly_while_edge_healthy():
     assert sinks.EDGE_FS_EVERY_S == 3600
+
+
+def test_clean_mexc_candles_once():
+    from app.db import Database
+    from app.services.runtime import Runtime
+
+    class _P:
+        name = "test"
+    rt = Runtime(Database("sqlite:///:memory:"), _P())
+    rt.store.upsert("binance", "ANTHROPIC/USDT", "15m", [[0, 10, 9.5, 9.0, 9.8, 1], [900_000, 10, 11, 9, 10.5, 1]])
+    rt.store.upsert("binance", "BTC/USDT", "15m", [[0, 10, 9.5, 9.0, 9.8, 1]])     # not a MEXC coin: untouched
+    assert worker.clean_mexc_candles(rt) == 1
+    df = rt.store.load("binance", "ANTHROPIC/USDT", "15m")
+    assert float(df["high"].iloc[0]) == 10.0 and worker.clean_mexc_candles(rt) == 0
+    assert float(rt.store.load("binance", "BTC/USDT", "15m")["high"].iloc[0]) == 9.5

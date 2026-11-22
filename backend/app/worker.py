@@ -426,7 +426,7 @@ MIGRATION_FLAGS = (
     "public_1d3d_v212", "reset_v1_done", "bots_lev20_v23", "reset_15m_v23", "members_practice_v23", "reset_15m_v23b",
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
-    "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269",
+    "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269", "mexc_clean_v269",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -669,6 +669,9 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 sink.set("config/watchlist", doc)
                 notes["silver_v269"] = SILVER
             rt.db.set_setting("silver_v269", True)
+        if not rt.db.get_setting("mexc_clean_v269", False):
+            notes["mexc_clean_v269"] = clean_mexc_candles(rt)
+            rt.db.set_setting("mexc_clean_v269", True)
         # renamed coins: rewrite the watchlist once so the website shows the new name too
         names = [norm_symbol(i["symbol"] if isinstance(i, dict) else i) for i in doc["symbols"]]
         if any(n in RENAMED for n in names):
@@ -1214,6 +1217,22 @@ def process_jobs(rt: Runtime, sink: BaseSink, deadline: float) -> int:
             if (job.get("finished_at") or job.get("created_at") or now_ms()) < cutoff:
                 sink.delete(f"jobs/{jid}")
         rt.db.set_setting("jobs_cleanup_at", now_ms())
+    return n
+
+
+def clean_mexc_candles(rt: Runtime) -> int:
+    """v2.69 one-time: stored MEXC candles whose high / low did not cover the open / close (ANTHROPIC ~9 % of 15m bars)
+    are widened, the same rule `futures_only.mexc_rows` now applies to every new candle. Returns the rows fixed."""
+    from .data.futures_only import FUT_ONLY
+    syms = list(FUT_ONLY)
+    marks = ",".join("?" * len(syms))
+    where = f"symbol IN ({marks}) AND (high < MAX(open, close) OR low > MIN(open, close))"
+    row = rt.db.one(f"SELECT COUNT(*) AS n FROM market_data WHERE {where}", tuple(syms))
+    n = int(row["n"]) if row else 0
+    if n:
+        rt.db.execute(f"UPDATE market_data SET high = MAX(high, open, close), low = MIN(low, open, close) WHERE {where}",
+                      tuple(syms))
+        rt.store._cache.clear()
     return n
 
 

@@ -1262,7 +1262,8 @@ up coins top half, down coins bottom, distance = strength, phosphor sweep, 3 str
   in `rejected_signals` (flag "WATCH ONLY" in `proof_checks.FLAGS`) → Trade Guardian filter board shows how its calls did.
   `futures_view` adds `watch` {action, side, grade} (row `side` stays 0); `TradeCall.verdictOf` shows "▲ WATCH" /
   "Watch only: the AI would go long" + amber note, with the plan levels. Tests `tests/test_silver_v269.py`.
-- MEXC candles: `mexc_rows` widens high / low to cover open / close (ANTHROPIC had ~9 % malformed 15m bars), volume ≥ 0.
+- MEXC candles: `mexc_rows` widens high / low to cover open / close (ANTHROPIC had ~9 % malformed 15m bars), volume ≥ 0;
+  stored ones fixed once by `worker.clean_mexc_candles` (flag `mexc_clean_v269`).
 - Writes: `sinks.EDGE_FS_EVERY_S` 900 → **3600** (measured 22 Nov: ~13.8K writes/day pace with 900 - the Firestore backup
   copies of analysis_/perf_ views were the bulk). Engine cycle 5 → **4 min** (`engine_loop.EVERY_S`, env `ENGINE_EVERY_S`;
   rounds avg 156 s, max 188 s; analyses ~103 s of it). `worker.SCHEDULE_MIN` 4.
