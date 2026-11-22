@@ -1,11 +1,11 @@
 {
  "status": "LIVE",
- "generated_min_ago": 0.8,
+ "generated_min_ago": 8.9,
  "market_data": {
   "status": "OK",
   "transport": "engine snapshot (website streams live prices)",
-  "last_update_ms": 1795330479736,
-  "age_s": 289.029,
+  "last_update_ms": 1795332534580,
+  "age_s": 299.62,
   "reconnects": 0,
   "last_error": null,
   "quality_pct": 99.873,
@@ -16,8 +16,8 @@
   "name": "binance",
   "errors": 0,
   "last_error": null,
-  "last_ok_ms": 1795330655253,
-  "clock_skew_ms": 1,
+  "last_ok_ms": 1795332718414,
+  "clock_skew_ms": 0,
   "status": "OK",
   "has_error": false
  },
@@ -26,13 +26,13 @@
   "engine": "sqlite"
  },
  "engine": {
-  "last_tick_finished": 1795330655509,
-  "last_tick_seconds": 188.8,
+  "last_tick_finished": 1795332718656,
+  "last_tick_seconds": 196.2,
   "failed_steps": [],
   "data_host": "https://data-api.binance.vision",
-  "ticks": 7461,
-  "firestore_writes_today": 14297,
-  "firestore_reads_today": 8292,
+  "ticks": 7467,
+  "firestore_writes_today": 14661,
+  "firestore_reads_today": 8490,
   "firestore_member_reserve": 300,
   "firestore_engine_budget": 14700,
   "firestore_lean": false,
@@ -46,24 +46,24 @@
    "symbol": "ANTHROPIC/USDT",
    "timeframe": "15m",
    "status": "DEGRADED",
-   "candles": 21325,
+   "candles": 21327,
    "missing": 0,
    "misaligned": 0,
    "malformed": 1929,
-   "quality_pct": 90.954,
-   "age_s": -31.2,
+   "quality_pct": 90.955,
+   "age_s": 234.2,
    "gaps": []
   },
   {
    "symbol": "ANTHROPIC/USDT",
    "timeframe": "1h",
    "status": "DEGRADED",
-   "candles": 5332,
+   "candles": 5333,
    "missing": 0,
    "misaligned": 0,
    "malformed": 332,
-   "quality_pct": 93.773,
-   "age_s": -31.2,
+   "quality_pct": 93.775,
+   "age_s": -1565.8,
    "gaps": []
   },
   {
@@ -75,7 +75,7 @@
    "misaligned": 0,
    "malformed": 49,
    "quality_pct": 96.327,
-   "age_s": -3631.2,
+   "age_s": -1565.8,
    "gaps": []
   },
   {
@@ -87,7 +87,7 @@
    "misaligned": 0,
    "malformed": 5,
    "quality_pct": 97.758,
-   "age_s": -61231.2,
+   "age_s": -59165.8,
    "gaps": []
   }
  ],
