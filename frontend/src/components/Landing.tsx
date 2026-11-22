@@ -230,6 +230,9 @@ export default function Landing({ error }: { error: string | null }) {
         {/* v2.68 the whole record in one strip + how one signal plays out */}
         <LandingProof />
 
+        {/* v2.76 the trader's tools added in v2.75 */}
+        <ToolsStrip />
+
         <SignalWave className="h-8 w-full" />
 
         {/* how to start: a real sequence, so numbered */}
@@ -308,5 +311,32 @@ export default function Landing({ error }: { error: string | null }) {
       {dialog && <AuthDialog mode={dialog} onClose={() => setDialog(null)} />}
       <SiteFooter apk />
     </div>
+  );
+}
+
+/** v2.76 landing: the tools members get beside the signals (drawings are illustrations, not data). */
+function ToolsStrip() {
+  const items: [string, string, JSX.Element][] = [
+    ["Position-size calculator", "Enter your balance and risk; it gives the size, margin and liquidation price for any signal.",
+      <svg viewBox="0 0 120 56" className="lt-art" aria-hidden="true"><rect x="6" y="8" width="108" height="10" rx="5" className="lt-track" /><rect x="6" y="8" width="44" height="10" rx="5" className="lt-fill" /><rect x="6" y="30" width="50" height="18" rx="5" className="lt-box" /><rect x="64" y="30" width="50" height="18" rx="5" className="lt-box" /><text x="31" y="43" className="lt-num" textAnchor="middle">1%</text><text x="89" y="43" className="lt-num" textAnchor="middle">12x</text></svg>],
+    ["Futures market data", "Open interest, funding, how crowded longs are and taker buying, per coin, updated hourly.",
+      <svg viewBox="0 0 120 56" className="lt-art" aria-hidden="true">{[18, 30, 24, 36, 28, 42, 38].map((h, i) => <rect key={i} x={8 + i * 15} y={50 - h} width="9" height={h} rx="2" className={i > 4 ? "lt-fill" : "lt-bar"} />)}<path d="M8 22 C30 14 50 26 70 16 S104 10 114 8" className="lt-line" /></svg>],
+    ["Liquidation map", "Where leveraged positions would be forced to close above and below the price - an estimate from real open interest.",
+      <svg viewBox="0 0 120 56" className="lt-art" aria-hidden="true">{[6, 10, 16, 9, 22, 13, 5].map((w, i) => <rect key={`s${i}`} x={60} y={4 + i * 7} width={w * 2} height="5" rx="1.5" className="lt-short" />)}{[8, 18, 11, 24, 12, 7, 4].map((w, i) => <rect key={`l${i}`} x={60 - w * 2} y={4 + i * 7} width={w * 2} height="5" rx="1.5" className="lt-long" />)}<line x1="0" x2="120" y1="28" y2="28" className="lt-price" /></svg>],
+  ];
+  return (
+    <section aria-labelledby="lt-title" className="py-14">
+      <h2 id="lt-title" className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">Tools beside every signal</h2>
+      <p className="mt-2 max-w-xl text-sm text-mute">So you can size a trade and see what the futures crowd is doing before you act.</p>
+      <ul className="mt-8 grid gap-4 md:grid-cols-3">
+        {items.map(([t, p, art]) => (
+          <li key={t} className="panel lt-card flex flex-col p-5">
+            {art}
+            <h3 className="font-display mt-4 text-lg font-semibold">{t}</h3>
+            <p className="mt-1 text-sm leading-relaxed text-mute">{p}</p>
+          </li>
+        ))}
+      </ul>
+    </section>
   );
 }

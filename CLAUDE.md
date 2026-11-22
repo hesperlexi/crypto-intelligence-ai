@@ -1313,3 +1313,15 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
 - Speed: coin logos self-hosted `public/coins/*.svg` (spothq/cryptocurrency-icons 0.18.1, CC0; `/coins/**` cached 30 days);
   Command Centre loads only the chosen timeframe's futures board until "Signals in flight" is near (IntersectionObserver).
 - Phone galaxy: names only for the 6 biggest coins, coins with a running call and the locked one.
+
+## v2.76 site tidy (owner, 22 Nov 2026: "scan the website, add or remove" → "all")
+- Coin search: `components/CoinSearch.tsx` (watchlist from `/meta`, GOLD / SILVER aliases, Enter = Binance spot + futures-only
+  search, "/" focuses, opens `/asset/<slug>`) in the desktop top bar (xl+, not on /coins) and as a full-screen sheet from the
+  phone header (`App.SearchButton`). CSS `.csx-*`.
+- `/coins` page (`pages/Coins.tsx`, Markets menu "Coins"): search + `MarketBoard` (table by default, own keys `cia-coins-view`,
+  `cia-coins-tf`). Scanner page deleted; `/scanner` redirects to `/coins`.
+- Backtest / Replay admin only (routes in `AdminOnly`, Tools menu only for the admin). "Analysis only" chip ≥ 1600 px.
+- Overview: Market insights + Volatility & options + Traditional markets in one "Market details" fold (open by default,
+  `cia-home-details`). Demo bots: compact cards (5 key figures, "Details" opens the rest, remembered `cia-bot-open-<id>`).
+- Landing: "Tools beside every signal" (calculator, futures data, liquidation map; drawings are illustrations);
+  Wins of the day rows end level (`WinsToday.evenCut`: two left-over cards share the last row, a lone one is left out at that width).

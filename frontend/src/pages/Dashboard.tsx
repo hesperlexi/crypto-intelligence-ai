@@ -95,14 +95,17 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* dominance, altcoin season, market pulse, top headline */}
-      <MarketInsights />
+      {/* v2.76 (owner: the page is long): the deeper market cards sit in one fold, open by default, remembered */}
+      <DetailsFold>
+        {/* dominance, altcoin season, market pulse, top headline */}
+        <MarketInsights />
 
-      {/* v2.75: options / volatility beside the traditional markets (views/derivs) */}
-      <div className="grid-even grid gap-4 lg:grid-cols-2">
-        <VolOptionsCard />
-        <MacroCard />
-      </div>
+        {/* v2.75: options / volatility beside the traditional markets (views/derivs) */}
+        <div className="grid-even grid gap-4 lg:grid-cols-2">
+          <VolOptionsCard />
+          <MacroCard />
+        </div>
+      </DetailsFold>
     </div>
   );
 }
@@ -211,5 +214,21 @@ function RadarMini() {
         ))}
       </ul>
     </>
+  );
+}
+
+/** Market details fold (v2.76): dominance, altcoin season, pulse, volatility & options, traditional markets. */
+function DetailsFold({ children }: { children: React.ReactNode }) {
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem("cia-home-details") !== "0"; } catch { return true; } });
+  const flip = () => setOpen((v) => { try { localStorage.setItem("cia-home-details", v ? "0" : "1"); } catch { /* ignore */ } return !v; });
+  return (
+    <section aria-label="Market details" className="space-y-4">
+      <button type="button" onClick={flip} aria-expanded={open} className="fold-head">
+        <span className="font-display text-xl font-semibold">Market details</span>
+        <span className="text-sm text-mute">dominance · altcoin season · volatility · traditional markets</span>
+        <span className="ml-auto text-sm font-medium text-accent">{open ? "Hide ▴" : "Show ▾"}</span>
+      </button>
+      {open && children}
+    </section>
   );
 }

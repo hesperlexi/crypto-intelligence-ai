@@ -1,5 +1,6 @@
 import { onAuthStateChanged, signInWithPopup, signOut, User } from "firebase/auth";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
+import CoinSearch from "./components/CoinSearch";
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, Navigate, NavLink, Route, Routes, useLocation } from "react-router-dom";
 import AppearanceButton from "./components/AppearancePanel";
@@ -55,7 +56,7 @@ const Report = page(() => import("./pages/Report"));
 const Achievements = page(() => import("./pages/Achievements"));
 const Paper = page(() => import("./pages/Paper"));
 const Replay = page(() => import("./pages/Replay"));
-const Scanner = page(() => import("./pages/Scanner"));
+const Coins = page(() => import("./pages/Coins"));
 const Settings = page(() => import("./pages/Settings"));
 const Signals = page(() => import("./pages/Signals"));
 const Users = page(() => import("./pages/Users"));
@@ -88,17 +89,18 @@ const NAV = [
 // v2.60: Control room = Health · Trade Guardian · Performance Lab, Share kit = Weekly report · Achievements (AdminTabs)
 const ADMIN_NAV = [["/health", "Control room"], ["/rich", "Hesper Challenge"], ["/report", "Share kit"]] as const;
 // research tools (also reachable from Results → Tools): one "Tools" menu on desktop, one group in the phone More sheet
-const TOOLS_NAV = [["/scanner", "Scanner"], ["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
+// v2.76 (owner): Scanner replaced by Coins (the market board + search); Backtest / Replay are admin tools
+const TOOLS_NAV = [["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
+const COINS = ["/coins", "Coins"] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);
 // the Tools menu sits after Radar in the second group
 // v2.45: Command Centre sits with the market pages (an extra page; nothing else moves)
 const COMMAND = ["/command", "Command Centre"] as const;
 const FLOW_NAV = ["/flow", "Money flow"] as const;   // v2.62
-const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [COMMAND, FLOW_NAV, NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
+const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [COINS, COMMAND, FLOW_NAV, NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
 // phone More sheet (v2.15): grouped instead of one flat grid
 const MORE_GROUPS: [string, (readonly [string, string])[]][] = [
-  ["Markets", [COMMAND, FLOW_NAV, NAV[3], NAV[4]]],
-  ["Tools", [...TOOLS_NAV]],
+  ["Markets", [COINS, COMMAND, FLOW_NAV, NAV[3], NAV[4]]],
   ["Account", [NAV[7], NAV[6], NAV[8]]],
 ];
 
@@ -312,8 +314,8 @@ function Shell({ user }: { user: User }) {
   // live-price snapshot, the sidebar only when these change.
   const sideGroups = useMemo<NavGroup[]>(() => [
     { title: "", items: [NAV[0], NAV[1], NAV[2], NAV[5]] },
-    { title: "Markets", items: [COMMAND, FLOW_NAV, NAV[3], NAV[4]] },
-    { title: "Tools", items: [...TOOLS_NAV], fold: true },
+    { title: "Markets", items: [COINS, COMMAND, FLOW_NAV, NAV[3], NAV[4]] },
+    ...(admin ? [{ title: "Tools", items: [...TOOLS_NAV], fold: true }] : []),
     { title: "Account", items: [NAV[6], NAV[7], NAV[8]] },
     ...(admin ? [{ title: "Admin", items: [...ADMIN_NAV, ["/users", "Users"] as const], fold: true, icon: "/guardian" }] : []),
   ], [admin]);
@@ -341,10 +343,11 @@ function Shell({ user }: { user: User }) {
                   live BTC / ETH beside it where the price strip is not shown */}
               <div className="flex min-w-0 items-center gap-5">
                 <PageTitle />
+                {loc.pathname !== "/coins" && <CoinSearch className="hidden !w-[14rem] shrink-0 xl:flex 2xl:!w-[18rem]" />}
                 {!TAPE_PATHS.has(loc.pathname) && <PriceChips className="hidden min-[1600px]:flex" />}
               </div>
               <div className="flex shrink-0 items-center gap-2.5">
-                <span className="tb-safe" title="This application never places real orders">Analysis only</span>
+                <span className="tb-safe hidden min-[1600px]:inline-flex" title="This application never places real orders">Analysis only</span>
                 <ModeSwitch className="hidden xl:inline-flex" />
                 <InstallButton compact />
                 <AppearanceButton />
@@ -363,6 +366,7 @@ function Shell({ user }: { user: User }) {
               <span className="hidden sm:inline"><Badge tone="mute" title="This application never places real orders">Analysis only</Badge></span>
             </div>
             <div className="flex items-center gap-2">
+              <SearchButton />
               <ModeSwitch className="hidden sm:inline-flex" />
               <InstallButton compact />
               <span className="hidden sm:inline-flex"><AppearanceButton /></span>
@@ -376,7 +380,7 @@ function Shell({ user }: { user: User }) {
                 {g.map(([to, label]) => (
                   <span key={to} className="contents">
                     <NavLink to={to} end={to === "/"} className={navCls}>{navLabel(to, label)}</NavLink>
-                    {to === "/radar" && <NavMenu label="Tools" items={[...TOOLS_NAV]} />}
+                    {to === "/radar" && admin && <NavMenu label="Tools" items={[...TOOLS_NAV]} />}
                   </span>
                 ))}
               </div>
@@ -394,7 +398,8 @@ function Shell({ user }: { user: User }) {
             <Route path="/" element={<Dashboard />} />
             <Route path="/asset/:symbol" element={<Asset />} />
             <Route path="/signals" element={<Signals />} />
-            <Route path="/scanner" element={<Scanner />} />
+            <Route path="/coins" element={<Coins />} />
+            <Route path="/scanner" element={<Navigate to="/coins" replace />} />
             <Route path="/futures" element={<Navigate to="/signals?market=futures" replace />} />
             <Route path="/news" element={<News />} />
             <Route path="/command" element={<Command />} />
@@ -406,8 +411,8 @@ function Shell({ user }: { user: User }) {
             <Route path="/achievements" element={<AdminOnly><Achievements /></AdminOnly>} />
             <Route path="/accuracy" element={<Navigate to="/results?tab=accuracy" replace />} />
             <Route path="/bots" element={<Navigate to="/results?tab=bots" replace />} />
-            <Route path="/backtest" element={<Backtest />} />
-            <Route path="/replay" element={<Replay />} />
+            <Route path="/backtest" element={<AdminOnly><Backtest /></AdminOnly>} />
+            <Route path="/replay" element={<AdminOnly><Replay /></AdminOnly>} />
             <Route path="/history" element={<Navigate to="/results?tab=log" replace />} />
             <Route path="/paper" element={<Paper />} />
             <Route path="/trade" element={<Navigate to="/paper" replace />} />
@@ -451,7 +456,7 @@ function Shell({ user }: { user: User }) {
           {/* the panel itself scrolls (rounded corners stay visible); the wrapper only places it between the top edge and the bar */}
           <div className="panel popover sheet-in pointer-events-auto max-h-full overflow-y-auto overscroll-contain p-2" onClick={(e) => e.stopPropagation()}>
             <div className="nav-sheet space-y-2">
-              {[...MORE_GROUPS, ...(admin ? [["Admin", adminItems] as [string, (readonly [string, string])[]]] : [])].map(([title, items], i) => (
+              {[...MORE_GROUPS, ...(admin ? [["Tools", [...TOOLS_NAV]] as [string, (readonly [string, string])[]], ["Admin", adminItems] as [string, (readonly [string, string])[]]] : [])].map(([title, items], i) => (
                 <div key={title} className={i ? "border-t border-glass/[0.06] pt-2" : ""}>
                   <div className="label px-3 pb-1">{title}</div>
                   {/* auto-fill columns: 3 on wide phones, 2 on most phones, 1 on the narrowest (Z Fold cover); long labels
@@ -487,5 +492,22 @@ function Shell({ user }: { user: User }) {
       <UpdateNotice />
       <NotifyPrompt />
     </div>
+  );
+}
+
+/** v2.76 phones / tablets: a search button in the header opens the coin search full screen. */
+function SearchButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button type="button" className="tap inline-flex items-center justify-center rounded-lg text-mute hover:text-text lg:hidden" aria-label="Search a coin" onClick={() => setOpen(true)}>
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M11 18a7 7 0 100-14 7 7 0 000 14zM21 21l-4.3-4.3" /></svg>
+      </button>
+      {open && (
+        <div className="csx-sheet" role="dialog" aria-modal="true" aria-label="Search a coin" onClick={(e) => { if (e.target === e.currentTarget) setOpen(false); }}>
+          <div className="flex items-center gap-2"><CoinSearch autoFocus onDone={() => setOpen(false)} /><button type="button" className="btn btn-sm shrink-0" onClick={() => setOpen(false)}>Close</button></div>
+        </div>
+      )}
+    </>
   );
 }

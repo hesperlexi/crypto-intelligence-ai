@@ -28,11 +28,11 @@ export default function WinsToday() {
         Wins of the <span className="text-accent">{v.data?.period === "today" ? "day" : "week"}</span>
       </h2>
       <p className="mx-auto mt-2 max-w-xl text-center text-sm text-mute">Real signals from the app that hit their targets {v.data?.period === "today" ? "in the last 24 hours" : "this week"}.</p>
-      <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-6">
         {wins.map((w, i) => {
           const r = roiOf(w);
           return (
-          <li key={i} className="panel relative flex flex-col overflow-hidden border-bull/30 p-0">
+          <li key={i} className={`panel relative flex flex-col overflow-hidden border-bull/30 p-0 ${evenCut(i, wins.length)}`}>
             <div className="pointer-events-none absolute -right-12 -top-12 h-40 w-40 rounded-full bg-bull/15 blur-3xl" aria-hidden="true" />
             <div className="pointer-events-none absolute -left-16 bottom-0 h-32 w-32 rounded-full bg-accent/10 blur-3xl" aria-hidden="true" />
             <div className="relative flex items-center gap-3 px-4 pt-4">
@@ -76,4 +76,13 @@ export default function WinsToday() {
       <p className="mt-1 text-center text-xs text-mute">Past results do not guarantee future results. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
     </section>
   );
+}
+
+/** v2.76 (owner: one card alone on the last row): rows end level - on computers two left-over cards share the last row
+ *  (half width each), a single left-over card is left out at that width (also on tablets' two columns). */
+function evenCut(i: number, n: number): string {
+  const r3 = n % 3, r2 = n % 2;
+  const lg = n >= 3 && r3 === 1 && i === n - 1 ? "lg:hidden" : n >= 3 && r3 === 2 && i >= n - 2 ? "lg:col-span-3" : "lg:col-span-2";
+  const sm = n >= 2 && r2 === 1 && i === n - 1 ? "sm:max-lg:hidden" : "";
+  return `${lg} ${sm}`;
 }

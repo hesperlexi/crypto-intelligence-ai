@@ -948,3 +948,44 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .sc-actions-5 { grid-template-columns: 1fr repeat(4, auto); }
 .signal-card { container-type: inline-size; }
 @container (max-width: 470px) { .sc-actions-5 { grid-template-columns: repeat(4, minmax(0, 1fr)); } .sc-actions-5 > .sc-main { grid-column: 1 / -1; } }
+
+/* v2.76 coin search (top bar) */
+.csx { position: relative; display: flex; align-items: center; width: 100%; max-width: 20rem; }
+.csx-ico { position: absolute; left: 11px; color: rgb(var(--mute)); pointer-events: none; }
+.csx-input { width: 100%; height: 38px; padding: 0 34px 0 34px; border-radius: 10px; font-size: 14px; color: rgb(var(--text));
+  background: rgb(var(--glass) / 0.05); border: 1px solid rgb(var(--glass) / 0.1); outline: none; transition: border-color .15s, background .15s; }
+.csx-input:focus { border-color: rgb(var(--accent) / 0.6); background: rgb(var(--glass) / 0.08); }
+.csx-input::placeholder { color: rgb(var(--mute)); }
+.csx-kbd { position: absolute; right: 9px; font-size: 11px; color: rgb(var(--mute)); border: 1px solid rgb(var(--glass) / 0.15); border-radius: 5px; padding: 0 5px; line-height: 17px; }
+.csx-input:focus ~ .csx-kbd { display: none; }
+.csx-list { position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 60; max-height: 22rem; overflow-y: auto; padding: 6px; border-radius: 12px;
+  background: rgb(var(--panel)); border: 1px solid rgb(var(--glass) / 0.12); box-shadow: 0 24px 50px -20px rgb(0 0 0 / 0.9); }
+.csx-item { display: flex; width: 100%; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 14px; text-align: left; }
+.csx-item.is-on { background: rgb(var(--accent) / 0.1); }
+.csx-more { width: 100%; padding: 9px 10px; border-radius: 8px; font-size: 13.5px; font-weight: 500; text-align: left; color: rgb(var(--accent)); }
+.csx-more:hover { background: rgb(var(--glass) / 0.05); }
+.csx-none { padding: 9px 10px; font-size: 13px; color: rgb(var(--mute)); }
+.csx-sheet { position: fixed; inset: 0; z-index: 70; padding: 14px; background: rgb(var(--ink) / 0.86); backdrop-filter: blur(6px); }
+.csx-sheet .csx { max-width: none; }
+.csx-sheet .csx-input { height: 46px; font-size: 16px; }
+.fold-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 14px; width: 100%; padding: 14px 4px 10px; border-bottom: 1px solid rgb(var(--glass) / 0.08); text-align: left; }
+.fold-head:hover .text-accent { text-decoration: underline; }
+/* v2.76 compact demo bot cards */
+.bot-sum { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 16px; align-items: start; }
+@media (min-width: 640px) { .bot-sum { grid-template-columns: repeat(5, minmax(0, 1fr)) auto; } }
+.bot-more { grid-column: 1 / -1; justify-self: stretch; min-height: 38px; padding: 0 14px; border-radius: var(--r-control, 8px); font-size: 14px; font-weight: 500;
+  color: rgb(var(--accent)); border: 1px solid rgb(var(--accent) / 0.35); background: rgb(var(--accent) / 0.06); }
+@media (min-width: 640px) { .bot-more { grid-column: auto; justify-self: end; align-self: center; } }
+.bot-more:hover { background: rgb(var(--accent) / 0.12); }
+/* v2.76 landing tools strip */
+.lt-art { width: 100%; height: 72px; }
+.lt-track, .lt-box { fill: rgb(var(--glass) / 0.06); stroke: rgb(var(--glass) / 0.12); }
+.lt-fill { fill: rgb(var(--accent) / 0.75); }
+.lt-bar { fill: rgb(var(--glass) / 0.18); }
+.lt-num { font: 600 10px var(--font-num, inherit); fill: rgb(var(--text)); }
+.lt-line { fill: none; stroke: rgb(var(--ai, 96 165 250)); stroke-width: 1.6; }
+.lt-short { fill: rgb(var(--bear) / 0.7); }
+.lt-long { fill: rgb(var(--bull) / 0.7); }
+.lt-price { stroke: rgb(var(--accent)); stroke-dasharray: 3 3; }
+.csx-sheet { z-index: 95; }
+@media (pointer: coarse) { .csx-kbd { display: none; } }

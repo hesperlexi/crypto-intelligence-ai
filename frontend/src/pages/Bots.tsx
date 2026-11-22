@@ -104,6 +104,10 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
     { name: "Bot equity", color: "--accent", baseline: Number(bot.config.starting_balance) || undefined, points: bot.equity_curve.map((p: any) => ({ ts: p.ts, value: p.equity })) },
     { name: "Buy & hold (same coins)", color: "--mute", dashed: true, points: bot.equity_curve.filter((p: any) => isNum(p.benchmark)).map((p: any) => ({ ts: p.ts, value: p.benchmark })) },
   ], [bot.equity_curve, bot.config.starting_balance]);
+  // v2.76 (owner: the tab was ~7 screens long): a compact summary per bot, the full details open on tap (remembered)
+  const openKey = `cia-bot-open-${bot.config.id}`;
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(openKey) === "1"; } catch { return false; } });
+  const flip = () => setOpen((v: boolean) => { try { localStorage.setItem(openKey, v ? "0" : "1"); } catch { /* ignore */ } return !v; });
   const live = bot.positions.map((p: any) => {
     const px = tickers[p.symbol]?.last ?? null;
     const u = px != null ? p.side * p.qty_open * (px - p.entry) : null;
@@ -111,7 +115,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
     return { ...p, px, u, lev, upct: px != null ? p.side * (px / p.entry - 1) * 100 * lev : null };
   });
   return (
-    <Card className="ai-card" title={<span className="flex items-center gap-2"><BotDrone on={bot.config.enabled} size={22} tone={(s.return_pct ?? 0) > 0 ? "bull" : (s.return_pct ?? 0) < 0 ? "bear" : "ai"} /><span className="text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "Prediction tracker" : "Signal bot"}</Badge><Badge tone="mute">{String(bot.config.timeframe).toUpperCase()}</Badge>{fut ? <Badge tone="warn">Futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">Spot</Badge>}{!bot.config.enabled && <Badge tone="warn">Paused</Badge>}</span>}
+    <Card className="ai-card" title={<span className="flex flex-wrap items-center gap-2"><BotDrone on={bot.config.enabled} size={22} tone={(s.return_pct ?? 0) > 0 ? "bull" : (s.return_pct ?? 0) < 0 ? "bear" : "ai"} /><span className="whitespace-nowrap text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "Prediction tracker" : "Signal bot"}</Badge><Badge tone="mute">{String(bot.config.timeframe).toUpperCase()}</Badge>{fut ? <Badge tone="warn">Futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">Spot</Badge>}{!bot.config.enabled && <Badge tone="warn">Paused</Badge>}</span>}
       right={!admin ? undefined : <div className="flex gap-1">
         <button className="btn px-2 py-0.5 text-xs" onClick={onToggle}>{bot.config.enabled ? "Pause" : "Resume"}</button>
         <button className="btn px-2 py-0.5 text-xs" onClick={onEdit}>{editing ? "Close" : "Settings"}</button>
@@ -119,15 +123,21 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
         <button className="btn px-2 py-0.5 text-xs hover:text-bear" onClick={onDelete}>Delete</button>
       </div>}>
       {editing && <Editor cfg={cfg} onSave={onSave} />}
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 xl:grid-cols-8">
-        <Stat label="Equity" value={`$${fmtNum(st.equity)}`} sub={`started $${fmtNum(bot.config.starting_balance, 0)} · ${fmtTime(st.started_at)}`} />
-        <Stat label="Return" value={fmtPctRaw(s.return_pct)} className={tone(s.return_pct)} sub={`buy & hold ${fmtPctRaw(s.benchmark_return_pct)}`} />
+      <div className="bot-sum">
+        <Stat label="Equity" value={`$${fmtNum(st.equity)}`} />
+        <Stat label="Return" value={fmtPctRaw(s.return_pct)} className={tone(s.return_pct)} />
         <Stat label="Closed trades" value={s.trades} sub={`${s.open_positions} open`} />
+        <Stat label="Win rate" value={fmtProb(s.win_rate, 1)} />
+        <div className="max-sm:hidden"><Stat label="Max drawdown" value={fmtPctRaw(s.max_drawdown_pct, 1)} className="text-bear" /></div>
+        <button type="button" className="bot-more" onClick={flip} aria-expanded={open}>{open ? "Hide details ▴" : "Details ▾"}</button>
+      </div>
+      {open && <>
+      <div className="mt-4 grid grid-cols-2 gap-4 border-t border-glass/[0.06] pt-4 sm:grid-cols-4">
+        <Stat label="Started" value={`$${fmtNum(bot.config.starting_balance, 0)}`} sub={fmtTime(st.started_at)} />
+        <Stat label="Buy & hold" value={fmtPctRaw(s.benchmark_return_pct)} sub="same coins" />
         <Stat label={isPred ? "Prediction accuracy" : "Direction right"} value={fmtProb(s.direction_accuracy, 1)} sub={s.direction_ci95 ? `95% CI ${fmtProb(s.direction_ci95[0])}–${fmtProb(s.direction_ci95[1])}` : DASH} />
-        <Stat label="Win rate (after costs)" value={fmtProb(s.win_rate, 1)} />
-        <Stat label="Profit factor" value={fmtNum(s.profit_factor)} sub={isNum(s.avg_r) ? `avg ${s.avg_r.toFixed(2)} R` : undefined} />
-        <Stat label="Max drawdown" value={fmtPctRaw(s.max_drawdown_pct, 1)} className="text-bear" />
-        <Stat label="Fees paid" value={`$${fmtNum(s.fees_paid)}`} />
+        <Stat label="Profit factor" value={fmtNum(s.profit_factor)} sub={isNum(s.avg_r) ? `avg ${s.avg_r.toFixed(2)} R` : `fees $${fmtNum(s.fees_paid)}`} />
+        <div className="sm:hidden"><Stat label="Max drawdown" value={fmtPctRaw(s.max_drawdown_pct, 1)} className="text-bear" /></div>
       </div>
       {fut && (
         <div className="mt-3 grid grid-cols-2 gap-4 border-t border-glass/[0.06] pt-3 sm:grid-cols-5">
@@ -234,6 +244,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
           {s.by_symbol.map((r: any) => <span key={r.symbol} className="rounded border border-line px-2 py-1"><span className="text-text">{r.symbol}</span> <span className="text-mute">{r.n} trades · {fmtProb(r.accuracy)} right ·</span> <span className={tone(r.pnl)}>${fmtNum(r.pnl)}</span></span>)}
         </div>
       )}
+      </>}
     </Card>
   );
 }

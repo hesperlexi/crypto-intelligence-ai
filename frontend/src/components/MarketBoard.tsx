@@ -57,16 +57,16 @@ function useRows(d: any): Row[] {
 type Sort = "list" | "move" | "trend" | "az";
 type Filter = "all" | "bull" | "bear" | "pinned";
 
-export default function MarketBoard({ d, tf, onTf, loading }: { d: any; tf: string; onTf: (tf: string) => void; loading?: boolean }) {
+export default function MarketBoard({ d, tf, onTf, loading, viewKey = "cia-board-view", defaultView = "heat", title = "Market board" }: { d: any; tf: string; onTf: (tf: string) => void; loading?: boolean; viewKey?: string; defaultView?: "table" | "heat"; title?: string }) {
   const rows = useRows(d);
   const dv = useDerivs().data;                     // v2.75 open interest / funding column
   const { tickers } = useLive();
-  const [view, setView] = useState<"table" | "heat">(() => { try { return localStorage.getItem("cia-board-view") === "table" ? "table" : "heat"; } catch { return "heat"; } });   // v2.71: heatmap by default (owner)
+  const [view, setView] = useState<"table" | "heat">(() => { try { const v = localStorage.getItem(viewKey); return v === "table" || v === "heat" ? v : defaultView; } catch { return defaultView; } });   // v2.71: heatmap by default on Overview (owner)
   const [sort, setSort] = useState<Sort>("list");
   const [filter, setFilter] = useState<Filter>("all");
   const [all, setAll] = useState(false);
   const [manage, setManage] = useState(false);
-  const pick = (v: "table" | "heat") => { setView(v); try { localStorage.setItem("cia-board-view", v); } catch { /* ignore */ } };
+  const pick = (v: "table" | "heat") => { setView(v); try { localStorage.setItem(viewKey, v); } catch { /* ignore */ } };
 
   const chg = (r: Row) => tickers[r.symbol]?.change_pct ?? r.change;
   const list = useMemo(() => {
@@ -91,7 +91,7 @@ export default function MarketBoard({ d, tf, onTf, loading }: { d: any; tf: stri
     <section className="panel mb-board" aria-label="Market board">
       <header className="mb-head">
         <div className="min-w-0">
-          <h2 className="mb-title">Market board</h2>
+          <h2 className="mb-title">{title}</h2>
           <p className="mb-sub">{rows.length ? `${rows.length} coins · ${tf.toUpperCase()} trend and signals · live prices` : "Coins appear after the next engine run"}</p>
         </div>
         <div className="mb-controls">
