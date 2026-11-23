@@ -1374,3 +1374,11 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
 - Liquidation history: Binance's free archive (`data/futures/um/daily/liquidationSnapshot`) stopped on 2024-03-31; free
   alternatives need a key (Coinalyze, free, 40 calls/min, owner sign-up) or are paid (CoinGlass from $29/mo, Amberdata,
   CoinMetrics). OI / long-short / taker history (Binance archive metrics) is already in `derivs` (≤400 days).
+
+## v2.80 Coinalyze liquidations (23 Nov 2026)
+- `app/data/coinalyze.py` (secret `COINALYZE_API_KEY`, never in code): worker step "liquidations" hourly (setting
+  `coinalyze_at`; full history once a day `coinalyze_full_at`, else last 48 1h bars) → `derivs` kinds `liq_long_<iv>` /
+  `liq_short_<iv>`. Coinalyze keeps only ~1500-2000 intraday points (4h ≈ 1 year, 1h ≈ 2-3 months); daily full.
+- Study `app/research_liq.py` (`research-liq.yml`, `results/liq-latest.json`, 23 Nov: 862 calls with history, baseline =
+  live pipeline + sweep guard +33.7R / DD 31.6R): liquidation-flush pause (coin/btc, k3/k5, 8h/24h) and "sweep needs a
+  liquidation spike" — **all FAIL / INCONCLUSIVE, nothing live**. Data keeps building; re-test when 1h history is longer.
