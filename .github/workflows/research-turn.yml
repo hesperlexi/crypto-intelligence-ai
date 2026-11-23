@@ -1,8 +1,6 @@
 name: Research v2.78 market-turn study (read-only)
 
 # v2.78 market-turn study (backend/app/research_turn.py): pause / close on detected turns, judged by research_verdict. Read-only state copy; results research-results/results/turn-*.json.
-# v2.78 market-turn study (backend/app/research_turn.py): pause / close on detected turns, judged by research_verdict. Read-only state copy; results research-results/results/turn-*.json.
-# v2.78 market-turn study (backend/app/research_turn.py): pause / close on detected turns, judged by research_verdict. Read-only state copy; results research-results/results/turn-*.json.
 on:
   workflow_dispatch:
     inputs:
