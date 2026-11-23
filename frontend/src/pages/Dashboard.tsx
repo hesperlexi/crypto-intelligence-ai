@@ -5,7 +5,6 @@ import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
 import { OpportunityBoard } from "../components/Deck";
 import { OrbitDial } from "../components/Instruments";
-import { SignalDeck } from "../components/CommandPlus";
 import { BriefingPanel } from "../components/Polish";
 import MarketBoard, { IntelBrief } from "../components/MarketBoard";
 import { MacroCard, UnlocksList, VolOptionsCard } from "../components/Derivs";
@@ -52,12 +51,9 @@ export default function Dashboard() {
       <FirstWeekGuide />
       <WelcomeTour />
       {/* row 2: what is running (live journeys) beside what is setting up (the opportunity board) */}
-      {/* v2.68: the 12 signal gauges take the full width; the opportunity board sits below as a wide strip (no hollow column) */}
+      {/* v2.78 (owner, 23 Nov 2026: "too crowded"): the live-signal gauges are gone from Overview (Signals / Results / Command
+          Centre still show every running call); the opportunity board is the wide strip here */}
       <div className="grid gap-4">
-        <Card title={<>Live signals <span className="num font-normal text-mute">· {openCount}</span></>}
-          right={<Link to="/results?tab=track" className="text-xs font-medium text-accent hover:underline">Track record ›</Link>} className="deck-fill">
-          <SignalDeck track={track.data} />
-        </Card>
         <Card title="Opportunity board" right={<span className="text-xs text-mute">4H · passes every check</span>} className="deck-fill deck-wide">
           <OpportunityBoard rows={dash4.data?.opportunities} />
         </Card>
