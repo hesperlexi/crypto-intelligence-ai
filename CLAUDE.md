@@ -1359,3 +1359,18 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   `risk_shadow.turn` (would the pause have held it?); Guardian logs the first break per running call in setting
   `turn_shadow_log` (last 500). Re-test on live calls in ~3 weeks; the AI turn model gets OKX / order-flow data later.
   Tests `tests/test_turn_watch_v278.py`.
+
+## v2.79 liquidity-sweep guard (owner, 23 Nov 2026: "stop run / liquidity grab - that's where things change"; live only if better)
+- Study `app/research_sweep.py` (workflow `research-sweep.yml`, `results/sweep-latest.json`, 921 unseen calls, baseline
+  +19.8R / DD 45R). Sweep = 1h candle pokes >= 0.1 ATR beyond the 48-hour low (high) and closes back inside. FILTER "no new
+  call against a sweep within W hours": coin|any|6h **PASS** +39.1R, DD 31.6R, halves 1.2→11.3 / 18.6→27.8, bootstrap 94 %,
+  204 held back (also PASS: coin|vol|6h, btc|any|6h, btc|any|12h, btc|vol|12h; 12-24 h coin windows FAIL). With the
+  OI-flush + taker confirmation (Binance archive `derivs` oi_1h / taker_1h, 38 coins): INCONCLUSIVE/FAIL - adds nothing.
+  SIGNAL "trade the reclaim": heavy loss (−0.16 to −0.22R per trade, thousands of trades) - not used.
+- Live: `services/sweep_guard.py` (`against(rt, symbol, side)`, `recent_sweep`, env `SWEEP_GUARD=0` off,
+  `SWEEP_GUARD_HOURS` 6) in `analysis.analyze` (live only, after the turn shadow, before the capital-protection veto) →
+  NO TRADE flag "LIQUIDITY SWEEP" (in `proof_checks.FLAGS`, so held-back calls are followed in `rejected_signals`).
+  Tests `tests/test_sweep_guard_v279.py`.
+- Liquidation history: Binance's free archive (`data/futures/um/daily/liquidationSnapshot`) stopped on 2024-03-31; free
+  alternatives need a key (Coinalyze, free, 40 calls/min, owner sign-up) or are paid (CoinGlass from $29/mo, Amberdata,
+  CoinMetrics). OI / long-short / taker history (Binance archive metrics) is already in `derivs` (≤400 days).

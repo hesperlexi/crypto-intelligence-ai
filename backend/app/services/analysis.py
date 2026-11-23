@@ -630,6 +630,19 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             risk_check["turn"] = turn_watch.against(rt, symbol, side_of(decision))
         except Exception:
             pass
+    # v2.79 liquidity-sweep guard (proven: research_sweep.py, PASS): no new call against a fresh stop run on the coin
+    if decision in TRADE_DECISIONS and live and bundle is None:
+        try:
+            from . import sweep_guard
+            from .guardian import side_of
+            sd = side_of(decision)
+            sw = sweep_guard.against(rt, symbol, sd)
+            if sw:
+                decision, grade = "NO TRADE", None
+                why = sweep_guard.reason(sw, sd)
+                flags.append(sweep_guard.FLAG)
+        except Exception:
+            pass
     if RISK_VETO and risk_check and risk_check.get("would_block") and decision in TRADE_DECISIONS:
         decision, grade = "NO TRADE", None
         why = f"capital protection: {risk_check.get('reason')}"
