@@ -1523,6 +1523,11 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         detail["news"] = step("news", lambda: sync_news(rt))
         detail["derivs"] = step("derivs", lambda: derivs.sync(rt.db, rt.symbols(), max_calls=40))
         detail["crowd"] = step("crowd", lambda: derivs.sync_crowd(rt.db, rt.symbols(), max_files=25))
+        # v2.80 liquidation history from Coinalyze (needs the COINALYZE_API_KEY secret; research data, not used by calls)
+        if now_ms() - int(rt.db.get_setting("coinalyze_at", 0) or 0) >= 3_300_000:
+            from .data import coinalyze
+            detail["liquidations"] = step("liquidations", lambda: coinalyze.hourly(rt.db, rt.symbols()))
+            rt.db.set_setting("coinalyze_at", now_ms())
         # Home-page market insights: hourly dominance snapshot (CoinGecko /global, fetched above) and, at most every
         # 6 hours, the altcoin season index (Binance spot daily closes)
         detail["insights"] = step("insights", lambda: {
