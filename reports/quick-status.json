@@ -211,26 +211,26 @@
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1795424454228,
-   "last_tick_finished": 1795424674567,
-   "last_tick_seconds": 220.3,
+   "last_tick_started": 1795424774585,
+   "last_tick_finished": 1795424981896,
+   "last_tick_seconds": 207.3,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7725,
-   "round_seconds_avg": 176.3,
+   "ticks": 7726,
+   "round_seconds_avg": 177.2,
    "round_seconds_max": 240.6,
    "rounds_measured": 48,
-   "watch_last_at": 1795424656120,
+   "watch_last_at": 1795424956313,
    "watch_coins": 12,
    "watch_priced": 12,
    "watch_sent_total": 340,
-   "flow_last_at": 1795424664518,
+   "flow_last_at": 1795424964534,
    "flow_coins": 28,
    "flow_errors": 0,
-   "firestore_writes_today": 430,
+   "firestore_writes_today": 515,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 376,
+   "firestore_reads_today": 407,
    "firestore_read_limit": 50000,
    "firestore_members_active": 7,
    "firestore_member_reserve": 420,
@@ -548,37 +548,37 @@
   "15m": {
    "n": 30,
    "fresh_12h": 0,
-   "max": 78.0,
+   "max": 78.1,
    "missing": 0
   },
   "1h": {
    "n": 30,
    "fresh_12h": 30,
-   "max": 5.8,
+   "max": 5.9,
    "missing": 0
   },
   "4h": {
    "n": 30,
    "fresh_12h": 29,
-   "max": 5.8,
+   "max": 5.9,
    "missing": 1
   },
   "12h": {
    "n": 30,
    "fresh_12h": 29,
-   "max": 5.8,
+   "max": 5.9,
    "missing": 1
   },
   "1d": {
    "n": 30,
    "fresh_12h": 27,
-   "max": 5.8,
+   "max": 5.9,
    "missing": 3
   },
   "3d": {
    "n": 30,
    "fresh_12h": 22,
-   "max": 5.8,
+   "max": 5.9,
    "missing": 8
   }
  },
@@ -706,8 +706,8 @@
  },
  "safety": [],
  "release": {
-  "updated_at": 1793386630880,
   "version": "2.1.0",
+  "updated_at": 1793386630880,
   "launched_at": 1793386630880
  },
  "track_record": {
@@ -842,7 +842,7 @@
   "paper_trades": 0,
   "paper_futures_trades": 192,
   "auto_paper_state": 4,
-  "jobs": 32
+  "jobs": 33
  },
  "bots": [
   {
@@ -878,9 +878,9 @@
   "has_token": true,
   "has_channel": true,
   "post_weekly": true,
-  "post_wins": true,
   "enabled": true,
   "post_teaser": true,
+  "post_wins": true,
   "keys": [
    "channel",
    "enabled",
@@ -892,7 +892,7 @@
  },
  "telegram_status": {
   "ok": true,
-  "checked_at": 1795421330467,
+  "checked_at": 1795425071235,
   "last_sent": [
    "week7 (waiting for approval)"
   ],
@@ -913,6 +913,11 @@
  "push_tokens": 6,
  "telegram_post_jobs": [
   {
+   "status": "queued",
+   "created_at": 1795425110489,
+   "error": ""
+  },
+  {
    "status": "done",
    "created_at": 1795410473210,
    "error": ""
@@ -931,11 +936,108 @@
    "status": "done",
    "created_at": 1795365467349,
    "error": ""
-  },
-  {
-   "status": "done",
-   "created_at": 1795353719007,
-   "error": ""
   }
- ]
+ ],
+ "derivs": {
+  "exists": true,
+  "generated_at": 1795424090007,
+  "coins": 29,
+  "liq_maps": 6,
+  "volatility": [
+   "dvol",
+   "options",
+   "source"
+  ],
+  "macro": [
+   "DXY",
+   "GOLD",
+   "NDX",
+   "SPX",
+   "US10Y",
+   "source"
+  ],
+  "unlocks": 7
+ },
+ "xag_models": {
+  "15m": {
+   "exists": true,
+   "active": true,
+   "keys": [
+    "available",
+    "best_model",
+    "data_end",
+    "data_start",
+    "edge",
+    "failures",
+    "fast",
+    "features"
+   ]
+  },
+  "1h": {
+   "exists": true,
+   "active": true,
+   "keys": [
+    "available",
+    "best_model",
+    "data_end",
+    "data_start",
+    "edge",
+    "failures",
+    "fast",
+    "features"
+   ]
+  },
+  "4h": {
+   "exists": true,
+   "active": true,
+   "keys": [
+    "available",
+    "best_model",
+    "data_end",
+    "data_start",
+    "edge",
+    "failures",
+    "fast",
+    "features"
+   ]
+  },
+  "12h": {
+   "exists": true,
+   "active": true,
+   "keys": [
+    "available",
+    "best_model",
+    "data_end",
+    "data_start",
+    "edge",
+    "failures",
+    "fast",
+    "features"
+   ]
+  },
+  "1d": {
+   "exists": true,
+   "active": false,
+   "keys": [
+    "available",
+    "libraries",
+    "reason",
+    "symbol",
+    "timeframe",
+    "training"
+   ]
+  },
+  "3d": {
+   "exists": true,
+   "active": false,
+   "keys": [
+    "available",
+    "libraries",
+    "reason",
+    "symbol",
+    "timeframe",
+    "training"
+   ]
+  }
+ }
 }
