@@ -327,6 +327,7 @@ def run(db_url: str, budget_s: float) -> dict[str, Any]:
         b = [t for t in base if t["side"] == sd]
         n = [t for t in pn if t["side"] == sd]
         side_split[nm] = {"base_r": round(sum(t["r"] for t in b), 2), "new_r": round(sum(t["r"] for t in n), 2), "n_base": len(b), "n_new": len(n)}
+    pause = pause_study(trades, base, h1, h4, (up_ai, dn_ai), test_start)
     ranked = sorted(((k, v) for k, v in results.items()), key=lambda kv: -((kv[1].get("new") or {}).get("total_r") or -1e9))
     return {"ok": True, "calls": len(trades), "base_calls": len(base), "test_start": test_start,
             "seconds": round(time.time() - t0, 1), "skipped_n": len(skipped), "skipped": skipped[:10],
@@ -336,7 +337,97 @@ def run(db_url: str, budget_s: float) -> dict[str, Any]:
             "passes": [k for k, v in results.items() if v.get("verdict") == "PASS"],
             "top5_by_total_r": [{"variant": k, "verdict": v.get("verdict"), "total_r": (v.get("new") or {}).get("total_r"),
                                  "max_dd": (v.get("new") or {}).get("max_dd_r")} for k, v in ranked[:5]],
-            "variants": results}
+            "pause_until_decided": pause, "variants": results}
+
+
+# ---- v2.78b owner: "when the market turns, pause the higher timeframes until the direction is decided" ----------------
+HTF = ("4h", "12h", "1d", "3d")
+
+
+def btc_regime_series(h4: pd.DataFrame) -> tuple[np.ndarray, np.ndarray]:
+    """(4h close times, regime per bar: 1 trend_up, -1 trend_down, 0 undecided) - the live regime rule (EMA50 +- 0.5 ATR + slope)."""
+    c, h, l = (h4[k].to_numpy(float) for k in ("close", "high", "low"))
+    ema, atr = _ema(c, 50), _atr(h, l, c)
+    slope = ema - np.r_[ema[:6], ema[:-6]]
+    reg = np.where((c > ema + 0.5 * atr) & (slope > 0), 1, np.where((c < ema - 0.5 * atr) & (slope < 0), -1, 0))
+    return h4["ts"].to_numpy(np.int64) + 4 * H, reg
+
+
+def events_reversal(h1: pd.DataFrame, move: float = 0.025) -> np.ndarray:
+    """A sharp reversal: BTC moves >= `move` over 24 h against the direction of the 3 days before."""
+    c = h1["close"].to_numpy(float)
+    r24 = pd.Series(c).pct_change(24).to_numpy()
+    r72p = pd.Series(c).shift(24).pct_change(72).to_numpy()
+    hit = (np.abs(r24) >= move) & (np.sign(r24) != np.sign(r72p)) & np.isfinite(r72p)
+    return h1["ts"].to_numpy(np.int64)[hit] + H
+
+
+def pause_windows(events: np.ndarray, reg_ts: np.ndarray, reg: np.ndarray, settle_bars: int, max_h: float) -> list[tuple[int, int]]:
+    """From each event until BTC's 4h regime has been a clear trend (either way) for `settle_bars` closed 4h candles in a
+    row (direction decided), at most `max_h` hours. Overlapping windows merge."""
+    out: list[tuple[int, int]] = []
+    clear = reg != 0
+    run = np.zeros(len(reg), int)
+    for i in range(len(reg)):
+        run[i] = (run[i - 1] + 1 if i and clear[i] and reg[i] == reg[i - 1] else (1 if clear[i] else 0))
+    for e in np.sort(events):
+        i = int(np.searchsorted(reg_ts, e, side="left"))
+        end = int(e + max_h * H)
+        while i < len(reg_ts) and reg_ts[i] < end:
+            if run[i] >= settle_bars:
+                end = int(reg_ts[i])
+                break
+            i += 1
+        if out and e <= out[-1][1]:
+            out[-1] = (out[-1][0], max(out[-1][1], end))
+        else:
+            out.append((int(e), end))
+    return out
+
+
+def in_windows(t: int, w: list[tuple[int, int]]) -> bool:
+    import bisect
+    i = bisect.bisect_right([a for a, _ in w], t) - 1
+    return i >= 0 and w[i][0] <= t < w[i][1]
+
+
+def pause_study(trades, base, h1, h4, ai_ev, test_start) -> dict[str, Any]:
+    from .research_verdict import verdict
+    reg_ts, reg = btc_regime_series(h4)
+    up_b, dn_b = events_break(h1)
+    srcs = {"reversal": events_reversal(h1), "btc_break": np.r_[up_b, dn_b], "ai": np.r_[ai_ev[0], ai_ev[1]],
+            "any": np.r_[events_reversal(h1), up_b, dn_b]}
+    res: dict[str, Any] = {}
+    for src, ev in srcs.items():
+        for tfs_name, tfs in (("4h+", HTF), ("1h+", ("1h",) + HTF)):
+            for settle in (1, 3):
+                for max_h in (48, 120):
+                    w = pause_windows(ev, reg_ts, reg, settle, max_h)
+                    mod = [t for t in trades if not (t["tf"] in tfs and in_windows(int(t["ts"]), w))]
+                    new = live_pipeline(mod)
+                    v = verdict(base, new, affected=_affected(base, new))
+                    paused_h = sum(min(b, 1e18) - a for a, b in w if a >= test_start) / H
+                    name = f"{src}|{tfs_name}|settle{settle}|max{max_h}h"
+                    res[name] = {**_slim(v), "paused_calls": len(trades) - len(mod),
+                                 "share_of_time_paused": None}
+                    span = (max(int(t["ts"]) for t in trades) - test_start) / H
+                    res[name]["share_of_time_paused"] = round(paused_h / span, 3) if span > 0 else None
+    # always pause the higher timeframes while BTC's 4h trend is undecided (no event needed)
+    for tfs_name, tfs in (("4h+", HTF), ("1h+", ("1h",) + HTF)):
+        mod = []
+        for t in trades:
+            i = int(np.searchsorted(reg_ts, int(t["ts"]), side="right")) - 1
+            if t["tf"] in tfs and (i < 0 or reg[i] == 0):
+                continue
+            mod.append(t)
+        new = live_pipeline(mod)
+        v = verdict(base, new, affected=_affected(base, new))
+        res[f"undecided_regime|{tfs_name}"] = {**_slim(v), "paused_calls": len(trades) - len(mod)}
+    return {"passes": [k for k, v in res.items() if v.get("verdict") == "PASS"],
+            "top5": sorted(({"variant": k, "verdict": v["verdict"], "total_r": v["new"].get("total_r"), "max_dd": v["new"].get("max_dd_r"),
+                             "h1": v["halves"]["first_half"], "h2": v["halves"]["second_half"], "boot": v.get("bootstrap_better_share")}
+                            for k, v in res.items()), key=lambda x: -(x["total_r"] or -1e9))[:5],
+            "variants": res}
 
 
 if __name__ == "__main__":
