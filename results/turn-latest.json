@@ -3,7 +3,7 @@
  "calls": 921,
  "base_calls": 610,
  "test_start": 1747526400000,
- "seconds": 92.9,
+ "seconds": 78.8,
  "skipped_n": 0,
  "skipped": [],
  "primary": "ai|pause24|close_profit",
@@ -164,6 +164,1548 @@
    "max_dd": 53.71
   }
  ],
+ "pause_until_decided": {
+  "passes": [],
+  "top5": [
+   {
+    "variant": "ai|4h+|settle1|max48h",
+    "verdict": "INCONCLUSIVE",
+    "total_r": 18.1,
+    "max_dd": 44.9,
+    "h1": {
+     "base": 1.23,
+     "new": -1.12
+    },
+    "h2": {
+     "base": 18.59,
+     "new": 19.22
+    },
+    "boot": 0.406
+   },
+   {
+    "variant": "ai|4h+|settle1|max120h",
+    "verdict": "INCONCLUSIVE",
+    "total_r": 18.1,
+    "max_dd": 44.9,
+    "h1": {
+     "base": 1.23,
+     "new": -1.12
+    },
+    "h2": {
+     "base": 18.59,
+     "new": 19.22
+    },
+    "boot": 0.406
+   },
+   {
+    "variant": "btc_break|4h+|settle1|max48h",
+    "verdict": "FAIL",
+    "total_r": 15.05,
+    "max_dd": 46.57,
+    "h1": {
+     "base": 1.23,
+     "new": -3.33
+    },
+    "h2": {
+     "base": 18.59,
+     "new": 18.38
+    },
+    "boot": 0.284
+   },
+   {
+    "variant": "btc_break|4h+|settle1|max120h",
+    "verdict": "FAIL",
+    "total_r": 15.05,
+    "max_dd": 46.57,
+    "h1": {
+     "base": 1.23,
+     "new": -3.33
+    },
+    "h2": {
+     "base": 18.59,
+     "new": 18.38
+    },
+    "boot": 0.284
+   },
+   {
+    "variant": "ai|1h+|settle1|max48h",
+    "verdict": "INCONCLUSIVE",
+    "total_r": 14.42,
+    "max_dd": 43.82,
+    "h1": {
+     "base": 1.23,
+     "new": -1.12
+    },
+    "h2": {
+     "base": 18.59,
+     "new": 15.54
+    },
+    "boot": 0.245
+   }
+  ],
+  "variants": {
+   "reversal|4h+|settle1|max48h": {
+    "verdict": "INCONCLUSIVE",
+    "reason": "only 99 calls differ (need 100)",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 581,
+     "avg_r": 0.016,
+     "total_r": 9.32,
+     "win_rate": 0.53,
+     "max_dd_r": 53.56,
+     "worst_streak": 12,
+     "profit_factor": 1.039,
+     "worst_5pct_r": -1.077
+    },
+    "affected": 99,
+    "bootstrap_better_share": 0.143,
+    "bootstrap_gain_r_5_50_95": [
+     -27.43,
+     -10.22,
+     5.39
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -7.73
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 17.05
+     }
+    },
+    "paused_calls": 58,
+    "share_of_time_paused": 0.126
+   },
+   "reversal|4h+|settle1|max120h": {
+    "verdict": "INCONCLUSIVE",
+    "reason": "only 99 calls differ (need 100)",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 581,
+     "avg_r": 0.016,
+     "total_r": 9.32,
+     "win_rate": 0.53,
+     "max_dd_r": 53.56,
+     "worst_streak": 12,
+     "profit_factor": 1.039,
+     "worst_5pct_r": -1.077
+    },
+    "affected": 99,
+    "bootstrap_better_share": 0.143,
+    "bootstrap_gain_r_5_50_95": [
+     -27.43,
+     -10.22,
+     5.39
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -7.73
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 17.05
+     }
+    },
+    "paused_calls": 58,
+    "share_of_time_paused": 0.126
+   },
+   "reversal|4h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 8% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 561,
+     "avg_r": 0.0068,
+     "total_r": 3.79,
+     "win_rate": 0.522,
+     "max_dd_r": 56.72,
+     "worst_streak": 18,
+     "profit_factor": 1.016,
+     "worst_5pct_r": -1.073
+    },
+    "affected": 161,
+    "bootstrap_better_share": 0.079,
+    "bootstrap_gain_r_5_50_95": [
+     -36.09,
+     -15.71,
+     2.49
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.44
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 13.23
+     }
+    },
+    "paused_calls": 104,
+    "share_of_time_paused": 0.18
+   },
+   "reversal|4h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 10% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 547,
+     "avg_r": 0.009,
+     "total_r": 4.94,
+     "win_rate": 0.525,
+     "max_dd_r": 55.51,
+     "worst_streak": 18,
+     "profit_factor": 1.022,
+     "worst_5pct_r": -1.072
+    },
+    "affected": 175,
+    "bootstrap_better_share": 0.097,
+    "bootstrap_gain_r_5_50_95": [
+     -35.94,
+     -14.63,
+     4.12
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.51
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 14.44
+     }
+    },
+    "paused_calls": 110,
+    "share_of_time_paused": 0.192
+   },
+   "reversal|1h+|settle1|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 22% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 574,
+     "avg_r": 0.0206,
+     "total_r": 11.83,
+     "win_rate": 0.531,
+     "max_dd_r": 51.38,
+     "worst_streak": 12,
+     "profit_factor": 1.051,
+     "worst_5pct_r": -1.072
+    },
+    "affected": 100,
+    "bootstrap_better_share": 0.216,
+    "bootstrap_gain_r_5_50_95": [
+     -25.51,
+     -7.83,
+     8.89
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -7.73
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 19.56
+     }
+    },
+    "paused_calls": 67,
+    "share_of_time_paused": 0.126
+   },
+   "reversal|1h+|settle1|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 22% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 574,
+     "avg_r": 0.0206,
+     "total_r": 11.83,
+     "win_rate": 0.531,
+     "max_dd_r": 51.38,
+     "worst_streak": 12,
+     "profit_factor": 1.051,
+     "worst_5pct_r": -1.072
+    },
+    "affected": 100,
+    "bootstrap_better_share": 0.216,
+    "bootstrap_gain_r_5_50_95": [
+     -25.51,
+     -7.83,
+     8.89
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -7.73
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 19.56
+     }
+    },
+    "paused_calls": 67,
+    "share_of_time_paused": 0.126
+   },
+   "reversal|1h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 12% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 554,
+     "avg_r": 0.0114,
+     "total_r": 6.3,
+     "win_rate": 0.523,
+     "max_dd_r": 55.14,
+     "worst_streak": 18,
+     "profit_factor": 1.028,
+     "worst_5pct_r": -1.066
+    },
+    "affected": 162,
+    "bootstrap_better_share": 0.12,
+    "bootstrap_gain_r_5_50_95": [
+     -33.58,
+     -13.01,
+     5.28
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.44
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 15.74
+     }
+    },
+    "paused_calls": 113,
+    "share_of_time_paused": 0.18
+   },
+   "reversal|1h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 14% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 540,
+     "avg_r": 0.0138,
+     "total_r": 7.45,
+     "win_rate": 0.526,
+     "max_dd_r": 53.93,
+     "worst_streak": 18,
+     "profit_factor": 1.034,
+     "worst_5pct_r": -1.066
+    },
+    "affected": 176,
+    "bootstrap_better_share": 0.139,
+    "bootstrap_gain_r_5_50_95": [
+     -33.21,
+     -12.17,
+     6.27
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.51
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 16.95
+     }
+    },
+    "paused_calls": 119,
+    "share_of_time_paused": 0.192
+   },
+   "btc_break|4h+|settle1|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 28% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 576,
+     "avg_r": 0.0261,
+     "total_r": 15.05,
+     "win_rate": 0.535,
+     "max_dd_r": 46.57,
+     "worst_streak": 12,
+     "profit_factor": 1.066,
+     "worst_5pct_r": -1.073
+    },
+    "affected": 122,
+    "bootstrap_better_share": 0.284,
+    "bootstrap_gain_r_5_50_95": [
+     -19.32,
+     -4.72,
+     9.23
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -3.33
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 18.38
+     }
+    },
+    "paused_calls": 81,
+    "share_of_time_paused": 0.145
+   },
+   "btc_break|4h+|settle1|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 28% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 576,
+     "avg_r": 0.0261,
+     "total_r": 15.05,
+     "win_rate": 0.535,
+     "max_dd_r": 46.57,
+     "worst_streak": 12,
+     "profit_factor": 1.066,
+     "worst_5pct_r": -1.073
+    },
+    "affected": 122,
+    "bootstrap_better_share": 0.284,
+    "bootstrap_gain_r_5_50_95": [
+     -19.32,
+     -4.72,
+     9.23
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -3.33
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 18.38
+     }
+    },
+    "paused_calls": 81,
+    "share_of_time_paused": 0.145
+   },
+   "btc_break|4h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 19% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 530,
+     "avg_r": 0.0188,
+     "total_r": 9.98,
+     "win_rate": 0.534,
+     "max_dd_r": 49.26,
+     "worst_streak": 11,
+     "profit_factor": 1.048,
+     "worst_5pct_r": -1.066
+    },
+    "affected": 220,
+    "bootstrap_better_share": 0.191,
+    "bootstrap_gain_r_5_50_95": [
+     -30.23,
+     -10.57,
+     9.59
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": 0.72
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 9.26
+     }
+    },
+    "paused_calls": 155,
+    "share_of_time_paused": 0.24
+   },
+   "btc_break|4h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 20% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 528,
+     "avg_r": 0.02,
+     "total_r": 10.54,
+     "win_rate": 0.534,
+     "max_dd_r": 49.26,
+     "worst_streak": 11,
+     "profit_factor": 1.05,
+     "worst_5pct_r": -1.066
+    },
+    "affected": 222,
+    "bootstrap_better_share": 0.202,
+    "bootstrap_gain_r_5_50_95": [
+     -29.45,
+     -10.14,
+     10.05
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": 1.28
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 9.26
+     }
+    },
+    "paused_calls": 157,
+    "share_of_time_paused": 0.249
+   },
+   "btc_break|1h+|settle1|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 25% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 565,
+     "avg_r": 0.0236,
+     "total_r": 13.34,
+     "win_rate": 0.535,
+     "max_dd_r": 45.28,
+     "worst_streak": 12,
+     "profit_factor": 1.06,
+     "worst_5pct_r": -1.071
+    },
+    "affected": 135,
+    "bootstrap_better_share": 0.251,
+    "bootstrap_gain_r_5_50_95": [
+     -23.08,
+     -6.23,
+     8.47
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -3.33
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 16.67
+     }
+    },
+    "paused_calls": 92,
+    "share_of_time_paused": 0.145
+   },
+   "btc_break|1h+|settle1|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 25% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 565,
+     "avg_r": 0.0236,
+     "total_r": 13.34,
+     "win_rate": 0.535,
+     "max_dd_r": 45.28,
+     "worst_streak": 12,
+     "profit_factor": 1.06,
+     "worst_5pct_r": -1.071
+    },
+    "affected": 135,
+    "bootstrap_better_share": 0.251,
+    "bootstrap_gain_r_5_50_95": [
+     -23.08,
+     -6.23,
+     8.47
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -3.33
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 16.67
+     }
+    },
+    "paused_calls": 92,
+    "share_of_time_paused": 0.145
+   },
+   "btc_break|1h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 20% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 518,
+     "avg_r": 0.0189,
+     "total_r": 9.77,
+     "win_rate": 0.535,
+     "max_dd_r": 49.85,
+     "worst_streak": 11,
+     "profit_factor": 1.048,
+     "worst_5pct_r": -1.06
+    },
+    "affected": 234,
+    "bootstrap_better_share": 0.196,
+    "bootstrap_gain_r_5_50_95": [
+     -31.36,
+     -10.61,
+     10.3
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": 0.72
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 9.05
+     }
+    },
+    "paused_calls": 169,
+    "share_of_time_paused": 0.24
+   },
+   "btc_break|1h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 21% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 516,
+     "avg_r": 0.02,
+     "total_r": 10.33,
+     "win_rate": 0.535,
+     "max_dd_r": 49.85,
+     "worst_streak": 11,
+     "profit_factor": 1.051,
+     "worst_5pct_r": -1.061
+    },
+    "affected": 236,
+    "bootstrap_better_share": 0.207,
+    "bootstrap_gain_r_5_50_95": [
+     -30.58,
+     -10.03,
+     10.64
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": 1.28
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 9.05
+     }
+    },
+    "paused_calls": 171,
+    "share_of_time_paused": 0.249
+   },
+   "ai|4h+|settle1|max48h": {
+    "verdict": "INCONCLUSIVE",
+    "reason": "only 71 calls differ (need 100)",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 595,
+     "avg_r": 0.0304,
+     "total_r": 18.1,
+     "win_rate": 0.538,
+     "max_dd_r": 44.9,
+     "worst_streak": 12,
+     "profit_factor": 1.077,
+     "worst_5pct_r": -1.07
+    },
+    "affected": 71,
+    "bootstrap_better_share": 0.406,
+    "bootstrap_gain_r_5_50_95": [
+     -14.47,
+     -1.6,
+     10.11
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -1.12
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 19.22
+     }
+    },
+    "paused_calls": 39,
+    "share_of_time_paused": 0.141
+   },
+   "ai|4h+|settle1|max120h": {
+    "verdict": "INCONCLUSIVE",
+    "reason": "only 71 calls differ (need 100)",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 595,
+     "avg_r": 0.0304,
+     "total_r": 18.1,
+     "win_rate": 0.538,
+     "max_dd_r": 44.9,
+     "worst_streak": 12,
+     "profit_factor": 1.077,
+     "worst_5pct_r": -1.07
+    },
+    "affected": 71,
+    "bootstrap_better_share": 0.406,
+    "bootstrap_gain_r_5_50_95": [
+     -14.47,
+     -1.6,
+     10.11
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -1.12
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 19.22
+     }
+    },
+    "paused_calls": 39,
+    "share_of_time_paused": 0.141
+   },
+   "ai|4h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 13% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 568,
+     "avg_r": 0.0158,
+     "total_r": 8.96,
+     "win_rate": 0.533,
+     "max_dd_r": 51.75,
+     "worst_streak": 13,
+     "profit_factor": 1.039,
+     "worst_5pct_r": -1.065
+    },
+    "affected": 142,
+    "bootstrap_better_share": 0.127,
+    "bootstrap_gain_r_5_50_95": [
+     -27.57,
+     -10.8,
+     4.25
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -2.51
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 11.47
+     }
+    },
+    "paused_calls": 88,
+    "share_of_time_paused": 0.19
+   },
+   "ai|4h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 10% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 567,
+     "avg_r": 0.0113,
+     "total_r": 6.39,
+     "win_rate": 0.533,
+     "max_dd_r": 54.68,
+     "worst_streak": 13,
+     "profit_factor": 1.028,
+     "worst_5pct_r": -1.064
+    },
+    "affected": 139,
+    "bootstrap_better_share": 0.099,
+    "bootstrap_gain_r_5_50_95": [
+     -31.9,
+     -13.07,
+     3.39
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -4.36
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 10.75
+     }
+    },
+    "paused_calls": 94,
+    "share_of_time_paused": 0.194
+   },
+   "ai|1h+|settle1|max48h": {
+    "verdict": "INCONCLUSIVE",
+    "reason": "only 79 calls differ (need 100)",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 591,
+     "avg_r": 0.0244,
+     "total_r": 14.42,
+     "win_rate": 0.535,
+     "max_dd_r": 43.82,
+     "worst_streak": 12,
+     "profit_factor": 1.062,
+     "worst_5pct_r": -1.071
+    },
+    "affected": 79,
+    "bootstrap_better_share": 0.245,
+    "bootstrap_gain_r_5_50_95": [
+     -19.78,
+     -5.34,
+     7.41
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -1.12
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 15.54
+     }
+    },
+    "paused_calls": 49,
+    "share_of_time_paused": 0.141
+   },
+   "ai|1h+|settle1|max120h": {
+    "verdict": "INCONCLUSIVE",
+    "reason": "only 79 calls differ (need 100)",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 591,
+     "avg_r": 0.0244,
+     "total_r": 14.42,
+     "win_rate": 0.535,
+     "max_dd_r": 43.82,
+     "worst_streak": 12,
+     "profit_factor": 1.062,
+     "worst_5pct_r": -1.071
+    },
+    "affected": 79,
+    "bootstrap_better_share": 0.245,
+    "bootstrap_gain_r_5_50_95": [
+     -19.78,
+     -5.34,
+     7.41
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -1.12
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 15.54
+     }
+    },
+    "paused_calls": 49,
+    "share_of_time_paused": 0.141
+   },
+   "ai|1h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 7% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 562,
+     "avg_r": 0.0097,
+     "total_r": 5.48,
+     "win_rate": 0.53,
+     "max_dd_r": 50.88,
+     "worst_streak": 13,
+     "profit_factor": 1.024,
+     "worst_5pct_r": -1.065
+    },
+    "affected": 148,
+    "bootstrap_better_share": 0.073,
+    "bootstrap_gain_r_5_50_95": [
+     -31.71,
+     -14.17,
+     1.83
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -2.51
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 7.98
+     }
+    },
+    "paused_calls": 101,
+    "share_of_time_paused": 0.19
+   },
+   "ai|1h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 6% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 561,
+     "avg_r": 0.0052,
+     "total_r": 2.91,
+     "win_rate": 0.529,
+     "max_dd_r": 54.53,
+     "worst_streak": 13,
+     "profit_factor": 1.013,
+     "worst_5pct_r": -1.065
+    },
+    "affected": 145,
+    "bootstrap_better_share": 0.058,
+    "bootstrap_gain_r_5_50_95": [
+     -36.13,
+     -16.53,
+     0.85
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -4.36
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 7.27
+     }
+    },
+    "paused_calls": 107,
+    "share_of_time_paused": 0.194
+   },
+   "any|4h+|settle1|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 15% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 563,
+     "avg_r": 0.0142,
+     "total_r": 8.02,
+     "win_rate": 0.529,
+     "max_dd_r": 51.86,
+     "worst_streak": 12,
+     "profit_factor": 1.035,
+     "worst_5pct_r": -1.073
+    },
+    "affected": 147,
+    "bootstrap_better_share": 0.146,
+    "bootstrap_gain_r_5_50_95": [
+     -31.28,
+     -12.01,
+     6.32
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.41
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 17.43
+     }
+    },
+    "paused_calls": 103,
+    "share_of_time_paused": 0.221
+   },
+   "any|4h+|settle1|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 15% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 563,
+     "avg_r": 0.0142,
+     "total_r": 8.02,
+     "win_rate": 0.529,
+     "max_dd_r": 51.86,
+     "worst_streak": 12,
+     "profit_factor": 1.035,
+     "worst_5pct_r": -1.073
+    },
+    "affected": 147,
+    "bootstrap_better_share": 0.146,
+    "bootstrap_gain_r_5_50_95": [
+     -31.28,
+     -12.01,
+     6.32
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.41
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 17.43
+     }
+    },
+    "paused_calls": 103,
+    "share_of_time_paused": 0.221
+   },
+   "any|4h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 8% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 517,
+     "avg_r": 0.0017,
+     "total_r": 0.86,
+     "win_rate": 0.524,
+     "max_dd_r": 58.56,
+     "worst_streak": 18,
+     "profit_factor": 1.004,
+     "worst_5pct_r": -1.067
+    },
+    "affected": 259,
+    "bootstrap_better_share": 0.081,
+    "bootstrap_gain_r_5_50_95": [
+     -42.73,
+     -19.04,
+     4.05
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -7.73
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 8.6
+     }
+    },
+    "paused_calls": 189,
+    "share_of_time_paused": 0.317
+   },
+   "any|4h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 9% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 516,
+     "avg_r": 0.0036,
+     "total_r": 1.88,
+     "win_rate": 0.525,
+     "max_dd_r": 58.56,
+     "worst_streak": 18,
+     "profit_factor": 1.009,
+     "worst_5pct_r": -1.067
+    },
+    "affected": 260,
+    "bootstrap_better_share": 0.091,
+    "bootstrap_gain_r_5_50_95": [
+     -42.29,
+     -17.98,
+     4.82
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -6.72
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 8.6
+     }
+    },
+    "paused_calls": 190,
+    "share_of_time_paused": 0.324
+   },
+   "any|1h+|settle1|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 22% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 549,
+     "avg_r": 0.019,
+     "total_r": 10.41,
+     "win_rate": 0.532,
+     "max_dd_r": 50.57,
+     "worst_streak": 12,
+     "profit_factor": 1.047,
+     "worst_5pct_r": -1.071
+    },
+    "affected": 161,
+    "bootstrap_better_share": 0.224,
+    "bootstrap_gain_r_5_50_95": [
+     -29.96,
+     -9.34,
+     10.36
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.41
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 19.81
+     }
+    },
+    "paused_calls": 119,
+    "share_of_time_paused": 0.221
+   },
+   "any|1h+|settle1|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; bootstrap 22% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 549,
+     "avg_r": 0.019,
+     "total_r": 10.41,
+     "win_rate": 0.532,
+     "max_dd_r": 50.57,
+     "worst_streak": 12,
+     "profit_factor": 1.047,
+     "worst_5pct_r": -1.071
+    },
+    "affected": 161,
+    "bootstrap_better_share": 0.224,
+    "bootstrap_gain_r_5_50_95": [
+     -29.96,
+     -9.34,
+     10.36
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -9.41
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 19.81
+     }
+    },
+    "paused_calls": 119,
+    "share_of_time_paused": 0.221
+   },
+   "any|1h+|settle3|max48h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 9% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 503,
+     "avg_r": 0.0025,
+     "total_r": 1.27,
+     "win_rate": 0.525,
+     "max_dd_r": 58.01,
+     "worst_streak": 18,
+     "profit_factor": 1.006,
+     "worst_5pct_r": -1.065
+    },
+    "affected": 271,
+    "bootstrap_better_share": 0.088,
+    "bootstrap_gain_r_5_50_95": [
+     -42.14,
+     -18.75,
+     4.21
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -7.73
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 9.01
+     }
+    },
+    "paused_calls": 207,
+    "share_of_time_paused": 0.317
+   },
+   "any|1h+|settle3|max120h": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 10% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 502,
+     "avg_r": 0.0046,
+     "total_r": 2.29,
+     "win_rate": 0.526,
+     "max_dd_r": 58.01,
+     "worst_streak": 18,
+     "profit_factor": 1.011,
+     "worst_5pct_r": -1.065
+    },
+    "affected": 272,
+    "bootstrap_better_share": 0.098,
+    "bootstrap_gain_r_5_50_95": [
+     -41.26,
+     -17.79,
+     4.7
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -6.72
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 9.01
+     }
+    },
+    "paused_calls": 208,
+    "share_of_time_paused": 0.324
+   },
+   "undecided_regime|4h+": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 10% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 542,
+     "avg_r": 0.0026,
+     "total_r": 1.4,
+     "win_rate": 0.53,
+     "max_dd_r": 57.14,
+     "worst_streak": 13,
+     "profit_factor": 1.006,
+     "worst_5pct_r": -1.077
+    },
+    "affected": 212,
+    "bootstrap_better_share": 0.103,
+    "bootstrap_gain_r_5_50_95": [
+     -41.88,
+     -19.06,
+     5.23
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -5.22
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 6.62
+     }
+    },
+    "paused_calls": 162
+   },
+   "undecided_regime|1h+": {
+    "verdict": "FAIL",
+    "reason": "not better in both halves; drawdown too deep; bootstrap 9% < 80%",
+    "base": {
+     "n": 610,
+     "avg_r": 0.0325,
+     "total_r": 19.83,
+     "win_rate": 0.538,
+     "max_dd_r": 44.95,
+     "worst_streak": 12,
+     "profit_factor": 1.082,
+     "worst_5pct_r": -1.075
+    },
+    "new": {
+     "n": 533,
+     "avg_r": 0.0009,
+     "total_r": 0.49,
+     "win_rate": 0.529,
+     "max_dd_r": 57.11,
+     "worst_streak": 13,
+     "profit_factor": 1.002,
+     "worst_5pct_r": -1.074
+    },
+    "affected": 213,
+    "bootstrap_better_share": 0.092,
+    "bootstrap_gain_r_5_50_95": [
+     -43.53,
+     -19.92,
+     4.87
+    ],
+    "halves": {
+     "first_half": {
+      "base": 1.23,
+      "new": -5.22
+     },
+     "second_half": {
+      "base": 18.59,
+      "new": 5.71
+     }
+    },
+    "paused_calls": 170
+   }
+  }
+ },
  "variants": {
   "ai|nopause|close_profit": {
    "verdict": "FAIL",
