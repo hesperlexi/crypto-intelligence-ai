@@ -24,8 +24,9 @@ def replay(db_url: str, budget_s: float) -> dict[str, Any]:
     return summarize(trades, skipped, t0)
 
 
-def collect(db_url: str, budget_s: float, hook: Any = None) -> tuple[list[dict[str, Any]], list[str], float, Any]:
-    """The live-guarded out-of-sample test calls of every series (before any cap), with the runtime used."""
+def collect(db_url: str, budget_s: float, hook: Any = None, keep_sim: bool = False) -> tuple[list[dict[str, Any]], list[str], float, Any]:
+    """The live-guarded out-of-sample test calls of every series (before any cap), with the runtime used.
+    keep_sim (v2.78 turn study): each trade also carries `_sim` = (ctx, paths, plan, entry mode) to re-follow it."""
     from . import research_engine as RE
     from . import research_v213 as V
     from .db import Database
@@ -77,6 +78,9 @@ def collect(db_url: str, budget_s: float, hook: Any = None) -> tuple[list[dict[s
         dd = _masked(d, m)
         tr = V._with_funding(ctx, dd, SP.run_series(ctx, paths, test, dd, entry_mode="old", news=news))
         new = [{**t, "side": int(dd["side"][t["j"]]), "tf": tf, "sym": s} for t in tr]
+        if keep_sim:
+            for t in new:
+                t["_sim"] = (ctx, paths, dd["plan"][t["j"]], "market" if dd["decision"][t["j"]] != "BUY ON PULLBACK" else "old")
         if hook is not None:
             try:
                 hook(rt, s, tf, ctx, tune, test, new)
