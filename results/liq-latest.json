@@ -1,0 +1,453 @@
+{
+ "ok": true,
+ "calls_with_liq_history": 862,
+ "calls_total": 922,
+ "liq_history_from": 1768154400000,
+ "fetch": {
+  "coins": 38,
+  "missing": [
+   "MSTRB/USDT",
+   "NVDAB/USDT",
+   "SPCXB/USDT"
+  ],
+  "rows": {
+   "4hour": 60794,
+   "daily": 46742
+  }
+ },
+ "coins_covered": 38,
+ "base": {
+  "n": 476,
+  "avg_r": 0.0708,
+  "total_r": 33.7,
+  "win_rate": 0.557,
+  "max_dd_r": 31.6,
+  "worst_streak": 12,
+  "profit_factor": 1.185,
+  "worst_5pct_r": -1.061
+ },
+ "seconds": 232.5,
+ "passes": [],
+ "variants": {
+  "flush|coin|k3|8h": {
+   "verdict": "INCONCLUSIVE",
+   "reason": "only 93 calls differ (need 100)",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 455,
+    "avg_r": 0.0596,
+    "total_r": 27.13,
+    "win_rate": 0.549,
+    "max_dd_r": 37.82,
+    "worst_streak": 11,
+    "profit_factor": 1.153,
+    "worst_5pct_r": -1.064
+   },
+   "affected": 93,
+   "bootstrap_better_share": 0.107,
+   "bootstrap_gain_r_5_50_95": [
+    -15.07,
+    -6.53,
+    2.07
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": -3.54
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 30.67
+    }
+   },
+   "blocked": 67
+  },
+  "flush|coin|k3|24h": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; drawdown too deep; bootstrap 8% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 425,
+    "avg_r": 0.0461,
+    "total_r": 19.58,
+    "win_rate": 0.555,
+    "max_dd_r": 45.42,
+    "worst_streak": 11,
+    "profit_factor": 1.115,
+    "worst_5pct_r": -1.065
+   },
+   "affected": 165,
+   "bootstrap_better_share": 0.081,
+   "bootstrap_gain_r_5_50_95": [
+    -30.66,
+    -13.27,
+    2.11
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": -9.93
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 29.51
+    }
+   },
+   "blocked": 144
+  },
+  "flush|btc|k3|8h": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; bootstrap 46% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 368,
+    "avg_r": 0.0874,
+    "total_r": 32.18,
+    "win_rate": 0.562,
+    "max_dd_r": 27.07,
+    "worst_streak": 10,
+    "profit_factor": 1.229,
+    "worst_5pct_r": -1.062
+   },
+   "affected": 228,
+   "bootstrap_better_share": 0.459,
+   "bootstrap_gain_r_5_50_95": [
+    -21.51,
+    -1.3,
+    18.81
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": 5.33
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 26.85
+    }
+   },
+   "blocked": 232
+  },
+  "flush|btc|k3|24h": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; bootstrap 18% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 215,
+    "avg_r": 0.0706,
+    "total_r": 15.17,
+    "win_rate": 0.549,
+    "max_dd_r": 22.08,
+    "worst_streak": 9,
+    "profit_factor": 1.175,
+    "worst_5pct_r": -1.064
+   },
+   "affected": 321,
+   "bootstrap_better_share": 0.178,
+   "bootstrap_gain_r_5_50_95": [
+    -51.38,
+    -17.71,
+    14.21
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": 13.92
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 1.25
+    }
+   },
+   "blocked": 421
+  },
+  "flush|coin|k5|8h": {
+   "verdict": "INCONCLUSIVE",
+   "reason": "only 88 calls differ (need 100)",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 456,
+    "avg_r": 0.0558,
+    "total_r": 25.44,
+    "win_rate": 0.548,
+    "max_dd_r": 39.55,
+    "worst_streak": 11,
+    "profit_factor": 1.142,
+    "worst_5pct_r": -1.065
+   },
+   "affected": 88,
+   "bootstrap_better_share": 0.059,
+   "bootstrap_gain_r_5_50_95": [
+    -16.75,
+    -8.03,
+    0.25
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": -3.54
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 28.98
+    }
+   },
+   "blocked": 61
+  },
+  "flush|coin|k5|24h": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; drawdown too deep; bootstrap 9% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 433,
+    "avg_r": 0.0459,
+    "total_r": 19.87,
+    "win_rate": 0.554,
+    "max_dd_r": 47.03,
+    "worst_streak": 11,
+    "profit_factor": 1.115,
+    "worst_5pct_r": -1.065
+   },
+   "affected": 161,
+   "bootstrap_better_share": 0.092,
+   "bootstrap_gain_r_5_50_95": [
+    -30.11,
+    -13.21,
+    2.9
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": -10.94
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 30.81
+    }
+   },
+   "blocked": 134
+  },
+  "flush|btc|k5|8h": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; bootstrap 21% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 414,
+    "avg_r": 0.0613,
+    "total_r": 25.38,
+    "win_rate": 0.548,
+    "max_dd_r": 32.51,
+    "worst_streak": 10,
+    "profit_factor": 1.156,
+    "worst_5pct_r": -1.065
+   },
+   "affected": 170,
+   "bootstrap_better_share": 0.207,
+   "bootstrap_gain_r_5_50_95": [
+    -23.44,
+    -7.96,
+    8.06
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": -2.8
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 28.18
+    }
+   },
+   "blocked": 172
+  },
+  "flush|btc|k5|24h": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; bootstrap 20% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 277,
+    "avg_r": 0.0677,
+    "total_r": 18.74,
+    "win_rate": 0.56,
+    "max_dd_r": 20.55,
+    "worst_streak": 9,
+    "profit_factor": 1.169,
+    "worst_5pct_r": -1.065
+   },
+   "affected": 265,
+   "bootstrap_better_share": 0.202,
+   "bootstrap_gain_r_5_50_95": [
+    -44.02,
+    -14.09,
+    13.9
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": 5.6
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 13.14
+    }
+   },
+   "blocked": 350
+  },
+  "sweep_needs_liq|k3": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; drawdown too deep; bootstrap 13% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 534,
+    "avg_r": 0.037,
+    "total_r": 19.74,
+    "win_rate": 0.534,
+    "max_dd_r": 41.21,
+    "worst_streak": 10,
+    "profit_factor": 1.093,
+    "worst_5pct_r": -1.065
+   },
+   "affected": 164,
+   "bootstrap_better_share": 0.13,
+   "bootstrap_gain_r_5_50_95": [
+    -34.68,
+    -13.68,
+    6.8
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": -2.42
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 22.16
+    }
+   },
+   "blocked": 50
+  },
+  "sweep_needs_liq|k5": {
+   "verdict": "FAIL",
+   "reason": "not better in both halves; drawdown too deep; bootstrap 13% < 80%",
+   "base": {
+    "n": 476,
+    "avg_r": 0.0708,
+    "total_r": 33.7,
+    "win_rate": 0.557,
+    "max_dd_r": 31.6,
+    "worst_streak": 12,
+    "profit_factor": 1.185,
+    "worst_5pct_r": -1.061
+   },
+   "new": {
+    "n": 534,
+    "avg_r": 0.037,
+    "total_r": 19.74,
+    "win_rate": 0.534,
+    "max_dd_r": 41.21,
+    "worst_streak": 10,
+    "profit_factor": 1.093,
+    "worst_5pct_r": -1.065
+   },
+   "affected": 164,
+   "bootstrap_better_share": 0.13,
+   "bootstrap_gain_r_5_50_95": [
+    -34.68,
+    -13.68,
+    6.8
+   ],
+   "halves": {
+    "first_half": {
+     "base": 3.76,
+     "new": -2.42
+    },
+    "second_half": {
+     "base": 29.94,
+     "new": 22.16
+    }
+   },
+   "blocked": 50
+  }
+ }
+}
