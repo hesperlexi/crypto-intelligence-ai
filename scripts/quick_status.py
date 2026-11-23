@@ -70,4 +70,20 @@ _jobs = [d.to_dict() or {} for d in fs.collection("jobs").where("type", "==", "t
 out["telegram_post_jobs"] = [{"status": j.get("status"), "created_at": j.get("created_at"),
                               "error": _re.sub(r"bot\d+:[\w-]+", "bot***", str(j.get("error") or (j.get("result") or {}).get("reason") or ""))[:200]}
                              for j in sorted(_jobs, key=lambda j: -(j.get("created_at") or 0))[:5]]
+# v2.75 check: views/derivs summary + silver (XAG/USDT) models (counts / names only)
+try:
+    dv = fs.document("views/derivs").get().to_dict()
+    dj = json.loads(dv["json"]) if dv else {}
+    out2 = {"exists": bool(dv), "generated_at": dj.get("generated_at"), "coins": len(dj.get("coins") or {}),
+            "liq_maps": len(dj.get("liq_maps") or {}), "volatility": sorted((dj.get("volatility") or {}).keys()),
+            "macro": sorted((dj.get("macro") or {}).keys()), "unlocks": len(dj.get("unlocks") or [])}
+except Exception as exc:
+    out2 = {"error": type(exc).__name__}
+xag = {}
+for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
+    m = fs.document(f"views/models_XAGUSDT_{tf}").get().to_dict()
+    mj = json.loads(m["json"]) if m else {}
+    xag[tf] = {"exists": bool(m), "active": bool(mj.get("active") or mj.get("bundle") or mj.get("models")), "keys": sorted(mj.keys())[:8]}
+out["derivs"], out["xag_models"] = out2, xag
 print(json.dumps(out, indent=1, default=str))
+
