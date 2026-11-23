@@ -1341,3 +1341,21 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   `figure` green/red (+ `gold` option), `curveChart` green/red, `luxFooter`); weekly report, achievements, Hesper /
   Last Stand cards inherit it. `ShareSignal` redrawn: pills, coin, move since entry, rail without prices with the live
   "now" dot, "How it is managed" (runner calls: nothing closes before 1:4). Hard-coded old golds swapped in share canvases.
+
+## v2.78 market turns (owner, 23 Nov 2026: losing streak after the 21 Nov bounce; "pause higher timeframes until the direction is decided")
+- Overview: the live-signal gauges (`SignalDeck`) removed (owner: too crowded); Opportunity board follows the hero.
+- Loss review `app/loss_review.py` (workflow `loss-review.yml`, `research-results/results/loss-review.json`): 22-23 Nov 9
+  closed calls, all SHORT, −2.5R (4h shorts 0/4) after BTC/ETH turned up on 21 Nov; no recent change touched the calls.
+- Study `app/research_turn.py` (workflow `research-turn.yml`, `results/turn-latest.json`, 921 unseen calls, baseline =
+  live pipeline +19.8R / DD 45R): pause / close on BTC 2-day breakout, BTC 4h regime flip, the coin's own 2-day 4h break,
+  or an AI turn model (gradient boosting on BTC 1h features + breadth, trained only before the test; precision up 19 % vs
+  12 % base, down 17 % vs 15 %) - NOTHING passed; closing early cuts the TP2/TP3 winners. Owner's "pause 4h+ (or 1h+) after
+  a turn until BTC's 4h regime is a clear trend again" (`pause_study`: reversal / breakout / AI / any events, settle 1 or 3
+  bars, max 48/120 h, or always while undecided) - every version worse (best +18.1R, ai|4h+|settle1). Closest candidate:
+  coin break + pause 24 h + close in profit +24.9R, both halves better, bootstrap 62 % → FAIL (not live).
+- Built instead (owner-approved): `services/turn_watch.py` `against()` (coin closed a 4h candle beyond its previous
+  12-candle range against the call within 24 h). Trade Guardian (recommend-only): reason `turn` (100 pts → CLOSE "Lock
+  profit") only when the call is in profit after 0.15 % costs; losing calls keep their stop. Shadow: published calls store
+  `risk_shadow.turn` (would the pause have held it?); Guardian logs the first break per running call in setting
+  `turn_shadow_log` (last 500). Re-test on live calls in ~3 weeks; the AI turn model gets OKX / order-flow data later.
+  Tests `tests/test_turn_watch_v278.py`.

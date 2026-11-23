@@ -222,8 +222,12 @@ def side_of(decision: Any) -> int:
 
 
 # ---- 1. detection (pure) ------------------------------------------------------------------------------------------
+TURN_PTS = 100                       # v2.78: coin broke its 2-day 4h range against a call in profit -> CLOSE ("lock profit")
+COST_PCT = 0.15                      # round trip, % of the entry (the record's cost)
+
+
 def assess(call: dict[str, Any], rows: list[tuple], atr: float, stop_if: float, memo: dict[str, Any] | None,
-           btc_rows: list[tuple] | None = None, funding_z: float | None = None) -> dict[str, Any]:
+           btc_rows: list[tuple] | None = None, funding_z: float | None = None, turn: dict[str, Any] | None = None) -> dict[str, Any]:
     """Severity 0-100, reasons [{code, label, points}] and the numbers behind them. Pure and deterministic.
     `call`: signal row (side, entry, stop = ORIGINAL stop, tp1_hit, peak_r, timeframe, symbol, payload grade)."""
     side, entry = int(call["side"]), float(call["entry"])
@@ -324,6 +328,13 @@ def assess(call: dict[str, Any], rows: list[tuple], atr: float, stop_if: float, 
         reasons.append({"code": "funding", "points": FUNDING_PTS, "estimate": True,
                         "label": f"Funding {abs(funding_z):.1f} sd against (estimate)"})
 
+    # v2.78 market turn on the coin (recommend-only): lock the profit of a call in profit after costs
+    if turn and turn.get("broke"):
+        cost_r = (COST_PCT / (risk / entry * 100)) if risk and entry else 0.0
+        facts["turn"] = {"broke_at": turn.get("at"), "range_edge": _sig_round(float(turn["level"])), "net_r_now": _f(r_now - cost_r)}
+        if r_now - cost_r > 0:
+            reasons.append({"code": "turn", "points": TURN_PTS,
+                            "label": f"Lock profit: {coin(call['symbol'])} broke its 2-day 4H range against the call"})
     reasons.sort(key=lambda r: -r["points"])
     sev = int(min(100, sum(r["points"] for r in reasons)))
     facts["severity"] = sev
@@ -696,7 +707,20 @@ class Guardian:
         stop_if = stop_in_force(c, adj)
         if int(c["side"]) * (price - stop_if) <= 0:
             return None                                  # at / through the stop: the record closes it on its own
-        res = assess(c, rows, atr, stop_if, memo, btc, self.funding_z(c["symbol"]))
+        turn = None
+        try:                                             # v2.78 market-turn watch (recommend-only + shadow log)
+            from . import turn_watch
+            self._turn_cache = getattr(self, "_turn_cache", {})
+            turn = turn_watch.against(self.rt, c["symbol"], int(c["side"]), self.now, self._turn_cache)
+            if turn and turn.get("broke"):
+                rr = abs(float(c["entry"]) - float(c["stop"]))
+                r_now = int(c["side"]) * (price - float(c["entry"])) / rr if rr else 0.0
+                turn_watch.log_first(self.db, sid, {"symbol": c["symbol"], "timeframe": c["timeframe"], "side": int(c["side"]),
+                                                    "detected_at": self.now, "price": price, "r_now": round(r_now, 3),
+                                                    "tp1_hit": bool(c.get("tp1_hit"))})
+        except Exception:
+            turn = None
+        res = assess(c, rows, atr, stop_if, memo, btc, self.funding_z(c["symbol"]), turn)
         band = res["band"]
         cs = st["calls"].setdefault(sid, {"streak": {"TIGHTEN": 0, "CLOSE": 0}})
         for lvl in LEVELS:
