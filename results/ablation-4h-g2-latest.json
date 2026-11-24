@@ -1,0 +1,159 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "g2",
+ "timeframes": {
+  "4h": {
+   "coins_done": 40,
+   "skipped": [
+    "ANTHROPIC/USDT: control not evaluated: ANTHROPIC/USDT 4h: no model / too few out-of-sample bars; no_xgboost not evaluated: ANTHROPIC/USDT 4h: no model / too few out-of-sample bars; no_lightgbm not evaluated: ANTHROPI",
+    "GRAM/USDT: control not evaluated: GRAM/USDT 4h: no model / too few out-of-sample bars; no_xgboost not evaluated: GRAM/USDT 4h: no model / too few out-of-sample bars; no_lightgbm not evaluated: GRAM/USDT 4h: no m",
+    "MSTRB/USDT: control not evaluated: MSTRB/USDT 4h: no model / too few out-of-sample bars; no_xgboost not evaluated: MSTRB/USDT 4h: no model / too few out-of-sample bars; no_lightgbm not evaluated: MSTRB/USDT 4h: n",
+    "NVDAB/USDT: control not evaluated: NVDAB/USDT 4h: no model / too few out-of-sample bars; no_xgboost not evaluated: NVDAB/USDT 4h: no model / too few out-of-sample bars; no_lightgbm not evaluated: NVDAB/USDT 4h: n",
+    "SPCXB/USDT: control not evaluated: SPCXB/USDT 4h: no model / too few out-of-sample bars; no_xgboost not evaluated: SPCXB/USDT 4h: no model / too few out-of-sample bars; no_lightgbm not evaluated: SPCXB/USDT 4h: n",
+    "XAUT/USDT: control not evaluated: XAUT/USDT 4h: no model / too few out-of-sample bars; no_xgboost not evaluated: XAUT/USDT 4h: no model / too few out-of-sample bars; no_lightgbm not evaluated: XAUT/USDT 4h: no m"
+   ],
+   "control": {
+    "trades": 615,
+    "avg_r": 0.056,
+    "total_r": 34.45,
+    "win_rate": 0.551,
+    "series": 40,
+    "brier_mean": 0.6556,
+    "log_loss_mean": 1.08115,
+    "drawdown_r_sum": 115.56
+   },
+   "no_xgboost": {
+    "trades": 593,
+    "avg_r": 0.0538,
+    "total_r": 31.88,
+    "win_rate": 0.546,
+    "series": 40,
+    "brier_mean": 0.65563,
+    "log_loss_mean": 1.08118,
+    "drawdown_r_sum": 115.66
+   },
+   "no_lightgbm": {
+    "trades": 616,
+    "avg_r": 0.0193,
+    "total_r": 11.86,
+    "win_rate": 0.524,
+    "series": 40,
+    "brier_mean": 0.65528,
+    "log_loss_mean": 1.08064,
+    "drawdown_r_sum": 126.61
+   },
+   "no_hist_gbm": {
+    "trades": 640,
+    "avg_r": 0.0416,
+    "total_r": 26.59,
+    "win_rate": 0.559,
+    "series": 40,
+    "brier_mean": 0.65545,
+    "log_loss_mean": 1.08091,
+    "drawdown_r_sum": 123.64
+   },
+   "xgboost_only": {
+    "trades": 618,
+    "avg_r": 0.0289,
+    "total_r": 17.89,
+    "win_rate": 0.534,
+    "series": 40,
+    "brier_mean": 0.65968,
+    "log_loss_mean": 1.08769,
+    "drawdown_r_sum": 123.74
+   },
+   "no_xgboost_vs_control": {
+    "n_series": 40,
+    "share_better": 0.434,
+    "ci90_r_per_trade": [
+     -0.036,
+     0.0309
+    ],
+    "brier_better_share": 0.625
+   },
+   "no_lightgbm_vs_control": {
+    "n_series": 40,
+    "share_better": 0.036,
+    "ci90_r_per_trade": [
+     -0.0672,
+     -0.0032
+    ],
+    "brier_better_share": 0.75
+   },
+   "no_hist_gbm_vs_control": {
+    "n_series": 40,
+    "share_better": 0.295,
+    "ci90_r_per_trade": [
+     -0.0527,
+     0.0248
+    ],
+    "brier_better_share": 0.6
+   },
+   "xgboost_only_vs_control": {
+    "n_series": 40,
+    "share_better": 0.179,
+    "ci90_r_per_trade": [
+     -0.0732,
+     0.0235
+    ],
+    "brier_better_share": 0.075
+   }
+  }
+ },
+ "same_as_control": {
+  "4h": []
+ },
+ "models": {
+  "4h": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_xgboost": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "lightgbm",
+    "arima"
+   ],
+   "no_lightgbm": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "arima"
+   ],
+   "no_hist_gbm": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "xgboost_only": [
+    "prior_baseline",
+    "prev_candle",
+    "xgboost"
+   ]
+  }
+ },
+ "seconds": 10483.2,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
