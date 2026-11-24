@@ -201,7 +201,8 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket, onFutures }: { s
   const all = [...symbols, ...extra.filter((x) => !symbols.includes(x))];
   const list = all.filter((s) => !q || s.toLowerCase().includes(q.trim().toLowerCase()) || (FUT_ONLY[s] ?? "").toLowerCase().includes(q.trim().toLowerCase()));
   return (
-    <div className="panel panel-hero flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-3 sm:px-4">
+    // the pair menu must not be cut off by the card (panel-hero clips its overflow) nor sit under the next card
+    <div className={`panel panel-hero flex flex-wrap items-center gap-x-6 gap-y-2 px-3 py-3 sm:px-4 !overflow-visible ${open ? "relative z-30" : ""}`}>
       <div className="relative">
         <button onClick={() => setOpen((v) => !v)} aria-expanded={open} className="flex items-center gap-2.5 rounded-lg px-1 py-1 hover:bg-glass/[0.05]">
           <CoinAvatar symbol={symbol} size={30} />
@@ -210,7 +211,7 @@ function PairBar({ symbol, symbols, market, onSymbol, onMarket, onFutures }: { s
           <span className="text-mute" aria-hidden="true">▾</span>
         </button>
         {open && (
-          <div className="panel absolute left-0 top-full z-40 mt-1 max-h-96 w-72 overflow-y-auto p-1">
+          <div className="panel popover pair-menu absolute left-0 top-full z-40 mt-1 max-h-[min(24rem,70vh)] w-72 overflow-y-auto overscroll-contain p-1">
             <input className="input mb-1 h-10 w-full text-sm" placeholder="Search pair (e.g. MSTR, GOLD)" value={q} onChange={(e) => setQ(e.target.value)} autoFocus aria-label="Search pair" />
             {!list.length && <p className="px-2 py-3 text-sm text-mute">No pair matches.</p>}
             {list.map((s) => {

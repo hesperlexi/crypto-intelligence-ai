@@ -157,7 +157,7 @@ body {
 .ts-dial .ins-dial-centre .text-xs { font-size: 0.6875rem; }
 /* mood card timeframe switch (turns 15M → 1H → 4H every 10 s) */
 .mood-card { position: relative; }
-.mood-tf { position: absolute; top: .9rem; right: 1rem; z-index: 2; display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px;
+.mood-tf { float: right; position: relative; z-index: 2; margin: 0 0 .5rem .75rem; display: inline-flex; gap: 2px; padding: 2px; border-radius: 999px;
   border: 1px solid var(--hair); background: rgb(var(--ink) / .35); }
 .mood-tf button { position: relative; overflow: hidden; min-height: 28px; padding: 0 .7rem; border-radius: 999px; font-size: .75rem; font-weight: 600; color: rgb(var(--mute)); }
 .mood-tf button.on { color: rgb(var(--text)); background: rgb(var(--glass) / .08); }
@@ -168,4 +168,4 @@ body {
   transform-origin: left; animation: mood-tf-fill 10s linear forwards; }
 @keyframes mood-tf-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .mood-tf-bar { animation: none; } }
-@media (max-width: 639px) { .mood-tf { position: static; margin-bottom: .75rem; } }
+@media (max-width: 639px) { .mood-tf { float: none; margin: 0 0 .75rem; } }

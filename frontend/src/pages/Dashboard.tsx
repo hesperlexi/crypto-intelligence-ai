@@ -44,9 +44,9 @@ export default function Dashboard() {
           E AI decisions · C market intelligence · D watchlist board · G recent developments. Phones: A, F, B, E, … */}
       {/* owner 24 Nov 2026: the market mood card is back, with the V3 market & risk status embedded in it */}
       <section className="panel panel-hero v3-glass mood-card p-4 sm:p-6" aria-label="Market mood" onPointerEnter={() => rot.hover(true)} onPointerLeave={() => rot.hover(false)}>
-        <MoodTfSwitch rot={rot} />
         <div className="mood-grid">
           <div className="min-w-0">
+            <MoodTfSwitch rot={rot} />
             <OverviewHead rows={moodData?.rows} status={moodData?.market_status} briefing={briefing} tfLabel={moodTf.toUpperCase()} />
             <MarketStatus status4={moodData?.market_status} rows={moodData?.rows} embedded tfLabel={moodTf.toUpperCase()} />
             <TodayLine track={track.data} />
