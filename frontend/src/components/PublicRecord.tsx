@@ -63,7 +63,7 @@ export default function PublicRecord() {
               <CoinAvatar symbol={r.symbol} size={24} />
               <b>{base(r.symbol)}</b>
               <span className={r.side === "LONG" ? "text-bull" : "text-bear"}>{r.side === "LONG" ? "▲" : "▼"} {String(r.timeframe).toUpperCase()}</span>
-              <span className="pr-st">{STATUS[r.status] ?? r.status}</span>
+              <span className="pr-st">{r.status === "EXPIRED" ? (r.return_pct > 0 ? "Win at market" : "Loss at market") : STATUS[r.status] ?? r.status}</span>
               <span className={`num ml-auto font-semibold ${(r.net_pct ?? 0) > 0 ? "text-bull" : "text-bear"}`}>{pct(r.net_pct)}</span>
               <span className="pr-day">{isNum(r.closed_at) ? day(r.closed_at) : ""}</span>
             </li>

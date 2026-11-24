@@ -12,7 +12,7 @@ import { Info } from "./ui";
 import { Explain, useIsPro } from "../lib/mode";
 import { useIsAdmin } from "../lib/session";
 import { managedLabel, fillLabel, Pill, RoiFigure } from "./SignalExtras";
-import { isOpen, LiveResult, LiveRoi, RecordSheet, statusOf } from "./RecordDetails";
+import { isOpen, LiveResult, LiveRoi, RecordSheet, resClass, statusOf } from "./RecordDetails";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 const rate = (v: unknown) => (isNum(v) ? `${Math.round(v * 100)}%` : "—");
@@ -186,7 +186,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                             <CoinAvatar symbol={x.symbol} size={30} />
                             <div className="min-w-0">
                               <div className="flex flex-wrap items-center gap-x-1.5"><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span>{x.grade && <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded border px-1 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span>}</div>
-                              <div className={`mt-1 text-xs font-semibold ${cls}`}><span className={`res-pill res-${String(x.status).toLowerCase()}`}>{lab}</span> <span className="num whitespace-nowrap font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
+                              <div className={`mt-1 text-xs font-semibold ${cls}`}>{!isOpen(x) && <span className={`res-pill ${resClass(x)}`}>{lab}</span>} <span className="num whitespace-nowrap font-normal text-mute">· {fmtDate(x.created_at)}</span></div>
                             </div>
                           </div>
                           <div className="shrink-0 text-right max-[359px]:basis-full min-[360px]:max-w-[45%]">{isOpen(x) ? <LiveRoi x={x} size="md" /> : <RoiFigure x={x} size="md" />}</div>
@@ -212,7 +212,7 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
                           <td><div className="flex items-center gap-2"><CoinAvatar symbol={x.symbol} size={22} /><span className="font-semibold">{base(x.symbol)}</span><span className={`text-xs font-bold ${x.side === "LONG" ? "text-bull" : "text-bear"}`}>{x.side}</span><span className="text-xs text-mute">{String(x.timeframe).toUpperCase()}</span></div><div className="num mt-0.5 pl-[30px] text-xs text-mute">{fmtTime(x.created_at)}</div></td>
                           <td className="text-center">{x.grade ? <span className={`inline-flex h-5 min-w-5 items-center justify-center rounded-md border px-1.5 text-xs font-bold ${x.grade === "A" ? "border-accent/50 bg-accent/15 text-accent" : "border-warn/45 bg-warn/10 text-warn"}`}>{x.grade}</span> : <span className="text-mute">—</span>}</td>
                           <td className="num text-right">{fmtPrice(x.entry)}</td><td className="num text-right text-bear">{fmtPrice(x.stop)}</td><td className="num text-right text-bull">{fmtPrice(x.tp1)}</td>
-                          <td className={`text-xs font-semibold ${cls}`}><span className={`res-pill res-${String(x.status).toLowerCase()}`}>{lab}</span>{isOpen(x) && <LiveResult x={x} />}<RecordExtras x={x} /></td>
+                          <td className={`text-xs font-semibold ${cls}`}><ResultCell x={x} lab={lab} /></td>
                           <td className="text-right align-middle">{isOpen(x) ? <LiveRoi x={x} /> : <RoiFigure x={x} size="sm" />}</td>
                         </tr>
                       );
@@ -268,23 +268,41 @@ export default function TrackRecord({ compact = false }: { compact?: boolean }) 
   );
 }
 
-/** v1 extras on a record row (fill status, managed exit, peak). Old rows show nothing extra. */
-function RecordExtras({ x }: { x: any }) {
+/** v1 extras on a record row, split (owner 24 Nov: "too congested, all same colour"): the coloured pills join the status
+ *  row; peak and the admin change line sit under it in quiet text, one line each. */
+function RecordPills({ x }: { x: any }) {
   const fill = fillLabel(x.fill_status);
   const managed = x.managed === 1 ? managedLabel(x.exit_reason) : null;
-  const adj = x.adjustments?.length ? x.adjustments : null;
-  if (!fill && !managed && !isNum(x.peak_pct) && !adj && !x.proof) return null;
   return (
-    <div className="font-normal">
-    <div className="mt-0.5 flex flex-wrap items-center gap-1">
-      <UpdatedBadge adj={adj} />
-      {x.exit_reason === "admin_stop" && <Pill tone="warn" title="Closed at the stop-loss the admin moved (public change, shown below)">Admin stop</Pill>}
-      {x.exit_reason === "admin_close" && <Pill tone="warn" title="Closed by the admin at the market price (public, shown below); the result is what that price gave">Closed by admin</Pill>}
+    <>
+      <UpdatedBadge adj={x.adjustments?.length ? x.adjustments : null} />
+      {x.exit_reason === "admin_stop" && <span className="res-pill res-admin" title="Closed at the stop-loss the admin moved (public change, shown below)">Admin stop</span>}
+      {x.exit_reason === "admin_close" && <span className="res-pill res-admin" title="Closed by the admin at the market price (public, shown below); the result is what that price gave">Closed by admin</span>}
       {fill && <Pill tone={fill[1]}>{fill[0]}</Pill>}
       {managed && <Pill tone="accent">{managed}</Pill>}
-      {isNum(x.peak_pct) && <span className="num text-xs text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</span>}
-    </div>
-    {adj && <AdjustHistory adj={adj} compact />}
-    </div>
+    </>
   );
+}
+const Peak = ({ x }: { x: any }) => (isNum(x.peak_pct) ? <span title="Best open profit reached"> · peak {pct(x.peak_pct, 1)}</span> : null);
+function RecordMeta({ x, peak = true }: { x: any; peak?: boolean }) {
+  const adj = x.adjustments?.length ? x.adjustments : null;
+  return (
+    <>
+      {peak && isNum(x.peak_pct) && <div className="num mt-0.5 text-xs font-normal text-mute" title="Best open profit reached">peak {pct(x.peak_pct, 1)}</div>}
+      {adj && <div className="max-w-[26rem] font-normal"><AdjustHistory adj={adj} compact /></div>}
+    </>
+  );
+}
+/** Result cell: one row of distinct pills, one line of figures. */
+function ResultCell({ x, lab }: { x: any; lab: string }) {
+  if (isOpen(x)) return <><LiveResult x={x} extras={<RecordPills x={x} />} tail={<Peak x={x} />} /><RecordMeta x={x} peak={false} /></>;
+  return (
+    <>
+      <div className="flex flex-wrap items-center gap-1"><span className={`res-pill ${resClass(x)}`}>{lab}</span><RecordPills x={x} /></div>
+      <RecordMeta x={x} />
+    </>
+  );
+}
+function RecordExtras({ x }: { x: any }) {
+  return <><div className="mt-1 flex flex-wrap items-center gap-1"><RecordPills x={x} /></div><RecordMeta x={x} /></>;
 }

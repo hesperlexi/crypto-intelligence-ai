@@ -3,17 +3,13 @@
 // this device (localStorage `cia-journal-<uid>`), so the free-plan write budget is untouched.
 import { useMemo, useState } from "react";
 import { base, fmtPrice, isNum } from "../lib/format";
-import { myUid } from "../lib/session";
 import { SizeCalcButton } from "./SizeCalc";
 
-const key = () => { try { return `cia-journal-${myUid()}`; } catch { return "cia-journal"; } };
-const loadNotes = (): Record<string, string> => { try { return JSON.parse(localStorage.getItem(key()) ?? "{}"); } catch { return {}; } };
 const money = (v: number) => `${v >= 0 ? "+" : "−"}$${Math.abs(v).toLocaleString("en-US", { maximumFractionDigits: 2 })}`;
 const idOf = (t: any) => String(t.id ?? `${t.created_at}-${t.symbol}-${t.side}`);
 const monthOf = (ms: number) => new Date(ms).toLocaleDateString(undefined, { month: "long", year: "numeric" });
 
 export default function TradeJournal({ d }: { d: any }) {
-  const [notes, setNotes] = useState<Record<string, string>>(loadNotes);
   const [all, setAll] = useState(false);
   const closes = useMemo(() => ((d?.trades ?? []) as any[]).filter((t) => t.type === "CLOSE" && isNum(t.created_at))
     .sort((a, b) => b.created_at - a.created_at), [d]);
@@ -25,19 +21,14 @@ export default function TradeJournal({ d }: { d: any }) {
       return { k, n: rows.length, won, net: p.reduce((a, b) => a + b, 0), best: Math.max(...p), worst: Math.min(...p) };
     });
   }, [closes]);
-  const save = (id: string, text: string) => setNotes((n) => {
-    const next = { ...n }; if (text.trim()) next[id] = text.slice(0, 280); else delete next[id];
-    try { localStorage.setItem(key(), JSON.stringify(next)); } catch { /* ignore */ }
-    return next;
-  });
   const shown = all ? closes.slice(0, 50) : closes.slice(0, 6);
   return (
     <section className="panel p-4" aria-label="Trade journal">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div><h2 className="label">Trade journal</h2><p className="text-xs text-mute">Your practice trades by month · notes stay on this device</p></div>
+        <div><h2 className="label">Trade journal</h2><p className="text-xs text-mute">Your practice trades by month</p></div>
         <SizeCalcButton seed={{}} className="btn btn-sm" label="Position-size calculator" />
       </div>
-      {!closes.length ? <p className="mt-3 text-sm text-mute">Close a practice trade and it appears here, ready for a note.</p> : (
+      {!closes.length ? <p className="mt-3 text-sm text-mute">Close a practice trade and it appears here.</p> : (
         <>
           <div className="jr-months mt-3">
             {months.map((m) => (
@@ -61,8 +52,6 @@ export default function TradeJournal({ d }: { d: any }) {
                     <span className="text-xs text-mute">{new Date(c.created_at).toLocaleDateString(undefined, { day: "numeric", month: "short" })} · {c.reason ?? "closed"}{isNum(c.price) ? ` at ${fmtPrice(c.price)}` : ""}</span>
                     <span className={`num ml-auto font-semibold ${pnl >= 0 ? "text-bull" : "text-bear"}`}>{money(pnl)}</span>
                   </div>
-                  <input className="input jr-note" placeholder="Why you took it, what you learned…" defaultValue={notes[id] ?? ""} maxLength={280}
-                    onBlur={(e) => save(id, e.target.value)} aria-label={`Note for the ${base(c.symbol)} trade`} />
                 </li>
               );
             })}

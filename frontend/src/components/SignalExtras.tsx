@@ -73,7 +73,7 @@ export function livePnl(side: string | undefined, entry: number | undefined, px:
 /** Status, fill, managed exit, live P&L and peak profit of the tracked call. Renders nothing for old rows. */
 export function CallStatusRow({ call, px }: { call?: any; px?: number }) {
   if (!call) return null;
-  const st = call.exit_reason === "admin_close" && call.status === "EXPIRED" ? (["Closed", "mute"] as [string, Tone]) : CALL_STATUS[call.status];
+  const st = call.status === "EXPIRED" ? ((call.return_pct > 0 ? ["Win at market", "bull"] : ["Loss at market", "bear"]) as [string, Tone]) : CALL_STATUS[call.status];
   const fill = fillLabel(call.fill_status);
   const managed = call.managed === 1 ? managedLabel(call.exit_reason) : null;
   const open = call.status === "OPEN" && call.fill_status !== "PENDING" && call.fill_status !== "NOT_FILLED";

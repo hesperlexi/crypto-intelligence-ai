@@ -948,6 +948,13 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .logox-pulse { transform-origin: 256px 256px; animation: logox-pulse 3.4s ease-in-out infinite; }
 .logox-tw { animation: cosmos-twinkle 3.6s ease-in-out infinite; }
 @keyframes logox-pulse { 50% { opacity: 0.55; transform: scale(1.04); } }
+/* owner 24 Nov: neurons blink green / red, links flash like lightning */
+.logox-green { fill: #22D39A; animation: logox-blink 1.8s steps(1, end) infinite; }
+.logox-red { fill: #F6465D; animation: logox-blink 1.8s steps(1, end) infinite; }
+@keyframes logox-blink { 0% { opacity: 1; } 50% { opacity: 0.15; } }
+.logox-bolt { opacity: 0; animation: logox-bolt 3s linear infinite; }
+@keyframes logox-bolt { 0%, 86%, 100% { opacity: 0; } 88% { opacity: 1; } 90% { opacity: 0.2; } 92% { opacity: 0.95; } 95% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .logox-green, .logox-red, .logox-bolt { animation: none; } .logox-bolt { opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .logox-spin, .logox-spinr, .logox-sweep, .logox-pulse, .logox-tw { animation: none; } .logox-sweep { display: none; } }
 /* boot loader bar (Shell.BootLoader) */
 .boot-bar { width: 200px; height: 3px; border-radius: 3px; overflow: hidden; background: rgb(var(--glass) / 0.08); }
@@ -1123,6 +1130,22 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
   100% { opacity: 0; transform: translate(-50%, -18px) scale(.96); }
 }
 @keyframes cheer-spin { from { transform: rotate(-180deg) scale(.3); } to { transform: rotate(0) scale(1); } }
+/* owner 24 Nov: win card - slides in, check draws, green ring pulses once, timer bar drains */
+.win-toast { position: fixed; right: 20px; top: 76px; z-index: 60; display: flex; align-items: center; gap: 12px; min-width: 280px; max-width: calc(100vw - 32px);
+  padding: 12px 16px 14px; border-radius: 12px; overflow: hidden; color: rgb(var(--text)); cursor: pointer; text-align: left;
+  background: rgb(var(--raised)); border: 1px solid rgb(var(--bull) / 0.35); box-shadow: 0 16px 40px rgb(0 0 0 / 0.45);
+  animation: win-in .35s cubic-bezier(.2,.8,.2,1) both, win-out .3s ease-in 3.9s forwards; }
+.win-check { position: relative; display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 50%; color: rgb(var(--bull)); background: rgb(var(--bull) / 0.14); }
+.win-check::after { content: ""; position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgb(var(--bull) / 0.6); animation: win-ring .9s ease-out .25s both; }
+.win-check path { fill: none; stroke: currentColor; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 22; stroke-dashoffset: 22; animation: win-draw .45s ease-out .2s forwards; }
+.win-bar { position: absolute; left: 0; bottom: 0; height: 2px; width: 100%; background: rgb(var(--bull)); transform-origin: left; animation: win-drain 4.2s linear forwards; }
+@keyframes win-in { from { opacity: 0; transform: translateX(24px); } to { opacity: 1; transform: none; } }
+@keyframes win-out { to { opacity: 0; transform: translateX(24px); } }
+@keyframes win-draw { to { stroke-dashoffset: 0; } }
+@keyframes win-ring { from { transform: scale(1); opacity: 1; } to { transform: scale(1.7); opacity: 0; } }
+@keyframes win-drain { to { transform: scaleX(0); } }
+@media (max-width: 640px) { .win-toast { left: 16px; right: 16px; top: 70px; } }
+@media (prefers-reduced-motion: reduce) { .win-toast, .win-check::after, .win-bar { animation: none; } .win-check path { animation: none; stroke-dashoffset: 0; } }
 @media (prefers-reduced-motion: reduce) { .cheer-toast { animation: cheer-fade 2.8s linear forwards; } .cheer-star { animation: none; } }
 @keyframes cheer-fade { 0%, 85% { opacity: 1; } 100% { opacity: 0; } }
 

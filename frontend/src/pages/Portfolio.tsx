@@ -77,11 +77,10 @@ export default function Portfolio() {
         <h1 className="v3-title">Portfolio</h1>
         <p className="mt-1.5 text-[0.9375rem] text-mute">Your practice capital, open positions and protection. Virtual money only.</p>
       </header>
-      <div className="grid-even grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+      {/* owner 24 Nov: one grid, two equal columns, so both rows line up edge to edge and each pair has one height */}
+      <div className="grid-even grid gap-4 lg:grid-cols-2">
         <MyCapital />
         <MyPositions />
-      </div>
-      <div className="grid-even grid gap-4 lg:grid-cols-2">
         <Protection />
         <Closed />
       </div>

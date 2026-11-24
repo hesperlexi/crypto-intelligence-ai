@@ -105,7 +105,7 @@ export function AllList({ rows, market, px, onOpen }: { rows: any[]; market: Mar
           const price = px(r.symbol) ?? r.price;
           const es = entryState(r, market, price);
           const c = r.call;
-          const st = c ? (c.exit_reason === "admin_close" && c.status === "EXPIRED" ? ["Closed", "mute"] as const : CALL_STATUS[c.status]) : null;
+          const st = c ? (c.status === "EXPIRED" ? (c.return_pct > 0 ? ["Win at market", "bull"] as const : ["Loss at market", "bear"] as const) : CALL_STATUS[c.status]) : null;
           const fill = c ? fillLabel(c.fill_status) : null;
           const pnl = c?.status === "OPEN" && c.fill_status !== "PENDING" && c.fill_status !== "NOT_FILLED" ? livePnl(c.side, c.entry, price) : null;
           const lev = isNum(c?.leverage) && c.leverage > 1 ? c.leverage : null;

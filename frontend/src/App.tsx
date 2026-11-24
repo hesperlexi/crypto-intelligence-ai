@@ -348,7 +348,7 @@ function Shell({ user }: { user: User }) {
                   live BTC / ETH beside it where the price strip is not shown */}
               <div className="flex min-w-0 items-center gap-5">
                 <PageTitle />
-                {loc.pathname !== "/coins" && <CoinSearch className="hidden !w-[14rem] shrink-0 xl:flex 2xl:!w-[18rem]" />}
+                {loc.pathname !== "/coins" && <CoinSearch className="hidden min-w-[9rem] !w-[14rem] shrink xl:flex 2xl:!w-[18rem]" />}
                 {!TAPE_PATHS.has(loc.pathname) && <PriceChips className="hidden min-[1600px]:flex" />}
               </div>
               <div className="flex shrink-0 items-center gap-2.5">

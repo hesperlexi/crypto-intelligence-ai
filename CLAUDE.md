@@ -663,6 +663,13 @@ Achievements, Health, Road to Rich, Trade Guardian, Users.
 directly. Frontend type-check: `npx tsc --noEmit` (CI). UI preview without Firebase: `cd frontend && npx vite --config
 dev/vite.preview.config.ts --port 5193`, `/?preview=admin|member|pending|signedout|unverified|nousername` (mocks in `dev/mocks`, data `dev/seed.ts`).
 
+## V3 polish (owner, 24 Nov 2026)
+Trade journal notes removed · Portfolio one 2-column grid · calls closed at market (time limit / admin) shown as "Win/Loss at
+market" by result, never a separate "Time limit" line (`statusOf`, `resClass`, ResultsBoard buckets) · record Result cell:
+one row of pills, one colour each (Live cyan `res-live`, Let it run violet `res-run`, Updated blue `res-upd`, admin orange
+`res-admin`), facts "now · SL x% · TP1 y% · peak" · win card `.win-toast` (no confetti) · logo neurons blink green/red,
+links flash as lightning (`Logo.tsx` MESH from make_logo.py seed 13; header uses LiveLogo too).
+
 ## Ideas not done yet
 Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance daily metrics
 (OI, long/short, taker) as features · iPhone App Store ($99/yr, owner decision) · real-money auto-trading (only after a proven record and a VARA check) ·

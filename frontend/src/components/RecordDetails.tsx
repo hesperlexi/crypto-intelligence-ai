@@ -3,7 +3,7 @@
 // tp1_hit/tp2_hit/tp3_hit/stop_hit, filled_at, horizon_bars, expires_at, peak_pct, exit_reason, adjustments, proof, ai.
 // The live figures use the same formula as the signal card (price move vs the entry, side-aware, x the card's leverage);
 // they are labelled "Live" and are never stored - the result in the record is only written when the call closes.
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router-dom";
 import { base, fmtPctRaw, fmtPrice, fmtTime, isNum, slug } from "../lib/format";
@@ -63,7 +63,12 @@ export const STATUS_LABEL: Record<string, [string, string]> = {
   NOT_FILLED: ["Entry missed", "text-mute"], VOID: ["Void (no data)", "text-mute"],
 };
 export const statusOf = (x: any): [string, string] =>
-  x.exit_reason === "admin_close" && x.status === "EXPIRED" ? ["Closed", "text-mute"] : STATUS_LABEL[x.status] ?? [x.status, ""];
+  // owner 24 Nov: no grey area - a call closed at market (time limit or admin) is shown as the win or loss it was
+  x.status === "EXPIRED" ? (isNum(x.return_pct) && x.return_pct > 0 ? ["Win · closed at market", "text-bull"] : ["Loss · closed at market", "text-bear"])
+    : STATUS_LABEL[x.status] ?? [x.status, ""];
+/** Colour class of the status pill (closed-at-market rows take the colour of their result). */
+export const resClass = (x: any): string =>
+  `res-${x.status === "EXPIRED" ? (isNum(x.return_pct) && x.return_pct > 0 ? "tp1" : "stopped") : String(x.status).toLowerCase()}`;
 
 const EXIT: Record<string, string> = {
   stop: "Stop-loss hit", break_even: "Stopped at break-even after target 1", trail: "Stopped at the trailed stop (target 1 after target 2)",
@@ -140,28 +145,30 @@ function left(ms: number): string {
 function HitTags({ x }: { x: any }) {
   const hits = [x.tp1_hit && "TP1", x.tp2_hit && "TP2", x.tp3_hit && "TP3"].filter(Boolean) as string[];
   if (!hits.length) return null;
-  return <>{hits.map((h) => <Pill key={h} tone="bull">{h} hit</Pill>)}</>;
+  return <Pill tone="bull">{hits.join(" · ")} hit</Pill>;
 }
 
 /** Result-column content of an OPEN row: "Live" pill, targets hit, stop in force, distances. */
-export function LiveResult({ x, compact = false }: { x: any; compact?: boolean }) {
+export function LiveResult({ x, compact = false, extras, tail }: { x: any; compact?: boolean; extras?: ReactNode; tail?: ReactNode }) {
   const px = useTickerThrottled(isOpen(x) ? x.symbol : undefined)?.last ?? undefined;
   // pending: the "Waiting for entry" pill comes from the row's fill status; here only the price now
-  if (isPending(x)) return !compact && isNum(px) ? <div className="num mt-0.5 text-xs font-normal text-mute">now <span className="text-text">{fmtPrice(px)}</span> · entry {fmtPrice(x.entry)}</div> : null;
+  if (isPending(x)) return <>{extras && <div className="flex flex-wrap items-center gap-1">{extras}</div>}{!compact && isNum(px) ? <div className="num mt-0.5 text-xs font-normal text-mute">now <span className="text-text">{fmtPrice(px)}</span> · entry {fmtPrice(x.entry)}</div> : null}</>;
   const l = liveOf(x, px);
   return (
     <div className="font-normal">
       <div className="flex flex-wrap items-center gap-1">
-        <Pill tone="accent" title="Still running. The figures follow the live price and are not a result yet">● Live</Pill>
-        {isRunner(x) && <Pill tone="accent" title="The AI let this trade run: nothing closes at the targets, the stop moves up after each one, and the whole trade exits at the final target or the raised stop.">{runnerLabel(x)}</Pill>}
+        <span className="res-pill res-live" title="Still running. The figures follow the live price and are not a result yet"><i className="res-dot" />Live</span>
+        {isRunner(x) && <span className="res-pill res-run" title="The AI let this trade run: nothing closes at the targets, the stop moves up after each one, and the whole trade exits at the final target or the raised stop.">{runnerLabel(x)}</span>}
         <HitTags x={x} />
+        {extras}
         {l.stop.why && x.tp1_hit ? <span className="text-xs text-mute">stop at {stopAt(x)}</span> : null}
       </div>
       {!compact && (
         <div className="num mt-0.5 text-xs text-mute">
           {isNum(px) ? <>now <span className="text-text">{fmtPrice(px)}</span></> : "waiting for the live price"}
-          {isNum(l.toStop) && <> · stop {fmtPctRaw(Math.abs(l.toStop), 2, false)} away</>}
-          {l.next && isNum(l.toNext) && <> · {l.next[0] === "Target 1" ? "TP1" : l.next[0] === "Target 2" ? "TP2" : l.next[0] === "Target 3" ? "TP3" : `1:${Number(x.runner?.rr ?? 4)}`} {fmtPctRaw(Math.abs(l.toNext), 2, false)} away</>}
+          {isNum(l.toStop) && <> · <span className="text-bear/80">SL {fmtPctRaw(Math.abs(l.toStop), 2, false)}</span></>}
+          {l.next && isNum(l.toNext) && <> · <span className="text-bull/80">{l.next[0] === "Target 1" ? "TP1" : l.next[0] === "Target 2" ? "TP2" : l.next[0] === "Target 3" ? "TP3" : `1:${Number(x.runner?.rr ?? 4)}`} {fmtPctRaw(Math.abs(l.toNext), 2, false)}</span></>}
+          {tail}
         </div>
       )}
     </div>

@@ -4,7 +4,6 @@
 import { PracticeBadges } from "./CommandPlus";
 import PracticeCoach from "./PracticeCoach";
 import TradeJournal from "./TradeJournal";
-import { Burst } from "./Premium";
 import { createContext, memo, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
@@ -115,7 +114,7 @@ export default function TradeTerminal() {
   const positions: any[] = d?.positions ?? [];
   const orders: any[] = d?.orders ?? [];
   // v2.44 small celebration: a practice trade just closed in profit (not on the first load)
-  const [cheer, setCheer] = useState<{ n: number; text: string } | null>(null);
+  const [cheer, setCheer] = useState<{ n: number; text: string; amt: string; coin: string; streak: number } | null>(null);
   const lastClosed = useRef<number | null>(null);
   useEffect(() => {
     if (!d || market !== "futures") return;
@@ -128,12 +127,12 @@ export default function TradeTerminal() {
     if (!t || !(Number(t.realized_pnl) > 0)) return;
     let streak = 0;
     for (const c of closes) { if (Number(c.realized_pnl) > 0) streak += 1; else break; }
-    setCheer({ n: Date.now(), text: `+${Number(t.realized_pnl).toFixed(2)} USDT on ${String(t.symbol).split("/")[0]}${streak >= 2 ? ` · ${streak} wins in a row` : ""}` });
+    setCheer({ n: Date.now(), amt: `+${Number(t.realized_pnl).toFixed(2)} USDT`, coin: String(t.symbol).split("/")[0], streak, text: `+${Number(t.realized_pnl).toFixed(2)} USDT on ${String(t.symbol).split("/")[0]}` });
   }, [d, market]);
   // v2.46: the toast plays its celebration and goes away by itself (its own timer, not reset by price updates)
   useEffect(() => {
     if (!cheer) return;
-    const id = window.setTimeout(() => setCheer(null), 2800);
+    const id = window.setTimeout(() => setCheer(null), 4200);
     return () => window.clearTimeout(id);
   }, [cheer]);
   const [tf, setTf] = useState<string>("15m");
@@ -148,8 +147,15 @@ export default function TradeTerminal() {
       <SignalStrip symbol={symbol} market={market} />
       {market === "futures" && <AutoTrade />}
       {cheer && (
-        <button type="button" key={cheer.n} className="cheer-toast" onClick={() => setCheer(null)} aria-label={`Practice win ${cheer.text}. Tap to close`}>
-          <Burst fire={cheer.n} big /><span className="cheer-star" aria-hidden="true">✦</span> Practice win <b className="num text-bull">{cheer.text}</b>
+        <button type="button" key={cheer.n} className="win-toast" onClick={() => setCheer(null)} aria-label={`Practice win ${cheer.text}. Tap to close`}>
+          {/* owner 24 Nov: calmer win card - a check that draws itself, the amount, a draining timer bar; no confetti */}
+          <span className="win-check" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M5 12.5l4.2 4.2L19 7" /></svg></span>
+          <span className="text-left">
+            <span className="block text-xs text-mute">Practice trade closed in profit</span>
+            <span className="flex items-baseline gap-2"><b className="num text-lg font-semibold text-bull">{cheer.amt}</b><span className="text-sm font-medium">{cheer.coin}</span>
+              {cheer.streak >= 2 && <span className="rounded-full bg-bull/10 px-2 py-0.5 text-xs font-medium text-bull">{cheer.streak} wins in a row</span>}</span>
+          </span>
+          <i className="win-bar" aria-hidden="true" />
         </button>
       )}
       {msg && <div role="status" className={`rounded-lg border px-3 py-2 text-sm ${msg.ok ? "border-bull/40 bg-bull/10 text-bull" : "border-bear/40 bg-bear/10 text-bear"}`}>{msg.text}</div>}

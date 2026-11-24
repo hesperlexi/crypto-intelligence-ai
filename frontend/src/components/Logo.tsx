@@ -67,10 +67,26 @@ export function Logo({ size = 32, className = "", title }: Props) {
   return <Tile size={size} variant="static" className={className} title={title} />;
 }
 
-/** Header logo: a light sweep every ~6 s and a soft glow; no rotation. */
+/** Header logo: the live logo (blinking neurons, lightning links) at header size. */
 export function AnimatedLogo({ size = 36, className = "", title }: Props) {
-  return <Tile size={size} variant="header" className={className} title={title} />;
+  return <LiveLogo size={size} className={className} title={title} />;
 }
+// keep the 3D tile available for any future still use
+void Tile;
+
+/* owner 24 Nov 2026: "cyan links - dots must blink like red and green - and lines connecting them must be like
+   lightning". The neuron map is the one baked into the tile (brand-source/make_logo.py mesh(seed 13)): p = points,
+   l = links. Each link gets a jagged bolt that flashes now and then; each neuron blinks green or red. */
+const MESH: { p: [number, number][]; l: [number, number][] } = {"p":[[242,495],[154,24],[336,443],[378,418],[236,62],[58,216],[195,467],[378,57],[462,275],[410,459],[347,24],[369,39],[492,178],[245,509],[11,276],[54,170],[112,421],[180,435],[361,31],[495,234],[25,174],[414,435],[69,325],[323,473],[251,478],[85,123],[409,420],[275,459],[329,457],[468,361],[463,194],[206,1],[445,309],[343,19],[129,104],[38,388],[444,93],[330,498],[85,428],[427,455],[63,109],[312,484],[53,143],[102,444],[143,431],[379,462]],"l":[[0,6],[0,13],[0,24],[0,27],[0,41],[1,31],[2,3],[2,9],[2,21],[2,23],[2,26],[2,27],[2,28],[2,37],[2,41],[2,45],[3,9],[3,21],[3,23],[3,26],[3,28],[3,39],[3,45],[4,31],[5,14],[5,15],[5,20],[5,42],[6,13],[6,17],[6,24],[6,44],[7,10],[7,11],[7,18],[7,33],[7,36],[8,19],[8,32],[9,21],[9,26],[9,39],[9,45],[10,11],[10,18],[10,33],[11,18],[11,33],[12,19],[12,30],[13,24],[13,27],[13,41],[14,22],[15,20],[15,25],[15,40],[15,42],[16,17],[16,38],[16,43],[16,44],[17,43],[17,44],[18,33],[19,30],[20,25],[20,40],[20,42],[21,26],[21,39],[21,45],[22,35],[23,24],[23,27],[23,28],[23,37],[23,41],[23,45],[24,27],[24,41],[25,34],[25,40],[25,42],[26,39],[26,45],[27,28],[27,37],[27,41],[28,37],[28,41],[28,45],[29,32],[34,40],[35,38],[37,41],[37,45],[38,43],[38,44],[39,45],[40,42],[41,45],[43,44]]};
+const jit = (i: number) => (((i * 9301 + 49297) % 233280) / 233280) - 0.5;
+const BOLTS = MESH.l.map(([a, b], i) => {
+  const [x1, y1] = MESH.p[a], [x2, y2] = MESH.p[b];
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy) || 1, nx = -dy / len, ny = dx / len;
+  const pt = (t: number, k: number) => `${(x1 + dx * t + nx * k).toFixed(1)} ${(y1 + dy * t + ny * k).toFixed(1)}`;
+  const amp = Math.min(9, len * 0.16);
+  return { d: `M${x1} ${y1}L${pt(0.3, amp * (0.6 + jit(i)))}L${pt(0.55, -amp * (0.7 + jit(i + 7)))}L${pt(0.78, amp * 0.5)}L${x2} ${y2}`,
+    delay: ((i * 0.37) % 4.2).toFixed(2), dur: (2.6 + ((i * 0.53) % 2.4)).toFixed(2) };
+});
 
 /** Hero logo (landing, sign-in, access and loading screens): the v2.28 live logo - the original artwork as the core of
  *  the V3.0 tile with a gold pulse and the turning cyan ring. */
@@ -94,6 +110,13 @@ export function LiveLogo({ size = 96, className = "", title }: Props) {
         <g clipPath={`url(#${id}tc)`}>
           <circle cx="256" cy="256" r="214" fill={`url(#${id}glow)`} className="logox-pulse" style={{ mixBlendMode: "screen" }} />
           <circle cx="256" cy="256" r="190" fill="none" stroke="#5DF1DD" strokeOpacity=".55" strokeWidth="2.5" strokeDasharray="2 9" className="logox-spinr" />
+          <g fill="none" stroke="#9FFFF2" strokeWidth="2.2" strokeLinejoin="miter" style={{ filter: "drop-shadow(0 0 4px #5DF1DD)" }}>
+            {BOLTS.map((b, i) => <path key={i} d={b.d} className="logox-bolt" style={{ animationDelay: `${b.delay}s`, animationDuration: `${b.dur}s` }} />)}
+          </g>
+          <g>
+            {MESH.p.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="4.2" className={i % 2 ? "logox-red" : "logox-green"}
+              style={{ animationDelay: `${((i * 0.29) % 1.8).toFixed(2)}s` }} />)}
+          </g>
         </g>
       </svg>
     </span>

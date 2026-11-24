@@ -404,11 +404,19 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .res-tp1, .res-tp2, .res-tp3 { color: rgb(var(--bull)); border-color: rgb(var(--bull) / 0.35); background: rgb(var(--bull) / 0.1); }
 .res-tp3 { box-shadow: 0 0 12px -2px rgb(var(--bull) / 0.5); }
 .res-stopped { color: rgb(var(--bear)); border-color: rgb(var(--bear) / 0.35); background: rgb(var(--bear) / 0.1); }
-.res-open { color: rgb(var(--accent)); border-color: rgb(var(--accent) / 0.4); background: rgb(var(--accent) / 0.08); }
+.res-open, .res-live { color: rgb(var(--ai)); border-color: rgb(var(--ai) / 0.4); background: rgb(var(--ai) / 0.08); }
+/* owner 24 Nov: one colour per meaning - live cyan, let-it-run violet, admin change blue, admin close orange, closed grey */
+.res-dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; animation: res-dot 1.6s ease-in-out infinite; }
+@keyframes res-dot { 50% { opacity: .25; } }
+.res-run { color: rgb(178 140 255); border-color: rgb(178 140 255 / 0.4); background: rgb(178 140 255 / 0.1); }
+.res-upd { color: rgb(96 165 250); border-color: rgb(96 165 250 / 0.4); background: rgb(96 165 250 / 0.08); }
+.res-admin { color: rgb(251 146 60); border-color: rgb(251 146 60 / 0.4); background: rgb(251 146 60 / 0.08); }
+.res-closed, .res-expired { color: rgb(var(--mute)); }
+@media (prefers-reduced-motion: reduce) { .res-dot { animation: none; } }
 .res-row td:first-child { box-shadow: inset 2px 0 0 0 transparent; }
 .res-row-won td:first-child { box-shadow: inset 2px 0 0 0 rgb(var(--bull) / 0.8); }
 .res-row-lost td:first-child { box-shadow: inset 2px 0 0 0 rgb(var(--bear) / 0.8); }
-.res-row-open td:first-child { box-shadow: inset 2px 0 0 0 rgb(var(--accent) / 0.8); }
+.res-row-open td:first-child { box-shadow: inset 2px 0 0 0 rgb(var(--ai) / 0.7); }
 .rb-formstats { margin-top: auto !important; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border: 1px solid var(--hair); border-radius: 12px; background: rgb(var(--ink) / 0.35); }
 .rb-formstats > div { padding: 0.65rem 0.85rem; min-width: 0; }
 .rb-formstats > div + div { border-left: 1px solid var(--hair); }

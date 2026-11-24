@@ -70,7 +70,7 @@ async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
       g.fillStyle = L.hair; g.fillRect(M, top, W - 2 * M, 1);
       txt(g, `0${k + 1}`, M, mid, { f: sora, w: 700, px: story ? 24 : 20, color: L.soft });
       txt(g, base(t.symbol), M + 60, mid, { f: sora, w: 700, px: story ? 34 : 28, color: L.text, maxW: 170 });
-      txt(g, `${t.side} · ${String(t.timeframe).toUpperCase()} · ${STATUS[t.status] ?? t.status}`, M + 250, mid,
+      txt(g, `${t.side} · ${String(t.timeframe).toUpperCase()} · ${t.status === "EXPIRED" ? (t.return_pct > 0 ? "Win at market" : "Loss at market") : STATUS[t.status] ?? t.status}`, M + 250, mid,
         { w: 600, px: story ? 21 : 18, color: t.side === "LONG" ? L.bull : L.bear, maxW: 330 });
       const ro = roiOf(t)!;
       figure(g, sp(ro.value, 1), W - M, mid, story ? 36 : 30, true, { align: "right" });

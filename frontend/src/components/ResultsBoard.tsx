@@ -203,10 +203,18 @@ function Fact({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls
 /** How the closed signals ended: one stacked bar, then each outcome with its count, share and average result. */
 function Outcomes({ rows }: { rows: Row[] }) {
   const n = rows.length;
-  const parts = OUTCOMES.map(([k, label, cls]) => {
-    const xs = rows.filter((x) => x.status === k);
+  // owner 24 Nov: no grey area - a call closed at its time limit is shown as the win or loss it was (by its result),
+  // never as a separate "Time limit" line. Every closed call is still counted.
+  const buckets: [string, string, string, (x: Row) => boolean][] = [
+    ...OUTCOMES.filter(([k]) => k !== "EXPIRED" && k !== "STOPPED").map(([k, l, c]) => [k, l, c, (x: Row) => x.status === k] as [string, string, string, (x: Row) => boolean]),
+    ["WIN_MKT", "Win, closed at market", "o-tp1", (x: Row) => x.status === "EXPIRED" && x.return_pct > 0],
+    ["LOSS_MKT", "Loss, closed at market", "o-stop", (x: Row) => x.status === "EXPIRED" && x.return_pct <= 0],
+    ["STOPPED", "Stop-loss", "o-stop", (x: Row) => x.status === "STOPPED"],
+  ];
+  const parts = buckets.map(([k, label, cls, f]) => {
+    const xs = rows.filter(f);
     return { k, label, cls, n: xs.length, avg: xs.length ? xs.reduce((a, x) => a + x.return_pct, 0) / xs.length : null };
-  });
+  }).filter((p) => p.n || !["WIN_MKT", "LOSS_MKT"].includes(p.k));
   return (
     <section className="panel flex flex-col p-4 sm:p-5" aria-label="How the signals ended">
       <div className="flex items-baseline justify-between gap-2"><h2 className="label">How the signals ended</h2><span className="text-xs text-mute">{n} closed · after fees</span></div>

@@ -32,7 +32,7 @@ const hhmm = (ms: number) => new Date(ms).toLocaleString(undefined, { month: "sh
 export function UpdatedBadge({ adj }: { adj?: Adjustment[] | null }) {
   if (!adj?.length) return null;
   const last = adj[adj.length - 1];
-  return <Pill tone="warn" title={`Changed by the admin ${hhmm(last.at)}. Results use the original levels before each change and the new ones after it.`}>Updated</Pill>;
+  return <span className="res-pill res-upd" title={`Changed by the admin ${hhmm(last.at)}. Results use the original levels before each change and the new ones after it.`}>Updated</span>;
 }
 
 /** The change history: "14:32 · Stop-loss 66,900 → 67,500 · note". */
@@ -43,12 +43,12 @@ export function AdjustHistory({ adj, compact = false }: { adj?: Adjustment[] | n
       {!compact && <div className="mb-1 text-xs font-semibold uppercase tracking-[0.08em] text-warn">Changed by the admin</div>}
       <ul className="space-y-0.5">
         {[...adj].reverse().map((a, i) => (
-          <li key={i} className="text-xs leading-snug text-mute">
+          <li key={i} className={`text-xs leading-snug text-mute ${compact ? "truncate" : ""}`} title={compact && a.note ? a.note : undefined}>
             <span className="num">{hhmm(a.at)}</span> · <span className="font-semibold text-text">{LABEL[a.field] ?? a.field}</span>{" "}
             {a.field === "close"
               ? <span className="num text-warn">{fmtPrice(a.new)}</span>
               : <span className="num">{fmtPrice(a.old)} → <span className={a.field === "stop" ? "text-bear" : "text-bull"}>{fmtPrice(a.new)}</span></span>}
-            {a.note ? <> · <span className="break-words">{a.note}</span></> : null}
+            {a.note && !compact ? <> · <span className="break-words">{a.note}</span></> : null}
           </li>
         ))}
       </ul>

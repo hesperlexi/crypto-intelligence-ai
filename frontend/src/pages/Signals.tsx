@@ -241,7 +241,7 @@ export default function Signals() {
 const TONE_TXT = { bull: "text-bull", bear: "text-bear", warn: "text-warn", accent: "text-accent", mute: "text-mute" } as const;
 function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Market; px?: number }) {
   const c = r.call;
-  const st = c ? CALL_STATUS[c.status] : null;
+  const st = c ? (c.status === "EXPIRED" ? (c.return_pct > 0 ? ["Win at market", "bull"] as const : ["Loss at market", "bear"] as const) : CALL_STATUS[c.status]) : null;
   const fill = c ? fillLabel(c.fill_status) : null;
   const managed = c?.managed === 1 ? managedLabel(c.exit_reason) : null;
   const pnl = c?.status === "OPEN" && c.fill_status !== "PENDING" && c.fill_status !== "NOT_FILLED" ? livePnl(c.side, c.entry, px) : null;
