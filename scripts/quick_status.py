@@ -125,14 +125,21 @@ try:
 except Exception as exc:
     out["news"] = {"error": str(exc)[:200]}
 try:
+    _h = fs.document("views/health_admin").get().to_dict() or {}
+    hj = json.loads(_h["json"]) if _h.get("json") else {}
     out["alert_watcher"] = (hj.get("engine") or {}).get("alert_watcher")
 except Exception:
     pass
 # health tiles the owner sees as warnings: market data, exchange errors, AI check (counts / labels only)
 try:
+    _h = fs.document("views/health_admin").get().to_dict() or {}
+    hj = json.loads(_h["json"]) if _h.get("json") else {}
     out["hj_keys"] = sorted(hj.keys())
     out["md"] = {k: v for k, v in (hj.get("market_data") or {}).items() if not isinstance(v, list)}
-    out["md_stale"] = [(x.get("symbol"), x.get("timeframe"), x.get("status"), x.get("age_min") or x.get("age_h")) for x in (hj.get("series") or []) if x.get("status") not in ("OK", "ok", None)][:40]
+    out["md_stale"] = [{k: v for k, v in x.items() if k in ("symbol", "timeframe", "status", "candles", "last_ts", "age_s", "gaps", "quality_pct", "missing")} for x in (hj.get("series") or []) if x.get("status") not in ("OK", "ok", "LIVE", None)][:40]
+    out["series_status"] = {st_: sum(1 for x in (hj.get("series") or []) if x.get("status") == st_) for st_ in {x.get("status") for x in (hj.get("series") or [])}}
+    out["series_sample"] = (hj.get("series") or [None])[0]
+    out["eng_watch"] = {k: v for k, v in (hj.get("engine") or {}).items() if k.startswith(("watch", "alert", "flow", "round", "last_tick"))}
     out["exchange"] = {k: (v if not isinstance(v, (list, dict)) else str(v)[:300]) for k, v in (hj.get("exchange") or {}).items()}
     g = fs.document("views/guardian").get().to_dict() or {}
     gj = json.loads(g["json"]) if g.get("json") else {}
