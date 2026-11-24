@@ -1720,6 +1720,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         if due:
             detail["news_push"] = step("news_push", lambda: sink.send_push(due))
             detail["news_telegram"] = step("news_telegram", lambda: telegram.post_news(sink, due))
+    if fetch_context:                    # v3.1 Cloudflare price-alert watcher: what to watch, what it sent
+        from .services import edge_watch
+        detail["edge_watch"] = step("edge_watch", lambda: edge_watch.run(rt, sink))
     last_week = views.week_start(now_ms()) - views.WEEK
     if int(rt.db.get_setting("weekly_report_notified", 0) or 0) < last_week and now_ms() - views.week_start(now_ms()) > 4 * 3_600_000:
         def weekly_push():

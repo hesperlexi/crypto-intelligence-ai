@@ -10,10 +10,13 @@
 //      other data, never gives financial advice, never invents numbers. Advisory text only; it changes nothing.
 // GET /health → {ok}. Nothing is stored except the counters and the membership cache (no questions, no answers).
 
+import { watchArm, watchInit, watchRun, watchStatus } from "./watch";
+
 export interface Env {
   KV: KVNamespace;
   VIEWS: DurableObjectNamespace;
   EDGE_KEY: string;
+  FCM_SENDER_KEY?: string;
   GEMINI_API_KEY: string;
   GEMINI_MODEL: string;
   FIREBASE_PROJECT: string;
@@ -184,7 +187,20 @@ async function ask(env: Env, question: string, page: string, context: string, hi
   return text || null;
 }
 
+/** Engine-only routes of the price-alert watcher (same X-Edge-Key as /ingest), handled inside the Durable Object. */
+async function engineOnly(req: Request, env: Env, path: string): Promise<Response> {
+  const key = req.headers.get("X-Edge-Key") ?? "";
+  if (!env.EDGE_KEY || key.length < 32 || key !== env.EDGE_KEY) return new Response(JSON.stringify({ error: "forbidden" }), { status: 403 });
+  const stub = env.VIEWS.get(env.VIEWS.idFromName("views"));
+  return stub.fetch(`https://do${path}`, { method: req.method, body: req.method === "POST" ? await req.text() : undefined });
+}
+
 export default {
+  // price-alert watcher: every minute (wrangler.toml crons), inside the Durable Object that holds the armed alerts
+  async scheduled(_ev: ScheduledEvent, env: Env, ctx: ExecutionContext) {
+    const stub = env.VIEWS.get(env.VIEWS.idFromName("views"));
+    ctx.waitUntil(stub.fetch("https://do/watch/run", { method: "POST" }).then(() => undefined).catch(() => undefined));
+  },
   async fetch(req: Request, env: Env): Promise<Response> {
     const h = cors(req.headers.get("Origin"), env);
     const url = new URL(req.url);
@@ -208,6 +224,8 @@ export default {
       return json({ models, gemini: gem, admins: env.ADMIN_EMAILS.split(/[,\s;]+/).filter(Boolean).length, last: JSON.parse((await env.KV.get("diag:last")) ?? "null") }, 200, h);
     }
     if (url.pathname === "/ingest" && req.method === "POST") return ingest(req, env);
+    if (url.pathname === "/watch/arm" && req.method === "POST") return engineOnly(req, env, "/watch/arm");
+    if (url.pathname === "/watch/status" && req.method === "GET") return engineOnly(req, env, `/watch/status?since=${encodeURIComponent(url.searchParams.get("since") ?? "0")}`);
     if (url.pathname === "/v" && req.method === "GET") return views(req, url, env, h);
     if (url.pathname === "/edge-health") return edgeHealth(env, h);
     if (url.pathname !== "/chat" || req.method !== "POST") return json({ error: "Not found" }, 404, h);
@@ -321,12 +339,21 @@ async function verifyCached(token: string, project: string) {
 /** One Durable Object holds every edge view (SQLite storage: one row per view). */
 export class ViewStore {
   sql: SqlStorage;
-  constructor(readonly state: DurableObjectState, _env: Env) {
+  env: Env;
+  constructor(readonly state: DurableObjectState, env: Env) {
+    this.env = env;
     this.sql = state.storage.sql;
     this.sql.exec("CREATE TABLE IF NOT EXISTS views (name TEXT PRIMARY KEY, json TEXT NOT NULL, at INTEGER NOT NULL, etag TEXT NOT NULL)");
   }
   async fetch(req: Request): Promise<Response> {
     const u = new URL(req.url);
+    if (u.pathname.startsWith("/watch/")) {
+      watchInit(this.sql);
+      if (u.pathname === "/watch/run") return Response.json(await watchRun(this.sql, this.env.FCM_SENDER_KEY));
+      if (u.pathname === "/watch/arm") return Response.json({ ok: true, armed: watchArm(this.sql, await req.json().catch(() => null)) });
+      if (u.pathname === "/watch/status") return Response.json(watchStatus(this.sql, Number(u.searchParams.get("since")) || 0));
+      return new Response("not found", { status: 404 });
+    }
     if (u.pathname.startsWith("/kv/")) {
       this.sql.exec("CREATE TABLE IF NOT EXISTS kv (k TEXT PRIMARY KEY, v TEXT NOT NULL, exp INTEGER NOT NULL)");
       const b: any = await req.json();

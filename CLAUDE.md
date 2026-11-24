@@ -657,6 +657,15 @@ configuration, market data + candle series table, models table, recent errors (c
   (`Command.Universe`: 7-day hourly closes rebased to 0 %, correlation + beta chips, `.rb-*`) · Market heat kept ·
   Coin deep dive = trading card (`Command.Scan`, `.tc-*`) · background = drifting gold price lines (`components/PriceLines.tsx`,
   portal, `.pl-bg`, cards 80 % opaque on that page). Options mockups were scratch files only.
+- **Cloudflare price-alert watcher** (owner, 24 Nov 2026): `chat-worker/src/watch.ts` runs every minute (wrangler cron, inside
+  the `ViewStore` Durable Object: tables `wkv`, `wsent`, `wtok`), prices armed levels (Binance spot / MEXC futures-only) and
+  sends FCM v1 pushes (same texts + tags as `watch.py`) with a SEND-ONLY service account `cia-alerts-sender` (GitHub secret
+  `FCM_SENDER_KEY` → Worker secret by `chat-worker.yml`; role Firebase Cloud Messaging API Admin). The main Firebase key never
+  leaves GitHub. Engine step `edge_watch` (`services/edge_watch.py`): armed list (open call levels × primed rules' phones,
+  Hesper / Last Stand admin + `|m` member items) → `POST /watch/arm` when changed or every 30 min; `GET /watch/status`
+  → setting `edge_watch_status`, sent keys merged into `watch_sent.json`, refused phones deleted from `push_tokens`.
+  `push_tokens` read at most hourly (setting `edge_watch_tokens`). `watch.py` stays quiet while `cloud_healthy` (watcher
+  ran < 6 min ago, armed < 45 min, no error). Armed list > 6 h old → watcher idles. `EDGE_WATCH=0` off. Tests `test_edge_watch.py`.
 - Version 3.1.0 everywhere (package.json → footer, Settings, APK name). Manual: 1d = demo bots, stale risk = half size, card.
 - Telegram news: `post_news` sends only high-impact US releases ~30 min before (a few a week); briefings wait for the owner's
   approval while "Ask me before posting" is on. `quick_status.py` now reports the calendar (`news`).

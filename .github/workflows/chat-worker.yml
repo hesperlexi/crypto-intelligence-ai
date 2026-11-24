@@ -74,6 +74,13 @@ jobs:
         run: |
           if [ -z "$FSA" ]; then echo "::warning::no Firebase key - edge views off"; exit 0; fi
           printf '%s' "cia-edge-v1|$FSA" | sha256sum | cut -c1-64 | tr -d '\n' | npx wrangler secret put EDGE_KEY >/dev/null && echo "edge key set"
+      - name: Notification send key (price-alert watcher; send-only service account, never printed)
+        if: steps.chk.outputs.go == '1'
+        env:
+          FCM_KEY: ${{ secrets.FCM_SENDER_KEY }}
+        run: |
+          if [ -z "$FCM_KEY" ]; then echo "::warning::FCM_SENDER_KEY not set - the Cloudflare alert watcher cannot send yet"; exit 0; fi
+          printf '%s' "$FCM_KEY" | npx wrangler secret put FCM_SENDER_KEY >/dev/null && echo "send key set"
       - name: Gemini key
         if: steps.chk.outputs.go == '1'
         env:

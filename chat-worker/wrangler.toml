@@ -14,6 +14,10 @@ ADMIN_DAILY = "100"
 GLOBAL_DAILY = "400"
 ADMIN_EMAILS = ""
 
+# price-alert watcher (24 Nov 2026): every minute, free plan
+[triggers]
+crons = ["* * * * *"]
+
 [[kv_namespaces]]
 binding = "KV"
 id = "__KV_ID__"

@@ -282,6 +282,17 @@ def send(messages: list[dict[str, str]]) -> dict[str, Any]:
         return {"sent": 0, "error": (p.stderr or "no result")[-200:]}
 
 
+CLOUD_FRESH_MS = 6 * 60_000
+
+
+def cloud_healthy(db: Any, now: int | None = None) -> bool:
+    """The Cloudflare watcher ran in the last few minutes with a fresh armed list and no sending error."""
+    st = db.get_setting("edge_watch_status", None) or {}
+    now = int(time.time() * 1000) if now is None else now
+    at, armed_at = int(st.get("at") or 0), int(st.get("armed_at") or 0)
+    return bool(at and now - at < CLOUD_FRESH_MS and armed_at and now - armed_at < 45 * 60_000 and not st.get("error") and not st.get("idle"))
+
+
 def main() -> None:
     from .config import settings
     url = settings.database_url
@@ -302,6 +313,11 @@ def main() -> None:
     prices = fetch_prices(syms)
     msgs, sent = once(db, sent, prices)
     res: dict[str, Any] = {}
+    # v3.1 (24 Nov 2026): the Cloudflare watcher sends these every minute; while it is healthy this watch stays quiet
+    # (marking what it saw as sent), so a phone never gets the same early alert twice. Back on when it goes quiet.
+    if msgs and cloud_healthy(db):
+        print(f"watch: {len(msgs)} early notification(s) left to the Cloudflare watcher", flush=True)
+        msgs = []
     if msgs:
         res = send(msgs)
         print(f"watch: {len(msgs)} early notification(s): {json.dumps(res)[:300]}", flush=True)
