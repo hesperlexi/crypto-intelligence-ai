@@ -41,23 +41,50 @@ const reached = (a: Armed, p: number) => {
   return a.profit ? d >= 0 : d <= 0;
 };
 
-async function prices(list: Armed[]): Promise<Record<string, number>> {
+// Binance first (the engine's own price source); Cloudflare's edge is sometimes refused by Binance (451 / 403 by
+// region), so OKX and then MEXC spot answer instead. One batch request each; futures-only coins from MEXC futures.
+async function prices(list: Armed[], st: any): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
   const spot = [...new Set(list.filter((a) => a.src === "spot").map((a) => a.pair))];
   const mexc = [...new Set(list.filter((a) => a.src === "mexc").map((a) => a.pair))];
+  const tries: string[] = [];
+  const need = () => spot.filter((p) => !isFinite(out[`spot:${p}`]));
   if (spot.length) {
-    try {
-      const r = await fetch(`https://data-api.binance.vision/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(spot))}`);
-      if (r.ok) for (const x of (await r.json()) as any[]) out[`spot:${x.symbol}`] = Number(x.price);
-    } catch { /* next minute */ }
+    for (const host of ["https://data-api.binance.vision", "https://api.binance.com"]) {
+      if (!need().length) break;
+      try {
+        const r = await fetch(`${host}/api/v3/ticker/price?symbols=${encodeURIComponent(JSON.stringify(need()))}`);
+        tries.push(`${host.replace("https://", "")} ${r.status}`);
+        if (r.ok) for (const x of (await r.json()) as any[]) out[`spot:${x.symbol}`] = Number(x.price);
+      } catch (e) { tries.push(`${host.replace("https://", "")} ${String(e).slice(0, 40)}`); }
+    }
+    if (need().length) {
+      try {
+        const r = await fetch("https://www.okx.com/api/v5/market/tickers?instType=SPOT");
+        tries.push(`okx ${r.status}`);
+        const d: any = r.ok ? await r.json() : null;
+        const want = new Set(need());
+        for (const x of d?.data ?? []) { const p = String(x.instId).replace("-", ""); if (want.has(p) && x.last) out[`spot:${p}`] = Number(x.last); }
+      } catch (e) { tries.push(`okx ${String(e).slice(0, 40)}`); }
+    }
+    if (need().length) {
+      try {
+        const r = await fetch("https://api.mexc.com/api/v3/ticker/price");
+        tries.push(`mexc ${r.status}`);
+        const want = new Set(need());
+        if (r.ok) for (const x of (await r.json()) as any[]) if (want.has(x.symbol)) out[`spot:${x.symbol}`] = Number(x.price);
+      } catch (e) { tries.push(`mexc ${String(e).slice(0, 40)}`); }
+    }
   }
   for (const c of mexc.slice(0, 5)) {
     try {
       const r = await fetch(`https://contract.mexc.com/api/v1/contract/ticker?symbol=${encodeURIComponent(c)}`);
       const d: any = r.ok ? await r.json() : null;
       if (d?.data?.lastPrice) out[`mexc:${c}`] = Number(d.data.lastPrice);
-    } catch { /* next minute */ }
+      else tries.push(`mexc-fut ${r.status}`);
+    } catch (e) { tries.push(`mexc-fut ${String(e).slice(0, 40)}`); }
   }
+  st.price_tries = tries.slice(0, 8);
   return out;
 }
 
@@ -99,7 +126,7 @@ export async function watchRun(sql: Sql, keyJson: string | undefined): Promise<R
   // hourly self-check: a dry-run send (validate_only: nothing reaches the phone) proves the key and its permission
   const check = JSON.parse(kvGet(sql, "fcm_check") ?? "null");
   const probe = kvGet(sql, "probe_token");
-  if (keyJson && probe && (!check || now - check.at > 3_600_000)) {
+  if (keyJson && probe && (!check || now - check.at > (check.ok ? 3_600_000 : 300_000))) {   // a failed check retries every 5 min
     const res: any = { at: now, ok: false };
     try {
       const auth = await accessToken(sql, keyJson);
@@ -117,7 +144,7 @@ export async function watchRun(sql: Sql, keyJson: string | undefined): Promise<R
   st.fcm_check = JSON.parse(kvGet(sql, "fcm_check") ?? "null");
   // armed list older than 6 h = the engine is gone for long; the levels may be out of date (closed calls) -> stop
   if (!list.length || now - armedAt > 6 * 3_600_000) { kvPut(sql, "status", JSON.stringify({ ...st, idle: true })); return st; }
-  const px = await prices(list);
+  const px = await prices(list, st);
   st.priced = Object.keys(px).length;
   const due = list.filter((a) => {
     const p = px[`${a.src}:${a.pair}`];
