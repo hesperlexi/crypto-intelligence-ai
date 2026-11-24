@@ -54,7 +54,7 @@ Each card answers two questions: **what does it do**, and **how does it help you
 </div>
 <div class="card" markdown>
 ### Six timeframes
-**What:** 15 minutes, 1 hour, 4 hours, 12 hours, 1 day and 3 days.
+**What:** 15 minutes, 1 hour, 4 hours, 12 hours, 1 day and 3 days. 1-day calls go to the demo bots only for now; the chart and AI view are still shown.
 **Helps you:** short ideas if you watch the market often, longer ones if you check in once a day.
 </div>
 <div class="card" markdown>
@@ -199,6 +199,7 @@ A **signal** is a trade idea with a full plan. It never tells you that a trade w
 
 Tap any coin to open its page. You will find:
 
+- **AI opportunity analysis** at the top: which way the AI leans, how many models agree, the chance it gives, whether a trading edge is proven, the evidence for it and what would cancel it. A lean is not a signal: only calls on the Signals page are trades.
 - **The chart**, with the AI's support and resistance levels and its trade plan drawn on it.
 - **The AI decision**: the current signal or WAIT, with the reason.
 - **Market direction**: whether the AI leans up or down on this coin.
@@ -317,7 +318,7 @@ Auto-trade copies the app's signals into your **practice futures account**, even
 <li markdown>**Save** and press **Turn on**.</li>
 <li markdown>**Review:** open **Auto-trade activity** on the panel to see every trade it placed or skipped, and why.</li>
 <li markdown>**Turn it off** any time with **Turn off**. Open trades stay until they reach their stop or target.</li>
-<li markdown>**Set your protection:** open **Portfolio → Auto-trade protection**: a **daily loss limit** (% of the account), the **most of the account in use**, and **Follow the market risk level** (High risk: half size; Severe: no new auto-trades). Press **Save protection**.</li>
+<li markdown>**Set your protection:** open **Portfolio → Auto-trade protection**: a **daily loss limit** (% of the account), the **most of the account in use**, and **Follow the market risk level** (High risk, or no fresh risk reading: half size; Severe: no new auto-trades). Press **Save protection**.</li>
 </ol>
 
 <div class="tip" markdown>

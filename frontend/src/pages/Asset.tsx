@@ -14,6 +14,7 @@ import { Badge, Card, Check, Empty, ErrorBox, isNotReady, FlagList, Loading, Met
 import TradeCall, { Market, verdictOf } from "../components/TradeCall";
 import CoinReport from "../components/CoinReport";
 import CoinPassport from "../components/CoinPassport";
+import OpportunityCard from "../components/OpportunityCard";
 import { CoinDerivatives } from "../components/Derivs";
 import { post, useApi } from "../lib/api";
 import { DASH, fmtCompact, fmtNum, fmtPct, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, slug, tone } from "../lib/format";
@@ -131,6 +132,8 @@ export default function Asset() {
         {ok && a.flags?.length > 0 && <div className="mt-3"><FlagList flags={a.flags} /></div>}
         {ok && a.decision_reason && <p className="mt-2 text-sm text-mute">Why {a.decision.toLowerCase()}: {a.decision_reason}.</p>}
       </div>
+
+      {ok && <OpportunityCard a={a} tf={tf} />}
 
       {/* v2.59 dossier: a missing analysis is one quiet line, not a big empty block; real errors stay red */}
       {an.error && (isNotReady(an.error)

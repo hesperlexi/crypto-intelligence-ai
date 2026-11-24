@@ -997,3 +997,40 @@ header.tb-premium > :last-child::after, .obs-horizon {
 .lt-price { stroke: rgb(var(--accent)); stroke-dasharray: 3 3; }
 .csx-sheet { z-index: 95; }
 @media (pointer: coarse) { .csx-kbd { display: none; } }
+
+/* AI opportunity analysis (coin page, 24 Nov 2026) */
+.opp{border:1px solid rgb(var(--line));border-radius:var(--r-card,12px);background:rgb(var(--panel)/var(--panel-a,.92));overflow:hidden}
+.opp-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:.5rem 1rem;padding:1rem 1.25rem;border-bottom:1px solid rgb(var(--line))}
+.opp-kicker{font-size:.75rem;color:rgb(var(--mute))}
+.opp-lean{font-size:1.25rem;font-weight:600;line-height:1.3}
+.opp-decision{font-size:.875rem;color:rgb(var(--mute));margin:0;text-align:right;max-width:28rem}
+.opp-bull{color:rgb(var(--bull))}.opp-bear{color:rgb(var(--bear))}.opp-flat{color:rgb(var(--mute))}.opp-warn{color:rgb(var(--warn))}
+.opp-top{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-bottom:1px solid rgb(var(--line))}
+.opp-top>div{padding:.9rem 1.25rem;min-width:0}.opp-top>div+div{border-left:1px solid rgb(var(--line))}
+.opp-k{font-size:.75rem;color:rgb(var(--mute))}
+.opp-v{font-size:1.5rem;font-weight:600;font-variant-numeric:tabular-nums;line-height:1.3}
+.opp-edge .opp-v{font-size:1.125rem;margin-top:.25rem}
+.opp-s{font-size:.75rem;color:rgb(var(--mute));margin-top:.35rem}
+.opp-dots{display:flex;flex-wrap:wrap;gap:4px;margin-top:.45rem}
+.opp-dots i{width:18px;height:6px;border-radius:3px;background:rgb(var(--line))}
+.opp-dots i.opp-bull{background:rgb(var(--bull))}.opp-dots i.opp-bear{background:rgb(var(--bear))}.opp-dots i.opp-flat{background:rgb(var(--mute))}
+.opp-bar{height:6px;border-radius:3px;background:rgb(var(--line));margin-top:.45rem;overflow:hidden}
+.opp-bar i{display:block;height:100%;background:rgb(var(--accent));border-radius:3px}
+.opp-cols{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+.opp-cols>section{padding:.9rem 1.25rem;min-width:0}.opp-cols>section+section{border-left:1px solid rgb(var(--line))}
+.opp-cols h3{font-size:.875rem;font-weight:600;margin:0 0 .35rem}
+.opp-cols ul{list-style:none;margin:0;padding:0}
+.opp-cols li{display:flex;gap:.75rem;align-items:baseline;padding:.4rem 0;font-size:.875rem;border-top:1px solid rgb(var(--glass)/.05)}
+.opp-cols li:first-child{border-top:0}
+.opp-cols li em{font-style:normal;margin-left:auto;font-size:.75rem;color:rgb(var(--mute));white-space:nowrap}
+.opp-none{font-size:.875rem;color:rgb(var(--mute));margin:0}
+.opp-foot{display:flex;flex-wrap:wrap;gap:.35rem 1.25rem;padding:.7rem 1.25rem;border-top:1px solid rgb(var(--line));background:rgb(var(--raised)/.5);font-size:.8125rem;color:rgb(var(--mute))}
+.opp-foot b{color:rgb(var(--text));font-weight:500}
+.opp-admin{font-size:.7rem;border:1px solid rgb(var(--line));border-radius:999px;padding:0 .4rem;margin-left:.25rem}
+@media (max-width:639px){
+  .opp-top{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .opp-top .opp-edge{grid-column:1/-1;border-left:0;border-top:1px solid rgb(var(--line))}
+  .opp-cols{grid-template-columns:1fr}.opp-cols>section+section{border-left:0;border-top:1px solid rgb(var(--line))}
+  .opp-decision{text-align:left}
+  .opp-head,.opp-top>div,.opp-cols>section,.opp-foot{padding-left:1rem;padding-right:1rem}
+}

@@ -521,6 +521,7 @@ export function seed(): Record<string, any> {
     "views/context": v({ market: { total_market_cap_usd: 2.41e12, market_cap_change_24h_pct: 1.21, btc_dominance: 56.4 }, sentiment: { value: 64, label: "Greed", change_7d: 9, history: Array.from({ length: 30 }, (_, i) => ({ ts: NOW - (29 - i) * D, value: 45 + Math.round(15 * Math.sin(i / 4)) + i / 2 })) } }),
     "views/market_context": v(marketContext()),
     "views/coin_reports": v(coinReports()),
+    "views/analysis_BTCUSDT_4h": v(assetAnalysis()),
     "views/derivs": v(derivs()),
     ...alertsFor("u_member"),
     ...alertsFor("owner"),
@@ -992,4 +993,48 @@ function derivs() {
     unlocks: [{ coin: "SUI", tokens_30d: 6.4e7, pct_of_unlocked: 2.1, next_at: NOW + 9 * D }, { coin: "APT", tokens_30d: 1.13e7, pct_of_unlocked: 1.4, next_at: NOW + 12 * D },
       { coin: "ENA", tokens_30d: 1.7e8, pct_of_unlocked: 0.9, next_at: NOW + 3 * D }, { coin: "AVAX", tokens_30d: 1.6e6, pct_of_unlocked: 0.4, next_at: NOW + 20 * D }],
     core: { coins: 10, maps: 3 } };
+}
+
+
+/** Coin page sample (BTC 4h): enough of the engine's analysis row for every card, incl. the AI opportunity card. */
+function assetAnalysis() {
+  const px = 68420.5;
+  const pm = (name: string, label: string, cal: number[], w: number) => ({ name, label, baseline: false, raw: cal, calibrated: cal, weight: w,
+    calibration: "isotonic", predicted: ["down", "neutral", "up"][cal.indexOf(Math.max(...cal))], oos_accuracy: 0.41, oos_brier: 0.62 });
+  return {
+    status: "OK", symbol: "BTC/USDT", timeframe: "4h", price: px, last_close: px, decision: "WAIT", grade: null,
+    decision_reason: "the setup's entry zone is below the price", confidence: 0.57, flags: [],
+    regime: { regime: "TRENDING_UP", score: 0.46, confidence: 0.72, trend_strength: "strong", momentum: "rising",
+      transition: { horizon_bars: 6, n: 412, from_group: "up", probabilities: { up: 0.71, range: 0.22, down: 0.07 } } },
+    volatility: { state: "NORMAL" },
+    signal: { signal: "BUY", score: 64, components: [
+      { key: "trend", label: "Trend", effective_weight: 0.3, available: true, score: 0.62 },
+      { key: "momentum", label: "Momentum", effective_weight: 0.25, available: true, score: 0.35 },
+      { key: "volume", label: "Volume", effective_weight: 0.2, available: true, score: 0.12 },
+      { key: "structure", label: "Structure", effective_weight: 0.25, available: true, score: 0.4 } ],
+      reasons: ["Price above the 50 and 200 averages", "Higher lows on 4H", "MACD above its signal line"],
+      warnings: ["RSI 68: close to overbought"] },
+    forecast: { available: true, model_version: "BTCUSDT-4h-20261124", trained_at: NOW - 5 * 36e5, bar_ts: NOW - 36e5, price: px,
+      sigma: 0.011, neutral_band: 0.0025, probabilities: { down: 0.21, neutral: 0.15, up: 0.64 },
+      raw_probabilities: { down: 0.23, neutral: 0.14, up: 0.63 }, predicted_class: 2, predicted: "up", p_max: 0.64,
+      model_agreement: 0.83, models_agreeing: 4, models_total: 5,
+      per_model: [pm("random_forest", "Random forest", [0.18, 0.14, 0.68], 0.4), pm("xgboost", "XGBoost", [0.24, 0.16, 0.6], 0.15),
+        pm("lightgbm", "LightGBM", [0.22, 0.17, 0.61], 0.15), pm("logistic", "Logistic", [0.27, 0.2, 0.53], 0.12), pm("arima", "ARIMA", [0.4, 0.31, 0.29], 0.08)],
+      expected_return: 0.0041, edge_confirmed: false, edge_failed_checks: ["bootstrap"],
+      confidence: { confidence: 0.57, n: 214, basis: "comparable out-of-sample calls" },
+      interval_coverage: { coverage: { "80": 0.79 }, n: 300 },
+      distribution: { expected_price: px * 1.0041, intervals: Object.fromEntries([["50", 0.006], ["80", 0.013], ["95", 0.022]].map(([k, w]) =>
+        [k, { low_price: px * (1 - (w as number)), high_price: px * (1 + (w as number)), low_return: -(w as number), high_return: w as number }])) },
+      explanation: { positive: [{ feature: "ret_20", label: "20-bar momentum", contribution: 0.031 }, { feature: "btc_oi", label: "Open interest rising", contribution: 0.018 }],
+        negative: [{ feature: "rsi", label: "RSI high", contribution: -0.012 }] } },
+    horizons: [], mtf: { alignment: 0.8, conflict: false, rows: [
+      { timeframe: "1h", available: true, direction: 1, direction_label: "Up", regime_score: 0.3 },
+      { timeframe: "4h", available: true, direction: 1, direction_label: "Up", regime_score: 0.46 },
+      { timeframe: "12h", available: true, direction: 1, direction_label: "Up", regime_score: 0.38 },
+      { timeframe: "1d", available: true, direction: 0, direction_label: "Range", regime_score: 0.05 } ] },
+    levels: { zones: { support: [{ mid: 66180 }, { mid: 64200 }], resistance: [{ mid: 70100 }] }, liquidity: [], supply_demand: { demand: [], supply: [] } },
+    setup: null, risk: null, indicators: {}, events: [],
+    liquidity: { relative_volume: 1.2, buy_pressure: 0.14, volume_spike: false },
+    commentary: "BTC is in a 4H uptrend; the AI ensemble leans up but has no proven edge on this timeframe yet.",
+  };
 }

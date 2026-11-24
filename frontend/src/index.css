@@ -153,8 +153,12 @@ h1 { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; letter-
    .panel     a card: solid surface, hairline border, low elevation (frosted only when "glass" is on)
    .tile      a nested box inside a card       .popover   menus / dropdown surfaces (elevated)
    ===================================================================================================== */
+/* position as a zero-specificity rule: a panel that is also `fixed` / `absolute` / `sticky` (prompts, notices) must keep
+   that utility. Before, `.panel` came after the utilities and turned every fixed panel into a normal box: on iPhone the
+   "Turn on alerts?" prompt then took half the page beside the content (owner, 24 Nov 2026). */
+:where(.panel) { position: relative; }
 .panel {
-  position: relative; border-radius: var(--r-card);
+  border-radius: var(--r-card);
   border: 1px solid var(--hair);
   background: rgb(var(--panel));
   box-shadow: var(--elev-1);

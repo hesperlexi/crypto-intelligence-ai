@@ -3,7 +3,7 @@
 Owner: Hesper (admin). Live site: https://crypapp-6a9b9.web.app (must ALWAYS stay active: Android app + existing links;
 never redirect or retire it) and the custom domain https://cryptointelai.com (Tasjeel DNS, connected 27 Oct 2026 via
 `custom-domain.yml`; www redirects to apex). Support email support@cryptointelai.com. Repo: hesperlexi/crypto-intelligence-ai (public).
-Version **2.1.0** (fresh start 30 Oct 2026: `reset_v1.py`, record counted from the reset) (web + Android TWA). Analysis and demo trading only: **no real orders, ever**.
+Version **3.1.0** (24 Nov 2026; was 2.1.0 since the fresh start 30 Oct 2026: `reset_v1.py`, record counted from the reset) (web + Android TWA). Analysis and demo trading only: **no real orders, ever**.
 
 ## Ground rules
 - Every result shown to members or the public comes from the real record. Never delete, hide or edit losing trades
@@ -639,6 +639,19 @@ configuration, market data + candle series table, models table, recent errors (c
 - Risk disclosure page moved to `/risk-disclosure` (members' `/risk` = Risk page; signed-out `/risk` still shows the disclosure).
 - Header "Data late" after 45 min (publish cadence 30 min). Tablet nav row wraps (no sideways page scroll at 768-1023 px).
 - F-30 was a false finding: `isAdmin()` already goes through `signedIn()`, which requires `email_verified`.
+- iPhone / iPad "page split in half" (owner, 24 Nov 2026): `.panel { position: relative }` came after the Tailwind
+  utilities, so every `panel … fixed` element (NotifyPrompt "Turn on alerts?", UpdateNotice) became a normal flex item
+  beside the page (root `div.flex`). Now `:where(.panel) { position: relative }` (zero specificity). Check any new
+  fixed/absolute panel with the computed-position scan (class says fixed, computed position must be fixed).
+- Coin page **AI opportunity analysis** (`components/OpportunityCard.tsx`, CSS `.opp-*` in observatory.css), right under
+  the header: lean (forecast class), models agreeing (per_model votes, disagreeing names), calibrated chance, proven edge
+  (`edge_confirmed`), evidence (signal reasons when the signal agrees, model drivers, same-direction timeframes, normal
+  risk; ≤5), what would cancel it (stop / nearest support or resistance, bigger-trend conflict, warnings, high risk,
+  volatility, US release < 24 h), footer (similar past calls admin only, models trained). Frontend only, explains, never
+  decides. Preview seed `assetAnalysis()` (views/analysis_BTCUSDT_4h).
+- Version 3.1.0 everywhere (package.json → footer, Settings, APK name). Manual: 1d = demo bots, stale risk = half size, card.
+- Telegram news: `post_news` sends only high-impact US releases ~30 min before (a few a week); briefings wait for the owner's
+  approval while "Ask me before posting" is on. `quick_status.py` now reports the calendar (`news`).
 - Model ablation study: `research-ablation.yml` (`python -m app.research ablation --group g1|g2|g3`) → `research-results/results/ablation-*.json`.
 
 ## Other features (where to look)
