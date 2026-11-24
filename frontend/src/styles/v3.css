@@ -130,3 +130,13 @@ body {
 @media (max-width: 639px) { .v3-feed-row { grid-template-columns: 48px 10px minmax(0, 1fr); } .v3-feed-row > .v3-go { display: none; } }
 .v3-dot { width: 8px; height: 8px; border-radius: 50%; }
 @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+
+/* owner 24 Nov 2026: market mood card (headline + V3 risk status) with the coin dial beside it */
+.mood-grid { display: grid; gap: 1.25rem; align-items: center; }
+@media (min-width: 1024px) { .mood-grid { grid-template-columns: minmax(0, 1fr) 300px; gap: 2rem; } }
+.mood-risk { margin-top: 1.1rem; padding-top: 1.1rem; border-top: 1px solid var(--hair); }
+.mood-card .deck-today { margin-top: 1rem; }
+.mood-card .ins-dial { width: 300px; }
+@media (max-width: 1023px) { .mood-card .ins-dial { width: 250px; } }
+.mood-risk .v3-facts { order: 3; flex-basis: 100%; }
+.mood-risk .v3-facts > div:first-child { border-left: 0; padding-left: 0; }

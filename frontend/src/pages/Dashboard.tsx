@@ -4,6 +4,7 @@ import { Link } from "react-router-dom";
 import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
 import { Decisions, MarketStatus, MyCapital, MyPositions } from "../components/V3Home";
+import { OrbitDial } from "../components/Instruments";
 import { BriefingPanel } from "../components/Polish";
 import MarketBoard, { IntelBrief } from "../components/MarketBoard";
 import { MacroCard, UnlocksList, VolOptionsCard } from "../components/Derivs";
@@ -34,15 +35,21 @@ export default function Dashboard() {
       <NewsBanner />
       {/* V3.0 Overview (owner-approved layout, 24 Nov 2026): A market & risk status · B my capital + F my positions ·
           E AI decisions · C market intelligence · D watchlist board · G recent developments. Phones: A, F, B, E, … */}
-      <header className="v3-head">
-        <h1 className="v3-title">Overview</h1>
-        <p className="mt-1.5 text-[0.9375rem] text-mute">What is happening, what the AI thinks, and what it means for your practice capital.</p>
-      </header>
-      <MarketStatus status4={status4} rows={dash4.data?.rows} />
+      {/* owner 24 Nov 2026: the market mood card is back, with the V3 market & risk status embedded in it */}
+      <section className="panel panel-hero v3-glass mood-card p-4 sm:p-6" aria-label="Market mood">
+        <div className="mood-grid">
+          <div className="min-w-0">
+            <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} />
+            <MarketStatus status4={status4} rows={dash4.data?.rows} embedded />
+            <TodayLine track={track.data} />
+          </div>
+          <OrbitDial rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
+        </div>
+      </section>
 
       <FirstWeekGuide />
       <WelcomeTour />
-      <div className="grid-even grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+      <div className="grid-even grid gap-4 lg:grid-cols-2">
         <div className="order-2 lg:order-1"><MyCapital /></div>
         <div className="order-1 lg:order-2"><MyPositions /></div>
       </div>
@@ -117,7 +124,7 @@ function greeting() {
 
 /** Top line of Home (kept from the old hero, owner 4 Nov 2026): the 4H market line, "Know why" (the briefing) and the
  *  quick actions Signals / Set an alert / Paper trade. */
-function OverviewHead({ rows, status, briefing, track }: { rows?: any[]; status?: any; briefing?: any; track?: any }) {
+function OverviewHead({ rows, status, briefing }: { rows?: any[]; status?: any; briefing?: any }) {
   const s = useSession();
   const [why, setWhy] = useState(false);
   const first = (s?.username || s?.name || s?.email || "").split(/[ @]/)[0];
@@ -129,21 +136,15 @@ function OverviewHead({ rows, status, briefing, track }: { rows?: any[]; status?
   const moodText = mood === "BULL" ? "leaning bullish" : mood === "BEAR" ? "leaning bearish" : mood === "NEUTRAL" ? "mixed" : "warming up";
   const moodCls = mood === "BULL" ? "text-bull" : mood === "BEAR" ? "text-bear" : "text-accent";
   return (
-    <section className="flex flex-wrap items-end justify-between gap-x-4 gap-y-3">
+    <section>
       <div className="min-w-0 max-w-3xl">
         <p className="text-sm text-mute">{greeting()}{first ? `, ${first}` : ""}</p>
-        <h1 className="font-display mt-1 text-2xl font-semibold leading-tight tracking-[-0.03em] sm:text-[2.125rem] sm:leading-[2.5rem]">The market is <span className={moodCls}>{moodText}</span>.</h1>
+        <h1 className="v3-title mt-1">The market is <span className={moodCls}>{moodText}</span>.</h1>
         <p className="mt-1 text-sm text-mute">
           {r.length ? <>On the 4H chart: <span className="font-medium text-bull">{buys} buy</span> · <span className="font-medium text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
           {briefing?.text && <>{" "}<button type="button" className="tap-h whitespace-nowrap font-medium text-accent hover:underline" aria-expanded={why} aria-controls="market-why" onClick={() => setWhy((v) => !v)}>{why ? "Hide why" : "Know why ›"}</button></>}
         </p>
         {why && briefing?.text && <BriefingPanel b={briefing} />}
-        <TodayLine track={track} />
-        <div className="mt-5 flex flex-wrap gap-2">
-        <Link to="/futures" className="btn btn-primary px-4"><span className="sm:hidden">Signals</span><span className="hidden sm:inline">Futures signals</span></Link>
-        <Link to="/alerts" className="btn px-4">Set an alert</Link>
-        <Link to="/paper" className="btn px-4">Paper trade</Link>
-        </div>
       </div>
     </section>
   );

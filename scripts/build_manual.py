@@ -36,7 +36,7 @@ def app_version() -> str:
 
 VERSION = sys.argv[1] if len(sys.argv) > 1 else app_version()
 DATE = dt.date.today().strftime("%d %B %Y").lstrip("0")
-MANUAL_ED = "Manual 3.0"
+MANUAL_ED = "Manual 3.1"
 
 
 def b64(path: pathlib.Path) -> str:

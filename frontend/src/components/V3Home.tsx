@@ -33,7 +33,7 @@ function Gauge({ state }: { state?: string }) {
   );
 }
 
-export function MarketStatus({ status4, rows }: { status4?: any; rows?: any[] }) {
+export function MarketStatus({ status4, rows, embedded = false }: { status4?: any; rows?: any[]; embedded?: boolean }) {
   const rs = useApi<any>("/risk-state", 60000).data;
   const btc = (rows ?? []).find((r) => r.symbol === "BTC/USDT");
   const state: string | undefined = rs?.state;
@@ -43,7 +43,7 @@ export function MarketStatus({ status4, rows }: { status4?: any; rows?: any[] })
   const stale = rs?.generated_at && Date.now() - rs.generated_at > 20 * 60_000;
   const unavailable: string[] = rs?.unavailable ?? [];
   return (
-    <section className="panel v3-glass p-4 sm:p-5" aria-label="Market and risk status">
+    <section className={embedded ? "mood-risk" : "panel v3-glass p-4 sm:p-5"} aria-label="Market and risk status">
       <div className="flex flex-wrap items-center gap-x-7 gap-y-4">
         <Link to="/risk" className="flex items-center gap-4" aria-label="Open Risk">
           <Gauge state={state} />

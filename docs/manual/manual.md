@@ -1,4 +1,4 @@
-<!-- Crypto Intelligence AI user manual v3 (21 Nov 2026). Built by scripts/build_manual.py into frontend/public/manual.pdf.
+<!-- Crypto Intelligence AI user manual v3.1 (24 Nov 2026: V3 design - Overview, Risk, Portfolio, AI Intelligence). Built by scripts/build_manual.py into frontend/public/manual.pdf.
 Blocks: <div class="cards">, <div class="card">, <ol class="steps">, <div class="tip">, <div class="note">, <div class="pro">,
 <div class="pair"> (desktop + phone screenshots). Every "## " heading starts a section; its {#id} feeds the contents. -->
 
@@ -15,7 +15,7 @@ The AI scans many coins on six timeframes and tells you when something is worth 
 </div>
 <div class="card" markdown>
 ### Understand the market
-A daily briefing, a market mood, news and the economic calendar explain what is moving prices.
+A market mood, a market risk level, a daily briefing, news and the economic calendar explain what is moving prices.
 </div>
 <div class="card" markdown>
 ### Practise safely
@@ -83,9 +83,14 @@ Each card answers two questions: **what does it do**, and **how does it help you
 **Helps you:** you judge the app by its real record, not by promises.
 </div>
 <div class="card" markdown>
-### Backtest and Replay
-**What:** test a simple strategy on past prices, or replay what the AI said at an earlier moment.
-**Helps you:** you see how ideas would have behaved before you trust them.
+### Market risk level
+**What:** one risk level for the whole market (Normal, Caution, High, Severe, Recovery), measured from Bitcoin, volatility, funding, liquidations and more.
+**Helps you:** you know when to be careful, and auto-trade can cut its size or stop by itself.
+</div>
+<div class="card" markdown>
+### Portfolio and protection
+**What:** your practice capital, open positions and the limits auto-trade must respect (daily loss limit, most of the account in use).
+**Helps you:** a bad day can't run away with your practice account.
 </div>
 <div class="card" markdown>
 ### News, calendar and Community
@@ -100,7 +105,7 @@ Each card answers two questions: **what does it do**, and **how does it help you
 <li markdown>**Open the app.** Go to **cryptointelai.com** on your phone or computer.</li>
 <li markdown>**Create your account.** Press **Continue with Google**, or **Sign up with email**. With email, choose a password of at least 8 characters, then open the confirmation email and tap its link.</li>
 <li markdown>**Choose a membership.** Pick a plan, pay as shown in the app, and upload your payment screenshot. The app opens as soon as your payment is approved.</li>
-<li markdown>**Install it on your phone.** Android: **Settings → Install the app → Download the Android app (APK)** (needs Google Chrome). iPhone: open the site in **Safari → Share → Add to Home Screen**.</li>
+<li markdown>**Install it on your phone.** Android: **Settings → Install the app → Download the Android app (APK)** (needs Google Chrome). iPhone: open the site in **Safari → Share → Add to Home Screen**. Installed the app before 24 Nov 2026? Download it again to get the new app icon; the app inside updates by itself.</li>
 <li markdown>**Turn on notifications.** **Settings → Notifications → Turn on notifications**, then **Send a test notification**.</li>
 <li markdown>**Pick your view.** **Beginner** shows the essentials; **Pro** shows every number. Switch at the top of the screen, in **More** on phones, or in **Settings → View mode**.</li>
 </ol>
@@ -111,40 +116,40 @@ Each card answers two questions: **what does it do**, and **how does it help you
 **Plans and prices.** Current membership plans, prices and payment options are always shown on **cryptointelai.com** and in the app under **Settings → Membership**.
 </div>
 
-## Your dashboard {#dashboard data-kicker="04" data-line="The home screen: the market at a glance"}
+## Your Overview {#dashboard data-kicker="04" data-line="The first screen: the market, its risk and your practice capital"}
 
-Home is where you start each visit. From top to bottom:
+**Overview** is where you start each visit. From top to bottom:
 
 <div class="cards two" markdown>
 <div class="card" markdown>
-### Market mood and briefing
-A one-line summary of the market (for example "leaning bullish") and a short AI briefing.
-**Why it matters:** you know the general direction before looking at single coins.
+### Market mood card
+A one-line summary ("The market is leaning bullish"), the **market risk** level from 1 to 5 with advice such as "Trade with caution", the 4H mood, Bitcoin's trend, volatility and breadth, and the reason in one sentence. Beside it, the **coin dial**: every coin around a ring, green leaning up, red leaning down, with Bitcoin live in the middle and the Fear & Greed reading.
+**Why it matters:** in five seconds you know the direction and how careful to be.
 </div>
 <div class="card" markdown>
-### Bitcoin and the market
-BTC price and change, total market size, Bitcoin's volatility and the Fear & Greed reading.
+### My capital and my open positions
+Your practice account: value, today's result, open profit or loss, how much of the account is in use and how much daily loss is left before auto-trade stops. Next to it, each open position with its stop and a protection check.
+**Why it matters:** you see your own risk at a glance.
+</div>
+<div class="card" markdown>
+### AI opportunities and decisions
+What the AI is doing now: calls running, waiting for entry, blocked by a safety check, and coins with no trade (with the reason).
+**Why it matters:** you see not only the trades, but also why others were skipped.
+</div>
+<div class="card" markdown>
+### Market today
+Bitcoin, total market size, volatility, sentiment, the Bitcoin chart, the AI briefing, and every coin on one board (heatmap or table).
 **Why it matters:** most coins follow Bitcoin, so its mood sets the tone.
-</div>
-<div class="card" markdown>
-### Live signals
-The open signals with their progress from stop to targets, and an opportunity board.
-**Why it matters:** you see at once which ideas are running well and which need care.
-</div>
-<div class="card" markdown>
-### Activity and performance
-What happened recently, and how the published signals have done so far.
-**Why it matters:** a quick, honest check of how the app is doing.
 </div>
 </div>
 
 <div class="pair" markdown>
-![Home on a computer (example screen with sample data)](img/v3/home.jpg)
-![Home on a phone (sample data)](img/v3/m-home.jpg)
+![Overview on a computer (example screen with sample data)](img/v3/home.jpg)
+![Overview on a phone (sample data)](img/v3/m-home.jpg)
 </div>
 
-<div class="pro" markdown>
-**Want to know more? Pro users.** **Command Centre** (menu: Markets) shows the whole watchlist as a galaxy, an opportunity radar for all timeframes and a deep scan of any coin. **Money flow** shows large buyers and sellers, forced closes, order-book walls and funding.
+<div class="tip" markdown>
+**On phones** the longer parts of Overview fold away. Tap a heading to open it; the app remembers your choice.
 </div>
 
 ## Understanding AI signals {#signals data-kicker="05" data-line="How to read a signal card, step by step"}
@@ -166,6 +171,7 @@ A **signal** is a trade idea with a full plan. It never tells you that a trade w
 - **Take-profit 1, 2, 3 (TP1–TP3):** targets. Half closes at TP1, a quarter at TP2, the rest at TP3. After TP1 the stop moves to the entry, so the rest can no longer lose.
 - **Timeframe:** the candle size the idea is based on. Shorter means faster trades.
 - **Status:** Waiting for entry, Running, or Closed (with the result).
+- **Time limit:** each signal has one. If neither a target nor the stop is reached in time, it closes at the market price and counts as a **win** or a **loss**, whichever it was.
 - **Why:** the short reason under the card, for example "trend and AI agree".
 </div>
 
@@ -311,13 +317,38 @@ Auto-trade copies the app's signals into your **practice futures account**, even
 <li markdown>**Save** and press **Turn on**.</li>
 <li markdown>**Review:** open **Auto-trade activity** on the panel to see every trade it placed or skipped, and why.</li>
 <li markdown>**Turn it off** any time with **Turn off**. Open trades stay until they reach their stop or target.</li>
+<li markdown>**Set your protection:** open **Portfolio → Auto-trade protection**: a **daily loss limit** (% of the account), the **most of the account in use**, and **Follow the market risk level** (High risk: half size; Severe: no new auto-trades). Press **Save protection**.</li>
 </ol>
 
 <div class="tip" markdown>
 **Tip.** Start with grade A and one or two timeframes. Watch the results for a few weeks before adding more.
 </div>
 
-## Demo bots: the AI in action {#bots data-kicker="11" data-line="Watch the signals trade on their own"}
+## Market risk and Portfolio {#risk data-kicker="11" data-line="How careful to be today, and how your capital is protected"}
+
+<div class="cards two" markdown>
+<div class="card" markdown>
+### Risk page
+**What:** the market risk level (Normal, Caution, High, Severe, Recovery), every check behind it with its status (data freshness, Bitcoin volatility, sudden Bitcoin moves, funding, liquidations, losses of the signals and more) and what each level means.
+**When to use it:** before opening a trade, and whenever the Overview shows Caution or worse.
+</div>
+<div class="card" markdown>
+### Portfolio page
+**What:** your practice capital, open positions, auto-trade protection and the latest closed trades in one place.
+**When to use it:** at the end of the day, to see where you stand.
+</div>
+</div>
+
+<div class="pair" markdown>
+![Risk (sample data)](img/v3/risk.jpg)
+![Portfolio (sample data)](img/v3/portfolio.jpg)
+</div>
+
+<div class="note" markdown>
+The engine also follows the risk level itself: in high-risk moments it holds back new signals that go against a sharp Bitcoin move. The checks protect; they never promise a win.
+</div>
+
+## Demo bots: the AI in action {#bots data-kicker="12" data-line="Watch the signals trade on their own"}
 
 **Demo bots** trade the app's published signals automatically with virtual money, one bot per timeframe. Open **Results → Demo bots**.
 
@@ -331,14 +362,14 @@ Auto-trade copies the app's signals into your **practice futures account**, even
 Demo bots show what *would* have happened with virtual money. Simulated and past results do not guarantee future results.
 </div>
 
-## Track the results {#results data-kicker="12" data-line="Judge the app by its real record"}
+## Track the results {#results data-kicker="13" data-line="Judge the app by its real record"}
 
 **Results** keeps every published signal, wins and losses, **after fees**. Nothing is hidden or removed.
 
 <div class="cards two" markdown>
 <div class="card" markdown>
 ### Track record
-Win rate, total result, open and closed signals, and how they ended (targets, stops, time limit). Choose a period: since the start, today, this week, the last 7 or 30 days.
+Win rate, total result, open and closed signals, and how they ended (targets, stop-loss, or a win or loss closed at the market price). Choose a period: since the start, today, this week, the last 7 or 30 days.
 </div>
 <div class="card" markdown>
 ### Signal log
@@ -346,7 +377,7 @@ Every signal ever published, with filters by coin, timeframe, side and result. *
 </div>
 <div class="card" markdown>
 ### Demo bots
-How the signals did when traded automatically (section 11).
+How the signals did when traded automatically (section 12).
 </div>
 <div class="card" markdown>
 ### Leaderboard
@@ -361,37 +392,37 @@ The best practice traders of the month (members with a username and at least 5 c
 
 ![Track record (example screen with sample data, not real results)](img/v3/results.jpg)
 
-## Tools for smarter decisions {#tools data-kicker="13" data-line="Scanner, Backtest and Replay"}
+## Coins, AI Intelligence and Money flow {#tools data-kicker="14" data-line="The Markets menu: every coin, the AI's map and the big players"}
 
-Find them under **Tools** in the menu (on phones: **More → Tools**).
+Find them under **Markets** in the menu (on phones: **More**).
 
 <div class="cards three" markdown>
 <div class="card" markdown>
-### Scanner
-**What:** every coin in one table, with trend, AI signal and grade.
-**When:** to compare coins quickly.
-**Benefit:** the strongest ideas rise to the top.
+### Coins
+**What:** every coin in one table or heatmap, with price, trend, signal and the AI's outlook. Search with the box at the top (or press **/**).
+**Benefit:** compare coins quickly and open any coin page.
 </div>
 <div class="card" markdown>
-### Backtest
-**What:** runs a simple strategy on past prices, with fees.
-**When:** before trusting a rule or a timeframe.
-**Benefit:** you see wins, losses and the worst dip.
+### AI Intelligence
+**What:** the market map (each coin around the AI core, ring = a running signal), the live signals in flight, Bitcoin's links with the biggest coins, and a deep look at any coin.
+**Benefit:** the whole market as the AI sees it.
 </div>
 <div class="card" markdown>
-### Replay
-**What:** shows what the AI said at an earlier moment, and what happened next.
-**When:** to learn how signals play out.
-**Benefit:** practice reading charts without hindsight.
+### Money flow
+**What:** large buyers and sellers, forced closes, order-book walls and funding, live from the futures market.
+**Benefit:** you see where big money is acting right now.
 </div>
 </div>
 
-![Scanner (sample data)](img/v3/scanner.jpg)
+<div class="pair" markdown>
+![Coins (sample data)](img/v3/coins.jpg)
+![AI Intelligence (sample data)](img/v3/command.jpg)
+</div>
 
-## Community and settings {#settings data-kicker="14" data-line="Talk with members and make the app yours"}
+## Community and settings {#settings data-kicker="15" data-line="Talk with members and make the app yours"}
 
 - **Community:** share ideas and questions with other members. Posting needs a username (choose one once; it can't be changed). Keep it friendly; nothing there is financial advice.
-- **Appearance:** **Settings → Appearance**: themes, light or dark, glass effect.
+- **Appearance:** **Settings → Appearance**: **Graphite** (dark), **Ivory** (light) or follow your device, plus menu position and density.
 - **Beginner or Pro view:** **Settings → View mode**, the switch at the top of the screen, or **More** on phones.
 - **Notifications:** **Settings → Notifications**: turn on, turn off, send a test.
 - **Membership:** **Settings → Membership** shows your plan and end date; renew there.
@@ -404,14 +435,14 @@ Find them under **Tools** in the menu (on phones: **More → Tools**).
 ![Settings (sample data)](img/v3/settings.jpg)
 </div>
 
-## Your daily routine {#routine data-kicker="15" data-line="A simple rhythm: a few minutes, a few times a day"}
+## Your daily routine {#routine data-kicker="16" data-line="A simple rhythm: a few minutes, a few times a day"}
 
 You don't need to watch the app all day. Let alerts do the watching.
 
 <div class="cards two routine" markdown>
 <div class="card" markdown>
 ### Morning
-- Check the market mood on **Home**.
+- Check the market mood and risk level on **Overview**.
 - Look at new signals on **Signals**.
 - Glance at your **alerts**.
 </div>
@@ -423,7 +454,7 @@ You don't need to watch the app all day. Let alerts do the watching.
 </div>
 <div class="card" markdown>
 ### Evening
-- Check your practice positions on **Trade**.
+- Check your positions and protection on **Portfolio**.
 - See the latest results.
 </div>
 <div class="card" markdown>
@@ -434,7 +465,7 @@ You don't need to watch the app all day. Let alerts do the watching.
 </div>
 </div>
 
-## Quick help {#help data-kicker="16" data-line="Short answers to common questions"}
+## Quick help {#help data-kicker="17" data-line="Short answers to common questions"}
 
 <div class="faq" markdown>
 **I can't sign in.**
@@ -459,7 +490,7 @@ Refresh the page or reopen the app. On Android, update the app from **Settings �
 Check your virtual balance (use **Add funds**), the amount and the leverage.
 
 **Auto-trade didn't take a signal.**
-Open **Auto-trade activity**: each skipped signal shows the reason (for example the open-trade limit or a timeframe you didn't choose).
+Open **Auto-trade activity**: each skipped signal shows the reason (for example the open-trade limit, a timeframe you didn't choose, your daily loss limit, or a Severe market risk level).
 
 **I have questions about the results.**
 Every signal is listed in **Results → Signal log**, with its result after fees.

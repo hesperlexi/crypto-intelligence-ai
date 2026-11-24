@@ -668,7 +668,12 @@ Trade journal notes removed · Portfolio one 2-column grid · calls closed at ma
 market" by result, never a separate "Time limit" line (`statusOf`, `resClass`, ResultsBoard buckets) · record Result cell:
 one row of pills, one colour each (Live cyan `res-live`, Let it run violet `res-run`, Updated blue `res-upd`, admin orange
 `res-admin`), facts "now · SL x% · TP1 y% · peak" · win card `.win-toast` (no confetti) · logo neurons blink green/red,
-links flash as lightning (`Logo.tsx` MESH from make_logo.py seed 13; header uses LiveLogo too).
+links flash as lightning (`Logo.tsx` MESH from make_logo.py seed 13; header uses LiveLogo too). Static logo / app icons:
+neurons green/red (`make_logo.py`), maskable = flat #141519 full bleed (no inner square); app colours #111215 (manifest,
+index.html, TWA template). Overview top = market mood card (`Dashboard` `.mood-card`: `OverviewHead` + `MarketStatus
+embedded` + `TodayLine` | `OrbitDial`). Manual v3.1 (17 sections incl. "Market risk and Portfolio", Markets menu;
+screenshots by scratch `v3/mshot.py` = member preview with tour hidden). Research: `research_exits.py` variants
+h_x2 / h_x4 / no_limit (`hmult`) + `standard_verdict`; workflow input `variants`.
 
 ## Ideas not done yet
 Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance daily metrics
