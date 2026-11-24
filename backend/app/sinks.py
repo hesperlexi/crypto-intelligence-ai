@@ -529,8 +529,42 @@ class FirestoreSink(BaseSink):
                 batch.set(self.fs.document(path), data)
             batch.commit()
 
+    # v3.1 (25 Nov 2026): when the day's 50,000 reads were used up, every read waited ~1 min in the client's retries,
+    # so one engine cycle took an hour and nothing was published (not even to the Cloudflare copy). Reads now fail at
+    # once (no retries, 20 s limit) and, after a quota refusal, are refused for READ_BLOCK_S without asking Firestore;
+    # the steps that need them fail and are retried next cycle, everything else (analyses, bots, edge views) goes on.
+    READ_BLOCK_S = 600
+
+    def reads_blocked(self) -> bool:
+        if self.db is None:
+            return False
+        try:
+            return int(self.db.get_setting("fs_reads_blocked_until", 0) or 0) > _now()
+        except Exception:
+            return False
+
+    def _rguard(self, fn):
+        if self.reads_blocked():
+            raise QuotaBlocked("Firestore daily read quota used up; reads resume after midnight US Pacific")
+        try:
+            return fn()
+        except Exception as exc:
+            if self.is_quota_error(exc) and self.db is not None:
+                try:
+                    self.db.set_setting("fs_reads_blocked_until", _now() + self.READ_BLOCK_S * 1000)
+                except Exception:
+                    pass
+            raise
+
+    @staticmethod
+    def _stream(q) -> list:
+        try:
+            return list(q.stream(retry=None, timeout=20))
+        except TypeError:                              # older client without these arguments
+            return list(q.stream())
+
     def get(self, path: str) -> dict[str, Any] | None:
-        snap = self.fs.document(path).get()
+        snap = self._rguard(lambda: self.fs.document(path).get(retry=None, timeout=20))
         self._count_reads(1)
         return snap.to_dict() if snap.exists else None
 
@@ -571,7 +605,7 @@ class FirestoreSink(BaseSink):
         self._count(1)
 
     def list(self, collection: str) -> list[tuple[str, dict[str, Any]]]:
-        out = [(s.id, s.to_dict() or {}) for s in self.fs.collection(collection).stream()]
+        out = [(s.id, s.to_dict() or {}) for s in self._rguard(lambda: self._stream(self.fs.collection(collection)))]
         self._count_reads(len(out))
         return out
 
@@ -584,7 +618,7 @@ class FirestoreSink(BaseSink):
             q = self.fs.collection(collection).where(filter=FieldFilter(field, op, value))
         except ImportError:
             q = self.fs.collection(collection).where(field, op, value)
-        out = [(s.id, s.to_dict() or {}) for s in q.stream()]
+        out = [(s.id, s.to_dict() or {}) for s in self._rguard(lambda: self._stream(q))]
         self._count_reads(len(out))
         return out
 
