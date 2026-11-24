@@ -1,0 +1,157 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "g2",
+ "timeframes": {
+  "12h": {
+   "coins_done": 35,
+   "skipped": [
+    "ANTHROPIC/USDT: control not evaluated: ANTHROPIC/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: ANTHROPIC/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: ANTHRO",
+    "BARD/USDT: control not evaluated: BARD/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: BARD/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: BARD/USDT 12h: n",
+    "BIO/USDT: control not evaluated: BIO/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: BIO/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: BIO/USDT 12h: no m",
+    "ERA/USDT: control not evaluated: ERA/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: ERA/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: ERA/USDT 12h: no m",
+    "MSTR/USDT: control not evaluated: MSTR/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: MSTR/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: MSTR/USDT 12h: n",
+    "U/USDT: control not evaluated: U/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: U/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: U/USDT 12h: no model /",
+    "XAG/USDT: control not evaluated: XAG/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: XAG/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: XAG/USDT 12h: no m",
+    "XAUT/USDT: control not evaluated: XAUT/USDT 12h: no model / too few out-of-sample bars; no_xgboost not evaluated: XAUT/USDT 12h: no model / too few out-of-sample bars; no_lightgbm not evaluated: XAUT/USDT 12h: n"
+   ],
+   "control": {
+    "trades": 257,
+    "avg_r": 0.1402,
+    "total_r": 36.04,
+    "win_rate": 0.572,
+    "series": 35,
+    "brier_mean": 0.66232,
+    "log_loss_mean": 1.0918,
+    "drawdown_r_sum": 60.26
+   },
+   "no_xgboost": {
+    "trades": 253,
+    "avg_r": 0.1214,
+    "total_r": 30.7,
+    "win_rate": 0.565,
+    "series": 35,
+    "brier_mean": 0.66188,
+    "log_loss_mean": 1.09111,
+    "drawdown_r_sum": 57.48
+   },
+   "no_lightgbm": {
+    "trades": 254,
+    "avg_r": 0.1169,
+    "total_r": 29.69,
+    "win_rate": 0.563,
+    "series": 35,
+    "brier_mean": 0.66127,
+    "log_loss_mean": 1.09021,
+    "drawdown_r_sum": 61.52
+   },
+   "no_hist_gbm": {
+    "trades": 250,
+    "avg_r": 0.0796,
+    "total_r": 19.9,
+    "win_rate": 0.548,
+    "series": 35,
+    "brier_mean": 0.66128,
+    "log_loss_mean": 1.09018,
+    "drawdown_r_sum": 61.98
+   },
+   "xgboost_only": {
+    "trades": 294,
+    "avg_r": 0.1262,
+    "total_r": 37.09,
+    "win_rate": 0.568,
+    "series": 35,
+    "brier_mean": 0.68425,
+    "log_loss_mean": 1.12825,
+    "drawdown_r_sum": 68.34
+   },
+   "no_xgboost_vs_control": {
+    "n_series": 35,
+    "share_better": 0.259,
+    "ci90_r_per_trade": [
+     -0.0715,
+     0.0308
+    ],
+    "brier_better_share": 0.8
+   },
+   "no_lightgbm_vs_control": {
+    "n_series": 35,
+    "share_better": 0.231,
+    "ci90_r_per_trade": [
+     -0.0796,
+     0.0298
+    ],
+    "brier_better_share": 0.886
+   },
+   "no_hist_gbm_vs_control": {
+    "n_series": 35,
+    "share_better": 0.038,
+    "ci90_r_per_trade": [
+     -0.1276,
+     -0.007
+    ],
+    "brier_better_share": 0.857
+   },
+   "xgboost_only_vs_control": {
+    "n_series": 35,
+    "share_better": 0.535,
+    "ci90_r_per_trade": [
+     -0.0964,
+     0.1004
+    ],
+    "brier_better_share": 0.0
+   }
+  }
+ },
+ "same_as_control": {
+  "12h": []
+ },
+ "models": {
+  "12h": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ],
+   "no_xgboost": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "lightgbm"
+   ],
+   "no_lightgbm": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost"
+   ],
+   "no_hist_gbm": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "xgboost",
+    "lightgbm"
+   ],
+   "xgboost_only": [
+    "prior_baseline",
+    "prev_candle",
+    "xgboost"
+   ]
+  }
+ },
+ "seconds": 5517.0,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
