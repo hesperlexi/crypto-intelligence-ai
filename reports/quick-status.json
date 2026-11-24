@@ -213,26 +213,26 @@
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1795516425238,
-   "last_tick_finished": 1795516608388,
-   "last_tick_seconds": 183.2,
+   "last_tick_started": 1795516752959,
+   "last_tick_finished": 1795516943665,
+   "last_tick_seconds": 190.7,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7860,
-   "round_seconds_avg": 171.0,
+   "ticks": 7861,
+   "round_seconds_avg": 172.3,
    "round_seconds_max": 279.0,
    "rounds_measured": 48,
-   "watch_last_at": 1795516592631,
+   "watch_last_at": 1795516933010,
    "watch_coins": 2,
    "watch_priced": 2,
    "watch_sent_total": 406,
-   "flow_last_at": 1795516600538,
+   "flow_last_at": 1795516930886,
    "flow_coins": 28,
    "flow_errors": 0,
-   "firestore_writes_today": 1814,
+   "firestore_writes_today": 1831,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 917,
+   "firestore_reads_today": 948,
    "firestore_read_limit": 50000,
    "firestore_members_active": 7,
    "firestore_member_reserve": 420,
@@ -550,37 +550,37 @@
   "15m": {
    "n": 30,
    "fresh_12h": 0,
-   "max": 103.6,
+   "max": 103.7,
    "missing": 0
   },
   "1h": {
    "n": 30,
    "fresh_12h": 0,
-   "max": 31.4,
+   "max": 31.5,
    "missing": 0
   },
   "4h": {
    "n": 30,
    "fresh_12h": 26,
-   "max": 31.3,
+   "max": 31.4,
    "missing": 1
   },
   "12h": {
    "n": 30,
    "fresh_12h": 25,
-   "max": 31.3,
+   "max": 31.4,
    "missing": 1
   },
   "1d": {
    "n": 30,
    "fresh_12h": 26,
-   "max": 31.3,
+   "max": 31.4,
    "missing": 3
   },
   "3d": {
    "n": 30,
    "fresh_12h": 22,
-   "max": 2.3,
+   "max": 2.4,
    "missing": 8
   }
  },
@@ -707,9 +707,9 @@
  },
  "safety": [],
  "release": {
-  "launched_at": 1793386630880,
   "updated_at": 1793386630880,
-  "version": "2.1.0"
+  "version": "2.1.0",
+  "launched_at": 1793386630880
  },
  "track_record": {
   "record_since": 1795511383715,
@@ -820,9 +820,9 @@
   "has_token": true,
   "has_channel": true,
   "post_wins": true,
+  "post_weekly": true,
   "enabled": true,
   "post_teaser": true,
-  "post_weekly": true,
   "keys": [
    "channel",
    "enabled",
@@ -876,7 +876,7 @@
  ],
  "derivs": {
   "exists": true,
-  "generated_at": 1795513268184,
+  "generated_at": 1795516938816,
   "coins": 29,
   "liq_maps": 6,
   "volatility": [
@@ -1023,13 +1023,47 @@
   "runs": 1,
   "trades": 10,
   "at": 1795516415212,
-  "since": 1793784369074
+  "since": 1793784369074,
+  "current_run": 1,
+  "run_numbers": [
+   1
+  ],
+  "run_trades": [
+   10
+  ],
+  "laststand": {
+   "id": "laststand",
+   "name": "Last Stand",
+   "title": "Last Stand",
+   "auto_restart": false,
+   "min_start": 5.0,
+   "since": 1795240371118,
+   "start": 10.0,
+   "goal": 100.0,
+   "max_leverage": 25,
+   "idle": false,
+   "policy": null,
+   "min_balance": 1.0,
+   "started": true,
+   "generated_at": 1795516415212,
+   "current": null,
+   "score": null,
+   "open_ended": true,
+   "runs": 1,
+   "trades": 1,
+   "curves": null,
+   "label": "Demo \u00b7 virtual money \u00b7 not financial advice"
+  }
  },
  "challenge_laststand": {
   "keys": [],
   "runs": null,
   "trades": null,
   "at": null,
-  "since": null
+  "since": null,
+  "current_run": null,
+  "run_numbers": [],
+  "run_trades": [],
+  "laststand": null
  }
 }
