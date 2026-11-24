@@ -38,6 +38,7 @@ const METHOD = "Points per factor (0 ok, 1 raised, 2 high). 0-1 Normal, 2-3 Caut
 const RULES: [string, string, string][] = [
   ["Signals", "Capital protection", "No new signal while closed signals lost 3R today or 6R this week, on a coin whose volatility is far above normal, or where the model's recent hit rate fell well below its test."],
   ["Signals", "Stop-run guard", "No new signal against a fresh stop run (liquidity grab) on the coin in the last 6 hours."],
+  ["Signals", "BTC shock guard", "No new signal against an unusually large BTC move (measured in its own normal size) for 6 hours."],
   ["Signals", "News pause", "No new entries 45 minutes before to 30 minutes after major US data."],
   ["Signals", "One-sided limit", "At most 12 running signals in the same direction."],
   ["Signals", "Bigger trend, costs, grade", "Calls against both higher timeframes, with targets too small for fees, or below the required grade are held back."],

@@ -161,7 +161,7 @@ const GATE_WORDS: Record<string, string> = {
   "LIQUIDITY SWEEP": "stop run against it", "CAPITAL PROTECTION": "capital protection", "TOO MANY SAME-SIDE CALLS": "too many same-side calls",
   "AGAINST BIGGER TREND": "against the bigger trend", "VOLUME WALL AHEAD": "volume wall ahead", "STOP TOO TIGHT FOR FEES": "stop too tight for fees",
   "TARGET TOO SMALL FOR COSTS": "target too small for costs", "GRADE A ONLY": "needs grade A", "FILTERED": "AI trade filter",
-  "NEWS": "news pause", "WATCH ONLY": "watch only",
+  "NEWS": "news pause", "WATCH ONLY": "watch only", "BTC SHOCK": "against a BTC shock",
 };
 
 export function Decisions({ rows, track }: { rows?: any[]; track?: any }) {
