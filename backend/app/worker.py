@@ -428,7 +428,7 @@ MIGRATION_FLAGS = (
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
     "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269", "mexc_clean_v269",
-    "fresh_restart_v3",
+    "fresh_restart_v3", "restore_hesper_v3",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -931,6 +931,13 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         fr = fresh_restart_v3.maybe_run(rt, sink, now_ms())
         if fr is not None:
             notes["fresh_restart_v3"] = {k: fr.get(k) for k in ("archived", "verify", "skipped")}
+    # V3.0 (owner, 24 Nov 2026): the Hesper Challenge (main + Last Stand) history comes back from the archive
+    if rt.db.get_setting("fresh_restart_v3", None) and not rt.db.get_setting("restore_hesper_v3", None):
+        _b("config: restore Hesper history")
+        from . import restore_hesper_v3
+        rh = restore_hesper_v3.maybe_run(rt, now_ms())
+        if rh is not None:
+            notes["restore_hesper_v3"] = rh
     honest = honest_record_v213(rt)
     if honest is not None:
         notes["honest_record_v213"] = honest
