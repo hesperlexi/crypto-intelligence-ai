@@ -132,7 +132,7 @@ except Exception:
 try:
     import hashlib, urllib.request
     key = hashlib.sha256(("cia-edge-v1|" + os.environ["FIREBASE_SERVICE_ACCOUNT"]).encode()).hexdigest()
-    req = urllib.request.Request("https://cia-chat.cryptointelai.workers.dev/watch/status?since=0", headers={"X-Edge-Key": key})
+    req = urllib.request.Request("https://cia-chat.cryptointelai.workers.dev/watch/status?since=0", headers={"X-Edge-Key": key, "User-Agent": "cia-status"})
     st = json.load(urllib.request.urlopen(req, timeout=20))
     out["cloud_watcher"] = {**{k: st.get(k) for k in ("at", "armed", "armed_at", "sent", "sent_total", "due", "priced", "error", "idle")},
                             "sent_keys_n": len(st.get("sent_keys") or []), "bad_tokens_n": len(st.get("bad_tokens") or [])}
