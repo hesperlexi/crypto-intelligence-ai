@@ -1524,3 +1524,9 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   factor, avg win / loss, largest drop, per timeframe, <30 warning), share images graphite + logo gold + corner mesh
   (`luxCard.luxBackground`, `cards._background`). Hesper Challenge history restored after the reset (`app/restore_hesper_v3.py`,
   flag `restore_hesper_v3`; post-reset run moved to `archive_v3b_*`; old state settings back).
+
+## 24 Nov 2026 (v3.1 audit)
+- Telegram news heads-up: with "Ask me before posting" on it waits in drafts (kind `news`, `expires_at` = release time; `post_draft` refuses after it). Off: sent directly.
+- Cloud watcher prices: Binance, then OKX / MEXC / Gate / KuCoin / Bybit spot (tries show matched/wanted); `MAX_SENDS` 32. `watch.cloud_healthy` also needs `priced > 0` when armed.
+- `delisted_to_mexc` stores coins MEXC does not list in setting `delisted_no_source` (Health explains them). XMR removed from the watchlist once (owner, flag `remove_xmr_v31`).
+- quick_status: `jobs_summary`, auto-trade `max_same_side` / `last2h`.

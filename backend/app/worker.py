@@ -428,7 +428,7 @@ MIGRATION_FLAGS = (
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
     "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269", "mexc_clean_v269",
-    "fresh_restart_v3", "restore_hesper_v3", "auto_limits_10_v31",
+    "fresh_restart_v3", "restore_hesper_v3", "auto_limits_10_v31", "remove_xmr_v31",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -594,6 +594,16 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
             items.append({"symbol": GOLD, "pinned": True})
         sink.set("config/watchlist", {**doc, "symbols": items, "updated_at": now_ms()})
         rt.db.set_setting("testing_v24b", True)
+    if not rt.db.get_setting("remove_xmr_v31", False):
+        # v3.1 (owner, 24 Nov 2026: "yes remove xmr"): Binance stopped XMR in Feb 2024, no live price anywhere we read;
+        # it leaves the watchlist once (old candles and records kept; the admin can add it back like any coin)
+        doc = sink.get("config/watchlist") or {}
+        items = doc.get("symbols") or []
+        keep = [i for i in items if norm_symbol(i.get("symbol") if isinstance(i, dict) else i) != "XMR/USDT"]
+        if len(keep) != len(items):
+            sink.set("config/watchlist", {**doc, "symbols": keep, "updated_at": now_ms()})
+            notes["removed_xmr"] = True
+        rt.db.set_setting("remove_xmr_v31", True)
     # watchlist
     _b("config: watchlist")
     doc = sink.get("config/watchlist")
