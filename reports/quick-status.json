@@ -38,11 +38,11 @@
  ],
  "views": {
   "15m": {
-   "rows": 33,
-   "updated": 1795532230601,
-   "with_plan": 27,
+   "rows": 35,
+   "updated": 1795536001437,
+   "with_plan": 34,
    "grades": {
-    "None": 27
+    "None": 34
    },
    "statuses": [
     "INSUFFICIENT DATA",
@@ -51,11 +51,11 @@
    "gold_row": true
   },
   "1h": {
-   "rows": 33,
-   "updated": 1795532230605,
-   "with_plan": 32,
+   "rows": 35,
+   "updated": 1795536001442,
+   "with_plan": 33,
    "grades": {
-    "None": 32
+    "None": 33
    },
    "statuses": [
     "INSUFFICIENT DATA",
@@ -64,11 +64,11 @@
    "gold_row": true
   },
   "4h": {
-   "rows": 33,
-   "updated": 1795532230609,
-   "with_plan": 27,
+   "rows": 35,
+   "updated": 1795536001446,
+   "with_plan": 28,
    "grades": {
-    "None": 27
+    "None": 28
    },
    "statuses": [
     "OK"
@@ -116,47 +116,51 @@
  "view_sizes_kb": [
   [
    "signals",
-   251.9
+   251.6
   ],
   [
    "performance",
-   85.4
+   90.8
   ],
   [
    "health_admin",
-   75.2
+   74.9
+  ],
+  [
+   "track_record",
+   68.1
+  ],
+  [
+   "futures_15m",
+   67.1
   ],
   [
    "futures_12h",
    65.3
   ],
   [
-   "track_record",
-   64.9
-  ],
-  [
    "futures_1h",
-   61.2
+   64.4
   ],
   [
    "futures_1d",
    60.3
   ],
   [
-   "futures_15m",
-   58.8
+   "dashboard_1d",
+   60.0
   ],
   [
    "futures_4h",
-   57.2
+   59.9
+  ],
+  [
+   "dashboard_3d",
+   58.1
   ],
   [
    "futures_3d",
    56.8
-  ],
-  [
-   "dashboard_1d",
-   56.6
   ],
   [
    "dashboard_12h",
@@ -175,12 +179,8 @@
    55.6
   ],
   [
-   "dashboard_3d",
-   54.7
-  ],
-  [
    "bots",
-   48.8
+   54.9
   ],
   [
    "dashboard_1w",
@@ -218,26 +218,26 @@
  "health": {
   "status": "DEGRADED",
   "engine": {
-   "last_tick_started": 1795535267399,
-   "last_tick_finished": 1795535546640,
-   "last_tick_seconds": 279.2,
+   "last_tick_started": 1795535671079,
+   "last_tick_finished": 1795535894995,
+   "last_tick_seconds": 223.9,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7886,
-   "round_seconds_avg": 197.8,
+   "ticks": 7887,
+   "round_seconds_avg": 198.4,
    "round_seconds_max": 297.6,
    "rounds_measured": 48,
-   "watch_last_at": 1795535544192,
+   "watch_last_at": 1795535879943,
    "watch_coins": 0,
    "watch_priced": 0,
    "watch_sent_total": 406,
-   "flow_last_at": 1795535532784,
+   "flow_last_at": 1795535869016,
    "flow_coins": 31,
    "flow_errors": 0,
-   "firestore_writes_today": 3445,
+   "firestore_writes_today": 3506,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 2127,
+   "firestore_reads_today": 2164,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -580,37 +580,37 @@
   "15m": {
    "n": 35,
    "fresh_12h": 2,
-   "max": 694.2,
+   "max": 694.3,
    "missing": 1
   },
   "1h": {
    "n": 35,
    "fresh_12h": 2,
-   "max": 660.7,
+   "max": 660.8,
    "missing": 1
   },
   "4h": {
    "n": 35,
    "fresh_12h": 30,
-   "max": 660.7,
+   "max": 660.8,
    "missing": 2
   },
   "12h": {
    "n": 35,
    "fresh_12h": 29,
-   "max": 660.7,
+   "max": 660.8,
    "missing": 2
   },
   "1d": {
    "n": 35,
    "fresh_12h": 28,
-   "max": 660.6,
+   "max": 660.7,
    "missing": 4
   },
   "3d": {
    "n": 35,
    "fresh_12h": 24,
-   "max": 252.7,
+   "max": 252.8,
    "missing": 10
   }
  },
@@ -737,14 +737,14 @@
  },
  "safety": [],
  "release": {
-  "launched_at": 1793386630880,
   "version": "2.1.0",
+  "launched_at": 1793386630880,
   "updated_at": 1793386630880
  },
  "track_record": {
   "record_since": 1795511383715,
   "live_signals": 6,
-  "updated": 1795532230591
+  "updated": 1795536001428
  },
  "record_live": {
   "summary": {
@@ -813,7 +813,7 @@
   "paper_trades": 0,
   "paper_futures_trades": 230,
   "auto_paper_state": 4,
-  "jobs": 29
+  "jobs": 30
  },
  "bots": [
   {
@@ -848,10 +848,10 @@
  "telegram": {
   "has_token": true,
   "has_channel": true,
-  "enabled": true,
   "post_wins": true,
   "post_weekly": true,
   "post_teaser": true,
+  "enabled": true,
   "keys": [
    "channel",
    "enabled",
@@ -863,20 +863,31 @@
  },
  "telegram_status": {
   "ok": true,
-  "checked_at": 1795534978040,
+  "checked_at": 1795536002920,
   "last_sent": [
-   "daily_result"
+   "wins (waiting for approval)"
   ],
   "last_post_at": 1795527718306,
   "updated_at": null,
   "errors": 0
  },
  "telegram_drafts": {
-  "n": 0,
-  "items": []
+  "n": 1,
+  "items": [
+   {
+    "kind": "wins",
+    "created_at": 1795536002920,
+    "at": null
+   }
+  ]
  },
  "push_tokens": 5,
  "telegram_post_jobs": [
+  {
+   "status": "queued",
+   "created_at": 1795536155058,
+   "error": ""
+  },
   {
    "status": "done",
    "created_at": 1795525617222,
@@ -896,17 +907,12 @@
    "status": "done",
    "created_at": 1795425110489,
    "error": ""
-  },
-  {
-   "status": "done",
-   "created_at": 1795410473210,
-   "error": ""
   }
  ],
  "derivs": {
   "exists": true,
-  "generated_at": 1795532122671,
-  "coins": 32,
+  "generated_at": 1795535888823,
+  "coins": 33,
   "liq_maps": 6,
   "volatility": [
    "dvol",
@@ -1008,7 +1014,7 @@
  "risk_state": {
   "state": "NORMAL",
   "score": 1,
-  "at": 1795534336946,
+  "at": 1795536299559,
   "factors": {
    "data": "ok",
    "btc_vol": "ok",
@@ -1096,8 +1102,8 @@
   "laststand": null
  },
  "news": {
-  "updated": 1795532231547,
-  "generated_at": 1795532231545,
+  "updated": 1795536002520,
+  "generated_at": 1795536002517,
   "calendar_n": 7,
   "high_usd": [
    {
@@ -1117,9 +1123,9 @@
  },
  "alert_watcher": null,
  "cloud_watcher": {
-  "at": 1795535773536,
+  "at": 1795536373735,
   "armed": 0,
-  "armed_at": 1795534430597,
+  "armed_at": 1795536002851,
   "sent": 0,
   "sent_total": null,
   "due": 0,
@@ -1128,6 +1134,12 @@
   "idle": true,
   "sent_keys_n": 0,
   "bad_tokens_n": 0,
-  "engine_diag": null
+  "engine_diag": {
+   "devices": 5,
+   "with_uid": 5,
+   "admins_set": 1,
+   "levels": 0,
+   "rules_primed": 9
+  }
  }
 }
