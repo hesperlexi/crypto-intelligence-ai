@@ -86,6 +86,45 @@ try:
     out["jobs_summary"] = js
 except Exception as exc:
     out["jobs_summary"] = {"error": str(exc)[:200]}
+# v3.1 open trades vs the public record (counts / ids hashed only; no coin, side or levels)
+try:
+    import hashlib as _h
+    hid = lambda x: _h.sha256(("cia|" + str(x)).encode()).hexdigest()[:8]
+    rec = {x.get("id"): x for x in sigs}
+    rec_open = {i for i, x in rec.items() if x.get("status") in ("OPEN", "PENDING")}
+    bv = fs.document("views/bots").get().to_dict() or {}
+    bj = json.loads(bv["json"]) if bv.get("json") else {}
+    rows = []
+    for b in bj.get("bots") or []:
+        cfg = b.get("config") or {}
+        for pz in (b.get("positions") or []) + [dict(x, _pending=True) for x in (b.get("pending") or [])]:
+            inf = pz.get("info") or {}
+            sid = inf.get("signal_id") or inf.get("call_id") or (inf.get("call") or {}).get("id")
+            tf = inf.get("timeframe") or cfg.get("timeframe")
+            same = [x for x in sigs if x.get("timeframe") == tf and x.get("symbol") == pz.get("symbol")
+                    and (x.get("side") == "LONG") == (int(pz.get("side") or 0) > 0)]
+            rows.append({"bot": cfg.get("id"), "tf": tf, "pending": bool(pz.get("_pending")), "opened_at": pz.get("opened_at") or pz.get("placed_at"),
+                         "info_keys": sorted(inf.keys())[:14], "sid": hid(sid) if sid else None,
+                         "sid_in_record": sid in rec if sid else None, "sid_open_in_record": sid in rec_open if sid else None,
+                         "same_coin_tf_side_statuses": [x.get("status") for x in same][:4]})
+    aut = []
+    for d in fs.collection("paper").stream():
+        if not d.id.endswith("_futures"):
+            continue
+        a = d.to_dict() or {}
+        for pz in list((a.get("positions") or {}).values()) + list((a.get("orders") or {}).values()):
+            sg = pz.get("signal") or {}
+            if not sg:
+                continue
+            same = [x for x in sigs if x.get("timeframe") == sg.get("timeframe") and x.get("symbol") == sg.get("symbol")]
+            aut.append({"tf": sg.get("timeframe"), "grade": sg.get("grade"), "at": sg.get("at"), "sid": hid(sg.get("id")),
+                        "sid_in_record": sg.get("id") in rec, "sid_open_in_record": sg.get("id") in rec_open,
+                        "same_coin_tf_statuses": [x.get("status") for x in same][:4]})
+    out["open_vs_record"] = {"record_rows": len(sigs), "record_open": len(rec_open),
+                             "record_open_tfs": sorted(str(rec[i].get("timeframe")) for i in rec_open),
+                             "record_since_tf": trj.get("record_since_tf"), "bots": rows, "auto": aut}
+except Exception as exc:
+    out["open_vs_record"] = {"error": str(exc)[:300]}
 # v2.75 check: views/derivs summary + silver (XAG/USDT) models (counts / names only)
 try:
     dv = fs.document("views/derivs").get().to_dict()
