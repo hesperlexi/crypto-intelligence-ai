@@ -122,7 +122,7 @@
   ],
   [
    "health_admin",
-   71.1
+   71.3
   ],
   [
    "futures_12h",
@@ -216,26 +216,26 @@
  "health": {
   "status": "DEGRADED",
   "engine": {
-   "last_tick_started": 1795534165687,
-   "last_tick_finished": 1795534337220,
-   "last_tick_seconds": 171.5,
+   "last_tick_started": 1795534440265,
+   "last_tick_finished": 1795534611983,
+   "last_tick_seconds": 171.7,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7883,
-   "round_seconds_avg": 197.0,
+   "ticks": 7884,
+   "round_seconds_avg": 196.7,
    "round_seconds_max": 297.6,
    "rounds_measured": 48,
-   "watch_last_at": 1795534314105,
+   "watch_last_at": 1795534583676,
    "watch_coins": 0,
    "watch_priced": 0,
    "watch_sent_total": 406,
-   "flow_last_at": 1795534312774,
+   "flow_last_at": 1795534592746,
    "flow_coins": 30,
    "flow_errors": 0,
-   "firestore_writes_today": 3301,
+   "firestore_writes_today": 3315,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 2006,
+   "firestore_reads_today": 2036,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -399,152 +399,152 @@
   "series_15m": [
    {
     "symbol": "PAXG/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "XAG/USDT",
-    "candles": 30212,
+    "candles": 30213,
     "status": "OK"
    },
    {
     "symbol": "BTC/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 32780,
-    "status": "OK"
-   },
-   {
-    "symbol": "GALA/USDT",
-    "candles": 32386,
-    "status": "OK"
-   },
-   {
-    "symbol": "TRX/USDT",
-    "candles": 32778,
-    "status": "OK"
-   },
-   {
-    "symbol": "ADA/USDT",
     "candles": 32781,
     "status": "OK"
    },
    {
+    "symbol": "GALA/USDT",
+    "candles": 32387,
+    "status": "OK"
+   },
+   {
+    "symbol": "TRX/USDT",
+    "candles": 32779,
+    "status": "OK"
+   },
+   {
+    "symbol": "ADA/USDT",
+    "candles": 32782,
+    "status": "OK"
+   },
+   {
     "symbol": "DOT/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "SUI/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "BCH/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "WIF/USDT",
-    "candles": 30960,
+    "candles": 30961,
     "status": "OK"
    },
    {
     "symbol": "BONK/USDT",
-    "candles": 30955,
+    "candles": 30956,
     "status": "OK"
    },
    {
     "symbol": "APT/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "ETC/USDT",
-    "candles": 30952,
+    "candles": 30953,
     "status": "OK"
    },
    {
     "symbol": "RARE/USDT",
-    "candles": 30785,
+    "candles": 30786,
     "status": "OK"
    },
    {
     "symbol": "SEI/USDT",
-    "candles": 30785,
+    "candles": 30786,
     "status": "OK"
    },
    {
     "symbol": "MSTR/USDT",
-    "candles": 30748,
+    "candles": 30749,
     "status": "OK"
    },
    {
     "symbol": "ANTHROPIC/USDT",
-    "candles": 21551,
+    "candles": 21552,
     "status": "OK"
    },
    {
     "symbol": "HYPE/USDT",
-    "candles": 5874,
+    "candles": 5875,
     "status": "OK"
    },
    {
     "symbol": "HBAR/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "SHIB/USDT",
-    "candles": 30958,
+    "candles": 30959,
     "status": "OK"
    },
    {
     "symbol": "WLD/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
@@ -554,12 +554,12 @@
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "FLOKI/USDT",
-    "candles": 30003,
+    "candles": 30004,
     "status": "OK"
    }
   ]
@@ -568,31 +568,31 @@
   "15m": {
    "n": 33,
    "fresh_12h": 1,
-   "max": 693.8,
+   "max": 693.9,
    "missing": 1
   },
   "1h": {
    "n": 33,
    "fresh_12h": 1,
-   "max": 660.4,
+   "max": 660.5,
    "missing": 1
   },
   "4h": {
    "n": 33,
    "fresh_12h": 29,
-   "max": 660.4,
+   "max": 660.5,
    "missing": 2
   },
   "12h": {
    "n": 33,
    "fresh_12h": 28,
-   "max": 660.4,
+   "max": 660.5,
    "missing": 2
   },
   "1d": {
    "n": 33,
    "fresh_12h": 27,
-   "max": 660.2,
+   "max": 660.3,
    "missing": 4
   },
   "3d": {
@@ -725,9 +725,9 @@
  },
  "safety": [],
  "release": {
+  "updated_at": 1793386630880,
   "launched_at": 1793386630880,
-  "version": "2.1.0",
-  "updated_at": 1793386630880
+  "version": "2.1.0"
  },
  "track_record": {
   "record_since": 1795511383715,
@@ -837,8 +837,8 @@
   "has_token": true,
   "has_channel": true,
   "post_wins": true,
-  "enabled": true,
   "post_weekly": true,
+  "enabled": true,
   "post_teaser": true,
   "keys": [
    "channel",
@@ -1039,7 +1039,7 @@
   ],
   "runs": 1,
   "trades": 10,
-  "at": 1795533573792,
+  "at": 1795534702595,
   "since": 1793784369074,
   "current_run": 1,
   "run_numbers": [
@@ -1062,7 +1062,7 @@
    "policy": null,
    "min_balance": 1.0,
    "started": true,
-   "generated_at": 1795533573792,
+   "generated_at": 1795534702595,
    "current": null,
    "score": null,
    "open_ended": true,
@@ -1103,5 +1103,8 @@
   "headlines_n": 30,
   "errors": []
  },
- "alert_watcher": null
+ "alert_watcher": null,
+ "cloud_watcher": {
+  "probe_error": "HTTP Error 403: Forbidden"
+ }
 }
