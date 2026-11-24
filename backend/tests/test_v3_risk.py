@@ -41,7 +41,7 @@ def test_blind_engine_is_never_safe():
 def test_practice_policy():
     assert risk_state.practice_policy("SEVERE") == {"open_new": False, "size": 0.0}
     assert risk_state.practice_policy("HIGH")["size"] == 0.5
-    assert risk_state.practice_policy(None)["open_new"]
+    assert risk_state.practice_policy(None) == {"open_new": True, "size": 0.5}     # audit F-02: unknown is never "safe"
 
 
 def test_auto_trade_follows_risk_and_limits():
@@ -99,3 +99,30 @@ def test_assess_runs_on_a_runtime(tmp_path):
     assert db.get_setting("risk_state_log")[-1]["to"] == st["state"]
     v = risk_state.view(rt, st)
     assert v["levels"][0]["state"] == "NORMAL" and v["series"]
+
+
+def test_autotrade_stale_risk_half_size():
+    """Audit F-02: a stale / missing market-risk state halves auto-trade size instead of trading at full size."""
+    from app.services import autopaper
+    s = autopaper.settings_of({})
+    acc = {"wallet": 1000.0, "deposited": 1000.0, "positions": {}, "orders": {}}
+    assert autopaper.protection(acc, s, {"risk": None}, 0) == (None, 0.5)
+    assert autopaper.protection(acc, s, {"risk": "UNKNOWN"}, 0) == (None, 0.5)
+    assert autopaper.protection(acc, s, {"risk": "NORMAL"}, 0) == (None, 1.0)
+    assert autopaper.protection(acc, s, {"risk": "SEVERE"}, 0)[1] == 0.0
+    assert autopaper.protection(acc, s, {}, 0) == (None, 1.0)               # callers without a guard (tests, tools)
+
+
+def test_autotrade_day_start_recorded_without_candidates(tmp_path):
+    """Audit F-04: the day's start value is stored on the first run of the UTC day, even with no signal to take."""
+    from app.services import autopaper
+    from app.sinks import LocalSink
+    sink = LocalSink(tmp_path)
+    now = 1_793_000_000_000
+    sink.set("users/m1", {"status": "approved", "expires_at": now + 86_400_000})
+    sink.set("auto_paper/m1", {"enabled": True})
+    sink.set("paper/m1_futures", {"wallet": 900.0, "deposited": 1000.0, "positions": {}, "orders": {}})
+    sink.set("auto_paper_state/m1", {"done": {}, "day": {"d": now // 86_400_000 - 1, "eq": 1000.0, "dep": 1000.0}})
+    autopaper.run(sink, {}, now, risk="NORMAL")
+    day = sink.get("auto_paper_state/m1")["day"]
+    assert day["d"] == now // 86_400_000 and day["eq"] == 900.0

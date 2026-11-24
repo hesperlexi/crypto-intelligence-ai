@@ -40,7 +40,7 @@ export function MarketStatus({ status4, rows, embedded = false }: { status4?: an
   const [verdict, vcls] = VERDICT[state ?? ""] ?? ["Checking conditions", "v3-muted"];
   const mood = status4?.status === "BULL" ? "Leaning up" : status4?.status === "BEAR" ? "Leaning down" : status4?.status ? "Mixed" : DASH;
   const vol = (rs?.factors ?? []).find((f: any) => f.key === "btc_vol");
-  const stale = rs?.generated_at && Date.now() - rs.generated_at > 20 * 60_000;
+  const stale = rs?.generated_at && Date.now() - rs.generated_at > 45 * 60_000;   // audit F-08: published every 30 min when unchanged
   const unavailable: string[] = rs?.unavailable ?? [];
   return (
     <section className={embedded ? "mood-risk" : "panel v3-glass p-4 sm:p-5"} aria-label="Market and risk status">

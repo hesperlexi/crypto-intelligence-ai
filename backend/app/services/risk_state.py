@@ -281,7 +281,10 @@ def step_state(prev: dict[str, Any] | None, a: dict[str, Any]) -> dict[str, Any]
 
 
 def practice_policy(state: str | None) -> dict[str, Any]:
-    """What members' practice auto-trade does under a state (only when the member follows market risk)."""
+    """What members' practice auto-trade does under a state (only when the member follows market risk).
+    Audit F-02 (24 Nov 2026): an unknown / stale state (None) is never treated as safe - it gets the HIGH rule (half size)."""
+    if state is None or state == "UNKNOWN":
+        return {"open_new": True, "size": 0.5}
     if state == "SEVERE":
         return {"open_new": False, "size": 0.0}
     if state == "HIGH":

@@ -10,7 +10,7 @@ import PublicRecord from "../components/PublicRecord";
 
 export const LAST_UPDATED = "31 Oct 2026";
 export type TrustKind = "about" | "contact" | "terms" | "risk" | "record";
-export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/record": "record" };
+export const TRUST_PATHS: Record<string, TrustKind> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/risk-disclosure": "risk", "/record": "record" };
 
 const Mail = () => <a className="text-accent hover:underline" href={`mailto:${BRAND.supportEmail}`}>{BRAND.supportEmail}</a>;
 
@@ -33,7 +33,7 @@ function About() {
       <ul className="list-disc space-y-1 pl-5">
         <li>It never places real orders and never asks for exchange API keys.</li>
         <li>It does not hold your money. Membership is paid by you directly in USDT and checked by hand.</li>
-        <li>It is not financial advice. See the <Link to="/risk" className="text-accent hover:underline">Risk disclosure</Link>.</li>
+        <li>It is not financial advice. See the <Link to="/risk-disclosure" className="text-accent hover:underline">Risk disclosure</Link>.</li>
       </ul>
       <H>Where to find it</H>
       <p>Web: <a className="text-accent hover:underline" href={BRAND.url}>{BRAND.url.replace("https://", "")}</a> · Android app · Telegram: <a className="text-accent hover:underline" href={BRAND.telegram} target="_blank" rel="noopener">@crypappai</a></p>
@@ -60,7 +60,7 @@ function Terms() {
       <H>The service</H>
       <p>{BRAND.name} provides market analysis, signals, alerts and practice trading with virtual money. It never places real orders and never connects to your exchange account. Features may change as the app is improved.</p>
       <H>Not financial advice</H>
-      <p>Everything in the app is analysis for information and education. It is not financial, investment or trading advice, and no result is guaranteed. You alone decide whether to trade and you are responsible for your own trades. Read the <Link to="/risk" className="text-accent hover:underline">Risk disclosure</Link>.</p>
+      <p>Everything in the app is analysis for information and education. It is not financial, investment or trading advice, and no result is guaranteed. You alone decide whether to trade and you are responsible for your own trades. Read the <Link to="/risk-disclosure" className="text-accent hover:underline">Risk disclosure</Link>.</p>
       <H>Accounts and membership</H>
       <ul className="list-disc space-y-1 pl-5">
         <li>You sign in with Google or with your email address and a password, and keep your account to yourself.</li>

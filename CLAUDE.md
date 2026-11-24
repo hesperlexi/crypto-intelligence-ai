@@ -633,6 +633,14 @@ configuration, market data + candle series table, models table, recent errors (c
 (so not shown): Gemini calls today, backup age, Hyperliquid history freshness. Preview seed: `views/bots`,
 `owner/telegram_status`, `views/news.generated_at`.
 
+## Audit Stage 1 fixes (24 Nov 2026, audit reports on branch `audit-v3`, docs/audit)
+- Auto-trade: unknown / stale market-risk state → half size (`risk_state.practice_policy`, worker passes "UNKNOWN"); a
+  member's daily start balance is recorded on the first run of the day even with no candidates.
+- Risk disclosure page moved to `/risk-disclosure` (members' `/risk` = Risk page; signed-out `/risk` still shows the disclosure).
+- Header "Data late" after 45 min (publish cadence 30 min). Tablet nav row wraps (no sideways page scroll at 768-1023 px).
+- F-30 was a false finding: `isAdmin()` already goes through `signedIn()`, which requires `email_verified`.
+- Model ablation study: `research-ablation.yml` (`python -m app.research ablation --group g1|g2|g3`) → `research-results/results/ablation-*.json`.
+
 ## Other features (where to look)
 News & calendar `services/news.py` + `pages/News.tsx` · Radar `services/radar.py` + `pages/Radar.tsx` · Track
 record / weekly report / achievements / wins_today `views.py` + `pages/Results.tsx`, `Report.tsx`,

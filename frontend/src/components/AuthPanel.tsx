@@ -124,7 +124,7 @@ export function AuthDialog({ mode, onClose }: { mode: AuthMode; onClose: () => v
             <button className="btn h-9 w-9 shrink-0 p-0" aria-label="Close" onClick={close}>✕</button>
           </div>
           <AuthForms initial={mode} onDone={close} />
-          <p className="mt-4 text-center text-xs text-mute">By continuing you agree to the <a className="text-accent hover:underline" href="/terms">Terms of Use</a> and the <a className="text-accent hover:underline" href="/risk">Risk disclosure</a>.</p>
+          <p className="mt-4 text-center text-xs text-mute">By continuing you agree to the <a className="text-accent hover:underline" href="/terms">Terms of Use</a> and the <a className="text-accent hover:underline" href="/risk-disclosure">Risk disclosure</a>.</p>
         </div>
       </div>
     </div>,

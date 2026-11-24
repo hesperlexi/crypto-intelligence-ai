@@ -1756,7 +1756,8 @@ def _auto_paper(rt: Runtime, sink: BaseSink, analyses: dict[tuple[str, str], dic
     """New futures signals into the paper accounts of members who switched auto-trading on."""
     rows = {tf: views.futures(rt, tf, analyses)["rows"] for tf in views.FUTURES_TIMEFRAMES if any(k[1] == tf for k in analyses)}
     rs = risk_state.current(rt.db)
-    r = autopaper.run(sink, rows, users=load_users(rt, sink)[0], risk=(rs or {}).get("state"))
+    # audit F-02: a stale / missing risk state is passed as UNKNOWN (half size), never left out
+    r = autopaper.run(sink, rows, users=load_users(rt, sink)[0], risk=(rs or {}).get("state") or "UNKNOWN")
     msgs = r.pop("push")
     if msgs:
         r["push"] = sink.send_push(msgs)

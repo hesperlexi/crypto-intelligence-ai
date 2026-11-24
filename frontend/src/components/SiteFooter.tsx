@@ -14,7 +14,7 @@ export const TRUST_LINKS: [string, string][] = [
   ["/about", "About"],
   ["/contact", "Contact"],
   ["/terms", "Terms"],
-  ["/risk", "Risk disclosure"],
+  ["/risk-disclosure", "Risk disclosure"],
 ];
 
 const HOST = BRAND.url.replace(/^https?:\/\/(www\.)?/, "");

@@ -100,7 +100,7 @@ def in_use(acc: dict[str, Any]) -> float:
 def protection(acc: dict[str, Any], s: dict[str, Any], guard: dict[str, Any] | None, now: int) -> tuple[str | None, float]:
     """(reason to skip or None, size factor). Same rules for every auto-trade path."""
     g = guard or {}
-    if s["follow_risk"]:
+    if s["follow_risk"] and "risk" in g:              # the engine passes the state (None = unknown / stale -> half size)
         from . import risk_state
         pol = risk_state.practice_policy(g.get("risk"))
         if not pol["open_new"]:
@@ -262,7 +262,15 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
         state = sink.get(f"auto_paper_state/{uid}") or {}
         done: dict[str, int] = dict(state.get("done") or {})
         day = dict(state.get("day") or {})
-        guard = {"risk": risk, "day": day}
+        day_new = False
+        if day.get("d") != now // 86_400_000:
+            # audit F-04 (24 Nov 2026): remember the account value at the first run of the UTC day (1 read + 1 write per
+            # member a day), not at the first candidate - so losses before the day's first signal count toward the limit
+            acc0 = sink.get(f"paper/{uid}_futures")
+            if acc0:
+                day = {"d": now // 86_400_000, "eq": round(equity_of(acc0), 2), "dep": float(acc0.get("deposited") or 0)}
+                day_new = True
+        guard = {"risk": risk, "day": day} if risk is not None else {"day": day}
         mine = set((sink.get(f"user_coins/{uid}") or {}).get("symbols") or []) if s["coins"] == "mine" else None
         entries = []
         for sig in sigs:
@@ -276,11 +284,6 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
             # one entry per signal: the same call is not re-entered on later candles for 6 bars
             if now - int(done.get(key, 0)) < 6 * tf_ms(sig["timeframe"]):
                 continue
-            if day.get("d") != now // 86_400_000:   # first auto-trade check of the UTC day: remember the start value
-                acc0 = sink.get(f"paper/{uid}_futures")
-                if acc0:
-                    day = {"d": now // 86_400_000, "eq": round(equity_of(acc0), 2), "dep": float(acc0.get("deposited") or 0)}
-                    guard["day"] = day
             result = sink.transact(f"paper/{uid}_futures", lambda acc, sig=sig: place(acc, sig, s, now, guard))
             done[key] = now
             if result.get("reversed"):
@@ -307,7 +310,7 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
                                              f"{result['price']:.6g} · margin ${result['margin']:.0f} at {result['leverage']}x · "
                                              f"stop {result['stop']:.6g} · target {result['take']:.6g} (practice account)"),
                                     "url": "/paper?market=futures", "tag": f"auto-{uid}-{sig['symbol']}"})
-        if entries or not state:
+        if entries or not state or day_new:
             done = {k: v for k, v in done.items() if now - v < 14 * 86_400_000}
             sink.set(f"auto_paper_state/{uid}", {"done": done, "updated_at": now, "day": day,
                                                   "log": (entries + list(state.get("log") or []))[:60]})

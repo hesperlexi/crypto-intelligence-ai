@@ -73,7 +73,7 @@ export default function WinsToday() {
         </p>
       )}
       <p className="mt-3 text-center text-xs text-mute">After fees. Leverage magnifies losses.</p>
-      <p className="mt-1 text-center text-xs text-mute">Past results do not guarantee future results. <Link to="/risk" className="underline hover:text-text">Risk disclosure</Link></p>
+      <p className="mt-1 text-center text-xs text-mute">Past results do not guarantee future results. <Link to="/risk-disclosure" className="underline hover:text-text">Risk disclosure</Link></p>
     </section>
   );
 }

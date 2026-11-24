@@ -71,7 +71,7 @@ const Community = page(() => import("./pages/Community"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
 const TrustContent = page(() => import("./pages/Trust").then((m) => ({ default: m.TrustContent })));
-const TRUST: Record<string, "about" | "contact" | "terms" | "risk" | "record"> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/record": "record" };
+const TRUST: Record<string, "about" | "contact" | "terms" | "risk" | "record"> = { "/about": "about", "/contact": "contact", "/terms": "terms", "/risk": "risk", "/risk-disclosure": "risk", "/record": "record" };
 try { window.setTimeout(() => sessionStorage.removeItem("chunk-reload"), 15000); } catch { /* ignore */ }
 const prefetch = () => { void import("./pages/Signals"); void import("./pages/Paper"); void import("./pages/Results"); void import("./pages/Asset"); };
 if (typeof window !== "undefined") window.setTimeout(() => ((window as any).requestIdleCallback ?? ((f: () => void) => f()))(prefetch), 2500);
@@ -379,7 +379,7 @@ function Shell({ user }: { user: User }) {
             </div>
           </div>
           {/* tablets (768-1023 px) always, computers too when the top bar was chosen */}
-          <nav className={`nav-top mx-auto hidden ${width} items-center px-3 pb-1.5 sm:px-4 md:flex ${side ? "lg:hidden" : ""}`} aria-label="Sections">
+          <nav className={`nav-top mx-auto hidden ${width} flex-wrap items-center gap-y-0.5 px-3 pb-1.5 sm:px-4 md:flex ${side ? "lg:hidden" : ""}`} aria-label="Sections">
             {NAV_GROUPS.map((g, i) => (
               <div key={i} className={`flex items-center gap-0.5 ${i ? "nav-group" : ""}`}>
                 {g.map(([to, label]) => (
@@ -432,7 +432,8 @@ function Shell({ user }: { user: User }) {
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="/community" element={<Community />} />
-            {Object.entries(TRUST).map(([path, kind]) => <Route key={path} path={path} element={<TrustContent kind={kind} />} />)}
+            {/* audit F-07: members' /risk is the Risk page; the disclosure lives at /risk-disclosure */}
+            {Object.entries(TRUST).filter(([path]) => path !== "/risk").map(([path, kind]) => <Route key={path} path={path} element={<TrustContent kind={kind} />} />)}
             <Route path="*" element={<NotFound />} />
           </Routes>
           </Suspense>
