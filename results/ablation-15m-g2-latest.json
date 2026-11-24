@@ -1,0 +1,152 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "g2",
+ "timeframes": {
+  "15m": {
+   "coins_done": 46,
+   "skipped": [],
+   "control": {
+    "trades": 510,
+    "avg_r": 0.1071,
+    "total_r": 54.65,
+    "win_rate": 0.584,
+    "series": 46,
+    "brier_mean": 0.64543,
+    "log_loss_mean": 1.06787,
+    "drawdown_r_sum": 93.0
+   },
+   "no_xgboost": {
+    "trades": 486,
+    "avg_r": 0.0478,
+    "total_r": 23.21,
+    "win_rate": 0.543,
+    "series": 46,
+    "brier_mean": 0.64554,
+    "log_loss_mean": 1.06809,
+    "drawdown_r_sum": 97.19
+   },
+   "no_lightgbm": {
+    "trades": 463,
+    "avg_r": 0.1281,
+    "total_r": 59.32,
+    "win_rate": 0.598,
+    "series": 46,
+    "brier_mean": 0.64544,
+    "log_loss_mean": 1.06779,
+    "drawdown_r_sum": 90.2
+   },
+   "no_hist_gbm": {
+    "trades": 470,
+    "avg_r": 0.1197,
+    "total_r": 56.27,
+    "win_rate": 0.594,
+    "series": 46,
+    "brier_mean": 0.64559,
+    "log_loss_mean": 1.0682,
+    "drawdown_r_sum": 82.99
+   },
+   "xgboost_only": {
+    "trades": 568,
+    "avg_r": 0.1241,
+    "total_r": 70.47,
+    "win_rate": 0.576,
+    "series": 46,
+    "brier_mean": 0.64699,
+    "log_loss_mean": 1.07936,
+    "drawdown_r_sum": 96.62
+   },
+   "no_xgboost_vs_control": {
+    "n_series": 46,
+    "share_better": 0.025,
+    "ci90_r_per_trade": [
+     -0.1134,
+     -0.0098
+    ],
+    "brier_better_share": 0.391
+   },
+   "no_lightgbm_vs_control": {
+    "n_series": 46,
+    "share_better": 0.62,
+    "ci90_r_per_trade": [
+     -0.0337,
+     0.0614
+    ],
+    "brier_better_share": 0.457
+   },
+   "no_hist_gbm_vs_control": {
+    "n_series": 46,
+    "share_better": 0.525,
+    "ci90_r_per_trade": [
+     -0.0572,
+     0.0709
+    ],
+    "brier_better_share": 0.196
+   },
+   "xgboost_only_vs_control": {
+    "n_series": 46,
+    "share_better": 0.805,
+    "ci90_r_per_trade": [
+     -0.0287,
+     0.0968
+    ],
+    "brier_better_share": 0.109
+   }
+  }
+ },
+ "same_as_control": {
+  "15m": []
+ },
+ "models": {
+  "15m": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_xgboost": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "lightgbm",
+    "arima"
+   ],
+   "no_lightgbm": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "arima"
+   ],
+   "no_hist_gbm": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "xgboost_only": [
+    "prior_baseline",
+    "prev_candle",
+    "xgboost"
+   ]
+  }
+ },
+ "seconds": 13163.9,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
