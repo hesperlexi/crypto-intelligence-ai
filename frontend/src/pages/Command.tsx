@@ -14,7 +14,8 @@ import { useApi } from "../lib/api";
 import { isAdmin } from "../lib/session";
 import { useKlines } from "../lib/klines";
 import LazyMount from "../components/LazyMount";
-import { CoinCompare, SignalLadders } from "../components/CommandPlus";
+import { CoinCompare } from "../components/CommandPlus";
+import { SignalJourneysV2 } from "../components/TradeJourneys";
 import { PriceLines } from "../components/PriceLines";
 const MarketGlobe = lazy(() => import("../components/MarketGlobe"));
 import { useLive, useTicker, useTickerThrottled } from "../lib/live";
@@ -537,7 +538,7 @@ export default function Command() {
         </div>
         <div className="cc-flight-lanes">
           <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Journeys</h2><span className="text-xs text-mute">stop · entry · targets · now</span></div>
-          <div className="flex-1"><SignalLadders track={track.data} /></div>
+          <div className="flex-1"><SignalJourneysV2 track={track.data} /></div>
         </div>
       </section>
       {/* market forces: universe beside mission control, then the globe full width */}

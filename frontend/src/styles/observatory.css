@@ -1096,3 +1096,62 @@ body:has(.pl-bg) .cc-page .cc-panel { background: rgb(var(--panel) / 0.8) !impor
 .tc-note { padding: 12px 14px; border-radius: 12px; border: 1px solid rgb(var(--ai) / 0.25); background: rgb(var(--ai) / 0.06); font-size: .875rem; line-height: 1.5; }
 /* Trade pair menu: solid so the page under it never shows through */
 .pair-menu, [data-glass] .panel.popover.pair-menu { background: rgb(var(--panel)) !important; background-image: none !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; box-shadow: 0 18px 40px -12px rgb(0 0 0 / .7) !important; }
+
+/* v3.1 Journeys (owner, 25 Nov 2026): crystal ball + quantum lane (default) / neural rail (switch) */
+.jo-top { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; }
+.jo-switch { display: inline-flex; padding: 2px; border-radius: 999px; border: 1px solid rgb(var(--glass) / 0.12); background: rgb(var(--ink) / 0.5); }
+.jo-switch button { padding: 3px 12px; border-radius: 999px; font-size: 0.75rem; color: rgb(var(--mute)); }
+.jo-switch button.is-on { background: rgb(var(--accent) / 0.16); color: rgb(var(--accent)); box-shadow: inset 0 0 0 1px rgb(var(--accent) / 0.35); }
+.jo-list { display: flex; flex-direction: column; margin-top: 4px; }
+.jo-row { display: flex; align-items: center; gap: 14px; padding: 10px 2px; border-bottom: 1px solid rgb(var(--glass) / 0.06); min-width: 0; }
+.jo-row:last-child { border-bottom: 0; }
+.jo-body { flex: 1; min-width: 0; }
+.jo-line1 { display: flex; align-items: baseline; gap: 10px; margin-bottom: 6px; min-width: 0; }
+.jo-head { display: inline-flex; align-items: center; gap: 7px; min-width: 0; }
+.jo-head b { font-size: 0.9375rem; }
+.jo-head:hover b { text-decoration: underline; }
+.jo-sub { font-size: 0.75rem; color: rgb(var(--mute)); white-space: nowrap; }
+.jo-r { margin-left: auto; font-weight: 600; font-size: 1rem; white-space: nowrap; }
+.jo-foot { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 0.75rem; color: rgb(var(--mute)); }
+/* crystal ball */
+.jo-orb { position: relative; flex: none; }
+.jo-orb svg { display: block; width: 100%; height: 100%; overflow: visible; }
+.jo-orb .jo-halo { filter: drop-shadow(0 0 5px currentColor); animation: jo-halo 3s ease-in-out infinite; }
+.jo-orb .jo-wave { animation: jo-wave 3.2s linear infinite; }
+.jo-orb .jo-wave2 { animation: jo-wave 4.6s linear infinite reverse; }
+.jo-orb .jo-bub { opacity: 0; animation: jo-bub 2.8s ease-in infinite; }
+.jo-orb-txt { position: absolute; inset: 0; display: grid; place-items: center; font-size: 0.75rem; font-weight: 600; color: #fff; text-shadow: 0 1px 4px rgb(0 0 0 / 0.8); }
+@keyframes jo-wave { to { transform: translateX(-80px); } }
+@keyframes jo-bub { 0% { transform: translateY(0); opacity: 0; } 20% { opacity: 0.8; } 100% { transform: translateY(-26px); opacity: 0; } }
+@keyframes jo-halo { 50% { opacity: 0.35; } }
+/* quantum lane */
+.jq-orbwrap { position: relative; flex: none; padding: 7px; }
+.jq-ring { position: absolute; inset: 0; border-radius: 50%; border: 1px dashed rgb(var(--ai) / 0.3); animation: jq-spin 14s linear infinite; }
+.jq-ring::after { content: ""; position: absolute; top: -3px; left: 50%; width: 6px; height: 6px; border-radius: 50%; background: rgb(var(--ai)); box-shadow: 0 0 8px rgb(var(--ai)); }
+@keyframes jq-spin { to { transform: rotate(360deg); } }
+.jq-path { position: relative; height: 38px; border-radius: 10px; background: rgb(var(--glass) / 0.035); border: 1px solid rgb(var(--glass) / 0.08); overflow: hidden; }
+.jq-gate { position: absolute; top: 0; bottom: 0; width: 2px; margin-left: -1px; background: linear-gradient(180deg, transparent, rgb(var(--glass) / 0.3), transparent); }
+.jq-gate.is-hit { background: linear-gradient(180deg, transparent, rgb(var(--bull)), transparent); box-shadow: 0 0 12px rgb(var(--bull)); }
+.jq-gate.is-sl { background: linear-gradient(180deg, transparent, rgb(var(--bear)), transparent); }
+.jq-gate.is-en { background: linear-gradient(180deg, transparent, rgb(var(--accent)), transparent); }
+.jq-gate em { position: absolute; bottom: 2px; left: 5px; font-size: 0.625rem; font-style: normal; color: rgb(var(--mute)); white-space: nowrap; }
+.jq-gate.is-end em { left: auto; right: 5px; }
+.jq-stream { position: absolute; top: 13px; height: 12px; overflow: hidden; }
+.jq-stream i { position: absolute; top: 4px; width: 4px; height: 4px; border-radius: 50%; background: currentColor; box-shadow: 0 0 6px currentColor; animation: jq-part 1.6s linear infinite; }
+.jq-stream.is-back i { animation-direction: reverse; }
+@keyframes jq-part { from { left: 0; opacity: 0; } 15% { opacity: 1; } to { left: 100%; opacity: 0; } }
+.jq-now { position: absolute; top: 7px; width: 22px; height: 22px; margin-left: -11px; border-radius: 50%; border: 2px solid currentColor; background: rgb(0 0 0 / 0.6); box-shadow: 0 0 14px currentColor; }
+/* neural rail */
+.jr-rail { position: relative; height: 34px; margin: 0 8px; }
+.jr-line { position: absolute; left: 0; right: 0; top: 9px; height: 2px; background: linear-gradient(90deg, rgb(var(--bear) / 0.35), rgb(var(--glass) / 0.14) 30%, rgb(var(--glass) / 0.14) 70%, rgb(var(--bull) / 0.35)); }
+.jr-flow { position: absolute; top: 9px; height: 2px; background: repeating-linear-gradient(90deg, currentColor 0 6px, transparent 6px 14px); animation: jr-flow 1s linear infinite; }
+@keyframes jr-flow { to { background-position: 14px 0; } }
+.jr-node { position: absolute; top: 3px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; border: 2px solid rgb(var(--glass) / 0.3); background: rgb(var(--panel)); }
+.jr-node.is-hit { border-color: rgb(var(--bull)); background: rgb(var(--bull)); box-shadow: 0 0 12px rgb(var(--bull)); }
+.jr-node.is-sl { border-color: rgb(var(--bear)); }
+.jr-node.is-en { border-color: rgb(var(--accent)); }
+.jr-node em { position: absolute; top: 15px; left: 50%; transform: translateX(-50%); font-size: 0.625rem; font-style: normal; color: rgb(var(--mute)); white-space: nowrap; }
+.jr-pulse { position: absolute; top: 1px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: currentColor; animation: jr-ping 1.8s infinite; }
+@keyframes jr-ping { 0% { box-shadow: 0 0 0 0 currentColor; } 100% { box-shadow: 0 0 0 12px transparent; } }
+@media (max-width: 480px) { .jo-row { gap: 10px; } .jq-gate em, .jr-node em { font-size: 0.5625rem; } }
+@media (prefers-reduced-motion: reduce) { .jo-orb *, .jq-ring, .jq-stream i, .jr-flow, .jr-pulse { animation: none !important; } .jo-orb .jo-bub { opacity: 0; } }
