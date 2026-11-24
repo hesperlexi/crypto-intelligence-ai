@@ -4,8 +4,8 @@
 
    Idea: an intelligence desk, not a spaceship. Soft black graphite surfaces (never pure #000), the logo's gold
    (#E8B637) as the one brand accent, the logo's cyan (#5DF1DD) ONLY for what the AI produced, green / red for
-   direction, amber for caution. Type: DM Sans for titles and text (owner, 24 Nov: no serif),
-   DM Mono for every figure so columns line up. Crystal glass is used sparingly (lead cards, risk status).
+   direction, amber for caution. Type: IBM Plex Sans everywhere - the family Binance's own BinancePlex is built on (owner, 24 Nov: "follow the Binance font structure"): one family, titles 600, text 400, labels 400 grey, figures 500-600 with tabular digits (no monospace),
+   Figures use the same family with tabular digits so columns line up. Crystal glass is used sparingly (lead cards, risk status).
    Background: a faint neural mesh in the top right corner instead of stars. Themes: Graphite (id "gold", so saved
    choices keep working) and Ivory (id "light"); the retired dark themes resolve to Graphite (appearance.tsx).
    ===================================================================================================== */
@@ -45,7 +45,7 @@
 
 /* ---------------------------------------------------------------------------------------------- TYPE */
 body {
-  font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   font-feature-settings: normal; letter-spacing: 0;
   background-color: rgb(var(--ink));
   background-image: var(--mesh), radial-gradient(70% 50% at 100% 0%, var(--glow1), transparent 70%);
@@ -56,16 +56,16 @@ body {
   background-image: var(--mesh), radial-gradient(70% 50% at 100% 0%, var(--glow1), transparent 70%);
 }
 .page-title, h1.page-title, .v3-title {
-  font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif; font-weight: 650;
-  font-size: 1.875rem; line-height: 1.1; letter-spacing: -0.025em;
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-weight: 600;
+  font-size: 1.75rem; line-height: 1.2; letter-spacing: -0.01em;
 }
-@media (min-width: 640px) { .page-title, .v3-title { font-size: 2.25rem; } }
-.font-display, .section-title, h2, h3 { font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif; }
+@media (min-width: 640px) { .page-title, .v3-title { font-size: 2rem; } }
+.font-display, .section-title, h2, h3 { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; }
 .num, .tabular, .figure, .metric-v {
-  font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-feature-settings: "tnum" 1;
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-variant-numeric: tabular-nums; letter-spacing: 0; font-feature-settings: "tnum" 1; font-weight: 500;
 }
-.card-head .label { font-family: "DM Sans Variable", "DM Sans", sans-serif; font-weight: 600; letter-spacing: -0.005em; }
+.card-head .label { font-family: "IBM Plex Sans", sans-serif; font-weight: 600; letter-spacing: 0; }
 .page-head::after { background: var(--horizon) !important; }
 ::selection { background: rgb(var(--accent) / 0.28); }
 
@@ -104,7 +104,7 @@ body {
 
 /* ---------------------------------------------------------------------------------------------- V3 BLOCKS */
 .v3-eyebrow { font-size: 0.8125rem; color: rgb(var(--mute)); }
-.v3-state { font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, sans-serif; font-weight: 650; font-size: 1.875rem; line-height: 1.05; letter-spacing: -0.025em; }
+.v3-state { font-family: "IBM Plex Sans", ui-sans-serif, sans-serif; font-weight: 600; font-size: 1.75rem; line-height: 1.1; letter-spacing: -0.01em; }
 .v3-k { font-size: 0.75rem; color: rgb(var(--mute)); }
 .v3-v { font-size: 0.95rem; margin-top: 2px; }
 .v3-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: 0.75rem; white-space: nowrap; }

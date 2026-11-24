@@ -22,8 +22,8 @@ if (typeof CanvasRenderingContext2D !== "undefined" && !(CanvasRenderingContext2
     this.arcTo(x, y + h, x, y, rr); this.arcTo(x, y, x + w, y, rr); this.closePath();
   };
 }
-export const sora = (w: number, px: number) => `${w} ${px}px Sora, Inter, system-ui, sans-serif`;
-export const inter = (w: number, px: number) => `${w} ${px}px "DM Sans Variable", "DM Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif`;
+export const sora = (w: number, px: number) => `${w} ${px}px "IBM Plex Sans", Inter, system-ui, sans-serif`;   // V3.0: Binance-style single family
+export const inter = (w: number, px: number) => `${w} ${px}px "IBM Plex Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif`;
 
 export async function luxReady() {
   try {

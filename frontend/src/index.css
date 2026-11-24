@@ -135,15 +135,15 @@ html.theme-switching, html.theme-switching *, html.theme-switching *::before, ht
   transition: background-color .24s ease, border-color .24s ease, color .24s ease, fill .24s ease, stroke .24s ease, box-shadow .24s ease !important;
 }
 /* numbers: Inter's tabular figures (same family as the text, digits line up in columns) */
-.num { font-family: Geist, Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 0, "cv11" 1; letter-spacing: -0.01em; }
+.num { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1, "zero" 0, "cv11" 1; letter-spacing: -0.01em; }
 .tabular { font-variant-numeric: tabular-nums; }
 
 /* ---- type scale: display / page title / section / label ---- */
 /* Sora is the brand display face (headings); Inter carries text and numbers */
-.font-display { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
-h1 { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
-.page-title { @apply text-xl font-semibold leading-tight sm:text-2xl; font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.022em; }
-.section-title { @apply text-base font-semibold leading-tight sm:text-xl; font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.015em; }
+.font-display { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
+h1 { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.02em; }
+.page-title { @apply text-xl font-semibold leading-tight sm:text-2xl; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.022em; }
+.section-title { @apply text-base font-semibold leading-tight sm:text-xl; font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; letter-spacing: -0.015em; }
 .page-sub { @apply mt-1 text-sm text-mute; }
 .label { @apply text-xs font-semibold uppercase tracking-[0.08em] text-mute; }
 .text-gradient { color: rgb(var(--accent)); }
@@ -622,7 +622,7 @@ a.kpi:hover { border-color: rgb(var(--accent) / 0.4); background: rgb(var(--ink)
 .sc-side-bear { background: rgb(var(--bear)); color: #fff; }
 .sc-side-wait { background: rgb(var(--glass) / 0.08); color: rgb(var(--text) / 0.85); box-shadow: 0 0 0 1px var(--hair-strong) inset; }
 [data-theme="light"] .sc-side-bull { color: #fff; }
-.sc-headline { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; font-size: 1.25rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; }
+.sc-headline { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size: 1.25rem; line-height: 1.2; font-weight: 600; letter-spacing: -0.02em; }
 @media (min-width: 640px) { .sc-headline { font-size: 1.75rem; } }
 .sc-section { border-top: 1px solid var(--hair); padding-top: 0.75rem; }
 .sc-label { margin-bottom: 0.4rem; font-size: 12px; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: rgb(var(--mute)); }
@@ -761,7 +761,7 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .metric-k { text-transform: none !important; letter-spacing: 0 !important; font-size: 0.8125rem; font-weight: 500; }
 /* ---- premium-a (sign-in, settings, alerts, community, news, radar, trust) ---- */
 /* legal / about pages: readable headings inside the long text */
-.trust-body h2 { color: rgb(var(--text)); font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; font-weight: 600; font-size: 1.125rem; letter-spacing: -0.015em; margin-top: 1.75rem; margin-bottom: 0.5rem; }
+.trust-body h2 { color: rgb(var(--text)); font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-weight: 600; font-size: 1.125rem; letter-spacing: -0.015em; margin-top: 1.75rem; margin-bottom: 0.5rem; }
 .trust-body p + p { margin-top: 0.75rem; }
 /* landing: a warmer, deeper light behind the hero ticket so the frosted card has something to catch */
 .landing-bg { background-image:
@@ -805,7 +805,7 @@ table.grid-table td { padding-top: 0.8rem; padding-bottom: 0.8rem; }
 .signal-card .metric-k { text-transform: none; letter-spacing: 0; font-size: 0.8125rem; font-weight: 500; }
 .signal-card .metric-strip { background: rgb(var(--ink) / 0.28); }
 /* ===== premium-c (Results, track record, admin pages) ===== */
-.statement-figure { font-family: Sora, Inter, ui-sans-serif, system-ui, sans-serif; font-size: 2.5rem; line-height: 1; letter-spacing: -0.04em; }
+.statement-figure { font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif; font-size: 2.5rem; line-height: 1; letter-spacing: -0.04em; }
 @media (min-width: 640px) { .statement-figure { font-size: 3.25rem; } }
 .statement-facts > div + div { border-left: 1px solid rgb(var(--glass) / 0.07); }
 @media (max-width: 639px) { .statement-facts > div:nth-child(3) { border-left: 0; } .statement-facts > div:nth-child(n+3) { border-top: 1px solid rgb(var(--glass) / 0.07); } }

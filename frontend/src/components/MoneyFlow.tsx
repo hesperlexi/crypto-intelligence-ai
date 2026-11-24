@@ -155,7 +155,7 @@ export function FlowRiver({ feed, paused }: { feed: Feed; paused: boolean }) {
         halo.addColorStop(0, `rgb(${f.color} / .55)`); halo.addColorStop(1, `rgb(${f.color} / 0)`);
         ctx.fillStyle = halo; ctx.beginPath(); ctx.arc(cx, y, rowH * (w < 640 ? 0.3 : 0.42), 0, Math.PI * 2); ctx.fill();
         ctx.fillStyle = `rgb(${f.color})`; ctx.beginPath(); ctx.arc(cx, y, w < 640 ? 11 : 14, 0, Math.PI * 2); ctx.fill();
-        ctx.fillStyle = `rgb(${glass} / .95)`; ctx.font = `600 ${w < 640 ? 10 : 12}px "DM Sans Variable", "DM Sans", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.fillStyle = `rgb(${glass} / .95)`; ctx.font = `600 ${w < 640 ? 10 : 12}px "IBM Plex Sans", system-ui, sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "middle";
         ctx.fillText(f.label === "Gold" ? "Au" : base(f.sym).slice(0, 3), cx, y + 0.5);
       });
       const keep: Dot[] = [];
