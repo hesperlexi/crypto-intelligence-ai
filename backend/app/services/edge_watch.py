@@ -194,7 +194,7 @@ def run(rt, sink, session: Any = None) -> dict[str, Any]:
     if last.get("hash") == digest and now_ms() - int(last.get("at") or 0) < REARM_S * 1000 and last.get("diag") == diag:
         return {**out, "armed": len(items), "sent": False}
     r = sess.post(f"{EDGE_URL}/watch/arm", data=json.dumps({"armed": items, "diag": diag,
-                                   "probe_token": next((d[0] for d in devs if (not admins or d[2] in admins)), None)}, separators=(",", ":")),
+                                   "probe_token": next((d[0] for d in devs if (not admins or d[2] in admins)), devs[0][0] if devs else None)}, separators=(",", ":")),
                   headers={"X-Edge-Key": key, "Content-Type": "application/json"}, timeout=20)
     ok = getattr(r, "status_code", 0) == 200
     if ok:
