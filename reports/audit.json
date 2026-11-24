@@ -1,0 +1,392 @@
+{
+ "checked_at_utc": "2026-11-24 12:27",
+ "problems": [],
+ "notes": [],
+ "views_total": 1021,
+ "views_not_updated_for_a_day": [
+  [
+   "perf_AVAXUSDT_1w",
+   760
+  ],
+  [
+   "perf_DOGEUSDT_1w",
+   760
+  ],
+  [
+   "perf_LINKUSDT_1w",
+   760
+  ],
+  [
+   "perf_SOLUSDT_1w",
+   760
+  ],
+  [
+   "perf_SUIUSDT_1w",
+   760
+  ],
+  [
+   "perf_XAUTUSDT_1d",
+   744
+  ],
+  [
+   "perf_XAUTUSDT_1w",
+   744
+  ],
+  [
+   "perf_XAUTUSDT_3d",
+   744
+  ],
+  [
+   "perf_NEARUSDT_1w",
+   743
+  ],
+  [
+   "perf_PEPEUSDT_1w",
+   743
+  ],
+  [
+   "models_ADAUSDT_1w",
+   729
+  ],
+  [
+   "models_ETHUSDT_1w",
+   729
+  ],
+  [
+   "perf_ENAUSDT_1w",
+   716
+  ],
+  [
+   "models_BTCUSDT_1w",
+   712
+  ],
+  [
+   "analysis_TONUSDT_15m",
+   711
+  ],
+  [
+   "models_TONUSDT_12h",
+   711
+  ],
+  [
+   "models_TONUSDT_1d",
+   711
+  ],
+  [
+   "models_TONUSDT_1h",
+   711
+  ],
+  [
+   "models_TONUSDT_1w",
+   711
+  ],
+  [
+   "models_TONUSDT_3d",
+   711
+  ],
+  [
+   "models_TONUSDT_4h",
+   711
+  ],
+  [
+   "perf_AAVEUSDT_1w",
+   711
+  ],
+  [
+   "perf_APTUSDT_1w",
+   711
+  ],
+  [
+   "perf_BCHUSDT_1w",
+   711
+  ],
+  [
+   "perf_BIOUSDT_1w",
+   711
+  ],
+  [
+   "perf_BIOUSDT_3d",
+   711
+  ],
+  [
+   "perf_DOTUSDT_1w",
+   711
+  ],
+  [
+   "perf_HBARUSDT_1w",
+   711
+  ],
+  [
+   "perf_INJUSDT_1w",
+   711
+  ],
+  [
+   "perf_TONUSDT_12h",
+   711
+  ],
+  [
+   "perf_TONUSDT_1d",
+   711
+  ],
+  [
+   "perf_TONUSDT_1h",
+   711
+  ],
+  [
+   "perf_TONUSDT_1w",
+   711
+  ],
+  [
+   "perf_TONUSDT_3d",
+   711
+  ],
+  [
+   "perf_TONUSDT_4h",
+   711
+  ],
+  [
+   "perf_UNIUSDT_1w",
+   711
+  ],
+  [
+   "models_XLMUSDT_1w",
+   709
+  ],
+  [
+   "models_TRXUSDT_1w",
+   708
+  ],
+  [
+   "perf_BTCUSDT_1w",
+   708
+  ],
+  [
+   "perf_ETHUSDT_1w",
+   708
+  ]
+ ],
+ "meta_age_min": 5.3,
+ "model_timeframes": [
+  "15m",
+  "1h",
+  "4h",
+  "12h",
+  "1d",
+  "3d"
+ ],
+ "watchlist_n": 30,
+ "gold_in_watchlist": true,
+ "timeframes": {
+  "15m": {
+   "age_min": 5.3,
+   "coins": 30,
+   "statuses": {
+    "OK": 30
+   },
+   "trade_plans": 15,
+   "grades": {
+    "None": 15
+   },
+   "gold_row": true,
+   "target_rule_breaks": []
+  },
+  "1h": {
+   "age_min": 5.3,
+   "coins": 30,
+   "statuses": {
+    "OK": 30
+   },
+   "trade_plans": 2,
+   "grades": {
+    "None": 2
+   },
+   "gold_row": true,
+   "target_rule_breaks": []
+  },
+  "4h": {
+   "age_min": 5.3,
+   "coins": 30,
+   "statuses": {
+    "OK": 30
+   },
+   "trade_plans": 2,
+   "grades": {
+    "None": 2
+   },
+   "gold_row": true,
+   "target_rule_breaks": []
+  },
+  "12h": {
+   "age_min": 66.9,
+   "coins": 30,
+   "statuses": {
+    "OK": 30
+   },
+   "trade_plans": 6,
+   "grades": {
+    "B": 1,
+    "None": 5
+   },
+   "gold_row": true,
+   "target_rule_breaks": []
+  },
+  "1d": {
+   "age_min": 66.9,
+   "coins": 30,
+   "statuses": {
+    "OK": 30
+   },
+   "trade_plans": 16,
+   "grades": {
+    "None": 16
+   },
+   "gold_row": true,
+   "target_rule_breaks": []
+  },
+  "3d": {
+   "age_min": 66.9,
+   "coins": 30,
+   "statuses": {
+    "OK": 29,
+    "INSUFFICIENT DATA": 1
+   },
+   "trade_plans": 10,
+   "grades": {
+    "None": 10
+   },
+   "gold_row": true,
+   "target_rule_breaks": []
+  }
+ },
+ "track_record": {
+  "age_min": 5.3,
+  "since": 1795511484672,
+  "closed": null,
+  "wins": null,
+  "losses": null,
+  "win_rate": null,
+  "total_return_pct": null,
+  "avg_return_pct": null,
+  "open": 2
+ },
+ "performance_keys": [
+  "rows",
+  "live",
+  "signals"
+ ],
+ "wins_today": {
+  "age_min": 66.9,
+  "period": "today",
+  "n": 4
+ },
+ "weekly_report_age_min": 5.3,
+ "bots": {
+  "age_min": 5.3,
+  "n": 7,
+  "ids": [
+   null,
+   null,
+   null,
+   null,
+   null,
+   null,
+   null
+  ],
+  "configured": 7
+ },
+ "membership": {
+  "keys": [
+   "currency",
+   "pay_note",
+   "plans",
+   "qr_url",
+   "support_email",
+   "updated_at"
+  ],
+  "plans": [
+   {
+    "id": null,
+    "name": null,
+    "price": 15,
+    "currency": null,
+    "days": null
+   },
+   {
+    "id": null,
+    "name": null,
+    "price": 40,
+    "currency": null,
+    "days": null
+   },
+   {
+    "id": null,
+    "name": null,
+    "price": 70,
+    "currency": null,
+    "days": null
+   },
+   {
+    "id": null,
+    "name": null,
+    "price": 130,
+    "currency": null,
+    "days": null
+   }
+  ],
+  "payment_methods": [],
+  "support_email_set": true
+ },
+ "telegram": {
+  "enabled": true,
+  "channel": "@crypappai",
+  "post_wins": true,
+  "post_weekly": true,
+  "post_teaser": true,
+  "post_each_win": null,
+  "approve_first": null,
+  "token_set": true,
+  "status": {
+   "ok": true,
+   "errors": [],
+   "last_post_min_ago": 42.6,
+   "checked_min_ago": 10.6
+  },
+  "drafts_waiting": 0
+ },
+ "presence": {
+  "n": 9,
+  "with_country": 9,
+  "active_10_min": 2,
+  "devices": [
+   "Android app",
+   "Android app (Chrome)",
+   "Android browser",
+   "Desktop browser",
+   "iPhone app"
+  ]
+ },
+ "members_docs": 0,
+ "jobs_stuck": [],
+ "health": {
+  "status": "LIVE",
+  "age_min": 5.3,
+  "failed_steps": null,
+  "paused_by_safety_switch": 0,
+  "recent_errors": []
+ },
+ "news_age_min": 5.3,
+ "radar_age_min": 73.5,
+ "context_age_min": 5.3
+}
+{
+ "models_done_vs_not_by_tf": {},
+ "not_trained": []
+}
+{"series_3d_1w": []}
+{"heartbeat": {"step": "config", "at": 1795523257903, "steps": {}, "tick_started": 1795523257903, "at_min_ago": -0.1, "tick_started_min_ago": -0.1}}
+{"plan_checks": {"plans": 51, "problems": ["15m: suggested 30x above the safe 10x", "15m: liquidation price does not match 30x", "15m: suggested 15x above the safe 10x", "15m: liquidation price does not match 15x", "15m: suggested 22x above the safe 10x", "15m: liquidation price does not match 22x", "15m: suggested 24x above the safe 10x", "15m: liquidation price does not match 24x", "15m: suggested 16x above the safe 10x", "15m: liquidation price does not match 16x", "15m: suggested 24x above the safe 10x", "15m: liquidation price does not match 24x", "15m: suggested 21x above the safe 10x", "15m: liquidation price does not match 21x", "15m: suggested 27x above the safe 10x", "15m: liquidation price does not match 27x", "15m: suggested 18x above the safe 10x", "15m: liquidation price does not match 18x", "15m: suggested 17x above the safe 10x", "15m: liquidation price does not match 17x", "15m: suggested 21x above the safe 10x", "15m: liquidation price does not match 21x", "15m: suggested 12x above the safe 10x", "15m: liquidation price does not match 12x", "15m: suggested 23x above the safe 10x", "15m: liquidation price does not match 23x", "15m: suggested 15x above the safe 10x", "15m: liquidation price does not match 15x", "15m: liquidation price does not match 10x", "1h: liquidation price does not match 10x", "1h: liquidation price does not match 8x", "4h: liquidation price does not match 2x", "4h: liquidation price does not match 4x", "12h: liquidation price does not match 5x", "12h: liquidation price does not match 2x", "12h: liquidation price does not match 7x", "12h: liquidation price does not match 10x", "12h: liquidation price does not match 2x", "12h: liquidation price does not match 2x", "1d: liquidation price does not match 1x"]}}
+{"record_checks": {"summary": {"closed": 5, "win_rate": 0.8, "avg_return_pct": 0.25975200382647745, "total_return_pct": 1.2987600191323871, "best_pct": 0.8593145161290369, "worst_pct": -0.028445958877900968, "profit_factor": 46.657101056324905, "net": true, "avg_gross_return_pct": 0.40900200382647744, "total_gross_return_pct": 2.0450100191323872, "gross_win_rate": 1.0, "avg_roi_pct": 0.7103483996398399, "total_roi_pct": 3.551741998199199, "best_roi_pct": 1.7186290322580737, "worst_roi_pct": -1.0240545196044348}, "listed_signals": 7, "listed_closed": 5, "statuses": {"OPEN": 2, "EXPIRED": 5}, "status_return_mismatch": 0, "win_rate_check": true, "total_check": true}}
+{"bot_checks": [{"id": "futures-signal-ab-1h", "equity": 10000.0, "trades": 0, "open": 0, "lev": 20.0, "stop_wrong_side": 0, "cash_negative": false}, {"id": "futures-signal-ab-4h", "equity": 10000.0, "trades": 0, "open": 0, "lev": 20.0, "stop_wrong_side": 0, "cash_negative": false}, {"id": "futures-signal-ab-12h", "equity": 10001.85, "trades": 2, "open": 1, "lev": 20.0, "stop_wrong_side": 0, "cash_negative": false}, {"id": "futures-signal-ab-15m", "equity": 9980.27, "trades": 2, "open": 2, "lev": 20.0, "stop_wrong_side": 0, "cash_negative": false}, {"id": "futures-signal-ab-3d", "equity": 10000.0, "trades": 0, "open": 0, "lev": 20.0, "stop_wrong_side": 0, "cash_negative": false}, {"id": "futures-test-tp08-15m", "equity": 9980.27, "trades": 2, "open": 2, "lev": 20.0, "stop_wrong_side": 0, "cash_negative": false}, {"id": "futures-demo-ab-1d", "equity": 10003.59, "trades": 0, "open": 3, "lev": 20.0, "stop_wrong_side": 0, "cash_negative": false}]}
+{"failed_jobs": []}
+{"bot_breakdown": {"futures-signal-ab-1h": {"trades": 0, "open": 0}, "futures-signal-ab-4h": {"trades": 0, "open": 0}, "futures-signal-ab-12h": {"trades": 2, "wins": 2, "pnl": 4.06, "fees": 0.91, "avg_r": 0.017, "median_hold_min": 103.74396666666667, "by_exit": {"closed by admin": {"n": 2, "pnl": 4.06, "fees": 0.91}}, "leverage": [2.0, 3.0], "decisions": {"SELL": 2}, "tp_hit": {"0": 2}, "coins_traded": 2, "equity": 10001.85, "open": 1, "sizes_notional": [413, 499]}, "futures-signal-ab-15m": {"trades": 2, "wins": 1, "pnl": 0.86, "fees": 13.7, "avg_r": 0.004, "median_hold_min": 30.476616666666665, "by_exit": {"closed by admin": {"n": 2, "pnl": 0.86, "fees": 13.7}}, "leverage": [22.0, 36.0], "decisions": {"SELL": 2}, "tp_hit": {"0": 2}, "coins_traded": 2, "equity": 9980.27, "open": 2, "sizes_notional": [5456, 8252]}, "futures-signal-ab-3d": {"trades": 0, "open": 0}, "futures-test-tp08-15m": {"trades": 2, "wins": 1, "pnl": 0.86, "fees": 13.7, "avg_r": 0.004, "median_hold_min": 30.476616666666665, "by_exit": {"closed by admin": {"n": 2, "pnl": 0.86, "fees": 13.7}}, "leverage": [22.0, 36.0], "decisions": {"SELL": 2}, "tp_hit": {"0": 2}, "coins_traded": 2, "equity": 9980.27, "open": 2, "sizes_notional": [5456, 8252]}, "futures-demo-ab-1d": {"trades": 0, "open": 3}}}
+{"tf_record": {"12h": {"closed": 3, "win_rate": 1.0, "avg_return_pct": 0.42224501643577406, "total_return_pct": 1.2667350493073222, "best_pct": 0.8593145161290369, "worst_pct": 0.10287507863283335, "profit_factor": null, "net": true, "avg_gross_return_pct": 0.5714116831024407, "total_gross_return_pct": 1.7142350493073222, "gross_win_rate": 1.0, "avg_roi_pct": 1.0818120287794606, "total_roi_pct": 3.2454360863383815, "best_roi_pct": 1.7186290322580737, "worst_roi_pct": 0.30862523589850005}, "15m": {"closed": 2, "win_rate": 0.5, "avg_return_pct": 0.01601248491253253, "total_return_pct": 0.03202496982506506, "best_pct": 0.060470928702966026, "worst_pct": -0.028445958877900968, "profit_factor": 2.12581790483936, "net": true, "avg_gross_return_pct": 0.16538748491253252, "total_gross_return_pct": 0.33077496982506505, "gross_win_rate": 1.0, "avg_roi_pct": 0.1531529559304089, "total_roi_pct": 0.3063059118608178, "best_roi_pct": 1.3303604314652526, "worst_roi_pct": -1.0240545196044348}}, "by_grade": {"A": {"closed": 3, "win_rate": 0.6666666666666666, "avg_return_pct": 0.29711316198470067, "total_return_pct": 0.891339485954102, "best_pct": 0.8593145161290369, "worst_pct": -0.028445958877900968, "profit_factor": 32.33448549862609, "net": true, "avg_gross_return_pct": 0.44627982865136734, "total_gross_return_pct": 1.338839485954102, "gross_win_rate": 1.0, "avg_roi_pct": 0.6749783147062972, "total_roi_pct": 2.0249349441188915, "best_roi_pct": 1.7186290322580737, "worst_roi_pct": -1.0240545196044348}, "B": {"closed": 2, "win_rate": 1.0, "avg_return_pct": 0.20371026658914262, "total_return_pct": 0.40742053317828525, "best_pct": 0.3045454545454519, "worst_pct": 0.10287507863283335, "profit_factor": null, "net": true, "avg_gross_return_pct": 0.35308526658914263, "total_gross_return_pct": 0.7061705331782853, "gross_win_rate": 1.0, "avg_roi_pct": 0.7634035270401538, "total_roi_pct": 1.5268070540803076, "best_roi_pct": 1.2181818181818076, "worst_roi_pct": 0.30862523589850005}}, "sig15_by_status": {"EXPIRED": 2, "OPEN": 1}}
