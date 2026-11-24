@@ -102,7 +102,12 @@ for vid in ("hesper", "laststand"):
             v = o.get(k) if isinstance(o, dict) else None
             return len(v) if isinstance(v, list) else v
         out[f"challenge_{vid}"] = {"keys": sorted(hj.keys())[:30], "runs": _n(hj, "runs"), "trades": _n(hj, "trades"),
-                                   "at": hj.get("generated_at"), "since": hj.get("since")}
+                                   "at": hj.get("generated_at"), "since": hj.get("since"),
+                                   "current_run": (hj.get("current") or {}).get("run") if isinstance(hj.get("current"), dict) else None,
+                                   "run_numbers": [x.get("run") for x in (hj.get("runs") or []) if isinstance(x, dict)][:40],
+                                   "run_trades": [x.get("trades") for x in (hj.get("runs") or []) if isinstance(x, dict)][:40],
+                                   "laststand": {k: (len(v) if isinstance(v, list) else v if isinstance(v, (int, float, str)) else None)
+                                                 for k, v in (hj.get("laststand") or {}).items()} if isinstance(hj.get("laststand"), dict) else None}
     except Exception as e:  # noqa: BLE001
         out[f"challenge_{vid}"] = {"error": type(e).__name__}
 print(json.dumps(out, indent=1, default=str))
