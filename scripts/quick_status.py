@@ -25,6 +25,35 @@ def _edge_only(reason: str) -> None:
         o["cloud_watcher"] = {k: st.get(k) for k in ("at", "armed", "priced", "sent_total", "error", "idle", "price_tries")}
     except Exception as exc:
         o["cloud_watcher"] = {"error": str(exc)[:200]}
+    try:   # the record and the bots as members see them (edge copy), compared without coin / side / levels
+        q = "https://cia-chat.cryptointelai.workers.dev/v?n=track_record,bots,futures_15m,futures_1h,futures_4h,futures_12h&e=,,,,,"
+        vv = json.load(urllib.request.urlopen(urllib.request.Request(q, headers={"X-Edge-Key": key, "User-Agent": "cia-status"}), timeout=30))["views"]
+        trj = (vv.get("track_record") or {}).get("data") or {}
+        bj = (vv.get("bots") or {}).get("data") or {}
+        sigs = (trj.get("live") or {}).get("signals") or trj.get("signals") or []
+        o["record_at"] = (vv.get("track_record") or {}).get("at")
+        o["record_open"] = [{"tf": x.get("timeframe"), "status": x.get("status"), "fill": x.get("fill_status"), "created_at": x.get("created_at")}
+                            for x in sigs if x.get("status") in ("OPEN", "PENDING")]
+        o["record_newest"] = [{"tf": x.get("timeframe"), "status": x.get("status"), "created_at": x.get("created_at")}
+                              for x in sorted(sigs, key=lambda x: -(x.get("created_at") or 0))[:5]]
+        rows = []
+        for b in bj.get("bots") or []:
+            cfg = b.get("config") or {}
+            for pz in b.get("positions") or []:
+                inf = pz.get("info") or {}
+                tf = inf.get("timeframe") or cfg.get("timeframe")
+                same = [x for x in sigs if x.get("timeframe") == tf and x.get("symbol") == pz.get("symbol")
+                        and (x.get("side") == "LONG") == (int(pz.get("side") or 0) > 0)]
+                rows.append({"bot": cfg.get("id"), "tf": tf, "opened_at": pz.get("opened_at"), "info_keys": sorted(inf.keys())[:16],
+                             "grade": inf.get("grade"), "demo": inf.get("demo"),
+                             "record_same_coin_tf_side": [(x.get("status"), x.get("created_at")) for x in same][:3]})
+        o["bots_open"] = rows
+        for tf in ("15m", "1h", "4h", "12h"):
+            fr = ((vv.get(f"futures_{tf}") or {}).get("data") or {}).get("rows") or []
+            o[f"calls_{tf}"] = {"at": (vv.get(f"futures_{tf}") or {}).get("at"),
+                                "with_plan": sum(1 for r in fr if r.get("plan")), "record_status": sorted({str(r.get("record_status")) for r in fr})}
+    except Exception as exc:
+        o["record_error"] = str(exc)[:300]
     print(json.dumps(o, indent=1, default=str))
     raise SystemExit(0)
 
