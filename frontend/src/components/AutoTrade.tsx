@@ -28,7 +28,7 @@ export function NumField({ value, min, max, onChange }: { value: number; min: nu
 }
 
 const clampLev = (l: any): number | "signal" => (l === "signal" || l == null ? "signal" : Math.max(1, Math.min(AUTO_MAX_LEV, Math.round(Number(l) || 1))));
-const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 3, coins: "all", notify: true, scale: true, max_same_side: 3 };
+const DEF = { enabled: false, margin: 100, leverage: "signal" as number | "signal", timeframes: ["1h", "4h"], grades: "AB", take: "tp2", max_open: 10, coins: "all", notify: true, scale: true, max_same_side: 10 };
 type S = typeof DEF;
 
 export default function AutoTrade() {

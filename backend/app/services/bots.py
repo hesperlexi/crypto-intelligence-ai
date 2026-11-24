@@ -104,6 +104,9 @@ DEFAULT_BOTS: list[dict[str, Any]] = [_sig_bot(tf, False) for tf in BOT_TFS] + [
 # v2.12 (owner decision 2 Nov 2026): 3d is public (grade A) -> one futures signal bot. Kept out of DEFAULT_BOTS so the
 # one-time "new default bot" rule never adds a spot 3d bot to existing line-ups; added by the `public_1d3d_v212` migration.
 FUTURES_3D: dict[str, Any] = _sig_bot("3d", True)
+BOT_CAPITAL = 30_000.0          # v3.1: every demo bot trades on $30,000 (risk % per trade unchanged)
+
+
 def size_multiplier(grade: str | None, filter_score: float | None = None, filter_threshold: float | None = None) -> float:
     """Bigger on stronger calls, smaller on weaker ones (0.5x - 1.5x of the normal risk): grade A 1.2x, grade B 0.8x,
     plus up to +30 % when the trade filter scores the setup well above its bar."""
@@ -194,6 +197,27 @@ class BotEngine:
                                 (bid, dumps(cfg), dumps(self._fresh_state(cfg)), cfg["reset_token"], now_ms()))
             else:
                 self.db.execute("UPDATE bots SET config = ? WHERE id = ?", (dumps(cfg), bid))
+
+    def add_capital(self, target: float = None, now: int | None = None) -> list[str]:
+        """v3.1 (owner, 24 Nov 2026: "increase the equity for bots to 30k, the current trades end as per the taken amount,
+        the new ones per the new equity, keep the % unchanged"): each bot's cash is topped up to `target` capital ONCE,
+        like Add funds on a practice account. Books are not reset; open trades keep their size; new trades size from the
+        larger equity with the same risk %. Return % is measured against the money put in (`deposited`)."""
+        target = BOT_CAPITAL if target is None else float(target)
+        now = now or now_ms()
+        done = []
+        for row in self.db.query("SELECT id, config, state FROM bots"):
+            cfg, state = loads(row["config"], {}), loads(row["state"], {})
+            dep = float(state.get("deposited") or cfg.get("starting_balance") or 0)
+            if not state or dep >= target:
+                continue
+            add = target - dep
+            state["cash"] = float(state.get("cash", 0.0)) + add
+            state["deposited"] = target
+            state["deposits"] = (state.get("deposits") or []) + [{"at": now, "amount": add}]
+            self.db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))
+            done.append(row["id"])
+        return done
 
     def _wipe(self, bid: str) -> None:
         self.db.execute("DELETE FROM bot_trades WHERE bot_id = ?", (bid,))
@@ -796,11 +820,18 @@ class BotEngine:
             for t in trades:
                 t["info"] = loads(t["info"], {})
             eq = self.db.query("SELECT ts, equity, benchmark FROM bot_equity WHERE bot_id = ? ORDER BY ts", (cfg["id"],))
+            deps = state.get("deposits") or []
+            if deps:
+                # v3.1: added capital is not profit - earlier points are shown on the same base (curve stays continuous,
+                # drawdowns and P/L unchanged); buy & hold is scaled to the same capital
+                scale = float(state.get("deposited") or cfg["starting_balance"]) / float(cfg["starting_balance"] or 1)
+                eq = [{**e, "equity": e["equity"] + sum(d["amount"] for d in deps if e["ts"] < d["at"]),
+                       "benchmark": (e["benchmark"] * scale) if e.get("benchmark") else e.get("benchmark")} for e in eq]
             step = max(1, len(eq) // 600)
             curve = eq[::step] + ([eq[-1]] if eq and (len(eq) - 1) % step else [])
             out.append({"config": cfg, "state": {k: state.get(k) for k in ("cash", "equity", "benchmark", "started_at",
                                                                           "updated_at", "fees_paid", "funding_paid",
-                                                                          "liquidations")},
+                                                                          "liquidations", "deposited", "deposits")},
                         "positions": state["positions"], "pending": state["pending"],
                         "stats": trade_stats(trades, cfg, state, eq), "trades": trades[:300], "equity_curve": curve})
         return {"bots": out, "defaults": DEFAULT_BOTS, "path_timeframe": PATH_TF,
@@ -833,14 +864,14 @@ def _bucket_stats(trades: list[dict[str, Any]], key: str) -> list[dict[str, Any]
 
 def trade_stats(trades: list[dict[str, Any]], cfg: dict[str, Any], state: dict[str, Any],
                 equity: list[dict[str, Any]]) -> dict[str, Any]:
-    start = cfg["starting_balance"]
+    start = float(state.get("deposited") or cfg["starting_balance"])     # v3.1: money put in (start + added capital)
     eq_now = state.get("equity", start)
     bench = state.get("benchmark")
     curve = np.array([e["equity"] for e in equity]) if equity else np.array([start])
     peak = np.maximum.accumulate(curve)
     n = len(trades)
     base = {"trades": n, "return_pct": (eq_now / start - 1) * 100, "equity": eq_now,
-            "benchmark_return_pct": (bench / start - 1) * 100 if bench else None,
+            "benchmark_return_pct": (bench / float(cfg["starting_balance"]) - 1) * 100 if bench else None,
             "max_drawdown_pct": float((curve / peak - 1).min() * 100), "open_positions": len(state["positions"]),
             "fees_paid": state.get("fees_paid", 0.0), "funding_paid": state.get("funding_paid", 0.0),
             "liquidations": state.get("liquidations", 0)}

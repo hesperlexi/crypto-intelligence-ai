@@ -37,7 +37,8 @@ TAKES = {"tp1": 0, "tp2": 1, "tp3": 2}
 MAX_OPEN_CAP = 10           # v2.64 (owner, 21 Nov 2026: "let's see more trades"; testing-mode 3 / 6 before)
 MAX_NEW_PER_DAY = 20
 DEFAULTS = {"enabled": False, "margin": 100.0, "leverage": "signal", "timeframes": ["1h", "4h"], "grades": "AB",
-            "take": "tp2", "max_open": 3, "coins": "all", "notify": True, "scale": True, "max_same_side": 3,
+            # v3.1 (owner, 24 Nov 2026): 10 open trades and 10 in one direction by default (was 3 / 3)
+            "take": "tp2", "max_open": 10, "coins": "all", "notify": True, "scale": True, "max_same_side": 10,
             # V3.0 practice protection (owner brief 24 Nov 2026; practice only, never the record): stop opening new
             # auto-trades after the account lost `daily_loss_pct` % today (realised, UTC day), keep the margin in use at
             # or below `max_exposure_pct` % of the account, and follow the market risk state (HIGH = half size,
@@ -75,7 +76,7 @@ def settings_of(raw: dict[str, Any] | None) -> dict[str, Any]:
     s["grades"] = "A" if str(s["grades"]).upper() == "A" else "AB"
     s["take"] = s["take"] if s["take"] in TAKES else "tp2"
     s["max_open"] = int(max(1, min(MAX_OPEN_CAP, int(s.get("max_open") or MAX_OPEN_CAP))))
-    s["max_same_side"] = int(max(1, min(50, int(s.get("max_same_side") or 3))))
+    s["max_same_side"] = int(max(1, min(50, int(s.get("max_same_side") or DEFAULTS["max_same_side"]))))
     s["scale"] = bool(s.get("scale", True))
     for k, lo, hi in (("daily_loss_pct", 0.5, 100.0), ("max_exposure_pct", 5.0, 100.0)):
         try:
@@ -261,6 +262,9 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
         out["members"] += 1
         state = sink.get(f"auto_paper_state/{uid}") or {}
         done: dict[str, int] = dict(state.get("done") or {})
+        # v3.1: the daily limit counts trades actually OPENED (or limit orders placed), not every look at a signal -
+        # before, skipped looks filled the 20 a day and later signals were ignored without a word
+        opened: dict[str, int] = dict(state.get("opened") or {})
         day = dict(state.get("day") or {})
         day_new = False
         if day.get("d") != now // 86_400_000:
@@ -279,13 +283,22 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
             if mine is not None and sig["symbol"] not in mine:
                 continue
             key = f"{sig['symbol']}|{sig['timeframe']}|{sig['side']}"
-            if sum(1 for v in done.values() if now - int(v) < 86_400_000) >= MAX_NEW_PER_DAY:
+            if sum(1 for v in opened.values() if now - int(v) < 86_400_000) >= MAX_NEW_PER_DAY:
+                entries.append({"ts": now, "symbol": sig["symbol"], "timeframe": sig["timeframe"], "grade": sig.get("grade"),
+                                "side": "LONG" if int(sig["side"]) > 0 else "SHORT", "action": "skipped",
+                                "reason": f"daily limit of {MAX_NEW_PER_DAY} new auto-trades reached"})
                 break                                   # daily limit of new auto-trades reached
             # one entry per signal: the same call is not re-entered on later candles for 6 bars
             if now - int(done.get(key, 0)) < 6 * tf_ms(sig["timeframe"]):
                 continue
             result = sink.transact(f"paper/{uid}_futures", lambda acc, sig=sig: place(acc, sig, s, now, guard))
-            done[key] = now
+            if result["action"] in ("opened", "limit order"):
+                done[key] = now
+                opened[key] = now
+            else:
+                # v3.1: a call skipped for a limit (open trades, one direction, exposure, a trade on the coin) is looked
+                # at again after ONE candle, so it is taken as soon as room frees up (price checks still apply)
+                done[key] = now - 5 * tf_ms(sig["timeframe"])
             if result.get("reversed"):
                 acc_id = (sink.get(f"paper/{uid}_futures") or {}).get("id")
                 sink.add("paper_futures_trades", {**result["reversed"], "account_id": acc_id, "uid": uid, "created_at": now,
@@ -312,6 +325,7 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
                                     "url": "/paper?market=futures", "tag": f"auto-{uid}-{sig['symbol']}"})
         if entries or not state or day_new:
             done = {k: v for k, v in done.items() if now - v < 14 * 86_400_000}
-            sink.set(f"auto_paper_state/{uid}", {"done": done, "updated_at": now, "day": day,
+            opened = {k: v for k, v in opened.items() if now - v < 2 * 86_400_000}
+            sink.set(f"auto_paper_state/{uid}", {"done": done, "opened": opened, "updated_at": now, "day": day,
                                                   "log": (entries + list(state.get("log") or []))[:60]})
     return out

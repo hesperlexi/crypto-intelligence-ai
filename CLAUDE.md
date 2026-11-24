@@ -673,6 +673,14 @@ configuration, market data + candle series table, models table, recent errors (c
   REST every 2 s count as live (`live.tsx`), sidebar says "Every 2 s". Cloud watcher prices: Binance refuses Cloudflare
   (403/451) → OKX spot tickers → MEXC spot (`price_tries` in status). AI check warnings (4h / 1d worse than base rates
   this week) are real model signals, not bugs. Engine rounds avg ~200 s, max ~300 s of the 240 s cycle (analyses ~130 s).
+- Auto-trade + bots (owner, 24 Nov 2026): members' daily limit (`MAX_NEW_PER_DAY` 20) now counts only OPENED trades /
+  limit orders (state `opened`; before, every skipped look counted and later signals were ignored silently - now logged
+  "daily limit … reached"); a call skipped for a limit is looked at again after one candle (was 6). Defaults max_open 10,
+  max_same_side 10 (`autopaper.DEFAULTS`, AutoTrade.tsx `DEF`); one-time `auto_limits_10_v31` raised every member's
+  auto_paper doc to ≥10 / 10. Bots: `BotEngine.add_capital` tops every bot up to `BOT_CAPITAL` $30,000 once (state
+  `deposited`, `deposits`; runs each sync so later bots too; books / open trades kept, risk % unchanged). Return % =
+  equity / deposited; report curve shifts pre-deposit points by the deposit (continuous; P/L unchanged), buy & hold
+  scaled; Bots page "Capital".
 - Version 3.1.0 everywhere (package.json → footer, Settings, APK name). Manual: 1d = demo bots, stale risk = half size, card.
 - Telegram news: `post_news` sends only high-impact US releases ~30 min before (a few a week); briefings wait for the owner's
   approval while "Ask me before posting" is on. `quick_status.py` now reports the calendar (`news`).

@@ -101,9 +101,9 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
   const isPred = bot.config.mode === "prediction";
   const fut = bot.config.market === "futures";
   const series = useMemo<Series[]>(() => [
-    { name: "Bot equity", color: "--accent", baseline: Number(bot.config.starting_balance) || undefined, points: bot.equity_curve.map((p: any) => ({ ts: p.ts, value: p.equity })) },
+    { name: "Bot equity", color: "--accent", baseline: Number(bot.state?.deposited ?? bot.config.starting_balance) || undefined, points: bot.equity_curve.map((p: any) => ({ ts: p.ts, value: p.equity })) },
     { name: "Buy & hold (same coins)", color: "--mute", dashed: true, points: bot.equity_curve.filter((p: any) => isNum(p.benchmark)).map((p: any) => ({ ts: p.ts, value: p.benchmark })) },
-  ], [bot.equity_curve, bot.config.starting_balance]);
+  ], [bot.equity_curve, bot.config.starting_balance, bot.state?.deposited]);
   // v2.76 (owner: the tab was ~7 screens long): a compact summary per bot, the full details open on tap (remembered)
   const openKey = `cia-bot-open-${bot.config.id}`;
   const [open, setOpen] = useState(() => { try { return localStorage.getItem(openKey) === "1"; } catch { return false; } });
@@ -133,7 +133,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
       </div>
       {open && <>
       <div className="mt-4 grid grid-cols-2 gap-4 border-t border-glass/[0.06] pt-4 sm:grid-cols-4">
-        <Stat label="Started" value={`$${fmtNum(bot.config.starting_balance, 0)}`} sub={fmtTime(st.started_at)} />
+        <Stat label="Capital" value={`$${fmtNum(bot.state?.deposited ?? bot.config.starting_balance, 0)}`} sub={bot.state?.deposits?.length ? `started $${fmtNum(bot.config.starting_balance, 0)} · ${fmtTime(st.started_at)}` : fmtTime(st.started_at)} />
         <Stat label="Buy & hold" value={fmtPctRaw(s.benchmark_return_pct)} sub="same coins" />
         <Stat label={isPred ? "Prediction accuracy" : "Direction right"} value={fmtProb(s.direction_accuracy, 1)} sub={s.direction_ci95 ? `95% CI ${fmtProb(s.direction_ci95[0])}–${fmtProb(s.direction_ci95[1])}` : DASH} />
         <Stat label="Profit factor" value={fmtNum(s.profit_factor)} sub={isNum(s.avg_r) ? `avg ${s.avg_r.toFixed(2)} R` : `fees $${fmtNum(s.fees_paid)}`} />
@@ -301,7 +301,7 @@ function FleetHero({ bots }: { bots: any[] }) {
   const league = [...bots].sort((a, z) => Number(z.stats?.return_pct ?? 0) - Number(a.stats?.return_pct ?? 0));
   const maxAbs = Math.max(1, ...bots.map((x) => Math.abs(Number(x.stats?.return_pct ?? 0))));
   const curves = bots.map((x) => {
-    const s0 = Number(x.config.starting_balance) || (x.equity_curve?.[0]?.equity ?? 1);
+    const s0 = Number(x.state?.deposited ?? x.config.starting_balance) || (x.equity_curve?.[0]?.equity ?? 1);
     return { name: x.config.name, pts: (x.equity_curve ?? []).filter((p: any) => isNum(p.equity)).map((p: any) => ({ ts: p.ts, v: (p.equity / s0 - 1) * 100 })) };
   });
   const tot = bots.reduce((a, x) => a + Number(x.stats?.trades ?? 0), 0);

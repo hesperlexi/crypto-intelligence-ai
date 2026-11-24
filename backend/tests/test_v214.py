@@ -340,7 +340,7 @@ def test_fresh_restart_deletes_exactly_the_history_and_keeps_the_rest(tmp_path, 
     assert [b["id"] for b in cfg] == [b["id"] for b in BOTS]
     assert all(b["reset_token"] == "v214" for b in cfg) and cfg[0]["leverage"] == 20.0 and cfg[1]["leverage"] == 1.0
     rows = {r["id"]: r for r in rt.db.query("SELECT * FROM bots")}
-    assert loads(rows["futures-signal-ab-4h"]["state"])["cash"] == 10_000 and rows["futures-signal-ab-4h"]["reset_token"] == "v214"
+    assert loads(rows["futures-signal-ab-4h"]["state"])["cash"] == 30_000 and rows["futures-signal-ab-4h"]["reset_token"] == "v214"
     # Firestore: old-history views and Telegram drafts gone; publish cache emptied
     assert sink.get("views/scalping") is None and sink.get("views/bot_old") is None
     assert sink.get("owner/telegram_drafts")["items"] == []

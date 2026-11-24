@@ -428,7 +428,7 @@ MIGRATION_FLAGS = (
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
     "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269", "mexc_clean_v269",
-    "fresh_restart_v3", "restore_hesper_v3",
+    "fresh_restart_v3", "restore_hesper_v3", "auto_limits_10_v31",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -1021,6 +1021,23 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         rt.db.set_setting("fresh_start_v2", True)
         notes["fresh_start_v2"] = True
     BotEngine(rt).sync_configs(bots_cfg)
+    if not rt.db.get_setting("auto_limits_10_v31", False):
+        # v3.1 (owner, 24 Nov 2026: "make the default trades for each user 10"): every member's auto-trade may hold
+        # 10 open trades and 10 in one direction (each member can still lower it in Auto-trade settings)
+        n = 0
+        for uid, doc in sink.list("auto_paper"):
+            want = {"max_open": max(10, int(doc.get("max_open") or 0)) if int(doc.get("max_open") or 0) <= 10 else int(doc["max_open"]),
+                    "max_same_side": max(10, int(doc.get("max_same_side") or 0))}
+            if any(doc.get(k) != v for k, v in want.items()):
+                sink.set(f"auto_paper/{uid}", {**doc, **want, "updated_at": now_ms()})
+                n += 1
+        notes["auto_limits_10"] = n
+        rt.db.set_setting("auto_limits_10_v31", True)
+    # v3.1 (owner, 24 Nov 2026): every demo bot trades on $30,000 - topped up once (also a bot added later); books and
+    # open trades unchanged, new trades sized on the larger equity with the same risk %
+    added = BotEngine(rt).add_capital()
+    if added:
+        notes["bots_capital_30k"] = added
     if mirror_migrations(rt, sink):
         notes["migrations_mirrored"] = True
     return notes

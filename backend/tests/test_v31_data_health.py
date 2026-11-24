@@ -51,3 +51,18 @@ def test_delisted_coin_moves_to_mexc(monkeypatch):
         assert worker.delisted_to_mexc(rt, now=10**13 + 1000) == []          # checked at most every 6 h
     finally:
         F.FUT_ONLY.pop("XMR/USDT", None)
+
+
+def test_bot_capital_topped_up_once_books_kept():
+    from app.db import Database
+    from app.services.bots import BotEngine, BOT_CAPITAL
+    import json
+    db = Database("sqlite:///:memory:")
+    db.execute("INSERT INTO bots (id, config, state, reset_token, created_at) VALUES ('b1', ?, ?, 'v1', 1)",
+               (json.dumps({"id": "b1", "starting_balance": 10_000.0}), json.dumps({"cash": 9_500.0, "positions": [], "pending": []})))
+    eng = BotEngine.__new__(BotEngine)
+    eng.db = db
+    assert eng.add_capital(now=1000) == ["b1"]
+    st = json.loads(db.one("SELECT state FROM bots WHERE id = 'b1'")["state"])
+    assert st["cash"] == 29_500.0 and st["deposited"] == BOT_CAPITAL and st["deposits"] == [{"at": 1000, "amount": 20_000.0}]
+    assert eng.add_capital(now=2000) == []                                  # once

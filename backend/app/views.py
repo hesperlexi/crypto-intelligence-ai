@@ -766,7 +766,8 @@ def _scalp_bot(rt: Runtime, bot_report: dict[str, Any] | None) -> dict[str, Any]
                            "return_pct": t.get("return_pct"),      # P/L / position size (no leverage multiplication)
                            "exit_reason": t.get("exit_reason")})
         return {"id": cfg["id"], "name": cfg.get("name"), "enabled": bool(cfg.get("enabled", True)),
-                "starting_balance": cfg.get("starting_balance"), "equity": st.get("equity", state.get("equity")),
+                "starting_balance": cfg.get("starting_balance"), "deposited": state.get("deposited") or cfg.get("starting_balance"),
+                "equity": st.get("equity", state.get("equity")),
                 "cash": state.get("cash"), "return_pct": st.get("return_pct"), "trades": st.get("trades", 0),
                 "win_rate": st.get("win_rate"), "profit_factor": st.get("profit_factor"),
                 "max_drawdown_pct": st.get("max_drawdown_pct"), "open_positions": st.get("open_positions", 0),
