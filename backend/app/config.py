@@ -169,8 +169,9 @@ class Settings:
 
     # ---- v2.5 trade management (audit v1). Hard limits below; every value is env-overridable and clamped. ----
     managed_exits: bool = field(default_factory=lambda: _b("MANAGED_EXITS", False))
-    # v2.65 champion / challenger: off = shadow (every retrain still goes live, decisions logged in `challenger_log`)
-    challenger_enforce: bool = field(default_factory=lambda: _b("CHALLENGER_ENFORCE", False))
+    # v2.65 champion / challenger; V3.0 (24 Nov 2026) ON after the shadow log (284 decisions 21-23 Nov, 7 refusals, each a
+    # lower walk-forward hit rate than the live model): a clearly worse retrain stays inactive. CHALLENGER_ENFORCE=0 = shadow
+    challenger_enforce: bool = field(default_factory=lambda: _b("CHALLENGER_ENFORCE", True))
     giveback_arm_r: float = field(default_factory=lambda: _clamp(_f("GIVEBACK_ARM_R", 0.6), *LIMITS["giveback_arm_r"]))
     giveback_frac: float = field(default_factory=lambda: _clamp(_f("GIVEBACK_FRAC", 0.5), *LIMITS["giveback_frac"]))
     trail_atr_k: float = field(default_factory=lambda: _clamp(_f("TRAIL_ATR_K", 2.0), *LIMITS["trail_atr_k"]))
