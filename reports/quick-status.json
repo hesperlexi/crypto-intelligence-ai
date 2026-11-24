@@ -725,9 +725,9 @@
  },
  "safety": [],
  "release": {
-  "updated_at": 1793386630880,
+  "version": "2.1.0",
   "launched_at": 1793386630880,
-  "version": "2.1.0"
+  "updated_at": 1793386630880
  },
  "track_record": {
   "record_since": 1795511383715,
@@ -836,10 +836,10 @@
  "telegram": {
   "has_token": true,
   "has_channel": true,
-  "post_wins": true,
   "post_weekly": true,
-  "enabled": true,
   "post_teaser": true,
+  "enabled": true,
+  "post_wins": true,
   "keys": [
    "channel",
    "enabled",
@@ -1105,6 +1105,16 @@
  },
  "alert_watcher": null,
  "cloud_watcher": {
-  "probe_error": "HTTP Error 403: Forbidden"
+  "at": 1795534813681,
+  "armed": 0,
+  "armed_at": 1795534430597,
+  "sent": 0,
+  "sent_total": null,
+  "due": 0,
+  "priced": null,
+  "error": null,
+  "idle": true,
+  "sent_keys_n": 0,
+  "bad_tokens_n": 0
  }
 }
