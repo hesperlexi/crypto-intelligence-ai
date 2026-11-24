@@ -112,15 +112,28 @@ def test_approve_first_keeps_the_card_until_the_owner_posts_it(tmp_path):
     assert T.post_draft(sink, items[0]["id"], fake)["sent"] is False                 # not twice
 
 
-def test_news_heads_up_goes_out_directly_and_only_when_switched_on(tmp_path):
+def test_news_heads_up_waits_for_approval_when_ask_me_is_on_else_goes_directly(tmp_path):
     sink, fake = LocalSink(tmp_path), Fake()
-    item = {"title": "High-impact news in 30 min", "body": "US CPI at 12:30 UTC. Expect volatility.", "tag": "econ-1"}
+    item = {"title": "High-impact news in 30 min", "body": "US CPI at 12:30 UTC. Expect volatility.", "tag": "econ-1",
+            "at": str(T.now_ms() + 1_800_000)}
     assert T.post_news(sink, [item], fake)["sent"] == 0                 # autopilot off: nothing
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "approve_first": True})
-    assert T.post_news(sink, [item], fake)["sent"] == 1                 # never held as a draft
-    assert "US CPI" in fake.sent[0]["text"] and (sink.get("owner/telegram_drafts") or {}).get("items") in (None, [])
+    assert T.post_news(sink, [item], fake)["sent"] == 1                 # v3.1: held for Post / Skip
+    drafts = sink.get("owner/telegram_drafts")["items"]
+    assert not fake.sent and drafts[0]["kind"] == "news" and drafts[0]["expires_at"] == int(item["at"])
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "approve_first": False})
+    assert T.post_news(sink, [item], fake)["sent"] == 1 and "US CPI" in fake.sent[0]["text"]
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_news": False})
     assert T.post_news(sink, [item], fake)["sent"] == 0
+
+
+def test_expired_news_draft_cannot_be_posted(tmp_path):
+    sink, fake = LocalSink(tmp_path), Fake()
+    sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c"})
+    did = T.add_draft(sink, "news", "<b>x</b>", None, 1, expires_at=2)
+    r = T.post_draft(sink, did, fake)
+    assert r["sent"] is False and "too late" in r["reason"] and not fake.sent
+    assert (sink.get("owner/telegram_drafts") or {}).get("items") == []
 
 
 def test_long_caption_goes_as_picture_plus_full_text(tmp_path):

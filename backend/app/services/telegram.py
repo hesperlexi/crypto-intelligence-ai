@@ -99,7 +99,8 @@ def send_photo(cfg: dict[str, Any], png: bytes | None, caption: str, session: An
     return body
 
 
-def add_draft(sink, kind: str, caption: str, png: bytes | None, now: int, card: tuple | None = None) -> str:
+def add_draft(sink, kind: str, caption: str, png: bytes | None, now: int, card: tuple | None = None,
+              expires_at: int | None = None) -> str:
     """Keep a card for the owner to approve (newest first, at most MAX_DRAFTS). v2.38: the card's recipe (`card`, the
     drawing function and its data) is kept too, so a card posted later is drawn again in the current design."""
     import base64
@@ -107,6 +108,8 @@ def add_draft(sink, kind: str, caption: str, png: bytes | None, now: int, card: 
     did = f"{kind}-{now}-{abs(hash(caption)) % 10_000:04d}"
     item = {"id": did, "kind": kind, "caption": caption, "created_at": now,
             "png": base64.b64encode(png).decode() if png else None}
+    if expires_at:
+        item["expires_at"] = int(expires_at)      # v3.1: a news heads-up is useless after the release
     if card:
         try:
             item["card"] = json.loads(json.dumps(list(card), default=str))
@@ -129,6 +132,10 @@ def post_draft(sink, draft_id: str, session: Any = None) -> dict[str, Any]:
     item = next((x for x in items if x.get("id") == draft_id), None)
     if not item:
         return {"sent": False, "reason": "this card is no longer waiting (already posted or skipped)"}
+    if item.get("expires_at") and now_ms() > int(item["expires_at"]):
+        sink.transact(DRAFTS, lambda cur: ({"items": [x for x in ((cur or {}).get("items") or []) if x.get("id") != draft_id],
+                                            "updated_at": now_ms()}, None))
+        return {"sent": False, "reason": "too late: the release already happened, so this heads-up was skipped"}
     png = _card(*item["card"]) if item.get("card") else None          # v2.38: redrawn in the current design
     if png is None and item.get("png"):
         png = base64.b64decode(item["png"])
@@ -604,13 +611,23 @@ def news_text(m: dict[str, Any]) -> str:
 
 
 def post_news(sink, items: list[dict[str, Any]], session: Any = None) -> dict[str, Any]:
-    """High-impact US release heads-up (the same items as the phone notification). Sent directly, never a draft:
-    it is a calendar fact, not a result. Never raises."""
+    """High-impact US release heads-up (the same items as the phone notification). v3.1: waits for the owner's Post /
+    Skip while "Ask me before posting" is on (until the release time), otherwise sent directly. Never raises."""
     cfg = config(sink)
     if not (items and cfg["enabled"] and cfg["token"] and cfg["channel"] and cfg["post_news"]):
         return {"sent": 0}
     sent, errors = 0, []
     for m in items:
+        if cfg["approve_first"]:
+            # v3.1 (owner, 24 Nov 2026): with "Ask me before posting" on, the heads-up waits in the drafts (Post / Skip)
+            # like every other card, until the release time; after that it can no longer be posted
+            try:
+                add_draft(sink, "news", news_text(m), _card("news_card", m), now_ms(), card=("news_card", m),
+                          expires_at=int(m.get("at") or 0) or None)
+                sent += 1
+            except Exception as exc:
+                errors.append(redact(f"news draft: {exc}")[:200])
+            continue
         try:
             send_photo(cfg, _card("news_card", m), news_text(m), session)      # v2.77: as an image card
             sent += 1

@@ -9,9 +9,9 @@ import { Card, Note } from "./ui";
 // v2.16 funnel: post_daily_call (replaces the teaser), post_briefing, post_week7 (replaces the old weekly) - on by default
 const DEF = { enabled: false, token: "", channel: "@crypappai", post_wins: true, post_weekly: true, post_teaser: true, post_each_win: true, approve_first: true,
   post_daily_call: true, post_briefing: true, post_week7: true, post_news: true };
-type Draft = { id: string; kind: string; caption: string; created_at: number; png?: string | null };
+type Draft = { id: string; kind: string; caption: string; created_at: number; png?: string | null; expires_at?: number };
 const KIND: Record<string, string> = { win: "Best win", wins: "Wins of the day", weekly: "Weekly results", teaser: "Free signal",
-  briefing: "Market briefing", week7: "Last 7 days" };
+  briefing: "Market briefing", week7: "Last 7 days", news: "High-impact news heads-up" };
 const plain = (html: string) => html.replace(/<[^>]+>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">");
 
 export default function TelegramCard() {
@@ -55,7 +55,7 @@ export default function TelegramCard() {
           <input className="input mt-1" value={s.channel} onChange={(e) => setS({ ...s, channel: e.target.value.trim() })} placeholder="@yourchannel" /></label>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
           {([["approve_first", "Ask me before posting"], ["post_each_win", "Every win (target 1, 2 or 3, after fees)"], ["post_wins", "Wins of the day"],
-             ["post_daily_call", "Free signal of the day + its result"], ["post_briefing", "Market briefing (2x a day)"], ["post_week7", "Last 7 days (Mondays)"], ["post_news", "High-impact news (30 min before)"],
+             ["post_daily_call", "Free signal of the day + its result"], ["post_briefing", "Market briefing (2x a day)"], ["post_week7", "Last 7 days (Mondays)"], ["post_news", "High-impact US news heads-up (30 min before; waits for you when \"Ask me\" is on)"],
              ...(s.post_week7 ? [] : [["post_weekly", "Weekly results (old card)"]]), ...(s.post_daily_call ? [] : [["post_teaser", "Teaser signal (old)"]])] as [string, string][]).map(([k, l]) => (
             <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={(s as any)[k]} onChange={(e) => setS({ ...s, [k]: e.target.checked })} />{l}</label>
           ))}
@@ -71,12 +71,12 @@ export default function TelegramCard() {
             <div className="text-sm font-medium text-text">Waiting for your approval ({drafts.length})</div>
             {drafts.map((d) => (
               <div key={d.id} className="rounded-lg border border-line p-2">
-                <div className="mb-1 flex items-center justify-between text-xs text-mute"><span className="font-semibold text-text">{KIND[d.kind] ?? d.kind}</span><span>{ago(d.created_at)}</span></div>
+                <div className="mb-1 flex items-center justify-between text-xs text-mute"><span className="font-semibold text-text">{KIND[d.kind] ?? d.kind}</span><span>{d.expires_at ? (Date.now() > d.expires_at ? "too late to post" : `post before ${new Date(d.expires_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}`) : ago(d.created_at)}</span></div>
                 {d.png && <img src={`data:image/png;base64,${d.png}`} alt="" className="w-full rounded" loading="lazy" />}
                 <p className="mt-2 whitespace-pre-line text-xs text-mute">{plain(d.caption)}</p>
                 {busy[d.id] ? <p className="mt-2 text-xs text-accent">{busy[d.id]}</p> : (
                   <div className="mt-2 flex gap-2">
-                    <button className="btn btn-primary flex-1" disabled={!ready} onClick={() => approve(d.id)}>Post</button>
+                    <button className="btn btn-primary flex-1" disabled={!ready || (!!d.expires_at && Date.now() > d.expires_at)} onClick={() => approve(d.id)}>Post</button>
                     <button className="btn flex-1" onClick={() => skip(d.id)}>Skip</button>
                   </div>
                 )}
