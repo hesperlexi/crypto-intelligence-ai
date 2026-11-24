@@ -128,6 +128,18 @@ try:
     out["alert_watcher"] = (hj.get("engine") or {}).get("alert_watcher")
 except Exception:
     pass
+# health tiles the owner sees as warnings: market data, exchange errors, AI check (counts / labels only)
+try:
+    out["md"] = {k: v for k, v in (hj.get("market_data") or {}).items() if not isinstance(v, list)}
+    out["md_stale"] = [(x.get("symbol"), x.get("timeframe"), x.get("status"), x.get("age_min") or x.get("age_h")) for x in (hj.get("series") or []) if x.get("status") not in ("OK", "ok", None)][:40]
+    out["exchange"] = {k: (v if not isinstance(v, (list, dict)) else str(v)[:300]) for k, v in (hj.get("exchange") or {}).items()}
+    g = fs.document("views/guardian").get().to_dict() or {}
+    gj = json.loads(g["json"]) if g.get("json") else {}
+    cal = (gj.get("checks") or {}).get("calibration") or {}
+    out["ai_check"] = {"warnings": cal.get("warnings"), "by_tf": {tf: {k: v for k, v in (x or {}).items() if not isinstance(v, (list, dict))} for tf, x in (cal.get("by_tf") or cal.get("timeframes") or {}).items()} if isinstance(cal.get("by_tf") or cal.get("timeframes"), dict) else None,
+                       "keys": sorted(cal.keys())}
+except Exception as exc:
+    out["md_probe_error"] = str(exc)[:200]
 # the Cloudflare price-alert watcher itself (counts only; no tokens, no keys)
 try:
     import hashlib, urllib.request
