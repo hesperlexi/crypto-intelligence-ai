@@ -128,5 +128,15 @@ try:
     out["alert_watcher"] = (hj.get("engine") or {}).get("alert_watcher")
 except Exception:
     pass
+# the Cloudflare price-alert watcher itself (counts only; no tokens, no keys)
+try:
+    import hashlib, urllib.request
+    key = hashlib.sha256(("cia-edge-v1|" + os.environ["FIREBASE_SERVICE_ACCOUNT"]).encode()).hexdigest()
+    req = urllib.request.Request("https://cia-chat.cryptointelai.workers.dev/watch/status?since=0", headers={"X-Edge-Key": key})
+    st = json.load(urllib.request.urlopen(req, timeout=20))
+    out["cloud_watcher"] = {**{k: st.get(k) for k in ("at", "armed", "armed_at", "sent", "sent_total", "due", "priced", "error", "idle")},
+                            "sent_keys_n": len(st.get("sent_keys") or []), "bad_tokens_n": len(st.get("bad_tokens") or [])}
+except Exception as exc:
+    out["cloud_watcher"] = {"probe_error": str(exc)[:200]}
 print(json.dumps(out, indent=1, default=str))
 
