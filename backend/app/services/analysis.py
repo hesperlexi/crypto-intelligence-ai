@@ -650,6 +650,19 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 flags.append(sweep_guard.FLAG)
         except Exception:
             pass
+    # V3.0 adaptive BTC shock guard (proven: research_btc.py, PASS): no new call against an unusually large BTC move
+    if decision in TRADE_DECISIONS and live and bundle is None:
+        try:
+            from . import btc_shock
+            from .guardian import side_of
+            sd = side_of(decision)
+            bs = btc_shock.against(rt, sd)
+            if bs:
+                decision, grade = "NO TRADE", None
+                why = btc_shock.reason(bs, sd)
+                flags.append(btc_shock.FLAG)
+        except Exception:
+            pass
     if RISK_VETO and risk_check and risk_check.get("would_block") and decision in TRADE_DECISIONS:
         decision, grade = "NO TRADE", None
         why = f"capital protection: {risk_check.get('reason')}"

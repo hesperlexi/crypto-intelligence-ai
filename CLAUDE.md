@@ -1413,3 +1413,14 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   setting `reset_v3_audit`. Members' practice (paper*, auto_paper*) untouched. Backup restore verified first
   (`backup-verify.yml` → `results/backup-verify.json`: integrity ok). To restore old history: INSERT INTO t SELECT <cols>
   FROM archive_v3_t. Tests `tests/test_fresh_restart_v3.py`.
+- **V3 "adaptive BTC volatility & capital flow" brief (24 Nov 2026, ChatGPT prompt from the owner):** audit
+  `app/v3_guard_audit.py` (`v3-guard-audit.yml`, `results/v3-guard-audit.json`): the live engine had NO BTC-movement guard
+  blocking calls (only coin-level guards); live since 4 Nov 102/106 published calls were shorts (+21.7R), BTC 24h > +3 %
+  was the worst condition (published −2R, blocked −19R). Capital-flow data: funding 929 d, OI / L-S / taker 427 d
+  (archive, 2-day lag), liquidations 4h 252 d / daily 4 y, OKX 40 d; ETF flows / exchange netflows: no free source.
+  Study `app/research_btc.py` (`research-btc.yml`, `results/btc-latest.json`, 953 unseen calls, baseline +12.7R / DD 39.7R):
+  BTC shock guard `shock|12h|z1.5|6h` **PASS** (+23.1R, DD 30.1R, both halves, bootstrap 82 %, 124 differ; every shock
+  variant raised R and cut DD) → **live** `services/btc_shock.py` (flag "BTC SHOCK", env `BTC_SHOCK_GUARD=0` off);
+  spot-vs-leverage (funding-crowded) split adds nothing; 15m opportunity strategies (recovery / continuation /
+  exhaustion) all lose (−0.21 to −0.27R per trade, PF 0.5-0.65) → not built. Note: out-of-sample LONG calls lost
+  (normal-BTC longs 116 calls −38.9R) while shorts won (+43.8R) - the long side needs its own study.
