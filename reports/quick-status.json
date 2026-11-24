@@ -124,7 +124,7 @@
   ],
   [
    "health_admin",
-   74.9
+   75.3
   ],
   [
    "track_record",
@@ -143,6 +143,10 @@
    64.4
   ],
   [
+   "dashboard_4h",
+   60.3
+  ],
+  [
    "futures_1d",
    60.3
   ],
@@ -155,28 +159,24 @@
    59.9
   ],
   [
+   "dashboard_12h",
+   59.8
+  ],
+  [
+   "dashboard_15m",
+   59.2
+  ],
+  [
+   "dashboard_1h",
+   59.2
+  ],
+  [
    "dashboard_3d",
    58.1
   ],
   [
    "futures_3d",
    56.8
-  ],
-  [
-   "dashboard_12h",
-   56.4
-  ],
-  [
-   "dashboard_4h",
-   56.3
-  ],
-  [
-   "dashboard_1h",
-   55.7
-  ],
-  [
-   "dashboard_15m",
-   55.6
   ],
   [
    "bots",
@@ -218,26 +218,26 @@
  "health": {
   "status": "DEGRADED",
   "engine": {
-   "last_tick_started": 1795535671079,
-   "last_tick_finished": 1795535894995,
-   "last_tick_seconds": 223.9,
+   "last_tick_started": 1795536420735,
+   "last_tick_finished": 1795536682786,
+   "last_tick_seconds": 262.1,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7887,
-   "round_seconds_avg": 198.4,
+   "ticks": 7888,
+   "round_seconds_avg": 201.1,
    "round_seconds_max": 297.6,
    "rounds_measured": 48,
-   "watch_last_at": 1795535879943,
+   "watch_last_at": 1795536660176,
    "watch_coins": 0,
    "watch_priced": 0,
    "watch_sent_total": 406,
-   "flow_last_at": 1795535869016,
+   "flow_last_at": 1795536669054,
    "flow_coins": 31,
    "flow_errors": 0,
-   "firestore_writes_today": 3506,
+   "firestore_writes_today": 3667,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 2164,
+   "firestore_reads_today": 2246,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -401,152 +401,152 @@
   "series_15m": [
    {
     "symbol": "PAXG/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "XAG/USDT",
-    "candles": 30214,
+    "candles": 30215,
     "status": "OK"
    },
    {
     "symbol": "BTC/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 32782,
-    "status": "OK"
-   },
-   {
-    "symbol": "GALA/USDT",
-    "candles": 32388,
-    "status": "OK"
-   },
-   {
-    "symbol": "TRX/USDT",
-    "candles": 32780,
-    "status": "OK"
-   },
-   {
-    "symbol": "ADA/USDT",
     "candles": 32783,
     "status": "OK"
    },
    {
+    "symbol": "GALA/USDT",
+    "candles": 32389,
+    "status": "OK"
+   },
+   {
+    "symbol": "TRX/USDT",
+    "candles": 32781,
+    "status": "OK"
+   },
+   {
+    "symbol": "ADA/USDT",
+    "candles": 32784,
+    "status": "OK"
+   },
+   {
     "symbol": "DOT/USDT",
-    "candles": 32782,
+    "candles": 32783,
     "status": "OK"
    },
    {
     "symbol": "SUI/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "BCH/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "WIF/USDT",
-    "candles": 30962,
+    "candles": 30963,
     "status": "OK"
    },
    {
     "symbol": "BONK/USDT",
-    "candles": 30957,
+    "candles": 30958,
     "status": "OK"
    },
    {
     "symbol": "APT/USDT",
-    "candles": 32781,
+    "candles": 32782,
     "status": "OK"
    },
    {
     "symbol": "ETC/USDT",
-    "candles": 30954,
+    "candles": 30955,
     "status": "OK"
    },
    {
     "symbol": "RARE/USDT",
-    "candles": 30787,
+    "candles": 30788,
     "status": "OK"
    },
    {
     "symbol": "SEI/USDT",
-    "candles": 30787,
+    "candles": 30788,
     "status": "OK"
    },
    {
     "symbol": "MSTR/USDT",
-    "candles": 30750,
+    "candles": 30751,
     "status": "OK"
    },
    {
     "symbol": "ANTHROPIC/USDT",
-    "candles": 21553,
+    "candles": 21554,
     "status": "OK"
    },
    {
     "symbol": "HYPE/USDT",
-    "candles": 5876,
+    "candles": 5877,
     "status": "OK"
    },
    {
     "symbol": "HBAR/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "SHIB/USDT",
-    "candles": 30960,
+    "candles": 30961,
     "status": "OK"
    },
    {
     "symbol": "WLD/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
@@ -556,22 +556,22 @@
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "FLOKI/USDT",
-    "candles": 30005,
+    "candles": 30006,
     "status": "OK"
    },
    {
     "symbol": "NEAR/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "PROM/USDT",
-    "candles": 30000,
+    "candles": 30001,
     "status": "OK"
    }
   ]
@@ -580,37 +580,37 @@
   "15m": {
    "n": 35,
    "fresh_12h": 2,
-   "max": 694.3,
+   "max": 694.5,
    "missing": 1
   },
   "1h": {
    "n": 35,
    "fresh_12h": 2,
-   "max": 660.8,
+   "max": 661.1,
    "missing": 1
   },
   "4h": {
    "n": 35,
    "fresh_12h": 30,
-   "max": 660.8,
+   "max": 661.0,
    "missing": 2
   },
   "12h": {
    "n": 35,
    "fresh_12h": 29,
-   "max": 660.8,
+   "max": 661.0,
    "missing": 2
   },
   "1d": {
    "n": 35,
    "fresh_12h": 28,
-   "max": 660.7,
+   "max": 660.9,
    "missing": 4
   },
   "3d": {
    "n": 35,
    "fresh_12h": 24,
-   "max": 252.8,
+   "max": 253.0,
    "missing": 10
   }
  },
@@ -737,9 +737,9 @@
  },
  "safety": [],
  "release": {
+  "updated_at": 1793386630880,
   "version": "2.1.0",
-  "launched_at": 1793386630880,
-  "updated_at": 1793386630880
+  "launched_at": 1793386630880
  },
  "track_record": {
   "record_since": 1795511383715,
@@ -848,10 +848,10 @@
  "telegram": {
   "has_token": true,
   "has_channel": true,
-  "post_wins": true,
-  "post_weekly": true,
   "post_teaser": true,
+  "post_wins": true,
   "enabled": true,
+  "post_weekly": true,
   "keys": [
    "channel",
    "enabled",
@@ -865,26 +865,20 @@
   "ok": true,
   "checked_at": 1795536002920,
   "last_sent": [
-   "wins (waiting for approval)"
+   "wins"
   ],
-  "last_post_at": 1795527718306,
+  "last_post_at": 1795536682606,
   "updated_at": null,
   "errors": 0
  },
  "telegram_drafts": {
-  "n": 1,
-  "items": [
-   {
-    "kind": "wins",
-    "created_at": 1795536002920,
-    "at": null
-   }
-  ]
+  "n": 0,
+  "items": []
  },
- "push_tokens": 5,
+ "push_tokens": 6,
  "telegram_post_jobs": [
   {
-   "status": "queued",
+   "status": "done",
    "created_at": 1795536155058,
    "error": ""
   },
@@ -1057,7 +1051,7 @@
   ],
   "runs": 1,
   "trades": 10,
-  "at": 1795535646498,
+  "at": 1795536784523,
   "since": 1793784369074,
   "current_run": 1,
   "run_numbers": [
@@ -1080,7 +1074,7 @@
    "policy": null,
    "min_balance": 1.0,
    "started": true,
-   "generated_at": 1795535646498,
+   "generated_at": 1795536784524,
    "current": null,
    "score": null,
    "open_ended": true,
@@ -1123,7 +1117,7 @@
  },
  "alert_watcher": null,
  "cloud_watcher": {
-  "at": 1795536373735,
+  "at": 1795537093900,
   "armed": 0,
   "armed_at": 1795536002851,
   "sent": 0,
@@ -1140,6 +1134,7 @@
    "admins_set": 1,
    "levels": 0,
    "rules_primed": 9
-  }
+  },
+  "fcm_check": null
  }
 }
