@@ -8,7 +8,32 @@ from firebase_admin import credentials, firestore
 
 firebase_admin.initialize_app(credentials.Certificate(json.loads(os.environ["FIREBASE_SERVICE_ACCOUNT"])), {"projectId": "crypapp-6a9b9"})
 fs = firestore.client()
-wl = [x.get("symbol") for x in (fs.document("config/watchlist").get().to_dict() or {}).get("symbols", [])]
+
+
+def _edge_only(reason: str) -> None:
+    """Firestore refused (daily quota): report what the Cloudflare side knows, then stop."""
+    import hashlib, urllib.request
+    o = {"firestore": reason[:200]}
+    base = "https://cia-chat.cryptointelai.workers.dev"
+    try:
+        o["edge_health"] = json.load(urllib.request.urlopen(urllib.request.Request(base + "/edge-health", headers={"User-Agent": "cia-status"}), timeout=20))
+    except Exception as exc:
+        o["edge_health"] = {"error": str(exc)[:200]}
+    try:
+        key = hashlib.sha256(("cia-edge-v1|" + os.environ["FIREBASE_SERVICE_ACCOUNT"]).encode()).hexdigest()
+        st = json.load(urllib.request.urlopen(urllib.request.Request(base + "/watch/status?since=0", headers={"X-Edge-Key": key, "User-Agent": "cia-status"}), timeout=20))
+        o["cloud_watcher"] = {k: st.get(k) for k in ("at", "armed", "priced", "sent_total", "error", "idle", "price_tries")}
+    except Exception as exc:
+        o["cloud_watcher"] = {"error": str(exc)[:200]}
+    print(json.dumps(o, indent=1, default=str))
+    raise SystemExit(0)
+
+
+try:
+    _probe = fs.document("config/watchlist").get()
+except Exception as _exc:
+    _edge_only(str(_exc))
+wl = [x.get("symbol") for x in (_probe.to_dict() or {}).get("symbols", [])]
 out = {"watchlist": wl, "views": {}}
 for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
     d = fs.document(f"views/futures_{tf}").get().to_dict()
@@ -21,9 +46,7 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
         "statuses": sorted({str(r.get("status")) for r in rows}),
         "gold_row": any(str(r.get("symbol", "")).startswith("PAXG") for r in rows),
     }
-# size of every published view (what the website downloads), largest first
-out["view_sizes_kb"] = sorted(((d.id, round(len((d.to_dict() or {}).get("json") or "") / 1024, 1)) for d in fs.collection("views").stream()),
-                              key=lambda x: -x[1])[:25]
+# (v3.1: the size listing of every view was removed - it read ~800 documents per run of this check)
 h = fs.document("views/health_admin").get().to_dict() or fs.document("views/health").get().to_dict()
 hj = json.loads(h["json"]) if h else {}
 out["health"] = {"status": hj.get("status"), "engine": {k: v for k, v in (hj.get("engine") or {}).items()
@@ -51,7 +74,8 @@ out["record_live"] = {"summary": (trj.get("live") or {}).get("summary") or trj.g
                       # counts only: no coin / side / levels / single results
                       "signals_by_status": {s: sum(1 for x in sigs if x.get("status") == s) for s in sorted({str(x.get("status")) for x in sigs})},
                       "signals_by_timeframe": {t: sum(1 for x in sigs if x.get("timeframe") == t) for t in sorted({str(x.get("timeframe")) for x in sigs})}}
-out["counts"] = {c: sum(1 for _ in fs.collection(c).select([]).stream()) for c in ("paper", "paper_trades", "paper_futures_trades", "auto_paper_state", "jobs")}
+_count = lambda c: int(fs.collection(c).count().get()[0][0].value)     # aggregation: 1 read per 1000 documents
+out["counts"] = {c: _count(c) for c in ("paper", "paper_trades", "paper_futures_trades", "auto_paper_state", "jobs")}
 bots = fs.document("config/bots").get().to_dict() or {}
 out["bots"] = [{"id": b.get("id"), "reset_token": b.get("reset_token")} for b in bots.get("bots", [])]
 # notifications check (no secrets: booleans, kinds and counts only)
@@ -64,7 +88,7 @@ out["telegram_status"]["errors"] = len(st.get("errors") or [])
 dr = fs.document("owner/telegram_drafts").get().to_dict() or {}
 out["telegram_drafts"] = {"n": len(dr.get("items") or []), "items": [{k: i.get(k) for k in ("kind", "created_at", "at")} for i in (dr.get("items") or [])][:10]}
 out["telegram"]["keys"] = sorted(k for k in tg.keys() if k != "token")
-out["push_tokens"] = sum(1 for _ in fs.collection("push_tokens").select([]).stream())
+out["push_tokens"] = _count("push_tokens")
 import re as _re
 _jobs = [d.to_dict() or {} for d in fs.collection("jobs").where("type", "==", "telegram_post").stream()]
 out["telegram_post_jobs"] = [{"status": j.get("status"), "created_at": j.get("created_at"),
