@@ -1,0 +1,108 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "rf",
+ "timeframes": {
+  "1d": {
+   "coins_done": 30,
+   "skipped": [
+    "BARD/USDT: control not evaluated: BARD/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: BARD/USDT 1d: no model / too few out-of-sample bars",
+    "BIO/USDT: control not evaluated: BIO/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: BIO/USDT 1d: no model / too few out-of-sample bars",
+    "BONK/USDT: control not evaluated: BONK/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: BONK/USDT 1d: no model / too few out-of-sample bars",
+    "ENA/USDT: control not evaluated: ENA/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: ENA/USDT 1d: no model / too few out-of-sample bars",
+    "ERA/USDT: control not evaluated: ERA/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: ERA/USDT 1d: no model / too few out-of-sample bars",
+    "MSTR/USDT: control not evaluated: MSTR/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: MSTR/USDT 1d: no model / too few out-of-sample bars",
+    "SEI/USDT: control not evaluated: SEI/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: SEI/USDT 1d: no model / too few out-of-sample bars",
+    "WIF/USDT: control not evaluated: WIF/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: WIF/USDT 1d: no model / too few out-of-sample bars",
+    "WLD/USDT: control not evaluated: WLD/USDT 1d: no model / too few out-of-sample bars; no_random_forest not evaluated: WLD/USDT 1d: no model / too few out-of-sample bars"
+   ],
+   "control": {
+    "trades": 124,
+    "avg_r": -0.0867,
+    "total_r": -10.74,
+    "win_rate": 0.468,
+    "series": 30,
+    "brier_mean": 0.66373,
+    "log_loss_mean": 1.09455,
+    "drawdown_r_sum": 50.29
+   },
+   "no_random_forest": {
+    "trades": 105,
+    "avg_r": 0.0261,
+    "total_r": 2.74,
+    "win_rate": 0.514,
+    "series": 30,
+    "brier_mean": 0.67048,
+    "log_loss_mean": 1.10607,
+    "drawdown_r_sum": 37.78
+   },
+   "no_random_forest_vs_control": {
+    "n_series": 30,
+    "share_better": 0.974,
+    "ci90_r_per_trade": [
+     0.0221,
+     0.1884
+    ],
+    "brier_better_share": 0.033
+   },
+   "no_random_forest_tune": {
+    "trades": 359,
+    "avg_r": 0.1068,
+    "total_r": 38.35,
+    "win_rate": 0.563,
+    "series": 30,
+    "brier_mean": null,
+    "log_loss_mean": null,
+    "drawdown_r_sum": 70.02
+   },
+   "control_tune": {
+    "trades": 364,
+    "avg_r": 0.0491,
+    "total_r": 17.86,
+    "win_rate": 0.555,
+    "series": 30,
+    "brier_mean": null,
+    "log_loss_mean": null,
+    "drawdown_r_sum": 80.47
+   },
+   "no_random_forest_tune_vs_control": {
+    "n_series": 30,
+    "share_better": 0.939,
+    "ci90_r_per_trade": [
+     -0.0031,
+     0.1132
+    ]
+   }
+  }
+ },
+ "same_as_control": {
+  "1d": []
+ },
+ "models": {
+  "1d": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_random_forest": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ]
+  }
+ },
+ "seconds": 2117.7,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
