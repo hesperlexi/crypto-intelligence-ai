@@ -216,26 +216,26 @@
  "health": {
   "status": "DEGRADED",
   "engine": {
-   "last_tick_started": 1795532880657,
-   "last_tick_finished": 1795533128072,
-   "last_tick_seconds": 247.4,
+   "last_tick_started": 1795534165687,
+   "last_tick_finished": 1795534337220,
+   "last_tick_seconds": 171.5,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7879,
-   "round_seconds_avg": 200.4,
+   "ticks": 7883,
+   "round_seconds_avg": 197.0,
    "round_seconds_max": 297.6,
    "rounds_measured": 48,
-   "watch_last_at": 1795533114117,
+   "watch_last_at": 1795534314105,
    "watch_coins": 0,
    "watch_priced": 0,
    "watch_sent_total": 406,
-   "flow_last_at": 1795533092713,
+   "flow_last_at": 1795534312774,
    "flow_coins": 30,
    "flow_errors": 0,
-   "firestore_writes_today": 3129,
+   "firestore_writes_today": 3301,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 1878,
+   "firestore_reads_today": 2006,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -399,152 +399,152 @@
   "series_15m": [
    {
     "symbol": "PAXG/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "XAG/USDT",
-    "candles": 30211,
+    "candles": 30212,
     "status": "OK"
    },
    {
     "symbol": "BTC/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 32779,
-    "status": "OK"
-   },
-   {
-    "symbol": "GALA/USDT",
-    "candles": 32385,
-    "status": "OK"
-   },
-   {
-    "symbol": "TRX/USDT",
-    "candles": 32777,
-    "status": "OK"
-   },
-   {
-    "symbol": "ADA/USDT",
     "candles": 32780,
     "status": "OK"
    },
    {
+    "symbol": "GALA/USDT",
+    "candles": 32386,
+    "status": "OK"
+   },
+   {
+    "symbol": "TRX/USDT",
+    "candles": 32778,
+    "status": "OK"
+   },
+   {
+    "symbol": "ADA/USDT",
+    "candles": 32781,
+    "status": "OK"
+   },
+   {
     "symbol": "DOT/USDT",
-    "candles": 32779,
+    "candles": 32780,
     "status": "OK"
    },
    {
     "symbol": "SUI/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "BCH/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "WIF/USDT",
-    "candles": 30959,
+    "candles": 30960,
     "status": "OK"
    },
    {
     "symbol": "BONK/USDT",
-    "candles": 30954,
+    "candles": 30955,
     "status": "OK"
    },
    {
     "symbol": "APT/USDT",
-    "candles": 32778,
+    "candles": 32779,
     "status": "OK"
    },
    {
     "symbol": "ETC/USDT",
-    "candles": 30951,
+    "candles": 30952,
     "status": "OK"
    },
    {
     "symbol": "RARE/USDT",
-    "candles": 30784,
+    "candles": 30785,
     "status": "OK"
    },
    {
     "symbol": "SEI/USDT",
-    "candles": 30784,
+    "candles": 30785,
     "status": "OK"
    },
    {
     "symbol": "MSTR/USDT",
-    "candles": 30747,
+    "candles": 30748,
     "status": "OK"
    },
    {
     "symbol": "ANTHROPIC/USDT",
-    "candles": 21550,
+    "candles": 21551,
     "status": "OK"
    },
    {
     "symbol": "HYPE/USDT",
-    "candles": 5873,
+    "candles": 5874,
     "status": "OK"
    },
    {
     "symbol": "HBAR/USDT",
-    "candles": 32777,
+    "candles": 32778,
     "status": "OK"
    },
    {
     "symbol": "SHIB/USDT",
-    "candles": 30957,
+    "candles": 30958,
     "status": "OK"
    },
    {
     "symbol": "WLD/USDT",
-    "candles": 32777,
+    "candles": 32778,
     "status": "OK"
    },
    {
@@ -554,12 +554,12 @@
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 32780,
+    "candles": 32781,
     "status": "OK"
    },
    {
     "symbol": "FLOKI/USDT",
-    "candles": 30002,
+    "candles": 30003,
     "status": "OK"
    }
   ]
@@ -568,37 +568,37 @@
   "15m": {
    "n": 33,
    "fresh_12h": 1,
-   "max": 693.5,
+   "max": 693.8,
    "missing": 1
   },
   "1h": {
    "n": 33,
    "fresh_12h": 1,
-   "max": 660.1,
+   "max": 660.4,
    "missing": 1
   },
   "4h": {
    "n": 33,
    "fresh_12h": 29,
-   "max": 660.0,
+   "max": 660.4,
    "missing": 2
   },
   "12h": {
    "n": 33,
    "fresh_12h": 28,
-   "max": 660.1,
+   "max": 660.4,
    "missing": 2
   },
   "1d": {
    "n": 33,
    "fresh_12h": 27,
-   "max": 659.9,
+   "max": 660.2,
    "missing": 4
   },
   "3d": {
    "n": 33,
    "fresh_12h": 23,
-   "max": 6.9,
+   "max": 7.3,
    "missing": 10
   }
  },
@@ -837,9 +837,9 @@
   "has_token": true,
   "has_channel": true,
   "post_wins": true,
-  "post_teaser": true,
   "enabled": true,
   "post_weekly": true,
+  "post_teaser": true,
   "keys": [
    "channel",
    "enabled",
@@ -996,7 +996,7 @@
  "risk_state": {
   "state": "NORMAL",
   "score": 1,
-  "at": 1795532420174,
+  "at": 1795534336946,
   "factors": {
    "data": "ok",
    "btc_vol": "ok",
@@ -1039,7 +1039,7 @@
   ],
   "runs": 1,
   "trades": 10,
-  "at": 1795532512324,
+  "at": 1795533573792,
   "since": 1793784369074,
   "current_run": 1,
   "run_numbers": [
@@ -1062,7 +1062,7 @@
    "policy": null,
    "min_balance": 1.0,
    "started": true,
-   "generated_at": 1795532512324,
+   "generated_at": 1795533573792,
    "current": null,
    "score": null,
    "open_ended": true,
