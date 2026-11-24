@@ -428,6 +428,7 @@ MIGRATION_FLAGS = (
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
     "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269", "mexc_clean_v269",
+    "fresh_restart_v3",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -922,6 +923,14 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
         fr = fresh_restart_v214.maybe_run(rt, sink, now_ms(), flag="fresh_restart_v218", token="v218", version="2.18")
         if fr is not None:
             notes["fresh_restart_v218"] = fr
+    # V3.0 testing-results reset (owner typed "RESET TESTING RESULTS", 24 Nov 2026): ARCHIVE, not delete - every result
+    # table is copied to archive_v3_<table> and checked before it is emptied (one transaction). Members' practice kept.
+    if rt.db.get_setting("fresh_restart_v218", None) and not rt.db.get_setting("fresh_restart_v3", None):
+        _b("config: V3.0 reset (archive)")
+        from . import fresh_restart_v3
+        fr = fresh_restart_v3.maybe_run(rt, sink, now_ms())
+        if fr is not None:
+            notes["fresh_restart_v3"] = {k: fr.get(k) for k in ("archived", "verify", "skipped")}
     honest = honest_record_v213(rt)
     if honest is not None:
         notes["honest_record_v213"] = honest
