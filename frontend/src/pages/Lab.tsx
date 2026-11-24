@@ -57,16 +57,16 @@ function LabBody({ v }: { v: any }) {
       </section>
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="xeno-panel p-4"><h2 className="label mb-2">Pulse · equity in R</h2><Pulse curve={v.curve ?? []} /></section>
-        <section className="xeno-panel p-4"><h2 className="label mb-2">Spectrum · result per call</h2><Spectrum bins={v.histogram ?? []} /></section>
+        <section className="xeno-panel p-4"><h2 className="label mb-2">Equity in R</h2><Pulse curve={v.curve ?? []} /></section>
+        <section className="xeno-panel p-4"><h2 className="label mb-2">Result spread · per call</h2><Spectrum bins={v.histogram ?? []} /></section>
       </div>
 
       <Splits v={v} />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="xeno-panel p-4"><h2 className="label mb-2">Hive · weekday × session (UTC)</h2><Hive heat={v.heat ?? []} /></section>
+        <section className="xeno-panel p-4"><h2 className="label mb-2">Weekday heat · weekday × session (UTC)</h2><Hive heat={v.heat ?? []} /></section>
         <section className="xeno-panel space-y-3 p-4">
-          <h2 className="label">Specimens</h2>
+          <h2 className="label">Notable calls</h2>
           <Specimen k="Losers that were in profit first" v={`${v.losers?.reached_profit?.["0.5"] ?? 0} of ${v.losers?.n ?? 0} reached +0.5R · ${v.losers?.reached_profit?.["1.0"] ?? 0} reached +1R`} />
           <Specimen k="Hold time" v={isNum(v.hold_h?.median) ? `median ${v.hold_h.median} h · longest ${v.hold_h.max} h` : "—"} />
           <Specimen k="How calls ended" v={Object.entries(v.exits ?? {}).map(([k, n]) => `${k === "None" ? "other" : k.replace(/_/g, " ")} ${n}`).join(" · ") || "—"} />
@@ -110,7 +110,7 @@ function Orbit({ dots, total, win }: { dots: Dot[]; total?: number; win?: number
   }), [dots, rings.join(",")]);
   return (
     <figure className="relative mx-auto w-full max-w-[420px]">
-      <svg viewBox="0 0 400 400" className="w-full" role="img" aria-label={`Orbit of ${dots.length} closed calls, total ${r2(total)}`}>
+      <svg viewBox="0 0 400 400" className="w-full" role="img" aria-label={`Calls map of ${dots.length} closed calls, total ${r2(total)}`}>
         <defs>
           <filter id="xglow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2.4" result="b" /><feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge></filter>
           <radialGradient id="xcore"><stop offset="0%" stopColor="rgb(var(--ai) / 0.35)" /><stop offset="60%" stopColor="rgb(var(--ai) / 0.08)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0)" /></radialGradient>

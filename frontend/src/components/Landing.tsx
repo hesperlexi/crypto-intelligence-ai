@@ -1,7 +1,7 @@
 // What signed-out visitors see: a short, honest sales page with live prices, features, pricing and sign-in.
 import PlanCards from "./PlanCards";
 import { signInWithPopup } from "firebase/auth";
-import { Constellation, CyberHorizon, HoloOrbit, SignalWave } from "./Xeno";
+import { Constellation, SignalWave } from "./Xeno";
 import { useEffect, useState } from "react";
 import { tickers as restTickers } from "../lib/binance";
 import { raceSocket } from "../lib/ws";
@@ -117,7 +117,6 @@ export default function Landing({ error }: { error: string | null }) {
       <main className="mx-auto max-w-6xl px-4">
         {/* hero: the members' entrance - the product itself on the right, a live ticket */}
         <section className="relative isolate grid items-center gap-10 pb-10 pt-10 sm:pt-16 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,0.95fr)] lg:gap-14">
-          <CyberHorizon className="pointer-events-none absolute -bottom-24 left-1/2 -z-20 h-[46%] w-screen max-w-none -translate-x-1/2 opacity-60" />
           <div>
             <HeroLogo size={112} title="Crypto Intelligence AI logo" className="mb-5" />
             <p className="flex items-center gap-2 text-sm text-mute">
@@ -145,7 +144,7 @@ export default function Landing({ error }: { error: string | null }) {
 
           {/* the live ticket, floating in front of a holographic orbit */}
           <div className="relative isolate">
-            <HoloOrbit className="pointer-events-none absolute left-1/2 top-1/2 -z-10 w-[135%] max-w-none -translate-x-1/2 -translate-y-1/2 opacity-90" />
+            <div aria-hidden className="pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2 rounded-full" style={{ background: "radial-gradient(closest-side, rgb(var(--accent) / 0.12), transparent 70%)" }} />
             <div className="panel panel-hero relative p-6 sm:p-7">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex items-center gap-3">
@@ -284,9 +283,8 @@ export default function Landing({ error }: { error: string | null }) {
 
         {/* final call */}
         <section className="panel panel-hero relative isolate mb-12 overflow-hidden p-8 text-center sm:p-12">
-          <CyberHorizon className="pointer-events-none absolute inset-x-0 bottom-0 -z-10 h-[70%] w-full opacity-60" />
           <div className="relative mx-auto mb-5 h-28 w-28">
-            <HoloOrbit label={false} className="pointer-events-none absolute -inset-10 h-[calc(100%+5rem)] w-[calc(100%+5rem)] opacity-70" />
+            <div aria-hidden className="pointer-events-none absolute -inset-10 rounded-full" style={{ background: "radial-gradient(closest-side, rgb(var(--accent) / 0.14), transparent 72%)" }} />
             <HeroLogo size={96} title="Crypto Intelligence AI logo" className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
           <h2 className="font-display text-3xl font-semibold tracking-tight sm:text-4xl">Trade with a plan, not a guess.</h2>

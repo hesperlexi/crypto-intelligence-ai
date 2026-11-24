@@ -8,8 +8,9 @@ import { SITE_HOST } from "./brand";
 // midnight-navy background with a cool light top right and a faint warm light bottom left, one thin gold orbit arc, a hairline
 // frame with gold corner marks, controlled gold only for brand marks and key labels, green gains / red losses, silver text.
 export const L = {
-  gold: "#d9b45f", soft: "#d9b45f", light: "#f2dfa6", text: "#f4f6fb", mute: "#9ca6ba", dim: "#6e788e", bull: "#34c98b", bear: "#e8616a",
-  line: "rgba(38,50,78,1)", hair: "rgba(156,166,186,0.16)", panel: "#0f1626",
+  // V3.0 (24 Nov 2026): graphite + the logo's gold (#E8B637) and cyan, no space
+  gold: "#e8b637", soft: "#e8b637", light: "#f6e37a", text: "#ece8df", mute: "#9a9ca6", dim: "#6c6e76", bull: "#34c98b", bear: "#e8616a",
+  line: "rgba(52,54,62,1)", hair: "rgba(236,232,223,0.12)", panel: "#1a1b21",
 };
 type G = CanvasRenderingContext2D;
 
@@ -41,7 +42,7 @@ function img(src: string): Promise<HTMLImageElement | null> {
 /** Metallic gold for large figures and the frame. */
 export function foil(g: G, x0: number, y0: number, x1: number, y1: number): CanvasGradient {
   const gr = g.createLinearGradient(x0, y0, x1, y1);
-  gr.addColorStop(0, "#a8873f"); gr.addColorStop(0.35, "#d9b45f"); gr.addColorStop(0.55, "#f2dfa6");
+  gr.addColorStop(0, "#9c7417"); gr.addColorStop(0.35, "#e8b637"); gr.addColorStop(0.55, "#f6e37a");
   gr.addColorStop(0.75, "#d0aa55"); gr.addColorStop(1, "#9a7a38");
   return gr;
 }
@@ -67,35 +68,28 @@ export function txt(g: G, t: string, x: number, y: number, o: { f?: (w: number, 
 
 /** Background (midnight navy, cool / warm lights, the orbit, faint stars) and the hairline frame with gold corner marks. */
 export async function luxBackground(g: G, W: number, H: number) {
-  const bg = g.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, "#0c1222"); bg.addColorStop(1, "#05080f");
+  // V3.0: soft-black graphite, a faint gold light top right, and a small neural mesh in that corner (no stars, no orbit)
+  const bg = g.createLinearGradient(0, 0, W, H);
+  bg.addColorStop(0, "#1a1b21"); bg.addColorStop(1, "#0f1013");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  const cool = g.createRadialGradient(W * 0.92, H * 0.05, 0, W * 0.92, H * 0.05, W * 0.95);
-  cool.addColorStop(0, "rgba(26,44,82,0.85)"); cool.addColorStop(1, "rgba(26,44,82,0)");
-  g.fillStyle = cool; g.fillRect(0, 0, W, H);
-  const warm = g.createRadialGradient(0, H, 0, 0, H, W * 0.85);
-  warm.addColorStop(0, "rgba(60,44,14,0.45)"); warm.addColorStop(1, "rgba(60,44,14,0)");
+  const warm = g.createRadialGradient(W * 0.95, H * 0.02, 0, W * 0.95, H * 0.02, W * 0.9);
+  warm.addColorStop(0, "rgba(232,182,55,0.10)"); warm.addColorStop(1, "rgba(232,182,55,0)");
   g.fillStyle = warm; g.fillRect(0, 0, W, H);
-  const v = g.createRadialGradient(W / 2, H / 2, W * 0.45, W / 2, H / 2, Math.max(W, H) * 0.85);
-  v.addColorStop(0, "rgba(0,0,0,0)"); v.addColorStop(1, "rgba(0,0,0,0.45)");
-  g.fillStyle = v; g.fillRect(0, 0, W, H);
-  // the orbit: one thin gold ellipse off the right edge and a fainter cool one inside it
   g.save();
-  g.strokeStyle = "rgba(217,180,95,0.10)"; g.lineWidth = 2;
-  g.beginPath(); g.ellipse(W * 1.02, H * 0.40, W * 0.62, W * 0.36, 0, 0, Math.PI * 2); g.stroke();
-  g.strokeStyle = "rgba(120,150,210,0.08)"; g.lineWidth = 1;
-  g.beginPath(); g.ellipse(W * 1.02, H * 0.40, W * 0.48, W * 0.28, 0, 0, Math.PI * 2); g.stroke();
   let seed = 11;
   const r = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
-  for (let i = 0; i < 70; i++) {
-    g.globalAlpha = 0.1 + r() * 0.22; g.fillStyle = "#c8d2eb";
-    g.beginPath(); g.arc(r() * W, r() * H, 0.6 + r() * 1.1, 0, Math.PI * 2); g.fill();
+  const pts = Array.from({ length: 26 }, () => [W * (0.55 + r() * 0.45), H * (r() * 0.32)]);
+  g.lineWidth = 1;
+  for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
+    const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]);
+    if (d < W * 0.12) { g.strokeStyle = `rgba(93,241,221,${0.10 * (1 - d / (W * 0.12))})`; g.beginPath(); g.moveTo(pts[i][0], pts[i][1]); g.lineTo(pts[j][0], pts[j][1]); g.stroke(); }
   }
+  for (const [x, y] of pts) { g.fillStyle = "rgba(246,227,122,0.35)"; g.beginPath(); g.arc(x, y, 2.2 * (W / 1080), 0, Math.PI * 2); g.fill(); }
   g.restore();
   // frame: hairline, gold marks hugging the top-left and bottom-right corners
   const o = 26, rad = 28, len = 40 * (W / 1080);
   g.save();
-  g.strokeStyle = "rgba(34,45,72,1)"; g.lineWidth = 1;
+  g.strokeStyle = "rgba(255,255,255,0.08)"; g.lineWidth = 1;
   g.beginPath(); g.roundRect(o, o, W - 2 * o, H - 2 * o, rad); g.stroke();
   g.strokeStyle = L.gold; g.lineWidth = 2;
   g.beginPath(); g.moveTo(o, o + rad + len); g.lineTo(o, o + rad); g.arc(o + rad, o + rad, rad, Math.PI, Math.PI * 1.5); g.lineTo(o + rad + len, o); g.stroke();
@@ -109,7 +103,7 @@ export async function luxBrand(g: G, W: number, M: number, top: number, tag: str
   const logo = await img("/brand/logo-192.png");
   const s = 64;
   if (logo) {
-    g.save(); g.shadowColor = "rgba(217,180,95,0.45)"; g.shadowBlur = 20;
+    g.save(); g.shadowColor = "rgba(232,182,55,0.45)"; g.shadowBlur = 20;
     g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.fillStyle = "#000"; g.fill(); g.restore();
     g.save(); g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.clip(); g.drawImage(logo, M, top, s, s); g.restore();
     g.save(); g.strokeStyle = "rgba(120,98,52,1)"; g.lineWidth = 1; g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.stroke(); g.restore();
@@ -125,7 +119,7 @@ export async function luxBrand(g: G, W: number, M: number, top: number, tag: str
   txt(g, tag, W - M - tw / 2, top + 36, { f: sora, w: 700, px: 14, track: 2.6, color: L.gold, align: "center" });
   // hairline under the header: gold fading into navy
   const hl = g.createLinearGradient(M, 0, W - M, 0);
-  hl.addColorStop(0, "rgba(217,180,95,0.9)"); hl.addColorStop(0.7, "rgba(38,50,78,1)"); hl.addColorStop(1, "rgba(38,50,78,1)");
+  hl.addColorStop(0, "rgba(232,182,55,0.9)"); hl.addColorStop(0.7, "rgba(38,50,78,1)"); hl.addColorStop(1, "rgba(38,50,78,1)");
   g.fillStyle = hl; g.fillRect(M, top + s + 18, W - 2 * M, 1);
   return top + s;
 }
@@ -139,7 +133,7 @@ export function figure(g: G, t: string, x: number, y: number, px: number, good: 
   const w = g.measureText(t).width;
   const x0 = o.align === "center" ? x - w / 2 : o.align === "right" ? x - w : x;
   g.textAlign = "left"; g.textBaseline = "alphabetic";
-  const [top, bot, glow] = o.gold ? ["#f2dfa6", "#d9b45f", "rgba(217,180,95,0.35)"]
+  const [top, bot, glow] = o.gold ? ["#f6e37a", "#e8b637", "rgba(232,182,55,0.35)"]
     : good ? ["#9be6c6", "#34c98b", "rgba(52,201,139,0.35)"] : ["#f3b0b5", "#e8616a", "rgba(232,97,106,0.25)"];
   const gr = g.createLinearGradient(0, y - size * 0.75, 0, y);
   gr.addColorStop(0, top); gr.addColorStop(1, bot);

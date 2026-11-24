@@ -47,7 +47,7 @@ export function Intercept({ heads, series, now, score }: { heads: Head[]; series
   return (
     <section className="panel intercept relative overflow-hidden p-0" aria-label={`${recent.length} headlines received in the last 24 hours`}>
       <div className="pointer-events-none absolute left-4 top-3 z-10">
-        <div className="label flex items-center gap-2"><span className="intercept-led" />Incoming transmissions</div>
+        <div className="label flex items-center gap-2"><span className="intercept-led" />Headline stream</div>
         <div className="num mt-0.5 font-display text-2xl font-semibold">{recent.length}<span className="ml-1.5 text-sm font-normal text-mute">headlines · 24 h</span></div>
       </div>
       <div className="pointer-events-none absolute right-4 top-3 z-10 hidden flex-wrap justify-end gap-x-3 gap-y-1 text-xs text-mute sm:flex">
@@ -177,7 +177,7 @@ export function CoinConstellation({ heads, coin, onPick }: { heads: Head[]; coin
   return (
     <section className="panel p-0">
       <div className="card-head flex items-center justify-between border-b border-glass/[0.06] px-4 py-2.5">
-        <h2 className="label">Coins in the transmissions</h2>
+        <h2 className="label">Coins in the news</h2>
         {coin !== "all" && <button type="button" className="text-xs text-accent hover:underline" onClick={() => onPick("all")}>Show all coins</button>}
       </div>
       <svg viewBox={`0 0 ${S} ${S * 0.86}`} className="mx-auto block w-full max-w-[420px]" role="group" aria-label="Coins mentioned in the headlines">
@@ -202,7 +202,7 @@ export function CoinConstellation({ heads, coin, onPick }: { heads: Head[]; coin
           })}
         </g>
       </svg>
-      <p className="px-4 pb-3 text-xs text-mute">Bigger star = more headlines. Tap a coin to read only its news.</p>
+      <p className="px-4 pb-3 text-xs text-mute">Bigger dot = more headlines. Tap a coin to read only its news.</p>
     </section>
   );
 }

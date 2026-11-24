@@ -29,17 +29,18 @@ from ..pricefmt import fmt_price
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 W, H = 1080, 1350
 M = 72                                       # outer margin
-INK = (6, 9, 17)                             # midnight near-black
-NAVY = (12, 19, 36)
-PANEL = (15, 22, 38)                         # charcoal-navy surface
-PANEL_HI = (21, 30, 50)
-LINE = (38, 50, 78)                          # hairline
-GOLD = (217, 180, 95)                        # controlled gold (brand marks, entry, key labels)
-GOLD_LIGHT = (242, 223, 166)
-GOLD_DIM = (120, 98, 52)
-WHITE = (244, 246, 251)
-SILVER = (156, 166, 186)
-MUTED = (110, 120, 142)
+# V3.0 (24 Nov 2026): graphite + the logo's gold and cyan, no space (was midnight navy, stars and an orbit)
+INK = (15, 16, 19)                           # soft black
+NAVY = (24, 25, 29)
+PANEL = (26, 27, 33)                         # graphite surface
+PANEL_HI = (34, 35, 42)
+LINE = (52, 54, 62)                          # hairline
+GOLD = (232, 182, 55)                        # the logo's gold (brand marks, entry, key labels)
+GOLD_LIGHT = (246, 227, 122)
+GOLD_DIM = (156, 116, 23)
+WHITE = (236, 232, 223)
+SILVER = (154, 156, 166)
+MUTED = (108, 110, 118)
 GREEN = (52, 201, 139)
 RED = (232, 97, 106)
 COOL = (70, 110, 190)
@@ -222,32 +223,31 @@ def _label(d, xy, text, size: int = 15, fill=SILVER, anchor: str = "ls") -> int:
 
 
 def _background(img: Image.Image) -> None:
+    """V3.0: graphite gradient, a faint gold light top right and a small neural mesh in that corner."""
     import numpy as np
     yy, xx = np.mgrid[0:H, 0:W].astype(float)
-    t = yy / H
-    base = np.stack([12 - 7 * t, 18 - 10 * t, 34 - 18 * t], -1)
-    cool = np.clip(1 - np.hypot(xx - W * 0.92, yy - H * 0.05) / (W * 0.95), 0, 1) ** 2
-    warm = np.clip(1 - np.hypot(xx - W * 0.0, yy - H * 1.0) / (W * 0.85), 0, 1) ** 2
-    arr = base + cool[..., None] * np.array([26, 44, 82]) * 0.85 + warm[..., None] * np.array([60, 44, 14]) * 0.45
-    vig = np.clip((np.hypot(xx - W / 2, yy - H / 2) - W * 0.45) / (W * 0.9), 0, 1) * 0.5
-    arr = arr * (1 - vig[..., None])
+    t = (xx / W + yy / H) / 2
+    base = np.stack([26 - 11 * t, 27 - 11 * t, 33 - 14 * t], -1)
+    warm = np.clip(1 - np.hypot(xx - W * 0.95, yy - H * 0.02) / (W * 0.9), 0, 1) ** 2
+    arr = base + warm[..., None] * np.array([232, 182, 55]) * 0.10
     img.paste(Image.fromarray(np.clip(arr, 0, 255).astype("uint8"), "RGB"))
     d = ImageDraw.Draw(img, "RGBA")
-    # the orbit: one thin gold ellipse arc off the right edge, a small satellite on it
-    cx, cy, rx, ry = W * 1.02, H * 0.40, W * 0.62, W * 0.36
-    d.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), outline=(217, 180, 95, 26), width=2)
-    d.ellipse((cx - rx * 0.78, cy - ry * 0.78, cx + rx * 0.78, cy + ry * 0.78), outline=(120, 150, 210, 20), width=1)
-    rng2 = np.random.default_rng(11)                            # a few faint stars
-    for _ in range(70):
-        x, y = rng2.random() * W, rng2.random() * H
-        r = 0.6 + rng2.random() * 1.1
-        d.ellipse((x - r, y - r, x + r, y + r), fill=(200, 210, 235, int(25 + rng2.random() * 55)))
+    rng2 = np.random.default_rng(11)
+    pts = [(W * (0.55 + rng2.random() * 0.45), H * (rng2.random() * 0.30)) for _ in range(26)]
+    lim = W * 0.12
+    for i, p in enumerate(pts):
+        for q in pts[i + 1:]:
+            dist = ((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2) ** 0.5
+            if dist < lim:
+                d.line([p, q], fill=(93, 241, 221, int(26 * (1 - dist / lim))), width=1)
+    for x, y in pts:
+        d.ellipse((x - 2.2, y - 2.2, x + 2.2, y + 2.2), fill=(246, 227, 122, 90))
 
 
 def _frame(img: Image.Image) -> None:
     d = ImageDraw.Draw(img)
     o = 26
-    d.rounded_rectangle((o, o, W - 1 - o, H - 1 - o), radius=28, outline=(34, 45, 72), width=1)
+    d.rounded_rectangle((o, o, W - 1 - o, H - 1 - o), radius=28, outline=(52, 54, 62), width=1)
     r, L_ = 28, 40
     d.arc((o, o, o + 2 * r, o + 2 * r), 180, 270, fill=GOLD, width=2)
     d.line([(o + r, o), (o + r + L_, o)], fill=GOLD, width=2)

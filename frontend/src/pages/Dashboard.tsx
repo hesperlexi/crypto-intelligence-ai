@@ -49,6 +49,7 @@ export default function Dashboard() {
 
       <Decisions rows={dash4.data?.rows} track={track.data} />
 
+      <PhoneFold id="market" title="Market today" sub="BTC, market cap, volatility, sentiment, chart, AI briefing">
       {/* C market intelligence: the four measured figures, then the BTC chart beside the AI briefing */}
       <section className="panel p-0" aria-label="Market intelligence">
         <header className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">Market today</h2>
@@ -65,10 +66,14 @@ export default function Dashboard() {
         <IntelBrief b={briefing} loading={mc.loading} rows={dash4.data?.rows} status={status4} />
       </div>
 
+      </PhoneFold>
+      <PhoneFold id="coins" title="Coins" sub="Every coin we follow: trend, signal, AI outlook">
       {/* D the watchlist: one board for every coin (table or heatmap) */}
       {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
       <MarketBoard d={d} tf={tf} onTf={setTf} loading={dash.loading} />
 
+      </PhoneFold>
+      <PhoneFold id="activity" title="Recent developments" sub="Activity, signal performance, market context">
       {/* G recent developments + signal performance + market context */}
       <div className="grid-even grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
         <RecentActivityCard track={track.data} briefing={briefing} />
@@ -91,6 +96,8 @@ export default function Dashboard() {
         </div>
       </div>
 
+      </PhoneFold>
+      <PhoneFold id="details" title="Market details" sub="Dominance, altcoin season, options, traditional markets">
       <DetailsFold>
         <MarketInsights />
         <div className="grid-even grid gap-4 lg:grid-cols-2">
@@ -98,6 +105,7 @@ export default function Dashboard() {
           <MacroCard />
         </div>
       </DetailsFold>
+      </PhoneFold>
     </div>
   );
 }
@@ -210,6 +218,25 @@ function RadarMini() {
 }
 
 /** Market details fold (v2.76): dominance, altcoin season, pulse, volatility & options, traditional markets. */
+/** V3.0 phones: the lower Overview sections fold into one line each (closed by default, remembered), so the phone page
+ *  shows status, positions, capital and decisions first. Computers always show them open. */
+function PhoneFold({ id, title, sub, children }: { id: string; title: string; sub: string; children: React.ReactNode }) {
+  const phone = typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches;
+  const key = `cia-fold-${id}`;
+  const [open, setOpen] = useState(() => { try { return localStorage.getItem(key) === "1"; } catch { return false; } });
+  if (!phone) return <>{children}</>;
+  const flip = () => setOpen((v) => { try { localStorage.setItem(key, v ? "0" : "1"); } catch { /* ignore */ } return !v; });
+  return (
+    <section className="space-y-4" aria-label={title}>
+      <button type="button" onClick={flip} aria-expanded={open} className="panel flex w-full items-center gap-3 px-4 py-3.5 text-left">
+        <span className="min-w-0 flex-1"><span className="block text-[0.9375rem] font-semibold">{title}</span><span className="block truncate text-xs text-mute">{sub}</span></span>
+        <span className="text-sm font-medium text-accent">{open ? "Hide" : "Show"}</span>
+      </button>
+      {open && children}
+    </section>
+  );
+}
+
 function DetailsFold({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(() => { try { return localStorage.getItem("cia-home-details") !== "0"; } catch { return true; } });
   const flip = () => setOpen((v) => { try { localStorage.setItem("cia-home-details", v ? "0" : "1"); } catch { /* ignore */ } return !v; });

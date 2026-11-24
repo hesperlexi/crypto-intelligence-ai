@@ -4,7 +4,7 @@ import LineChart, { Series } from "../components/LineChart";
 import LazyMount from "../components/LazyMount";
 import { Card, Empty, ErrorBox, Info, Loading, Note, Row, Stat } from "../components/ui";
 import { Badge, Tile } from "../components/kit";
-import { BotDrone, FleetOrbit, FleetPulse, type FleetBot } from "../components/Xeno";
+import { FleetPulse } from "../components/Xeno";
 import { put, useApi } from "../lib/api";
 import { DASH, fmtNum, fmtPctRaw, fmtPrice, fmtProb, fmtTime, isNum, tone } from "../lib/format";
 import { useLive } from "../lib/live";
@@ -115,7 +115,7 @@ function BotCard({ bot, cfg, admin, editing, onEdit, onSave, onToggle, onReset, 
     return { ...p, px, u, lev, upct: px != null ? p.side * (px / p.entry - 1) * 100 * lev : null };
   });
   return (
-    <Card className="ai-card" title={<span className="flex flex-wrap items-center gap-2"><BotDrone on={bot.config.enabled} size={22} tone={(s.return_pct ?? 0) > 0 ? "bull" : (s.return_pct ?? 0) < 0 ? "bear" : "ai"} /><span className="whitespace-nowrap text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "Prediction tracker" : "Signal bot"}</Badge><Badge tone="mute">{String(bot.config.timeframe).toUpperCase()}</Badge>{fut ? <Badge tone="warn">Futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">Spot</Badge>}{!bot.config.enabled && <Badge tone="warn">Paused</Badge>}</span>}
+    <Card className="ai-card" title={<span className="flex flex-wrap items-center gap-2"><span className="v3-dot" style={{ background: `rgb(var(${!bot.config.enabled ? "--mute" : (s.return_pct ?? 0) > 0 ? "--bull" : (s.return_pct ?? 0) < 0 ? "--bear" : "--ai"}))` }} /><span className="whitespace-nowrap text-text">{bot.config.name}</span><Badge tone={isPred ? "accent" : "mute"}>{isPred ? "Prediction tracker" : "Signal bot"}</Badge><Badge tone="mute">{String(bot.config.timeframe).toUpperCase()}</Badge>{fut ? <Badge tone="warn">Futures {bot.config.leverage}x{bot.config.safe_leverage && !isPred ? " max" : ""}</Badge> : <Badge tone="mute">Spot</Badge>}{!bot.config.enabled && <Badge tone="warn">Paused</Badge>}</span>}
       right={!admin ? undefined : <div className="flex gap-1">
         <button className="btn px-2 py-0.5 text-xs" onClick={onToggle}>{bot.config.enabled ? "Pause" : "Resume"}</button>
         <button className="btn px-2 py-0.5 text-xs" onClick={onEdit}>{editing ? "Close" : "Settings"}</button>
@@ -289,7 +289,7 @@ function Editor({ cfg, onSave }: { cfg: any; onSave: (patch: any) => void }) {
   );
 }
 
-/** v2.27 (owner, 14 Nov 2026): the fleet at a glance - every bot orbiting the AI core, and all their returns on one pulse. */
+/** V3.0: the bots at a glance - a league of returns and every bot's return over time. */
 /** v2.39: a drawing that fails on some phone never takes the whole Demo bots page down with it. */
 class SafePart extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
@@ -298,8 +298,8 @@ class SafePart extends Component<{ children: ReactNode }, { failed: boolean }> {
 }
 
 function FleetHero({ bots }: { bots: any[] }) {
-  const fleet: FleetBot[] = bots.map((x) => ({ id: x.config.id, name: x.config.name, tf: String(x.config.timeframe), ret: Number(x.stats?.return_pct ?? 0),
-    open: Number(x.stats?.open_positions ?? 0), enabled: !!x.config.enabled, futures: x.config.market === "futures" }));
+  const league = [...bots].sort((a, z) => Number(z.stats?.return_pct ?? 0) - Number(a.stats?.return_pct ?? 0));
+  const maxAbs = Math.max(1, ...bots.map((x) => Math.abs(Number(x.stats?.return_pct ?? 0))));
   const curves = bots.map((x) => {
     const s0 = Number(x.config.starting_balance) || (x.equity_curve?.[0]?.equity ?? 1);
     return { name: x.config.name, pts: (x.equity_curve ?? []).filter((p: any) => isNum(p.equity)).map((p: any) => ({ ts: p.ts, v: (p.equity / s0 - 1) * 100 })) };
@@ -309,17 +309,36 @@ function FleetHero({ bots }: { bots: any[] }) {
   const avg = bots.length ? bots.reduce((a, x) => a + Number(x.stats?.return_pct ?? 0), 0) / bots.length : 0;
   const best = [...bots].sort((a, z) => Number(z.stats?.return_pct ?? 0) - Number(a.stats?.return_pct ?? 0))[0];
   return (
-    <section className="xeno-panel grid gap-4 p-4 lg:grid-cols-[minmax(0,420px)_1fr] lg:items-center" aria-label="Bot fleet">
-      <FleetOrbit bots={fleet} />
+    <section className="panel v3-glass grid gap-5 p-4 sm:p-5 lg:grid-cols-[minmax(0,380px)_1fr] lg:items-start" aria-label="Bot league">
+      {/* V3.0: the bot league (best return first) replaces the space fleet drawing */}
+      <div className="min-w-0">
+        <div className="mb-2 text-sm font-semibold">Bot league</div>
+        <ul className="space-y-2">
+          {league.map((x) => {
+            const r = Number(x.stats?.return_pct ?? 0);
+            return (
+              <li key={x.config.id} className="grid grid-cols-[3.2rem_minmax(0,1fr)_4.2rem] items-center gap-2 text-sm">
+                <span className="num text-xs text-mute">{String(x.config.timeframe).toUpperCase()}</span>
+                <span className="relative h-2 rounded-full" style={{ background: "rgb(var(--raised))" }}>
+                  <i className="absolute inset-y-0 rounded-full" style={{ left: r >= 0 ? "50%" : `${50 - (Math.abs(r) / maxAbs) * 50}%`, width: `${(Math.abs(r) / maxAbs) * 50}%`, background: `rgb(var(${r >= 0 ? "--bull" : "--bear"}))` }} />
+                  <i className="absolute inset-y-[-3px] left-1/2 w-px" style={{ background: "var(--hair-strong)" }} />
+                </span>
+                <span className={`num text-right ${tone(r)}`}>{fmtPctRaw(r)}</span>
+              </li>
+            );
+          })}
+        </ul>
+        <p className="mt-2 text-xs text-mute">Return since each bot started, after fees. Practice money.</p>
+      </div>
       <div className="min-w-0 space-y-3">
         <div className="metric-strip">
-          <Tile variant="strip" label="Bots in orbit" value={String(bots.length)} sub={`${bots.filter((x) => x.config.enabled).length} active`} />
+          <Tile variant="strip" label="Bots running" value={String(bots.length)} sub={`${bots.filter((x) => x.config.enabled).length} active`} />
           <Tile variant="strip" label="Average return" value={fmtPctRaw(avg)} valueClass={tone(avg)} sub="since each bot started" />
           <Tile variant="strip" label="Trades" value={String(tot)} sub={`${open} open now`} />
           <Tile variant="strip" label="Leading" value={best ? String(best.config.timeframe).toUpperCase() : "—"} valueClass="text-accent" sub={best ? fmtPctRaw(best.stats?.return_pct) : undefined} />
         </div>
         <div>
-          <div className="mb-1 flex items-baseline justify-between text-xs text-mute"><span>Fleet pulse · return of every bot</span><span>after fees</span></div>
+          <div className="mb-1 flex items-baseline justify-between text-xs text-mute"><span>Return of every bot over time</span><span>after fees</span></div>
           <FleetPulse curves={curves} />
         </div>
       </div>

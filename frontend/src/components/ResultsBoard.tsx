@@ -128,11 +128,65 @@ export default function ResultsBoard({ d, sigs, roi, admin, avgTested, proven }:
         {ps?.sample_note && <p className="px-4 pb-3 text-xs text-warn sm:px-6">{ps.sample_note}</p>}
       </section>
 
+      <Quality rows={inPeriod} />
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
         <Outcomes rows={inPeriod} />
         <Form rows={inPeriod.slice(0, 20)} months={weeks.months} />
       </div>
     </div>
+  );
+}
+
+/** V3.0 results quality (owner brief: expectancy, profit factor, average win / loss, drawdown, sample size - not win
+ *  rate alone) and the same figures per timeframe. All from the closed rows shown, after fees, equal size, no leverage. */
+function Quality({ rows }: { rows: Row[] }) {
+  const q = useMemo(() => {
+    const ordered = [...rows].sort((a, b) => (a.closed_at ?? 0) - (b.closed_at ?? 0));
+    const r = ordered.map((x) => x.return_pct as number);
+    const wins = r.filter((x) => x > 0), losses = r.filter((x) => x <= 0);
+    const gw = wins.reduce((a, b) => a + b, 0), gl = -losses.reduce((a, b) => a + b, 0);
+    let peak = 0, cum = 0, dd = 0;
+    for (const x of r) { cum += x; peak = Math.max(peak, cum); dd = Math.max(dd, peak - cum); }
+    const byTf = new Map<string, number[]>();
+    for (const x of ordered) { const k = String(x.timeframe ?? "").toUpperCase(); byTf.set(k, [...(byTf.get(k) ?? []), x.return_pct as number]); }
+    return { n: r.length, avg: r.length ? r.reduce((a, b) => a + b, 0) / r.length : null, pf: gl > 0 ? gw / gl : null,
+      avgWin: wins.length ? gw / wins.length : null, avgLoss: losses.length ? -gl / losses.length : null, dd,
+      tfs: [...byTf.entries()].sort((a, b) => ["15M", "1H", "4H", "12H", "1D", "3D"].indexOf(a[0]) - ["15M", "1H", "4H", "12H", "1D", "3D"].indexOf(b[0])) };
+  }, [rows]);
+  return (
+    <section className="panel p-0" aria-label="Quality of the results">
+      <header className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">Quality of the results</h2>
+        <span className="hidden text-xs text-mute sm:inline">after fees · equal size · no leverage</span></header>
+      <dl className="statement-facts grid grid-cols-2 sm:grid-cols-5 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1">
+        <Fact k="Expectancy" v={pct(q.avg, 2)} cls={tone(q.avg)} sub="average per signal" />
+        <Fact k="Profit factor" v={isNum(q.pf) ? q.pf.toFixed(2) : "—"} cls={isNum(q.pf) ? (q.pf >= 1 ? "text-bull" : "text-bear") : ""} sub="wins ÷ losses" />
+        <Fact k="Average win" v={pct(q.avgWin, 2)} cls="text-bull" />
+        <Fact k="Average loss" v={pct(q.avgLoss, 2)} cls="text-bear" />
+        <Fact k="Largest drop" v={q.n ? pct(-q.dd, 2) : "—"} cls={q.dd > 0 ? "text-bear" : ""} sub="peak to low, summed" />
+      </dl>
+      {q.n > 0 && q.n < 30 && <p className="px-4 pb-1 pt-2 text-xs text-warn sm:px-5">{q.n} closed signals so far: too few to judge reliably (30 or more needed).</p>}
+      {q.tfs.length > 0 && (
+        <div className="overflow-x-auto px-4 pb-4 pt-2 sm:px-5">
+          <table className="w-full text-sm">
+            <thead><tr className="text-left text-xs text-mute"><th className="py-2 font-normal">Timeframe</th><th className="py-2 font-normal">Closed</th>
+              <th className="py-2 font-normal">Won</th><th className="py-2 font-normal">Average</th><th className="py-2 text-right font-normal">Total</th></tr></thead>
+            <tbody>
+              {q.tfs.map(([tf, r]) => {
+                const tot = r.reduce((a, b) => a + b, 0);
+                return (
+                  <tr key={tf} className="border-t" style={{ borderColor: "var(--hair)" }}>
+                    <td className="py-2 font-medium">{tf}</td><td className="num py-2">{r.length}</td>
+                    <td className="num py-2">{Math.round((r.filter((x) => x > 0).length / r.length) * 100)}%</td>
+                    <td className={`num py-2 ${tone(tot / r.length)}`}>{pct(tot / r.length, 2)}</td>
+                    <td className={`num py-2 text-right ${tone(tot)}`}>{pct(tot)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </section>
   );
 }
 

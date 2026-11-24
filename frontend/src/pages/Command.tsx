@@ -138,38 +138,18 @@ const regimeWord = (r?: string) => (!r ? "—" : r.charAt(0) + r.slice(1).toLowe
 /** v2.58 (owner, 18 Nov 2026): the galaxy's centre is the brand itself - the round logo artwork as a planet: lit from
  *  the upper left, a gold atmosphere, a tilted ring that passes behind and in front of it, a small moon on the ring. */
 function LogoPlanet({ x, y, r }: { x: number; y: number; r: number }) {
-  const rx = r * 1.85, ry = r * 0.42, tilt = -16;
-  const ring = (front: boolean) => (
-    <path d={`M${x - rx} ${y} A${rx} ${ry} 0 0 ${front ? 0 : 1} ${x + rx} ${y}`} fill="none"
-      stroke={front ? "url(#lp-ring)" : "rgb(var(--accent) / 0.35)"} strokeWidth={front ? 3 : 2} transform={`rotate(${tilt} ${x} ${y})`} />
-  );
+  // V3.0 (no space): the AI core is the logo medallion with a soft gold glow and the logo's cyan dashed ring
   return (
     <g aria-label="Crypto Intelligence AI" role="img">
       <defs>
         <clipPath id="lp-clip"><circle cx={x} cy={y} r={r} /></clipPath>
-        <radialGradient id="lp-shade" cx="32%" cy="28%" r="80%">
-          <stop offset="0%" stopColor="#fff6dc" stopOpacity="0.28" />
-          <stop offset="38%" stopColor="#000" stopOpacity="0" />
-          <stop offset="100%" stopColor="#000" stopOpacity="0.62" />
-        </radialGradient>
-        <radialGradient id="lp-atmo"><stop offset="70%" stopColor="rgb(var(--accent) / 0)" /><stop offset="82%" stopColor="rgb(var(--accent) / 0.45)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
-        <linearGradient id="lp-ring" x1="0" x2="1"><stop offset="0%" stopColor="rgb(var(--accent) / 0.2)" /><stop offset="50%" stopColor="rgb(var(--accent-2))" /><stop offset="100%" stopColor="rgb(var(--accent) / 0.2)" /></linearGradient>
+        <radialGradient id="lp-atmo"><stop offset="60%" stopColor="rgb(var(--accent) / 0.25)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
       </defs>
-      <circle cx={x} cy={y} r={r * 1.3} fill="url(#lp-atmo)" className="lp-atmo" />
-      {ring(false)}
-      <circle cx={x} cy={y} r={r} fill="#0b0b0d" />
+      <circle cx={x} cy={y} r={r * 1.45} fill="url(#lp-atmo)" />
+      <circle cx={x} cy={y} r={r * 1.18} fill="none" stroke="rgb(var(--ai) / 0.5)" strokeWidth={1.4} strokeDasharray="2 6" />
+      <circle cx={x} cy={y} r={r} fill="rgb(var(--ink))" />
       <image href="/brand/logo-art-384.webp" x={x - r} y={y - r} width={r * 2} height={r * 2} clipPath="url(#lp-clip)" preserveAspectRatio="xMidYMid slice" />
-      <circle cx={x} cy={y} r={r} fill="url(#lp-shade)" />
-      <circle cx={x} cy={y} r={r} fill="none" stroke="rgb(var(--accent-2) / 0.7)" strokeWidth={1.2} />
-      {ring(true)}
-      {/* a small moon travelling along the ring (left out for people who reduce motion) */}
-      {!(typeof window !== "undefined" && window.matchMedia?.("(prefers-reduced-motion: reduce)").matches) && (
-        <g transform={`rotate(${tilt} ${x} ${y})`}>
-          <circle r={Math.max(2.5, r * 0.07)} fill="rgb(var(--ai))">
-            <animateMotion dur="24s" repeatCount="indefinite" path={`M${x + rx} ${y} A${rx} ${ry} 0 1 1 ${x - rx} ${y} A${rx} ${ry} 0 1 1 ${x + rx} ${y}`} />
-          </circle>
-        </g>
-      )}
+      <circle cx={x} cy={y} r={r} fill="none" stroke="rgb(var(--accent))" strokeWidth={1.6} />
     </g>
   );
 }
@@ -284,7 +264,6 @@ function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: a
   const bw = week(btc.data);
   const W = 520, H = 330, C = { x: 260, y: 150 }, TX = 1.75, TY = 0.42;
   const ORB = [62, 98, 134];
-  const stars = useMemo(() => { let x = 7; const r = () => ((x = (x * 9301 + 49297) % 233280) / 233280); return Array.from({ length: 70 }, () => ({ x: r() * W, y: r() * H, s: 0.3 + r() * 1.1, d: r() * 4 })); }, []);
   const maxW = Math.max(1, ...nodes.map((n) => Math.abs(n.w ?? 0)));
   // fixed slots around the ellipse (degrees; 90 = front): back-left, back-right, front-left, front-right, front
   const SLOTS = [222, 318, 138, 42, 90];
@@ -315,7 +294,6 @@ function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: a
         </defs>
         <g mask={`url(#${id}-mask)`}>
           <rect width={W} height={H} fill={`url(#${id}-neb1)`} /><rect width={W} height={H} fill={`url(#${id}-neb2)`} />
-          {stars.map((t, i) => <circle key={i} cx={t.x} cy={t.y} r={t.s} fill="#fff" opacity={0.5} className={i % 4 ? undefined : "cosmos-twinkle"} style={i % 4 ? undefined : { animationDelay: `${t.d}s` }} />)}
         </g>
         {/* back halves of the orbits, behind the sun */}
         {ORB.map((r) => <path key={`b${r}`} d={ring(r, "back")} fill="none" stroke="rgb(var(--accent) / 0.16)" strokeDasharray="1 5" />)}
