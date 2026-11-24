@@ -1,0 +1,55 @@
+name: Verify the engine backup restores (read-only)
+
+# V3.0 reset safety (24 Nov 2026): downloads the newest encrypted engine backup on a throwaway runner, decrypts it,
+# and checks the database (integrity + row counts). Nothing is saved anywhere except the small JSON report.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: backup-verify
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Restore the newest backup into this runner
+        id: r
+        env:
+          GH_TOKEN: ${{ github.token }}
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          ENGINE_BACKUP_KEY: ${{ secrets.ENGINE_BACKUP_KEY }}
+        run: |
+          set +e
+          bash scripts/engine_backup.sh restore; echo "code=$?" >> "$GITHUB_OUTPUT"
+      - name: Check the restored database
+        run: |
+          mkdir -p out
+          python3 - <<'PY' > out/backup-verify.json
+          import json, os, sqlite3
+          p = "backend/data/crypto_ai.db"
+          out = {"restore_exit": "${{ steps.r.outputs.code }}", "exists": os.path.exists(p)}
+          if out["exists"]:
+              c = sqlite3.connect(f"file:{p}?mode=ro", uri=True)
+              out["bytes"] = os.path.getsize(p)
+              out["integrity"] = c.execute("PRAGMA quick_check").fetchone()[0]
+              for t in ("signals", "bot_trades", "market_data", "model_versions", "predictions"):
+                  try:
+                      out[t] = c.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]
+                  except Exception as e:
+                      out[t] = str(e)
+              out["newest_candle"] = c.execute("SELECT MAX(ts) FROM market_data").fetchone()[0]
+          print(json.dumps(out))
+          PY
+          cat out/backup-verify.json
+      - name: Commit the report to research-results
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch --depth 1 origin research-results && git worktree add ../rr FETCH_HEAD && git -C ../rr checkout -B research-results
+          mkdir -p ../rr/results && cp out/backup-verify.json ../rr/results/
+          cd ../rr && git add results && git commit -m "Backup verify" && git push origin HEAD:research-results
