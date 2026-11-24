@@ -198,3 +198,27 @@ jobs:
             -q '.actions_caches[4:][] | .id' | while read -r id; do
               gh api -X DELETE "repos/${{ github.repository }}/actions/caches/$id" >/dev/null || true
             done
+      # V3.0 (24 Nov 2026): GitHub skipped scheduled runs overnight (engine idle 2.5 h, no nightly training on 24 Nov).
+      # The ending run now queues its successor itself, and starts the nightly training if the schedule missed it.
+      - name: Queue the next engine run and catch a missed nightly training
+        if: always()
+        working-directory: .
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          repo="${{ github.repository }}"
+          busy=$(gh api "repos/$repo/actions/workflows/train.yml/runs?status=in_progress&per_page=1" -q '.total_count' || echo 0)
+          queued=$(gh api "repos/$repo/actions/workflows/engine.yml/runs?status=queued&per_page=1" -q '.total_count' || echo 0)
+          waiting=$(gh api "repos/$repo/actions/workflows/engine.yml/runs?status=pending&per_page=1" -q '.total_count' || echo 0)
+          if [ "$busy" = "0" ] && [ "$queued" = "0" ] && [ "$waiting" = "0" ]; then
+            gh api -X POST "repos/$repo/actions/workflows/engine.yml/dispatches" -f ref=main && echo "next engine run queued" || true
+          else
+            echo "not queuing: training running=$busy, engine queued=$queued pending=$waiting"
+          fi
+          today=$(date -u +%Y-%m-%d)
+          if [ "$(date -u +%H)" -ge 3 ]; then
+            n=$(gh api "repos/$repo/actions/workflows/train.yml/runs?created=>=$today&per_page=1" -q '.total_count' || echo 1)
+            if [ "$n" = "0" ]; then
+              gh api -X POST "repos/$repo/actions/workflows/train.yml/dispatches" -f ref=main && echo "nightly training started (schedule missed it)" || true
+            fi
+          fi
