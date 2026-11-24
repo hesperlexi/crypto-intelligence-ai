@@ -706,8 +706,8 @@
  },
  "safety": [],
  "release": {
-  "launched_at": 1793386630880,
   "version": "2.1.0",
+  "launched_at": 1793386630880,
   "updated_at": 1793386630880
  },
  "track_record": {
@@ -878,8 +878,8 @@
   "has_token": true,
   "has_channel": true,
   "post_weekly": true,
-  "post_teaser": true,
   "enabled": true,
+  "post_teaser": true,
   "post_wins": true,
   "keys": [
    "channel",
@@ -1039,5 +1039,6 @@
     "training"
    ]
   }
- }
+ },
+ "risk_state": null
 }
