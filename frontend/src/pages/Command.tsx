@@ -5,7 +5,7 @@
 //   views/health (mission control; already open in the header), the coin's analysis view for the scan (1 read per coin
 //   picked). Correlations from public Binance 1h candles in the browser (no Firebase).
 import { lazy, ReactNode, Suspense, useEffect, useId, useMemo, useRef, useState } from "react";
-import { BeadDefs, CoinBead } from "../components/Instruments";
+import { BeadDefs, CoinBead, leanOf } from "../components/Instruments";
 import { Link } from "react-router-dom";
 import { Segmented } from "../components/kit";
 import { CoinAvatar } from "../components/Polish";
@@ -14,7 +14,8 @@ import { useApi } from "../lib/api";
 import { isAdmin } from "../lib/session";
 import { useKlines } from "../lib/klines";
 import LazyMount from "../components/LazyMount";
-import { CoinCompare, SignalJourneys } from "../components/CommandPlus";
+import { CoinCompare, SignalLadders } from "../components/CommandPlus";
+import { PriceLines } from "../components/PriceLines";
 const MarketGlobe = lazy(() => import("../components/MarketGlobe"));
 import { useLive, useTicker, useTickerThrottled } from "../lib/live";
 import { ago, base, fmtCompact, fmtPrice, isNum, slug } from "../lib/format";
@@ -47,61 +48,72 @@ function useNarrow() {
   return n;
 }
 
-function Galaxy({ rows, open, sel, onSel, onHover }: { rows: any[]; open: Set<string>; sel: string; onSel: (s: string) => void; onHover: (s: string | null) => void }) {
+/** Market map = "Opportunity quadrant" (owner's pick, 24 Nov 2026; replaces the galaxy). Across = 24h move (live
+ *  ticker), up / down = the AI's lean on the chosen timeframe (P(up) − P(down) from that timeframe's futures board; the
+ *  trend when the board has none), dot size = 24h volume, colour = the AI's lean. Coins where the price and the AI agree
+ *  sit in the green (top right) and red (bottom left) corners. Gold dashed ring = a call running on this timeframe. */
+function Galaxy({ rows, open, sel, onSel, onHover, board }: { rows: any[]; open: Set<string>; sel: string; onSel: (s: string) => void; onHover: (s: string | null) => void; board?: any[] }) {
   const { tickers } = useLive();
-  const narrow = useNarrow();                    // phones: a tighter drawing so labels stay readable
-  // v2.55 (owner): the galaxy has the whole first row on computers, so the orbits are stretched wide (KX)
-  const W = narrow ? 400 : 960, H = narrow ? 430 : 600, KX = narrow ? 1 : 1.5, KY = narrow ? 0.92 : 0.95;   // v2.74: narrower beside the readout
-  const C = { x: W / 2, y: H / 2 };
-  const ranked = [...rows].sort((a, b) => (b.quote_volume_24h ?? 0) - (a.quote_volume_24h ?? 0));
-  const maxV = Math.max(1, ...ranked.map((r) => r.quote_volume_24h ?? 0));
-  const tiers = [ranked.slice(0, 2), ranked.slice(2, 6), ranked.slice(6)];
-  const RAD = narrow ? [76, 122, 170] : [130, 200, 268];
-  const planets = tiers.flatMap((t, ti) => t.map((r, i) => {
-    const a = ((i / Math.max(1, t.length)) * 360 + ti * 37 - 90) * (Math.PI / 180);
-    const chg = tickers[r.symbol]?.change_pct ?? r.change_24h_pct;
-    const size = (narrow ? 7 : 9) + (narrow ? 9 : 15) * Math.sqrt((r.quote_volume_24h ?? 0) / maxV);
-    const sig = String(r.signal ?? "");
-    const dir = /BUY|LONG/.test(sig) ? 1 : /SELL|SHORT/.test(sig) ? -1 : 0;
-    return { r, a, ti, x: C.x + RAD[ti] * KX * Math.cos(a), y: C.y + RAD[ti] * Math.sin(a) * KY, size, chg, sig: open.has(r.symbol), dir };
-  }));
-  // v2.56 signal constellations: coins with a call in the same direction joined by a faint line (in orbit order)
-  const chain = (d: 1 | -1) => planets.filter((p) => p.dir === d).sort((p, q) => p.a - q.a);
-  const line = (ps: typeof planets) => ps.map((p, i) => `${i ? "L" : "M"}${p.x.toFixed(1)} ${p.y.toFixed(1)}`).join(" ");
-  const longs = chain(1), shorts = chain(-1);
-  const setHover = onHover;
+  const narrow = useNarrow();
+  const W = narrow ? 400 : 960, H = narrow ? 420 : 560, P = { l: narrow ? 14 : 22, r: narrow ? 14 : 22, t: 30, b: 34 };
+  const maxV = Math.max(1, ...rows.map((r) => r.quote_volume_24h ?? 0));
+  const pts = rows.map((r) => {
+    const f = (board ?? []).find((x: any) => x.symbol === r.symbol);
+    const lean = isNum(f?.p_up) && isNum(f?.p_down) ? f.p_up - f.p_down : leanOf(r) * 0.3;
+    const chg = tickers[r.symbol]?.change_pct ?? r.change_24h_pct ?? 0;
+    return { r, lean, chg: isNum(chg) ? chg : 0, size: (narrow ? 4 : 6) + (narrow ? 9 : 16) * Math.sqrt((r.quote_volume_24h ?? 0) / maxV) };
+  });
+  const sortedAbs = pts.map((p) => Math.abs(p.chg)).sort((a, b) => a - b);
+  const xMax = Math.max(1, sortedAbs[Math.floor(sortedAbs.length * 0.92)] ?? 1) * 1.15;
+  const yMax = Math.max(0.2, ...pts.map((p) => Math.abs(p.lean))) * 1.15;
+  const cx = (P.l + W - P.r) / 2, cy = (P.t + H - P.b) / 2, hw = (W - P.l - P.r) / 2, hh = (H - P.t - P.b) / 2;
+  const X = (v: number) => cx + Math.max(-1, Math.min(1, v / xMax)) * hw * 0.94;
+  const Y = (v: number) => cy - Math.max(-1, Math.min(1, v / yMax)) * hh * 0.9;
+  const tone = (l: number) => (l > 0.02 ? "rgb(var(--bull))" : l < -0.02 ? "rgb(var(--bear))" : "rgb(var(--mute))");
+  // labels: biggest first, skipped where they would sit on top of another label
+  const placed: { x: number; y: number; w: number }[] = [];
+  const labelled = new Set<string>(), leftSide = new Set<string>();
+  [...pts].sort((a, b) => b.size - a.size).forEach((p) => {
+    const w = name(p.r.symbol).length * (narrow ? 6.6 : 7.4) + 6;
+    const left = X(p.chg) + p.size + 4 + w > W - P.r;
+    const x = left ? X(p.chg) - p.size - 4 - w : X(p.chg) + p.size + 4, y = Y(p.lean) + 4;
+    const hit = placed.some((q) => Math.abs(q.y - y) < 13 && x < q.x + q.w && x + w > q.x)
+      || pts.some((o) => o !== p && X(o.chg) + o.size > x && X(o.chg) - o.size < x + w && Y(o.lean) + o.size > y - 11 && Y(o.lean) - o.size < y + 3);
+    if (!hit || p.r.symbol === sel) { placed.push({ x, y, w }); labelled.add(p.r.symbol); if (left) leftSide.add(p.r.symbol); }
+  });
+  const corner = (x: number, y: number, a: "start" | "end", t: string, c: string) => <text x={x} y={y} fontSize={narrow ? 10.5 : 12} fontWeight="600" fill={c} textAnchor={a}>{t}</text>;
   return (
     <div className="cc-galaxy">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Market map: every coin you watch around the AI core">
-        <ellipse cx={C.x} cy={C.y} rx={narrow ? 80 : 190} ry={narrow ? 80 : 130} fill="url(#cc-glow)" />
-        {RAD.map((r, i) => (
-          <g key={r}>
-            <ellipse cx={C.x} cy={C.y} rx={r * KX} ry={r * KY} fill="none" stroke="rgb(var(--accent) / 0.2)" strokeDasharray="2 6" />
-            {/* a light travelling along each orbit (stroke offset only: cheap) */}
-            <ellipse cx={C.x} cy={C.y} rx={r * KX} ry={r * KY} fill="none" stroke="rgb(var(--accent-2) / 0.7)" strokeWidth={1.6} strokeLinecap="round"
-              pathLength={1000} strokeDasharray="6 994" className="cc-trail" style={{ animationDuration: `${18 + i * 9}s` }} />
-          </g>
-        ))}
-        {longs.length > 1 && <path d={line(longs)} fill="none" stroke="rgb(var(--bull) / 0.35)" strokeWidth={1} strokeDasharray="1 5" strokeLinecap="round" />}
-        {shorts.length > 1 && <path d={line(shorts)} fill="none" stroke="rgb(var(--bear) / 0.4)" strokeWidth={1} strokeDasharray="1 5" strokeLinecap="round" />}
-        <LogoPlanet x={C.x} y={C.y} r={narrow ? 30 : 48} />
-        {planets.map((p) => {
-          const on = p.r.symbol === sel;
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Market map: 24h move across, the AI's lean up and down">
+        <rect x={cx} y={P.t} width={hw} height={hh} fill="rgb(var(--bull) / 0.05)" />
+        <rect x={P.l} y={cy} width={hw} height={hh} fill="rgb(var(--bear) / 0.05)" />
+        {[0.25, 0.5, 0.75].flatMap((k) => [cx - hw * k, cx + hw * k]).map((x) => <line key={`v${x}`} x1={x} x2={x} y1={P.t} y2={H - P.b} stroke="rgb(var(--glass) / 0.035)" />)}
+        {[0.33, 0.66].flatMap((k) => [cy - hh * k, cy + hh * k]).map((y) => <line key={`h${y}`} x1={P.l} x2={W - P.r} y1={y} y2={y} stroke="rgb(var(--glass) / 0.035)" />)}
+        <line x1={P.l} x2={W - P.r} y1={cy} y2={cy} stroke="rgb(var(--glass) / 0.16)" />
+        <line x1={cx} x2={cx} y1={P.t} y2={H - P.b} stroke="rgb(var(--glass) / 0.16)" />
+        {corner(W - P.r - 8, P.t + 16, "end", "Rising · AI agrees", "rgb(var(--bull))")}
+        {corner(P.l + 8, P.t + 16, "start", "Falling · AI sees up", "rgb(var(--mute))")}
+        {corner(P.l + 8, H - P.b - 8, "start", "Falling · AI agrees", "rgb(var(--bear))")}
+        {corner(W - P.r - 8, H - P.b - 8, "end", "Rising · AI sees down", "rgb(var(--mute))")}
+        <text x={cx} y={H - 10} fontSize="11" fill="rgb(var(--mute))" textAnchor="middle">24h move → · {`±${xMax.toFixed(1)}%`}</text>
+        <text transform={`translate(${P.l - 4} ${cy}) rotate(-90)`} fontSize="11" fill="rgb(var(--mute))" textAnchor="middle" dy="-2">AI lean ↑</text>
+        {[...pts].sort((a, b) => b.size - a.size).map((p) => {
+          const on = p.r.symbol === sel, x = X(p.chg), y = Y(p.lean);
           return (
-            <g key={p.r.symbol} className="cc-planet" tabIndex={0} role="button" aria-label={`${name(p.r.symbol)} ${pct(p.chg)} in 24 hours${p.sig ? ", signal running" : ""}`}
-              onMouseEnter={() => setHover(p.r.symbol)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(p.r.symbol)} onBlur={() => setHover(null)}
+            <g key={p.r.symbol} className="cc-planet" tabIndex={0} role="button"
+              aria-label={`${name(p.r.symbol)} ${pct(p.chg)} in 24 hours, AI ${p.lean > 0.02 ? "leans up" : p.lean < -0.02 ? "leans down" : "neutral"}${open.has(p.r.symbol) ? ", signal running" : ""}`}
+              onMouseEnter={() => onHover(p.r.symbol)} onMouseLeave={() => onHover(null)} onFocus={() => onHover(p.r.symbol)} onBlur={() => onHover(null)}
               onClick={() => onSel(p.r.symbol)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); onSel(p.r.symbol); } }}>
-              {on && <circle cx={p.x} cy={p.y} r={p.size + 13} fill="none" stroke="#fff1c4" strokeWidth="1.5" className="cc-lock" />}
-              {p.sig && <circle cx={p.x} cy={p.y} r={p.size + 7} fill="none" stroke={GOLD} strokeWidth="2" strokeDasharray="4 3" />}
-              <circle cx={p.x} cy={p.y} r={p.size} fill={name(p.r.symbol) === "GOLD" || p.r.symbol.startsWith("PAXG") ? "url(#cc-gold)" : (p.chg ?? 0) >= 0 ? "url(#cc-up)" : "url(#cc-dn)"} />
-              {/* v2.75 phones: with 30 coins the outer ring's names collided - there only the 6 biggest, coins with a running
-                  call and the one locked on are named (every planet still reads out when tapped) */}
-              {(!narrow || p.ti < 2 || on || p.sig) && <>
-                <text x={p.x} y={p.y + p.size + 15} textAnchor="middle" fontSize="13" fontWeight="600" fill="rgb(var(--text))">{name(p.r.symbol)}</text>
-                <text x={p.x} y={p.y + p.size + 29} textAnchor="middle" fontSize="12" fill={(p.chg ?? 0) >= 0 ? UP : DN}>{pct(p.chg)}</text>
-              </>}
+              {on && <circle cx={x} cy={y} r={p.size + 8} fill="none" stroke="rgb(var(--text) / 0.8)" strokeWidth="1.5" />}
+              {open.has(p.r.symbol) && <circle cx={x} cy={y} r={p.size + 4} fill="none" stroke={GOLD} strokeWidth="1.6" strokeDasharray="3 3" />}
+              <circle cx={x} cy={y} r={p.size} fill={tone(p.lean)} fillOpacity={0.78} stroke="rgb(var(--ink))" strokeWidth="1" />
             </g>
           );
+        })}
+        {pts.filter((p) => labelled.has(p.r.symbol)).map((p) => {
+          const x = X(p.chg), y = Y(p.lean), l = leftSide.has(p.r.symbol);
+          return <text key={`l${p.r.symbol}`} x={l ? x - p.size - 4 : x + p.size + 4} y={y + 4} fontSize={narrow ? 10.5 : 12} fontWeight="600" fill="rgb(var(--text))" textAnchor={l ? "end" : "start"} pointerEvents="none"
+            stroke="rgb(var(--panel))" strokeWidth={3} paintOrder="stroke">{name(p.r.symbol)}</text>;
         })}
       </svg>
     </div>
@@ -250,97 +262,90 @@ function corr(a: number[], b: number[]) {
 const rets = (c: any[] | null) => (c ?? []).map((k, i, a) => (i ? Math.log(k[4] / a[i - 1][4]) : 0)).slice(1);
 const week = (c: any[] | null) => (c && c.length > 1 ? (c[c.length - 1][4] / c[0][4] - 1) * 100 : null);
 
+function beta(a: number[], b: number[]) {
+  const n = Math.min(a.length, b.length);
+  if (n < 20) return null;
+  const x = a.slice(-n), y = b.slice(-n);
+  const mx = x.reduce((s, v) => s + v, 0) / n, my = y.reduce((s, v) => s + v, 0) / n;
+  let cxy = 0, vx = 0;
+  for (let i = 0; i < n; i++) { cxy += (x[i] - mx) * (y[i] - my); vx += (x[i] - mx) ** 2; }
+  return vx ? cxy / vx : null;
+}
+
+/** BTC link map = "Racing BTC" (owner's pick, 24 Nov 2026; replaces the v2.66 solar system). Seven days of hourly closes
+ *  of BTC and the five biggest coins, all rebased to 0 % at the start: gold = BTC, a coin in green finished ahead of BTC,
+ *  grey behind it. Under it per coin: how closely it followed BTC (hourly-return correlation) and how big its moves were
+ *  next to BTC's (beta). Same public Binance klines as before; no Firestore reads. */
 function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: any; mc: any; onSel: (s: string) => void; tf: string }) {
-  // v2.66 (owner, 21 Nov 2026: "make it premium"): a tilted solar system. BTC = the sun (its own logo in a gold corona);
-  // the five biggest coins as logo planets: the closer the orbit, the more it moved with Bitcoin over 7 days (hourly
-  // correlation); planet size = size of the 7-day move; glow + label colour = up / down. Same data as v2.46.
-  const id = useId().replace(/:/g, "");
   const btc = useKlines("BTC/USDT", "1h", 168, 900_000);
   const k = [useKlines(peers[0] ?? "ETH/USDT", "1h", 168, 900_000), useKlines(peers[1] ?? "SOL/USDT", "1h", 168, 900_000), useKlines(peers[2] ?? "BNB/USDT", "1h", 168, 900_000),
     useKlines(peers[3] ?? "XRP/USDT", "1h", 168, 900_000), useKlines(peers[4] ?? "DOGE/USDT", "1h", 168, 900_000)];
   const rb = rets(btc.data);
-  const nodes = peers.slice(0, 5).map((s, i) => ({ s, c: corr(rb, rets(k[i].data)), w: week(k[i].data) }));
-  const alt = mc?.altseason?.value;
+  const rebase = (c: any[] | null) => (c && c.length > 1 ? c.map((x) => (x[4] / c[0][4] - 1) * 100) : null);
+  const series = [{ s: "BTC/USDT", v: rebase(btc.data), btc: true, c: 1, b: 1 },
+    ...peers.slice(0, 5).map((s, i) => ({ s, v: rebase(k[i].data), btc: false, c: corr(rb, rets(k[i].data)), b: beta(rb, rets(k[i].data)) }))]
+    .filter((x) => x.v && x.v.length > 1) as { s: string; v: number[]; btc: boolean; c: number | null; b: number | null }[];
   const bw = week(btc.data);
-  const W = 520, H = 330, C = { x: 260, y: 150 }, TX = 1.75, TY = 0.42;
-  const ORB = [62, 98, 134];
-  const maxW = Math.max(1, ...nodes.map((n) => Math.abs(n.w ?? 0)));
-  // fixed slots around the ellipse (degrees; 90 = front): back-left, back-right, front-left, front-right, front
-  const SLOTS = [222, 318, 138, 42, 90];
-  const placed = nodes.map((n, i) => {
-    const c = isNum(n.c) ? Math.max(0, Math.min(1, n.c)) : 0.3;
-    const orb = ORB[2] - c * (ORB[2] - ORB[0]);
-    const a = (SLOTS[i] * Math.PI) / 180;
-    const x = C.x + orb * TX * Math.cos(a), y = C.y + orb * TY * Math.sin(a) * 2.1;
-    const depth = (Math.sin(a) + 1) / 2;                       // 0 back … 1 front
-    const r = (12 + 7 * (Math.abs(n.w ?? 0) / maxW)) * (0.82 + 0.3 * depth);
-    return { ...n, c, orb, x, y, r, depth, up: (n.w ?? 0) >= 0 };
-  }).sort((a, b) => a.depth - b.depth);
-  const ring = (r: number, half: "back" | "front") => {
-    const rx = r * TX, ry = r * TY * 2.1;
-    return half === "back" ? `M${C.x - rx} ${C.y} A${rx} ${ry} 0 0 1 ${C.x + rx} ${C.y}` : `M${C.x - rx} ${C.y} A${rx} ${ry} 0 0 0 ${C.x + rx} ${C.y}`;
-  };
+  const alt = mc?.altseason?.value;
+  const W = 640, H = 280, x0 = 8, x1 = W - 128, top = 12, bot = H - 24;
+  const all = series.flatMap((x) => x.v);
+  const mn = Math.min(0, ...all) - 0.5, mx = Math.max(0, ...all) + 0.5;
+  const Y = (v: number) => top + ((mx - v) / (mx - mn)) * (bot - top);
+  const n = Math.max(2, ...series.map((x) => x.v.length));
+  const X = (i: number, len: number) => x0 + ((i + (n - len)) / (n - 1)) * (x1 - x0);
+  const end = (x: { v: number[] }) => x.v[x.v.length - 1];
+  const colOf = (x: { btc: boolean; v: number[] }) => (x.btc ? "rgb(var(--accent))" : isNum(bw) && end(x) >= bw ? "rgb(var(--bull))" : "rgb(var(--text) / 0.5)");
+  const step = (mx - mn) > 24 ? 10 : (mx - mn) > 10 ? 5 : 2;
+  const grid: number[] = [];
+  for (let g = Math.ceil(mn / step) * step; g <= mx; g += step) grid.push(g);
+  // labels at the right end, pushed apart so they never overlap
+  const labels = series.map((x) => ({ x, y: Y(end(x)) })).sort((a, b) => a.y - b.y);
+  for (let i = 1; i < labels.length; i++) labels[i].y = Math.max(labels[i].y, labels[i - 1].y + 17);
+  const over = labels.length ? labels[labels.length - 1].y - (H - 8) : 0;
+  if (over > 0) labels.forEach((l) => { l.y -= over; });
+  const days = btc.data && btc.data.length > 1 ? Array.from({ length: 7 }, (_, d) => {
+    const i = Math.round(((d + 0.5) / 7) * (btc.data!.length - 1));
+    return { x: X(i, btc.data!.length), t: new Date(btc.data![i][0]).toLocaleDateString(undefined, { weekday: "short" }) };
+  }) : [];
   return (
     <div className="flex flex-1 flex-col gap-3">
-      <div className="uv-stage flex flex-1 items-center"><svg viewBox={`0 0 ${W} ${H}`} className="mx-auto w-full max-w-[560px]" role="group" aria-label="Bitcoin and the five biggest coins: a closer orbit means the coin moved more with Bitcoin over 7 days">
-        <BeadDefs id={id} />
-        <defs>
-          <radialGradient id={`${id}-neb1`} cx="30%" cy="35%" r="60%"><stop offset="0%" stopColor="rgb(var(--ai) / 0.16)" /><stop offset="100%" stopColor="rgb(var(--ai) / 0)" /></radialGradient>
-          <radialGradient id={`${id}-neb2`} cx="78%" cy="70%" r="55%"><stop offset="0%" stopColor="rgb(var(--accent) / 0.12)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
-          <radialGradient id={`${id}-corona`}><stop offset="0%" stopColor="#fff1c4" stopOpacity="0.75" /><stop offset="22%" stopColor="#f0b90b" stopOpacity="0.45" /><stop offset="55%" stopColor="#f0b90b" stopOpacity="0.1" /><stop offset="100%" stopColor="#f0b90b" stopOpacity="0" /></radialGradient>
-          <radialGradient id={`${id}-fade`} cx="50%" cy="48%" r="58%"><stop offset="55%" stopColor="#fff" /><stop offset="100%" stopColor="#000" /></radialGradient>
-          <mask id={`${id}-mask`}><rect width={W} height={H} fill={`url(#${id}-fade)`} /></mask>
-          <linearGradient id={`${id}-orb`} x1="0" x2="1"><stop offset="0%" stopColor="rgb(var(--accent) / 0.05)" /><stop offset="50%" stopColor="rgb(var(--accent) / 0.55)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0.05)" /></linearGradient>
-        </defs>
-        <g mask={`url(#${id}-mask)`}>
-          <rect width={W} height={H} fill={`url(#${id}-neb1)`} /><rect width={W} height={H} fill={`url(#${id}-neb2)`} />
-        </g>
-        {/* back halves of the orbits, behind the sun */}
-        {ORB.map((r) => <path key={`b${r}`} d={ring(r, "back")} fill="none" stroke="rgb(var(--accent) / 0.16)" strokeDasharray="1 5" />)}
-        {/* the sun: corona, rotating rays, BTC */}
-        <circle cx={C.x} cy={C.y} r={86} fill={`url(#${id}-corona)`} className="uv-float" style={{ transformOrigin: `${C.x}px ${C.y}px` }} />
-        <g className="uv-spin" style={{ transformOrigin: `${C.x}px ${C.y}px` }}>
-          <circle cx={C.x} cy={C.y} r={40} fill="none" stroke="#f0b90b" strokeOpacity={0.35} strokeWidth={7} strokeDasharray="1.2 6.5" />
-        </g>
-        <circle cx={C.x} cy={C.y} r={31} fill="url(#cc-gold)" />
-        <CoinBead id={id} symbol="BTC/USDT" x={C.x} y={C.y} r={24} tone="#f0b90b" ring={1.2} />
-        {/* front halves */}
-        {ORB.map((r) => <path key={`f${r}`} d={ring(r, "front")} fill="none" stroke={`url(#${id}-orb)`} strokeWidth={1} />)}
-        {/* beams + planets, back to front */}
-        {placed.map((n) => (
-          <g key={n.s} className="cc-planet" tabIndex={0} role="button" onClick={() => onSel(n.s)} onKeyDown={(e) => { if (e.key === "Enter") onSel(n.s); }}
-            aria-label={`${name(n.s)}: ${pct(n.w)} in 7 days, moves with Bitcoin ${isNum(n.c) ? Math.round(n.c * 100) + "%" : "unknown"}`}>
-            <line x1={C.x} y1={C.y} x2={n.x} y2={n.y} stroke={n.up ? "rgb(var(--bull) / 0.18)" : "rgb(var(--bear) / 0.18)"} strokeWidth={1} />
-            <line x1={C.x} y1={C.y} x2={n.x} y2={n.y} stroke="rgb(var(--accent) / 0.85)" strokeWidth={0.8 + n.c * 2.2} strokeDasharray="2 12" strokeLinecap="round" className="un-flow" />
-            <g className="uv-float" style={{ animationDelay: `${n.depth * 2}s`, transformOrigin: `${n.x}px ${n.y}px` }}>
-              <CoinBead id={id} symbol={n.s} x={n.x} y={n.y} r={n.r} tone={n.up ? UP : DN} ring={1.6} />
+      {series.length < 2 ? <div className="skeleton h-[260px] rounded-xl" /> : (
+        <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label={`Seven days of Bitcoin and the five biggest coins, rebased to 0%. Bitcoin ${pct(bw)}.`}>
+          {grid.map((g) => (
+            <g key={g}>
+              <line x1={x0} x2={x1} y1={Y(g)} y2={Y(g)} stroke={`rgb(var(--glass) / ${g === 0 ? 0.16 : 0.05})`} />
+              <text x={x1 + 6} y={Y(g) + 3.5} fontSize="9.5" fill="rgb(var(--mute) / 0.8)">{g > 0 ? "+" : ""}{g}%</text>
             </g>
-          </g>
+          ))}
+          {days.map((d, i) => <text key={i} x={d.x} y={H - 6} fontSize="10" fill="rgb(var(--mute))" textAnchor="middle">{d.t}</text>)}
+          {series.filter((x) => !x.btc).map((x) => (
+            <polyline key={x.s} points={x.v.map((v, i) => `${X(i, x.v.length).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")} fill="none" stroke={colOf(x)} strokeWidth={1.5} strokeLinejoin="round" />
+          ))}
+          {series.filter((x) => x.btc).map((x) => (
+            <polyline key={x.s} points={x.v.map((v, i) => `${X(i, x.v.length).toFixed(1)},${Y(v).toFixed(1)}`).join(" ")} fill="none" stroke={colOf(x)} strokeWidth={2.8} strokeLinejoin="round" />
+          ))}
+          {labels.map(({ x, y }) => (
+            <g key={x.s} className="cc-planet" tabIndex={x.btc ? -1 : 0} role={x.btc ? undefined : "button"} onClick={() => !x.btc && onSel(x.s)} onKeyDown={(e) => { if (e.key === "Enter" && !x.btc) onSel(x.s); }}>
+              <line x1={x1} y1={Y(end(x))} x2={x1 + 30} y2={y} stroke={colOf(x)} strokeOpacity={0.35} />
+              <text x={x1 + 34} y={y + 3.5} fontSize="11" fontWeight="600" fill="rgb(var(--text))">{name(x.s)} <tspan fill={x.btc ? "rgb(var(--accent))" : end(x) >= 0 ? "rgb(var(--bull))" : "rgb(var(--bear))"}>{pct(end(x))}</tspan></text>
+            </g>
+          ))}
+        </svg>
+      )}
+      <div className="rb-chips">
+        {series.filter((x) => !x.btc).map((x) => (
+          <button key={x.s} type="button" className="rb-chip" onClick={() => onSel(x.s)}>
+            <CoinAvatar symbol={x.s} size={16} /><span>{name(x.s)} follows BTC <b>{isNum(x.c) ? `${Math.round(x.c * 100)}%` : "—"}</b></span>
+            <span className="text-mute">· moves <b className="text-accent">{isNum(x.b) ? `${x.b.toFixed(1)}×` : "—"}</b></span>
+          </button>
         ))}
-        {/* labels on top of everything, beside the planet on the outer side (below for the front one) */}
-        {placed.map((n) => {
-          let side = n.x < C.x - 20 ? -1 : n.x > C.x + 20 ? 1 : 0;
-          if (side && (n.x + side * (n.r + 50) < 46 || n.x + side * (n.r + 50) > W - 46)) side = 0;   // no room beside: below
-          const lx = side === 0 ? n.x : n.x + side * (n.r + 50), ly = side === 0 ? n.y + n.r + 9 : n.y - 15;
-          return (
-            <g key={`l${n.s}`} transform={`translate(${lx} ${ly})`} pointerEvents="none">
-              <rect x={-44} y={0} width={88} height={30} rx={8} fill="rgb(var(--ink) / 0.92)" stroke={n.up ? "rgb(var(--bull) / 0.5)" : "rgb(var(--bear) / 0.5)"} strokeWidth={0.8} />
-              <text x={0} y={12.5} textAnchor="middle" fontSize="10.5" fontWeight="700" fill="rgb(var(--text))">{name(n.s).length > 8 ? name(n.s).slice(0, 7) + "…" : name(n.s)} <tspan fill={n.up ? UP : DN}>{pct(n.w)}</tspan></text>
-              <text x={0} y={24} textAnchor="middle" fontSize="8.5" fill="rgb(var(--text) / 0.7)">{isNum(n.c) ? `${Math.round(n.c * 100)}% with BTC` : "—"}</text>
-            </g>
-          );
-        })}
-        <g transform={`translate(${C.x} ${C.y - 58})`}>
-          <rect x={-40} y={-11} width={80} height={20} rx={10} fill="rgb(var(--ink) / 0.8)" stroke="rgb(var(--accent) / 0.55)" strokeWidth={0.7} />
-          <text x={0} y={3.5} textAnchor="middle" fontSize="10" fontWeight="700" fill="rgb(var(--accent))">BTC {pct(bw)}</text>
-        </g>
-      </svg></div>
+      </div>
       <div className="grid grid-cols-3 gap-2 text-xs">
         <div className="cc-cell"><div className="text-mute">Breadth · {tf.toUpperCase()}</div><div className="text-sm font-semibold"><span className="text-bull">{status?.bull ?? "—"} ▲</span> <span className="text-bear">{status?.bear ?? "—"} ▼</span></div></div>
         <div className="cc-cell"><div className="text-mute">Alt strength</div><div className="text-sm font-semibold">{isNum(alt) ? `${Math.round(alt)} / 100` : "—"}</div></div>
         <div className="cc-cell"><div className="text-mute">BTC · 7 days</div><div className={`text-sm font-semibold ${(bw ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(bw)}</div></div>
       </div>
-      <p className="text-xs text-mute">Closer ring and brighter line = moved more with Bitcoin (7 days). Bigger dot = bigger 7-day move.</p>
+      <p className="text-xs text-mute">All lines start at 0% seven days ago. Gold = Bitcoin; green = finished ahead of Bitcoin. "Moves 1.6×" = its swings are 1.6 times Bitcoin's.</p>
     </div>
   );
 }
@@ -378,56 +383,64 @@ function Mission({ health, connected }: { health: any; connected: boolean }) {
 }
 
 /* ---------------------------------------------------------------- deep-space scan */
-function Scan({ symbol, row, f4, tf }: { symbol: string; row: any; f4: any; tf: string }) {
+/** Coin deep dive = "Trading card" (owner's pick, 24 Nov 2026; replaces the planet). A premium card for the coin (logo,
+ *  rank by 24h volume, live price, today's change, 60 hourly closes) beside the eight facts, the call on the chosen
+ *  timeframe and the engine's note, with the nearest support / resistance under the line. */
+function Scan({ symbol, row, f4, tf, rank }: { symbol: string; row: any; f4: any; tf: string; rank?: number }) {
   const T = tf.toUpperCase();
   const tk = useTicker(symbol);
   const an = useApi<any>(`/analysis/${slug(symbol)}?timeframe=${tf}`);
   const a = an.data?.status === "OK" ? an.data : null;
+  const kl = useKlines(symbol, "1h", 60, 900_000);
   const px = tk?.last ?? a?.price ?? row?.price;
   const sup = (a?.levels?.zones?.support ?? []).map((z: any) => z.mid).filter((p: number) => isNum(p) && isNum(px) && p < px).sort((x: number, y: number) => y - x)[0];
   const res = (a?.levels?.zones?.resistance ?? []).map((z: any) => z.mid).filter((p: number) => isNum(p) && isNum(px) && p > px).sort((x: number, y: number) => x - y)[0];
-  const pos = isNum(sup) && isNum(res) && isNum(px) ? Math.max(0, Math.min(1, (px - sup) / (res - sup))) : null;
   const side = callOf(f4);
   const chg = tk?.change_pct ?? row?.change_24h_pct;
+  const abs = isNum(px) && isNum(chg) ? px - px / (1 + chg / 100) : null;
+  const closes: number[] = (kl.data ?? []).map((k: any) => k[4]);
+  const mn = Math.min(...closes), mx = Math.max(...closes);
+  const line = closes.length > 1 ? closes.map((c, i) => `${((i / (closes.length - 1)) * 380).toFixed(1)},${(56 - ((c - mn) / (mx - mn || 1)) * 50).toFixed(1)}`).join(" ") : "";
+  const up = closes.length > 1 ? closes[closes.length - 1] >= closes[0] : (chg ?? 0) >= 0;
+  const trend = row?.trend_label;
   const inds: [string, string, string?][] = [
-    [`Trend ${T}`, row?.trend_label ?? "—", row?.trend_label === "Up" ? "text-bull" : row?.trend_label === "Down" ? "text-bear" : ""],
-    ["RSI 14", isNum(row?.rsi) ? row.rsi.toFixed(0) : "—"],
-    ["ADX (trend strength)", isNum(row?.adx) ? row.adx.toFixed(0) : "—"],
-    ["Volatility", row?.volatility ? String(row.volatility).toLowerCase() : "—"],
+    [`Trend ${T}`, trend ?? "—", trend === "Up" ? "text-bull" : trend === "Down" ? "text-bear" : ""],
+    ["RSI 14", isNum(row?.rsi) ? `${row.rsi.toFixed(0)} · ${row.rsi >= 70 ? "overbought" : row.rsi <= 30 ? "oversold" : "neutral"}` : "—"],
+    ["ADX", isNum(row?.adx) ? `${row.adx.toFixed(0)} · ${row.adx >= 25 ? "trending" : "no clear trend"}` : "—"],
+    ["Volatility", row?.volatility ? String(row.volatility).toLowerCase().replace(/^./, (c: string) => c.toUpperCase()) : "—"],
     ["Volume 24h", isNum(tk?.quote_volume ?? row?.quote_volume_24h) ? `${fmtCompact(tk?.quote_volume ?? row?.quote_volume_24h)} USDT` : "—"],
     ["Liquidity", isNum(tk?.spread_bps) ? `spread ${tk!.spread_bps!.toFixed(1)} bps` : "—"],
-    ["Signal score", isNum(row?.score) ? `${Math.round(row.score)} / 100` : "—"],
+    ["Signal score", isNum(row?.score) ? `${Math.round(row.score)} / 100` : "—", "text-accent"],
     ["News", f4?.news_risk?.title ? `${f4.news_risk.title}` : "No major release near", f4?.news_risk ? "text-warn" : ""],
   ];
+  const note = a?.ai?.rationale || (side ? f4?.decision_basis : f4?.decision_reason ? `No trade: ${f4.decision_reason}.` : null) || "The engine has no note for this coin yet.";
   return (
-    <div className="grid gap-6 lg:grid-cols-[220px_minmax(0,1fr)_320px] lg:items-start">
-      <div className="flex flex-col items-center gap-2 text-center">
-        <svg viewBox="0 0 170 150" width="170" height="150" aria-hidden="true">
-          <ellipse cx="85" cy="75" rx="80" ry="20" fill="none" stroke="rgb(var(--accent) / 0.45)" strokeWidth="1.5" transform="rotate(-16 85 75)" />
-          <circle cx="85" cy="75" r="46" fill={symbol.startsWith("PAXG") ? "url(#cc-gold)" : (chg ?? 0) >= 0 ? "url(#cc-up)" : "url(#cc-dn)"} />
-          <path d="M5 75 A80 20 0 0 0 165 75" fill="none" stroke="#f0b90b" strokeWidth="2" transform="rotate(-16 85 75)" />
-        </svg>
-        <div className="flex items-center gap-2"><CoinAvatar symbol={symbol} size={24} /><span className="font-display text-2xl font-bold">{name(symbol)}</span></div>
-        <div className="num text-xl font-semibold">{fmtPrice(px)} <span className={`text-sm ${(chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(chg)}</span></div>
-      </div>
-      <div className="min-w-0 space-y-4">
-        <h2 className="font-display text-lg font-semibold">Coin deep dive · {T}</h2>
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-          {inds.map(([k, v, c]) => <div key={k} className="cc-cell"><div className="text-xs text-mute">{k}</div><div className={`truncate font-semibold ${c ?? ""}`}>{v}</div></div>)}
+    <div className="tc-wrap">
+      <div className="tc-card">
+        <div className="tc-glow" aria-hidden="true" />
+        <div className="tc-head">
+          <CoinAvatar symbol={symbol} size={44} />
+          <div className="min-w-0"><div className="tc-name">{name(symbol)}</div><div className="text-xs text-mute">{base(symbol)}/USDT{rank ? ` · #${rank}` : ""}</div></div>
+          <span className={`tc-call ${side > 0 ? "is-long" : side < 0 ? "is-short" : ""}`}>{side > 0 ? "▲ LONG" : side < 0 ? "▼ SHORT" : "WAIT"}{side && f4?.grade ? ` · ${f4.grade}` : ""} · {T}</span>
         </div>
-        {pos != null && (
-          <div>
-            <div className="text-xs text-mute">Market structure · nearest support to resistance</div>
-            <div className="cc-structure mt-2"><span style={{ left: `${pos * 100}%` }} /></div>
-            <div className="num mt-1.5 flex justify-between text-xs"><span className="text-bull">Support {fmtPrice(sup)}</span><span className="text-accent">Price {fmtPrice(px)}</span><span className="text-bear">Resistance {fmtPrice(res)}</span></div>
-          </div>
-        )}
+        <div className="tc-price num">{fmtPrice(px)}</div>
+        <div className={`num text-sm font-semibold ${(chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(chg)}{isNum(abs) ? ` · ${abs >= 0 ? "+" : ""}${fmtPrice(abs)} today` : ""}</div>
+        {line ? (
+          <svg viewBox="0 0 380 60" className="tc-spark" aria-label="Last 60 hours">
+            <defs><linearGradient id="tc-fill" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0.3" /><stop offset="1" stopColor={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} stopOpacity="0" /></linearGradient></defs>
+            <polygon points={`0,60 ${line} 380,60`} fill="url(#tc-fill)" />
+            <polyline points={line} fill="none" stroke={up ? "rgb(var(--bull))" : "rgb(var(--bear))"} strokeWidth="2" strokeLinejoin="round" />
+          </svg>
+        ) : <div className="skeleton tc-spark h-[60px]" />}
+        <div className="tc-levels num"><span className="text-bull">Support {isNum(sup) ? fmtPrice(sup) : "—"}</span><span className="text-bear">Resistance {isNum(res) ? fmtPrice(res) : "—"}</span></div>
       </div>
-      <div className="cc-cell space-y-3 p-4">
-        <div className="flex items-center justify-between"><span className="text-xs text-mute">Signal · {T}</span>
-          <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${side > 0 ? "bg-bull text-ink" : side < 0 ? "bg-bear text-white" : "bg-glass/15 text-text"}`}>{side > 0 ? "▲ LONG" : side < 0 ? "▼ SHORT" : "WAIT"}{side && f4?.grade ? ` · ${f4.grade}` : ""}</span></div>
-        <p className="text-sm leading-relaxed">{a?.ai?.rationale || (side ? f4?.decision_basis : f4?.decision_reason ? `No trade: ${f4.decision_reason}.` : null) || "The engine has no note for this coin yet."}</p>
-        <Link to={`/asset/${slug(symbol)}?tf=${tf}`} className="btn btn-primary w-full">Open full analysis</Link>
+      <div className="tc-side">
+        <h2 className="font-display text-lg font-semibold">Coin deep dive · {T}</h2>
+        <div className="tc-facts">
+          {inds.map(([k, v, c]) => <div key={k} className="tc-fact"><div className="text-xs text-mute">{k}</div><div className={`truncate font-semibold ${c ?? ""}`}>{v}</div></div>)}
+        </div>
+        <div className="tc-note"><b className="text-ai">AI note</b> {note}</div>
+        <Link to={`/asset/${slug(symbol)}?tf=${tf}`} className="btn btn-primary w-full sm:w-auto sm:self-start">Open full analysis</Link>
       </div>
     </div>
   );
@@ -500,16 +513,17 @@ export default function Command() {
   if (dash.error) return <ErrorBox error={dash.error} retry={dash.reload} />;
   return (
     <div className="cc-page space-y-4">
+      <PriceLines />
       <Defs />
       <MissionStrip tf={tf} setTf={setTf} status={dash.data?.market_status} open={track.data} health={health.data} connected={connected} />
       {/* v2.74 Observatory (owner's pick, 22 Nov 2026): galaxy beside its readout */}
       <div className="cc-row1">
         <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Market map">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div><h2 className="font-display text-xl font-semibold">Market map</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a coin to read it.</p></div>
-            <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● up 24h</span><span className="text-bear">● down 24h</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
+            <div><h2 className="font-display text-xl font-semibold">Market map</h2><p className="text-sm text-mute">Across = 24h move, up / down = the AI's lean. Tap a coin to read it.</p></div>
+            <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● AI leans up</span><span className="text-bear">● AI leans down</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
           </div>
-          <div className="flex flex-1 items-center [&>*]:w-full"><Galaxy rows={rows} open={open} sel={focus} onSel={setSel} onHover={setHover} /></div>
+          <div className="flex flex-1 items-center [&>*]:w-full"><Galaxy rows={rows} open={open} sel={focus} onSel={setSel} onHover={setHover} board={boards[TFS.indexOf(tf as any)]?.data?.rows} /></div>
         </section>
         <Readout symbol={shown} row={rows.find((r) => r.symbol === shown)} f={(boards[TFS.indexOf(tf as any)]?.data?.rows ?? []).find((r: any) => r.symbol === shown)} tf={tf}
           onScan={() => { setSel(shown); scan(); }} />
@@ -522,14 +536,14 @@ export default function Command() {
           <div className="mt-3 flex flex-wrap justify-center gap-3 text-xs text-mute"><span className="text-bull">● long</span><span className="text-bear">● short</span><span className="text-accent">◎ grade A</span></div>
         </div>
         <div className="cc-flight-lanes">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Journeys</h2><span className="text-xs text-mute">stop → entry → targets</span></div>
-          <div className="mt-3 flex-1"><SignalJourneys track={track.data} /></div>
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Journeys</h2><span className="text-xs text-mute">stop · entry · targets · now</span></div>
+          <div className="flex-1"><SignalLadders track={track.data} /></div>
         </div>
       </section>
       {/* market forces: universe beside mission control, then the globe full width */}
       <div className="cc-forces">
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="BTC link map">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">BTC link map</h2><span className="text-xs text-mute">moves with BTC · 7 days</span></div>
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Racing BTC">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Racing BTC</h2><span className="text-xs text-mute">7 days · rebased to 0%</span></div>
           <Universe peers={peers} status={dash.data?.market_status} mc={mc.data} onSel={pick} tf={tf} />
         </section>
         <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="System status">
@@ -542,7 +556,7 @@ export default function Command() {
         <div className="mt-3 flex-1"><LazyMount height={380}><Suspense fallback={<div className="skeleton h-[360px] rounded-xl" />}><MarketGlobe news={news.data} /></Suspense></LazyMount></div>
       </section>
       <section id="cc-scan" className="cc-panel cc-scan scroll-mt-20 p-4 sm:p-6" aria-label={`Coin deep dive: ${name(focus)}`}>
-        <Scan symbol={focus} row={row} f4={f4} tf={tf} />
+        <Scan symbol={focus} row={row} f4={f4} tf={tf} rank={[...rows].sort((a, b) => (b.quote_volume_24h ?? 0) - (a.quote_volume_24h ?? 0)).findIndex((r) => r.symbol === focus) + 1 || undefined} />
       </section>
       <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">
         <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Coin vs coin</h2><span className="text-xs text-mute">pick up to 3</span></div>

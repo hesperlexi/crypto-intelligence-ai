@@ -79,6 +79,67 @@ export function SignalJourneys({ track }: { track: any }) {
   );
 }
 
+/** AI Intelligence "Journeys" (owner's pick, 24 Nov 2026: level ladders). One upright ladder per running call, like a
+ *  thermometer: the stop at the bottom, the entry in gold, TP1-TP3 (or the runner's final target) above; the bar fills
+ *  from the entry to the live price (green above, red below), reached targets are ticked, the stop in force (break-even
+ *  / TP1 after a hit, or an admin stop) is marked amber. Best progress first. Same data as before. */
+export function SignalLadders({ track }: { track: any }) {
+  const { tickers } = useLive();
+  const { shown, more, total } = useOpenCalls(track);
+  if (!total) return <Empty />;
+  const legs = shown.map((x) => legOf(x, tickers[x.symbol]?.last ?? undefined)).sort((a, b) => (b.r ?? -99) - (a.r ?? -99));
+  const live = legs.filter((l) => l.r != null);
+  const green = live.filter((l) => (l.r ?? 0) >= 0).length;
+  const avg = live.length ? live.reduce((t, l) => t + (l.r ?? 0), 0) / live.length : null;
+  const hitCount = legs.reduce((t, l) => t + l.hits.filter(Boolean).length, 0);
+  return (
+    <div className="fc-wrap">
+      <div className="fc-sum">
+        <span><b className="num">{total}</b> running</span>
+        <span><b className="num text-bull">{green}</b> in profit</span>
+        <span><b className="num text-bear">{live.length - green}</b> below entry</span>
+        <span>avg <b className={`num ${(avg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{rTxt(avg)}</b></span>
+        <span><b className="num text-accent">{hitCount}</b> targets hit</span>
+      </div>
+      <ul className="ld-grid">{legs.map((l) => <Ladder key={l.x.id ?? `${l.x.symbol}${l.x.created_at}`} l={l} />)}</ul>
+      <More n={more} />
+    </div>
+  );
+}
+
+function Ladder({ l }: { l: Leg }) {
+  const { x } = l;
+  const top = (t: number) => `${(1 - t) * 100}%`;
+  const lo = Math.min(l.e, l.c), hi = Math.max(l.e, l.c);
+  const tone = l.pending || l.r == null ? "mute" : l.up ? "bull" : "bear";
+  const runner = x.runner?.on && isNum(x.runner.target);
+  const marks: [number, string, string, boolean][] = [
+    ...l.tps.map((p, k) => [l.at(p), `TP${k + 1}`, "tp", l.hits[k]] as [number, string, string, boolean]),
+    ...(runner ? [[1, `1:${x.runner.rr ?? 4}`, "tp", false] as [number, string, string, boolean]] : []),
+    [l.e, "Entry", "en", false], [0, "SL", "sl", false],
+  ];
+  const sIn = isNum(l.sNow) && l.sNow !== x.stop ? l.at(l.sNow) : null;
+  return (
+    <li className={`ld-card is-${tone}`}>
+      <Link to={`/asset/${slug(x.symbol)}?tf=${x.timeframe}`} className="ld-head" title={`${name(x.symbol)} ${x.timeframe} ${l.s > 0 ? "long" : "short"}: ${l.label}`}>
+        <CoinAvatar symbol={x.symbol} size={26} />
+        <b>{name(x.symbol)}</b>
+        <span className="ld-sub">{String(x.timeframe).toUpperCase()} · <span className={l.s > 0 ? "text-bull" : "text-bear"}>{l.s > 0 ? "▲" : "▼"}</span></span>
+      </Link>
+      <div className="ld-scale" role="img" aria-label={`${name(x.symbol)}: ${l.pending ? "waiting for entry" : rTxt(l.r)}, ${l.hits.filter(Boolean).length} of ${l.tps.length} targets hit`}>
+        <i className="ld-track" />
+        {!l.pending && l.r != null && <i className={`ld-fill is-${tone}`} style={{ top: top(hi), height: `${(hi - lo) * 100}%` }} />}
+        {marks.map(([t, lab, kind, hit]) => (
+          <span key={lab} className={`ld-mark is-${kind} ${hit ? "is-hit" : ""}`} style={{ top: top(t) }}><em>{lab}{hit ? " ✓" : ""}</em></span>
+        ))}
+        {sIn != null && <span className="ld-stopnow" style={{ top: top(sIn) }} title="Stop in force" />}
+        {!l.pending && l.r != null && <span className={`ld-dot is-${tone}`} style={{ top: top(l.c) }} />}
+      </div>
+      <div className={`ld-r text-${tone}`}>{l.pending ? "Waiting" : rTxt(l.r)}</div>
+    </li>
+  );
+}
+
 /** Home (owner's pick, 22 Nov 2026): one arc gauge per running call. Left end = stop, right end = last target; red arc =
  *  risk, gold/green arc = room to the targets; the live price is the glowing needle tip, the filled arc runs from the
  *  entry to it; target diamonds light up when hit. */

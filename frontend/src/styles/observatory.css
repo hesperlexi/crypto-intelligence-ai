@@ -1034,3 +1034,63 @@ header.tb-premium > :last-child::after, .obs-horizon {
   .opp-decision{text-align:left}
   .opp-head,.opp-top>div,.opp-cols>section,.opp-foot{padding-left:1rem;padding-right:1rem}
 }
+
+/* AI Intelligence background: soft gold price lines drifting across the screen (owner, 24 Nov 2026) */
+.pl-bg { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.pl-bg svg { position: absolute; inset: 0; width: 200%; height: 100%; }
+.pl-line { animation: pl-drift linear infinite; will-change: transform; }
+.pl-line.pl-rev { animation-direction: reverse; }
+@keyframes pl-drift { from { transform: translateX(0); } to { transform: translateX(-1600px); } }
+[data-theme="light"] .pl-bg { opacity: .6; }
+@media (prefers-reduced-motion: reduce) { .pl-line { animation: none; } }
+
+/* Journeys = level ladders (owner, 24 Nov 2026) */
+.ld-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-top: 12px; }
+.ld-card { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 10px 6px 10px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.06); background: rgb(var(--glass) / 0.02); min-width: 0; }
+.ld-head { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; min-width: 0; }
+.ld-head b { font-size: .8125rem; font-weight: 600; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ld-sub { font-size: .6875rem; color: rgb(var(--mute)); }
+.ld-scale { position: relative; width: 100%; height: 190px; }
+.ld-track { position: absolute; left: 50%; top: 0; bottom: 0; width: 8px; margin-left: -4px; border-radius: 4px; background: rgb(var(--glass) / 0.07); }
+.ld-fill { position: absolute; left: 50%; width: 8px; margin-left: -4px; border-radius: 4px; }
+.ld-fill.is-bull { background: rgb(var(--bull)); box-shadow: 0 0 12px rgb(var(--bull) / 0.45); }
+.ld-fill.is-bear { background: rgb(var(--bear)); box-shadow: 0 0 12px rgb(var(--bear) / 0.45); }
+.ld-mark { position: absolute; left: 4px; right: 4px; height: 0; border-top: 1px dashed rgb(var(--glass) / 0.18); }
+.ld-mark em { position: absolute; left: 0; bottom: 1px; font-style: normal; font-size: .625rem; line-height: 1; color: rgb(var(--mute)); }
+.ld-mark.is-tp { border-top-color: rgb(var(--bull) / 0.35); }
+.ld-mark.is-tp.is-hit em { color: rgb(var(--bull)); }
+.ld-mark.is-en { border-top: 1px solid rgb(var(--accent) / 0.7); }
+.ld-mark.is-en em { color: rgb(var(--accent)); }
+.ld-mark.is-sl { border-top-color: rgb(var(--bear) / 0.45); }
+.ld-mark.is-sl em { color: rgb(var(--bear)); top: 3px; bottom: auto; }
+.ld-stopnow { position: absolute; left: 50%; width: 16px; height: 2px; margin-left: -8px; background: rgb(var(--warn)); border-radius: 1px; }
+.ld-dot { position: absolute; left: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; background: rgb(var(--panel)); border: 2px solid rgb(var(--mute)); }
+.ld-dot.is-bull { border-color: rgb(var(--bull)); } .ld-dot.is-bear { border-color: rgb(var(--bear)); }
+.ld-r { font-size: .875rem; font-weight: 600; font-variant-numeric: tabular-nums; }
+.rb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.rb-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; border: 1px solid rgb(var(--glass) / 0.08); background: rgb(var(--glass) / 0.02); font-size: .75rem; }
+.rb-chip:hover { border-color: rgb(var(--accent) / 0.4); }
+.rb-chip b { font-weight: 600; }
+/* the price lines show through the AI Intelligence cards a little */
+body:has(.pl-bg) .cc-page .cc-panel { background: rgb(var(--panel) / 0.8) !important; }
+
+/* Coin deep dive = trading card (owner, 24 Nov 2026) */
+.tc-wrap { display: grid; gap: 22px; }
+@media (min-width: 1024px) { .tc-wrap { grid-template-columns: 420px minmax(0, 1fr); align-items: stretch; } }
+.tc-card { position: relative; overflow: hidden; border-radius: 20px; padding: 22px; border: 1px solid rgb(var(--accent) / 0.35);
+  background: linear-gradient(135deg, rgb(var(--accent) / 0.14) 0%, rgb(var(--panel)) 45%, rgb(var(--ink)) 100%);
+  box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.08); display: flex; flex-direction: column; }
+.tc-glow { position: absolute; right: -50px; top: -50px; width: 220px; height: 220px; border-radius: 50%; background: radial-gradient(circle, rgb(var(--accent) / 0.22), transparent 65%); pointer-events: none; }
+.tc-head { position: relative; display: flex; align-items: center; gap: 12px; }
+.tc-name { font-size: 1.25rem; font-weight: 600; line-height: 1.2; }
+.tc-call { margin-left: auto; white-space: nowrap; font-size: .75rem; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid rgb(var(--accent) / 0.4); color: rgb(var(--accent)); }
+.tc-call.is-long { color: rgb(var(--bull)); border-color: rgb(var(--bull) / 0.45); background: rgb(var(--bull) / 0.1); }
+.tc-call.is-short { color: rgb(var(--bear)); border-color: rgb(var(--bear) / 0.45); background: rgb(var(--bear) / 0.1); }
+.tc-price { position: relative; margin-top: 20px; font-size: 2.5rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.1; }
+.tc-spark { margin-top: auto; padding-top: 14px; width: 100%; height: auto; }
+.tc-levels { display: flex; justify-content: space-between; gap: 8px; margin-top: 8px; font-size: .75rem; }
+.tc-side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.tc-facts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+@media (min-width: 640px) { .tc-facts { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.tc-fact { padding: 11px 13px; border-radius: 12px; border: 1px solid rgb(var(--glass) / 0.07); background: rgb(var(--glass) / 0.025); min-width: 0; }
+.tc-note { padding: 12px 14px; border-radius: 12px; border: 1px solid rgb(var(--ai) / 0.25); background: rgb(var(--ai) / 0.06); font-size: .875rem; line-height: 1.5; }
