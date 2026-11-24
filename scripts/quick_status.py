@@ -70,6 +70,22 @@ _jobs = [d.to_dict() or {} for d in fs.collection("jobs").where("type", "==", "t
 out["telegram_post_jobs"] = [{"status": j.get("status"), "created_at": j.get("created_at"),
                               "error": _re.sub(r"bot\d+:[\w-]+", "bot***", str(j.get("error") or (j.get("result") or {}).get("reason") or ""))[:200]}
                              for j in sorted(_jobs, key=lambda j: -(j.get("created_at") or 0))[:5]]
+# every job type: how many done / failed / waiting, and the newest failure reasons (no user data)
+try:
+    js = {}
+    for d in fs.collection("jobs").stream():
+        j = d.to_dict() or {}
+        t = js.setdefault(str(j.get("type")), {"n": 0, "status": {}, "errors": [], "oldest_queued_min": None})
+        t["n"] += 1
+        st = str(j.get("status")); t["status"][st] = t["status"].get(st, 0) + 1
+        if j.get("error") and len(t["errors"]) < 3:
+            t["errors"].append(_re.sub(r"bot\d+:[\w-]+", "bot***", str(j.get("error")))[:160])
+        if st in ("queued", "pending", "running") and j.get("created_at"):
+            age = round((time.time() * 1000 - int(j["created_at"])) / 60000)
+            t["oldest_queued_min"] = max(t["oldest_queued_min"] or 0, age)
+    out["jobs_summary"] = js
+except Exception as exc:
+    out["jobs_summary"] = {"error": str(exc)[:200]}
 # v2.75 check: views/derivs summary + silver (XAG/USDT) models (counts / names only)
 try:
     dv = fs.document("views/derivs").get().to_dict()
