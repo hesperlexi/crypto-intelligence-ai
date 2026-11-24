@@ -147,6 +147,66 @@ export const OrbitDial = memo(function OrbitDial({ rows, fg, fgLabel, status }: 
   );
 });
 
+/* ================================================================== ThinkingSpectrum (Overview mood card, V3.1)
+   Owner's pick 24 Nov 2026 ("H"): a live "thinking" visualiser. Each watched coin is a bar around the AI core - colour =
+   the AI's lean (call or trend), length = strength (a call > a trend > neutral, then the board score). The bars breathe,
+   the core sends out cyan pulses, a thin gold ring carries Fear & Greed as an arc. BTC live in the centre; hover / focus a
+   coin to see it there. Same data as the old dial, no extra reads. */
+export const ThinkingSpectrum = memo(function ThinkingSpectrum({ rows, fg, fgLabel, status }: { rows?: any[]; fg?: number | null; fgLabel?: string; status?: any }) {
+  const id = useId().replace(/:/g, "");
+  const [hover, setHover] = useState<any>(null);
+  const list = useMemo(() => (rows ?? []).filter((x) => x?.symbol)
+    .map((x) => {
+      const v = leanOf(x), sc = isNum(x.score) ? Math.max(0, Math.min(100, x.score)) / 100 : 0.5;
+      return { x, v, k: Math.max(0.18, Math.min(1, 0.15 + 0.5 * Math.abs(v) + 0.35 * sc)) };
+    })
+    .sort((a, b) => b.v - a.v || b.k - a.k), [rows]);
+  const n = Math.max(1, list.length);
+  const C = 180, R0 = 66, LEN = 62, RING = 168;
+  const step = TAU / n, start = -Math.PI / 2;
+  const bw = Math.max(3, Math.min(9, (R0 * step) * 0.62));
+  const beadR = Math.max(6, Math.min(9.5, ((R0 + LEN + 14) * step) / 2 - 1.5));
+  const fv = isNum(fg) ? Math.max(0, Math.min(100, fg)) : null;
+  const bull = status?.bull ?? list.filter((p) => p.v > 0).length;
+  const bear = status?.bear ?? list.filter((p) => p.v < 0).length;
+  const fgCol = fv == null ? "rgb(var(--mute))" : fv < 25 ? BEAR : fv < 45 ? "rgb(var(--warn))" : fv <= 55 ? "rgb(var(--mute))" : BULL;
+  return (
+    <figure className="ins-dial ts-dial">
+      <svg viewBox="0 0 360 360" role="group" aria-label={`AI market spectrum: ${bull} bullish and ${bear} bearish of ${list.length} coins; Fear and Greed ${fv ?? "unknown"}`}>
+        <BeadDefs id={id} />
+        <circle cx={C} cy={C} r={RING} fill="none" stroke="rgb(var(--accent) / 0.35)" strokeWidth={1.2} />
+        {fv != null && fv > 0 && <path d={arcPath(C, C, RING, start, start + Math.max(0.02, (fv / 100) * TAU))} fill="none" stroke={fgCol} strokeWidth={3.5} strokeLinecap="round" />}
+        {list.map((p, i) => {
+          const a = start + (i + 0.5) * step, r1 = R0 + LEN * p.k;
+          const on = hover?.symbol === p.x.symbol;
+          return (
+            <line key={`b${p.x.symbol}`} x1={C + R0 * Math.cos(a)} y1={C + R0 * Math.sin(a)} x2={C + r1 * Math.cos(a)} y2={C + r1 * Math.sin(a)}
+              stroke={toneOf(p.v)} strokeWidth={on ? bw + 2 : bw} strokeLinecap="round" className="ts-bar" style={{ animationDelay: `${((i * 0.37) % 2.4).toFixed(2)}s`, animationDuration: `${(2 + p.k * 2).toFixed(1)}s` }} />
+          );
+        })}
+        <circle cx={C} cy={C} r={58} fill="rgb(var(--ink))" stroke="rgb(var(--accent))" strokeWidth={2.4} />
+        {[0, 0.8, 1.6].map((d) => <circle key={d} cx={C} cy={C} r={58} fill="none" stroke="rgb(var(--ai))" strokeWidth={1.2} className="ts-pulse" style={{ animationDelay: `${d}s` }} />)}
+        {list.map((p, i) => {
+          const a = start + (i + 0.5) * step, rb = R0 + LEN * p.k + beadR + 5;
+          const x = C + rb * Math.cos(a), y = C + rb * Math.sin(a), b = base(p.x.symbol);
+          return (
+            <Link key={p.x.symbol} to={`/asset/${slug(p.x.symbol)}`} className="ins-bead" aria-label={`${b}: ${words(p.v)}`}
+              onMouseEnter={() => setHover(p.x)} onMouseLeave={() => setHover(null)} onFocus={() => setHover(p.x)} onBlur={() => setHover(null)}>
+              <CoinBead id={id} symbol={p.x.symbol} x={x} y={y} r={hover?.symbol === p.x.symbol ? beadR + 1.5 : beadR} tone={toneOf(p.v)} ring={1} shade={false} />
+              <title>{`${b} · ${words(p.v)}`}</title>
+            </Link>
+          );
+        })}
+      </svg>
+      <DialCentre hover={hover} />
+      <figcaption className="ins-cap">
+        <span><b className="text-bull">{bull}</b> bullish · <b className="text-bear">{bear}</b> bearish <span className="text-mute">of {list.length} coins · 4H</span></span>
+        <span className="text-mute">Fear &amp; Greed <b className="num" style={{ color: fgCol }}>{fv ?? DASH}</b>{fgLabel ? ` · ${fgLabel}` : ""}</span>
+      </figcaption>
+    </figure>
+  );
+});
+
 function DialCentre({ hover }: { hover: any }) {
   const sym = hover?.symbol ?? "BTC/USDT";
   const t = useTickerThrottled(sym, 1000);

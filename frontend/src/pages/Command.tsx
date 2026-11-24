@@ -450,7 +450,7 @@ function MissionStrip({ tf, setTf, status, open, health, connected }: { tf: stri
   return (
     <section className="cc-mission" aria-label="System status">
       <div className="min-w-0">
-        <h1 className="page-title">Command Centre</h1>
+        <h1 className="page-title">AI Intelligence</h1>
         <p className="mt-1 flex items-center gap-2 text-sm text-mute"><span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-bull live-dot" : "bg-warn"}`} />Live market intelligence · real data only</p>
       </div>
       <dl className="cc-readouts">

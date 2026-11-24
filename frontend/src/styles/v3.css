@@ -146,3 +146,12 @@ body {
 .badge-neuron { animation: badge-blink 1.8s steps(1, end) infinite; }
 @keyframes badge-blink { 50% { opacity: 0.2; } }
 @media (prefers-reduced-motion: reduce) { .badge-neuron { animation: none; } }
+
+/* V3.1 Thinking Spectrum (owner's pick "H", 24 Nov 2026) */
+.ts-bar { animation: ts-breathe 3s ease-in-out infinite; }
+@keyframes ts-breathe { 50% { stroke-opacity: 0.5; } }
+.ts-pulse { transform-origin: 180px 180px; transform-box: view-box; animation: ts-pulse 2.4s ease-out infinite; opacity: 0; }
+@keyframes ts-pulse { 0% { transform: scale(1); opacity: 0.55; } 100% { transform: scale(1.26); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ts-bar, .ts-pulse { animation: none; } .ts-pulse { display: none; } }
+.ts-dial .ins-dial-centre .text-xl { font-size: 1rem; line-height: 1.3rem; }
+.ts-dial .ins-dial-centre .text-xs { font-size: 0.6875rem; }

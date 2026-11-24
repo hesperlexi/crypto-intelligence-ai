@@ -681,6 +681,10 @@ solid footer band with a gold rule (`FOOT_Y`, `luxFooter` uses the canvas height
 "Win/Loss at market" labels. Achievements: neural hexagon badge (`Achievements.medal` / `Medal`, `.ach-tile`,
 `.badge-neuron`). `components/TelegramButton.tsx` (tap twice to post, `telegramShare.postToTelegram`) on Weekly report,
 each achievement and the poster.
+Overview mood card dial = `Instruments.ThinkingSpectrum` (owner's pick "H", 24 Nov 2026; replaces `OrbitDial` there): one bar per
+coin round the AI core, colour = `leanOf`, length = 0.15 + 0.5·|lean| + 0.35·score, breathing bars `.ts-bar`, cyan core pulses
+`.ts-pulse`, gold ring with the Fear & Greed arc. Command page h1 now "AI Intelligence". Time-limit study 24 Nov
+(`results/exits-latest.json`): h_x2 / h_x4 / no_limit all FAIL (bootstrap 61-67 %) → time limits unchanged.
 
 ## Ideas not done yet
 Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance daily metrics

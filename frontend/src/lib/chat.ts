@@ -78,7 +78,7 @@ export async function pageContext(pathname: string, search: string): Promise<{ p
     case "command": {
       const tf = (() => { try { return localStorage.getItem("cia-cc-tf") || "4h"; } catch { return "4h"; } })();
       const [d, b] = await Promise.all([safe(`/dashboard?timeframe=${tf}`), briefing()]);
-      return { page: `Command Centre (${tf.toUpperCase()})`, data: { market: pick(d, ["market_status", "rows"]), briefing: b } };
+      return { page: `AI Intelligence (${tf.toUpperCase()})`, data: { market: pick(d, ["market_status", "rows"]), briefing: b } };
     }
     case "paper": {
       const sym = q.get("symbol") ?? "BTC/USDT";

@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
 import { Decisions, MarketStatus, MyCapital, MyPositions } from "../components/V3Home";
-import { OrbitDial } from "../components/Instruments";
+import { ThinkingSpectrum } from "../components/Instruments";
 import { BriefingPanel } from "../components/Polish";
 import MarketBoard, { IntelBrief } from "../components/MarketBoard";
 import { MacroCard, UnlocksList, VolOptionsCard } from "../components/Derivs";
@@ -43,7 +43,7 @@ export default function Dashboard() {
             <MarketStatus status4={status4} rows={dash4.data?.rows} embedded />
             <TodayLine track={track.data} />
           </div>
-          <OrbitDial rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
+          <ThinkingSpectrum rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
         </div>
       </section>
 
