@@ -189,17 +189,34 @@ def run(rt, sink, session: Any = None) -> dict[str, Any]:
             "rules_primed": len([1 for r in rt.db.query(f"SELECT last_state FROM alerts WHERE enabled = 1 AND type IN ({','.join('?' * len(W.CALL_RULES))})", W.CALL_RULES) if r.get("last_state") == "primed"])}
     for it in items:                                   # the watcher needs no rule ids
         it.pop("rules", None)
-    digest = hashlib.sha256(json.dumps(items, sort_keys=True).encode()).hexdigest()[:20]
+    members = _members(rt)
+    digest = hashlib.sha256(json.dumps([items, members], sort_keys=True).encode()).hexdigest()[:20]
     last = rt.db.get_setting("edge_watch_armed", None) or {}
     if last.get("hash") == digest and now_ms() - int(last.get("at") or 0) < REARM_S * 1000 and last.get("diag") == diag:
         return {**out, "armed": len(items), "sent": False}
-    r = sess.post(f"{EDGE_URL}/watch/arm", data=json.dumps({"armed": items, "diag": diag,
+    r = sess.post(f"{EDGE_URL}/watch/arm", data=json.dumps({"armed": items, "diag": diag, "members": members,
                                    "probe_token": next((d[0] for d in devs if (not admins or d[2] in admins)), devs[0][0] if devs else None)}, separators=(",", ":")),
                   headers={"X-Edge-Key": key, "Content-Type": "application/json"}, timeout=20)
     ok = getattr(r, "status_code", 0) == 200
     if ok:
         rt.db.set_setting("edge_watch_armed", {"hash": digest, "at": now_ms(), "n": len(items), "diag": diag})
     return {**out, "armed": len(items), "sent": ok, "status": getattr(r, "status_code", None), "diag": diag}
+
+
+def _members(rt) -> dict[str, int]:
+    """v3.1: approved members {uid: membership end ms, 0 = no end} from the engine's users cache (no extra reads), so the
+    Cloudflare Worker can check membership without reading Firestore (and while Firestore is over its quota)."""
+    users = ((rt.db.get_setting("users_cache", None) or {}).get("users")) or {}
+    out = {}
+    for uid, u in users.items():
+        if str(u.get("status")) == "approved":
+            try:
+                exp = int(float(u.get("expires_at") or 0))
+            except (TypeError, ValueError):
+                exp = 0
+            if not exp or exp > now_ms():
+                out[str(uid)] = exp
+    return out
 
 
 def sync_sent(rt, sink, sess) -> dict[str, Any]:

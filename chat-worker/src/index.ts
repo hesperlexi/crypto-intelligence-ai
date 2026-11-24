@@ -10,7 +10,7 @@
 //      other data, never gives financial advice, never invents numbers. Advisory text only; it changes nothing.
 // GET /health → {ok}. Nothing is stored except the counters and the membership cache (no questions, no answers).
 
-import { watchArm, watchInit, watchRun, watchStatus } from "./watch";
+import { memberOf, watchArm, watchInit, watchRun, watchStatus } from "./watch";
 
 export interface Env {
   KV: KVNamespace;
@@ -103,19 +103,35 @@ async function roleOf(claims: any, token: string, env: Env, appCheck: string | n
   const ck = `role:${claims.sub}`;
   const hit = ROLES.get(claims.sub);
   if (hit && hit.until > Date.now()) return hit.role === "member" ? "member" : null;
+  // v3.1: the engine's member list first (no Firestore read; works while Firestore is over its daily quota)
+  try {
+    const stub = env.VIEWS.get(env.VIEWS.idFromName("views"));
+    const m = await (await stub.fetch(`https://do/watch/member?u=${encodeURIComponent(claims.sub)}`)).text();
+    if (m === "member") { ROLES.set(claims.sub, { role: "member", until: Date.now() + 300_000 }); return "member"; }   // not listed: ask as before (a member approved minutes ago)
+  } catch { /* fall through */ }
   const cached = await store(env, "get", { k: ck });
   if (cached) { await keepRole(claims.sub, cached, env, false); return cached === "member" ? "member" : null; }
   const r = await fetch(`https://firestore.googleapis.com/v1/projects/${env.FIREBASE_PROJECT}/databases/(default)/documents/users/${claims.sub}`,
     { headers: { Authorization: `Bearer ${token}`, ...(appCheck ? { "X-Firebase-AppCheck": appCheck } : {}) } });
   let role: "member" | "none" = "none";
+  let exp = 0;
   if (r.ok) {
     const f = ((await r.json()) as any).fields ?? {};
     const status = f.status?.stringValue;
-    const exp = Number(f.expires_at?.integerValue ?? f.expires_at?.doubleValue ?? 0);
+    exp = Number(f.expires_at?.integerValue ?? f.expires_at?.doubleValue ?? 0);
     if (status === "approved" && (!exp || exp > Date.now())) role = "member";
+  } else if (r.status === 429 || r.status >= 500) {
+    // v3.1 (25 Nov 2026): Firestore over its daily quota (or down) says nothing about membership - use the last
+    // confirmed answer (kept 14 days, never past the membership's end) and cache nothing, so members keep live data
+    const last = await store(env, "get", { k: `role_last:${claims.sub}` });
+    const [lr, lexp] = String(last ?? "").split("|");
+    await note(env, `users read ${r.status}: using last known role (${lr || "none"})`);
+    if (lr === "member" && (!Number(lexp) || Number(lexp) > Date.now())) { ROLES.set(claims.sub, { role: "member", until: Date.now() + 120_000 }); return "member"; }
+    return null;
   }
   if (role !== "member") await note(env, `not a member: users read ${r.status}`);
   await keepRole(claims.sub, role, env, true);
+  if (role === "member") { try { await store(env, "put", { k: `role_last:${claims.sub}`, v: `member|${exp || 0}`, ttl: 14 * 86400 }); } catch { /* best effort */ } }
   return role === "member" ? "member" : null;
 }
 
@@ -352,6 +368,7 @@ export class ViewStore {
       if (u.pathname === "/watch/run") return Response.json(await watchRun(this.sql, this.env.FCM_SENDER_KEY));
       if (u.pathname === "/watch/arm") return Response.json({ ok: true, armed: watchArm(this.sql, await req.json().catch(() => null)) });
       if (u.pathname === "/watch/status") return Response.json(watchStatus(this.sql, Number(u.searchParams.get("since")) || 0));
+      if (u.pathname === "/watch/member") return new Response(memberOf(this.sql, String(u.searchParams.get("u") ?? "")));
       return new Response("not found", { status: 404 });
     }
     if (u.pathname.startsWith("/kv/")) {

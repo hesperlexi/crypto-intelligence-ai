@@ -46,7 +46,9 @@ def _edge_only(reason: str) -> None:
                         and (x.get("side") == "LONG") == (int(pz.get("side") or 0) > 0)]
                 rows.append({"bot": cfg.get("id"), "tf": tf, "opened_at": pz.get("opened_at"), "info_keys": sorted(inf.keys())[:16],
                              "grade": inf.get("grade"), "demo": inf.get("demo"),
-                             "record_same_coin_tf_side": [(x.get("status"), x.get("created_at")) for x in same][:3]})
+                             "pending_bars": cfg.get("pending_bars"), "exit_at": pz.get("exit_at"),
+                             "record_same_coin_tf_side": [{k: x.get(k) for k in ("status", "created_at", "fill_status", "filled_at", "closed_at",
+                                                           "exit_reason", "horizon_bars", "expires_at", "tp1_hit", "stop_hit")} for x in same][:3]})
         o["bots_open"] = rows
         for tf in ("15m", "1h", "4h", "12h"):
             fr = ((vv.get(f"futures_{tf}") or {}).get("data") or {}).get("rows") or []

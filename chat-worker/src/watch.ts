@@ -200,8 +200,24 @@ export function watchArm(sql: Sql, body: any): number {
   kvPut(sql, "armed", JSON.stringify(list));
   kvPut(sql, "engine_diag", JSON.stringify(body?.diag ?? null).slice(0, 2000));
   if (typeof body?.probe_token === "string") kvPut(sql, "probe_token", body.probe_token);
+  // v3.1: approved members {uid: membership end ms or 0} from the engine's users cache, so a membership check never
+  // needs a Firestore read (and still works while Firestore is over its daily quota)
+  if (body?.members && typeof body.members === "object") {
+    kvPut(sql, "members", JSON.stringify(body.members).slice(0, 200_000));
+    kvPut(sql, "members_at", String(Date.now()));
+  }
   kvPut(sql, "armed_at", String(Date.now()));
   return list.length;
+}
+
+/** "member" / "no" from the engine's list, "" when the list is missing or older than 2 h (then ask Firestore). */
+export function memberOf(sql: Sql, uid: string): string {
+  const at = Number(kvGet(sql, "members_at") ?? 0);
+  if (!at || Date.now() - at > 2 * 3_600_000) return "";
+  const m = JSON.parse(kvGet(sql, "members") ?? "{}");
+  if (!(uid in m)) return "no";
+  const exp = Number(m[uid]) || 0;
+  return !exp || exp > Date.now() ? "member" : "no";
 }
 
 export function watchStatus(sql: Sql, since: number) {
