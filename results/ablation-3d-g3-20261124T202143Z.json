@@ -1,0 +1,167 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "g3",
+ "timeframes": {
+  "3d": {
+   "coins_done": 14,
+   "skipped": [
+    "AAVE/USDT: control not evaluated: AAVE/USDT 3d: span too short to split; no_arima not evaluated: AAVE/USDT 3d: span too short to split; random_forest_only not evaluated: AAVE/USDT 3d: span too short to split; bo",
+    "APT/USDT: control not evaluated: APT/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: APT/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: APT/USDT 3d: no",
+    "AVAX/USDT: control not evaluated: AVAX/USDT 3d: span too short to split; no_arima not evaluated: AVAX/USDT 3d: span too short to split; random_forest_only not evaluated: AVAX/USDT 3d: span too short to split; bo",
+    "DOT/USDT: control not evaluated: DOT/USDT 3d: span too short to split; no_arima not evaluated: DOT/USDT 3d: span too short to split; random_forest_only not evaluated: DOT/USDT 3d: span too short to split; boost",
+    "FLOKI/USDT: control not evaluated: FLOKI/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: FLOKI/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: FLOKI/USDT ",
+    "GALA/USDT: control not evaluated: GALA/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: GALA/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: GALA/USDT 3d:",
+    "INJ/USDT: control not evaluated: INJ/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: INJ/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: INJ/USDT 3d: no",
+    "NEAR/USDT: control not evaluated: NEAR/USDT 3d: span too short to split; no_arima not evaluated: NEAR/USDT 3d: span too short to split; random_forest_only not evaluated: NEAR/USDT 3d: span too short to split; bo",
+    "PAXG/USDT: control not evaluated: PAXG/USDT 3d: span too short to split; no_arima not evaluated: PAXG/USDT 3d: span too short to split; random_forest_only not evaluated: PAXG/USDT 3d: span too short to split; bo",
+    "PEPE/USDT: control not evaluated: PEPE/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: PEPE/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: PEPE/USDT 3d:",
+    "PROM/USDT: control not evaluated: PROM/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: PROM/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: PROM/USDT 3d:",
+    "RARE/USDT: control not evaluated: RARE/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: RARE/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: RARE/USDT 3d:",
+    "SHIB/USDT: control not evaluated: SHIB/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: SHIB/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: SHIB/USDT 3d:",
+    "SOL/USDT: control not evaluated: SOL/USDT 3d: span too short to split; no_arima not evaluated: SOL/USDT 3d: span too short to split; random_forest_only not evaluated: SOL/USDT 3d: span too short to split; boost",
+    "SUI/USDT: control not evaluated: SUI/USDT 3d: no model / too few out-of-sample bars; no_arima not evaluated: SUI/USDT 3d: no model / too few out-of-sample bars; random_forest_only not evaluated: SUI/USDT 3d: no",
+    "UNI/USDT: control not evaluated: UNI/USDT 3d: span too short to split; no_arima not evaluated: UNI/USDT 3d: span too short to split; random_forest_only not evaluated: UNI/USDT 3d: span too short to split; boost"
+   ],
+   "control": {
+    "trades": 15,
+    "avg_r": -0.4387,
+    "total_r": -6.58,
+    "win_rate": 0.267,
+    "series": 14,
+    "brier_mean": 0.67808,
+    "log_loss_mean": 1.11763,
+    "drawdown_r_sum": 9.18
+   },
+   "no_arima": {
+    "trades": 23,
+    "avg_r": -0.3715,
+    "total_r": -8.55,
+    "win_rate": 0.348,
+    "series": 14,
+    "brier_mean": 0.68818,
+    "log_loss_mean": 1.1317,
+    "drawdown_r_sum": 13.24
+   },
+   "random_forest_only": {
+    "trades": 22,
+    "avg_r": -0.248,
+    "total_r": -5.46,
+    "win_rate": 0.364,
+    "series": 14,
+    "brier_mean": 0.66485,
+    "log_loss_mean": 1.09556,
+    "drawdown_r_sum": 12.14
+   },
+   "boosting_only": {
+    "trades": 24,
+    "avg_r": -0.1129,
+    "total_r": -2.71,
+    "win_rate": 0.5,
+    "series": 14,
+    "brier_mean": 0.75396,
+    "log_loss_mean": 1.25871,
+    "drawdown_r_sum": 11.11
+   },
+   "with_deep": {
+    "trades": 16,
+    "avg_r": -0.1522,
+    "total_r": -2.44,
+    "win_rate": 0.375,
+    "series": 14,
+    "brier_mean": 0.67246,
+    "log_loss_mean": 1.10819,
+    "drawdown_r_sum": 8.38
+   },
+   "no_arima_vs_control": {
+    "n_series": 14,
+    "share_better": 0.341,
+    "ci90_r_per_trade": [
+     -0.6656,
+     0.1786
+    ],
+    "brier_better_share": 0.143
+   },
+   "random_forest_only_vs_control": {
+    "n_series": 14,
+    "share_better": 0.609,
+    "ci90_r_per_trade": [
+     -0.5063,
+     0.4996
+    ],
+    "brier_better_share": 1.0
+   },
+   "boosting_only_vs_control": {
+    "n_series": 14,
+    "share_better": 0.864,
+    "ci90_r_per_trade": [
+     -0.1634,
+     0.6776
+    ],
+    "brier_better_share": 0.0
+   },
+   "with_deep_vs_control": {
+    "n_series": 14,
+    "share_better": 0.902,
+    "ci90_r_per_trade": [
+     -0.1021,
+     0.6623
+    ],
+    "brier_better_share": 0.929
+   }
+  }
+ },
+ "same_as_control": {
+  "3d": []
+ },
+ "models": {
+  "3d": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_arima": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ],
+   "random_forest_only": [
+    "prior_baseline",
+    "prev_candle",
+    "random_forest"
+   ],
+   "boosting_only": [
+    "prior_baseline",
+    "prev_candle",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ],
+   "with_deep": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ]
+  }
+ },
+ "seconds": 2847.9,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
