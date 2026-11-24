@@ -181,19 +181,24 @@ def run(rt, sink, session: Any = None) -> dict[str, Any]:
     except Exception as exc:
         out["status_error"] = str(exc)[:160]
     admins = {e.strip().lower() for e in os.environ.get("ADMIN_EMAILS", "").split(",") if e.strip()}
-    items = armed(rt.db, _devices(rt, sink), admins)
+    devs = _devices(rt, sink)
+    items = armed(rt.db, devs, admins)
+    from .. import watch as W
+    diag = {"devices": len(devs), "with_uid": sum(1 for d in devs if d[1]), "admins_set": len(admins),
+            "levels": len(call_levels(rt.db)),
+            "rules_primed": len([1 for r in rt.db.query(f"SELECT last_state FROM alerts WHERE enabled = 1 AND type IN ({','.join('?' * len(W.CALL_RULES))})", W.CALL_RULES) if r.get("last_state") == "primed"])}
     for it in items:                                   # the watcher needs no rule ids
         it.pop("rules", None)
     digest = hashlib.sha256(json.dumps(items, sort_keys=True).encode()).hexdigest()[:20]
     last = rt.db.get_setting("edge_watch_armed", None) or {}
-    if last.get("hash") == digest and now_ms() - int(last.get("at") or 0) < REARM_S * 1000:
+    if last.get("hash") == digest and now_ms() - int(last.get("at") or 0) < REARM_S * 1000 and last.get("diag") == diag:
         return {**out, "armed": len(items), "sent": False}
-    r = sess.post(f"{EDGE_URL}/watch/arm", data=json.dumps({"armed": items}, separators=(",", ":")),
+    r = sess.post(f"{EDGE_URL}/watch/arm", data=json.dumps({"armed": items, "diag": diag}, separators=(",", ":")),
                   headers={"X-Edge-Key": key, "Content-Type": "application/json"}, timeout=20)
     ok = getattr(r, "status_code", 0) == 200
     if ok:
-        rt.db.set_setting("edge_watch_armed", {"hash": digest, "at": now_ms(), "n": len(items)})
-    return {**out, "armed": len(items), "sent": ok, "status": getattr(r, "status_code", None)}
+        rt.db.set_setting("edge_watch_armed", {"hash": digest, "at": now_ms(), "n": len(items), "diag": diag})
+    return {**out, "armed": len(items), "sent": ok, "status": getattr(r, "status_code", None), "diag": diag}
 
 
 def sync_sent(rt, sink, sess) -> dict[str, Any]:

@@ -147,6 +147,7 @@ export function watchArm(sql: Sql, body: any): number {
     a && typeof a.key === "string" && typeof a.pair === "string" && isFinite(Number(a.level)) && (a.side === 1 || a.side === -1)
     && a.msg && typeof a.msg.tag === "string" && Array.isArray(a.tokens)).slice(0, 2000);
   kvPut(sql, "armed", JSON.stringify(list));
+  kvPut(sql, "engine_diag", JSON.stringify(body?.diag ?? null).slice(0, 2000));
   kvPut(sql, "armed_at", String(Date.now()));
   return list.length;
 }
@@ -154,5 +155,5 @@ export function watchArm(sql: Sql, body: any): number {
 export function watchStatus(sql: Sql, since: number) {
   const st = JSON.parse(kvGet(sql, "status") ?? "{}");
   const sent = sql.exec("SELECT key, at FROM wsent WHERE at >= ?", since).toArray().map((r: any) => [r.key, r.at]);
-  return { ...st, sent_keys: sent, bad_tokens: JSON.parse(kvGet(sql, "bad_tokens") ?? "[]") };
+  return { ...st, sent_keys: sent, bad_tokens: JSON.parse(kvGet(sql, "bad_tokens") ?? "[]"), engine_diag: JSON.parse(kvGet(sql, "engine_diag") ?? "null") };
 }
