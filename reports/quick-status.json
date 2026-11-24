@@ -70,7 +70,7 @@
   },
   "12h": {
    "rows": 30,
-   "updated": 1795507726501,
+   "updated": 1795511368492,
    "with_plan": 28,
    "grades": {
     "None": 28
@@ -82,7 +82,7 @@
   },
   "1d": {
    "rows": 30,
-   "updated": 1795507726504,
+   "updated": 1795511368497,
    "with_plan": 28,
    "grades": {
     "None": 28
@@ -94,7 +94,7 @@
   },
   "3d": {
    "rows": 30,
-   "updated": 1795507726506,
+   "updated": 1795511368501,
    "with_plan": 29,
    "grades": {
     "None": 29
@@ -133,7 +133,7 @@
   ],
   [
    "futures_12h",
-   59.5
+   59.4
   ],
   [
    "futures_4h",
@@ -145,15 +145,19 @@
   ],
   [
    "futures_1d",
-   54.4
+   54.6
+  ],
+  [
+   "dashboard_1h",
+   53.2
   ],
   [
    "futures_1h",
    53.2
   ],
   [
-   "dashboard_1h",
-   53.0
+   "dashboard_15m",
+   52.6
   ],
   [
    "dashboard_12h",
@@ -161,11 +165,7 @@
   ],
   [
    "dashboard_4h",
-   52.4
-  ],
-  [
-   "dashboard_15m",
-   52.3
+   52.5
   ],
   [
    "dashboard_1d",
@@ -211,26 +211,26 @@
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1795509357473,
-   "last_tick_finished": 1795509586949,
-   "last_tick_seconds": 229.5,
+   "last_tick_started": 1795510976558,
+   "last_tick_finished": 1795511255566,
+   "last_tick_seconds": 279.0,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7843,
-   "round_seconds_avg": 152.4,
-   "round_seconds_max": 291.2,
+   "ticks": 7847,
+   "round_seconds_avg": 150.6,
+   "round_seconds_max": 279.0,
    "rounds_measured": 48,
-   "watch_last_at": 1795509566603,
+   "watch_last_at": 1795511247003,
    "watch_coins": 3,
    "watch_priced": 3,
    "watch_sent_total": 406,
-   "flow_last_at": 1795509574794,
+   "flow_last_at": 1795511234864,
    "flow_coins": 28,
    "flow_errors": 0,
-   "firestore_writes_today": 408,
+   "firestore_writes_today": 624,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 209,
+   "firestore_reads_today": 378,
    "firestore_read_limit": 50000,
    "firestore_members_active": 7,
    "firestore_member_reserve": 420,
@@ -394,152 +394,152 @@
   "series_15m": [
    {
     "symbol": "PAXG/USDT",
-    "candles": 32754,
+    "candles": 32756,
     "status": "OK"
    },
    {
     "symbol": "XAG/USDT",
-    "candles": 30185,
+    "candles": 30187,
     "status": "OK"
    },
    {
     "symbol": "BTC/USDT",
-    "candles": 32754,
+    "candles": 32756,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 32754,
+    "candles": 32756,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 32754,
+    "candles": 32756,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 32754,
+    "candles": 32756,
     "status": "OK"
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 32754,
+    "candles": 32756,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 32752,
+    "candles": 32754,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 32752,
+    "candles": 32754,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 32752,
+    "candles": 32754,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 32754,
+    "candles": 32756,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 32753,
+    "candles": 32755,
     "status": "OK"
    },
    {
     "symbol": "GALA/USDT",
-    "candles": 32359,
+    "candles": 32361,
     "status": "OK"
    },
    {
     "symbol": "TRX/USDT",
-    "candles": 32751,
-    "status": "OK"
-   },
-   {
-    "symbol": "ADA/USDT",
-    "candles": 32754,
-    "status": "OK"
-   },
-   {
-    "symbol": "DOT/USDT",
     "candles": 32753,
     "status": "OK"
    },
    {
+    "symbol": "ADA/USDT",
+    "candles": 32756,
+    "status": "OK"
+   },
+   {
+    "symbol": "DOT/USDT",
+    "candles": 32755,
+    "status": "OK"
+   },
+   {
     "symbol": "SUI/USDT",
-    "candles": 32752,
+    "candles": 32754,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 32752,
+    "candles": 32754,
     "status": "OK"
    },
    {
     "symbol": "BCH/USDT",
-    "candles": 32752,
+    "candles": 32754,
     "status": "OK"
    },
    {
     "symbol": "WIF/USDT",
-    "candles": 30933,
+    "candles": 30935,
     "status": "OK"
    },
    {
     "symbol": "BONK/USDT",
-    "candles": 30928,
+    "candles": 30930,
     "status": "OK"
    },
    {
     "symbol": "APT/USDT",
-    "candles": 32752,
+    "candles": 32754,
     "status": "OK"
    },
    {
     "symbol": "ETC/USDT",
-    "candles": 30925,
+    "candles": 30927,
     "status": "OK"
    },
    {
     "symbol": "RARE/USDT",
-    "candles": 30758,
+    "candles": 30760,
     "status": "OK"
    },
    {
     "symbol": "SEI/USDT",
-    "candles": 30758,
+    "candles": 30760,
     "status": "OK"
    },
    {
     "symbol": "MSTR/USDT",
-    "candles": 30721,
+    "candles": 30723,
     "status": "OK"
    },
    {
     "symbol": "ANTHROPIC/USDT",
-    "candles": 21524,
+    "candles": 21526,
     "status": "OK"
    },
    {
     "symbol": "HYPE/USDT",
-    "candles": 5847,
+    "candles": 5849,
     "status": "OK"
    },
    {
     "symbol": "HBAR/USDT",
-    "candles": 32751,
+    "candles": 32753,
     "status": "OK"
    },
    {
     "symbol": "SHIB/USDT",
-    "candles": 30931,
+    "candles": 30933,
     "status": "OK"
    }
   ]
@@ -548,37 +548,37 @@
   "15m": {
    "n": 30,
    "fresh_12h": 0,
-   "max": 101.6,
+   "max": 102.1,
    "missing": 0
   },
   "1h": {
    "n": 30,
    "fresh_12h": 0,
-   "max": 29.4,
+   "max": 29.9,
    "missing": 0
   },
   "4h": {
    "n": 30,
    "fresh_12h": 26,
-   "max": 29.4,
+   "max": 29.9,
    "missing": 1
   },
   "12h": {
    "n": 30,
    "fresh_12h": 25,
-   "max": 29.4,
+   "max": 29.8,
    "missing": 1
   },
   "1d": {
    "n": 30,
    "fresh_12h": 26,
-   "max": 29.3,
+   "max": 29.8,
    "missing": 3
   },
   "3d": {
    "n": 30,
    "fresh_12h": 22,
-   "max": 0.4,
+   "max": 0.9,
    "missing": 8
   }
  },
@@ -705,9 +705,9 @@
  },
  "safety": [],
  "release": {
-  "launched_at": 1793386630880,
+  "updated_at": 1793386630880,
   "version": "2.1.0",
-  "updated_at": 1793386630880
+  "launched_at": 1793386630880
  },
  "track_record": {
   "record_since": 1793784369962,
@@ -846,39 +846,39 @@
  "bots": [
   {
    "id": "futures-signal-ab-1h",
-   "reset_token": "v218"
+   "reset_token": "v3"
   },
   {
    "id": "futures-signal-ab-4h",
-   "reset_token": "v218"
+   "reset_token": "v3"
   },
   {
    "id": "futures-signal-ab-12h",
-   "reset_token": "v218"
+   "reset_token": "v3"
   },
   {
    "id": "futures-signal-ab-15m",
-   "reset_token": "v218"
+   "reset_token": "v3"
   },
   {
    "id": "futures-signal-ab-3d",
-   "reset_token": "v218"
+   "reset_token": "v3"
   },
   {
    "id": "futures-test-tp08-15m",
-   "reset_token": "v240"
+   "reset_token": "v3"
   },
   {
    "id": "futures-demo-ab-1d",
-   "reset_token": "v264"
+   "reset_token": "v3"
   }
  ],
  "telegram": {
   "has_token": true,
   "has_channel": true,
   "post_weekly": true,
-  "post_wins": true,
   "post_teaser": true,
+  "post_wins": true,
   "enabled": true,
   "keys": [
    "channel",
@@ -891,7 +891,7 @@
  },
  "telegram_status": {
   "ok": true,
-  "checked_at": 1795507727316,
+  "checked_at": 1795511369441,
   "last_sent": [
    "briefing (waiting for approval)"
   ],
@@ -900,14 +900,8 @@
   "errors": 0
  },
  "telegram_drafts": {
-  "n": 1,
-  "items": [
-   {
-    "kind": "briefing",
-    "created_at": 1795500412965,
-    "at": null
-   }
-  ]
+  "n": 0,
+  "items": []
  },
  "push_tokens": 5,
  "telegram_post_jobs": [
