@@ -33,7 +33,7 @@ from .services import hesper, scalp_backfill
 from .services import briefing, coin_reports
 from .services import leaderboard, referrals
 from .services import guardian
-from .services import market_data, turn_detector
+from .services import market_data, risk_state, turn_detector
 from .services import perf_lab
 from .services import market_extras
 from .services import coin_scorecard
@@ -1599,6 +1599,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # never blocks the tick (it catches its own errors; the step wrapper catches anything else)
     if guardian.ENABLED:
         detail["guardian"] = step("guardian", lambda: guardian.Guardian(rt, sink).run(analyses))
+    # V3.0 market risk state (services/risk_state.py): one deterministic state from recorded inputs every tick;
+    # shown + stored on calls (shadow), applied only to members' practice auto-trade
+    detail["risk_state"] = step("risk_state", lambda: risk_state.run(rt, sink))
     # v2.22 live market data (OKX, stablecoins -> SQLite only) and the admin-only market turn detector (recommend-only,
     # never changes a call): hourly, each in its own step so a slow or failing source never stops the tick
     if fetch_context and now_ms() - int(rt.db.get_setting("market_turn_at", 0) or 0) >= turn_detector.PUBLISH_EVERY_S * 1000 - 120_000:
@@ -1736,7 +1739,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
 def _auto_paper(rt: Runtime, sink: BaseSink, analyses: dict[tuple[str, str], dict]) -> dict[str, Any]:
     """New futures signals into the paper accounts of members who switched auto-trading on."""
     rows = {tf: views.futures(rt, tf, analyses)["rows"] for tf in views.FUTURES_TIMEFRAMES if any(k[1] == tf for k in analyses)}
-    r = autopaper.run(sink, rows, users=load_users(rt, sink)[0])
+    rs = risk_state.current(rt.db)
+    r = autopaper.run(sink, rows, users=load_users(rt, sink)[0], risk=(rs or {}).get("state"))
     msgs = r.pop("push")
     if msgs:
         r["push"] = sink.send_push(msgs)

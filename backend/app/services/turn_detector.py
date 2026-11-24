@@ -255,5 +255,7 @@ def publish(rt, sink, symbols: list[str], now: int | None = None) -> dict[str, A
     if getattr(sink, "lean", False):
         return {"skipped": "lean"}
     v = run(rt, symbols, now)
+    rt.db.set_setting("market_turn_last", {"at": v["generated_at"], "state": v["market"]["state"], "trend": v["market"]["trend"],
+                                           "score": v["market"]["score"]})
     sink.view("market_turn", v, volatile=("generated_at",), min_interval_s=PUBLISH_EVERY_S, core=view_core(v))
     return {"market": v["market"]["state"], "coins": len(v["coins"])}

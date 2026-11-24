@@ -630,6 +630,13 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             risk_check["turn"] = turn_watch.against(rt, symbol, side_of(decision))
         except Exception:
             pass
+        try:                                   # V3.0: market risk state at publication (shadow; judged by replay later)
+            from . import risk_state
+            rs = risk_state.current(rt.db)
+            risk_check["state"] = (rs or {}).get("state") or "UNKNOWN"
+            risk_check["state_score"] = (rs or {}).get("score")
+        except Exception:
+            pass
     # v2.79 liquidity-sweep guard (proven: research_sweep.py, PASS): no new call against a fresh stop run on the coin
     if decision in TRADE_DECISIONS and live and bundle is None:
         try:

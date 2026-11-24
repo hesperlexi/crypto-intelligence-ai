@@ -37,7 +37,12 @@ TAKES = {"tp1": 0, "tp2": 1, "tp3": 2}
 MAX_OPEN_CAP = 10           # v2.64 (owner, 21 Nov 2026: "let's see more trades"; testing-mode 3 / 6 before)
 MAX_NEW_PER_DAY = 20
 DEFAULTS = {"enabled": False, "margin": 100.0, "leverage": "signal", "timeframes": ["1h", "4h"], "grades": "AB",
-            "take": "tp2", "max_open": 3, "coins": "all", "notify": True, "scale": True, "max_same_side": 3}
+            "take": "tp2", "max_open": 3, "coins": "all", "notify": True, "scale": True, "max_same_side": 3,
+            # V3.0 practice protection (owner brief 24 Nov 2026; practice only, never the record): stop opening new
+            # auto-trades after the account lost `daily_loss_pct` % today (realised, UTC day), keep the margin in use at
+            # or below `max_exposure_pct` % of the account, and follow the market risk state (HIGH = half size,
+            # SEVERE = nothing new). Members can change all three in the auto-trade settings.
+            "daily_loss_pct": 5.0, "max_exposure_pct": 50.0, "follow_risk": True}
 
 
 def _rid(n: int = 10) -> str:
@@ -72,7 +77,46 @@ def settings_of(raw: dict[str, Any] | None) -> dict[str, Any]:
     s["max_open"] = int(max(1, min(MAX_OPEN_CAP, int(s.get("max_open") or MAX_OPEN_CAP))))
     s["max_same_side"] = int(max(1, min(50, int(s.get("max_same_side") or 3))))
     s["scale"] = bool(s.get("scale", True))
+    for k, lo, hi in (("daily_loss_pct", 0.5, 100.0), ("max_exposure_pct", 5.0, 100.0)):
+        try:
+            s[k] = float(max(lo, min(hi, float(s[k]))))
+        except (TypeError, ValueError):
+            s[k] = DEFAULTS[k]
+    s["follow_risk"] = bool(s.get("follow_risk", True))
     return s
+
+
+def equity_of(acc: dict[str, Any]) -> float:
+    """Account value from realised money only: free wallet + margin in positions + reserves of open orders."""
+    return float(acc.get("wallet") or 0) + sum(float(x.get("margin") or 0) for x in (acc.get("positions") or {}).values()) \
+        + sum(float(x.get("reserve") or 0) for x in (acc.get("orders") or {}).values())
+
+
+def in_use(acc: dict[str, Any]) -> float:
+    return sum(float(x.get("margin") or 0) for x in (acc.get("positions") or {}).values()) \
+        + sum(float(x.get("reserve") or 0) for x in (acc.get("orders") or {}).values())
+
+
+def protection(acc: dict[str, Any], s: dict[str, Any], guard: dict[str, Any] | None, now: int) -> tuple[str | None, float]:
+    """(reason to skip or None, size factor). Same rules for every auto-trade path."""
+    g = guard or {}
+    if s["follow_risk"]:
+        from . import risk_state
+        pol = risk_state.practice_policy(g.get("risk"))
+        if not pol["open_new"]:
+            return "market risk is severe: no new auto-trades until it falls", 0.0
+        size = pol["size"]
+    else:
+        size = 1.0
+    eq = equity_of(acc)
+    day = g.get("day") or {}
+    if day.get("d") == now // 86_400_000 and day.get("eq"):
+        start = float(day["eq"]) + (float(acc.get("deposited") or 0) - float(day.get("dep") or acc.get("deposited") or 0))
+        if start > 0 and (start - eq) / start * 100 >= s["daily_loss_pct"]:
+            return f"daily loss limit reached ({s['daily_loss_pct']:g}% of the account today)", 0.0
+    if eq > 0 and in_use(acc) / eq * 100 >= s["max_exposure_pct"]:
+        return f"exposure limit reached ({s['max_exposure_pct']:g}% of the account in use)", 0.0
+    return None, size
 
 
 def candidates(rows_by_tf: dict[str, list[dict[str, Any]]]) -> list[dict[str, Any]]:
@@ -93,7 +137,8 @@ def origin_of(sig: dict[str, Any]) -> dict[str, Any]:
             "side": "LONG" if int(sig["side"]) > 0 else "SHORT", "at": call.get("created_at")}
 
 
-def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], now: int) -> tuple[dict[str, Any] | None, dict[str, Any]]:
+def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], now: int,
+          guard: dict[str, Any] | None = None) -> tuple[dict[str, Any] | None, dict[str, Any]]:
     """Pure function: the new account document (or None to leave it) and a result record."""
     acc = acc or new_account(now)
     sym, side, p = sig["symbol"], int(sig["side"]), sig["plan"]
@@ -137,6 +182,9 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
                                                "reason": f"already {same} {'long' if side > 0 else 'short'} trades open (same-direction limit)"}
     if len(positions) + len(orders) >= s["max_open"]:
         return (acc if reversed_ else None), {**res, "action": "skipped", "reason": f"the limit of {s['max_open']} open trades is reached"}
+    why, size = protection(acc, s, guard, now)
+    if why:
+        return (acc if reversed_ else None), {**res, "action": "skipped", "reason": why}
     stop = float(p["stop"])
     targets = p["targets"]
     take = float(targets[min(TAKES[s["take"]], len(targets) - 1)]["price"])
@@ -158,7 +206,14 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
         lev = max(1, min(lev, safe, MAX_LEV))           # never so high that liquidation comes before the stop
     from .bots import size_multiplier
     mult = size_multiplier(sig.get("grade"), sig.get("filter_score"), sig.get("filter_threshold")) if s["scale"] else 1.0
-    margin = round(float(s["margin"]) * mult, 2)
+    margin = round(float(s["margin"]) * mult * size, 2)
+    eq = equity_of(acc)
+    room = eq * s["max_exposure_pct"] / 100 - in_use(acc)
+    if margin > room:                        # shrink to the exposure room; skip when that halves the plan
+        if room < margin / 2:
+            return (acc if reversed_ else None), {**res, "action": "skipped",
+                                                   "reason": f"exposure limit ({s['max_exposure_pct']:g}% of the account)"}
+        margin = round(room, 2)
     if market:
         qty = margin * lev / entry
         fee = qty * entry * FEE
@@ -184,7 +239,7 @@ def place(acc: dict[str, Any] | None, sig: dict[str, Any], s: dict[str, Any], no
 
 
 def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = None,
-        users: dict[str, dict[str, Any]] | None = None) -> dict[str, Any]:
+        users: dict[str, dict[str, Any]] | None = None, risk: str | None = None) -> dict[str, Any]:
     """`users`: the members' records (worker.load_users, re-read every 30 min); read here when not given.
     Only the auto-trade settings that are switched on are read (a query on `enabled`, not every member's settings)."""
     now = now or now_ms()
@@ -206,6 +261,8 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
         out["members"] += 1
         state = sink.get(f"auto_paper_state/{uid}") or {}
         done: dict[str, int] = dict(state.get("done") or {})
+        day = dict(state.get("day") or {})
+        guard = {"risk": risk, "day": day}
         mine = set((sink.get(f"user_coins/{uid}") or {}).get("symbols") or []) if s["coins"] == "mine" else None
         entries = []
         for sig in sigs:
@@ -219,7 +276,12 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
             # one entry per signal: the same call is not re-entered on later candles for 6 bars
             if now - int(done.get(key, 0)) < 6 * tf_ms(sig["timeframe"]):
                 continue
-            result = sink.transact(f"paper/{uid}_futures", lambda acc, sig=sig: place(acc, sig, s, now))
+            if day.get("d") != now // 86_400_000:   # first auto-trade check of the UTC day: remember the start value
+                acc0 = sink.get(f"paper/{uid}_futures")
+                if acc0:
+                    day = {"d": now // 86_400_000, "eq": round(equity_of(acc0), 2), "dep": float(acc0.get("deposited") or 0)}
+                    guard["day"] = day
+            result = sink.transact(f"paper/{uid}_futures", lambda acc, sig=sig: place(acc, sig, s, now, guard))
             done[key] = now
             if result.get("reversed"):
                 acc_id = (sink.get(f"paper/{uid}_futures") or {}).get("id")
@@ -247,6 +309,6 @@ def run(sink, rows_by_tf: dict[str, list[dict[str, Any]]], now: int | None = Non
                                     "url": "/paper?market=futures", "tag": f"auto-{uid}-{sig['symbol']}"})
         if entries or not state:
             done = {k: v for k, v in done.items() if now - v < 14 * 86_400_000}
-            sink.set(f"auto_paper_state/{uid}", {"done": done, "updated_at": now,
+            sink.set(f"auto_paper_state/{uid}", {"done": done, "updated_at": now, "day": day,
                                                   "log": (entries + list(state.get("log") or []))[:60]})
     return out

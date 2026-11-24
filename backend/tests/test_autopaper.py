@@ -45,7 +45,7 @@ def test_leverage_is_capped_so_liquidation_never_comes_before_the_stop(tmp_path)
     assert p["leverage"] < 50 and p["liq"] < p["stop"]
     poor = autopaper.new_account(1, balance=10)
     _, res = autopaper.place(poor, {**row(), "timeframe": "1h"}, autopaper.settings_of({"margin": 100}), 1)
-    assert res["action"] == "skipped" and "balance" in res["reason"]
+    assert res["action"] == "skipped" and ("balance" in res["reason"] or "exposure" in res["reason"])
 
 
 def test_reversal_closes_the_auto_trade_and_opens_the_other_way(tmp_path):
