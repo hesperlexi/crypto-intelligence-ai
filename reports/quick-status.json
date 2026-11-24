@@ -7,7 +7,7 @@
   "last_put": 1795554250482
  },
  "cloud_watcher": {
-  "at": 1795554313494,
+  "at": 1795554433840,
   "armed": 24,
   "priced": 2,
   "sent_total": 0,
@@ -86,11 +86,21 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": [
-    [
-     "OPEN",
-     1795552505107
-    ]
+    {
+     "status": "OPEN",
+     "created_at": 1795552505107,
+     "fill_status": "FILLED",
+     "filled_at": 1795552505107,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 200,
+     "expires_at": 1796272505107,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
    ]
   },
   {
@@ -117,11 +127,21 @@
    ],
    "grade": "B",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": [
-    [
-     "EXPIRED",
-     1795511484672
-    ]
+    {
+     "status": "EXPIRED",
+     "created_at": 1795511484672,
+     "fill_status": "FILLED",
+     "filled_at": 1795511484672,
+     "closed_at": 1795527359083,
+     "exit_reason": "admin_close",
+     "horizon_bars": 30,
+     "expires_at": 1796807484672,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
    ]
   },
   {
@@ -147,11 +167,21 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": [
-    [
-     "EXPIRED",
-     1795512807185
-    ]
+    {
+     "status": "EXPIRED",
+     "created_at": 1795512807185,
+     "fill_status": "FILLED",
+     "filled_at": 1795512807185,
+     "closed_at": 1795514575772,
+     "exit_reason": "admin_close",
+     "horizon_bars": 250,
+     "expires_at": 1795737807185,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
    ]
   },
   {
@@ -178,11 +208,21 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": [
-    [
-     "OPEN",
-     1795537930021
-    ]
+    {
+     "status": "OPEN",
+     "created_at": 1795537930021,
+     "fill_status": "FILLED",
+     "filled_at": 1795537930021,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 250,
+     "expires_at": 1795762930021,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
    ]
   },
   {
@@ -209,11 +249,21 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": [
-    [
-     "EXPIRED",
-     1795512807185
-    ]
+    {
+     "status": "EXPIRED",
+     "created_at": 1795512807185,
+     "fill_status": "FILLED",
+     "filled_at": 1795512807185,
+     "closed_at": 1795514575772,
+     "exit_reason": "admin_close",
+     "horizon_bars": 250,
+     "expires_at": 1795737807185,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
    ]
   },
   {
@@ -240,11 +290,21 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": [
-    [
-     "OPEN",
-     1795537930021
-    ]
+    {
+     "status": "OPEN",
+     "created_at": 1795537930021,
+     "fill_status": "FILLED",
+     "filled_at": 1795537930021,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 250,
+     "expires_at": 1795762930021,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
    ]
   },
   {
@@ -270,6 +330,8 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": []
   },
   {
@@ -295,6 +357,8 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": []
   },
   {
@@ -320,6 +384,8 @@
    ],
    "grade": "A",
    "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
    "record_same_coin_tf_side": []
   }
  ],
