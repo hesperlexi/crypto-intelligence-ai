@@ -651,6 +651,12 @@ configuration, market data + candle series table, models table, recent errors (c
   decides. Preview seed `assetAnalysis()` (views/analysis_BTCUSDT_4h).
 - Overview mood card turns 15M → 1H → 4H every 10 s (`Dashboard.useMoodRotation`, `MoodTfSwitch` `.mood-tf`; tap holds a
   timeframe, Auto resumes; paused on hover / hidden tab; +2 view listeners dashboard_15m / _1h).
+- AI Intelligence page (owner's picks, 24 Nov 2026): Market map = Opportunity quadrant (`Command.Galaxy`: x = 24h move,
+  y = P(up)−P(down) from the chosen TF's futures board, size = volume, colour = AI lean, labels skip collisions) ·
+  Live signals radar kept · Journeys = level ladders (`CommandPlus.SignalLadders`, `.ld-*`) · BTC link map = Racing BTC
+  (`Command.Universe`: 7-day hourly closes rebased to 0 %, correlation + beta chips, `.rb-*`) · Market heat kept ·
+  Coin deep dive = trading card (`Command.Scan`, `.tc-*`) · background = drifting gold price lines (`components/PriceLines.tsx`,
+  portal, `.pl-bg`, cards 80 % opaque on that page). Options mockups were scratch files only.
 - Version 3.1.0 everywhere (package.json → footer, Settings, APK name). Manual: 1d = demo bots, stale risk = half size, card.
 - Telegram news: `post_news` sends only high-impact US releases ~30 min before (a few a week); briefings wait for the owner's
   approval while "Ask me before posting" is on. `quick_status.py` now reports the calendar (`news`).
