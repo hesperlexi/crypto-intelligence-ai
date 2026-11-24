@@ -1070,5 +1070,25 @@
   "run_numbers": [],
   "run_trades": [],
   "laststand": null
+ },
+ "news": {
+  "updated": 1795524847983,
+  "generated_at": 1795524847981,
+  "calendar_n": 7,
+  "high_usd": [
+   {
+    "title": "Core PCE Price Index m/m",
+    "ts": 1795613400000,
+    "past": false
+   },
+   {
+    "title": "Prelim GDP q/q",
+    "ts": 1795613400000,
+    "past": false
+   }
+  ],
+  "next_high": "Core PCE Price Index m/m",
+  "headlines_n": 30,
+  "errors": []
  }
 }
