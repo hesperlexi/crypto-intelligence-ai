@@ -1382,3 +1382,27 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
 - Study `app/research_liq.py` (`research-liq.yml`, `results/liq-latest.json`, 23 Nov: 862 calls with history, baseline =
   live pipeline + sweep guard +33.7R / DD 31.6R): liquidation-flush pause (coin/btc, k3/k5, 8h/24h) and "sweep needs a
   liquidation spike" — **all FAIL / INCONCLUSIVE, nothing live**. Data keeps building; re-test when 1h history is longer.
+
+## V3.0 (owner brief "Master Development Prompt V3.0", 24 Nov 2026)
+- Phase 1 docs (Claude Docs): "Crypto Intelligence AI — V3.0 Phase 1 Audit & Plan", "Incident report — losses of 21–23
+  November 2026". Read-only tools: `app/reset_inventory.py` (`reset-inventory.yml`), `app/v3_review.py` (`v3-review.yml`).
+- **Owner decisions 24 Nov:** Hesper main run journey = concept A "Path to Superintelligence" (seed → 2x Learning → 5x
+  Reasoning → 10x Superintelligence core; liquidation = "Shutdown" grid); Last Stand = concept C "The Singularity" (goal =
+  Singularity point, liquidation = "Null" void). Logo = B+D blend: original gold artwork, soft-black tile, gold neurons +
+  cyan links, cyan dashed ring, NO space (stars / nebula / satellite gone). Themes: Graphite (dark) + Ivory (light) only.
+  Results page IS redesigned (supersedes 17 Nov "keep as is"). Names / menu / Overview layout of the plan approved
+  (Command Centre → "AI Intelligence", galaxy → Market map, Mission control → System status, Deep-space scan → Coin deep
+  dive, Signals in flight → Live signals; menu Overview · AI Intelligence · Risk · Signals · Trade · Portfolio · Results).
+  Reset = ARCHIVE testing results (not delete), members' practice trades untouched, only after the exact phrase
+  RESET TESTING RESULTS. Design reference = owner's Replit mockup (Redesign.rar): Instrument Serif titles, DM Sans text,
+  DM Mono figures, graphite surfaces, champagne/logo gold, hairlines; logo colours gold #E8B637 (primary), #F6E37A,
+  #9C7417, cyan #5DF1DD (AI only), indigo #342D63. Design previews in session: overview-desktop/phone.png, logo-blend.png.
+- **Stage 2 (live 24 Nov):** `services/risk_state.py` market risk state (12 factors, points 0/1/2; 0-1 NORMAL, 2-3 CAUTION,
+  4-5 HIGH, ≥6 SEVERE, RECOVERY 6 h after HIGH/SEVERE; missing BTC data never "safe"), worker step `risk_state` every tick,
+  settings `risk_state` / `risk_state_log` / `risk_state_series`, `views/risk_state` (members). Calls store
+  `risk_shadow.state` (SHADOW: may block only after a research_verdict PASS). `turn_detector.publish` saves
+  `market_turn_last`. Practice auto-trade (`autopaper.protection`): `follow_risk` (HIGH half size, SEVERE nothing new),
+  `daily_loss_pct` 5 (realised, UTC day, deposits excluded; state `auto_paper_state.day`), `max_exposure_pct` 50 (margin
+  + order reserves); UI fields still to add (Stage 5). `CHALLENGER_ENFORCE` default ON (log 21-23 Nov: 284 decisions, 7
+  refusals). engine.yml last step queues the next engine run and dispatches a missed nightly training (GitHub skipped
+  schedules 24 Nov). Tests `tests/test_v3_risk.py`.
