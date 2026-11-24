@@ -4,7 +4,7 @@
 
    Idea: an intelligence desk, not a spaceship. Soft black graphite surfaces (never pure #000), the logo's gold
    (#E8B637) as the one brand accent, the logo's cyan (#5DF1DD) ONLY for what the AI produced, green / red for
-   direction, amber for caution. Type: Instrument Serif for page titles (the owner's reference), DM Sans for text,
+   direction, amber for caution. Type: DM Sans for titles and text (owner, 24 Nov: no serif),
    DM Mono for every figure so columns line up. Crystal glass is used sparingly (lead cards, risk status).
    Background: a faint neural mesh in the top right corner instead of stars. Themes: Graphite (id "gold", so saved
    choices keep working) and Ivory (id "light"); the retired dark themes resolve to Graphite (appearance.tsx).
@@ -56,10 +56,10 @@ body {
   background-image: var(--mesh), radial-gradient(70% 50% at 100% 0%, var(--glow1), transparent 70%);
 }
 .page-title, h1.page-title, .v3-title {
-  font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-weight: 400;
-  font-size: 2.25rem; line-height: 1.05; letter-spacing: -0.01em;
+  font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif; font-weight: 650;
+  font-size: 1.875rem; line-height: 1.1; letter-spacing: -0.025em;
 }
-@media (min-width: 640px) { .page-title, .v3-title { font-size: 2.75rem; } }
+@media (min-width: 640px) { .page-title, .v3-title { font-size: 2.25rem; } }
 .font-display, .section-title, h2, h3 { font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif; }
 .num, .tabular, .figure, .metric-v {
   font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -104,7 +104,7 @@ body {
 
 /* ---------------------------------------------------------------------------------------------- V3 BLOCKS */
 .v3-eyebrow { font-size: 0.8125rem; color: rgb(var(--mute)); }
-.v3-state { font-family: "Instrument Serif", Georgia, serif; font-size: 2.25rem; line-height: 1; }
+.v3-state { font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, sans-serif; font-weight: 650; font-size: 1.875rem; line-height: 1.05; letter-spacing: -0.025em; }
 .v3-k { font-size: 0.75rem; color: rgb(var(--mute)); }
 .v3-v { font-size: 0.95rem; margin-top: 2px; }
 .v3-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: 0.75rem; white-space: nowrap; }

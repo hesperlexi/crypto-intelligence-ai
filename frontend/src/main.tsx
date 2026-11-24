@@ -5,7 +5,6 @@ import App from "./App";
 import { AppearanceProvider } from "./lib/appearance";
 import { ModeProvider } from "./lib/mode";
 import { startUpdater } from "./lib/updater";
-import "@fontsource/instrument-serif/latin-400.css";
 import "@fontsource-variable/dm-sans/wght.css";
 import "@fontsource/dm-mono/latin-400.css";
 import "@fontsource/dm-mono/latin-500.css";
