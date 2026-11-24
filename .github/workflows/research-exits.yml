@@ -14,6 +14,9 @@ on:
       budget:
         description: "seconds for the replay part"
         default: "14400"
+      variants:
+        description: "comma list of variants besides base (empty = all)"
+        default: ""
 
 concurrency:
   group: research-exits
@@ -50,6 +53,7 @@ jobs:
       - name: Run the research
         env:
           DATABASE_URL: sqlite:///./data/crypto_ai.db
+          RESEARCH_EXITS_VARIANTS: ${{ github.event.inputs.variants }}
         run: |
           mkdir -p ../out
           stamp=$(date -u +%Y%m%dT%H%M%SZ)

@@ -33,7 +33,15 @@ VARIANTS: dict[str, dict[str, Any]] = {
     "back_05": {"back": 0.5},
     "tp1_07": {"ladder": (0.7, 1.75, 2.5)},
     "tp1_08": {"ladder": (0.8, 1.75, 2.5)},
+    # owner 24 Nov 2026 ("time limit is not required - it's a win or loss"): the same calls with a longer / no time limit
+    "h_x2": {"hmult": 2},
+    "h_x4": {"hmult": 4},
+    "no_limit": {"hmult": 20},          # 15m 5000 / 1h 4000 / 4h 2000 candles: in practice only stop or target closes
 }
+import os as _os
+if _os.environ.get("RESEARCH_EXITS_VARIANTS"):
+    _keep = {"base", *_os.environ["RESEARCH_EXITS_VARIANTS"].split(",")}
+    VARIANTS = {k: v for k, v in VARIANTS.items() if k in _keep}
 
 
 def follow_x(side: int, entry: float, stop: float, tps, high, low, close, first_is_fill: bool = False,
@@ -194,11 +202,12 @@ def replay(db_url: str, budget_s: float, raw: bool = False) -> dict[str, Any]:
             if tf in A_ONLY:
                 keep &= d["grade"] == "A"
             dd = _masked(d, keep)
-            SP.HORIZON_BARS = int(tracking.horizon_for(tf))
+            h0 = int(tracking.horizon_for(tf))
             for name, v in VARIANTS.items():
+                SP.HORIZON_BARS = int(h0 * v.get("hmult", 1))
                 lad = v.get("ladder")
                 opts = {k: v[k] for k in ("arm", "lock", "back") if k in v}
-                S.follow = (lambda *a, _o=opts, **k: follow_x(*a, **k, **_o)) if name != "base" else orig_follow
+                S.follow = (lambda *a, _o=opts, **k: follow_x(*a, **k, **_o)) if opts else orig_follow
                 S.ladder = (lambda side, e, st, mult=None, _l=lad: orig_ladder(side, e, st, _l)) if lad else orig_ladder
                 for part, m in (("tune", tune), ("test", test)):
                     tr = V._with_funding(ctx, dd, SP.run_series(ctx, paths, m, dd, entry_mode="old", news=news))
@@ -229,7 +238,24 @@ def replay(db_url: str, budget_s: float, raw: bool = False) -> dict[str, Any]:
             row[tf] = {"test_avg_r": x_te["avg_r"], "base_test_avg_r": b_te["avg_r"],
                        "tune_avg_r": x_tu["avg_r"], "base_tune_avg_r": b_tu["avg_r"], "better": better}
         verdict[name] = row
-    return {"variants": out, "verdict": verdict, "selfcheck": check, "skipped": skipped[:20],
+    # the standard verdict (research_verdict: both halves, drawdown, bootstrap, enough calls changed) on the test part
+    from .research_verdict import verdict as std_verdict
+    standard = {}
+    bt = _cap(res["base"]["test"], 8, False)
+    for name in VARIANTS:
+        if name == "base":
+            continue
+        nt = _cap(res[name]["test"], 8, False)
+        rb = {(t["sym"], t["tf"], int(t["ts"])): t["r"] for t in bt}
+        aff = sum(1 for t in nt if abs(rb.get((t["sym"], t["tf"], int(t["ts"])), 1e9) - t["r"]) > 1e-9)
+        aff += len(set(rb) ^ {(t["sym"], t["tf"], int(t["ts"])) for t in nt})     # calls taken / skipped differently
+        row = {"all": std_verdict(bt, nt, affected=aff)}
+        for tf in TFS:
+            b1, n1 = [t for t in bt if t["tf"] == tf], [t for t in nt if t["tf"] == tf]
+            if b1:
+                row[tf] = std_verdict(b1, n1, affected=sum(1 for t in n1 if abs(rb.get((t["sym"], tf, int(t["ts"])), 1e9) - t["r"]) > 1e-9))
+        standard[name] = row
+    return {"variants": out, "verdict": verdict, "standard_verdict": standard, "selfcheck": check, "skipped": skipped[:20],
             "skipped_n": len(skipped), "seconds": round(time.time() - t0, 1),
             "notes": [__doc__.split("\n\n")[1].replace("\n", " ")]}
 
