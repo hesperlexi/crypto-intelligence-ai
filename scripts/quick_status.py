@@ -93,5 +93,17 @@ try:
                          "factors": {f["key"]: f["status"] for f in rj.get("factors") or []}} if rj else None
 except Exception as e:  # noqa: BLE001
     out["risk_state"] = {"error": type(e).__name__}
+# Hesper challenge (main + Last Stand): counts only - no coin, side or levels in this public report
+for vid in ("hesper", "laststand"):
+    try:
+        r = fs.document(f"views/{vid}").get().to_dict()
+        hj = json.loads(r["json"]) if r and "json" in r else (r or {})
+        def _n(o, k):
+            v = o.get(k) if isinstance(o, dict) else None
+            return len(v) if isinstance(v, list) else v
+        out[f"challenge_{vid}"] = {"keys": sorted(hj.keys())[:30], "runs": _n(hj, "runs"), "trades": _n(hj, "trades"),
+                                   "at": hj.get("generated_at"), "since": hj.get("since")}
+    except Exception as e:  # noqa: BLE001
+        out[f"challenge_{vid}"] = {"error": type(e).__name__}
 print(json.dumps(out, indent=1, default=str))
 
