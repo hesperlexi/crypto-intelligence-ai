@@ -681,6 +681,10 @@ configuration, market data + candle series table, models table, recent errors (c
   `deposited`, `deposits`; runs each sync so later bots too; books / open trades kept, risk % unchanged). Return % =
   equity / deposited; report curve shifts pre-deposit points by the deposit (continuous; P/L unchanged), buy & hold
   scaled; Bots page "Capital".
+- Admin / Guardian "Close now" on bots (owner, 24 Nov 2026: closed calls still running on bots): `BotEngine.apply_close` now
+  closes every bot position on the same coin + side + timeframe opened before the close (also from an earlier candle /
+  the previous call - the old signal-candle match missed those); pending entries placed before it are cancelled.
+  Worker step `bot_admin_closes` (`reconcile_admin_closes`) re-applies the last 3 days' admin closes each tick (idempotent).
 - Version 3.1.0 everywhere (package.json → footer, Settings, APK name). Manual: 1d = demo bots, stale risk = half size, card.
 - Telegram news: `post_news` sends only high-impact US releases ~30 min before (a few a week); briefings wait for the owner's
   approval while "Ask me before posting" is on. `quick_status.py` now reports the calendar (`news`).

@@ -1651,6 +1651,7 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # Gemini advisor (advisory notes only; off without GEMINI_API_KEY): new calls and closed calls, bounded per cycle
     detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
     detail["sentiment"] = step("news_sentiment", lambda: sentiment.collect(rt.db, getattr(rt, "headlines", None)))
+    detail["bot_admin_closes"] = step("bot_admin_closes", lambda: BotEngine(rt).reconcile_admin_closes())   # v3.1
     detail["bot_events"] = len(step("bots", lambda: BotEngine(rt).run(started)) or [])
     # Road to Rich (admin, 2 Nov 2026): Hesper's all-in demo runs - its own step and tables, after the bots
     hesper_events = step("hesper", lambda: hesper.Hesper(rt).run(started)) or []

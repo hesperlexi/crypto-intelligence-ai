@@ -66,3 +66,28 @@ def test_bot_capital_topped_up_once_books_kept():
     st = json.loads(db.one("SELECT state FROM bots WHERE id = 'b1'")["state"])
     assert st["cash"] == 29_500.0 and st["deposited"] == BOT_CAPITAL and st["deposits"] == [{"at": 1000, "amount": 20_000.0}]
     assert eng.add_capital(now=2000) == []                                  # once
+
+
+def test_admin_close_reaches_a_bot_position_from_an_earlier_candle():
+    from app.db import Database
+    from app.services.bots import BotEngine
+    import json
+    db = Database("sqlite:///:memory:")
+    pos_old = {"symbol": "ETH/USDT", "side": -1, "qty": 1, "qty_open": 1, "opened_at": 1_000, "info": {"bar_ts": 500}}
+    pos_other = {"symbol": "ETH/USDT", "side": 1, "qty": 1, "qty_open": 1, "opened_at": 1_000, "info": {"bar_ts": 500}}
+    pos_later = {"symbol": "ETH/USDT", "side": -1, "qty": 1, "qty_open": 1, "opened_at": 9_000, "info": {"bar_ts": 8_000}}
+    db.execute("INSERT INTO bots (id, config, state, reset_token, created_at) VALUES ('b', ?, ?, 'v', 1)",
+               (json.dumps({"id": "b", "mode": "decision", "timeframe": "1h"}),
+                json.dumps({"cash": 1.0, "positions": [pos_old, pos_other], "pending": []})))
+    db.execute("INSERT INTO bots (id, config, state, reset_token, created_at) VALUES ('c', ?, ?, 'v', 1)",
+               (json.dumps({"id": "c", "mode": "decision", "timeframe": "1h"}),
+                json.dumps({"cash": 1.0, "positions": [pos_later], "pending": []})))
+    eng = BotEngine.__new__(BotEngine)
+    eng.db = db
+    sig = {"symbol": "ETH/USDT", "side": -1, "timeframe": "1h", "bar_ts": 2_000}
+    assert eng.apply_close(sig, 3000.0, 5_000) == 1
+    b = json.loads(db.one("SELECT state FROM bots WHERE id = 'b'")["state"])["positions"]
+    assert b[0]["admin_close"] == {"at": 5_000, "price": 3000.0} and "admin_close" not in b[1]      # other side untouched
+    c = json.loads(db.one("SELECT state FROM bots WHERE id = 'c'")["state"])["positions"]
+    assert "admin_close" not in c[0]                                                               # opened after the close
+    assert eng.apply_close(sig, 3000.0, 5_000) == 0                                                # idempotent

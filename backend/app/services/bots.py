@@ -561,20 +561,35 @@ class BotEngine:
             if cfg.get("mode") != "decision" or cfg.get("timeframe") != tf:
                 continue
             hit = 0
+            # v3.1 (owner, 24 Nov 2026: "trades closed by admin / Trade Guardian are still running on bots"): a bot can
+            # hold the same coin and direction on this timeframe from an EARLIER candle of the call (or the call before
+            # it, when the record kept one call per coin) - the signal-candle match missed those. Every position the bot
+            # holds on this coin, side and timeframe that was opened before the close is closed with it.
             mine = lambda x: x.get("symbol") == sig["symbol"] and int(x.get("side") or 0) == side and \
-                int((x.get("info") or {}).get("bar_ts") or 0) >= bar
+                (int((x.get("info") or {}).get("bar_ts") or 0) >= bar or int(x.get("opened_at") or x.get("placed_at") or 0) <= int(at))
             for x in state.get("positions") or []:
-                if mine(x) and not x.get("admin_close"):
+                if mine(x) and not x.get("admin_close") and int(x.get("opened_at") or 0) <= int(at):
                     x["admin_close"] = {"at": int(at), "price": float(price)}
                     hit += 1
             for o in list(state.get("pending") or []):
-                if mine(o):
+                if mine(o) and int(o.get("placed_at") or 0) <= int(at):
                     state["cash"] = state.get("cash", 0.0) + o.get("reserved", 0.0)
                     state["pending"].remove(o)
                     hit += 1
             if hit:
                 self.db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))
                 n += hit
+        return n
+
+    def reconcile_admin_closes(self, since_ms: int = 3 * 86_400_000) -> int:
+        """v3.1: calls the admin (or Trade Guardian through the admin) closed in the last 3 days are applied to the bots
+        again, so a position the earlier close missed closes too (at the admin's price and time). Idempotent."""
+        now = now_ms()
+        n = 0
+        for a in self.db.query("SELECT signal_id, at, new FROM signal_adjustments WHERE field = 'close' AND at >= ?", (now - since_ms,)):
+            sig = self.db.one("SELECT * FROM signals WHERE id = ?", (a["signal_id"],))
+            if sig and a.get("new") is not None:
+                n += self.apply_close(sig, float(a["new"]), int(a["at"]))
         return n
 
     @staticmethod
