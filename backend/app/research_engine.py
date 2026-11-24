@@ -170,7 +170,8 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
                 P["ts"].append(c["ts"])
         series[f"{s} {tf}"] = {"ctx": ctx, "paths": paths, "tune": tune, "test": test, "cut": cut, "base": base,
                                "gate": gate, "conf": conf, "dec_conf": dec_conf, "struct": struct, "entry_tune": entry_tune,
-                               "cands": cands_by_entry, "secs": round(time.time() - t0, 1)}
+                               "cands": cands_by_entry, "secs": round(time.time() - t0, 1),
+                               "tune_r": [t["r"] for t in old_tune]}
         log.info("%s %s: %d oos bars, %d tuning trades, %.1fs", s, tf, ctx.n, len(old_tune), time.time() - t0)
     # ---- entry rule per timeframe, chosen like the nightly job: best lower bound on the EARLY 70 % of the tuning
     # trades (pooled over coins), kept only if it also beats the v2.5 rule on the LATE 30 % of the tuning trades -------
@@ -265,6 +266,7 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
         "series": {k: {"oos_bars": int(v["ctx"].n), "tune_bars": int(v["tune"].sum()), "test_bars": int(v["test"].sum()),
                        "cut": v["cut"], "gate": v["gate"], "conf_b": v["conf"]["conf_b"], "conf_table": v["conf"]["table"],
                        "test_old": S.stats([t["r"] for t in results["old"][k]]),
+                       "tune_old": S.stats(v.get("tune_r") or []),       # the earlier 70 % (independent window)
                        "seconds": v["secs"]} for k, v in series.items()},
         "skipped": skipped, "entry_choice": entry_choice,
         "filters": {tf: {k: x for k, x in f.items() if k != "model"} for tf, f in filters.items()},

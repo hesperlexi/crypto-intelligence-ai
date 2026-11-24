@@ -10,6 +10,12 @@ on:
       budget:
         description: "seconds for the replay part"
         default: "18000"
+      tfs:
+        description: 'timeframes as JSON, e.g. ["1d"]'
+        default: '["15m", "1h", "4h", "12h", "1d", "3d"]'
+      groups:
+        description: 'variant groups as JSON, e.g. ["rf"] (rf = 1d confirm on both windows)'
+        default: '["g1", "g2", "g3"]'
 
 concurrency:
   group: research-ablation
@@ -21,8 +27,8 @@ jobs:
       fail-fast: false
       max-parallel: 6
       matrix:
-        tf: ["15m", "1h", "4h", "12h", "1d", "3d"]
-        group: ["g1", "g2", "g3"]
+        tf: ${{ fromJSON(inputs.tfs) }}
+        group: ${{ fromJSON(inputs.groups) }}
     runs-on: ubuntu-latest
     timeout-minutes: 340
     permissions:

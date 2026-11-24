@@ -46,6 +46,8 @@ GROUPS: dict[str, dict[str, Any]] = {
            "xgboost_only": _only("xgboost")},
     "g3": {"no_arima": _drop("arima"), "random_forest_only": _only("random_forest"), "boosting_only": _only(*BOOST),
            "with_deep": "deep"},
+    # v3.1 confirm (owner, 25 Nov 2026): 1d without Random Forest, judged on BOTH windows (earlier 70 % and last 30 %)
+    "rf": {"no_random_forest": _drop("random_forest")},
 }
 
 
@@ -144,7 +146,8 @@ def run(db_url: str, timeframes: list[str], group: str, budget_s: float, cost: f
                     scores = dict(last)
                     res = RE.evaluate(rt, [s], [tf], deadline, cost)
                     v = (res.get("series") or {}).get(f"{s} {tf}")
-                    row[name] = ({**dict(v["test_old"]), "brier": scores.get("brier"), "log_loss": scores.get("log_loss"),
+                    row[name] = ({**dict(v["test_old"]), "tune": dict(v.get("tune_old") or {}),
+                                  "brier": scores.get("brier"), "log_loss": scores.get("log_loss"),
                                   "trained": scores.get("models")} if v
                                  else {"error": "not evaluated: " + "; ".join(res.get("skipped") or [])[:120]})
                 if all(isinstance(row.get(k), dict) and "n" in row[k] for k, _, _ in plan):
@@ -157,6 +160,15 @@ def run(db_url: str, timeframes: list[str], group: str, budget_s: float, cost: f
             for k in [p[0] for p in plan[1:]]:
                 T[f"{k}_vs_control"] = _boot([(per[s][k]["total_r"] - per[s]["control"]["total_r"], per[s]["control"]["n"])
                                               for s in per])
+                if group == "rf":            # the earlier window too: a change must hold in both
+                    tw = lambda s, kk: per[s][kk].get("tune") or {}
+                    T[f"{k}_tune"] = _stats([{**tw(s, k), "n": tw(s, k).get("n", 0), "total_r": tw(s, k).get("total_r", 0.0),
+                                              "win_rate": tw(s, k).get("win_rate")} for s in per])
+                    T["control_tune"] = _stats([{**tw(s, "control"), "n": tw(s, "control").get("n", 0),
+                                                 "total_r": tw(s, "control").get("total_r", 0.0),
+                                                 "win_rate": tw(s, "control").get("win_rate")} for s in per])
+                    T[f"{k}_tune_vs_control"] = _boot([(tw(s, k).get("total_r", 0.0) - tw(s, "control").get("total_r", 0.0),
+                                                        tw(s, "control").get("n", 0) or 1) for s in per])
                 b = [(per[s][k]["brier"], per[s]["control"]["brier"]) for s in per
                      if per[s][k].get("brier") is not None and per[s]["control"].get("brier") is not None]
                 T[f"{k}_vs_control"]["brier_better_share"] = round(sum(x < y for x, y in b) / len(b), 3) if b else None
