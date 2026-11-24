@@ -1,0 +1,529 @@
+{
+ "ok": true,
+ "read_only": true,
+ "at": 1795506381457,
+ "engine_db": {
+  "path": "crypto_ai.db",
+  "exists": true,
+  "bytes": 1109127168,
+  "integrity": "ok",
+  "tables": [
+   {
+    "table": "alert_events",
+    "rows": 1885,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "alert_marks",
+    "rows": 2244,
+    "class": "ask_owner",
+    "why": "which alert was already sent per call (cleared calls make these orphans; harmless)",
+    "foreign_keys": []
+   },
+   {
+    "table": "alerts",
+    "rows": 12,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "altseason_history",
+    "rows": 97,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "app_settings",
+    "rows": 1221,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "backtests",
+    "rows": 1,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "bot_equity",
+    "rows": 15040,
+    "class": "test_result",
+    "why": "demo bot equity curves",
+    "foreign_keys": []
+   },
+   {
+    "table": "bot_trades",
+    "rows": 66,
+    "class": "test_result",
+    "why": "demo bot trades",
+    "foreign_keys": []
+   },
+   {
+    "table": "bots",
+    "rows": 7,
+    "class": "test_result",
+    "why": "demo bot books (re-created from config/bots with a fresh balance)",
+    "foreign_keys": []
+   },
+   {
+    "table": "decisions",
+    "rows": 1682,
+    "class": "test_result",
+    "why": "engine decision log of calls",
+    "foreign_keys": []
+   },
+   {
+    "table": "derivs",
+    "rows": 3259647,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "econ_events",
+    "rows": 64,
+    "class": "unsure",
+    "why": "not classified - kept",
+    "foreign_keys": []
+   },
+   {
+    "table": "edge_published",
+    "rows": 656,
+    "class": "test_result",
+    "why": "edge view hash cache (rebuilt)",
+    "foreign_keys": []
+   },
+   {
+    "table": "engine_runs",
+    "rows": 7849,
+    "class": "unsure",
+    "why": "not classified - kept",
+    "foreign_keys": []
+   },
+   {
+    "table": "guardian_m1",
+    "rows": 785,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "guardian_recs",
+    "rows": 105,
+    "class": "test_result",
+    "why": "Trade Guardian recommendations + shadow outcomes",
+    "foreign_keys": []
+   },
+   {
+    "table": "held_signals",
+    "rows": 0,
+    "class": "test_result",
+    "why": "calls withdrawn by the admin (Hold)",
+    "foreign_keys": []
+   },
+   {
+    "table": "hesper_runs",
+    "rows": 1,
+    "class": "test_result",
+    "why": "Hesper Challenge runs",
+    "foreign_keys": []
+   },
+   {
+    "table": "hesper_trades",
+    "rows": 10,
+    "class": "test_result",
+    "why": "Hesper Challenge trades",
+    "foreign_keys": []
+   },
+   {
+    "table": "laststand_runs",
+    "rows": 1,
+    "class": "test_result",
+    "why": "Last Stand runs",
+    "foreign_keys": []
+   },
+   {
+    "table": "laststand_trades",
+    "rows": 1,
+    "class": "test_result",
+    "why": "Last Stand trades",
+    "foreign_keys": []
+   },
+   {
+    "table": "leaderboard_entries",
+    "rows": 3,
+    "class": "ask_owner",
+    "why": "members' monthly practice ranking readings (depends on practice accounts)",
+    "foreign_keys": []
+   },
+   {
+    "table": "leaderboard_winners",
+    "rows": 0,
+    "class": "ask_owner",
+    "why": "past monthly winners (prizes were given)",
+    "foreign_keys": []
+   },
+   {
+    "table": "market_data",
+    "rows": 2787983,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "market_snapshots",
+    "rows": 579,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "mkt_daily",
+    "rows": 39,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "mkt_liq",
+    "rows": 60232,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "mkt_okx",
+    "rows": 109348,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "model_metrics",
+    "rows": 950138,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "model_versions",
+    "rows": 3660,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "news_sentiment",
+    "rows": 2256,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "paper_accounts",
+    "rows": 0,
+    "class": "unsure",
+    "why": "not classified - kept",
+    "foreign_keys": []
+   },
+   {
+    "table": "paper_positions",
+    "rows": 0,
+    "class": "unsure",
+    "why": "not classified - kept",
+    "foreign_keys": []
+   },
+   {
+    "table": "prediction_outcomes",
+    "rows": 86171,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "predictions",
+    "rows": 86365,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "published",
+    "rows": 828,
+    "class": "test_result",
+    "why": "view hash cache (rebuilt from the empty record)",
+    "foreign_keys": []
+   },
+   {
+    "table": "radar_picks",
+    "rows": 233,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "rejected_signals",
+    "rows": 479,
+    "class": "test_result",
+    "why": "calls blocked by filters, followed privately (filter check)",
+    "foreign_keys": []
+   },
+   {
+    "table": "scalp_signals",
+    "rows": 0,
+    "class": "test_result",
+    "why": "old 15m scalping log (switched off 2 Nov)",
+    "foreign_keys": []
+   },
+   {
+    "table": "shadow_signals",
+    "rows": 0,
+    "class": "test_result",
+    "why": "calls held by the safety switch, followed privately",
+    "foreign_keys": []
+   },
+   {
+    "table": "signal_adjustments",
+    "rows": 78,
+    "class": "test_result",
+    "why": "admin stop / target / close changes on calls",
+    "foreign_keys": []
+   },
+   {
+    "table": "signal_proofs",
+    "rows": 0,
+    "class": "test_result",
+    "why": "sealed fingerprints of calls (feature removed)",
+    "foreign_keys": []
+   },
+   {
+    "table": "signals",
+    "rows": 25421,
+    "class": "test_result",
+    "why": "public signal record (wins and losses)",
+    "foreign_keys": []
+   },
+   {
+    "table": "system_health",
+    "rows": 0,
+    "class": "unsure",
+    "why": "not classified - kept",
+    "foreign_keys": []
+   },
+   {
+    "table": "trades",
+    "rows": 0,
+    "class": "unsure",
+    "why": "not classified - kept",
+    "foreign_keys": []
+   },
+   {
+    "table": "users",
+    "rows": 1,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "watchlists",
+    "rows": 30,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   }
+  ],
+  "settings": {
+   "test_result": [
+    "challenger_log",
+    "hesper_since",
+    "hesper_state",
+    "hesper_v1",
+    "laststand_state",
+    "record_excludes",
+    "record_restart",
+    "record_since",
+    "record_since_tf",
+    "tg_win_last",
+    "turn_shadow_log"
+   ],
+   "keep_count": 1210
+  }
+ },
+ "flow_db": {
+  "path": "flow.db",
+  "exists": true,
+  "bytes": 6148096,
+  "integrity": "ok",
+  "tables": [
+   {
+    "table": "book_5m",
+    "rows": 20064,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "flow_5m",
+    "rows": 22609,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "flow_alerts",
+    "rows": 209,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "liq_5m",
+    "rows": 2637,
+    "class": "keep",
+    "why": "configuration / market history / research / models / logs",
+    "foreign_keys": []
+   },
+   {
+    "table": "sqlite_sequence",
+    "rows": 1,
+    "class": "keep",
+    "why": "SQLite internal",
+    "foreign_keys": []
+   }
+  ],
+  "settings": {
+   "test_result": [],
+   "keep_count": 0
+  }
+ },
+ "summary": {
+  "test_result": {
+   "tables": 18,
+   "rows": 44375
+  },
+  "ask_owner": {
+   "tables": 3,
+   "rows": 2247
+  },
+  "unsure": {
+   "tables": 6,
+   "rows": 7913
+  },
+  "keep": {
+   "tables": 20,
+   "rows": 7350683
+  }
+ },
+ "firestore": {
+  "ok": true,
+  "collections": [
+   {
+    "collection": "admin",
+    "docs": 4,
+    "note": ""
+   },
+   {
+    "collection": "admin_secrets",
+    "docs": 1,
+    "note": ""
+   },
+   {
+    "collection": "alerts",
+    "docs": 12,
+    "note": ""
+   },
+   {
+    "collection": "auto_paper",
+    "docs": 4,
+    "note": ""
+   },
+   {
+    "collection": "auto_paper_state",
+    "docs": 4,
+    "note": "auto-trade logs"
+   },
+   {
+    "collection": "config",
+    "docs": 9,
+    "note": ""
+   },
+   {
+    "collection": "jobs",
+    "docs": 18,
+    "note": ""
+   },
+   {
+    "collection": "owner",
+    "docs": 4,
+    "note": "owner docs incl. Telegram drafts"
+   },
+   {
+    "collection": "paper",
+    "docs": 10,
+    "note": "members' practice accounts (owner kept them in earlier restarts)"
+   },
+   {
+    "collection": "paper_futures_trades",
+    "docs": 208,
+    "note": ""
+   },
+   {
+    "collection": "post_meta",
+    "docs": 2,
+    "note": ""
+   },
+   {
+    "collection": "posts",
+    "docs": 2,
+    "note": ""
+   },
+   {
+    "collection": "presence",
+    "docs": 9,
+    "note": ""
+   },
+   {
+    "collection": "push_tokens",
+    "docs": 5,
+    "note": ""
+   },
+   {
+    "collection": "system",
+    "docs": 1,
+    "note": ""
+   },
+   {
+    "collection": "user_coins",
+    "docs": 1,
+    "note": ""
+   },
+   {
+    "collection": "user_state",
+    "docs": 5,
+    "note": ""
+   },
+   {
+    "collection": "usernames",
+    "docs": 7,
+    "note": ""
+   },
+   {
+    "collection": "users",
+    "docs": 7,
+    "note": ""
+   },
+   {
+    "collection": "views",
+    "docs": 1020,
+    "note": ""
+   }
+  ],
+  "paper_subcollections_seen_in_20": {}
+ }
+}
