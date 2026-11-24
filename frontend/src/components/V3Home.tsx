@@ -33,7 +33,7 @@ function Gauge({ state }: { state?: string }) {
   );
 }
 
-export function MarketStatus({ status4, rows, embedded = false }: { status4?: any; rows?: any[]; embedded?: boolean }) {
+export function MarketStatus({ status4, rows, embedded = false, tfLabel = "4H" }: { status4?: any; rows?: any[]; embedded?: boolean; tfLabel?: string }) {
   const rs = useApi<any>("/risk-state", 60000).data;
   const btc = (rows ?? []).find((r) => r.symbol === "BTC/USDT");
   const state: string | undefined = rs?.state;
@@ -53,10 +53,10 @@ export function MarketStatus({ status4, rows, embedded = false }: { status4?: an
           </div>
         </Link>
         <div className="v3-facts min-w-0 flex-1">
-          <div><div className="v3-k">Mood · 4H</div><div className="v3-v">{mood}</div></div>
+          <div><div className="v3-k">Mood · {tfLabel}</div><div className="v3-v">{mood}</div></div>
           <div><div className="v3-k">BTC trend</div><div className="v3-v">{btc?.regime ? String(btc.regime).toLowerCase().replace(/^./, (c) => c.toUpperCase()) : DASH}</div></div>
           <div><div className="v3-k">Volatility</div><div className="v3-v">{vol ? (vol.status === "high" ? "High" : vol.status === "warn" ? "Raised" : vol.status === "ok" ? "Normal" : "Unknown") : DASH}</div></div>
-          <div><div className="v3-k">Breadth · 4H</div><div className="v3-v num">{status4 ? `${status4.bull ?? 0} up · ${status4.bear ?? 0} down` : DASH}</div></div>
+          <div><div className="v3-k">Breadth · {tfLabel}</div><div className="v3-v num">{status4 ? `${status4.bull ?? 0} up · ${status4.bear ?? 0} down` : DASH}</div></div>
         </div>
         <span className={`v3-pill ${vcls} !px-3.5 !py-1.5 text-[0.8125rem] font-semibold`}>{verdict}</span>
       </div>

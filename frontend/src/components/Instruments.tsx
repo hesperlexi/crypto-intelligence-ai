@@ -152,7 +152,7 @@ export const OrbitDial = memo(function OrbitDial({ rows, fg, fgLabel, status }: 
    the AI's lean (call or trend), length = strength (a call > a trend > neutral, then the board score). The bars breathe,
    the core sends out cyan pulses, a thin gold ring carries Fear & Greed as an arc. BTC live in the centre; hover / focus a
    coin to see it there. Same data as the old dial, no extra reads. */
-export const ThinkingSpectrum = memo(function ThinkingSpectrum({ rows, fg, fgLabel, status }: { rows?: any[]; fg?: number | null; fgLabel?: string; status?: any }) {
+export const ThinkingSpectrum = memo(function ThinkingSpectrum({ rows, fg, fgLabel, status, tfLabel = "4H" }: { rows?: any[]; fg?: number | null; fgLabel?: string; status?: any; tfLabel?: string }) {
   const id = useId().replace(/:/g, "");
   const [hover, setHover] = useState<any>(null);
   const list = useMemo(() => (rows ?? []).filter((x) => x?.symbol)
@@ -200,7 +200,7 @@ export const ThinkingSpectrum = memo(function ThinkingSpectrum({ rows, fg, fgLab
       </svg>
       <DialCentre hover={hover} />
       <figcaption className="ins-cap">
-        <span><b className="text-bull">{bull}</b> bullish · <b className="text-bear">{bear}</b> bearish <span className="text-mute">of {list.length} coins · 4H</span></span>
+        <span><b className="text-bull">{bull}</b> bullish · <b className="text-bear">{bear}</b> bearish <span className="text-mute">of {list.length} coins · {tfLabel}</span></span>
         <span className="text-mute">Fear &amp; Greed <b className="num" style={{ color: fgCol }}>{fv ?? DASH}</b>{fgLabel ? ` · ${fgLabel}` : ""}</span>
       </figcaption>
     </figure>

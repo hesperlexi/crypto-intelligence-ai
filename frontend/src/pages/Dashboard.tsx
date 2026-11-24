@@ -1,5 +1,5 @@
 import MarketInsights from "../components/MarketInsights";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
@@ -28,6 +28,13 @@ export default function Dashboard() {
   const sentiment = ctx.data?.sentiment;
   const status4 = dash4.data?.market_status;
   const briefing = mc.data?.briefing;
+  // owner 24 Nov 2026: the mood card turns through 15M → 1H → 4H every 10 s (tap a timeframe to hold it; paused on hover
+  // and while the tab is hidden). +2 view listeners (15m / 1h dashboards) while Home is open.
+  const mood15 = useApi<any>("/dashboard?timeframe=15m", 60000);
+  const mood1h = useApi<any>("/dashboard?timeframe=1h", 60000);
+  const rot = useMoodRotation();
+  const moodData = [mood15.data, mood1h.data, dash4.data][rot.i];
+  const moodTf = MOOD_TFS[rot.i];
   const openCount = ((track.data?.live?.signals ?? []) as any[]).filter((x) => x.status === "OPEN").length;
 
   return (
@@ -36,14 +43,15 @@ export default function Dashboard() {
       {/* V3.0 Overview (owner-approved layout, 24 Nov 2026): A market & risk status · B my capital + F my positions ·
           E AI decisions · C market intelligence · D watchlist board · G recent developments. Phones: A, F, B, E, … */}
       {/* owner 24 Nov 2026: the market mood card is back, with the V3 market & risk status embedded in it */}
-      <section className="panel panel-hero v3-glass mood-card p-4 sm:p-6" aria-label="Market mood">
+      <section className="panel panel-hero v3-glass mood-card p-4 sm:p-6" aria-label="Market mood" onPointerEnter={() => rot.hover(true)} onPointerLeave={() => rot.hover(false)}>
+        <MoodTfSwitch rot={rot} />
         <div className="mood-grid">
           <div className="min-w-0">
-            <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} />
-            <MarketStatus status4={status4} rows={dash4.data?.rows} embedded />
+            <OverviewHead rows={moodData?.rows} status={moodData?.market_status} briefing={briefing} tfLabel={moodTf.toUpperCase()} />
+            <MarketStatus status4={moodData?.market_status} rows={moodData?.rows} embedded tfLabel={moodTf.toUpperCase()} />
             <TodayLine track={track.data} />
           </div>
-          <ThinkingSpectrum rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
+          <ThinkingSpectrum rows={moodData?.rows} status={moodData?.market_status} fg={sentiment?.value} fgLabel={sentiment?.label} tfLabel={moodTf.toUpperCase()} />
         </div>
       </section>
 
@@ -124,7 +132,7 @@ function greeting() {
 
 /** Top line of Home (kept from the old hero, owner 4 Nov 2026): the 4H market line, "Know why" (the briefing) and the
  *  quick actions Signals / Set an alert / Paper trade. */
-function OverviewHead({ rows, status, briefing }: { rows?: any[]; status?: any; briefing?: any }) {
+function OverviewHead({ rows, status, briefing, tfLabel = "4H" }: { rows?: any[]; status?: any; briefing?: any; tfLabel?: string }) {
   const s = useSession();
   const [why, setWhy] = useState(false);
   const first = (s?.username || s?.name || s?.email || "").split(/[ @]/)[0];
@@ -141,7 +149,7 @@ function OverviewHead({ rows, status, briefing }: { rows?: any[]; status?: any; 
         <p className="text-sm text-mute">{greeting()}{first ? `, ${first}` : ""}</p>
         <h1 className="v3-title mt-1">The market is <span className={moodCls}>{moodText}</span>.</h1>
         <p className="mt-1 text-sm text-mute">
-          {r.length ? <>On the 4H chart: <span className="font-medium text-bull">{buys} buy</span> · <span className="font-medium text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
+          {r.length ? <>On the {tfLabel} chart: <span className="font-medium text-bull">{buys} buy</span> · <span className="font-medium text-bear">{sells} sell</span> signals across {r.length} coins{best ? <> · strongest: <Link to={`/asset/${slug(best.symbol)}`} className="font-medium text-text hover:text-accent">{base(best.symbol)} {best.signal}</Link></> : null}</> : "Signals appear after the next engine run."}
           {briefing?.text && <>{" "}<button type="button" className="tap-h whitespace-nowrap font-medium text-accent hover:underline" aria-expanded={why} aria-controls="market-why" onClick={() => setWhy((v) => !v)}>{why ? "Hide why" : "Know why ›"}</button></>}
         </p>
         {why && briefing?.text && <BriefingPanel b={briefing} />}
@@ -250,5 +258,46 @@ function DetailsFold({ children }: { children: React.ReactNode }) {
       </button>
       {open && children}
     </section>
+  );
+}
+
+
+const MOOD_TFS = ["15m", "1h", "4h"] as const;
+const MOOD_EVERY_MS = 10_000;
+
+/** Which timeframe the mood card shows: turns every 10 s unless held (a tap), hovered, or the tab is hidden. */
+function useMoodRotation() {
+  const [i, setI] = useState(2);
+  const [held, setHeld] = useState(false);
+  const hovered = useRef(false);
+  const [tick, setTick] = useState(0);              // restarts the progress bar
+  useEffect(() => {
+    if (held) return;
+    const t = window.setInterval(() => {
+      if (hovered.current || document.hidden) return;
+      setI((v) => (v + 1) % MOOD_TFS.length); setTick((n) => n + 1);
+    }, MOOD_EVERY_MS);
+    return () => window.clearInterval(t);
+  }, [held]);
+  return {
+    i, held, tick,
+    pick: (k: number) => { setI(k); setHeld(true); },
+    auto: () => { setHeld(false); setTick((n) => n + 1); },
+    hover: (v: boolean) => { hovered.current = v; },
+  };
+}
+
+function MoodTfSwitch({ rot }: { rot: ReturnType<typeof useMoodRotation> }) {
+  return (
+    <div className="mood-tf" role="group" aria-label="Timeframe of the market mood">
+      {MOOD_TFS.map((tf, k) => (
+        <button key={tf} type="button" aria-pressed={rot.i === k} className={rot.i === k ? "on" : ""} onClick={() => rot.pick(k)}>
+          {tf.toUpperCase()}
+          {rot.i === k && !rot.held && <i key={rot.tick} className="mood-tf-bar" aria-hidden="true" />}
+        </button>
+      ))}
+      <button type="button" className={`mood-tf-auto ${rot.held ? "" : "on"}`} aria-pressed={!rot.held} onClick={rot.auto}
+        title="Turn through 15M, 1H and 4H every 10 seconds">{rot.held ? "▶ Auto" : "Auto"}</button>
+    </div>
   );
 }
