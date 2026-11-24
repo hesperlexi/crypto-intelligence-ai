@@ -14,8 +14,9 @@ const icon = full;
 const uri = (s) => `data:image/svg+xml;base64,${Buffer.from(s).toString("base64")}`;
 // a square, full-bleed version (no rounded corners, no rim) for maskable / Apple icons: the tile background fills it
 const bleed = (s, scale) => s
-  .replace('<clipPath id="tc"><rect x="16" y="16" width="480" height="480" rx="104"/></clipPath>', '<clipPath id="tc"><rect x="-40" y="-40" width="592" height="592"/></clipPath>')
-  .replace(/<rect x="16" y="16" width="480" height="480" fill="url\(#(bg|sheen)\)"\/>/g, '<rect x="-40" y="-40" width="592" height="592" fill="url(#$1)"/>')
+  .replace(/<rect x="16" y="16" width="480" height="480" fill="url\(#sheen\)"\/>/, "")
+  .replace('<clipPath id="tc"><rect x="16" y="16" width="480" height="480" rx="104"/></clipPath>', '<clipPath id="tc"><rect x="-400" y="-400" width="1312" height="1312"/></clipPath>')
+  .replace(/<rect x="16" y="16" width="480" height="480" fill="url\(#(bg|sheen)\)"\/>/g, '<rect x="-400" y="-400" width="1312" height="1312" fill="#141519"/>')
   .replace('<g clip-path="url(#tc)">', `<rect width="512" height="512" fill="#141519"/><g transform="translate(256 256) scale(${scale}) translate(-256 -256)"><g clip-path="url(#tc)">`)
   .replace(/<rect x="17.5" y="17.5" width="477" height="477" rx="103" fill="none"[^>]*\/>/, "</g>");
 

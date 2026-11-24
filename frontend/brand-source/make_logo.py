@@ -30,9 +30,10 @@ def mesh(seed: int = 13) -> str:
         pts.append((C + math.cos(a) * R, C + math.sin(a) * R))
     lines = "".join(f'<line x1="{p[0]:.0f}" y1="{p[1]:.0f}" x2="{q[0]:.0f}" y2="{q[1]:.0f}"/>'
                     for i, p in enumerate(pts) for j, q in enumerate(pts) if j > i and math.hypot(p[0] - q[0], p[1] - q[1]) < 80)
-    dots = "".join(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="3.2"/>' for x, y in pts)
-    return (f'<g stroke="#5DF1DD" stroke-opacity=".34" stroke-width="1.5">{lines}</g>'
-            f'<g fill="#F6E37A" fill-opacity=".8">{dots}</g>')
+    # owner 24 Nov 2026: neurons green / red (the live logo blinks them), links cyan
+    dots = "".join(f'<circle cx="{x:.0f}" cy="{y:.0f}" r="3.6" fill="{"#F6465D" if i % 2 else "#22D39A"}"/>' for i, (x, y) in enumerate(pts))
+    return (f'<g stroke="#5DF1DD" stroke-opacity=".45" stroke-width="1.6">{lines}</g>'
+            f'<g>{dots}</g>')
 
 
 SVG = f"""<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 512 512">
