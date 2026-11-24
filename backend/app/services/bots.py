@@ -581,6 +581,33 @@ class BotEngine:
                 n += hit
         return n
 
+    def close_unrecorded(self, now: int | None = None) -> int:
+        """v3.1 one-time (owner, 25 Nov 2026): a bot position on a public timeframe whose call is not running in the
+        track record (taken again after the admin closed the call) closes at the current price, like an admin close.
+        Demo-only timeframes and demo bots are left alone (they never have a record call)."""
+        now = now or now_ms()
+        n = 0
+        for row in self.db.query("SELECT id, config, state FROM bots"):
+            cfg, state = loads(row["config"], {}), loads(row["state"], {})
+            tf = cfg.get("timeframe")
+            if cfg.get("mode") != "decision" or cfg.get("demo_only") or tf in analysis.DEMO_ONLY_TFS:
+                continue
+            hit = 0
+            for x in state.get("positions") or []:
+                if x.get("admin_close"):
+                    continue
+                oc = self.db.one("SELECT id FROM signals WHERE symbol = ? AND timeframe = ? AND status = 'OPEN' AND side = ? LIMIT 1",
+                                 (x["symbol"], tf, 1 if int(x["side"]) > 0 else -1))
+                if oc is None:
+                    px = self._price(x["symbol"])
+                    if px is not None:
+                        x["admin_close"] = {"at": int(now), "price": float(px), "why": "not in the track record"}
+                        hit += 1
+            if hit:
+                self.db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))
+                n += hit
+        return n
+
     def reconcile_admin_closes(self, since_ms: int = 3 * 86_400_000) -> int:
         """v3.1: calls the admin (or Trade Guardian through the admin) closed in the last 3 days are applied to the bots
         again, so a position the earlier close missed closes too (at the admin's price and time). Idempotent."""

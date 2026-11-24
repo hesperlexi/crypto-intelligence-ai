@@ -91,3 +91,52 @@ def test_admin_close_reaches_a_bot_position_from_an_earlier_candle():
     c = json.loads(db.one("SELECT state FROM bots WHERE id = 'c'")["state"])["positions"]
     assert "admin_close" not in c[0]                                                               # opened after the close
     assert eng.apply_close(sig, 3000.0, 5_000) == 0                                                # idempotent
+
+
+def test_only_calls_in_the_record_are_tradable():
+    from app.db import Database
+    from app.services import analysis
+    db = Database("sqlite:///:memory:")
+    base = {"symbol": "ETH/USDT", "timeframe": "1h", "decision": "SELL", "grade": "A", "flags": [], "setup": {"side_int": -1}}
+    a = {**base, "record_status": "logged"}
+    analysis.only_recorded(db, a)
+    assert a["decision"] == "SELL"
+    a = {**base, "record_status": "not_logged", "record_reason": "re-entry pause after a closed call"}
+    analysis.only_recorded(db, a)
+    assert a["decision"] == "NO TRADE" and a["grade"] is None and "NOT IN RECORD" in a["flags"] and "re-entry" in a["decision_reason"]
+    a = {**base, "record_status": "already_open"}
+    analysis.only_recorded(db, a)                                    # no open call on that side -> not tradable
+    assert a["decision"] == "NO TRADE"
+    db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, status) "
+               "VALUES ('s1', 1, 'ETH/USDT', '1h', 1, 'SELL', 'SELL', 1.0, -1, 'OPEN')")
+    a = {**base, "record_status": "already_open"}
+    analysis.only_recorded(db, a)                                    # the record's running call: still tradable
+    assert a["decision"] == "SELL"
+    a = {**base, "setup": {"side_int": 1}, "decision": "BUY", "record_status": "already_open"}
+    analysis.only_recorded(db, a)                                    # opposite side of the running call
+    assert a["decision"] == "NO TRADE"
+
+
+def test_bot_trades_not_in_the_record_close_once(monkeypatch):
+    from app.db import Database
+    from app.services import analysis
+    monkeypatch.setattr(analysis, "DEMO_ONLY_TFS", ("1d",))
+    from app.services.bots import BotEngine
+    import json
+    db = Database("sqlite:///:memory:")
+    keep = {"symbol": "ETH/USDT", "side": -1, "qty": 1, "qty_open": 1, "opened_at": 1_000, "info": {}}
+    orphan = {"symbol": "SOL/USDT", "side": -1, "qty": 1, "qty_open": 1, "opened_at": 1_000, "info": {}}
+    for bid, tf, extra in (("b", "1h", {}), ("d", "1d", {}), ("e", "15m", {"demo_only": True})):
+        db.execute("INSERT INTO bots (id, config, state, reset_token, created_at) VALUES (?, ?, ?, 'v', 1)",
+                   (bid, json.dumps({"id": bid, "mode": "decision", "timeframe": tf, **extra}),
+                    json.dumps({"cash": 1.0, "positions": [dict(keep), dict(orphan)], "pending": []})))
+    db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, status) "
+               "VALUES ('s1', 1, 'ETH/USDT', '1h', 1, 'SELL', 'SELL', 1.0, -1, 'OPEN')")
+    eng = BotEngine.__new__(BotEngine)
+    eng.db = db
+    eng._price = lambda s: 100.0
+    assert eng.close_unrecorded(now=5_000) == 1
+    b = json.loads(db.one("SELECT state FROM bots WHERE id = 'b'")["state"])["positions"]
+    assert "admin_close" not in b[0] and b[1]["admin_close"]["price"] == 100.0
+    for bid in ("d", "e"):                                               # demo timeframe / demo bot untouched
+        assert not any("admin_close" in x for x in json.loads(db.one("SELECT state FROM bots WHERE id = ?", (bid,))["state"])["positions"])

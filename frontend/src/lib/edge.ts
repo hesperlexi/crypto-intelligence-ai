@@ -48,8 +48,20 @@ function allToFirestore() {
   for (const e of entries.values()) if (e.mode === "edge") toFirestore(e);
 }
 
+// v3.1 (25 Nov 2026): a view that fell back to Firestore came back to the edge only when the page was opened again;
+// with Firestore over its daily quota that left the page frozen on old data. Now it is tried again every RETRY_MS.
+function backToEdge() {
+  if (killed() || Date.now() < offUntil) return;
+  for (const e of entries.values()) {
+    if (e.mode !== "fs" || !e.listeners.size) continue;
+    e.mode = "edge";
+    for (const l of e.listeners) { l.fsUnsub?.(); l.fsUnsub = undefined; }
+  }
+}
+
 async function poll() {
   if (busy || document.hidden) return;
+  backToEdge();
   const live = [...entries.values()].filter((e) => e.mode === "edge" && e.listeners.size);
   if (!live.length) return;
   busy = true;

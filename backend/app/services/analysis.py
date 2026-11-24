@@ -727,6 +727,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         tracking.log_signal(rt.db, out)                  # sets out["record_status"] (logged / already_open / not_logged)
         if out.get("record_status") is None and decision in TRADE_DECISIONS:
             out["record_status"] = "not_logged"
+        if decision in TRADE_DECISIONS:
+            only_recorded(rt.db, out)
         if shadow and not stale:
             tracking.log_shadow(rt.db, out, shadow[0], shadow[1])
         if pre_gate and decision not in TRADE_DECISIONS and not stale and as_of is None:
@@ -889,3 +891,22 @@ def gate_failures(db: Any, now: int | None = None) -> dict[str, Any]:
     now = int(time.time() * 1000) if now is None else now
     return {k: v for k, v in (db.get_setting("gate_failures", {}) or {}).items()
             if now - int((v or {}).get("at") or 0) < GATE_FAILURES_KEEP_MS}
+
+
+def only_recorded(db: Any, out: dict[str, Any]) -> None:
+    """v3.1 (owner, 25 Nov 2026: "a trade has been taken, while it's not showing in results"): bots and members'
+    auto-trades follow the published decision, so a call the record did not take (re-entry pause after a closed or
+    admin-closed call, a call already on this candle ...) becomes NO TRADE for everyone. The record's running call on
+    the same side stays tradable."""
+    if out.get("decision") not in TRADE_DECISIONS:
+        return
+    st = out.get("record_status")
+    if st == "logged":
+        return
+    if st == "already_open":
+        oc = tracking.open_call(db, out["symbol"], out["timeframe"])
+        if oc is not None and (1 if int(oc["side"]) > 0 else -1) == int((out.get("setup") or {}).get("side_int") or 0):
+            return
+    out["decision_reason"] = f"No new entry: {out.get('record_reason') or 'the track record did not take this call'}"
+    out["decision"], out["grade"] = "NO TRADE", None
+    out["flags"] = list(dict.fromkeys([*(out.get("flags") or []), "NOT IN RECORD", "NO TRADE"]))
