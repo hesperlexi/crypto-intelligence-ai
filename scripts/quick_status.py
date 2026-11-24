@@ -85,5 +85,13 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
     mj = json.loads(m["json"]) if m else {}
     xag[tf] = {"exists": bool(m), "active": bool(mj.get("active") or mj.get("bundle") or mj.get("models")), "keys": sorted(mj.keys())[:8]}
 out["derivs"], out["xag_models"] = out2, xag
+# V3.0 market risk state (state, score, factor levels only)
+try:
+    r = fs.document("views/risk_state").get().to_dict()
+    rj = json.loads(r["json"]) if r and "json" in r else (r or {})
+    out["risk_state"] = {"state": rj.get("state"), "score": rj.get("score"), "at": rj.get("generated_at"),
+                         "factors": {f["key"]: f["status"] for f in rj.get("factors") or []}} if rj else None
+except Exception as e:  # noqa: BLE001
+    out["risk_state"] = {"error": type(e).__name__}
 print(json.dumps(out, indent=1, default=str))
 
