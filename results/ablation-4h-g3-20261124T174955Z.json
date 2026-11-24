@@ -1,0 +1,157 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "g3",
+ "timeframes": {
+  "4h": {
+   "coins_done": 41,
+   "skipped": [
+    "ANTHROPIC/USDT: control not evaluated: ANTHROPIC/USDT 4h: no model / too few out-of-sample bars; no_arima not evaluated: ANTHROPIC/USDT 4h: no model / too few out-of-sample bars; random_forest_only not evaluated: ANT",
+    "GRAM/USDT: control not evaluated: GRAM/USDT 4h: no model / too few out-of-sample bars; no_arima not evaluated: GRAM/USDT 4h: no model / too few out-of-sample bars; random_forest_only not evaluated: GRAM/USDT 4h:",
+    "MSTRB/USDT: control not evaluated: MSTRB/USDT 4h: no model / too few out-of-sample bars; no_arima not evaluated: MSTRB/USDT 4h: no model / too few out-of-sample bars; random_forest_only not evaluated: MSTRB/USDT ",
+    "NVDAB/USDT: control not evaluated: NVDAB/USDT 4h: no model / too few out-of-sample bars; no_arima not evaluated: NVDAB/USDT 4h: no model / too few out-of-sample bars; random_forest_only not evaluated: NVDAB/USDT ",
+    "SPCXB/USDT: control not evaluated: SPCXB/USDT 4h: no model / too few out-of-sample bars; no_arima not evaluated: SPCXB/USDT 4h: no model / too few out-of-sample bars; random_forest_only not evaluated: SPCXB/USDT ",
+    "XAUT/USDT: control not evaluated: XAUT/USDT 4h: no model / too few out-of-sample bars; no_arima not evaluated: XAUT/USDT 4h: no model / too few out-of-sample bars; random_forest_only not evaluated: XAUT/USDT 4h:"
+   ],
+   "control": {
+    "trades": 656,
+    "avg_r": 0.0524,
+    "total_r": 34.38,
+    "win_rate": 0.553,
+    "series": 41,
+    "brier_mean": 0.65544,
+    "log_loss_mean": 1.08088,
+    "drawdown_r_sum": 122.94
+   },
+   "no_arima": {
+    "trades": 650,
+    "avg_r": 0.0128,
+    "total_r": 8.3,
+    "win_rate": 0.528,
+    "series": 41,
+    "brier_mean": 0.6554,
+    "log_loss_mean": 1.08077,
+    "drawdown_r_sum": 137.15
+   },
+   "random_forest_only": {
+    "trades": 551,
+    "avg_r": 0.0503,
+    "total_r": 27.7,
+    "win_rate": 0.539,
+    "series": 41,
+    "brier_mean": 0.65455,
+    "log_loss_mean": 1.07932,
+    "drawdown_r_sum": 118.51
+   },
+   "boosting_only": {
+    "trades": 648,
+    "avg_r": 0.0464,
+    "total_r": 30.08,
+    "win_rate": 0.537,
+    "series": 41,
+    "brier_mean": 0.66014,
+    "log_loss_mean": 1.08841,
+    "drawdown_r_sum": 122.45
+   },
+   "with_deep": {
+    "trades": 670,
+    "avg_r": 0.0185,
+    "total_r": 12.38,
+    "win_rate": 0.54,
+    "series": 41,
+    "brier_mean": 0.65427,
+    "log_loss_mean": 1.07907,
+    "drawdown_r_sum": 131.89
+   },
+   "no_arima_vs_control": {
+    "n_series": 41,
+    "share_better": 0.009,
+    "ci90_r_per_trade": [
+     -0.0696,
+     -0.0123
+    ],
+    "brier_better_share": 0.488
+   },
+   "random_forest_only_vs_control": {
+    "n_series": 41,
+    "share_better": 0.364,
+    "ci90_r_per_trade": [
+     -0.0544,
+     0.0325
+    ],
+    "brier_better_share": 0.659
+   },
+   "boosting_only_vs_control": {
+    "n_series": 41,
+    "share_better": 0.406,
+    "ci90_r_per_trade": [
+     -0.0492,
+     0.0373
+    ],
+    "brier_better_share": 0.024
+   },
+   "with_deep_vs_control": {
+    "n_series": 41,
+    "share_better": 0.086,
+    "ci90_r_per_trade": [
+     -0.0745,
+     0.0068
+    ],
+    "brier_better_share": 0.878
+   }
+  }
+ },
+ "same_as_control": {
+  "4h": []
+ },
+ "models": {
+  "4h": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_arima": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ],
+   "random_forest_only": [
+    "prior_baseline",
+    "prev_candle",
+    "random_forest"
+   ],
+   "boosting_only": [
+    "prior_baseline",
+    "prev_candle",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ],
+   "with_deep": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ]
+  }
+ },
+ "seconds": 12084.9,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
