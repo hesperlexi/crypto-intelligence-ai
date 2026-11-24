@@ -3,11 +3,11 @@
  "edge_health": {
   "ok": true,
   "views": 751,
-  "newest": 1795553777335,
-  "last_put": 1795553783519
+  "newest": 1795554209016,
+  "last_put": 1795554250482
  },
  "cloud_watcher": {
-  "at": 1795554194404,
+  "at": 1795554313494,
   "armed": 24,
   "priced": 2,
   "sent_total": 0,
@@ -16,9 +16,340 @@
   "price_tries": [
    "data-api.binance.vision 403",
    "api.binance.com 451",
-   "okx 429 0/1",
-   "mexc 200 0/1",
-   "gate 200 1/1"
+   "okx 200 1/1"
+  ]
+ },
+ "record_at": 1795554208832,
+ "record_open": [
+  {
+   "tf": "1h",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795552505107
+  },
+  {
+   "tf": "15m",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795537930021
+  }
+ ],
+ "record_newest": [
+  {
+   "tf": "1h",
+   "status": "OPEN",
+   "created_at": 1795552505107
+  },
+  {
+   "tf": "15m",
+   "status": "OPEN",
+   "created_at": 1795537930021
+  },
+  {
+   "tf": "15m",
+   "status": "EXPIRED",
+   "created_at": 1795512878139
+  },
+  {
+   "tf": "15m",
+   "status": "EXPIRED",
+   "created_at": 1795512807185
+  },
+  {
+   "tf": "12h",
+   "status": "EXPIRED",
+   "created_at": 1795512290788
+  }
+ ],
+ "bots_open": [
+  {
+   "bot": "futures-signal-ab-1h",
+   "tf": "1h",
+   "opened_at": 1795552352426,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": [
+    [
+     "OPEN",
+     1795552505107
+    ]
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-12h",
+   "tf": "12h",
+   "opened_at": 1795530375069,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "B",
+   "demo": null,
+   "record_same_coin_tf_side": [
+    [
+     "EXPIRED",
+     1795511484672
+    ]
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-15m",
+   "tf": "15m",
+   "opened_at": 1795515499297,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": [
+    [
+     "EXPIRED",
+     1795512807185
+    ]
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-15m",
+   "tf": "15m",
+   "opened_at": 1795537752236,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": [
+    [
+     "OPEN",
+     1795537930021
+    ]
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "tf": "15m",
+   "opened_at": 1795515499297,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe",
+    "tp1_r"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": [
+    [
+     "EXPIRED",
+     1795512807185
+    ]
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "tf": "15m",
+   "opened_at": 1795537752236,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": [
+    [
+     "OPEN",
+     1795537930021
+    ]
+   ]
+  },
+  {
+   "bot": "futures-demo-ab-1d",
+   "tf": "1d",
+   "opened_at": 1795511382950,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": []
+  },
+  {
+   "bot": "futures-demo-ab-1d",
+   "tf": "1d",
+   "opened_at": 1795511382950,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": []
+  },
+  {
+   "bot": "futures-demo-ab-1d",
+   "tf": "1d",
+   "opened_at": 1795511382950,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "record_same_coin_tf_side": []
+  }
+ ],
+ "calls_15m": {
+  "at": 1795554208847,
+  "with_plan": 34,
+  "record_status": [
+   "None"
+  ]
+ },
+ "calls_1h": {
+  "at": 1795554208854,
+  "with_plan": 34,
+  "record_status": [
+   "None",
+   "already_open"
+  ]
+ },
+ "calls_4h": {
+  "at": 1795554208860,
+  "with_plan": 33,
+  "record_status": [
+   "None"
+  ]
+ },
+ "calls_12h": {
+  "at": 1795551575253,
+  "with_plan": 32,
+  "record_status": [
+   "None"
   ]
  }
 }
