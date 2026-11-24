@@ -1424,3 +1424,16 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   spot-vs-leverage (funding-crowded) split adds nothing; 15m opportunity strategies (recovery / continuation /
   exhaustion) all lose (−0.21 to −0.27R per trade, PF 0.5-0.65) → not built. Note: out-of-sample LONG calls lost
   (normal-BTC longs 116 calls −38.9R) while shorts won (+43.8R) - the long side needs its own study.
+- **V3.0 design part 1 live (24 Nov 2026, branch `v3-design`):** `styles/v3.css` (loaded last): Graphite (theme id "gold")
+  + Ivory; retired dark themes map to Graphite (`appearance.normalizeTheme`); fonts self-hosted @fontsource DM Sans
+  Variable (text + titles, owner: no serif) + DM Mono (figures, `.num`); Sora only for share canvases (Google). Faint
+  neural mesh background (`--mesh`, hidden on phones); `CosmicBackdrop` removed. Logo B+D (`brand-source/make_logo.py`
+  → `render_logo_assets.cjs`; PNGs palette-quantised); `LiveLogo` = still tile + gold pulse + turning cyan ring.
+  Overview (`components/V3Home.tsx`: MarketStatus (views/risk_state), MyCapital + MyPositions (practice futures account,
+  `/auto-paper` = auto_paper/{uid}), Decisions; then Market today strip, BTC chart + brief, MarketBoard, activity /
+  performance / context, details fold). New pages `/risk` (`pages/Risk.tsx`) and `/portfolio` (`pages/Portfolio.tsx`,
+  saves daily_loss_pct / max_exposure_pct / follow_risk). Menu: Overview · AI Intelligence (/command) · Risk · Signals ·
+  Trade · Portfolio · Results | Markets: Coins · Money flow · Radar · News. Command Centre names: Market map, Live signals,
+  BTC link map, System status, Coin deep dive. Hesper journeys `components/Journeys.tsx` (AscentJourney main run,
+  SingularityJourney Last Stand). Still to restyle: Signals, Trade, Results (full redesign), News, Coins, Settings, share
+  images; space visuals left in Landing, Demo bots (FleetOrbit), News (Intercept/OrbitTrack), Lab, Xeno.tsx.
