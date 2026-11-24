@@ -3,11 +3,11 @@
  "edge_health": {
   "ok": true,
   "views": 751,
-  "newest": 1795554209016,
-  "last_put": 1795554250482
+  "newest": 1795557140099,
+  "last_put": 1795557146409
  },
  "cloud_watcher": {
-  "at": 1795554433840,
+  "at": 1795557373612,
   "armed": 24,
   "priced": 2,
   "sent_total": 0,
@@ -16,10 +16,12 @@
   "price_tries": [
    "data-api.binance.vision 403",
    "api.binance.com 451",
-   "okx 200 1/1"
+   "okx 429 0/1",
+   "mexc 200 0/1",
+   "gate 200 1/1"
   ]
  },
- "record_at": 1795554208832,
+ "record_at": 1795557139781,
  "record_open": [
   {
    "tf": "1h",
@@ -104,87 +106,6 @@
    ]
   },
   {
-   "bot": "futures-signal-ab-12h",
-   "tf": "12h",
-   "opened_at": 1795530375069,
-   "info_keys": [
-    "atr",
-    "bar_ts",
-    "confidence",
-    "decision",
-    "edge_confirmed",
-    "grade",
-    "leverage",
-    "model_version",
-    "p_down",
-    "p_up",
-    "predicted",
-    "rr",
-    "run_target",
-    "signal",
-    "size_mult",
-    "timeframe"
-   ],
-   "grade": "B",
-   "demo": null,
-   "pending_bars": 6,
-   "exit_at": null,
-   "record_same_coin_tf_side": [
-    {
-     "status": "EXPIRED",
-     "created_at": 1795511484672,
-     "fill_status": "FILLED",
-     "filled_at": 1795511484672,
-     "closed_at": 1795527359083,
-     "exit_reason": "admin_close",
-     "horizon_bars": 30,
-     "expires_at": 1796807484672,
-     "tp1_hit": 0,
-     "stop_hit": 0
-    }
-   ]
-  },
-  {
-   "bot": "futures-signal-ab-15m",
-   "tf": "15m",
-   "opened_at": 1795515499297,
-   "info_keys": [
-    "atr",
-    "bar_ts",
-    "confidence",
-    "decision",
-    "edge_confirmed",
-    "grade",
-    "leverage",
-    "model_version",
-    "p_down",
-    "p_up",
-    "predicted",
-    "rr",
-    "signal",
-    "size_mult",
-    "timeframe"
-   ],
-   "grade": "A",
-   "demo": null,
-   "pending_bars": 6,
-   "exit_at": null,
-   "record_same_coin_tf_side": [
-    {
-     "status": "EXPIRED",
-     "created_at": 1795512807185,
-     "fill_status": "FILLED",
-     "filled_at": 1795512807185,
-     "closed_at": 1795514575772,
-     "exit_reason": "admin_close",
-     "horizon_bars": 250,
-     "expires_at": 1795737807185,
-     "tp1_hit": 0,
-     "stop_hit": 0
-    }
-   ]
-  },
-  {
    "bot": "futures-signal-ab-15m",
    "tf": "15m",
    "opened_at": 1795537752236,
@@ -220,47 +141,6 @@
      "exit_reason": null,
      "horizon_bars": 250,
      "expires_at": 1795762930021,
-     "tp1_hit": 0,
-     "stop_hit": 0
-    }
-   ]
-  },
-  {
-   "bot": "futures-test-tp08-15m",
-   "tf": "15m",
-   "opened_at": 1795515499297,
-   "info_keys": [
-    "atr",
-    "bar_ts",
-    "confidence",
-    "decision",
-    "edge_confirmed",
-    "grade",
-    "leverage",
-    "model_version",
-    "p_down",
-    "p_up",
-    "predicted",
-    "rr",
-    "signal",
-    "size_mult",
-    "timeframe",
-    "tp1_r"
-   ],
-   "grade": "A",
-   "demo": null,
-   "pending_bars": 6,
-   "exit_at": null,
-   "record_same_coin_tf_side": [
-    {
-     "status": "EXPIRED",
-     "created_at": 1795512807185,
-     "fill_status": "FILLED",
-     "filled_at": 1795512807185,
-     "closed_at": 1795514575772,
-     "exit_reason": "admin_close",
-     "horizon_bars": 250,
-     "expires_at": 1795737807185,
      "tp1_hit": 0,
      "stop_hit": 0
     }
@@ -390,30 +270,29 @@
   }
  ],
  "calls_15m": {
-  "at": 1795554208847,
-  "with_plan": 34,
+  "at": 1795557139794,
+  "with_plan": 30,
   "record_status": [
    "None"
   ]
  },
  "calls_1h": {
-  "at": 1795554208854,
+  "at": 1795557139799,
   "with_plan": 34,
   "record_status": [
-   "None",
-   "already_open"
+   "None"
   ]
  },
  "calls_4h": {
-  "at": 1795554208860,
+  "at": 1795557139805,
   "with_plan": 33,
   "record_status": [
    "None"
   ]
  },
  "calls_12h": {
-  "at": 1795551575253,
-  "with_plan": 32,
+  "at": 1795555153554,
+  "with_plan": 33,
   "record_status": [
    "None"
   ]
