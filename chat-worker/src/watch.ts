@@ -96,6 +96,25 @@ export async function watchRun(sql: Sql, keyJson: string | undefined): Promise<R
   const list: Armed[] = JSON.parse(kvGet(sql, "armed") ?? "[]");
   const armedAt = Number(kvGet(sql, "armed_at") ?? 0);
   const st: any = { at: now, armed: list.length, armed_at: armedAt, sent: 0, due: 0, error: keyJson ? null : "FCM_SENDER_KEY not set" };
+  // hourly self-check: a dry-run send (validate_only: nothing reaches the phone) proves the key and its permission
+  const check = JSON.parse(kvGet(sql, "fcm_check") ?? "null");
+  const probe = kvGet(sql, "probe_token");
+  if (keyJson && probe && (!check || now - check.at > 3_600_000)) {
+    const res: any = { at: now, ok: false };
+    try {
+      const auth = await accessToken(sql, keyJson);
+      if (!auth) res.why = "no access token";
+      else {
+        const r = await fetch(`https://fcm.googleapis.com/v1/projects/${auth.project}/messages:send`, {
+          method: "POST", headers: { Authorization: `Bearer ${auth.token}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ validate_only: true, message: { token: probe, data: { title: "check", body: "check" } } }) });
+        res.ok = r.ok; res.status = r.status;
+        if (!r.ok) res.why = (await r.text()).slice(0, 160).replace(/ya29\.[\w.-]+/g, "[token]");
+      }
+    } catch (e) { res.why = String(e).slice(0, 120); }
+    kvPut(sql, "fcm_check", JSON.stringify(res));
+  }
+  st.fcm_check = JSON.parse(kvGet(sql, "fcm_check") ?? "null");
   // armed list older than 6 h = the engine is gone for long; the levels may be out of date (closed calls) -> stop
   if (!list.length || now - armedAt > 6 * 3_600_000) { kvPut(sql, "status", JSON.stringify({ ...st, idle: true })); return st; }
   const px = await prices(list);
@@ -148,6 +167,7 @@ export function watchArm(sql: Sql, body: any): number {
     && a.msg && typeof a.msg.tag === "string" && Array.isArray(a.tokens)).slice(0, 2000);
   kvPut(sql, "armed", JSON.stringify(list));
   kvPut(sql, "engine_diag", JSON.stringify(body?.diag ?? null).slice(0, 2000));
+  if (typeof body?.probe_token === "string") kvPut(sql, "probe_token", body.probe_token);
   kvPut(sql, "armed_at", String(Date.now()));
   return list.length;
 }

@@ -136,7 +136,7 @@ try:
     st = json.load(urllib.request.urlopen(req, timeout=20))
     out["cloud_watcher"] = {**{k: st.get(k) for k in ("at", "armed", "armed_at", "sent", "sent_total", "due", "priced", "error", "idle")},
                             "sent_keys_n": len(st.get("sent_keys") or []), "bad_tokens_n": len(st.get("bad_tokens") or []),
-                            "engine_diag": st.get("engine_diag")}
+                            "engine_diag": st.get("engine_diag"), "fcm_check": st.get("fcm_check")}
 except Exception as exc:
     out["cloud_watcher"] = {"probe_error": str(exc)[:200]}
 print(json.dumps(out, indent=1, default=str))
