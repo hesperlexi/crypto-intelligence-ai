@@ -194,14 +194,14 @@ export const Sidebar = memo(function Sidebar({ groups, counts, collapsed, onTogg
 
 /** v2.56: the console's status line at the foot of the sidebar - price feed and engine, from data already loaded. */
 function SideStatus() {
-  const { connected } = useLive();
+  const { connected, feed } = useLive();
   const health = useApi<any>("/system/health");
   const last = health.data?.engine?.last_tick_finished;
   const late = isNumber(last) && Date.now() - last > 45 * 60_000;
   return (
     <div className="side-status mb-1.5 space-y-1.5 text-xs" role="status">
       <div className="flex items-center justify-between"><span className="text-mute">Prices</span>
-        <span className={`inline-flex items-center gap-1.5 font-medium ${connected ? "text-bull" : "text-warn"}`}><span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-bull live-dot" : "bg-warn"}`} />{connected ? "Streaming" : "Reconnecting"}</span></div>
+        <span className={`inline-flex items-center gap-1.5 font-medium ${connected ? "text-bull" : "text-warn"}`}><span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-bull live-dot" : "bg-warn"}`} />{connected ? (feed?.status === "LIVE · 2s" ? "Every 2 s" : "Streaming") : "Reconnecting"}</span></div>
       <div className="flex items-center justify-between"><span className="text-mute">AI engine</span>
         <span className={`num font-medium ${late ? "text-warn" : "text-text/85"}`}>{isNumber(last) ? ago(last) : "—"}</span></div>
     </div>

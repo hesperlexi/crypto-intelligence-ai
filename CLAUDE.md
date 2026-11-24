@@ -666,6 +666,13 @@ configuration, market data + candle series table, models table, recent errors (c
   → setting `edge_watch_status`, sent keys merged into `watch_sent.json`, refused phones deleted from `push_tokens`.
   `push_tokens` read at most hourly (setting `edge_watch_tokens`). `watch.py` stays quiet while `cloud_healthy` (watcher
   ran < 6 min ago, armed < 45 min, no error). Armed list > 6 h old → watcher idles. `EDGE_WATCH=0` off. Tests `test_edge_watch.py`.
+- Health fixes (owner, 24 Nov 2026): `data.quality.check_candles` judges only holes in the last 30 days (`RECENT_MS`,
+  `recent_missing`) for a fresh series' status (silver's January MEXC holes no longer mark it DEGRADED);
+  `worker.delisted_to_mexc` (in `sync_config`, every 6 h): a watchlist coin whose 1d candles stopped > 7 days ago (Binance
+  delisted, e.g. XMR) moves to its MEXC perpetual via `add_futures_only` (old candles kept). Website: prices arriving over
+  REST every 2 s count as live (`live.tsx`), sidebar says "Every 2 s". Cloud watcher prices: Binance refuses Cloudflare
+  (403/451) → OKX spot tickers → MEXC spot (`price_tries` in status). AI check warnings (4h / 1d worse than base rates
+  this week) are real model signals, not bugs. Engine rounds avg ~200 s, max ~300 s of the 240 s cycle (analyses ~130 s).
 - Version 3.1.0 everywhere (package.json → footer, Settings, APK name). Manual: 1d = demo bots, stale risk = half size, card.
 - Telegram news: `post_news` sends only high-impact US releases ~30 min before (a few a week); briefings wait for the owner's
   approval while "Ask me before posting" is on. `quick_status.py` now reports the calendar (`news`).

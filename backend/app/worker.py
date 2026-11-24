@@ -716,6 +716,9 @@ def sync_config(rt: Runtime, sink: BaseSink) -> dict[str, Any]:
                 rejected.append(sym)
         for sym in current - set(wanted):
             rt.remove_symbol(sym)
+        moved = delisted_to_mexc(rt)              # v3.1: a coin Binance stopped trading (XMR) follows MEXC instead
+        if moved:
+            notes["moved_to_mexc"] = moved
         for sym, pinned in wanted.items():
             rt.pin_symbol(sym, pinned)
         if rejected:
@@ -1257,6 +1260,36 @@ def add_futures_only(rt: Runtime, symbol: str) -> bool:
     rt.db.set_setting(F.EXTRA_KEY, extra)
     F.FUT_ONLY[sym] = contract
     return True
+
+
+DELISTED_AFTER_MS = 7 * 86_400_000
+DELISTED_EVERY_MS = 6 * 3_600_000
+
+
+def delisted_to_mexc(rt: Runtime, now: int | None = None) -> list[str]:
+    """v3.1 (24 Nov 2026): a watchlist coin whose Binance spot candles stopped more than a week ago (delisted there, e.g.
+    XMR in Feb 2024) is followed on its MEXC USDT perpetual from now on, like silver; checked at most every 6 h. Old
+    candles are kept (nothing deleted); new ones come from MEXC. Coins MEXC does not list are left as they are."""
+    from .data import futures_only as F
+    now = now or now_ms()
+    if now - int(rt.db.get_setting("delisted_check_at", 0) or 0) < DELISTED_EVERY_MS:
+        return []
+    rt.db.set_setting("delisted_check_at", now)
+    moved = []
+    for sym in rt.symbols():
+        if sym.upper() in F.FUT_ONLY:
+            continue
+        row = rt.db.one("SELECT MAX(ts) AS ts FROM market_data WHERE symbol = ? AND timeframe = '1d'", (sym,))
+        last = int(row["ts"]) if row and row.get("ts") else None
+        if last is None or now - last < DELISTED_AFTER_MS:
+            continue
+        if add_futures_only(rt, sym):
+            moved.append(sym)
+            try:
+                rt.store._cache.clear()
+            except Exception:
+                pass
+    return moved
 
 
 def clean_mexc_candles(rt: Runtime) -> int:

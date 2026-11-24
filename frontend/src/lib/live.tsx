@@ -328,7 +328,8 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     return () => window.clearInterval(id);
   }, [hasPrices]);
 
-  const live = mode === "ws" || futLive;
+  // v3.1: prices that still arrive every 2 s over REST while a stream reconnects count as up to date (they are)
+  const live = mode === "ws" || futLive || (mode === "rest" && Date.now() - (slow.lastMsg ?? 0) < 6000);
   const status = !online ? "OFFLINE" : live ? "LIVE" : mode === "rest" ? "LIVE · 2s" : all.length ? "RECONNECTING" : "IDLE";
   const dismissAlert = useCallback((id: string) => setAlerts((a) => a.filter((x) => x.id !== id)), []);
   const symbolList = useMemo(() => (key ? key.split(",") : []), [key]);

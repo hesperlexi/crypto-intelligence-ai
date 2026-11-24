@@ -9,6 +9,8 @@ import pandas as pd
 
 from .base import tf_ms
 
+RECENT_MS = 30 * 86_400_000
+
 
 def check_candles(df: pd.DataFrame, timeframe: str, now_ms: int | None = None,
                   raw_rows: int | None = None) -> dict[str, Any]:
@@ -32,8 +34,12 @@ def check_candles(df: pd.DataFrame, timeframe: str, now_ms: int | None = None,
     age_s = (now_ms - (int(ts[-1]) + step)) / 1000  # time since the last stored candle closed
     fresh = age_s <= 2 * step / 1000
     gaps = [{"from": int(ts[i]), "to": int(ts[i + 1]), "missing": int(diffs[i] // step - 1)} for i in gap_idx[-10:]]
-    status = "OK" if fresh and quality >= 99 else ("STALE" if not fresh else "DEGRADED")
+    # v3.1 (24 Nov 2026): holes older than RECENT_MS are history the source never had (silver: market holidays on MEXC in
+    # early January); they no longer mark a fresh series DEGRADED. Recent holes, malformed or misaligned bars still do.
+    recent_missing = int(sum((diffs[i] // step) - 1 for i in gap_idx if int(ts[i + 1]) > now_ms - RECENT_MS))
+    clean_recent = recent_missing == 0 and malformed == 0 and misaligned == 0
+    status = "OK" if fresh and (quality >= 99 or clean_recent) else ("STALE" if not fresh else "DEGRADED")
     return {"timeframe": timeframe, "candles": int(len(df)), "missing": missing, "duplicates": duplicates,
             "malformed": malformed, "misaligned": misaligned, "gaps": gaps,
-            "quality_pct": round(float(quality), 3), "fresh": bool(fresh), "age_s": round(float(age_s), 1),
+            "quality_pct": round(float(quality), 3), "recent_missing": recent_missing, "fresh": bool(fresh), "age_s": round(float(age_s), 1),
             "first_ts": int(ts[0]), "last_ts": int(ts[-1]), "status": status}
