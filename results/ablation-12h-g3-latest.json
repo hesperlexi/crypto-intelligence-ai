@@ -1,0 +1,130 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "g3",
+ "timeframes": {
+  "12h": {
+   "coins_done": 35,
+   "skipped": [
+    "ANTHROPIC/USDT: control not evaluated: ANTHROPIC/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: ANTHROPIC/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluat",
+    "BARD/USDT: control not evaluated: BARD/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: BARD/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluated: BARD/U",
+    "BIO/USDT: control not evaluated: BIO/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: BIO/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluated: BIO/USDT",
+    "ERA/USDT: control not evaluated: ERA/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: ERA/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluated: ERA/USDT",
+    "MSTR/USDT: control not evaluated: MSTR/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: MSTR/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluated: MSTR/U",
+    "U/USDT: control not evaluated: U/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: U/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluated: U/USDT 12h: ",
+    "XAG/USDT: control not evaluated: XAG/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: XAG/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluated: XAG/USDT",
+    "XAUT/USDT: control not evaluated: XAUT/USDT 12h: no model / too few out-of-sample bars; random_forest_only not evaluated: XAUT/USDT 12h: no model / too few out-of-sample bars; boosting_only not evaluated: XAUT/U"
+   ],
+   "control": {
+    "trades": 257,
+    "avg_r": 0.1403,
+    "total_r": 36.06,
+    "win_rate": 0.572,
+    "series": 35,
+    "brier_mean": 0.66232,
+    "log_loss_mean": 1.0918,
+    "drawdown_r_sum": 60.25
+   },
+   "random_forest_only": {
+    "trades": 246,
+    "avg_r": 0.094,
+    "total_r": 23.13,
+    "win_rate": 0.553,
+    "series": 35,
+    "brier_mean": 0.65845,
+    "log_loss_mean": 1.08573,
+    "drawdown_r_sum": 63.45
+   },
+   "boosting_only": {
+    "trades": 315,
+    "avg_r": 0.0959,
+    "total_r": 30.2,
+    "win_rate": 0.575,
+    "series": 35,
+    "brier_mean": 0.69557,
+    "log_loss_mean": 1.14845,
+    "drawdown_r_sum": 67.02
+   },
+   "with_deep": {
+    "trades": 230,
+    "avg_r": 0.1063,
+    "total_r": 24.45,
+    "win_rate": 0.565,
+    "series": 35,
+    "brier_mean": 0.66019,
+    "log_loss_mean": 1.08856,
+    "drawdown_r_sum": 59.68
+   },
+   "random_forest_only_vs_control": {
+    "n_series": 35,
+    "share_better": 0.088,
+    "ci90_r_per_trade": [
+     -0.1219,
+     0.009
+    ],
+    "brier_better_share": 0.886
+   },
+   "boosting_only_vs_control": {
+    "n_series": 35,
+    "share_better": 0.288,
+    "ci90_r_per_trade": [
+     -0.0905,
+     0.045
+    ],
+    "brier_better_share": 0.0
+   },
+   "with_deep_vs_control": {
+    "n_series": 35,
+    "share_better": 0.213,
+    "ci90_r_per_trade": [
+     -0.14,
+     0.046
+    ],
+    "brier_better_share": 0.914
+   }
+  }
+ },
+ "same_as_control": {
+  "12h": [
+   "no_arima"
+  ]
+ },
+ "models": {
+  "12h": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ],
+   "random_forest_only": [
+    "prior_baseline",
+    "prev_candle",
+    "random_forest"
+   ],
+   "boosting_only": [
+    "prior_baseline",
+    "prev_candle",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ],
+   "with_deep": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm"
+   ]
+  }
+ },
+ "seconds": 8080.8,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
