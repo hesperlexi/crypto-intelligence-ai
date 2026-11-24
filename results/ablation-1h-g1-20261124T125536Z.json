@@ -1,0 +1,154 @@
+{
+ "ok": true,
+ "command": "ablation",
+ "group": "g1",
+ "timeframes": {
+  "1h": {
+   "coins_done": 45,
+   "skipped": [
+    "HYPE/USDT: control not evaluated: HYPE/USDT 1h: span too short to split; no_random_forest not evaluated: HYPE/USDT 1h: span too short to split; no_logistic not evaluated: HYPE/USDT 1h: span too short to split; n"
+   ],
+   "control": {
+    "trades": 434,
+    "avg_r": 0.0049,
+    "total_r": 2.12,
+    "win_rate": 0.525,
+    "series": 45,
+    "brier_mean": 0.64988,
+    "log_loss_mean": 1.08045,
+    "drawdown_r_sum": 108.7
+   },
+   "no_random_forest": {
+    "trades": 371,
+    "avg_r": 0.0298,
+    "total_r": 11.05,
+    "win_rate": 0.536,
+    "series": 45,
+    "brier_mean": 0.65127,
+    "log_loss_mean": 1.09668,
+    "drawdown_r_sum": 96.22
+   },
+   "no_logistic": {
+    "trades": 368,
+    "avg_r": 0.0119,
+    "total_r": 4.39,
+    "win_rate": 0.516,
+    "series": 45,
+    "brier_mean": 0.6507,
+    "log_loss_mean": 1.08303,
+    "drawdown_r_sum": 90.72
+   },
+   "no_technical_rules": {
+    "trades": 486,
+    "avg_r": 0.0209,
+    "total_r": 10.15,
+    "win_rate": 0.519,
+    "series": 45,
+    "brier_mean": 0.64976,
+    "log_loss_mean": 1.08152,
+    "drawdown_r_sum": 114.18
+   },
+   "logistic_only": {
+    "trades": 429,
+    "avg_r": 0.0751,
+    "total_r": 32.23,
+    "win_rate": 0.564,
+    "series": 45,
+    "brier_mean": 0.65228,
+    "log_loss_mean": 1.09823,
+    "drawdown_r_sum": 93.29
+   },
+   "no_random_forest_vs_control": {
+    "n_series": 45,
+    "share_better": 0.794,
+    "ci90_r_per_trade": [
+     -0.0205,
+     0.0634
+    ],
+    "brier_better_share": 0.067
+   },
+   "no_logistic_vs_control": {
+    "n_series": 45,
+    "share_better": 0.557,
+    "ci90_r_per_trade": [
+     -0.0575,
+     0.0582
+    ],
+    "brier_better_share": 0.022
+   },
+   "no_technical_rules_vs_control": {
+    "n_series": 45,
+    "share_better": 0.717,
+    "ci90_r_per_trade": [
+     -0.0358,
+     0.0681
+    ],
+    "brier_better_share": 0.422
+   },
+   "logistic_only_vs_control": {
+    "n_series": 45,
+    "share_better": 0.938,
+    "ci90_r_per_trade": [
+     -0.0047,
+     0.1393
+    ],
+    "brier_better_share": 0.133
+   }
+  }
+ },
+ "same_as_control": {
+  "1h": []
+ },
+ "models": {
+  "1h": {
+   "control": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_random_forest": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "technical_rules",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_logistic": [
+    "prior_baseline",
+    "prev_candle",
+    "technical_rules",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "no_technical_rules": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic",
+    "random_forest",
+    "hist_gbm",
+    "xgboost",
+    "lightgbm",
+    "arima"
+   ],
+   "logistic_only": [
+    "prior_baseline",
+    "prev_candle",
+    "logistic"
+   ]
+  }
+ },
+ "seconds": 17529.8,
+ "method": "Model ablation study (owner, 24 Nov 2026: \"concentrate on how many models actually improve the final decision\").\nREAD-ONLY on production: runs on a private copy of the engine state, never saves it, never activates anything live.\n\n`python -m app.research ablation --timeframes 4h --variants g1 --budget 18000`\n\nFor every active coin of the timeframe the model bundle is retrained several ways on the SAME, latest data and each one is\njudged on the untouched test split with the live decision rules and the record's exits + costs (research_engine.evaluate):\n\n  control         today's live model set for that timeframe (settings.model_exclude applied, deep models off as live)\n  no_<model>      the live set without one model                       -> does that model add anything?\n  <model>_only    one model alone (+ the two baselines, which carry no weight) -> is the ensemble better than its parts?\n  with_deep       the live set + LSTM / GRU / Transformer               -> do deep models add anything?\n\nGroups (one CI job each, so every job fits in the 6-hour limit):\n  g1  no_random_forest, no_logistic, no_technical_rules, logistic_only\n  g2  no_xgboost, no_lightgbm, no_hist_gbm, xgboost_only\n  g3  no_arima, random_forest_only, boosting_only, with_deep\n\nPer variant: trading result (net R, per trade, win rate), the ensemble's out-of-sample Brier score and log loss from the\nwalk-forward, and a series bootstrap of the R difference vs control (share of resamples better, 90 % interval).\nThe champion / challenger guard is switched OFF inside the study (otherwise a variant could be refused and the old model\nevaluated in its place)."
+}
