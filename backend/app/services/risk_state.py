@@ -142,14 +142,16 @@ def f_sweep(rt, now) -> dict[str, Any]:
 
 def f_liq(rt, now) -> dict[str, Any]:
     try:
-        rows = rt.db.query("SELECT kind, ts, value FROM derivs WHERE symbol = ? AND kind IN ('liq_long_4hour','liq_short_4hour') "
+        # hourly bars (refreshed every hour) summed into 4h buckets; the 4h series is only refreshed once a day
+        rows = rt.db.query("SELECT kind, ts, value FROM derivs WHERE symbol = ? AND kind IN ('liq_long_1hour','liq_short_1hour') "
                            "AND ts >= ? ORDER BY ts", (BTC, now - 40 * 4 * H))
     except Exception:
         rows = []
     by: dict[int, float] = {}
     for r in rows:
-        if int(r["ts"]) + 4 * H <= now:
-            by[int(r["ts"])] = by.get(int(r["ts"]), 0.0) + float(r["value"] or 0)
+        b = int(r["ts"]) // (4 * H) * (4 * H)
+        if b + 4 * H <= now:
+            by[b] = by.get(b, 0.0) + float(r["value"] or 0)
     ts = sorted(by)
     if len(ts) < 12 or now - ts[-1] > 12 * H:
         return _f("liq", "Liquidation wave", 0, "unknown", None, "liquidation data not available yet", source="Coinalyze")
