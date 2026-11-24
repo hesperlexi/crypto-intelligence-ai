@@ -124,7 +124,7 @@
   ],
   [
    "health_admin",
-   75.3
+   75.4
   ],
   [
    "futures_12h",
@@ -218,26 +218,26 @@
  "health": {
   "status": "DEGRADED",
   "engine": {
-   "last_tick_started": 1795537752236,
-   "last_tick_finished": 1795537939035,
-   "last_tick_seconds": 186.8,
+   "last_tick_started": 1795538049663,
+   "last_tick_finished": 1795538235232,
+   "last_tick_seconds": 185.6,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7892,
+   "ticks": 7893,
    "round_seconds_avg": 198.6,
    "round_seconds_max": 297.6,
    "rounds_measured": 48,
-   "watch_last_at": 1795537920138,
-   "watch_coins": 0,
-   "watch_priced": 0,
+   "watch_last_at": 1795538220861,
+   "watch_coins": 1,
+   "watch_priced": 1,
    "watch_sent_total": 406,
-   "flow_last_at": 1795537929096,
+   "flow_last_at": 1795538209081,
    "flow_coins": 31,
    "flow_errors": 0,
-   "firestore_writes_today": 3748,
+   "firestore_writes_today": 3768,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 2372,
+   "firestore_reads_today": 2404,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -401,152 +401,152 @@
   "series_15m": [
    {
     "symbol": "PAXG/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "XAG/USDT",
-    "candles": 30216,
+    "candles": 30217,
     "status": "OK"
    },
    {
     "symbol": "BTC/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 32784,
-    "status": "OK"
-   },
-   {
-    "symbol": "GALA/USDT",
-    "candles": 32390,
-    "status": "OK"
-   },
-   {
-    "symbol": "TRX/USDT",
-    "candles": 32782,
-    "status": "OK"
-   },
-   {
-    "symbol": "ADA/USDT",
     "candles": 32785,
     "status": "OK"
    },
    {
+    "symbol": "GALA/USDT",
+    "candles": 32391,
+    "status": "OK"
+   },
+   {
+    "symbol": "TRX/USDT",
+    "candles": 32783,
+    "status": "OK"
+   },
+   {
+    "symbol": "ADA/USDT",
+    "candles": 32786,
+    "status": "OK"
+   },
+   {
     "symbol": "DOT/USDT",
-    "candles": 32784,
+    "candles": 32785,
     "status": "OK"
    },
    {
     "symbol": "SUI/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "BCH/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "WIF/USDT",
-    "candles": 30964,
+    "candles": 30965,
     "status": "OK"
    },
    {
     "symbol": "BONK/USDT",
-    "candles": 30959,
+    "candles": 30960,
     "status": "OK"
    },
    {
     "symbol": "APT/USDT",
-    "candles": 32783,
+    "candles": 32784,
     "status": "OK"
    },
    {
     "symbol": "ETC/USDT",
-    "candles": 30956,
+    "candles": 30957,
     "status": "OK"
    },
    {
     "symbol": "RARE/USDT",
-    "candles": 30789,
+    "candles": 30790,
     "status": "OK"
    },
    {
     "symbol": "SEI/USDT",
-    "candles": 30789,
+    "candles": 30790,
     "status": "OK"
    },
    {
     "symbol": "MSTR/USDT",
-    "candles": 30752,
+    "candles": 30753,
     "status": "OK"
    },
    {
     "symbol": "ANTHROPIC/USDT",
-    "candles": 21555,
+    "candles": 21556,
     "status": "OK"
    },
    {
     "symbol": "HYPE/USDT",
-    "candles": 5878,
+    "candles": 5879,
     "status": "OK"
    },
    {
     "symbol": "HBAR/USDT",
-    "candles": 32782,
+    "candles": 32783,
     "status": "OK"
    },
    {
     "symbol": "SHIB/USDT",
-    "candles": 30962,
+    "candles": 30963,
     "status": "OK"
    },
    {
     "symbol": "WLD/USDT",
-    "candles": 32782,
+    "candles": 32783,
     "status": "OK"
    },
    {
@@ -556,22 +556,22 @@
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "FLOKI/USDT",
-    "candles": 30007,
+    "candles": 30008,
     "status": "OK"
    },
    {
     "symbol": "NEAR/USDT",
-    "candles": 32785,
+    "candles": 32786,
     "status": "OK"
    },
    {
     "symbol": "PROM/USDT",
-    "candles": 30002,
+    "candles": 30003,
     "status": "OK"
    }
   ]
@@ -580,37 +580,37 @@
   "15m": {
    "n": 35,
    "fresh_12h": 2,
-   "max": 694.8,
+   "max": 694.9,
    "missing": 1
   },
   "1h": {
    "n": 35,
    "fresh_12h": 2,
-   "max": 661.4,
+   "max": 661.5,
    "missing": 1
   },
   "4h": {
    "n": 35,
    "fresh_12h": 30,
-   "max": 661.4,
+   "max": 661.5,
    "missing": 2
   },
   "12h": {
    "n": 35,
    "fresh_12h": 29,
-   "max": 661.4,
+   "max": 661.5,
    "missing": 2
   },
   "1d": {
    "n": 35,
    "fresh_12h": 28,
-   "max": 661.2,
+   "max": 661.3,
    "missing": 4
   },
   "3d": {
    "n": 35,
    "fresh_12h": 24,
-   "max": 253.3,
+   "max": 253.4,
    "missing": 10
   }
  },
@@ -738,8 +738,8 @@
  "safety": [],
  "release": {
   "version": "2.1.0",
-  "launched_at": 1793386630880,
-  "updated_at": 1793386630880
+  "updated_at": 1793386630880,
+  "launched_at": 1793386630880
  },
  "track_record": {
   "record_since": 1795511383715,
@@ -848,9 +848,9 @@
  "telegram": {
   "has_token": true,
   "has_channel": true,
-  "enabled": true,
-  "post_weekly": true,
   "post_wins": true,
+  "post_weekly": true,
+  "enabled": true,
   "post_teaser": true,
   "keys": [
    "channel",
@@ -1051,7 +1051,7 @@
   ],
   "runs": 1,
   "trades": 10,
-  "at": 1795537742492,
+  "at": 1795538334265,
   "since": 1793784369074,
   "current_run": 1,
   "run_numbers": [
@@ -1074,7 +1074,7 @@
    "policy": null,
    "min_balance": 1.0,
    "started": true,
-   "generated_at": 1795537742492,
+   "generated_at": 1795538334265,
    "current": null,
    "score": null,
    "open_ended": true,
@@ -1116,6 +1116,7 @@
   "errors": []
  },
  "alert_watcher": null,
+ "hj_keys": [],
  "md": {},
  "md_stale": [],
  "exchange": {},
@@ -1132,13 +1133,13 @@
   ]
  },
  "cloud_watcher": {
-  "at": 1795538293648,
-  "armed": 4,
-  "armed_at": 1795538039494,
+  "at": 1795538473617,
+  "armed": 20,
+  "armed_at": 1795538337539,
   "sent": 0,
   "sent_total": 0,
   "due": 0,
-  "priced": 0,
+  "priced": 1,
   "error": null,
   "idle": null,
   "sent_keys_n": 0,
@@ -1151,10 +1152,14 @@
    "rules_primed": 9
   },
   "fcm_check": {
-   "at": 1795538054249,
-   "ok": false,
-   "status": 403,
-   "why": "{\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Permission 'cloudmessaging.messages.create' denied on resource '//cloudresourcemanager.googleapis.com/projects/c"
-  }
+   "at": 1795538473617,
+   "ok": true,
+   "status": 200
+  },
+  "price_tries": [
+   "data-api.binance.vision 403",
+   "api.binance.com 451",
+   "okx 200"
+  ]
  }
 }
