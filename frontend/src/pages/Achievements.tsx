@@ -9,45 +9,54 @@ import { C, download, font } from "../lib/cardCanvas";
 import { figure, foil, inter, L, luxBackground, luxBrand, luxFooter, luxReady, sora, txt, wrapLines } from "../lib/luxCard";
 import { LevChip } from "../components/SignalExtras";
 import AdminTabs from "../components/AdminTabs";
+import TelegramButton from "../components/TelegramButton";
+import { SITE_HOST } from "../lib/brand";
 
 const ICON: Record<string, string> = { signals: "◆", best_trade: "▲", win_streak: "⚡", all_targets: "◎", best_week: "★", green_weeks: "▣",
   win_rate_30d: "%", bot: "⚙", radar_star: "✦", proven_edges: "✓", live: "◷" };
 const iconOf = (id: string) => ICON[Object.keys(ICON).find((k) => id.startsWith(k)) ?? ""] ?? "★";
 
+// V3.1 (owner, 24 Nov 2026: achievements were still the old design): the "neural badge" - a rounded hexagon with a gold
+// edge on graphite, the glyph in gold, and six neurons around it (green / red, linked in cyan) like the logo. No orbit.
+const HEX = (r: number) => Array.from({ length: 6 }, (_, k) => { const a = -Math.PI / 2 + (k * Math.PI) / 3; return [Math.cos(a) * r, Math.sin(a) * r]; });
+function hexPath(g: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
+  const p = HEX(r), rr = r * 0.16;
+  g.beginPath();
+  p.forEach(([x, y], k) => {
+    const [nx, ny] = p[(k + 1) % 6], [px, py] = p[(k + 5) % 6];
+    const a = [x + (px - x) * (rr / r), y + (py - y) * (rr / r)], b = [x + (nx - x) * (rr / r), y + (ny - y) * (rr / r)];
+    if (k) g.lineTo(cx + a[0], cy + a[1]); else g.moveTo(cx + a[0], cy + a[1]);
+    g.quadraticCurveTo(cx + x, cy + y, cx + b[0], cy + b[1]);
+  });
+  g.closePath();
+}
 function medal(g: CanvasRenderingContext2D, cx: number, cy: number, r: number, icon: string) {
   g.save();
-  g.shadowColor = "rgba(217,180,95,0.55)"; g.shadowBlur = r * 0.5;
-  const ring = foil(g, cx - r, cy - r, cx + r, cy + r);
-  g.beginPath(); g.arc(cx, cy, r, 0, Math.PI * 2); g.fillStyle = ring; g.fill();
-  g.restore();
-  const inner = g.createRadialGradient(cx, cy - r * 0.3, 0, cx, cy, r * 0.84); inner.addColorStop(0, "#221c10"); inner.addColorStop(1, "#0b0a08");
-  g.beginPath(); g.arc(cx, cy, r * 0.84, 0, Math.PI * 2); g.fillStyle = inner; g.fill();
-  g.beginPath(); g.arc(cx, cy, r * 0.84, 0, Math.PI * 2); g.strokeStyle = "rgba(217,180,95,0.35)"; g.lineWidth = 2; g.stroke();
-  // icon glyph centred by its measured box, not the font's line box
-  g.font = font(800, r * 0.8); g.textAlign = "center"; g.textBaseline = "alphabetic";
+  // neurons: six around the badge, linked to its corners and to each other
+  const ring = HEX(r * 1.42).map(([x, y]) => [cx + x * 1.0, cy + y * 1.0]);
+  const corner = HEX(r).map(([x, y]) => [cx + x, cy + y]);
+  g.lineWidth = Math.max(1.2, r / 55);
+  ring.forEach(([x, y], k) => {
+    g.strokeStyle = "rgba(93,241,221,0.45)";
+    g.beginPath(); g.moveTo(x, y); g.lineTo(corner[k][0], corner[k][1]); g.stroke();
+    const [nx, ny] = ring[(k + 1) % 6];
+    g.strokeStyle = "rgba(93,241,221,0.18)";
+    g.beginPath(); g.moveTo(x, y); g.lineTo(nx, ny); g.stroke();
+  });
+  ring.forEach(([x, y], k) => { g.fillStyle = k % 2 ? "#f6465d" : "#0ecb81"; g.beginPath(); g.arc(x, y, Math.max(3, r * 0.07), 0, Math.PI * 2); g.fill(); });
+  const fill = g.createLinearGradient(cx, cy - r, cx, cy + r); fill.addColorStop(0, "#24252c"); fill.addColorStop(1, "#15161a");
+  hexPath(g, cx, cy, r); g.fillStyle = fill; g.fill();
+  g.lineWidth = Math.max(3, r / 22); g.strokeStyle = C.gold; g.stroke();
+  hexPath(g, cx, cy, r * 0.82); g.lineWidth = 1; g.strokeStyle = "rgba(232,182,55,0.28)"; g.stroke();
+  g.font = font(700, r * 0.78); g.textAlign = "center"; g.textBaseline = "alphabetic";
   const m = g.measureText(icon);
-  const asc = m.actualBoundingBoxAscent, desc = m.actualBoundingBoxDescent;
-  g.fillStyle = foil(g, cx - r * 0.5, cy - r * 0.5, cx + r * 0.5, cy + r * 0.5); g.fillText(icon, cx, cy + (asc - desc) / 2);
-  g.textAlign = "left";
-  // v2.35: the logo's language around the medal - a gold tick ring and a tilted light-gold orbit with a satellite
-  g.save();
-  g.strokeStyle = "rgba(217,180,95,0.75)"; g.lineCap = "round";
-  for (let k = 0; k < 48; k++) {
-    const a = (k / 48) * Math.PI * 2, r0 = r * 1.14, r1 = r * (k % 4 === 0 ? 1.24 : 1.2);
-    g.lineWidth = k % 4 === 0 ? 3 : 2;
-    g.beginPath(); g.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0); g.lineTo(cx + Math.cos(a) * r1, cy + Math.sin(a) * r1); g.stroke();
-  }
-  g.translate(cx, cy); g.rotate(-0.38);
-  g.strokeStyle = "rgba(255,214,107,0.55)"; g.lineWidth = Math.max(1.5, r / 50);
-  g.beginPath(); g.ellipse(0, 0, r * 1.75, r * 0.5, 0, 0, Math.PI * 2); g.stroke();
-  g.fillStyle = "#f2dfa6"; g.shadowColor = C.gold; g.shadowBlur = 18;
-  g.beginPath(); g.arc(Math.cos(-0.5) * r * 1.75, Math.sin(-0.5) * r * 0.5, Math.max(3, r / 17), 0, Math.PI * 2); g.fill();
+  g.fillStyle = C.gold; g.fillText(icon, cx, cy + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2);
   g.restore();
 }
 
 const valueColor = (a: any) => (isNum(a.roi_pct) && a.roi_pct < 0 ? C.bear : C.bull);
 
-async function drawBadge(cv: HTMLCanvasElement, a: any) {
+export async function drawBadge(cv: HTMLCanvasElement, a: any) {
   // v2.37 premium layout (lib/luxCard.ts): centred medal, metallic gold figure, editorial type
   const W = 1080, H = 1080, M = 84;
   cv.width = W; cv.height = H;
@@ -80,7 +89,7 @@ async function drawBadge(cv: HTMLCanvasElement, a: any) {
     inter(500, 16), W - 2 * M, 2));
 }
 
-async function drawPoster(cv: HTMLCanvasElement, list: any[]) {
+export async function drawPoster(cv: HTMLCanvasElement, list: any[]) {
   const items = list.slice(0, 9);
   const W = 1080, M = 84, gapX = 28, cols = 3;
   const cw = (W - 2 * M - (cols - 1) * gapX) / cols, ch = 300;
@@ -111,24 +120,18 @@ async function drawPoster(cv: HTMLCanvasElement, list: any[]) {
     inter(500, 16), W - 2 * M, 2));
 }
 
-/** v2.38 the on-page medal (same design as the image): foil ring, tick ring, tilted orbit with a satellite. */
+/** The on-page badge: the same neural hexagon as the share image. */
 function Medal({ icon, on }: { icon: string; on: boolean }) {
-  const id = `m${icon.charCodeAt(0)}`;
-  const ticks = Array.from({ length: 40 }, (_, k) => (k / 40) * Math.PI * 2);
+  const pt = (r: number) => HEX(r).map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(" ");
+  const ring = HEX(50), corner = HEX(35);
   return (
     <svg viewBox="-60 -60 120 120" className={`h-24 w-24 ${on ? "" : "opacity-40 grayscale"}`} aria-hidden="true">
-      <defs>
-        <linearGradient id={id} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0" stopColor="#9c6f0a" /><stop offset=".3" stopColor="#f0b90b" /><stop offset=".5" stopColor="#fff1c4" /><stop offset=".72" stopColor="#e7ae17" /><stop offset="1" stopColor="#8f650a" />
-        </linearGradient>
-        <radialGradient id={`${id}i`} cx=".5" cy=".35" r=".7"><stop offset="0" stopColor="#2a2213" /><stop offset="1" stopColor="#0b0a08" /></radialGradient>
-      </defs>
-      {ticks.map((a, k) => <line key={k} x1={Math.cos(a) * 41} y1={Math.sin(a) * 41} x2={Math.cos(a) * (k % 4 ? 44 : 46)} y2={Math.sin(a) * (k % 4 ? 44 : 46)} stroke="#f0b90b" strokeOpacity=".7" strokeWidth={k % 4 ? 1 : 1.6} />)}
-      <circle r="36" fill={`url(#${id})`} style={{ filter: on ? "drop-shadow(0 0 8px rgba(240,185,11,.45))" : undefined }} />
-      <circle r="30" fill={`url(#${id}i)`} stroke="rgba(240,185,11,.35)" />
-      <text y="9" textAnchor="middle" fontSize="26" fontWeight="800" fill={`url(#${id})`}>{icon}</text>
-      <g transform="rotate(-22)"><ellipse rx="56" ry="15" fill="none" stroke="#ffd66b" strokeOpacity=".55" strokeWidth="1.2" />
-        <circle cx="48" cy="-8" r="2.6" fill="#fff1c4" style={{ filter: "drop-shadow(0 0 3px #f0b90b)" }} /></g>
+      {ring.map(([x, y], k) => <line key={`a${k}`} x1={x} y1={y} x2={corner[k][0]} y2={corner[k][1]} stroke="#5df1dd" strokeOpacity=".45" strokeWidth="1" />)}
+      {ring.map(([x, y], k) => <line key={`b${k}`} x1={x} y1={y} x2={ring[(k + 1) % 6][0]} y2={ring[(k + 1) % 6][1]} stroke="#5df1dd" strokeOpacity=".18" strokeWidth="1" />)}
+      {ring.map(([x, y], k) => <circle key={`c${k}`} cx={x} cy={y} r="2.6" fill={k % 2 ? "#f6465d" : "#0ecb81"} className={on ? "badge-neuron" : ""} style={{ animationDelay: `${k * 0.3}s` }} />)}
+      <polygon points={pt(35)} fill="rgb(var(--raised))" stroke="#e8b637" strokeWidth="2.4" strokeLinejoin="round" />
+      <polygon points={pt(29)} fill="none" stroke="#e8b637" strokeOpacity=".28" strokeWidth="1" strokeLinejoin="round" />
+      <text y="9" textAnchor="middle" fontSize="26" fontWeight="700" fill="#e8b637">{icon}</text>
     </svg>
   );
 }
@@ -141,23 +144,30 @@ export default function Achievements() {
   const list: any[] = v.data?.achievements ?? [];
   const unlocked = list.filter((a) => a.unlocked);
   const dl = async (a: any) => { setBusy(a.id); const cv = document.createElement("canvas"); await drawBadge(cv, a); download(cv, `achievement-${a.id}.png`); setBusy(null); };
+  const badgeCv = async (a: any) => { const cv = document.createElement("canvas"); await drawBadge(cv, a); return cv; };
+  const posterCv = async () => { const cv = document.createElement("canvas"); await drawPoster(cv, unlocked); return cv; };
+  const capOf = (a: any) => `🏆 Achievement unlocked: ${a.title}\n${String(a.value)} · ${a.detail}\n\nEvery signal is public, wins and losses: https://${SITE_HOST}\nNot financial advice.`;
+  const capAll = `🏆 Crypto Intelligence AI · ${unlocked.length} milestones reached from the public record\n` + unlocked.slice(0, 9).map((a) => `• ${a.title}: ${a.value}`).join("\n") + `\n\nhttps://${SITE_HOST} · Not financial advice.`;
   const dlAll = async () => { setBusy("all"); const cv = document.createElement("canvas"); await drawPoster(cv, unlocked); download(cv, "crypto-intelligence-achievements.png"); setBusy(null); };
 
   return (
     <div className="space-y-4">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <AdminTabs family="share" />
-        <button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>
+        <span className="flex flex-wrap items-center gap-2">
+          <button className="btn btn-primary" disabled={!unlocked.length || busy === "all"} onClick={dlAll}>{busy === "all" ? "Preparing…" : `Download all (${unlocked.length})`}</button>
+          {unlocked.length > 0 && <TelegramButton canvas={posterCv} caption={capAll} kind="achievements" />}
+        </span>
       </div>
       {!list.length && <p className="panel p-4 text-sm text-mute">No achievements yet.</p>}
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      <ul className="grid-even grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {list.map((a) => (
-          <li key={a.id} className={`panel lux-tile flex flex-col items-center p-5 text-center ${a.unlocked ? "" : "opacity-70"}`}>
+          <li key={a.id} className={`panel ach-tile flex flex-col items-center p-5 text-center ${a.unlocked ? "is-on" : "opacity-70"}`}>
             <Medal icon={iconOf(a.id)} on={a.unlocked} />
-            <div className="mt-1 text-xs font-semibold tracking-wide text-accent/80">{a.unlocked ? "Unlocked" : "Locked"}</div>
-            <div className="mt-1 font-display text-lg font-semibold">{a.title}</div>
+            <span className={`mt-2 rounded-md px-2 py-0.5 text-xs font-semibold ${a.unlocked ? "bg-accent/15 text-accent" : "bg-glass/[0.06] text-mute"}`}>{a.unlocked ? "Unlocked" : "Locked"}</span>
+            <div className="mt-2 text-lg font-semibold">{a.title}</div>
             <div className="mt-1 flex items-center justify-center gap-1.5">
-              <span className={`font-display text-3xl font-extrabold tracking-tight ${a.unlocked ? (isNum(a.roi_pct) && a.roi_pct < 0 ? "text-bear" : "foil-text") : "text-mute"}`}>{String(a.value).replace(/ ROI$/, "")}</span>
+              <span className={`num text-3xl font-bold tracking-tight ${a.unlocked ? (isNum(a.roi_pct) && a.roi_pct < 0 ? "text-bear" : "text-bull") : "text-mute"}`}>{String(a.value).replace(/ ROI$/, "")}</span>
               {/ ROI$/.test(String(a.value)) && <span className="text-xs font-bold text-accent">ROI</span>}
               {isNum(a.leverage) && <LevChip lev={a.leverage} />}
             </div>
@@ -165,7 +175,10 @@ export default function Achievements() {
             {a.unlocked ? (
               <>
                 {a.achieved_at && <div className="mt-1 text-xs text-mute">{fmtDate(a.achieved_at)}</div>}
-                <button className="btn mt-3 px-3 py-1.5 text-xs" disabled={busy === a.id} onClick={() => dl(a)}>{busy === a.id ? "Preparing…" : "Download image"}</button>
+                <div className="mt-auto flex flex-wrap items-center justify-center gap-2 pt-3">
+                  <button className="btn btn-sm" disabled={busy === a.id} onClick={() => dl(a)}>{busy === a.id ? "Preparing…" : "Download image"}</button>
+                  <TelegramButton canvas={() => badgeCv(a)} caption={capOf(a)} kind="achievement" className="btn btn-sm" />
+                </div>
               </>
             ) : (
               <div className="mt-3 w-full">

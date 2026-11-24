@@ -9,8 +9,9 @@ import { SITE_HOST } from "./brand";
 // frame with gold corner marks, controlled gold only for brand marks and key labels, green gains / red losses, silver text.
 export const L = {
   // V3.0 (24 Nov 2026): graphite + the logo's gold (#E8B637) and cyan, no space
-  gold: "#e8b637", soft: "#e8b637", light: "#f6e37a", text: "#ece8df", mute: "#9a9ca6", dim: "#6c6e76", bull: "#34c98b", bear: "#e8616a",
-  line: "rgba(52,54,62,1)", hair: "rgba(236,232,223,0.12)", panel: "#1a1b21",
+  // V3.1 (owner, 24 Nov 2026: "rework all the shareable cards"): Binance-style greys / greens / reds, IBM Plex Sans only
+  gold: "#e8b637", soft: "#e8b637", light: "#f6e37a", text: "#eaecef", mute: "#848e9c", dim: "#5e6673", bull: "#0ecb81", bear: "#f6465d",
+  line: "rgba(48,50,58,1)", hair: "rgba(234,236,239,0.10)", panel: "#1c1d23", cyan: "#5df1dd",
 };
 type G = CanvasRenderingContext2D;
 
@@ -22,8 +23,8 @@ if (typeof CanvasRenderingContext2D !== "undefined" && !(CanvasRenderingContext2
     this.arcTo(x, y + h, x, y, rr); this.arcTo(x, y, x + w, y, rr); this.closePath();
   };
 }
-export const sora = (w: number, px: number) => `${w} ${px}px "IBM Plex Sans", Inter, system-ui, sans-serif`;   // V3.0: Binance-style single family
-export const inter = (w: number, px: number) => `${w} ${px}px "IBM Plex Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif`;
+export const sora = (w: number, px: number) => `${Math.min(w, 700)} ${px}px "IBM Plex Sans", Inter, system-ui, sans-serif`;   // V3.0: Binance-style single family
+export const inter = (w: number, px: number) => `${Math.min(w, 700)} ${px}px "IBM Plex Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif`;
 
 export async function luxReady() {
   try {
@@ -42,8 +43,7 @@ function img(src: string): Promise<HTMLImageElement | null> {
 /** Metallic gold for large figures and the frame. */
 export function foil(g: G, x0: number, y0: number, x1: number, y1: number): CanvasGradient {
   const gr = g.createLinearGradient(x0, y0, x1, y1);
-  gr.addColorStop(0, "#9c7417"); gr.addColorStop(0.35, "#e8b637"); gr.addColorStop(0.55, "#f6e37a");
-  gr.addColorStop(0.75, "#d0aa55"); gr.addColorStop(1, "#9a7a38");
+  gr.addColorStop(0, "#e8b637"); gr.addColorStop(1, "#f0c75a");      // V3.1: flat gold, no metallic foil
   return gr;
 }
 
@@ -66,61 +66,47 @@ export function txt(g: G, t: string, x: number, y: number, o: { f?: (w: number, 
   return w;
 }
 
-/** Background (midnight navy, cool / warm lights, the orbit, faint stars) and the hairline frame with gold corner marks. */
+/** V3.1 background: graphite (lighter at the top), the logo's neural mesh in the top-right corner (cyan links, green /
+ *  red neurons). No frame: the footer band closes the card. */
 export async function luxBackground(g: G, W: number, H: number) {
-  // V3.0: soft-black graphite, a faint gold light top right, and a small neural mesh in that corner (no stars, no orbit)
-  const bg = g.createLinearGradient(0, 0, W, H);
-  bg.addColorStop(0, "#1a1b21"); bg.addColorStop(1, "#0f1013");
+  const bg = g.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, "#17181d"); bg.addColorStop(1, "#101114");
   g.fillStyle = bg; g.fillRect(0, 0, W, H);
-  const warm = g.createRadialGradient(W * 0.95, H * 0.02, 0, W * 0.95, H * 0.02, W * 0.9);
-  warm.addColorStop(0, "rgba(232,182,55,0.10)"); warm.addColorStop(1, "rgba(232,182,55,0)");
+  const warm = g.createRadialGradient(W * 0.92, 0, 0, W * 0.92, 0, W * 0.75);
+  warm.addColorStop(0, "rgba(232,182,55,0.07)"); warm.addColorStop(1, "rgba(232,182,55,0)");
   g.fillStyle = warm; g.fillRect(0, 0, W, H);
   g.save();
-  let seed = 11;
+  let seed = 13;
   const r = () => ((seed = (seed * 9301 + 49297) % 233280) / 233280);
-  const pts = Array.from({ length: 26 }, () => [W * (0.55 + r() * 0.45), H * (r() * 0.32)]);
+  const k = W / 1080, pts: number[][] = [];
+  while (pts.length < 22) {
+    const x = W * (0.52 + r() * 0.5), y = 1350 * k * (r() * 0.13);
+    if (!(x > W - 72 * k - 260 * k && y > 50 * k && y < 130 * k)) pts.push([x, y]);
+  }
   g.lineWidth = 1;
   for (let i = 0; i < pts.length; i++) for (let j = i + 1; j < pts.length; j++) {
     const d = Math.hypot(pts[i][0] - pts[j][0], pts[i][1] - pts[j][1]);
-    if (d < W * 0.12) { g.strokeStyle = `rgba(93,241,221,${0.10 * (1 - d / (W * 0.12))})`; g.beginPath(); g.moveTo(pts[i][0], pts[i][1]); g.lineTo(pts[j][0], pts[j][1]); g.stroke(); }
+    if (d < W * 0.13) { g.strokeStyle = `rgba(93,241,221,${0.28 * (1 - d / (W * 0.13))})`; g.beginPath(); g.moveTo(pts[i][0], pts[i][1]); g.lineTo(pts[j][0], pts[j][1]); g.stroke(); }
   }
-  for (const [x, y] of pts) { g.fillStyle = "rgba(246,227,122,0.35)"; g.beginPath(); g.arc(x, y, 2.2 * (W / 1080), 0, Math.PI * 2); g.fill(); }
-  g.restore();
-  // frame: hairline, gold marks hugging the top-left and bottom-right corners
-  const o = 26, rad = 28, len = 40 * (W / 1080);
-  g.save();
-  g.strokeStyle = "rgba(255,255,255,0.08)"; g.lineWidth = 1;
-  g.beginPath(); g.roundRect(o, o, W - 2 * o, H - 2 * o, rad); g.stroke();
-  g.strokeStyle = L.gold; g.lineWidth = 2;
-  g.beginPath(); g.moveTo(o, o + rad + len); g.lineTo(o, o + rad); g.arc(o + rad, o + rad, rad, Math.PI, Math.PI * 1.5); g.lineTo(o + rad + len, o); g.stroke();
-  const x1 = W - o, y1 = H - o;
-  g.beginPath(); g.moveTo(x1, y1 - rad - len); g.lineTo(x1, y1 - rad); g.arc(x1 - rad, y1 - rad, rad, 0, Math.PI * 0.5); g.lineTo(x1 - rad - len, y1); g.stroke();
+  pts.forEach(([x, y], i) => { g.fillStyle = i % 2 ? "rgba(246,70,93,0.6)" : "rgba(14,203,129,0.6)"; g.beginPath(); g.arc(x, y, 3 * k, 0, Math.PI * 2); g.fill(); });
   g.restore();
 }
 
-/** Brand line (logo + spaced name) and a tag on the right. Returns the y below it. */
+/** Header: logo tile, name, the site, a gold tag on the right, a divider. Returns the y of the logo's bottom. */
 export async function luxBrand(g: G, W: number, M: number, top: number, tag: string): Promise<number> {
   const logo = await img("/brand/logo-192.png");
-  const s = 64;
-  if (logo) {
-    g.save(); g.shadowColor = "rgba(232,182,55,0.45)"; g.shadowBlur = 20;
-    g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.fillStyle = "#000"; g.fill(); g.restore();
-    g.save(); g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.clip(); g.drawImage(logo, M, top, s, s); g.restore();
-    g.save(); g.strokeStyle = "rgba(120,98,52,1)"; g.lineWidth = 1; g.beginPath(); g.arc(M + s / 2, top + s / 2, s / 2, 0, Math.PI * 2); g.stroke(); g.restore();
-  }
-  txt(g, "CRYPTO INTELLIGENCE AI", M + s + 20, top + 28, { f: sora, w: 700, px: 19, track: 4.2, color: L.text });
-  txt(g, SITE_HOST, M + s + 20, top + 56, { w: 500, px: 18, color: L.mute });
+  const s = 76;
+  if (logo) g.drawImage(logo, M, top, s, s);
+  txt(g, "Crypto Intelligence AI", M + s + 20, top + 34, { w: 600, px: 30, color: L.text });
+  txt(g, SITE_HOST, M + s + 20, top + 66, { w: 400, px: 21, color: L.mute });
   g.save();
-  g.font = sora(700, 14); spaced(g, 2.6);
-  const tw = g.measureText(tag).width + 40;
-  g.fillStyle = "#161618"; g.strokeStyle = "rgba(120,98,52,1)"; g.lineWidth = 1;
-  g.beginPath(); g.roundRect(W - M - tw, top + 12, tw, 38, 19); g.fill(); g.stroke();
+  g.font = inter(600, 17); spaced(g, 0.6);
+  const tw = g.measureText(tag).width + 32;
+  g.fillStyle = "#2c2512";
+  g.beginPath(); g.roundRect(W - M - tw, top + 18, tw, 40, 8); g.fill();
   g.restore();
-  txt(g, tag, W - M - tw / 2, top + 36, { f: sora, w: 700, px: 14, track: 2.6, color: L.gold, align: "center" });
-  // hairline under the header: gold fading into navy
-  const hl = g.createLinearGradient(M, 0, W - M, 0);
-  hl.addColorStop(0, "rgba(232,182,55,0.9)"); hl.addColorStop(0.7, "rgba(38,50,78,1)"); hl.addColorStop(1, "rgba(38,50,78,1)");
-  g.fillStyle = hl; g.fillRect(M, top + s + 18, W - 2 * M, 1);
+  txt(g, tag, W - M - tw / 2, top + 44, { w: 600, px: 17, track: 0.6, color: L.gold, align: "center" });
+  g.fillStyle = L.line; g.fillRect(M, top + s + 32, W - 2 * M, 1);
   return top + s;
 }
 
@@ -133,12 +119,7 @@ export function figure(g: G, t: string, x: number, y: number, px: number, good: 
   const w = g.measureText(t).width;
   const x0 = o.align === "center" ? x - w / 2 : o.align === "right" ? x - w : x;
   g.textAlign = "left"; g.textBaseline = "alphabetic";
-  const [top, bot, glow] = o.gold ? ["#f6e37a", "#e8b637", "rgba(232,182,55,0.35)"]
-    : good ? ["#9be6c6", "#34c98b", "rgba(52,201,139,0.35)"] : ["#f3b0b5", "#e8616a", "rgba(232,97,106,0.25)"];
-  const gr = g.createLinearGradient(0, y - size * 0.75, 0, y);
-  gr.addColorStop(0, top); gr.addColorStop(1, bot);
-  g.shadowColor = glow; g.shadowBlur = size * 0.22;
-  g.fillStyle = gr;
+  g.fillStyle = o.gold ? L.gold : good ? L.bull : L.bear;      // V3.1: flat colour, no glow
   g.fillText(t, x0, y);
   g.restore();
   return { w, px: size };
@@ -149,7 +130,7 @@ export function curveChart(g: G, x: number, y: number, w: number, h: number, pts
   if (pts.length < 2) return;
   const lo = Math.min(0, ...pts), hi = Math.max(0, ...pts), span = hi - lo || 1;
   const X = (i: number) => x + (i / (pts.length - 1)) * w, Y = (v: number) => y + h - ((v - lo) / span) * h;
-  const col = good ? "52,201,139" : "232,97,106";
+  const col = good ? "14,203,129" : "246,70,93";
   g.save();
   g.setLineDash([4, 8]); g.strokeStyle = L.hair; g.lineWidth = 1.5;
   g.beginPath(); g.moveTo(x, Y(0)); g.lineTo(x + w, Y(0)); g.stroke(); g.setLineDash([]);
@@ -159,9 +140,9 @@ export function curveChart(g: G, x: number, y: number, w: number, h: number, pts
   g.fillStyle = area; g.fill();
   g.beginPath(); pts.forEach((v, i) => (i ? g.lineTo(X(i), Y(v)) : g.moveTo(X(i), Y(v))));
   g.strokeStyle = good ? L.bull : L.bear; g.lineWidth = 4; g.lineJoin = "round";
-  g.shadowColor = `rgba(${col},0.5)`; g.shadowBlur = 10; g.stroke();
+  g.stroke();
   const ex = X(pts.length - 1), ey = Y(pts[pts.length - 1]);
-  g.fillStyle = good ? L.bull : L.bear; g.shadowBlur = 12;
+  g.fillStyle = good ? L.bull : L.bear;
   g.beginPath(); g.arc(ex, ey, 7, 0, Math.PI * 2); g.fill();
   g.strokeStyle = `rgba(${col},0.5)`; g.lineWidth = 2; g.shadowBlur = 0;
   g.beginPath(); g.arc(ex, ey, 14, 0, Math.PI * 2); g.stroke();
@@ -180,12 +161,13 @@ export function statRow(g: G, x: number, y: number, w: number, items: [string, s
   });
 }
 
-/** Footer: hairline with a short gold segment, the call to action in white, small print. */
+/** V3.1 footer: a solid band from `top` to the bottom with a gold rule, the call to action in gold, small print. */
 export function luxFooter(g: G, W: number, M: number, top: number, cta: string, small: string[]) {
-  g.fillStyle = L.line; g.fillRect(M, top, W - 2 * M, 1);
-  g.fillStyle = L.gold; g.fillRect(M, top - 0.5, 120, 2);
-  txt(g, cta, M, top + 48, { f: sora, w: 700, px: 26, color: L.text, maxW: W - 2 * M });
-  small.forEach((s, k) => txt(g, s, M, top + 82 + k * 24, { w: 500, px: 16, color: L.dim, maxW: W - 2 * M }));
+  const H = g.canvas.height, y0 = top - 26;
+  g.fillStyle = "#0d0e11"; g.fillRect(0, y0, W, H - y0);
+  g.fillStyle = L.gold; g.fillRect(0, y0, W, 2);
+  txt(g, cta, M, top + 38, { w: 600, px: 27, color: L.gold, maxW: W - 2 * M });
+  small.forEach((s, k) => txt(g, s, M, top + 74 + k * 24, { w: 400, px: 16, color: L.dim, maxW: W - 2 * M }));
 }
 
 /** Word-wrap in the given font to maxW, at most n lines (last one ellipsised). */

@@ -29,50 +29,50 @@ from ..pricefmt import fmt_price
 ASSETS = Path(__file__).resolve().parent.parent / "assets"
 W, H = 1080, 1350
 M = 72                                       # outer margin
-# V3.0 (24 Nov 2026): graphite + the logo's gold and cyan, no space (was midnight navy, stars and an orbit)
-INK = (15, 16, 19)                           # soft black
-NAVY = (24, 25, 29)
-PANEL = (26, 27, 33)                         # graphite surface
-PANEL_HI = (34, 35, 42)
-LINE = (52, 54, 62)                          # hairline
-GOLD = (232, 182, 55)                        # the logo's gold (brand marks, entry, key labels)
+# V3.1 (owner, 24 Nov 2026: "rework all the shareable cards", Binance font structure): graphite, IBM Plex Sans only,
+# flat figures (no glow), Binance-style greens / reds / greys, the logo's neural mesh (cyan links, green / red neurons)
+# in the top-right corner, a solid footer band with a gold rule.
+INK = (16, 17, 20)                           # page bottom
+NAVY = (23, 24, 29)                          # page top
+PANEL = (28, 29, 35)                         # card surface
+PANEL_HI = (37, 38, 46)
+LINE = (48, 50, 58)                          # hairline
+GOLD = (232, 182, 55)                        # the logo's gold (brand, entry, key labels)
 GOLD_LIGHT = (246, 227, 122)
-GOLD_DIM = (156, 116, 23)
-WHITE = (236, 232, 223)
-SILVER = (154, 156, 166)
-MUTED = (108, 110, 118)
-GREEN = (52, 201, 139)
-RED = (232, 97, 106)
+GOLD_DIM = (120, 92, 24)
+WHITE = (234, 236, 239)
+SILVER = (132, 142, 156)
+MUTED = (94, 102, 115)
+GREEN = (14, 203, 129)
+RED = (246, 70, 93)
+CYAN = (93, 241, 221)
 COOL = (70, 110, 190)
+FOOT = (13, 14, 17)
 GOLD_SOFT = GOLD                              # old names kept for callers
 AI = GOLD_LIGHT
 
 SITE_TEXT = brand.DISPLAY_URL
 _fonts: dict[tuple[str, str, int], ImageFont.FreeTypeFont] = {}
+_PLEX = {"Regular": "Regular", "Medium": "Medium", "SemiBold": "SemiBold", "Bold": "Bold", "ExtraBold": "Bold"}
 
 
 def _f(weight: str, size: int) -> ImageFont.FreeTypeFont:
-    """Inter (text)."""
-    key = ("inter", weight, size)
+    """IBM Plex Sans (every text on a card)."""
+    key = ("plex", weight, size)
     if key not in _fonts:
         try:
-            _fonts[key] = ImageFont.truetype(str(ASSETS / "fonts" / f"Inter-{weight}.otf"), size)
+            _fonts[key] = ImageFont.truetype(str(ASSETS / "fonts" / f"IBMPlexSans-{_PLEX.get(weight, 'Medium')}.ttf"), size)
         except OSError:
-            _fonts[key] = ImageFont.load_default(size)
+            try:
+                _fonts[key] = ImageFont.truetype(str(ASSETS / "fonts" / f"Inter-{weight}.otf"), size)
+            except OSError:
+                _fonts[key] = ImageFont.load_default(size)
     return _fonts[key]
 
 
 def _s(weight: str, size: int) -> ImageFont.FreeTypeFont:
-    """Sora (titles, figures)."""
-    key = ("sora", weight, size)
-    if key not in _fonts:
-        try:
-            f = ImageFont.truetype(str(ASSETS / "fonts" / "Sora.ttf"), size)
-            f.set_variation_by_name(weight)
-            _fonts[key] = f
-        except Exception:
-            _fonts[key] = _f("ExtraBold" if weight in ("ExtraBold", "Bold") else "SemiBold", size)
-    return _fonts[key]
+    """Titles and figures: the same family (one typeface, Binance style)."""
+    return _f(weight, size)
 
 
 # ---- formatting -----------------------------------------------------------------------------------------------
@@ -181,22 +181,23 @@ def _grad_text(img: Image.Image, xy, text: str, font, top, bottom, anchor: str =
 
 
 def _figure(img: Image.Image, xy, value: float, font, anchor: str = "ls", text: str | None = None) -> int:
-    """A result figure: green for a gain, red for a loss, white for nothing - a soft glow, never neon."""
+    """A result figure: flat green for a gain, red for a loss, white for nothing (V3.1: no glow, no gradient)."""
     t = text if text is not None else pct(value)
     col = GREEN if value > 0 else RED if value < 0 else WHITE
-    top = tuple(min(255, int(c + (255 - c) * 0.45)) for c in col)
-    _glow(img, lambda m: m.text(xy, t, font=font, fill=255, anchor=anchor), col, max(8, font.size // 7), 0.35 if value >= 0 else 0.22)
-    return _grad_text(img, xy, t, font, top, col, anchor)
+    d = ImageDraw.Draw(img)
+    d.text(xy, t, font=font, fill=col, anchor=anchor)
+    return int(d.textlength(t, font=font))
 
 
 def _pill(d: ImageDraw.ImageDraw, x: int, y: int, text: str, fg, bg=None, outline=None, size: int = 17, h: int = 40,
-          align: str = "left", w: int | None = None, track: float = 2.0) -> int:
-    """Pill with spaced capitals; top-left (top-right for align='right') at x, y. Returns the far x edge."""
-    fn = _f("Bold", size)
+          align: str = "left", w: int | None = None, track: float = 0.6) -> int:
+    """Tag (V3.1: Binance-style rounded rectangle, light tracking); top-left (top-right for align='right') at x, y."""
+    fn = _f("SemiBold", max(size, 17))
+    track = min(track, 1.0)
     tw = sum(d.textlength(ch, font=fn) + track for ch in text) - track
-    w = max(w or 0, int(tw) + 2 * 18)
+    w = max(w or 0, int(tw) + 2 * 16)
     x0 = x if align == "left" else x - w
-    d.rounded_rectangle((x0, y, x0 + w, y + h), radius=h // 2, fill=bg, outline=outline, width=1 if outline else 0)
+    d.rounded_rectangle((x0, y, x0 + w, y + h), radius=8, fill=bg, outline=outline, width=1 if outline else 0)
     _spaced(d, (x0 + w / 2, y + h / 2 + _cap(fn) / 2), text, fn, fg, track, anchor="ms")
     return x0 + w if align == "left" else x0
 
@@ -211,90 +212,88 @@ def _chip(d, x, y, text, **kw) -> int:
 
 
 def _gold_chip(d, x, y, text, **kw) -> int:
-    return _pill(d, x, y, text, GOLD, bg=(30, 27, 20), outline=GOLD_DIM, **kw)
+    return _pill(d, x, y, text, GOLD, bg=(44, 37, 18), outline=None, **kw)
 
 
-def _panel(d: ImageDraw.ImageDraw, box, fill=PANEL, outline=LINE, r: int = 22) -> None:
+def _panel(d: ImageDraw.ImageDraw, box, fill=PANEL, outline=LINE, r: int = 16) -> None:
     d.rounded_rectangle(box, radius=r, fill=fill, outline=outline, width=1)
 
 
 def _label(d, xy, text, size: int = 15, fill=SILVER, anchor: str = "ls") -> int:
-    return _spaced(d, xy, text.upper(), _f("SemiBold", size), fill, 2.2, anchor=anchor)
+    """V3.1: sentence-case label (no spaced capitals)."""
+    t = str(text)
+    t = t[:1].upper() + t[1:]
+    fn = _f("Medium", max(18, size + 3))
+    d.text(xy, t, font=fn, fill=fill, anchor="ls" if anchor == "ls" else anchor)
+    return int(d.textlength(t, font=fn))
 
 
 def _background(img: Image.Image) -> None:
-    """V3.0: graphite gradient, a faint gold light top right and a small neural mesh in that corner."""
+    """V3.1: graphite (lighter at the top), the logo's neural mesh in the top-right corner (cyan links, neurons green / red)."""
     import numpy as np
-    yy, xx = np.mgrid[0:H, 0:W].astype(float)
-    t = (xx / W + yy / H) / 2
-    base = np.stack([26 - 11 * t, 27 - 11 * t, 33 - 14 * t], -1)
-    warm = np.clip(1 - np.hypot(xx - W * 0.95, yy - H * 0.02) / (W * 0.9), 0, 1) ** 2
-    arr = base + warm[..., None] * np.array([232, 182, 55]) * 0.10
+    yy = np.linspace(0, 1, H)[:, None, None]
+    arr = np.array(NAVY, float) * (1 - yy) + np.array(INK, float) * yy
+    arr = np.broadcast_to(arr, (H, W, 3)).copy()
+    yy2, xx2 = np.mgrid[0:H, 0:W].astype(float)
+    warm = np.clip(1 - np.hypot(xx2 - W * 0.92, yy2 - H * 0.0) / (W * 0.75), 0, 1) ** 2
+    arr += warm[..., None] * np.array(GOLD, float) * 0.06
     img.paste(Image.fromarray(np.clip(arr, 0, 255).astype("uint8"), "RGB"))
     d = ImageDraw.Draw(img, "RGBA")
-    rng2 = np.random.default_rng(11)
-    pts = [(W * (0.55 + rng2.random() * 0.45), H * (rng2.random() * 0.30)) for _ in range(26)]
-    lim = W * 0.12
+    rng = np.random.default_rng(13)
+    pts = []
+    while len(pts) < 22:
+        x, y = W * (0.52 + rng.random() * 0.5), H * (rng.random() * 0.13)
+        if not (x > W - M - 260 and 50 < y < 130):          # keep clear of the kind tag
+            pts.append((x, y))
+    lim = W * 0.13
     for i, p in enumerate(pts):
         for q in pts[i + 1:]:
             dist = ((p[0] - q[0]) ** 2 + (p[1] - q[1]) ** 2) ** 0.5
             if dist < lim:
-                d.line([p, q], fill=(93, 241, 221, int(26 * (1 - dist / lim))), width=1)
-    for x, y in pts:
-        d.ellipse((x - 2.2, y - 2.2, x + 2.2, y + 2.2), fill=(246, 227, 122, 90))
+                d.line([p, q], fill=CYAN + (int(70 * (1 - dist / lim)),), width=1)
+    for i, (x, y) in enumerate(pts):
+        c = RED if i % 2 else GREEN
+        d.ellipse((x - 3, y - 3, x + 3, y + 3), fill=c + (150,))
 
 
 def _frame(img: Image.Image) -> None:
-    d = ImageDraw.Draw(img)
-    o = 26
-    d.rounded_rectangle((o, o, W - 1 - o, H - 1 - o), radius=28, outline=(52, 54, 62), width=1)
-    r, L_ = 28, 40
-    d.arc((o, o, o + 2 * r, o + 2 * r), 180, 270, fill=GOLD, width=2)
-    d.line([(o + r, o), (o + r + L_, o)], fill=GOLD, width=2)
-    d.line([(o, o + r), (o, o + r + L_)], fill=GOLD, width=2)
-    x1, y1 = W - 1 - o, H - 1 - o
-    d.arc((x1 - 2 * r, y1 - 2 * r, x1, y1), 0, 90, fill=GOLD, width=2)
-    d.line([(x1 - r, y1), (x1 - r - L_, y1)], fill=GOLD, width=2)
-    d.line([(x1, y1 - r), (x1, y1 - r - L_)], fill=GOLD, width=2)
+    """V3.1: no frame (the footer band closes the card)."""
+    return None
+
+
+HEAD_Y = 176                                 # the header's divider
 
 
 def _base(title: str, tag: str = "REAL RECORD") -> tuple[Image.Image, ImageDraw.ImageDraw]:
-    """Background, frame and the header: logo, spaced wordmark, one context line, the card's kind."""
+    """Background and the header: logo tile, name, one context line, the card's kind; a divider under it."""
     img = Image.new("RGB", (W, H), INK)
     _background(img)
-    _frame(img)
-    ls, y0 = 64, 66
+    ls, y0 = 76, 60
     try:
         logo = Image.open(ASSETS / "logo.png").convert("RGBA").resize((ls, ls), Image.LANCZOS)
-        mask = Image.new("L", logo.size, 0)
-        ImageDraw.Draw(mask).ellipse((0, 0, ls - 1, ls - 1), fill=255)
-        logo.putalpha(Image.composite(logo.getchannel("A"), Image.new("L", logo.size, 0), mask))
-        _glow(img, lambda m: m.ellipse((M - 2, y0 - 2, M + ls + 2, y0 + ls + 2), fill=120), GOLD, 12, 0.5)
         img.paste(logo, (M, y0), logo)
-        ImageDraw.Draw(img).ellipse((M - 1, y0 - 1, M + ls, y0 + ls), outline=GOLD_DIM, width=1)
     except OSError:
         pass
     d = ImageDraw.Draw(img)
     tx = M + ls + 20
-    _spaced(d, (tx, y0 + 28), "CRYPTO INTELLIGENCE AI", _s("Bold", 19), WHITE, 4.2)
-    d.text((tx, y0 + 56), title, font=_fit(d, title, "Medium", 18, W - 2 * M - ls - 20 - 230), fill=SILVER, anchor="ls")
+    d.text((tx, y0 + 34), "Crypto Intelligence AI", font=_f("SemiBold", 30), fill=WHITE, anchor="ls")
     tag = tag.replace("AI  ·  ", "").strip().upper()
-    _pill(d, W - M, y0 + 12, tag, GOLD, bg=(22, 22, 24), outline=GOLD_DIM, size=14, h=38, align="right", track=2.6)
-    # hairline under the header: gold fading into navy
-    for i in range(W - 2 * M):
-        k = max(0.0, 1 - i / (W - 2 * M) * 1.4)
-        c = tuple(int(LINE[j] + (GOLD[j] - LINE[j]) * k) for j in range(3))
-        d.point((M + i, 168), fill=c)
+    tag_w = _tw(d, tag, _f("SemiBold", 17)) + 40
+    d.text((tx, y0 + 66), title, font=_fit(d, title, "Regular", 21, W - 2 * M - ls - 20 - tag_w - 24), fill=SILVER, anchor="ls")
+    _pill(d, W - M, y0 + 18, tag, GOLD, bg=(44, 37, 18), size=17, h=40, align="right")
+    d.line([(M, HEAD_Y - 8), (W - M, HEAD_Y - 8)], fill=LINE, width=1)
     return img, d
 
 
+FOOT_Y = H - 118                             # top of the footer band
+
+
 def _footer(d: ImageDraw.ImageDraw, note: str = "Analysis only, not financial advice", img: Image.Image | None = None) -> None:
-    y = H - 150
-    d.line([(M, y), (W - M, y)], fill=LINE, width=1)
-    d.line([(M, y), (M + 120, y)], fill=GOLD, width=2)
-    d.text((M, y + 52), SITE_TEXT, font=_s("Bold", 26), fill=WHITE, anchor="ls")
-    d.text((W - M, y + 52), note, font=_fit(d, note, "Medium", 18, W - 2 * M - 400), fill=SILVER, anchor="rs")
-    d.text((M, y + 88), brand.FOOTER, font=_fit(d, brand.FOOTER, "Medium", 15, W - 2 * M), fill=MUTED, anchor="ls")
+    d.rectangle((0, FOOT_Y, W, H), fill=FOOT)
+    d.rectangle((0, FOOT_Y, W, FOOT_Y + 2), fill=GOLD)
+    d.text((M, FOOT_Y + 56), SITE_TEXT, font=_f("SemiBold", 28), fill=GOLD, anchor="ls")
+    d.text((W - M, FOOT_Y + 56), note, font=_fit(d, note, "Medium", 20, W - 2 * M - 420), fill=WHITE, anchor="rs")
+    d.text((M, FOOT_Y + 92), brand.FOOTER, font=_fit(d, brand.FOOTER, "Regular", 17, W - 2 * M), fill=MUTED, anchor="ls")
 
 
 def _png(img: Image.Image) -> bytes:
@@ -430,16 +429,17 @@ def _coin_title(d, img, y: int, sym: str, max_w: int = W - 2 * M) -> int:
     return y
 
 
-TARGET = {"TP1": "TARGET 1 HIT", "TP2": "TARGET 2 HIT", "TP3": "ALL TARGETS HIT", "STOPPED": "STOPPED OUT",
-          "EXPIRED": "CLOSED AT TIME LIMIT"}
+TARGET = {"TP1": "TARGET 1 HIT", "TP2": "TARGET 2 HIT", "TP3": "ALL TARGETS HIT", "STOPPED": "STOPPED OUT"}
 HIT = {"TP1": "TP1", "TP2": "TP1 · TP2", "TP3": "TP1 · TP2 · TP3"}
 
 
 def _status_label(x: dict[str, Any], default: str) -> str:
     """Result label; a call the admin closed at market says so (v2.8)."""
-    if x.get("exit_reason") == "admin_close":
-        return "CLOSED BY ADMIN"
-    return TARGET.get(str(x.get("status") or ""), default)
+    st = str(x.get("status") or "")
+    if st == "EXPIRED" or x.get("exit_reason") == "admin_close":
+        # owner 24 Nov 2026: no grey area - a call closed at the market price is the win or loss it was
+        return "WIN AT MARKET" if (_num(x.get("return_pct")) or 0) > 0 else "LOSS AT MARKET"
+    return TARGET.get(st, default)
 
 
 # ---- cards ----------------------------------------------------------------------------------------------------
@@ -474,7 +474,7 @@ def result_card(w: dict[str, Any]) -> bytes:
     _panel(d, (M, 736, W - M, 900))
     _rail(img, (M + 36, 752, W - M - 36, 900), side, {k: w.get(k) for k in ("stop", "entry", "tp1", "tp2", "tp3")}, hit)
     d = ImageDraw.Draw(img)
-    _stat_grid(d, (M, 924, W - M, 1164), [("Entry", px(w.get("entry")), WHITE), ("Closed at", px(w.get("exit_price")), WHITE),
+    _stat_grid(d, (M, 924, W - M, FOOT_Y - 48), [("Entry", px(w.get("entry")), WHITE), ("Closed at", px(w.get("exit_price")), WHITE),
                                            ("Targets hit", HIT.get(status, "none"), GREEN if status in HIT else SILVER),
                                            ("Held", str(w.get("held") or "—"), WHITE)])
     _footer(d, "Wins and losses are all public", img=img)
@@ -504,12 +504,12 @@ def wins_card(wins: list[dict[str, Any]], period: str = "today", closed: int | N
     d = ImageDraw.Draw(img)
     rows = wins[:6]
     tally = closed is not None and losses is not None
-    bottom = 1010 if tally else 1170
-    top, gap = 392, 12
-    rh = int(max(96, min(128, (bottom - top) / max(1, len(rows)) - gap)))
+    bottom = (FOOT_Y - 48 - 124 - 32) if tally else FOOT_Y - 48
+    top, gap = 392, 14
+    rh = int(max(96, min(170, (bottom - top) / max(1, len(rows)) - gap)))
     for i, x in enumerate(rows):
         y = top + i * (rh + gap)
-        _panel(d, (M, y, W - M, y + rh), fill=PANEL if i % 2 == 0 else (13, 19, 33))
+        _panel(d, (M, y, W - M, y + rh))
         side = _side(x["side"])
         d.rounded_rectangle((M, y + 18, M + 5, y + rh - 18), radius=2, fill=GREEN if side == "LONG" else RED)
         cf = _fit(d, coin(x["symbol"]), "Bold", 36, 220, sora=True)
@@ -525,7 +525,8 @@ def wins_card(wins: list[dict[str, Any]], period: str = "today", closed: int | N
     if n > len(rows):
         d.text((W - M, top + len(rows) * (rh + gap) + 14), f"+ {n - len(rows)} more in the app", font=_f("Medium", 18), fill=SILVER, anchor="rs")
     if tally:                               # the whole window, losses included
-        _stat_grid(d, (M, 1040, W - M, 1164), [("Closed", str(closed), WHITE), ("Wins", str(max(0, closed - losses)), GREEN),
+        ty = FOOT_Y - 48 - 124                  # anchored above the footer
+        _stat_grid(d, (M, ty, W - M, ty + 124), [("Closed", str(closed), WHITE), ("Wins", str(max(0, closed - losses)), GREEN),
                                                ("Losses", str(losses), RED)], cols=3)
     _footer(d, "After fees · leverage magnifies losses", img=img)
     return _png(img)
@@ -610,8 +611,8 @@ def teaser_card(s: dict[str, Any], mins: int) -> bytes:
     cells = [("Entry", px(s.get("entry")), GOLD), ("Stop-loss", px(s.get("stop")), RED), ("Target 1 · close 50%", px(s.get("tp1")), GREEN),
              ("Target 2 · close 25%", px(s.get("tp2")), GREEN), ("Target 3 · close 25%", px(s.get("tp3")), GREEN),
              ("Leverage", f"{lev}x" if lev else "—", WHITE)]
-    _stat_grid(d, (M, 780, W - M, 1110), cells, cols=2)
-    d.text((M, 1150), "Members get every signal the moment it appears, with phone alerts.", font=_f("Medium", 20), fill=SILVER, anchor="ls")
+    _stat_grid(d, (M, 780, W - M, FOOT_Y - 110), cells, cols=2)
+    d.text((M, FOOT_Y - 56), "Members get every signal the moment it appears, with phone alerts.", font=_f("Medium", 20), fill=SILVER, anchor="ls")
     _footer(d, "Not financial advice · prices may have moved", img=img)
     return _png(img)
 
@@ -631,7 +632,7 @@ def week7_card(r: dict[str, Any], now: int) -> bytes:
     _stat_grid(d, (M, 492, W - M, 642), [("Closed", str(n), WHITE), ("Wins", str(r.get("wins") or 0), GREEN),
                                           ("Losses", str(max(0, n - int(r.get("wins") or 0))), RED), ("Win rate", wr, WHITE)], cols=4)
     # win-rate ring + best / worst
-    cx, cy, rr = M + 150, 860, 120
+    cx, cy, rr = M + 150, 890, 130
     d.ellipse((cx - rr, cy - rr, cx + rr, cy + rr), outline=LINE, width=16)
     if r.get("win_rate") is not None:
         d.arc((cx - rr, cy - rr, cx + rr, cy + rr), -90, -90 + 360 * float(r["win_rate"]), fill=GREEN, width=16)
@@ -639,8 +640,8 @@ def week7_card(r: dict[str, Any], now: int) -> bytes:
     d.text((cx, cy + 50), "won", font=_f("Medium", 19), fill=SILVER, anchor="ms")
     bx = M + 340
     for i, (lab, x) in enumerate((("Best", r.get("best")), ("Worst", r.get("worst")))):
-        y = 730 + i * 140
-        _panel(d, (bx, y, W - M, y + 120), r=18)
+        y = 740 + i * 160
+        _panel(d, (bx, y, W - M, y + 136))
         _label(d, (bx + 26, y + 40), lab, 13, GOLD if i == 0 else SILVER)
         if x:
             name = f"{coin(x['symbol'])} {_side(x['side'])} · {str(x['timeframe']).upper()}"
@@ -651,7 +652,7 @@ def week7_card(r: dict[str, Any], now: int) -> bytes:
             d.text((bx + 26, y + 88), "—", font=_s("Bold", 26), fill=SILVER, anchor="ls")
     note = r.get("sample_note") or "Equal size per signal · price move after a 0.15% round trip and funding · no leverage"
     for i, ln in enumerate(_wrap(d, note, _f("Medium", 19), W - 2 * M)[:2]):
-        d.text((M, 1060 + i * 30), ln, font=_f("Medium", 19), fill=GOLD if r.get("sample_note") else SILVER, anchor="ls")
+        d.text((M, FOOT_Y - 92 + i * 30), ln, font=_f("Medium", 19), fill=GOLD if r.get("sample_note") else SILVER, anchor="ls")
     _footer(d, "Past results don't guarantee future results", img=img)
     return _png(img)
 
@@ -705,21 +706,21 @@ def briefing_card(b: dict[str, Any]) -> bytes:
         _chip(d, M, 350, "AI SUMMARY")
     _dial(img, W - M - 190, 400, 176, val)
     d = ImageDraw.Draw(img)
-    body = _f("Medium", 30)
+    body = _f("Regular", 34)
     lines = _wrap(d, str(b.get("text") or ""), body, W - 2 * M)[:8]
-    y = 540
+    y = 560
     for ln in lines:
         d.text((M, y), ln, font=body, fill=WHITE, anchor="ls")
-        y += 46
+        y += 52
     bullets = [_wrap(d, str(t), _f("SemiBold", 23), W - 2 * M - 92)[:2] for t in (b.get("bullets") or [])[:5]]
     if bullets:
         need = sum(32 * len(x) + 26 for x in bullets) + 70
-        top = max(y + 20, 1170 - need)
-        _panel(d, (M, top, W - M, 1170))
+        top = max(y + 24, FOOT_Y - 48 - need)   # anchored above the footer
+        _panel(d, (M, top, W - M, top + need))
         _label(d, (M + 32, top + 46), "Key facts", 13, GOLD)
         yy = top + 92
         for ln in bullets:
-            d.rectangle((M + 34, yy - 14, M + 42, yy - 6), fill=GOLD)
+            d.ellipse((M + 34, yy - 15, M + 44, yy - 5), fill=GOLD)
             for j, part in enumerate(ln):
                 d.text((M + 62, yy + j * 32), part, font=_f("SemiBold", 23), fill=WHITE if j == 0 else SILVER, anchor="ls")
             yy += 32 * len(ln) + 26
@@ -755,7 +756,7 @@ def news_card(m: dict[str, Any]) -> bytes:
         d.text((M, y), ln, font=_f("Medium", 26), fill=WHITE, anchor="ls")
         y += 38
     # signal pause strip: -45 min ... release ... +30 min
-    y = max(y + 30, 1010)
+    y = max(y + 30, FOOT_Y - 190)
     _label(d, (M, y), "New signals pause around it", 14, SILVER)
     bx0, bx1, by = M, W - M, y + 50
     d.rounded_rectangle((bx0, by - 6, bx1, by + 6), radius=6, fill=PANEL_HI)

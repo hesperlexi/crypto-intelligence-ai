@@ -674,6 +674,13 @@ index.html, TWA template). Overview top = market mood card (`Dashboard` `.mood-c
 embedded` + `TodayLine` | `OrbitDial`). Manual v3.1 (17 sections incl. "Market risk and Portfolio", Markets menu;
 screenshots by scratch `v3/mshot.py` = member preview with tour hidden). Research: `research_exits.py` variants
 h_x2 / h_x4 / no_limit (`hmult`) + `standard_verdict`; workflow input `variants`.
+Share cards V3.1 (owner, 24 Nov: "rework all the shareable cards"): Telegram `cards.py` and website `luxCard.ts` = graphite,
+IBM Plex Sans only (`assets/fonts/IBMPlexSans-*.ttf`, converted from @fontsource latin woff, OFL), flat green #0ecb81 / red
+#f6465d figures (no glow / foil), neural mesh top-right (cyan links, green/red neurons), logo tile header + gold tag,
+solid footer band with a gold rule (`FOOT_Y`, `luxFooter` uses the canvas height); content anchored above the footer;
+"Win/Loss at market" labels. Achievements: neural hexagon badge (`Achievements.medal` / `Medal`, `.ach-tile`,
+`.badge-neuron`). `components/TelegramButton.tsx` (tap twice to post, `telegramShare.postToTelegram`) on Weekly report,
+each achievement and the poster.
 
 ## Ideas not done yet
 Arabic (RTL) · smarter exits per coin · parallel training matrix · Binance daily metrics

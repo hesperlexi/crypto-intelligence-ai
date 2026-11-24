@@ -10,13 +10,14 @@ import { SITE_HOST } from "../lib/brand";
 import { curveChart, figure, foil, inter, L, luxBackground, luxBrand, luxFooter, luxReady, sora, statRow, txt, wrapLines } from "../lib/luxCard";
 import { roiOf } from "../lib/roi";
 import AdminTabs from "../components/AdminTabs";
+import TelegramButton from "../components/TelegramButton";
 
 const SITE = SITE_HOST;
 const dfmt = (ms: number) => new Date(ms).toLocaleDateString("en-GB", { day: "numeric", month: "short", timeZone: "UTC" });
 const range = (r: any) => `${dfmt(r.week_start)} – ${dfmt(r.week_end - 1)}`;
 const sp = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
 
-const STATUS: Record<string, string> = { TP3: "All targets", TP2: "Target 2", TP1: "Target 1", STOPPED: "Stopped", EXPIRED: "Time limit" };
+const STATUS: Record<string, string> = { TP3: "All targets", TP2: "Target 2", TP1: "Target 1", STOPPED: "Stopped" };
 
 async function draw(cv: HTMLCanvasElement, r: any, story: boolean) {
   // v2.37 premium layout (lib/luxCard.ts): editorial, left-aligned, metallic gold figures, hairlines instead of boxes
@@ -162,6 +163,7 @@ export default function Report() {
         </span>
         <button className="btn btn-primary" onClick={download}>Download image</button>
         <button className="btn" onClick={copy}>{copied ? "Caption copied" : "Copy caption"}</button>
+        <TelegramButton canvas={async () => cv.current} caption={cap} kind="weekly-report" />
       </div>
       <div className="grid gap-4 lg:grid-cols-[minmax(0,560px)_minmax(0,1fr)]">
         <canvas ref={cv} className="mx-auto w-full max-w-[560px] self-start rounded-xl border border-glass/10" style={{ aspectRatio: story ? "9 / 16" : "1 / 1" }} aria-label="Weekly report image" />
