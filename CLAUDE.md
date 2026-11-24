@@ -1425,8 +1425,9 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   exhaustion) all lose (−0.21 to −0.27R per trade, PF 0.5-0.65) → not built. Note: out-of-sample LONG calls lost
   (normal-BTC longs 116 calls −38.9R) while shorts won (+43.8R) - the long side needs its own study.
 - **V3.0 design part 1 live (24 Nov 2026, branch `v3-design`):** `styles/v3.css` (loaded last): Graphite (theme id "gold")
-  + Ivory; retired dark themes map to Graphite (`appearance.normalizeTheme`); fonts self-hosted @fontsource DM Sans
-  Variable (text + titles, owner: no serif) + DM Mono (figures, `.num`); Sora only for share canvases (Google). Faint
+  + Ivory; retired dark themes map to Graphite (`appearance.normalizeTheme`); fonts: **IBM Plex Sans only** (owner 24 Nov:
+  "follow the Binance font structure" - BinancePlex is built on it), self-hosted @fontsource 400/500/600/700, titles 600,
+  figures `.num` tabular 500, no mono / serif / Google fonts; share canvases use it too. Faint
   neural mesh background (`--mesh`, hidden on phones); `CosmicBackdrop` removed. Logo B+D (`brand-source/make_logo.py`
   → `render_logo_assets.cjs`; PNGs palette-quantised); `LiveLogo` = still tile + gold pulse + turning cyan ring.
   Overview (`components/V3Home.tsx`: MarketStatus (views/risk_state), MyCapital + MyPositions (practice futures account,
@@ -1437,3 +1438,9 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   BTC link map, System status, Coin deep dive. Hesper journeys `components/Journeys.tsx` (AscentJourney main run,
   SingularityJourney Last Stand). Still to restyle: Signals, Trade, Results (full redesign), News, Coins, Settings, share
   images; space visuals left in Landing, Demo bots (FleetOrbit), News (Intercept/OrbitTrack), Lab, Xeno.tsx.
+- **V3.0 part 2 live (24 Nov 2026):** phone Overview folds (`Dashboard.PhoneFold`, keys `cia-fold-*`), Demo bots "Bot league"
+  (FleetOrbit / drones gone), AI core = logo medallion, no stars / orbit / grid floor on Landing, News "Headline stream" /
+  "Coins in the news", Lab section names, Results "Quality of the results" (`ResultsBoard.Quality`: expectancy, profit
+  factor, avg win / loss, largest drop, per timeframe, <30 warning), share images graphite + logo gold + corner mesh
+  (`luxCard.luxBackground`, `cards._background`). Hesper Challenge history restored after the reset (`app/restore_hesper_v3.py`,
+  flag `restore_hesper_v3`; post-reset run moved to `archive_v3b_*`; old state settings back).
