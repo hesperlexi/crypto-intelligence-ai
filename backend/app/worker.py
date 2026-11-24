@@ -1688,6 +1688,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         es = sink.edge_status() if hasattr(sink, "edge_status") else {}
         engine["edge"] = {"on": bool(getattr(sink, "edge_on", lambda: False)()), "healthy": bool(getattr(sink, "edge_healthy", lambda: False)()),
                           "ok_at": es.get("ok_at"), "fail_at": es.get("fail_at"), "sent_today": es.get("sent_today"), "error": es.get("last_error")}
+        ew = rt.db.get_setting("edge_watch_status", None) or {}          # v3.1 Cloudflare price-alert watcher
+        engine["alert_watcher"] = {k: ew.get(k) for k in ("at", "armed", "armed_at", "sent_total", "error", "idle")} if ew else None
         wb = rt.db.get_setting("fs_writes_by", None) or {}
         engine["firestore_writes_by"] = dict(sorted((wb.get("n") or {}).items(), key=lambda kv: -kv[1])[:12])
     except Exception:

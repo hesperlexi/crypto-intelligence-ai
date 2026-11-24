@@ -124,5 +124,9 @@ try:
                    "errors": nv.get("errors")}
 except Exception as exc:
     out["news"] = {"error": str(exc)[:200]}
+try:
+    out["alert_watcher"] = (hj.get("engine") or {}).get("alert_watcher")
+except Exception:
+    pass
 print(json.dumps(out, indent=1, default=str))
 
