@@ -1406,3 +1406,10 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   + order reserves); UI fields still to add (Stage 5). `CHALLENGER_ENFORCE` default ON (log 21-23 Nov: 284 decisions, 7
   refusals). engine.yml last step queues the next engine run and dispatches a missed nightly training (GitHub skipped
   schedules 24 Nov). Tests `tests/test_v3_risk.py`.
+- **Stage 3 done (24 Nov 2026 13:49 Dubai):** `app/fresh_restart_v3.py` (flag `fresh_restart_v3` in MIGRATION_FLAGS): every
+  testing-result table copied to `archive_v3_<table>` (+ `archived_at`), counts checked, then emptied, one transaction;
+  `bots`/`published`/`edge_published` cleared; Hesper/Last Stand/safety/record settings reset (old values in setting
+  `archive_v3_settings`), `record_since` = reset time, restart line "V3.0 fresh start …", bots reset_token v3; audit in
+  setting `reset_v3_audit`. Members' practice (paper*, auto_paper*) untouched. Backup restore verified first
+  (`backup-verify.yml` → `results/backup-verify.json`: integrity ok). To restore old history: INSERT INTO t SELECT <cols>
+  FROM archive_v3_t. Tests `tests/test_fresh_restart_v3.py`.
