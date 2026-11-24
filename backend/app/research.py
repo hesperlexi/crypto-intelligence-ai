@@ -219,7 +219,8 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15", "exits", "models-value"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15", "exits", "models-value", "ablation"])
+    ap.add_argument("--group", default="g1", help="ablation: variant group g1 | g2 | g3")
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
     ap.add_argument("--cost-pct", type=float, default=settings.research_cost_pct)
@@ -247,6 +248,11 @@ def main(argv: list[str] | None = None) -> int:
         if a.command == "models-value":
             from . import research_models
             out = {"ok": True, "command": a.command, **research_models.run(a.db, a.budget)}
+        elif a.command == "ablation":
+            from . import research_ablation
+            out = {"ok": True, "command": a.command,
+                   **research_ablation.run(a.db, [x for x in (a.timeframes or "4h").split(",") if x], a.group, a.budget,
+                                           a.cost_pct, [x for x in (a.symbols or "").split(",") if x] or None)}
         elif a.command == "exits":
             from . import research_exits
             out = {"ok": True, "command": a.command, **research_exits.run(a.db, a.budget)}
