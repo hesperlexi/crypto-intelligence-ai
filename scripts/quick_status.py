@@ -2,7 +2,7 @@
 
 The output goes to the public `reports` branch and public job logs, so it never contains a call's coin, side, grade or
 levels (members pay for those), nor any record row - only counts and statuses (v2.13)."""
-import json, os
+import json, os, time
 import firebase_admin
 from firebase_admin import credentials, firestore
 
@@ -160,12 +160,15 @@ try:
         a = d.to_dict() or {}
         st_ = fs.document(f"auto_paper_state/{d.id}").get().to_dict() or {}
         log = [x for x in (st_.get("log") or []) if int(x.get("ts") or 0) >= cut]
-        reasons = {}
+        reasons, last2h = {}, {}
         for x in log:
             k = f"{x.get('timeframe')}|{x.get('grade')}|{x.get('action')}|{x.get('reason') or ''}"
             reasons[k] = reasons.get(k, 0) + 1
+            if int(x.get("ts") or 0) >= int(time.time() * 1000) - 2 * 3_600_000:
+                last2h[k] = last2h.get(k, 0) + 1
         ap.append({"n": i, "enabled": a.get("enabled"), "timeframes": a.get("timeframes"), "grades": a.get("grades"),
-                   "coins": a.get("coins"), "max_open": a.get("max_open"), "margin": {k: a.get(k) for k in a if "margin" in k or "size" in k or "risk" in k},
+                   "coins": a.get("coins"), "max_open": a.get("max_open"), "max_same_side": a.get("max_same_side"),
+                   "max_new_per_day": a.get("max_new_per_day"), "last2h": last2h, "margin": {k: a.get(k) for k in a if "margin" in k or "size" in k or "risk" in k},
                    "state_updated": st_.get("updated_at"), "recent": reasons})
     out["auto_trade"] = ap
 except Exception as exc:

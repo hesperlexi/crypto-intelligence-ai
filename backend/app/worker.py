@@ -1292,7 +1292,7 @@ def delisted_to_mexc(rt: Runtime, now: int | None = None) -> list[str]:
     if now - int(rt.db.get_setting("delisted_check_at", 0) or 0) < DELISTED_EVERY_MS:
         return []
     rt.db.set_setting("delisted_check_at", now)
-    moved = []
+    moved, orphans = [], []
     for sym in rt.symbols():
         if sym.upper() in F.FUT_ONLY:
             continue
@@ -1306,6 +1306,9 @@ def delisted_to_mexc(rt: Runtime, now: int | None = None) -> list[str]:
                 rt.store._cache.clear()
             except Exception:
                 pass
+        else:
+            orphans.append({"symbol": sym, "last_candle": last})
+    rt.db.set_setting("delisted_no_source", orphans)       # Health explains these (no live price anywhere we read)
     return moved
 
 

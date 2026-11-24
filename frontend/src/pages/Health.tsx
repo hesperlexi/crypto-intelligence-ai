@@ -464,6 +464,9 @@ function Centre({ d, raw, errs, modelMsg, tr, bots, news, tg, guardian, turn, co
             <div>
               <Row k="Candle data quality" v={isNum(md.quality_pct) ? `${fmtNum(md.quality_pct, 2)}%` : DASH} />
               <Row k="Stale series" v={md.stale_series ?? DASH} className={md.stale_series ? "text-warn" : ""} />
+              {(md.no_source ?? []).map((o: any) => (
+                <p key={o.symbol} className="text-xs text-warn">{String(o.symbol).replace("/USDT", "")}: Binance stopped trading it{o.last_candle ? ` (last candle ${new Date(o.last_candle).toLocaleDateString()})` : ""} and MEXC has no futures for it, so it has no live price. Remove it from the watchlist to clear this warning.</p>
+              ))}
             </div>
             <div>
               <Row k="API errors in cycle" v={ex.errors ?? DASH} className={ex.errors ? "text-warn" : ""} />

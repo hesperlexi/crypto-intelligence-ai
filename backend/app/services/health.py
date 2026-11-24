@@ -58,6 +58,7 @@ def report(rt: Runtime, full: bool = True) -> dict[str, Any]:
         "status": overall, "generated_at": now, "uptime_s": rt.uptime_s(),
         "market_data": {"status": feed["status"], "transport": feed.get("transport"), "last_update_ms": feed.get("last_update_ms"),
                         "age_s": feed.get("age_s"), "reconnects": feed.get("reconnects"), "last_error": feed.get("last_error"),
+                        "no_source": rt.db.get_setting("delisted_no_source", None) or [],
                         "quality_pct": quality, "stale_series": len(stale)},
         "exchange": exchange, "database": {"ok": db_ok, "engine": "postgresql" if rt.db.is_postgres else "sqlite"},
         "series": series, "models": models, "model_libraries": model_status(),

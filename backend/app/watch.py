@@ -290,7 +290,10 @@ def cloud_healthy(db: Any, now: int | None = None) -> bool:
     st = db.get_setting("edge_watch_status", None) or {}
     now = int(time.time() * 1000) if now is None else now
     at, armed_at = int(st.get("at") or 0), int(st.get("armed_at") or 0)
-    return bool(at and now - at < CLOUD_FRESH_MS and armed_at and now - armed_at < 45 * 60_000 and not st.get("error") and not st.get("idle"))
+    # v3.1 (24 Nov 2026): a watcher that could not price anything is not watching -> the engine keeps its own watch on
+    priced_ok = not int(st.get("armed") or 0) or int(st.get("priced") or 0) > 0
+    return bool(at and now - at < CLOUD_FRESH_MS and armed_at and now - armed_at < 45 * 60_000 and not st.get("error")
+                and not st.get("idle") and priced_ok)
 
 
 def main() -> None:

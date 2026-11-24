@@ -21,7 +21,7 @@ export type Armed = {
 };
 
 const KEEP_SENT_MS = 7 * 86_400_000;
-const MAX_SENDS = 40;            // free plan: at most 50 outgoing requests per run (prices + token + sends)
+const MAX_SENDS = 32;            // free plan: at most 50 outgoing requests per run (up to 7 spot + 5 futures prices, token, check, sends)
 
 type Sql = SqlStorage;
 function kvGet(sql: Sql, k: string): string | null {
@@ -42,7 +42,7 @@ const reached = (a: Armed, p: number) => {
 };
 
 // Binance first (the engine's own price source); Cloudflare's edge is sometimes refused by Binance (451 / 403 by
-// region), so OKX and then MEXC spot answer instead. One batch request each; futures-only coins from MEXC futures.
+// region), so OKX, MEXC, Gate, KuCoin and Bybit spot answer instead (first that has the coin). One batch request each; futures-only coins from MEXC futures.
 async function prices(list: Armed[], st: any): Promise<Record<string, number>> {
   const out: Record<string, number> = {};
   const spot = [...new Set(list.filter((a) => a.src === "spot").map((a) => a.pair))];
@@ -58,22 +58,27 @@ async function prices(list: Armed[], st: any): Promise<Record<string, number>> {
         if (r.ok) for (const x of (await r.json()) as any[]) out[`spot:${x.symbol}`] = Number(x.price);
       } catch (e) { tries.push(`${host.replace("https://", "")} ${String(e).slice(0, 40)}`); }
     }
-    if (need().length) {
+    // fallbacks, each one batch request; "host status matched/wanted" so the status shows which one answered
+    const alts: [string, string, (d: any) => [string, number][]][] = [
+      ["okx", "https://www.okx.com/api/v5/market/tickers?instType=SPOT",
+        (d) => (d?.data ?? []).map((x: any) => [String(x.instId).replace("-", ""), Number(x.last)])],
+      ["mexc", "https://api.mexc.com/api/v3/ticker/price", (d) => (Array.isArray(d) ? d : []).map((x: any) => [String(x.symbol), Number(x.price)])],
+      ["gate", "https://api.gateio.ws/api/v4/spot/tickers",
+        (d) => (Array.isArray(d) ? d : []).map((x: any) => [String(x.currency_pair).replace("_", ""), Number(x.last)])],
+      ["kucoin", "https://api.kucoin.com/api/v1/market/allTickers",
+        (d) => (d?.data?.ticker ?? []).map((x: any) => [String(x.symbol).replace("-", ""), Number(x.last)])],
+      ["bybit", "https://api.bybit.com/v5/market/tickers?category=spot",
+        (d) => (d?.result?.list ?? []).map((x: any) => [String(x.symbol), Number(x.lastPrice)])],
+    ];
+    for (const [name, url, parse] of alts) {
+      const want = new Set(need());
+      if (!want.size) break;
       try {
-        const r = await fetch("https://www.okx.com/api/v5/market/tickers?instType=SPOT");
-        tries.push(`okx ${r.status}`);
-        const d: any = r.ok ? await r.json() : null;
-        const want = new Set(need());
-        for (const x of d?.data ?? []) { const p = String(x.instId).replace("-", ""); if (want.has(p) && x.last) out[`spot:${p}`] = Number(x.last); }
-      } catch (e) { tries.push(`okx ${String(e).slice(0, 40)}`); }
-    }
-    if (need().length) {
-      try {
-        const r = await fetch("https://api.mexc.com/api/v3/ticker/price");
-        tries.push(`mexc ${r.status}`);
-        const want = new Set(need());
-        if (r.ok) for (const x of (await r.json()) as any[]) if (want.has(x.symbol)) out[`spot:${x.symbol}`] = Number(x.price);
-      } catch (e) { tries.push(`mexc ${String(e).slice(0, 40)}`); }
+        const r = await fetch(url, { headers: { "User-Agent": "cia-watch/1", Accept: "application/json" } });
+        let got = 0;
+        if (r.ok) for (const [p, v] of parse(await r.json())) if (want.has(p) && isFinite(v) && v > 0) { out[`spot:${p}`] = v; got++; }
+        tries.push(`${name} ${r.status} ${got}/${want.size}`);
+      } catch (e) { tries.push(`${name} ${String(e).slice(0, 40)}`); }
     }
   }
   for (const c of mexc.slice(0, 5)) {
@@ -84,7 +89,7 @@ async function prices(list: Armed[], st: any): Promise<Record<string, number>> {
       else tries.push(`mexc-fut ${r.status}`);
     } catch (e) { tries.push(`mexc-fut ${String(e).slice(0, 40)}`); }
   }
-  st.price_tries = tries.slice(0, 8);
+  st.price_tries = tries.slice(0, 10);
   return out;
 }
 

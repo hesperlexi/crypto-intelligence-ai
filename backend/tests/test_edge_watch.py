@@ -60,6 +60,10 @@ def test_watch_py_stays_quiet_only_while_the_cloud_watcher_is_fresh_and_error_fr
     assert not watch.cloud_healthy(db, NOW + 10 * 60_000)            # watcher silent for > 6 min
     db.set_setting("edge_watch_status", {"at": NOW - 60_000, "armed_at": NOW - 5 * 60_000, "error": "FCM_SENDER_KEY not set"})
     assert not watch.cloud_healthy(db, NOW)
+    db.set_setting("edge_watch_status", {"at": NOW - 60_000, "armed_at": NOW - 5 * 60_000, "armed": 20, "priced": 0})
+    assert not watch.cloud_healthy(db, NOW)                          # could not price anything: engine keeps watching
+    db.set_setting("edge_watch_status", {"at": NOW - 60_000, "armed_at": NOW - 5 * 60_000, "armed": 20, "priced": 9})
+    assert watch.cloud_healthy(db, NOW)
 
 
 def test_run_is_off_without_the_edge_key(monkeypatch):
