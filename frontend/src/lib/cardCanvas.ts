@@ -13,7 +13,7 @@ export const C = {
 export const M = 72;                                                  // outer margin
 
 type G = CanvasRenderingContext2D;
-export const font = (w: number, px: number) => `${w} ${px}px Geist, Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
+export const font = (w: number, px: number) => `${w} ${px}px "DM Sans Variable", "DM Sans", Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif`;
 
 /** Wait for the web fonts so measurements match what is painted. */
 export async function fontsReady() {

@@ -1,0 +1,132 @@
+/* =====================================================================================================
+   V3.0 AI SUPERINTELLIGENCE - design system (owner brief "Master Development Prompt V3.0", 24 Nov 2026)
+   Loaded last (after index.css and observatory.css), so these tokens win.
+
+   Idea: an intelligence desk, not a spaceship. Soft black graphite surfaces (never pure #000), the logo's gold
+   (#E8B637) as the one brand accent, the logo's cyan (#5DF1DD) ONLY for what the AI produced, green / red for
+   direction, amber for caution. Type: Instrument Serif for page titles (the owner's reference), DM Sans for text,
+   DM Mono for every figure so columns line up. Crystal glass is used sparingly (lead cards, risk status).
+   Background: a faint neural mesh in the top right corner instead of stars. Themes: Graphite (id "gold", so saved
+   choices keep working) and Ivory (id "light"); the retired dark themes resolve to Graphite (appearance.tsx).
+   ===================================================================================================== */
+
+:root, [data-theme="gold"], [data-theme="obsidian"], [data-theme="violet"], [data-theme="aurora"] {
+  --ink: 17 18 21; --panel: 24 25 29; --raised: 32 33 39; --line: 48 50 57;
+  --text: 236 232 223; --mute: 146 148 155;
+  --bull: 52 201 139; --bear: 232 97 106; --warn: 233 166 74;
+  --accent: 232 182 55; --accent-2: 246 227 122; --ai: 93 241 221;
+  --primary: 232 182 55; --primary-2: 242 206 104; --on-primary: 22 17 6; --on-accent: 22 17 6;
+  --glass: 255 255 255;
+  --panel-bg: 24 25 29; --panel-a: 0.94; --bar-a: 0.9;
+  --glow1: rgba(232, 182, 55, 0.05); --glow2: rgba(93, 241, 221, 0.03);
+  --shadow: rgba(0, 0, 0, 0.6);
+  --hair: rgb(255 255 255 / 0.07); --hair-strong: rgb(255 255 255 / 0.12);
+  --edge-top: rgb(255 255 255 / 0.05);
+  --horizon: linear-gradient(90deg, rgb(var(--accent) / 0.0), rgb(var(--accent) / 0.75) 18%, rgb(var(--accent) / 0.35) 55%, transparent 100%);
+  --mesh: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Cg fill='none' stroke='%23E8B637' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M300 40L392 88L470 52L560 110L612 64M392 88L430 170L520 196L612 160M430 170L350 210L402 290L500 300L590 262M520 196L500 300M470 52L520 196M350 210L250 160L300 40M560 110L612 160M402 290L330 340'/%3E%3C/g%3E%3Cg fill='%23F6E37A' fill-opacity='.28'%3E%3Ccircle cx='300' cy='40' r='2'/%3E%3Ccircle cx='392' cy='88' r='2.4'/%3E%3Ccircle cx='470' cy='52' r='2'/%3E%3Ccircle cx='560' cy='110' r='2.4'/%3E%3Ccircle cx='612' cy='64' r='1.8'/%3E%3Ccircle cx='430' cy='170' r='2.6'/%3E%3Ccircle cx='520' cy='196' r='2.2'/%3E%3Ccircle cx='612' cy='160' r='1.8'/%3E%3Ccircle cx='350' cy='210' r='2'/%3E%3Ccircle cx='402' cy='290' r='2.2'/%3E%3Ccircle cx='500' cy='300' r='2'/%3E%3Ccircle cx='590' cy='262' r='1.8'/%3E%3Ccircle cx='250' cy='160' r='1.6'/%3E%3Ccircle cx='330' cy='340' r='1.6'/%3E%3C/g%3E%3Cg fill='%235DF1DD' fill-opacity='.35'%3E%3Ccircle cx='430' cy='170' r='1.2'/%3E%3Ccircle cx='560' cy='110' r='1.2'/%3E%3C/g%3E%3C/svg%3E");
+  color-scheme: dark;
+}
+[data-theme="light"] {
+  /* Ivory (low glare, warm): no pure white, deep gold and teal so both stay readable on cream */
+  --ink: 228 223 211; --panel: 238 234 224; --raised: 222 216 202; --line: 200 192 174;
+  --text: 36 33 28; --mute: 92 86 74;
+  --bull: 0 110 70; --bear: 176 36 56; --warn: 150 76 0;
+  --accent: 138 101 16; --accent-2: 214 164 40; --ai: 16 118 106;
+  --primary: 214 164 40; --primary-2: 226 180 60; --on-primary: 30 24 10; --on-accent: 246 241 230;
+  --glass: 60 46 20;
+  --panel-bg: 238 234 224; --panel-a: 0.97; --bar-a: 0.95;
+  --glow1: rgba(200, 150, 40, 0.08); --glow2: rgba(16, 118, 106, 0.04);
+  --shadow: rgba(60, 46, 20, 0.14);
+  --hair: rgb(40 32 16 / 0.10); --hair-strong: rgb(40 32 16 / 0.17);
+  --horizon: linear-gradient(90deg, rgb(var(--accent) / 0.0), rgb(var(--accent) / 0.6) 18%, rgb(var(--accent) / 0.25) 55%, transparent 100%);
+  --mesh: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='640' height='360' viewBox='0 0 640 360'%3E%3Cg fill='none' stroke='%238A6510' stroke-opacity='.10' stroke-width='1'%3E%3Cpath d='M300 40L392 88L470 52L560 110L612 64M392 88L430 170L520 196L612 160M430 170L350 210L402 290L500 300L590 262M520 196L500 300M470 52L520 196M350 210L250 160L300 40M560 110L612 160M402 290L330 340'/%3E%3C/g%3E%3Cg fill='%238A6510' fill-opacity='.22'%3E%3Ccircle cx='392' cy='88' r='2.4'/%3E%3Ccircle cx='560' cy='110' r='2.4'/%3E%3Ccircle cx='430' cy='170' r='2.6'/%3E%3Ccircle cx='520' cy='196' r='2.2'/%3E%3Ccircle cx='402' cy='290' r='2.2'/%3E%3C/g%3E%3C/svg%3E");
+  color-scheme: light;
+}
+
+/* ---------------------------------------------------------------------------------------------- TYPE */
+body {
+  font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-feature-settings: normal; letter-spacing: 0;
+  background-color: rgb(var(--ink));
+  background-image: var(--mesh), radial-gradient(70% 50% at 100% 0%, var(--glow1), transparent 70%);
+  background-repeat: no-repeat; background-position: top right, top right;
+  background-attachment: fixed;
+}
+[data-glass="on"] body, [data-glass="off"] body {
+  background-image: var(--mesh), radial-gradient(70% 50% at 100% 0%, var(--glow1), transparent 70%);
+}
+.page-title, h1.page-title, .v3-title {
+  font-family: "Instrument Serif", Georgia, "Times New Roman", serif; font-weight: 400;
+  font-size: 2.25rem; line-height: 1.05; letter-spacing: -0.01em;
+}
+@media (min-width: 640px) { .page-title, .v3-title { font-size: 2.75rem; } }
+.font-display, .section-title, h2, h3 { font-family: "DM Sans Variable", "DM Sans", ui-sans-serif, system-ui, sans-serif; }
+.num, .tabular, .figure, .metric-v {
+  font-family: "DM Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-variant-numeric: tabular-nums; letter-spacing: -0.02em; font-feature-settings: "tnum" 1;
+}
+.card-head .label { font-family: "DM Sans Variable", "DM Sans", sans-serif; font-weight: 600; letter-spacing: -0.005em; }
+.page-head::after { background: var(--horizon) !important; }
+::selection { background: rgb(var(--accent) / 0.28); }
+
+/* ---------------------------------------------------------------------------------------------- SURFACES */
+.panel, [data-glass="on"] .panel, [data-glass="off"] .panel {
+  border-radius: 14px; border: 1px solid var(--hair);
+  background-color: rgb(var(--panel) / var(--panel-a));
+  background-image: linear-gradient(180deg, rgb(var(--glass) / 0.03), rgb(var(--glass) / 0) 40%);
+  box-shadow: 0 1px 0 0 var(--edge-top) inset, 0 16px 36px -26px rgb(0 0 0 / 0.75);
+}
+/* crystal glass: only the lead card of a page and risk / status panels */
+.panel-hero, .v3-glass, [data-glass="on"] .panel-hero {
+  background-color: rgb(var(--raised) / 0.62) !important;
+  background-image: linear-gradient(135deg, rgb(var(--glass) / 0.06), rgb(var(--glass) / 0.012) 45%, rgb(var(--accent) / 0.035)) !important;
+  border-color: rgb(var(--glass) / 0.11) !important;
+  box-shadow: inset 0 1px 0 0 rgb(var(--glass) / 0.10), 0 24px 48px -30px rgb(0 0 0 / 0.8) !important;
+}
+@media (min-width: 1024px) {
+  .panel-hero, .v3-glass { -webkit-backdrop-filter: blur(16px) saturate(140%); backdrop-filter: blur(16px) saturate(140%); }
+}
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .panel-hero, .v3-glass { background-color: rgb(var(--raised)) !important; }
+}
+.panel-hero::before { background: var(--horizon) !important; }
+.ai-card { box-shadow: 0 1px 0 0 var(--edge-top) inset, inset 2px 0 0 0 rgb(var(--ai) / 0.65) !important; }
+
+/* ---------------------------------------------------------------------------------------------- CONTROLS */
+.btn-primary, [data-glass="on"] .btn-primary {
+  background: linear-gradient(180deg, rgb(var(--primary-2)) 0%, rgb(var(--primary)) 60%, rgb(196 150 40) 100%);
+  color: rgb(var(--on-primary));
+}
+[data-theme="light"] .btn-primary { background: linear-gradient(180deg, rgb(var(--primary-2)), rgb(var(--primary))); }
+
+/* the space backdrop and its decorations are retired in V3.0 */
+.cosmos, .cosmos-orbit, .cosmos-twinkle { display: none !important; }
+
+/* ---------------------------------------------------------------------------------------------- V3 BLOCKS */
+.v3-eyebrow { font-size: 0.8125rem; color: rgb(var(--mute)); }
+.v3-state { font-family: "Instrument Serif", Georgia, serif; font-size: 2.25rem; line-height: 1; }
+.v3-k { font-size: 0.75rem; color: rgb(var(--mute)); }
+.v3-v { font-size: 0.95rem; margin-top: 2px; }
+.v3-pill { display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; padding: 3px 10px; font-size: 0.75rem; white-space: nowrap; }
+.v3-ok { color: rgb(var(--bull)); background: rgb(var(--bull) / 0.10); }
+.v3-watch { color: rgb(var(--warn)); background: rgb(var(--warn) / 0.10); }
+.v3-act { color: rgb(var(--bear)); background: rgb(var(--bear) / 0.12); }
+.v3-muted { color: rgb(var(--mute)); background: rgb(var(--glass) / 0.05); }
+.v3-ai { color: rgb(var(--ai)); }
+.v3-bar { height: 6px; border-radius: 9px; background: rgb(var(--raised)); overflow: hidden; }
+.v3-bar > i { display: block; height: 100%; border-radius: 9px; }
+.v3-facts { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.v3-facts > div { padding: 2px 18px; border-left: 1px solid var(--hair); white-space: nowrap; }
+@media (max-width: 767px) {
+  .v3-facts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 0; flex-basis: 100%; }
+  body, [data-glass="on"] body, [data-glass="off"] body { background-image: radial-gradient(70% 40% at 100% 0%, var(--glow1), transparent 70%); }
+  .v3-facts > div { border-left: 0; padding: 0 10px 0 0; white-space: normal; }
+}
+.v3-lane { border-radius: 10px; border: 1px solid var(--hair); background: rgb(var(--raised) / 0.55); padding: 12px 14px; }
+.v3-lane-row { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--hair); font-size: 0.8125rem; }
+.v3-lane-row:first-of-type { border-top: 0; }
+.v3-feed-row { display: grid; grid-template-columns: 64px 12px minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--hair); font-size: 0.875rem; }
+.v3-feed-row:first-child { border-top: 0; }
+@media (max-width: 639px) { .v3-feed-row { grid-template-columns: 48px 10px minmax(0, 1fr); } .v3-feed-row > .v3-go { display: none; } }
+.v3-dot { width: 8px; height: 8px; border-radius: 50%; }
+@media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }

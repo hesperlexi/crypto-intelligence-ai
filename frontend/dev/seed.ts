@@ -536,6 +536,7 @@ export function seed(): Record<string, any> {
     "views/hesper": v(hesper()),
     "views/guardian": v(guardian()),
     "views/market_turn": v(marketTurn()),
+    "views/risk_state": v(riskState()),
     "views/perf_lab": v(perfLab()),
     ...leaderboard(),
     "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
@@ -869,6 +870,36 @@ function guardian() {
 
 
 /** v2.22 market turn detector sample (admin only) */
+function riskState() {
+  const now = Date.now();
+  const f = (key: string, label: string, points: number, status: string, detail: string, source: string, critical = false) =>
+    ({ key, label, points, status, detail, source, critical, value: null });
+  return {
+    generated_at: now - 3 * 60_000, state: "CAUTION", label: "Caution", score: 2, since: now - 5 * H,
+    policy: "Be selective: prefer grade A calls and smaller size.",
+    why: "BTC +3.1% last 4 hours; 11 short and 0 long signals running",
+    factors: [
+      f("data", "Data freshness", 0, "ok", "newest closed 15m candle 2 min old", "engine", true),
+      f("btc_vol", "BTC volatility", 0, "ok", "recent 4h range is 1.12x its 100-candle normal", "Binance 4h", true),
+      f("btc_move", "Sudden BTC move", 1, "warn", "BTC +0.8% last hour, +3.1% last 4 hours", "Binance 1h", true),
+      f("breadth_vol", "Market-wide volatility", 0, "ok", "4 of 29 coins far above their normal volatility", "Binance 4h"),
+      f("turn", "Trend turning", 0, "ok", "market trend down: weakening", "OKX + Binance"),
+      f("sweep", "Stop run on BTC", 0, "ok", "no stop run in the last 6 hours", "Binance 1h"),
+      f("liq", "Liquidation wave", 0, "ok", "BTC forced closes last 4h: $38M (1.4x normal)", "Coinalyze"),
+      f("funding", "Funding extreme", 0, "ok", "longs paying a normal amount (z +0.6)", "Hyperliquid / OKX"),
+      f("news", "Major US data", 0, "ok", "no high-impact release within the pause window", "economic calendar"),
+      f("record", "Signal losses", 0, "ok", "closed signals +0.4R today, +0.4R this week (after fees)", "track record"),
+      f("streak", "Losing streak", 0, "ok", "1 losing signals in a row", "track record"),
+      f("exposure", "One-sided exposure", 1, "warn", "0 long and 11 short signals running", "track record"),
+    ],
+    unavailable: [],
+    log: [{ at: now - 5 * H, from: "NORMAL", to: "CAUTION", score: 2, why: "BTC +3.1% last 4 hours" },
+          { at: now - 30 * H, from: "RECOVERY", to: "NORMAL", score: 1, why: "no risk factor is raised" }],
+    series: Array.from({ length: 48 }, (_, i) => [now - (47 - i) * H, i > 42 ? 2 : i > 30 ? 1 : 0, i > 42 ? "CAUTION" : "NORMAL"]),
+    levels: [], method: "",
+  };
+}
+
 function marketTurn() {
   const now = Date.now();
   return {

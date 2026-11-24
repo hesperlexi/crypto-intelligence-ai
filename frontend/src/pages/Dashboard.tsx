@@ -3,8 +3,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
-import { OpportunityBoard } from "../components/Deck";
-import { OrbitDial } from "../components/Instruments";
+import { Decisions, MarketStatus, MyCapital, MyPositions } from "../components/V3Home";
 import { BriefingPanel } from "../components/Polish";
 import MarketBoard, { IntelBrief } from "../components/MarketBoard";
 import { MacroCard, UnlocksList, VolOptionsCard } from "../components/Derivs";
@@ -33,49 +32,50 @@ export default function Dashboard() {
   return (
     <div className="space-y-4 sm:space-y-5">
       <NewsBanner />
-      {/* v2.56 Intelligence Deck: one lead instrument - the market line and actions beside the market dial,
-          then the four figures as a divided strip */}
-      <section className="panel panel-hero deck-hero p-4 sm:p-6" aria-label="Market today">
-        <div className="deck-hero-grid">
-          <OverviewHead rows={dash4.data?.rows} status={status4} briefing={briefing} track={track.data} />
-          <OrbitDial rows={dash4.data?.rows} status={status4} fg={sentiment?.value} fgLabel={sentiment?.label} />
-        </div>
-        <div className="ov-strip mt-5 grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4">
+      {/* V3.0 Overview (owner-approved layout, 24 Nov 2026): A market & risk status · B my capital + F my positions ·
+          E AI decisions · C market intelligence · D watchlist board · G recent developments. Phones: A, F, B, E, … */}
+      <header className="v3-head">
+        <h1 className="v3-title">Overview</h1>
+        <p className="mt-1.5 text-[0.9375rem] text-mute">What is happening, what the AI thinks, and what it means for your practice capital.</p>
+      </header>
+      <MarketStatus status4={status4} rows={dash4.data?.rows} />
+
+      <FirstWeekGuide />
+      <WelcomeTour />
+      <div className="grid-even grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.3fr)]">
+        <div className="order-2 lg:order-1"><MyCapital /></div>
+        <div className="order-1 lg:order-2"><MyPositions /></div>
+      </div>
+
+      <Decisions rows={dash4.data?.rows} track={track.data} />
+
+      {/* C market intelligence: the four measured figures, then the BTC chart beside the AI briefing */}
+      <section className="panel p-0" aria-label="Market intelligence">
+        <header className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">Market today</h2>
+          <span className="text-xs text-mute">Measured data · Binance, CoinGecko</span></header>
+        <div className="ov-strip px-4 pb-4 sm:px-5 grid grid-cols-1 min-[360px]:grid-cols-2 xl:grid-cols-4">
           <BtcCard />
           <MarketCapCard mc={mc.data} ctx={ctx.data} />
           <VolatilityCard />
           <SentimentCard status={status4} sentiment={sentiment} />
         </div>
       </section>
-
-      <FirstWeekGuide />
-      <WelcomeTour />
-      {/* row 2: what is running (live journeys) beside what is setting up (the opportunity board) */}
-      {/* v2.78 (owner, 23 Nov 2026: "too crowded"): the live-signal gauges are gone from Overview (Signals / Results / Command
-          Centre still show every running call); the opportunity board is the wide strip here */}
-      <div className="grid gap-4">
-        <Card title="Opportunity board" right={<span className="text-xs text-mute">4H · passes every check</span>} className="deck-fill deck-wide">
-          <OpportunityBoard rows={dash4.data?.opportunities} />
-        </Card>
-      </div>
-
-      {/* row 3: BTC chart beside the market intelligence brief (v2.70: headline, breadth, facts, leaders / laggards) */}
       <div className="ov-pair grid gap-4 xl:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
         <BtcChartCard />
         <IntelBrief b={briefing} loading={mc.loading} rows={dash4.data?.rows} status={status4} />
       </div>
 
-      {/* row 4 (v2.70): ONE market board - coins, trend, signal, AI outlook, watch notes; table or heatmap */}
+      {/* D the watchlist: one board for every coin (table or heatmap) */}
       {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
       <MarketBoard d={d} tf={tf} onTf={setTf} loading={dash.loading} />
 
-      {/* row 5: performance (+ Trade Guardian for the admin) · recent activity · market context, equal heights */}
+      {/* G recent developments + signal performance + market context */}
       <div className="grid-even grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
+        <RecentActivityCard track={track.data} briefing={briefing} />
         <div className="ov-stack flex min-w-0 flex-col gap-4">
           {admin && <GuardianCard />}
           <PerformanceCard track={track.data} loading={track.loading} />
         </div>
-        <RecentActivityCard track={track.data} briefing={briefing} />
         <div className="lg:col-span-2 xl:col-span-1">
           <Card title="Market context" className="h-full">
             {sentiment?.divergence && <p className="mb-2 text-sm text-warn">{sentiment.divergence}</p>}
@@ -91,12 +91,8 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* v2.76 (owner: the page is long): the deeper market cards sit in one fold, open by default, remembered */}
       <DetailsFold>
-        {/* dominance, altcoin season, market pulse, top headline */}
         <MarketInsights />
-
-        {/* v2.75: options / volatility beside the traditional markets (views/derivs) */}
         <div className="grid-even grid gap-4 lg:grid-cols-2">
           <VolOptionsCard />
           <MacroCard />

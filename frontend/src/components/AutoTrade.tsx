@@ -12,7 +12,7 @@ export const AUTO_MAX_LEV = 20;      // v2.13 (owner): auto-trade never above 20
 export const AUTO_MAX_OPEN = 10;     // v2.64: up to 10 open auto-trades, 20 new a day (engine: autopaper.MAX_OPEN_CAP / MAX_NEW_PER_DAY)
 
 /** A number box you can clear and retype freely; the value is checked (and clamped) when you leave the box. */
-function NumField({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
+export function NumField({ value, min, max, onChange }: { value: number; min: number; max: number; onChange: (n: number) => void }) {
   const [txt, setTxt] = useState(String(value));
   const [focus, setFocus] = useState(false);
   useEffect(() => { if (!focus) setTxt(String(value)); }, [value, focus]);

@@ -113,7 +113,7 @@ function Globe({ size = 340 }: { size?: number }) {
       }
       // exchanges
       const pulse = (Math.sin((now - t0) / 380) + 1) / 2;
-      ctx!.font = "600 12px Geist, Inter, system-ui, sans-serif";
+      ctx!.font = "600 12px \"DM Sans Variable\", system-ui, sans-serif";
       for (const m of MARKETS) {
         const on = marketState(m, d).open;
         const p = proj([m.lon, m.lat]);

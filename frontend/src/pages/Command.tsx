@@ -72,7 +72,7 @@ function Galaxy({ rows, open, sel, onSel, onHover }: { rows: any[]; open: Set<st
   const setHover = onHover;
   return (
     <div className="cc-galaxy">
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Crypto galaxy: every coin you watch as a planet">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="group" aria-label="Market map: every coin you watch around the AI core">
         <ellipse cx={C.x} cy={C.y} rx={narrow ? 80 : 190} ry={narrow ? 80 : 130} fill="url(#cc-glow)" />
         {RAD.map((r, i) => (
           <g key={r}>
@@ -118,7 +118,7 @@ function Readout({ symbol, row, f, tf, onScan }: { symbol: string; row: any; f: 
   return (
     <section className="cc-readout" aria-live="polite" aria-label={`Readout: ${name(symbol)}`}>
       <div className="flex items-center gap-3"><CoinAvatar symbol={symbol} size={44} />
-        <div className="min-w-0"><div className="font-display text-[22px] font-semibold leading-tight">{name(symbol)}</div><div className="text-sm text-mute">Locked on · tap a planet</div></div></div>
+        <div className="min-w-0"><div className="font-display text-[22px] font-semibold leading-tight">{name(symbol)}</div><div className="text-sm text-mute">Selected · tap a coin</div></div></div>
       <div><span className="font-display num text-[34px] font-semibold tracking-tight">{isNum(px) ? fmtPrice(px) : "—"}</span> <span className={`num font-semibold ${(chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(chg)}</span></div>
       <span className={`cc-ro-call ${side > 0 ? "is-long" : side < 0 ? "is-short" : ""}`}>{side > 0 ? "▲ Long call" : side < 0 ? "▼ Short call" : "No call now"} · {tf.toUpperCase()}{side && grade ? ` · grade ${grade}` : ""}</span>
       <dl className="cc-ro-grid">
@@ -128,7 +128,7 @@ function Readout({ symbol, row, f, tf, onScan }: { symbol: string; row: any; f: 
         <div><dt>AI lean</dt><dd className={up != null && dn != null ? (up > dn ? "text-bull" : up < dn ? "text-bear" : "") : ""}>{up != null && dn != null ? (up >= dn ? `${up}% up` : `${dn}% down`) : "—"}</dd></div>
       </dl>
       {(f?.ai?.rationale || f?.decision_basis || f?.decision_reason) && <p className="cc-ro-note">{f?.ai?.rationale ?? f?.decision_basis ?? f?.decision_reason}</p>}
-      <button type="button" className="btn btn-primary mt-auto w-full" onClick={onScan}>Deep-space scan</button>
+      <button type="button" className="btn btn-primary mt-auto w-full" onClick={onScan}>Coin deep dive</button>
     </section>
   );
 }
@@ -362,7 +362,7 @@ function Universe({ peers, status, mc, onSel, tf }: { peers: string[]; status: a
         <div className="cc-cell"><div className="text-mute">Alt strength</div><div className="text-sm font-semibold">{isNum(alt) ? `${Math.round(alt)} / 100` : "—"}</div></div>
         <div className="cc-cell"><div className="text-mute">BTC · 7 days</div><div className={`text-sm font-semibold ${(bw ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(bw)}</div></div>
       </div>
-      <p className="text-xs text-mute">Closer orbit and brighter beam = moved more with Bitcoin (7 days). Bigger planet = bigger 7-day move.</p>
+      <p className="text-xs text-mute">Closer ring and brighter line = moved more with Bitcoin (7 days). Bigger dot = bigger 7-day move.</p>
     </div>
   );
 }
@@ -433,7 +433,7 @@ function Scan({ symbol, row, f4, tf }: { symbol: string; row: any; f4: any; tf: 
         <div className="num text-xl font-semibold">{fmtPrice(px)} <span className={`text-sm ${(chg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{pct(chg)}</span></div>
       </div>
       <div className="min-w-0 space-y-4">
-        <h2 className="font-display text-lg font-semibold">Deep-space scan · {T}</h2>
+        <h2 className="font-display text-lg font-semibold">Coin deep dive · {T}</h2>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
           {inds.map(([k, v, c]) => <div key={k} className="cc-cell"><div className="text-xs text-mute">{k}</div><div className={`truncate font-semibold ${c ?? ""}`}>{v}</div></div>)}
         </div>
@@ -470,7 +470,7 @@ function MissionStrip({ tf, setTf, status, open, health, connected }: { tf: stri
     ["Engine", <span className={isNum(last) && Date.now() - last < 15 * 60_000 ? "text-bull" : "text-warn"}>{isNum(last) ? ago(last) : "—"}</span>],
   ];
   return (
-    <section className="cc-mission" aria-label="Mission status">
+    <section className="cc-mission" aria-label="System status">
       <div className="min-w-0">
         <h1 className="page-title">Command Centre</h1>
         <p className="mt-1 flex items-center gap-2 text-sm text-mute"><span className={`h-1.5 w-1.5 rounded-full ${connected ? "bg-bull live-dot" : "bg-warn"}`} />Live market intelligence · real data only</p>
@@ -479,7 +479,7 @@ function MissionStrip({ tf, setTf, status, open, health, connected }: { tf: stri
         {read.map(([k, v, c]) => <div key={k}><dt>{k}</dt><dd className={c ?? ""}>{v}</dd></div>)}
       </dl>
       <div className="cc-mission-tf">
-        <Segmented value={tf} onChange={setTf} options={TFS.map((t) => [t, t.toUpperCase()] as [string, string])} label="Timeframe the galaxy, AI core and scan follow" />
+        <Segmented value={tf} onChange={setTf} options={TFS.map((t) => [t, t.toUpperCase()] as [string, string])} label="Timeframe the map, AI core and deep dive follow" />
       </div>
     </section>
   );
@@ -526,9 +526,9 @@ export default function Command() {
       <MissionStrip tf={tf} setTf={setTf} status={dash.data?.market_status} open={track.data} health={health.data} connected={connected} />
       {/* v2.74 Observatory (owner's pick, 22 Nov 2026): galaxy beside its readout */}
       <div className="cc-row1">
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Crypto galaxy">
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Market map">
           <div className="flex flex-wrap items-baseline justify-between gap-2">
-            <div><h2 className="font-display text-xl font-semibold">Crypto galaxy</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a planet to read it.</p></div>
+            <div><h2 className="font-display text-xl font-semibold">Market map</h2><p className="text-sm text-mute">Your coins around the AI core. Tap a coin to read it.</p></div>
             <div className="flex flex-wrap gap-3 text-xs text-mute"><span className="text-bull">● up 24h</span><span className="text-bear">● down 24h</span><span className="text-accent">◌ {tf.toUpperCase()} signal running</span><span>size = 24h volume</span></div>
           </div>
           <div className="flex flex-1 items-center [&>*]:w-full"><Galaxy rows={rows} open={open} sel={focus} onSel={setSel} onHover={setHover} /></div>
@@ -537,9 +537,9 @@ export default function Command() {
           onScan={() => { setSel(shown); scan(); }} />
       </div>
       {/* signals in flight: the timeframe radar beside the journeys, one card */}
-      <section ref={flightRef} className="cc-panel cc-flight" aria-label="Signals in flight">
+      <section ref={flightRef} className="cc-panel cc-flight" aria-label="Live signals">
         <div className="cc-flight-radar">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Signals in flight</h2><span className="text-xs text-mute">by timeframe</span></div>
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signals</h2><span className="text-xs text-mute">by timeframe</span></div>
           <div className="flex flex-1 flex-col justify-center"><Radar boards={boards.map((b) => b.data?.rows ?? [])} onSel={pick} tf={tf} /></div>
           <div className="mt-3 flex flex-wrap justify-center gap-3 text-xs text-mute"><span className="text-bull">● long</span><span className="text-bear">● short</span><span className="text-accent">◎ grade A</span></div>
         </div>
@@ -550,12 +550,12 @@ export default function Command() {
       </section>
       {/* market forces: universe beside mission control, then the globe full width */}
       <div className="cc-forces">
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Market universe">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market universe</h2><span className="text-xs text-mute">moves with BTC · 7 days</span></div>
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="BTC link map">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">BTC link map</h2><span className="text-xs text-mute">moves with BTC · 7 days</span></div>
           <Universe peers={peers} status={dash.data?.market_status} mc={mc.data} onSel={pick} tf={tf} />
         </section>
-        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Mission control">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Mission control</h2><span className="text-xs text-mute">live status</span></div>
+        <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="System status">
+          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">System status</h2><span className="text-xs text-mute">live status</span></div>
           <div className="mt-3 flex-1"><Mission health={health.data} connected={connected} /></div>
         </section>
       </div>
@@ -563,7 +563,7 @@ export default function Command() {
         <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Market heat</h2><span className="text-xs text-mute">sessions · volume · next release</span></div>
         <div className="mt-3 flex-1"><LazyMount height={380}><Suspense fallback={<div className="skeleton h-[360px] rounded-xl" />}><MarketGlobe news={news.data} /></Suspense></LazyMount></div>
       </section>
-      <section id="cc-scan" className="cc-panel cc-scan scroll-mt-20 p-4 sm:p-6" aria-label={`Deep-space scan of ${name(focus)}`}>
+      <section id="cc-scan" className="cc-panel cc-scan scroll-mt-20 p-4 sm:p-6" aria-label={`Coin deep dive: ${name(focus)}`}>
         <Scan symbol={focus} row={row} f4={f4} tf={tf} />
       </section>
       <section className="cc-panel p-4 sm:p-5" aria-label="Coin versus coin">

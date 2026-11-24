@@ -15,9 +15,9 @@ const uri = (s) => `data:image/svg+xml;base64,${Buffer.from(s).toString("base64"
 // a square, full-bleed version (no rounded corners, no rim) for maskable / Apple icons: the tile background fills it
 const bleed = (s, scale) => s
   .replace('<clipPath id="tc"><rect x="16" y="16" width="480" height="480" rx="104"/></clipPath>', '<clipPath id="tc"><rect x="-40" y="-40" width="592" height="592"/></clipPath>')
-  .replace(/<rect x="16" y="16" width="480" height="480" fill="url\(#(bg|neb|neb2)\)"\/>/g, '<rect x="-40" y="-40" width="592" height="592" fill="url(#$1)"/>')
-  .replace('<g clip-path="url(#tc)">', `<rect width="512" height="512" fill="#0B0A12"/><g transform="translate(256 256) scale(${scale}) translate(-256 -256)"><g clip-path="url(#tc)">`)
-  .replace(/<rect x="16" y="16" width="480" height="480" rx="104" fill="none"[^>]*\/>/, "</g>");
+  .replace(/<rect x="16" y="16" width="480" height="480" fill="url\(#(bg|sheen)\)"\/>/g, '<rect x="-40" y="-40" width="592" height="592" fill="url(#$1)"/>')
+  .replace('<g clip-path="url(#tc)">', `<rect width="512" height="512" fill="#141519"/><g transform="translate(256 256) scale(${scale}) translate(-256 -256)"><g clip-path="url(#tc)">`)
+  .replace(/<rect x="17.5" y="17.5" width="477" height="477" rx="103" fill="none"[^>]*\/>/, "</g>");
 
 const jobs = [
   [full, 384, "brand/logo-384.png"], [full, 192, "brand/logo-192.png"], [icon, 96, "brand/logo-96.png"],
@@ -41,9 +41,9 @@ const jobs = [
   // social preview card
   await p.setViewportSize({ width: 1200, height: 630 });
   await p.setContent(`<html><body style="margin:0;width:1200px;height:630px;display:flex;align-items:center;gap:56px;padding:0 90px;box-sizing:border-box;
-    background:radial-gradient(70% 90% at 78% 10%,#2a2150 0%,#0d0b14 55%,#050408 100%);font-family:Arial,Helvetica,sans-serif;color:#f6ecd0">
-    <img src="${uri(full)}" width="380" height="380" style="filter:drop-shadow(0 0 40px rgba(247,201,72,.35))">
-    <div><div style="font-size:66px;font-weight:800;line-height:1.05">Crypto Intelligence <span style="color:#F7C948">AI</span></div>
+    background:radial-gradient(70% 90% at 78% 10%,#2a2416 0%,#141519 55%,#0e0f12 100%);font-family:Arial,Helvetica,sans-serif;color:#f6ecd0">
+    <img src="${uri(full)}" width="380" height="380" style="filter:drop-shadow(0 0 40px rgba(232,182,55,.3))">
+    <div><div style="font-size:66px;font-weight:800;line-height:1.05">Crypto Intelligence <span style="color:#E8B637">AI</span></div>
     <div style="margin-top:22px;font-size:30px;color:#c9bfa6">AI trade plans for spot and futures</div>
     <div style="margin-top:34px;font-size:26px;color:#5CF2DF">cryptointelai.com</div></div></body></html>`);
   await p.waitForTimeout(300);

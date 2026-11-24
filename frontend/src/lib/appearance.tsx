@@ -4,11 +4,8 @@ import { createContext, ReactNode, useContext, useEffect, useLayoutEffect, useRe
  *  Theme ids are stable keys in saved preferences: "gold" is Midnight Gold and "light" is Ivory. The colours of each
  *  theme live in index.css under [data-theme="<id>"]. */
 export const THEMES = [
-  { id: "gold", name: "Observatory", sub: "Default · deep space, champagne gold", dark: true },
-  { id: "obsidian", name: "Obsidian", sub: "Pure black, champagne gold", dark: true },
-  { id: "aurora", name: "Aurora", sub: "Navy blue, gold and cyan", dark: true },
-  { id: "violet", name: "Violet Night", sub: "Deep purple, violet glow", dark: true },
-  { id: "light", name: "Ivory", sub: "Light paper, deep gold", dark: false },
+  { id: "gold", name: "Graphite", sub: "Default · soft black, logo gold", dark: true },
+  { id: "light", name: "Ivory", sub: "Warm light, deep gold", dark: false },
   { id: "system", name: "System", sub: "Follows the device", dark: true },
 ] as const;
 export type ThemeId = (typeof THEMES)[number]["id"];
@@ -26,7 +23,8 @@ export interface Appearance {
 const DEFAULTS: Appearance = { theme: "gold", nav: "side", density: "comfortable", width: "contained", glass: true, sideCollapsed: false };
 const KEY = "cia-appearance-v2";     // v2: the new Gold look becomes everyone's starting theme once
 // names people might have saved under other spellings; anything else unknown falls back to Midnight Gold
-const ALIASES: Record<string, ThemeId> = { midnight: "gold", "midnight-gold": "gold", dark: "gold", ivory: "light" };
+const ALIASES: Record<string, ThemeId> = { midnight: "gold", "midnight-gold": "gold", dark: "gold", ivory: "light",
+  obsidian: "gold", aurora: "gold", violet: "gold", graphite: "gold" };   // V3.0: retired dark themes → Graphite
 
 /** A saved theme id made safe: aliases mapped, retired or unknown ids (abyss, nexora, trado …) → Midnight Gold. */
 export function normalizeTheme(t: unknown): ThemeId {

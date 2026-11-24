@@ -64,6 +64,8 @@ const Rich = page(() => import("./pages/Rich"));
 const Guardian = page(() => import("./pages/Guardian"));
 const Lab = page(() => import("./pages/Lab"));
 const Command = page(() => import("./pages/Command"));
+const Risk = page(() => import("./pages/Risk"));
+const Portfolio = page(() => import("./pages/Portfolio"));
 const Flow = page(() => import("./pages/Flow"));
 const Community = page(() => import("./pages/Community"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
@@ -75,7 +77,7 @@ const prefetch = () => { void import("./pages/Signals"); void import("./pages/Pa
 if (typeof window !== "undefined") window.setTimeout(() => ((window as any).requestIdleCallback ?? ((f: () => void) => f()))(prefetch), 2500);
 
 const NAV = [
-  ["/", "Home"],
+  ["/", "Overview"],
   ["/signals", "Signals"],
   ["/paper", "Trade"],
   ["/news", "News"],
@@ -95,12 +97,15 @@ const COINS = ["/coins", "Coins"] as const;
 // desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);
 // the Tools menu sits after Radar in the second group
 // v2.45: Command Centre sits with the market pages (an extra page; nothing else moves)
-const COMMAND = ["/command", "Command Centre"] as const;
+const COMMAND = ["/command", "AI Intelligence"] as const;   // V3.0: was "Command Centre"
+const RISK = ["/risk", "Risk"] as const;                     // V3.0 market risk state
+const PORTFOLIO = ["/portfolio", "Portfolio"] as const;      // V3.0 practice capital + protection
 const FLOW_NAV = ["/flow", "Money flow"] as const;   // v2.62
-const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [NAV.slice(0, 3).concat([NAV[5]]), [COINS, COMMAND, FLOW_NAV, NAV[3], NAV[4], NAV[6], NAV[7]], [NAV[8]]];
+const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [[NAV[0], COMMAND, RISK, NAV[1], NAV[2], PORTFOLIO, NAV[5]], [COINS, FLOW_NAV, NAV[4], NAV[3], NAV[7], NAV[6]], [NAV[8]]];
 // phone More sheet (v2.15): grouped instead of one flat grid
 const MORE_GROUPS: [string, (readonly [string, string])[]][] = [
-  ["Markets", [COINS, COMMAND, FLOW_NAV, NAV[3], NAV[4]]],
+  ["Intelligence", [COMMAND, RISK, PORTFOLIO]],
+  ["Markets", [COINS, FLOW_NAV, NAV[4], NAV[3]]],
   ["Account", [NAV[7], NAV[6], NAV[8]]],
 ];
 
@@ -144,7 +149,7 @@ function NavMenu({ label, items, pending = 0 }: { label: string; items: (readonl
 }
 
 // phone bottom bar: four main sections + "More" for the rest
-const PRIMARY: [string, string, string][] = [["/", "Home", "home"], ["/signals", "Signals", "signals"], ["/paper", "Trade", "trade"], ["/results", "Results", "results"]];
+const PRIMARY: [string, string, string][] = [["/", "Overview", "home"], ["/signals", "Signals", "signals"], ["/paper", "Trade", "trade"], ["/results", "Results", "results"]];
 
 function StatusPill({ user }: { user: User }) {
   // phones / tablets: the same market clock as the computer top bar (v2.49), compact below 640 px
@@ -313,8 +318,8 @@ function Shell({ user }: { user: User }) {
   // sidebar groups (v2.20): main · markets · tools (folds) · account · admin. Memoised: the shell re-renders with every
   // live-price snapshot, the sidebar only when these change.
   const sideGroups = useMemo<NavGroup[]>(() => [
-    { title: "", items: [NAV[0], NAV[1], NAV[2], NAV[5]] },
-    { title: "Markets", items: [COINS, COMMAND, FLOW_NAV, NAV[3], NAV[4]] },
+    { title: "", items: [NAV[0], COMMAND, RISK, NAV[1], NAV[2], PORTFOLIO, NAV[5]] },
+    { title: "Markets", items: [COINS, FLOW_NAV, NAV[4], NAV[3]] },
     ...(admin ? [{ title: "Tools", items: [...TOOLS_NAV], fold: true }] : []),
     { title: "Account", items: [NAV[6], NAV[7], NAV[8]] },
     ...(admin ? [{ title: "Admin", items: [...ADMIN_NAV, ["/users", "Users"] as const], fold: true, icon: "/guardian" }] : []),
@@ -403,6 +408,9 @@ function Shell({ user }: { user: User }) {
             <Route path="/futures" element={<Navigate to="/signals?market=futures" replace />} />
             <Route path="/news" element={<News />} />
             <Route path="/command" element={<Command />} />
+            <Route path="/intelligence" element={<Navigate to="/command" replace />} />
+            <Route path="/risk" element={<Risk />} />
+            <Route path="/portfolio" element={<Portfolio />} />
             <Route path="/flow" element={<Flow />} />
             <Route path="/results" element={<Results />} />
             <Route path="/track" element={<Navigate to="/results?tab=track" replace />} />

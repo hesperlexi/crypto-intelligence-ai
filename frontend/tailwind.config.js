@@ -14,10 +14,10 @@ export default {
         "2xl": ["1.75rem", { lineHeight: "2.125rem" }],
       },
       fontFamily: {
-        sans: ["Geist", "Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
-        display: ["Sora", "Geist", "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ["DM Sans Variable", "DM Sans", "Inter", "ui-sans-serif", "system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
+        display: ["DM Sans Variable", "DM Sans", "Inter", "ui-sans-serif", "system-ui", "sans-serif"],
         // no web mono font is loaded (JetBrains Mono was declared but never fetched): system monospace only
-        mono: ["ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
+        mono: ["DM Mono", "ui-monospace", "SFMono-Regular", "Menlo", "Consolas", "monospace"],
       },
     },
   },
