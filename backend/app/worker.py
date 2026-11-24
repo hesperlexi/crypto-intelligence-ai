@@ -1689,7 +1689,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         engine["edge"] = {"on": bool(getattr(sink, "edge_on", lambda: False)()), "healthy": bool(getattr(sink, "edge_healthy", lambda: False)()),
                           "ok_at": es.get("ok_at"), "fail_at": es.get("fail_at"), "sent_today": es.get("sent_today"), "error": es.get("last_error")}
         ew = rt.db.get_setting("edge_watch_status", None) or {}          # v3.1 Cloudflare price-alert watcher
-        engine["alert_watcher"] = {k: ew.get(k) for k in ("at", "armed", "armed_at", "sent_total", "error", "idle")} if ew else None
+        engine["alert_watcher"] = {**({k: ew.get(k) for k in ("at", "armed", "armed_at", "sent_total", "error", "idle")} if ew else {}),
+                                   "engine_step": rt.db.get_setting("edge_watch_last", None)}
         wb = rt.db.get_setting("fs_writes_by", None) or {}
         engine["firestore_writes_by"] = dict(sorted((wb.get("n") or {}).items(), key=lambda kv: -kv[1])[:12])
     except Exception:
@@ -1725,6 +1726,10 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     if fetch_context:                    # v3.1 Cloudflare price-alert watcher: what to watch, what it sent
         from .services import edge_watch
         detail["edge_watch"] = step("edge_watch", lambda: edge_watch.run(rt, sink))
+        try:
+            rt.db.set_setting("edge_watch_last", {"at": now_ms(), "result": detail["edge_watch"]})
+        except Exception:
+            pass
     last_week = views.week_start(now_ms()) - views.WEEK
     if int(rt.db.get_setting("weekly_report_notified", 0) or 0) < last_week and now_ms() - views.week_start(now_ms()) > 4 * 3_600_000:
         def weekly_push():
