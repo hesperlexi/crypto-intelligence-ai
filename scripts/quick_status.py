@@ -110,5 +110,19 @@ for vid in ("hesper", "laststand"):
                                                  for k, v in (hj.get("laststand") or {}).items()} if isinstance(hj.get("laststand"), dict) else None}
     except Exception as e:  # noqa: BLE001
         out[f"challenge_{vid}"] = {"error": type(e).__name__}
+# news / calendar (public facts only): is the calendar arriving, which high-impact US events were due
+try:
+    import time as _t
+    nd = fs.document("views/news").get().to_dict() or {}
+    nv = json.loads(nd["json"]) if nd.get("json") else {}
+    now_ms_ = int(_t.time() * 1000)
+    cal = nv.get("calendar") or []
+    hi = [e for e in cal if e.get("impact") == "High" and e.get("country") == "USD"]
+    out["news"] = {"updated": nd.get("updated_at"), "generated_at": nv.get("generated_at"), "calendar_n": len(cal),
+                   "high_usd": [{"title": e.get("title"), "ts": e.get("ts"), "past": e.get("ts", 0) < now_ms_} for e in hi][:20],
+                   "next_high": (nv.get("next_high") or {}).get("title"), "headlines_n": len(nv.get("headlines") or []),
+                   "errors": nv.get("errors")}
+except Exception as exc:
+    out["news"] = {"error": str(exc)[:200]}
 print(json.dumps(out, indent=1, default=str))
 
