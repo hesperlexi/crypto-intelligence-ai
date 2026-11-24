@@ -96,10 +96,10 @@ def incident(db: Database) -> dict[str, Any]:
     btc = [(int(r["ts"]), float(r["close"])) for r in db.query(
         "SELECT ts, close FROM market_data WHERE symbol = 'BTC/USDT' AND timeframe = '1h' AND ts >= ? AND ts < ? ORDER BY ts", (T0 - 48 * H, T1))]
     runs = [int(r["started_at"]) for r in db.query("SELECT started_at FROM engine_runs WHERE started_at >= ? AND started_at < ? ORDER BY started_at", (T0, T1))]
-    gaps = sorted(((b - a) / 60_000 for a, b in zip(runs, runs[1:])), reverse=True)[:5]
+    gaps = sorted(((b - a) / 60_000, a) for a, b in zip(runs, runs[1:]))[::-1][:5]
     return {"window": [T0, T1], "calls": calls, "exposure_4h": hours, "held_back": dict(rej), "held_back_side": dict(rej_side),
             "bots": bots, "bot_equity_now": eq, "challenges": chal, "btc_1h": btc, "engine_runs": len(runs),
-            "engine_gap_min_top": [round(g, 1) for g in gaps]}
+            "engine_gap_min_top": [[round(g, 1), a] for g, a in gaps]}
 
 
 def _has(db, t):
