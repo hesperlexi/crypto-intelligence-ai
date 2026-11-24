@@ -139,6 +139,9 @@ try:
     out["md_stale"] = [{k: v for k, v in x.items() if k in ("symbol", "timeframe", "status", "candles", "last_ts", "age_s", "gaps", "quality_pct", "missing")} for x in (hj.get("series") or []) if x.get("status") not in ("OK", "ok", "LIVE", None)][:40]
     out["series_status"] = {st_: sum(1 for x in (hj.get("series") or []) if x.get("status") == st_) for st_ in {x.get("status") for x in (hj.get("series") or [])}}
     out["series_sample"] = (hj.get("series") or [None])[0]
+    _e = hj.get("engine") or {}
+    out["step_avg"] = dict(sorted((_e.get("step_seconds_avg") or {}).items(), key=lambda kv: -(kv[1] or 0))[:15])
+    out["step_max"] = dict(sorted((_e.get("step_seconds_max") or {}).items(), key=lambda kv: -(kv[1] or 0))[:10])
     out["eng_watch"] = {k: v for k, v in (hj.get("engine") or {}).items() if k.startswith(("watch", "alert", "flow", "round", "last_tick"))}
     out["exchange"] = {k: (v if not isinstance(v, (list, dict)) else str(v)[:300]) for k, v in (hj.get("exchange") or {}).items()}
     g = fs.document("views/guardian").get().to_dict() or {}
