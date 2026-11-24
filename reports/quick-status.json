@@ -737,9 +737,9 @@
  },
  "safety": [],
  "release": {
-  "version": "2.1.0",
+  "launched_at": 1793386630880,
   "updated_at": 1793386630880,
-  "launched_at": 1793386630880
+  "version": "2.1.0"
  },
  "track_record": {
   "record_since": 1795511383715,
@@ -848,9 +848,9 @@
  "telegram": {
   "has_token": true,
   "has_channel": true,
+  "enabled": true,
   "post_wins": true,
   "post_weekly": true,
-  "enabled": true,
   "post_teaser": true,
   "keys": [
    "channel",
@@ -1115,11 +1115,294 @@
   "headlines_n": 30,
   "errors": []
  },
- "alert_watcher": null,
- "hj_keys": [],
- "md": {},
- "md_stale": [],
- "exchange": {},
+ "alert_watcher": {
+  "at": 1795537994102,
+  "armed": 0,
+  "armed_at": 1795536002851,
+  "sent_total": null,
+  "error": null,
+  "idle": true,
+  "engine_step": {
+   "at": 1795538039562,
+   "result": {
+    "watcher_at": 1795537994102,
+    "watcher_sent_total": null,
+    "bad_removed": 0,
+    "armed": 4,
+    "sent": true,
+    "status": 200,
+    "diag": {
+     "devices": 5,
+     "with_uid": 5,
+     "admins_set": 1,
+     "levels": 4,
+     "rules_primed": 9
+    }
+   }
+  }
+ },
+ "hj_keys": [
+  "config",
+  "database",
+  "engine",
+  "exchange",
+  "fail_closed",
+  "generated_at",
+  "market_data",
+  "model_libraries",
+  "models",
+  "recent_errors_count",
+  "safety",
+  "series",
+  "status",
+  "uptime_s"
+ ],
+ "md": {
+  "status": "OK",
+  "transport": "engine snapshot (website streams live prices)",
+  "last_update_ms": 1795538061835,
+  "age_s": 272.449,
+  "reconnects": 0,
+  "last_error": null,
+  "quality_pct": 99.993,
+  "stale_series": 2,
+  "has_error": false
+ },
+ "md_stale": [
+  {
+   "timeframe": "1h",
+   "candles": 7810,
+   "missing": 120,
+   "gaps": [
+    {
+     "from": 1767222000000,
+     "to": 1767312000000,
+     "missing": 24
+    },
+    {
+     "from": 1767394800000,
+     "to": 1767571200000,
+     "missing": 48
+    },
+    {
+     "from": 1767999600000,
+     "to": 1768176000000,
+     "missing": 48
+    }
+   ],
+   "quality_pct": 98.487,
+   "age_s": -1265.7,
+   "last_ts": 1795536000000,
+   "status": "DEGRADED",
+   "symbol": "XAG/USDT"
+  },
+  {
+   "timeframe": "4h",
+   "candles": 1954,
+   "missing": 30,
+   "gaps": [
+    {
+     "from": 1767211200000,
+     "to": 1767312000000,
+     "missing": 6
+    },
+    {
+     "from": 1767384000000,
+     "to": 1767571200000,
+     "missing": 12
+    },
+    {
+     "from": 1767988800000,
+     "to": 1768176000000,
+     "missing": 12
+    }
+   ],
+   "quality_pct": 98.488,
+   "age_s": -12065.7,
+   "last_ts": 1795536000000,
+   "status": "DEGRADED",
+   "symbol": "XAG/USDT"
+  },
+  {
+   "timeframe": "1d",
+   "candles": 326,
+   "missing": 5,
+   "gaps": [
+    {
+     "from": 1767139200000,
+     "to": 1767312000000,
+     "missing": 1
+    },
+    {
+     "from": 1767312000000,
+     "to": 1767571200000,
+     "missing": 2
+    },
+    {
+     "from": 1767916800000,
+     "to": 1768176000000,
+     "missing": 2
+    }
+   ],
+   "quality_pct": 98.489,
+   "age_s": -26465.7,
+   "last_ts": 1795478400000,
+   "status": "DEGRADED",
+   "symbol": "XAG/USDT"
+  },
+  {
+   "timeframe": "15m",
+   "candles": 0,
+   "missing": 0,
+   "gaps": [],
+   "quality_pct": null,
+   "age_s": null,
+   "status": "NO DATA",
+   "symbol": "XMR/USDT"
+  },
+  {
+   "timeframe": "1h",
+   "candles": 0,
+   "missing": 0,
+   "gaps": [],
+   "quality_pct": null,
+   "age_s": null,
+   "status": "NO DATA",
+   "symbol": "XMR/USDT"
+  },
+  {
+   "timeframe": "4h",
+   "candles": 5949,
+   "missing": 0,
+   "gaps": [],
+   "quality_pct": 100.0,
+   "age_s": 87136734.3,
+   "last_ts": 1708387200000,
+   "status": "STALE",
+   "symbol": "XMR/USDT"
+  },
+  {
+   "timeframe": "1d",
+   "candles": 1804,
+   "missing": 0,
+   "gaps": [],
+   "quality_pct": 100.0,
+   "age_s": 87064734.3,
+   "last_ts": 1708387200000,
+   "status": "STALE",
+   "symbol": "XMR/USDT"
+  }
+ ],
+ "series_status": {
+  "OK": 133,
+  "DEGRADED": 3,
+  "STALE": 2,
+  "NO DATA": 2
+ },
+ "series_sample": {
+  "timeframe": "15m",
+  "candles": 32786,
+  "missing": 0,
+  "duplicates": 0,
+  "malformed": 0,
+  "misaligned": 0,
+  "gaps": [],
+  "quality_pct": 100.0,
+  "fresh": true,
+  "age_s": -365.7,
+  "first_ts": 1766031300000,
+  "last_ts": 1795537800000,
+  "status": "OK",
+  "symbol": "PAXG/USDT"
+ },
+ "eng_watch": {
+  "last_tick_started": 1795538049663,
+  "last_tick_finished": 1795538235232,
+  "last_tick_seconds": 185.6,
+  "round_seconds_avg": 198.6,
+  "round_seconds_max": 297.6,
+  "rounds_measured": 48,
+  "watch_last_at": 1795538220861,
+  "watch_coins": 1,
+  "watch_priced": 1,
+  "watch_sent_total": 406,
+  "flow_last_at": 1795538209081,
+  "flow_coins": 31,
+  "flow_errors": 0,
+  "flow_alerts": {
+   "whales": {
+    "alerts": 196,
+    "p15": {
+     "n": 192,
+     "followed_pct": 49.0,
+     "avg_move_pct": -0.059
+    },
+    "p60": {
+     "n": 190,
+     "followed_pct": 52.1,
+     "avg_move_pct": 0.03
+    },
+    "p240": {
+     "n": 178,
+     "followed_pct": 52.8,
+     "avg_move_pct": 0.024
+    }
+   },
+   "wipeout": {
+    "alerts": 53,
+    "p15": {
+     "n": 53,
+     "followed_pct": 39.6,
+     "avg_move_pct": -0.187
+    },
+    "p60": {
+     "n": 53,
+     "followed_pct": 50.9,
+     "avg_move_pct": 0.079
+    },
+    "p240": {
+     "n": 48,
+     "followed_pct": 41.7,
+     "avg_move_pct": -0.699
+    }
+   }
+  },
+  "alert_watcher": {
+   "at": 1795537994102,
+   "armed": 0,
+   "armed_at": 1795536002851,
+   "sent_total": null,
+   "error": null,
+   "idle": true,
+   "engine_step": {
+    "at": 1795538039562,
+    "result": {
+     "watcher_at": 1795537994102,
+     "watcher_sent_total": null,
+     "bad_removed": 0,
+     "armed": 4,
+     "sent": true,
+     "status": 200,
+     "diag": {
+      "devices": 5,
+      "with_uid": 5,
+      "admins_set": 1,
+      "levels": 4,
+      "rules_primed": 9
+     }
+    }
+   }
+  }
+ },
+ "exchange": {
+  "name": "binance",
+  "errors": 0,
+  "last_error": null,
+  "last_ok_ms": 1795538235007,
+  "clock_skew_ms": 0,
+  "status": "OK",
+  "has_error": false
+ },
  "ai_check": {
   "warnings": [
    "4h: the AI did worse than plain base rates this week (skill -4.0%) and worse than the month before",
@@ -1133,7 +1416,7 @@
   ]
  },
  "cloud_watcher": {
-  "at": 1795538473617,
+  "at": 1795538593742,
   "armed": 20,
   "armed_at": 1795538337539,
   "sent": 0,
