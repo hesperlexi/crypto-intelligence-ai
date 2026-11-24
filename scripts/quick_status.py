@@ -151,6 +151,25 @@ try:
                        "keys": sorted(cal.keys())}
 except Exception as exc:
     out["md_probe_error"] = str(exc)[:200]
+# auto-trade: per member (anonymous index) the settings that decide what is taken, and recent outcomes (no coin / side / levels)
+try:
+    import time as _t2
+    cut = int(_t2.time() * 1000) - 2 * 86_400_000
+    ap = []
+    for i, d in enumerate(fs.collection("auto_paper").stream()):
+        a = d.to_dict() or {}
+        st_ = fs.document(f"auto_paper_state/{d.id}").get().to_dict() or {}
+        log = [x for x in (st_.get("log") or []) if int(x.get("ts") or 0) >= cut]
+        reasons = {}
+        for x in log:
+            k = f"{x.get('timeframe')}|{x.get('grade')}|{x.get('action')}|{x.get('reason') or ''}"
+            reasons[k] = reasons.get(k, 0) + 1
+        ap.append({"n": i, "enabled": a.get("enabled"), "timeframes": a.get("timeframes"), "grades": a.get("grades"),
+                   "coins": a.get("coins"), "max_open": a.get("max_open"), "margin": {k: a.get(k) for k in a if "margin" in k or "size" in k or "risk" in k},
+                   "state_updated": st_.get("updated_at"), "recent": reasons})
+    out["auto_trade"] = ap
+except Exception as exc:
+    out["auto_trade"] = {"error": str(exc)[:200]}
 # the Cloudflare price-alert watcher itself (counts only; no tokens, no keys)
 try:
     import hashlib, urllib.request
