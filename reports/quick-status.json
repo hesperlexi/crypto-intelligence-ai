@@ -218,26 +218,26 @@
  "health": {
   "status": "DEGRADED",
   "engine": {
-   "last_tick_started": 1795537449481,
-   "last_tick_finished": 1795537641526,
-   "last_tick_seconds": 192.0,
+   "last_tick_started": 1795537752236,
+   "last_tick_finished": 1795537939035,
+   "last_tick_seconds": 186.8,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 7891,
-   "round_seconds_avg": 200.4,
+   "ticks": 7892,
+   "round_seconds_avg": 198.6,
    "round_seconds_max": 297.6,
    "rounds_measured": 48,
-   "watch_last_at": 1795537620111,
+   "watch_last_at": 1795537920138,
    "watch_coins": 0,
    "watch_priced": 0,
    "watch_sent_total": 406,
-   "flow_last_at": 1795537629091,
+   "flow_last_at": 1795537929096,
    "flow_coins": 31,
    "flow_errors": 0,
-   "firestore_writes_today": 3736,
+   "firestore_writes_today": 3748,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 2336,
+   "firestore_reads_today": 2372,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -586,25 +586,25 @@
   "1h": {
    "n": 35,
    "fresh_12h": 2,
-   "max": 661.3,
+   "max": 661.4,
    "missing": 1
   },
   "4h": {
    "n": 35,
    "fresh_12h": 30,
-   "max": 661.3,
+   "max": 661.4,
    "missing": 2
   },
   "12h": {
    "n": 35,
    "fresh_12h": 29,
-   "max": 661.3,
+   "max": 661.4,
    "missing": 2
   },
   "1d": {
    "n": 35,
    "fresh_12h": 28,
-   "max": 661.1,
+   "max": 661.2,
    "missing": 4
   },
   "3d": {
@@ -849,9 +849,9 @@
   "has_token": true,
   "has_channel": true,
   "enabled": true,
-  "post_teaser": true,
-  "post_wins": true,
   "post_weekly": true,
+  "post_wins": true,
+  "post_teaser": true,
   "keys": [
    "channel",
    "enabled",
@@ -1008,7 +1008,7 @@
  "risk_state": {
   "state": "NORMAL",
   "score": 1,
-  "at": 1795536299559,
+  "at": 1795538235026,
   "factors": {
    "data": "ok",
    "btc_vol": "ok",
@@ -1116,25 +1116,45 @@
   "errors": []
  },
  "alert_watcher": null,
+ "md": {},
+ "md_stale": [],
+ "exchange": {},
+ "ai_check": {
+  "warnings": [
+   "4h: the AI did worse than plain base rates this week (skill -4.0%) and worse than the month before",
+   "1d: the AI did worse than plain base rates this week (skill -7.8%) and worse than the month before"
+  ],
+  "by_tf": null,
+  "keys": [
+   "since",
+   "timeframes",
+   "warnings"
+  ]
+ },
  "cloud_watcher": {
-  "at": 1795537813791,
-  "armed": 0,
-  "armed_at": 1795536002851,
+  "at": 1795538293648,
+  "armed": 4,
+  "armed_at": 1795538039494,
   "sent": 0,
-  "sent_total": null,
+  "sent_total": 0,
   "due": 0,
-  "priced": null,
+  "priced": 0,
   "error": null,
-  "idle": true,
+  "idle": null,
   "sent_keys_n": 0,
   "bad_tokens_n": 0,
   "engine_diag": {
    "devices": 5,
    "with_uid": 5,
    "admins_set": 1,
-   "levels": 0,
+   "levels": 4,
    "rules_primed": 9
   },
-  "fcm_check": null
+  "fcm_check": {
+   "at": 1795538054249,
+   "ok": false,
+   "status": 403,
+   "why": "{\n  \"error\": {\n    \"code\": 403,\n    \"message\": \"Permission 'cloudmessaging.messages.create' denied on resource '//cloudresourcemanager.googleapis.com/projects/c"
+  }
  }
 }
