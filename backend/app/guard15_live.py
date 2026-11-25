@@ -15,7 +15,8 @@ def main() -> None:
     ap.add_argument("--since-ms", type=int, default=0)
     ap.add_argument("--out", default="-")
     a = ap.parse_args()
-    db = Database(a.db)
+    from .research_verdict import frozen_copy
+    db = Database(frozen_copy(a.db))          # V3.2: private copy without the forward-holdout period
     out = {"ok": True, "all": G.live(db)}
     if a.since_ms:
         from .services import tracking

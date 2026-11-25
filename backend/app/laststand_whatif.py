@@ -87,7 +87,9 @@ if __name__ == "__main__":
     ap.add_argument("--start", type=float, default=15.0)
     ap.add_argument("--out", default="-")
     a = ap.parse_args()
-    out = json.dumps(run(a.db, a.start), indent=1, default=str)
+    from .research_verdict import frozen_copy               # V3.2: private copy without the forward-holdout period
+    db_path = a.db if a.db.startswith("sqlite:///") else f"sqlite:///{a.db}"
+    out = json.dumps(run(frozen_copy(db_path).replace("sqlite:///", ""), a.start), indent=1, default=str)
     if a.out == "-":
         print(out)
     else:

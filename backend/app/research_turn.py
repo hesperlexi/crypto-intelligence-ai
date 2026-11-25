@@ -437,5 +437,5 @@ if __name__ == "__main__":
     ap.add_argument("--out", default="-")
     a = ap.parse_args()
     from .research_verdict import run_study
-    s = json.dumps(run_study("turn", lambda: run(a.db, a.budget), a.db), indent=1, default=str)
+    s = json.dumps(run_study("turn", lambda u: run(u, a.budget), a.db), indent=1, default=str)
     print(s) if a.out == "-" else open(a.out, "w").write(s)

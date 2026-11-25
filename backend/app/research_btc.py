@@ -291,7 +291,7 @@ def main() -> None:
     ap.add_argument("--db", default="sqlite:///./data/crypto_ai.db")
     a = ap.parse_args()
     from .research_verdict import run_study
-    out = run_study("btc", lambda: run(a.db, a.budget), a.db)
+    out = run_study("btc", lambda u: run(u, a.budget), a.db)
     with open(a.out, "w") as f:
         json.dump(out, f, default=str)
 

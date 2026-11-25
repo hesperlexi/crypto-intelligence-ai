@@ -16,7 +16,9 @@ prove one. From V3.2:
 * A historical PASS is at most "PROVISIONAL": `promotable` stays False until the frozen FORWARD HOLDOUT confirms it.
 * Forward holdout = record calls published from HOLDOUT_START (26 Nov 2026 00:00 UTC). No study may read it
   (`read_holdout` raises HoldoutLocked) until HOLDOUT_MIN_CLOSED (300) of them have closed; `verdict` refuses trades
-  dated inside it unless `holdout=True`, and research_engine._split ends the replay test split before it."""
+  dated inside it unless `holdout=True`, and research_engine._split ends the replay test split before it.
+* Every study / review entry point runs on `frozen_copy` (holdout period removed); a confirmation reads the holdout only
+  through `read_holdout_once`, which uses each 300-call forward window once (ledger)."""
 from __future__ import annotations
 
 from typing import Any
@@ -51,7 +53,8 @@ class HoldoutLocked(Exception):
 def _check_holdout(trades: list[dict[str, Any]], holdout: bool) -> None:
     if holdout:
         return
-    late = [t for t in trades if int(t["ts"]) >= HOLDOUT_START]
+    late = [t for t in trades if int(t["ts"]) >= HOLDOUT_START
+            or (t.get("closed_ts") is not None and int(t["closed_ts"]) > HOLDOUT_START)]
     if late:
         raise HoldoutLocked(f"{len(late)} trades fall inside the forward holdout (from 2026-11-26 UTC); "
                             "research must stop before it (research_engine._split) or use read_holdout() once unlocked")
@@ -247,22 +250,128 @@ def holdout_status(db: Any) -> dict[str, Any]:
 
 
 def read_holdout(db: Any) -> list[dict[str, Any]]:
-    """The forward-holdout record calls - only once HOLDOUT_MIN_CLOSED of them have closed."""
+    """Locked check only: raises until HOLDOUT_MIN_CLOSED calls have closed, and even then refuses - a confirmation
+    must use read_holdout_once (single use, ledgered)."""
     rows = _holdout_rows(db)
     if len(rows) < HOLDOUT_MIN_CLOSED:
         raise HoldoutLocked(f"forward holdout locked: {len(rows)} of {HOLDOUT_MIN_CLOSED} closed calls since 2026-11-26 UTC")
-    return rows
+    raise HoldoutLocked("the forward holdout is read only through read_holdout_once (each window is used once)")
+
+
+# ---- V3.2 verification: no research entry point can see the holdout period ----------------------------------------
+# Every study / review entry point works on a PRIVATE COPY of the engine state from which everything dated in the
+# holdout period is removed: candles that CLOSE after HOLDOUT_START, and rows of every table whose time column
+# (created / bar / closed / opened / ... time) is at or after it. The engine's own state file is only read.
+TIME_COLS = ("ts", "created_at", "bar_ts", "closed_at", "opened_at", "started_at", "filled_at", "resolved_at",
+             "decided_at", "held_at", "known_at", "start_at", "ended_at", "finished_at")
+
+
+def strip_holdout(db: Any) -> dict[str, int]:
+    """Delete holdout-period rows from a research COPY (a Database). Returns rows removed per table."""
+    from .data.base import tf_ms
+    removed: dict[str, int] = {}
+    tables = [r["name"] for r in db.query("SELECT name FROM sqlite_master WHERE type = 'table'", ())]
+    for t in tables:
+        if t.startswith("sqlite_"):
+            continue
+        cols = [r["name"] for r in db.query(f'PRAGMA table_info("{t}")', ())]
+        n0 = int((db.one(f'SELECT COUNT(*) AS n FROM "{t}"', ()) or {}).get("n") or 0)
+        if t == "market_data" and "timeframe" in cols:
+            for r in db.query('SELECT DISTINCT timeframe FROM market_data', ()):
+                tf = r["timeframe"]
+                try:
+                    step = tf_ms(tf)
+                except Exception:
+                    step = 0
+                db.execute("DELETE FROM market_data WHERE timeframe = ? AND ts + ? > ?", (tf, step, HOLDOUT_START))
+        for c in cols:
+            if c in TIME_COLS:
+                db.execute(f'DELETE FROM "{t}" WHERE "{c}" >= ?', (HOLDOUT_START,))
+        n1 = int((db.one(f'SELECT COUNT(*) AS n FROM "{t}"', ()) or {}).get("n") or 0)
+        if n1 != n0:
+            removed[t] = n0 - n1
+    return removed
+
+
+def frozen_copy(db_url: str) -> str:
+    """A private sqlite copy of `db_url` without the holdout period; returns its URL. Never writes to the source."""
+    import sqlite3
+    import tempfile
+    from pathlib import Path
+    if not db_url.startswith("sqlite:///"):
+        raise HoldoutLocked("research needs a sqlite copy of the engine state (the holdout cannot be stripped otherwise)")
+    path = db_url.replace("sqlite:///", "")
+    tmp = Path(tempfile.mkdtemp(prefix="research-frozen-")) / "copy.db"
+    if path != ":memory:" and Path(path).exists():
+        src = sqlite3.connect(f"file:{Path(path).resolve()}?mode=ro", uri=True)
+        dst = sqlite3.connect(str(tmp))
+        src.backup(dst)
+        src.close()
+        dst.close()
+    from .db import Database
+    url = f"sqlite:///{tmp}"
+    db = Database(url)
+    strip_holdout(db)
+    return url
+
+
+def holdout_status_url(db_url: str | None) -> dict[str, Any]:
+    """holdout_status of an engine state file, read-only (counts only, never outcomes)."""
+    base = {"start_utc": "2026-11-26T00:00:00Z", "needed": HOLDOUT_MIN_CLOSED, "locked": True, "closed": None}
+    if not db_url or not db_url.startswith("sqlite:///"):
+        return base
+    import sqlite3
+    from pathlib import Path
+    path = db_url.replace("sqlite:///", "")
+    if not Path(path).exists():
+        return base
+    try:
+        from .services import tracking
+        closed = tuple(tracking.CLOSED_STATUSES)
+        c = sqlite3.connect(f"file:{Path(path).resolve()}?mode=ro", uri=True)
+        n = c.execute(f"SELECT COUNT(*) FROM signals WHERE created_at >= ? AND status IN ({','.join('?' * len(closed))}) "
+                      "AND (fill_status IS NULL OR fill_status != 'NOT_FILLED')", (HOLDOUT_START, *closed)).fetchone()[0]
+        c.close()
+        return {**base, "closed": int(n), "locked": int(n) < HOLDOUT_MIN_CLOSED}
+    except Exception:
+        return base
 
 
 def run_study(study: str, fn: Any, db_url: str | None = None) -> dict[str, Any]:
-    """Run one study and annotate its result (count reset first, so n_variants is this study's own)."""
+    """Run one study on a frozen private copy (no holdout period) and annotate its result. `fn(db_url)` gets the
+    copy's URL. The count is reset first, so n_variants is this study's own."""
     reset_count()
-    out = fn()
-    db = None
-    if db_url:
-        try:
-            from .db import Database
-            db = Database(db_url)
-        except Exception:
-            db = None
-    return finalize(out, study, db=db)
+    url = frozen_copy(db_url) if db_url else None
+    out = fn(url)
+    out = finalize(out, study)
+    if isinstance(out, dict):
+        out["holdout"] = holdout_status_url(db_url)
+    return out
+
+
+# ---- the confirmation run: each forward-holdout window is used once ---------------------------------------------------
+def read_holdout_once(db: Any, ledger_path: str, study: str, variants_sha1: str) -> list[dict[str, Any]]:
+    """Closed record calls of the NEXT unused forward window (after the last confirmation's cutoff), only once it holds
+    HOLDOUT_MIN_CLOSED calls. The use is written to `ledger_path` (a file the confirmation job must keep, e.g. on the
+    research-results branch) BEFORE the rows are returned, so the same window can never be read for a second variant
+    set. A ledger that cannot be read or written refuses access."""
+    from pathlib import Path
+    p = Path(ledger_path)
+    try:
+        ledger = json.loads(p.read_text()) if p.exists() else []
+    except Exception as exc:
+        raise HoldoutLocked(f"holdout ledger unreadable ({exc}); refusing access") from exc
+    start = max([HOLDOUT_START] + [int(e["cutoff"]) + 1 for e in ledger])
+    rows = [r for r in _holdout_rows(db) if int(r["created_at"]) >= start]
+    if len(rows) < HOLDOUT_MIN_CLOSED:
+        raise HoldoutLocked(f"forward holdout locked: {len(rows)} of {HOLDOUT_MIN_CLOSED} closed calls in the unused window")
+    rows = sorted(rows, key=lambda r: int(r["created_at"]))[:HOLDOUT_MIN_CLOSED]
+    cutoff = int(rows[-1]["created_at"])
+    ledger.append({"study": study, "variants_sha1": variants_sha1, "from": start, "cutoff": cutoff, "n": len(rows),
+                   "used_at": int(time.time() * 1000)})
+    try:
+        p.parent.mkdir(parents=True, exist_ok=True)
+        p.write_text(json.dumps(ledger, indent=1))
+    except Exception as exc:
+        raise HoldoutLocked(f"holdout ledger not writable ({exc}); refusing access") from exc
+    return rows

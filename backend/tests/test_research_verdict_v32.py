@@ -127,7 +127,9 @@ def test_holdout_reader_locked_until_300_closed():
     with pytest.raises(RV.HoldoutLocked):
         RV.read_holdout(db)
     db.rows += _rows(1, start=RV.HOLDOUT_START + 10 ** 9)
-    assert len(RV.read_holdout(db)) == 300 and not RV.holdout_status(db)["locked"]
+    assert not RV.holdout_status(db)["locked"]
+    with pytest.raises(RV.HoldoutLocked):                  # V3.2 verification: only the single-use reader may read it
+        RV.read_holdout(db)
 
 
 def test_unfilled_calls_do_not_count_toward_the_holdout():

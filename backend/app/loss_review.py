@@ -48,7 +48,8 @@ def main() -> None:
     ap.add_argument("--since-ms", type=int, default=int(datetime(2026, 11, 22, tzinfo=DUBAI).timestamp() * 1000))
     ap.add_argument("--out", default="-")
     a = ap.parse_args()
-    db = Database(a.db)
+    from .research_verdict import frozen_copy
+    db = Database(frozen_copy(a.db))          # V3.2: private copy without the forward-holdout period
     since_rec = int(db.get_setting("record_since", 0) or 0)
     closed = tuple(tracking.CLOSED_STATUSES)
     q = ",".join("?" * len(closed))

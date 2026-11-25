@@ -233,18 +233,15 @@ def main(argv: list[str] | None = None) -> int:
         out = {"ok": False, "command": a.command, "reason": f"no engine state found at {path} (state cache not restored)"}
     else:
         tmp = None
+        source_db = a.db
         if a.db.startswith("sqlite:///") and path != ":memory:":
-            # opening a Database creates / migrates tables: work on a private copy so the engine state is never touched
-            import shutil
-            import sqlite3
-            import tempfile
-            tmp = Path(tempfile.mkdtemp(prefix="research-")) / "copy.db"
-            src = sqlite3.connect(f"file:{Path(path).resolve()}?mode=ro", uri=True)
-            dst = sqlite3.connect(str(tmp))
-            src.backup(dst)
-            src.close()
-            dst.close()
-            a.db = f"sqlite:///{tmp}"
+            # opening a Database creates / migrates tables: work on a private copy so the engine state is never touched.
+            # V3.2: the copy has the forward-holdout period removed (research_verdict.frozen_copy)
+            from .research_verdict import frozen_copy
+            a.db = frozen_copy(a.db)
+        elif not a.db.startswith("sqlite:///"):
+            from .research_verdict import HoldoutLocked
+            raise HoldoutLocked("research runs only on a sqlite copy of the engine state (holdout period removed)")
         if a.command == "models-value":
             from . import research_models
             out = {"ok": True, "command": a.command, **research_models.run(a.db, a.budget)}
@@ -285,9 +282,10 @@ def main(argv: list[str] | None = None) -> int:
             body = giveback_report(sigs, candles, since) if a.command == "giveback" else compare_report(sigs, candles, a.cost_pct)
             out = {"ok": True, "command": a.command, "engine_version": ENGINE_VERSION, "signals_in_db": len(sigs), **body}
     try:                                      # V3.2 (audit R-03): Holm correction, n_variants, holdout status
-        from .research_verdict import finalize
+        from .research_verdict import finalize, holdout_status_url
         if isinstance(out, dict) and out.get("ok"):
             finalize(out, str(a.command))
+            out["holdout"] = holdout_status_url(locals().get("source_db"))
     except Exception as exc:
         out["finalize_error"] = f"{type(exc).__name__}: {exc}"[:200]
     text = json.dumps(json.loads(dumps(out)), indent=1)

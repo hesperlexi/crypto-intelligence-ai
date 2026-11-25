@@ -167,7 +167,10 @@ def main() -> None:
     ap.add_argument("--budget", type=float, default=2400)
     ap.add_argument("--out", default="diagnose.json")
     a = ap.parse_args()
-    rt = Runtime(get_db(), market.make_provider())
+    from .db import Database
+    from .research_verdict import frozen_copy
+    # V3.2: a private copy of the engine state without the forward-holdout period (the state itself is only read)
+    rt = Runtime(Database(frozen_copy(settings.database_url)), market.make_provider())
     rep = {"inventory": model_inventory(rt)}
     rep.update(run(rt, rt.symbols(), [t for t in a.timeframes.split(",") if t], a.days, time.time() + a.budget))
     with open(a.out, "w") as f:

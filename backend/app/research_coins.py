@@ -109,6 +109,8 @@ def candidate(db_url: str, sym: str, budget_s: float, cost: float) -> dict[str, 
             r = asyncio.run(market.sync_symbol(rt, sym, [tf], force=True))
             if not isinstance(r.get(tf), int) or r.get(tf) == 0:
                 break
+    from .research_verdict import strip_holdout          # V3.2: freshly fetched candles stop before the holdout too
+    strip_holdout(db)
     out["candles"] = {tf: int(db.one("SELECT COUNT(*) AS n FROM market_data WHERE symbol = ? AND timeframe = ?",
                                      (sym, tf))["n"]) for tf in TFS}
     trained = {}

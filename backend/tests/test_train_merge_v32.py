@@ -96,3 +96,21 @@ def test_shard_manifest_lists_untrainable_due_pairs(monkeypatch, tmp_path):
     r = worker.train_shard(rt, 0, 1, 60, str(tmp_path / "slice-0"))
     m = json.loads((tmp_path / "slice-0" / "manifest.json").read_text())
     assert r["pairs"] == 0 and m["pairs"] == [] and m["not_trainable"] == ["BTC/USDT 4h"]
+
+
+def test_merge_proves_each_import(monkeypatch, tmp_path):
+    """A slice's model, imported by the merge, is the active version and loads (imported_verified)."""
+    from app.ml import trainer
+    from app.services import training
+    from tests.helpers import make_runtime
+    rt, _ = make_runtime(symbols=("BTC/USDT",), predictable=0.15, model_dir=str(tmp_path / "m1"))
+    monkeypatch.setattr(worker, "MODEL_TIMEFRAMES", ["4h"])
+    orig = training.train_one
+    monkeypatch.setattr(training, "train_one", lambda rt_, s, tf, fast=False: orig(rt_, s, tf, True))
+    monkeypatch.setattr(worker, "trainable", lambda *a, **k: True)
+    worker.train_shard(rt, 0, 1, 600, str(tmp_path / "shards" / "slice-0"))
+    rt2, _ = make_runtime(symbols=("BTC/USDT",), predictable=0.15, model_dir=str(tmp_path / "m2"))
+    monkeypatch.setattr(worker, "MODEL_TIMEFRAMES", ["4h"])
+    d = _merge(monkeypatch, tmp_path, rt2)
+    assert d["imported"] == 1 and d["imported_verified"] == 1 and d["imported_unverified"] == []
+    assert trainer.active_version("BTC/USDT", "4h", rt2.db) is not None

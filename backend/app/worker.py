@@ -1995,6 +1995,7 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
     started = now_ms()
     imported, skipped, shards, failed = 0, 0, 0, []
     due, trained_n, not_trainable, not_reached, not_exported, missing_file, older = 0, 0, [], [], [], [], []
+    verified, unverified = 0, []
     for m in sorted(Path(in_dir).glob("**/manifest.json")):
         shards += 1
         data = loads(m.read_text(), {}) or {}
@@ -2010,6 +2011,16 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
                 skipped += 1
             elif trainer.import_bundle(rec, str(f), rt.db):
                 imported += 1
+                # V3.2 verification: prove the import - the version is now the active one and its file loads
+                act = trainer.active_version(rec["symbol"], rec["timeframe"], rt.db)
+                try:
+                    b = trainer.load_bundle(rec["symbol"], rec["timeframe"], rt.db)
+                except Exception:
+                    b = None
+                if act is not None and act["id"] == rec["version"] and b is not None and b.get("version") == rec["version"]:
+                    verified += 1
+                else:
+                    unverified.append(rec.get("version"))
             else:
                 skipped += 1
                 older.append(rec.get("version"))          # a newer model is already active (expected, not an error)
@@ -2031,6 +2042,8 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
     problems = []
     if expected and shards < expected:
         problems.append(f"{expected - shards} of {expected} slice manifests missing (slice failed or artifact not uploaded)")
+    if unverified:
+        problems.append(f"{len(unverified)} imported models are not active / do not load after import")
     if missing_file:
         problems.append(f"{len(missing_file)} exported models have no file in the artifact")
     if failed:
@@ -2047,6 +2060,7 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
               "failed": failed[:20], "derivs": derivs_note, "series_policy": series_note,
               # V3.2 (audit R-13): why a merge imported what it did
               "expected_shards": expected or None, "due": due, "trained": trained_n,
+              "imported_verified": verified, "imported_unverified": unverified[:20],
               "not_trainable": not_trainable[:60], "not_reached": not_reached[:60], "not_exported": not_exported[:20],
               "missing_files": missing_file[:20], "skipped_older": len(older), "stale_models": fresh,
               "problems": problems}

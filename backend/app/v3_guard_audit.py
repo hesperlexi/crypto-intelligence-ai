@@ -144,7 +144,8 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     ap.add_argument("--db", default="sqlite:///./data/crypto_ai.db")
     a = ap.parse_args()
-    db = Database(a.db)
+    from .research_verdict import frozen_copy
+    db = Database(frozen_copy(a.db))          # V3.2: private copy without the forward-holdout period
     btc = BTC(db)
     out: dict[str, Any] = {"ok": True}
     for k, fn in (("blocked", lambda: blocked(db, btc)), ("published", lambda: published(db, btc)), ("coverage", lambda: coverage(db))):

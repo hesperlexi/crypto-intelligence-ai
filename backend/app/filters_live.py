@@ -16,7 +16,8 @@ def main() -> None:
     ap.add_argument("--until-ms", type=int, default=10**15)
     ap.add_argument("--out", default="-")
     a = ap.parse_args()
-    db = Database(a.db)
+    from .research_verdict import frozen_copy
+    db = Database(frozen_copy(a.db))          # V3.2: private copy without the forward-holdout period
     from .services import tracking
     closed = tuple(tracking.CLOSED_STATUSES)
     done = lambda rows: [x for x in (G._r(r) for r in rows if r.get("status") in closed and r.get("fill_status") != "NOT_FILLED") if x is not None]

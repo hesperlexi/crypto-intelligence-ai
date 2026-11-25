@@ -338,7 +338,16 @@ class Hesper(BotEngine):
 
     def _enter_call(self, state: dict[str, Any], r: dict[str, Any], now: int) -> dict[str, Any] | None:
         sym, side, tf = r["symbol"], int(r["side"]), r["timeframe"]
-        px = self._price(sym)
+        # V3.2 (audit R-14): with a price feed in place (the engine installs a ticker snapshot every tick, empty when the
+        # fetch failed), enter only at that coin's live ticker - never at the 15m close fallback of _price(). The call
+        # stays a candidate and is retried next tick; exits and pending fills keep using _price / candles as before.
+        # Without any feed (offline replays, tests) the candle price is used as before.
+        if getattr(self.rt, "feed", None) is not None:
+            px = self.rt.live_price(sym)
+            if px is None or not math.isfinite(px) or px <= 0:
+                return None
+        else:
+            px = self._price(sym)
         if px is None:
             return None
         stop = float(r["stop"])

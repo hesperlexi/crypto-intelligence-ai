@@ -440,7 +440,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     # V3.2 (Fable 5.2 audit R-14): the live price carries its source, timestamp and quality. Without a valid ticker the
     # analysis still runs on the last close, but `price_quality` says so and the record refuses a market fill on it
     # (tracking._plan); pending-fill entries (limit / confirm rules) are filled later from candles as before.
-    pq = live_quote(rt, symbol, close) if live else None
+    pq = live_quote(rt, symbol, close, atr=_n(last["atr"])) if live else None
     price = pq["price"] if pq else close
     regime = describe_regime(ind)
     matrix = mtf_engine.mtf_matrix(frames, unavailable)
@@ -889,15 +889,24 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
 
 
 TICKER_MAX_AGE_S = float(os.environ.get("TICKER_MAX_AGE_S", "300"))   # one engine cycle (snapshot taken every tick)
+TICKER_MAX_FUTURE_S = float(os.environ.get("TICKER_MAX_FUTURE_S", "60"))   # clock skew allowance for a ticker's own time
+# sanity bound between the ticker and the analysis candle it is used with: more than this many ATRs of the timeframe
+# (or TICKER_MIN_DEV_PCT %, whichever is larger) away = a wrong instrument / unit / venue price, not a fill
+TICKER_MAX_DEV_ATR = float(os.environ.get("TICKER_MAX_DEV_ATR", "4"))
+TICKER_MIN_DEV_PCT = float(os.environ.get("TICKER_MIN_DEV_PCT", "0.5"))
 
 
-def live_quote(rt: Any, symbol: str, close: float, now: int | None = None) -> dict[str, Any]:
-    """{'price', 'source': 'ticker' | 'last_close', 'quality': 'live' | 'missing' | 'stale' | 'invalid', 'ts', 'age_s'}.
-    'live' = a ticker with a positive last price no older than TICKER_MAX_AGE_S."""
+def live_quote(rt: Any, symbol: str, close: float, now: int | None = None, atr: float | None = None) -> dict[str, Any]:
+    """{'price', 'source': 'ticker' | 'last_close', 'quality', 'ts', 'age_s'}. quality: 'live' | 'missing' | 'stale' |
+    'future' | 'invalid' (zero / negative / non-finite) | 'mismatch' (ticker of another symbol) | 'deviant' (too far
+    from the analysis candle). 'live' = a ticker for this symbol with a finite positive last price, at most
+    TICKER_MAX_AGE_S old and at most TICKER_MAX_FUTURE_S ahead, within the deviation bound."""
     now = int(time.time() * 1000) if now is None else int(now)
     try:
         tk = rt.ticker(symbol)
     except Exception:
+        tk = None
+    if tk is not None and not isinstance(tk, dict):
         tk = None
     last = None
     try:
@@ -913,18 +922,28 @@ def live_quote(rt: Any, symbol: str, close: float, now: int | None = None) -> di
         feed = getattr(rt, "feed", None)
         ts = getattr(feed, "taken_ms", None) or getattr(feed, "last_update_ms", None)
     age = (now - int(ts)) / 1000 if ts else None
+    dev_lim = None
+    if atr is not None and np.isfinite(atr) and atr > 0 and close and np.isfinite(close) and close > 0:
+        dev_lim = max(TICKER_MAX_DEV_ATR * float(atr), TICKER_MIN_DEV_PCT / 100 * float(close))
     if tk is None or last is None:
         q = "missing"
+    elif tk.get("symbol") not in (None, symbol):
+        q = "mismatch"
     elif not np.isfinite(last) or last <= 0:
         q = "invalid"
-    elif age is None or age > TICKER_MAX_AGE_S or age < -TICKER_MAX_AGE_S:
+    elif age is None or age > TICKER_MAX_AGE_S:
         q = "stale"
+    elif age < -TICKER_MAX_FUTURE_S:
+        q = "future"
+    elif dev_lim is not None and abs(last - float(close)) > dev_lim:
+        q = "deviant"
     else:
         q = "live"
     if q == "live":
         return {"price": last, "source": "ticker", "quality": q, "ts": int(ts), "age_s": round(age, 1)}
     return {"price": close, "source": "last_close", "quality": q, "ts": int(ts) if ts else None,
-            "age_s": round(age, 1) if age is not None else None}
+            "age_s": round(age, 1) if age is not None else None,
+            "ticker_price": last if (last is not None and np.isfinite(last)) else None, "max_dev": dev_lim}
 
 
 def entry_guards(rt: Any, symbol: str, timeframe: str, decision: str, grade: str | None, why: str | None,

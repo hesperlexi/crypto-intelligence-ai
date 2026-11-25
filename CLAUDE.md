@@ -1578,3 +1578,13 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   `stale_models` (>48 h) and `problems`, and records status "warn" instead of "ok". The 25 Nov 11:29 UTC merge (0 of 15)
   was a daytime re-run: shards=15, records 0, failed 0 (nothing due was exported); exact per-pair cause needs those logs.
 - Tests: test_guards_fail_closed_v32, test_oof_thresholds_v32, test_research_verdict_v32, test_stage1_v32, test_train_merge_v32.
+- **Stage 1 verification (26 Nov 2026, follow-up commit on the same branch):** (1) every research / review entry point runs
+  on `research_verdict.frozen_copy` (private sqlite copy, holdout period removed: candles closing after HOLDOUT_START and
+  rows of every table with a time column at / after it); `research.py` refuses a non-sqlite state; `research_coins`
+  strips again after fetching candles; holdout status is read read-only from the source. `verdict` also refuses trades
+  closing inside the holdout. Confirmation reads go only through `read_holdout_once` (ledger file; each 300-call
+  forward window used once; `read_holdout` always refuses). (2) `live_quote` also rejects future-dated tickers
+  (> `TICKER_MAX_FUTURE_S` 60 s ahead), a ticker of another symbol, and a price more than max(`TICKER_MAX_DEV_ATR` 4 x ATR
+  of the timeframe, `TICKER_MIN_DEV_PCT` 0.5 %) from the analysis close ("deviant"). (3) Hesper / Last Stand enter only at
+  the coin's live ticker when a feed is installed (never the 15m-close fallback). (4) The merge proves each import
+  (`imported_verified`: active version = the record and the bundle loads). Tests: test_stage1_verify_v32.
