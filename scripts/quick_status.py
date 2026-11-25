@@ -304,7 +304,8 @@ try:
     _vv = json.load(_ur.urlopen(_ur.Request(_b + "/v?n=health,track_record&e=,", headers={"X-Edge-Key": _k, "User-Agent": "cia-status"}), timeout=30))["views"]
     out["edge_side"] = {"edge_health": _eh, "health_at": (_vv.get("health") or {}).get("at"),
                         "health_tick": (((_vv.get("health") or {}).get("data") or {}).get("engine") or {}).get("last_tick_finished"),
-                        "track_record_at": (_vv.get("track_record") or {}).get("at")}
+                        "track_record_at": (_vv.get("track_record") or {}).get("at"),
+                        "mexc_px": json.load(_ur.urlopen(_ur.Request(_b + "/px?s=ANTHROPIC", headers={"User-Agent": "cia-status", "Origin": "https://cryptointelai.com"}), timeout=20))}
 except Exception as exc:
     out["edge_side"] = {"error": str(exc)[:200]}
 print(json.dumps(out, indent=1, default=str))
