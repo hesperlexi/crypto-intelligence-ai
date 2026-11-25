@@ -3,11 +3,11 @@
  "edge_health": {
   "ok": true,
   "views": 751,
-  "newest": 1795589902454,
-  "last_put": 1795589906292
+  "newest": 1795590330037,
+  "last_put": 1795590336219
  },
  "cloud_watcher": {
-  "at": 1795590253763,
+  "at": 1795590433567,
   "armed": 25,
   "priced": null,
   "sent_total": null,
@@ -15,8 +15,14 @@
   "idle": true,
   "price_tries": null
  },
- "record_at": 1795589900266,
+ "record_at": 1795590329904,
  "record_open": [
+  {
+   "tf": "1h",
+   "status": "OPEN",
+   "fill": "PENDING",
+   "created_at": 1795590091530
+  },
   {
    "tf": "12h",
    "status": "OPEN",
@@ -62,6 +68,11 @@
  ],
  "record_newest": [
   {
+   "tf": "1h",
+   "status": "OPEN",
+   "created_at": 1795590091530
+  },
+  {
    "tf": "12h",
    "status": "OPEN",
    "created_at": 1795586295927
@@ -80,11 +91,6 @@
    "tf": "1h",
    "status": "OPEN",
    "created_at": 1795569656102
-  },
-  {
-   "tf": "12h",
-   "status": "OPEN",
-   "created_at": 1795565393816
   }
  ],
  "bots_open": [
@@ -164,6 +170,46 @@
      "exit_reason": null,
      "horizon_bars": 200,
      "expires_at": 1796289656102,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-1h",
+   "tf": "1h",
+   "opened_at": 1795589923962,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795590091530,
+     "fill_status": "PENDING",
+     "filled_at": null,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 200,
+     "expires_at": 1796310091530,
      "tp1_hit": 0,
      "stop_hit": 0
     }
@@ -495,21 +541,22 @@
   }
  ],
  "calls_15m": {
-  "at": 1795589900282,
-  "with_plan": 26,
+  "at": 1795590329920,
+  "with_plan": 25,
   "record_status": [
    "None"
   ]
  },
  "calls_1h": {
-  "at": 1795589900288,
-  "with_plan": 34,
+  "at": 1795590329926,
+  "with_plan": 33,
   "record_status": [
-   "None"
+   "None",
+   "logged"
   ]
  },
  "calls_4h": {
-  "at": 1795589900294,
+  "at": 1795590329932,
   "with_plan": 33,
   "record_status": [
    "None"
