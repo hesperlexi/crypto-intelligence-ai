@@ -245,6 +245,18 @@ def close(rt: Any, params: dict[str, Any], by: str, sink: Any = None, now: int |
     except Exception as exc:                     # the record close stands; bots are best effort
         bots = f"not applied: {type(exc).__name__}"
     _hesper(rt, "apply_close", sig, price, at)
+    # v3.1 (owner, 25 Nov 2026: "when I close the trade it should happen immediately"): the record row and the bots
+    # holding the call are settled in this engine cycle (they used to wait for the next one)
+    try:
+        tracking.update_signal_outcomes(rt, ids=[sid], now=at + 1)
+    except Exception as exc:
+        rt.record_error("admin close: record", exc)
+    if isinstance(bots, int) and bots:
+        try:
+            from .bots import BotEngine
+            BotEngine(rt).settle()
+        except Exception as exc:
+            rt.record_error("admin close: bots", exc)
     word = "" if ret is None else (" at break-even" if abs(ret) < 1e-9 else " as a win" if ret > 0 else " as a loss")
     out: dict[str, Any] = {"ok": True, "signal_id": sid, "at": at, "price": price, "return_pct": ret, "roi_pct": roi,
                            "bots_closed": bots,

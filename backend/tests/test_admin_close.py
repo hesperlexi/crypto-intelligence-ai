@@ -101,11 +101,13 @@ def test_job_closes_the_call_records_it_and_notifies(monkeypatch):
     out = A.close(rt, {"signal_id": sid, "action": "close", "note": "taking profit"}, "boss@example.com", sink, now=at)
     assert out["ok"] and out["price"] == 100.8 and out["return_pct"] == pytest.approx(0.8) and "as a win" in out["message"]
     assert sent[-1]["title"] == "BTC 1H long closed" and "Closed by the admin at" in sent[-1]["body"]
-    with pytest.raises(A.AdjustError, match="already being"):
+    # v3.1: the record closes in the same engine cycle (no wait for the next one)
+    s = rt.db.one("SELECT * FROM signals")
+    assert s["status"] == "EXPIRED" and s["exit_reason"] == "admin_close"
+    with pytest.raises(A.AdjustError, match="only an open signal"):
         A.close(rt, {"signal_id": sid, "note": "again"}, "boss@example.com", sink, now=at + 1)
-    with pytest.raises(A.AdjustError, match="being closed"):
+    with pytest.raises(A.AdjustError):
         A.apply(rt, {"signal_id": sid, "stop": 99.0, "note": "tighten"}, "boss@example.com", sink, now=at + 1)
-    # the record: the 2nd candle had not closed at the click -> needs it in the data (it is), closes at 100.8
     T.update_signal_outcomes(rt, now=at + M15)
     s = rt.db.one("SELECT * FROM signals")
     assert s["status"] == "EXPIRED" and s["exit_reason"] == "admin_close" and s["return_pct"] == pytest.approx(0.8)

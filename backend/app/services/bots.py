@@ -25,6 +25,7 @@ Honesty rules:
 from __future__ import annotations
 
 import copy
+import os
 from typing import Any
 
 import numpy as np
@@ -59,6 +60,10 @@ def demo_view(a: dict[str, Any], cfg: dict[str, Any]) -> dict[str, Any]:
     d = a.get("demo") if cfg.get("demo_only") else None
     return {**a, "decision": d["decision"], "grade": d["grade"]} if d else a
 
+
+# v3.1 (owner, 25 Nov 2026): bots on public timeframes trade the record's call itself (levels, entry, leverage); env
+# RECORD_MIRROR=0 restores the bots' own plan
+RECORD_MIRROR = os.environ.get("RECORD_MIRROR", "1") != "0"
 
 # v2.8 (owner decision 31 Oct 2026): 15m runs in this demo bot only - grade A, up to 20x (safe leverage per trade),
 # the whole position closes at TP1, held up to 250 candles; never on the public signal list or record
@@ -239,11 +244,17 @@ class BotEngine:
             px = float(df["close"].iloc[-1]) if not df.empty else None
         return px
 
-    def _path(self, symbol: str, after_ts: int) -> list[tuple[int, float, float, float, float]]:
+    def _path15(self, symbol: str, after_ts: int) -> list[tuple[int, float, float, float, float]]:
         """Closed 15m candles opened after `after_ts`: (open_ts, open, high, low, close)."""
         df = self.rt.candles(symbol, PATH_TF)
         df = df[df["ts"] > after_ts]
         return list(zip(df["ts"].astype(int), df["open"], df["high"], df["low"], df["close"]))
+
+    def _path(self, symbol: str, after_ts: int) -> list[tuple[int, float, float, float, float, int]]:
+        """v3.1: closed 15m candles after `after_ts`, then the closed 1-minute candles since the last of them
+        (services/m1tail.py), each with its duration: (open_ts, open, high, low, close, ms)."""
+        from . import m1tail
+        return m1tail.path(self.rt, symbol, after_ts, self.rt.candles(symbol, PATH_TF))
 
     # ---- one cycle --------------------------------------------------------------------------------------
     def run(self, now: int | None = None) -> list[dict[str, Any]]:
@@ -265,6 +276,44 @@ class BotEngine:
                 events += self._enter_decision(cfg, state, syms, now)
             else:
                 events += self._run_prediction(cfg, state, syms, now)
+            self._mark(cfg, state, now)
+        return events
+
+    RECORD_FRESH_MS = 15 * 60_000
+
+    def _record_call(self, cfg: dict[str, Any], a: dict[str, Any], side: int, now: int) -> dict[str, Any] | bool | None:
+        """v3.1: the record call a bot on a PUBLIC timeframe must mirror: {id, entry, stop, targets, leverage, runner}
+        when the record's call on this coin / timeframe is OPEN, on the same side, FILLED and filled within the last
+        RECORD_FRESH_MS (a bot never enters an old call at a stale price); False = do not trade; None = demo-only
+        timeframe or demo bot (its own plan, as before)."""
+        if cfg.get("demo_only") or cfg.get("timeframe") in analysis.DEMO_ONLY_TFS or not RECORD_MIRROR:
+            return None
+        call = a.get("call") or {}
+        if call.get("status") != "OPEN" or (1 if call.get("side") == "LONG" else -1) != side or call.get("fill_status") != "FILLED":
+            return False
+        row = self.db.one("SELECT * FROM signals WHERE id = ?", (call.get("id"),))
+        if not row or row.get("status") != "OPEN" or row.get("entry") is None:
+            return False
+        filled = int(row.get("filled_at") or row.get("created_at") or 0)
+        if now - filled > self.RECORD_FRESH_MS:
+            return False
+        pay = loads(row.get("payload"), {}) if isinstance(row.get("payload"), str) else (row.get("payload") or {})
+        tps = [float(t) for t in (row.get("tp1"), row.get("tp2"), row.get("tp3")) if t is not None]
+        if not tps:
+            return False
+        from . import tracking
+        return {"id": row["id"], "entry": float(row["entry"]), "stop": float(row["stop"]), "targets": tps,
+                "leverage": tracking.margin_fields(row, pay).get("leverage"), "runner": pay.get("runner") or {}}
+
+    def settle(self, now: int | None = None) -> list[dict[str, Any]]:
+        """v3.1: follow the open trades only (no new entries) - run right after an admin "Close now" so the bots close
+        in the same engine cycle instead of the next one."""
+        now = now_ms() if now is None else now
+        events: list[dict[str, Any]] = []
+        for cfg, state in self.bots():
+            if not cfg.get("enabled", True) or cfg.get("mode") != "decision":
+                continue
+            events += self._manage_decision(cfg, state, now)
             self._mark(cfg, state, now)
         return events
 
@@ -395,16 +444,17 @@ class BotEngine:
 
     # ---- decision bots ----------------------------------------------------------------------------------
     def _manage_decision(self, cfg: dict[str, Any], state: dict[str, Any], now: int) -> list[dict[str, Any]]:
+        from . import m1tail
         events = []
         tf = tf_ms(cfg["timeframe"])
         step = tf_ms(PATH_TF)
         # pending limit orders (BUY ON PULLBACK): fill when a candle trades through the limit
         for o in list(state["pending"]):
             filled = False
-            for ts, op, hi, lo, cl in self._path(o["symbol"], o["last_check"]):
-                o["last_check"] = ts
-                if ts + step > o["expires_at"]:
+            for ts, op, hi, lo, cl, cs in self._path(o["symbol"], o["last_check"]):
+                if ts + cs > o["expires_at"]:
                     break
+                o["last_check"] = m1tail.mark(ts, cs)
                 touched = lo <= o["limit"] if o["side"] > 0 else hi >= o["limit"]
                 if touched:
                     px = min(op, o["limit"]) if o["side"] > 0 else max(op, o["limit"])
@@ -413,7 +463,7 @@ class BotEngine:
                     pos = self._open(state, o["symbol"], o["side"], px, o["qty"], ts, o["info"], o["stop"], o["targets"],
                                      fill_raw=True, lev=o.get("lev", 1.0), cfg=cfg)
                     if pos:
-                        pos["last_check"] = ts - step         # re-check this same candle for the stop
+                        pos["last_check"] = ts - step if cs >= step else ts - 60_000 + 1   # re-check this same candle for the stop
                         if o.get("adj"):
                             pos["adj"] = list(o["adj"])
                         events.append({"bot": cfg["id"], "type": "fill", "symbol": o["symbol"], "price": px})
@@ -429,14 +479,14 @@ class BotEngine:
             side = pos["side"]
             done = None
             ac = pos.get("admin_close")
-            for ts, op, hi, lo, cl in self._path(pos["symbol"], pos["last_check"]):
-                if ac and ts + step > int(ac["at"]):
+            for ts, op, hi, lo, cl, cs in self._path(pos["symbol"], pos["last_check"]):
+                if ac and ts + cs > int(ac["at"]):
                     break                     # v2.8: the admin closed the call before this candle closed
-                pos["last_check"] = ts
+                pos["last_check"] = m1tail.mark(ts, cs)
                 self._admin_levels(pos, ts)
                 if self._liq_hit(pos, op, hi, lo):
                     self._liquidate(state, pos)
-                    done = ("liquidated", ts + step)
+                    done = ("liquidated", ts + cs)
                     break
                 stop_hit = (lo <= pos["stop"]) if side > 0 else (hi >= pos["stop"])
                 if stop_hit:
@@ -444,7 +494,7 @@ class BotEngine:
                     self._reduce(state, pos, pos["qty_open"], px, True)
                     done = ("admin stop" if pos.get("admin_stop") is not None and abs(pos["stop"] - pos["admin_stop"]) < 1e-12
                             else "atr trail" if pos.get("mg_trailed") else "trailing stop" if pos["tp_hit"] >= 2
-                            else "breakeven stop" if pos["tp_hit"] else "stop", ts + step)
+                            else "breakeven stop" if pos["tp_hit"] else "stop", ts + cs)
                     break
                 # v2.5 managed exits (MANAGED_EXITS, shared rules in engine/manage.py): give-back before TP1
                 mg = self._mg(pos, mp)
@@ -452,7 +502,7 @@ class BotEngine:
                     gb = MG.giveback_exit(mg, op, hi, lo, mp, pos["tp_hit"] >= 1)
                     if gb is not None:
                         self._reduce(state, pos, pos["qty_open"], gb, True)
-                        done = ("giveback", ts + step)
+                        done = ("giveback", ts + cs)
                         break
                     MG.observe(mg, hi, lo, cl)
                 run_t = (pos.get("info") or {}).get("run_target")
@@ -467,7 +517,7 @@ class BotEngine:
                     if (hi >= run_t) if side > 0 else (lo <= run_t):
                         px = max(op, run_t) if side > 0 else min(op, run_t)
                         self._reduce(state, pos, pos["qty_open"], px, True)
-                        done = ("runner target", ts + step)
+                        done = ("runner target", ts + cs)
                         break
                 while not run_t and pos["tp_hit"] < len(pos["targets"]):
                     tp = pos["targets"][pos["tp_hit"]]
@@ -485,20 +535,20 @@ class BotEngine:
                         pos["stop"] = pos["targets"][0]       # trail: after TP2 the last quarter is locked in at TP1
                     self._protect(pos)
                 if pos["qty_open"] <= pos["qty"] * 1e-9:
-                    done = (f"TP{pos['tp_hit']}", ts + step)
+                    done = (f"TP{pos['tp_hit']}", ts + cs)
                     break
                 if mg is not None:
                     lvl = MG.trail_level(mg, pos["stop"], mp, pos["tp_hit"] >= 1)
                     if lvl != pos["stop"]:
                         pos["stop"], pos["mg_trailed"] = lvl, True
-                    if MG.time_exit_due(mg, ts + step, pos["opened_at"], tf, cl, mp, pos["tp_hit"] >= 1):
+                    if MG.time_exit_due(mg, ts + cs, pos["opened_at"], tf, cl, mp, pos["tp_hit"] >= 1):
                         self._reduce(state, pos, pos["qty_open"], cl, False)
-                        done = ("time stop", ts + step)
+                        done = ("time stop", ts + cs)
                         break
                     pos["mg"] = mg
-                if ts + step >= pos["opened_at"] + cfg.get("max_hold_bars", 42) * tf:
+                if ts + cs >= pos["opened_at"] + cfg.get("max_hold_bars", 42) * tf:
                     self._reduce(state, pos, pos["qty_open"], cl, False)
-                    done = ("time exit", ts + step)
+                    done = ("time exit", ts + cs)
                     break
             if not done and ac:
                 self._reduce(state, pos, pos["qty_open"], float(ac["price"]), False)
@@ -695,6 +745,13 @@ class BotEngine:
             if px is None:
                 continue
             stop, targets = float(setup["stop"]), [float(t["price"]) for t in setup["targets"]]
+            rec = self._record_call(cfg, a, side, now)
+            if rec is False:
+                continue                              # public timeframe but no fresh filled record call: not taken
+            if rec:
+                # v3.1 (owner, 25 Nov 2026: bots must show what the record shows): the record's own levels, entry and
+                # leverage - the same trade, not a look-alike
+                stop, targets, px = rec["stop"], rec["targets"], rec["entry"]
             if cfg.get("tp1_only"):
                 targets = targets[:1]                 # v2.8 15m demo: the whole position closes at TP1
             # the plan must still make sense at the price the bot can actually get
@@ -710,11 +767,14 @@ class BotEngine:
                     "predicted": fc.get("predicted"), "model_version": fc.get("model_version"),
                     "edge_confirmed": fc.get("edge_confirmed"), "rr": setup.get("risk_reward"),
                     "bar_ts": a["bar_ts"], "timeframe": cfg["timeframe"], "atr": setup.get("atr")}
-            run = setup.get("runner") or {}
+            run = (rec or {}).get("runner") if rec else (setup.get("runner") or {})
+            run = run or {}
             if run.get("on") and run.get("target") and not cfg.get("tp1_only"):
                 info["run_target"] = float(run["target"])         # v2.3: AI let-it-run exit for this trade
+            if rec:
+                info["signal_id"] = rec["id"]
             eq = self.equity(state)
-            entry = float(setup["ideal_entry"]) if a["decision"] == "BUY ON PULLBACK" else px
+            entry = px if rec else float(setup["ideal_entry"]) if a["decision"] == "BUY ON PULLBACK" else px
             risk_per_unit = abs(entry - stop)
             if cfg.get("tp1_r") and len(targets) > 1:
                 # v2.40 test bot: TP1 at tp1_r x the risk from its own entry (the exit study's best 15m candidate)
@@ -725,7 +785,9 @@ class BotEngine:
             fut = cfg.get("market") == "futures"
             lev = 1.0
             if fut:
-                if F.in_policy(cfg["timeframe"]):
+                if rec and rec.get("leverage"):       # v3.1: the card's leverage (same ROI as the record)
+                    lev = float(rec["leverage"])
+                elif F.in_policy(cfg["timeframe"]):
                     # v2.14 (15m): leverage chosen by the engine (10-50x from stop distance, coin tier and grade); a
                     # trade whose stop is too wide for 10x is skipped (liquidation never before the stop)
                     el = F.engine_leverage(entry, stop, s, a.get("grade"), cfg["timeframe"])
@@ -752,7 +814,7 @@ class BotEngine:
             if qty < 0.5 * planned:
                 continue
             state["last_entry_bar"][s] = a["bar_ts"]
-            if a["decision"] == "BUY ON PULLBACK" and side * (px - entry) > 0:
+            if not rec and a["decision"] == "BUY ON PULLBACK" and side * (px - entry) > 0:
                 reserved = qty * entry * (1 / lev + fee_rate)
                 state["cash"] -= reserved
                 state["pending"].append({"symbol": s, "side": side, "limit": entry, "qty": qty, "reserved": reserved, "lev": lev,
@@ -761,7 +823,7 @@ class BotEngine:
                                          "expires_at": now + cfg.get("pending_bars", 6) * tf_ms(cfg["timeframe"])})
                 events.append({"bot": cfg["id"], "type": "limit", "symbol": s, "price": entry})
             else:
-                if self._open(state, s, side, px, qty, now, info, stop, targets, lev=lev, cfg=cfg):
+                if self._open(state, s, side, px, qty, now, info, stop, targets, lev=lev, cfg=cfg, fill_raw=bool(rec)):
                     events.append({"bot": cfg["id"], "type": "open", "symbol": s, "side": side, "price": px})
         return events
 
@@ -774,7 +836,7 @@ class BotEngine:
         for pos in list(state["positions"]):
             if pos.get("liq") is None:
                 continue
-            for ts, op, hi, lo, cl in self._path(pos["symbol"], pos["last_check"]):
+            for ts, op, hi, lo, cl in self._path15(pos["symbol"], pos["last_check"]):
                 if ts + step > pos["exit_at"]:
                     break
                 pos["last_check"] = ts
@@ -787,7 +849,7 @@ class BotEngine:
         for pos in list(state["positions"]):
             if now < pos["exit_at"]:
                 continue
-            path = [c for c in self._path(pos["symbol"], pos["opened_at"] - step) if c[0] + step <= pos["exit_at"]]
+            path = [c for c in self._path15(pos["symbol"], pos["opened_at"] - step) if c[0] + step <= pos["exit_at"]]
             px = path[-1][4] if path and path[-1][0] + step == pos["exit_at"] else self._price(pos["symbol"])
             if px is None:
                 continue

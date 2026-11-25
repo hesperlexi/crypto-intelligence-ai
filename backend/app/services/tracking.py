@@ -756,7 +756,8 @@ def _bar_ms(tf: str) -> int:
 
 
 def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bars: int = 30,
-                    params: dict[str, Any] | None = None, adjust: list[dict[str, Any]] | None = None) -> dict[str, Any]:
+                    params: dict[str, Any] | None = None, adjust: list[dict[str, Any]] | None = None,
+                    tail: list[tuple] | None = None) -> dict[str, Any]:
     """Pure: the tracked state of one OPEN signal row given its 15m path (`p15`) and own-timeframe candles (`own`).
     `adjust`: the admin's stop / TP1 changes ({at, field, old, new}); `s` must carry the ORIGINAL levels (the row's
     columns stay the published ones) - each change applies forward-only from its time (engine/manage.py).
@@ -790,6 +791,15 @@ def evaluate_signal(s: dict[str, Any], p15: Any, own: Any, now: int, horizon_bar
                        fill_status=fill_status if fill_status == "FILLED" else "NOT_FILLED")
             out["events"].append({"rule": "void", "inputs": {"reason": "no market data after publication"}})
         return out
+    if tail and fill_status == "FILLED" and pms == path_ms:
+        # v3.1: the closed 1-minute candles since the last closed 15-minute candle (services/m1tail.py), so a target /
+        # stop touched in the current quarter hour shows at the next engine cycle, not after the candle closes
+        import pandas as pd
+        nxt = int(after["ts"].iloc[-1]) + path_ms
+        extra = [t for t in tail if nxt <= t[0] < end]
+        if extra:
+            after = pd.concat([after[["ts", "open", "high", "low", "close"]],
+                               pd.DataFrame(extra, columns=["ts", "open", "high", "low", "close"])], ignore_index=True)
     path = after
     first_is_fill = False
     rule = pay.get("entry_rule") or None
@@ -901,7 +911,11 @@ def update_signal_outcomes(rt: Any, horizon_bars: int = 30, table: str = "signal
         except Exception:
             own = None
         adj = adjustments_of(db, s["id"]) if table == "signals" else None
-        res = evaluate_signal(s, paths[s["symbol"]], own, now, horizon_bars, params, adj)
+        tail = None
+        if table == "signals" and paths[s["symbol"]] is not None and len(paths[s["symbol"]]):
+            from . import m1tail
+            tail = m1tail.tail(rt, s["symbol"], int(paths[s["symbol"]]["ts"].iloc[-1]) + tf_ms(PATH_TF), now)
+        res = evaluate_signal(s, paths[s["symbol"]], own, now, horizon_bars, params, adj, tail)
         events = res.pop("events")
         expo = res.pop("exposure", None)
         if res.get("status") in CLOSED_STATUSES and res.get("return_pct") is not None:
