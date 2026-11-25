@@ -11,7 +11,7 @@ const INTERVAL: Record<string, string> = { "1m": "1", "5m": "5", "15m": "15", "3
 export default function TVChart({ symbol, market = "spot", tf = "1h", height = 520, tvSymbolOverride }: { symbol: string; market?: "spot" | "futures"; tf?: string; height?: number; tvSymbolOverride?: string }) {
   const { resolved } = useAppearance();
   // gold (PAXG in the app) shows forex.com's spot gold price, XAU/USD; an index (e.g. CRYPTOCAP:BTC.D) is passed as is
-  const tvSymbol = tvSymbolOverride ? tvSymbolOverride : symbol.startsWith("PAXG/") ? "FOREXCOM:XAUUSD" : symbol.startsWith("XAG/") ? "FOREXCOM:XAGUSD" : `BINANCE:${symbol.replace("/", "").toUpperCase()}${market === "futures" ? ".P" : ""}`;
+  const tvSymbol = tvSymbolOverride ? tvSymbolOverride : symbol.startsWith("PAXG/") ? "FOREXCOM:XAUUSD" : symbol.startsWith("XAG/") ? "FOREXCOM:XAGUSD" : symbol.startsWith("ANTHROPIC/") ? "MEXC:ANTHROPICUSDT.P" : `BINANCE:${symbol.replace("/", "").toUpperCase()}${market === "futures" ? ".P" : ""}`;
   const src = useMemo(() => {
     const dark = !isLightTheme(resolved);
     const q = new URLSearchParams({

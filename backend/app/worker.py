@@ -428,7 +428,7 @@ MIGRATION_FLAGS = (
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
     "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269", "mexc_clean_v269",
-    "fresh_restart_v3", "restore_hesper_v3", "auto_limits_10_v31", "remove_xmr_v31", "bots_unrecorded_v31",
+    "fresh_restart_v3", "restore_hesper_v3", "auto_limits_10_v31", "remove_xmr_v31", "bots_unrecorded_v31", "bots_unrecorded_trades_v31",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -1665,6 +1665,10 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["ai"] = step("ai_advisor", lambda: ai_advisor.run(rt.db))
     detail["sentiment"] = step("news_sentiment", lambda: sentiment.collect(rt.db, getattr(rt, "headlines", None)))
     detail["bot_admin_closes"] = step("bot_admin_closes", lambda: BotEngine(rt).reconcile_admin_closes())   # v3.1
+    if not rt.db.get_setting("bots_unrecorded_trades_v31", False):
+        # one-time (owner, 25 Nov 2026): the trades closed by the cleanup below never belonged in the bot books
+        detail["bots_unrecorded_removed"] = step("bots_unrecorded_removed", lambda: BotEngine(rt).remove_unrecorded_trades())
+        rt.db.set_setting("bots_unrecorded_trades_v31", True)
     if not rt.db.get_setting("bots_unrecorded_v31", False):
         detail["bots_unrecorded"] = step("bots_unrecorded", lambda: BotEngine(rt).close_unrecorded())
         rt.db.set_setting("bots_unrecorded_v31", True)

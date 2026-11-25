@@ -305,6 +305,40 @@ class BotEngine:
         return {"id": row["id"], "entry": float(row["entry"]), "stop": float(row["stop"]), "targets": tps,
                 "leverage": tracking.margin_fields(row, pay).get("leverage"), "runner": pay.get("runner") or {}}
 
+    def remove_unrecorded_trades(self) -> list[dict[str, Any]]:
+        """v3.1 one-time (owner, 25 Nov 2026): trades a bot took on a call that was NOT in the track record (re-taken
+        after the admin closed the call, the bug fixed on 24-25 Nov) were closed at market by `close_unrecorded`; they
+        never belonged in the books. They are moved to `bot_trades_removed` (kept, never lost), and the bot's cash and
+        later equity points are set back as if the trade had not happened. Only those: a trade from a real record call
+        (wins and losses alike) is never touched."""
+        self.db.execute("CREATE TABLE IF NOT EXISTS bot_trades_removed (id TEXT PRIMARY KEY, bot_id TEXT, removed_at INTEGER, "
+                        "reason TEXT, row TEXT)")
+        out = []
+        for row in self.db.query("SELECT id, config, state FROM bots"):
+            cfg, state = loads(row["config"], {}), loads(row["state"], {})
+            tf = cfg.get("timeframe")
+            if cfg.get("mode") != "decision" or cfg.get("demo_only") or tf in analysis.DEMO_ONLY_TFS:
+                continue
+            for t in self.db.query("SELECT * FROM bot_trades WHERE bot_id = ? AND exit_reason = 'closed by admin'", (cfg["id"],)):
+                # a real admin close has its record adjustment within minutes of the trade's close
+                real = self.db.one("SELECT 1 AS x FROM signal_adjustments a JOIN signals s ON s.id = a.signal_id WHERE a.field = 'close' "
+                                   "AND s.symbol = ? AND s.timeframe = ? AND s.side = ? AND ABS(a.at - ?) <= 600000 LIMIT 1",
+                                   (t["symbol"], tf, 1 if int(t["side"]) > 0 else -1, int(t["closed_at"])))
+                rec = self.db.one("SELECT 1 AS x FROM signals WHERE symbol = ? AND timeframe = ? AND side = ? AND created_at <= ? "
+                                  "AND (closed_at IS NULL OR closed_at >= ?) LIMIT 1",
+                                  (t["symbol"], tf, 1 if int(t["side"]) > 0 else -1, int(t["opened_at"]) + 1_200_000, int(t["opened_at"])))
+                if real or rec:
+                    continue
+                pnl = float(t["pnl"] or 0.0)
+                self.db.execute("INSERT INTO bot_trades_removed (id, bot_id, removed_at, reason, row) VALUES (?, ?, ?, ?, ?) "
+                                "ON CONFLICT (id) DO NOTHING", (t["id"], cfg["id"], now_ms(), "not in the track record", dumps(t)))
+                self.db.execute("DELETE FROM bot_trades WHERE id = ?", (t["id"],))
+                state["cash"] = float(state.get("cash", 0.0)) - pnl
+                self.db.execute("UPDATE bot_equity SET equity = equity - ? WHERE bot_id = ? AND ts >= ?", (pnl, cfg["id"], int(t["closed_at"])))
+                out.append({"bot": cfg["id"], "pnl": round(pnl, 2)})
+            self.db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))
+        return out
+
     def settle(self, now: int | None = None) -> list[dict[str, Any]]:
         """v3.1: follow the open trades only (no new entries) - run right after an admin "Close now" so the bots close
         in the same engine cycle instead of the next one."""

@@ -35,7 +35,29 @@ async function get<T = any>(path: string, hosts = REST): Promise<T> {
   throw new Error(`Binance not reachable (${last instanceof Error ? last.message : "network"})`);
 }
 
+// v3.1 (owner, 25 Nov 2026: "the chart of Anthropic is wrong"): coins the engine follows on MEXC only (not listed on
+// Binance) take their candles from MEXC through the Cloudflare Worker (/kl, same candles as the engine). A chart polls
+// the forming candle at most every 5 s (the Worker caches 20 s).
+const EDGE_URL = (import.meta.env.VITE_CHAT_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+const mexcCache = new Map<string, { at: number; rows: Candle[] }>();
+async function mexcOnly(symbol: string): Promise<boolean> {
+  if (!isFutOnly(symbol) || !EDGE_URL) return false;
+  try { const l = await listedPairs(); return !l.fut.has(bsym(symbol)) && !l.spot.has(bsym(symbol)); } catch { return true; }
+}
+async function mexcKlines(symbol: string, tf: string, limit: number): Promise<Candle[]> {
+  const k = `${symbol}|${tf}`;
+  const hit = mexcCache.get(k);
+  if (hit && Date.now() - hit.at < 5000 && (limit <= 2 || hit.rows.length >= limit)) return hit.rows.slice(-limit);
+  const r = await fetch(`${EDGE_URL}/kl?s=${encodeURIComponent(symbol.split("/")[0])}&tf=${tf}&limit=${Math.max(limit, 2)}`, { cache: "no-store" });
+  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const rows = ((await r.json()) as number[][]).map((x) => [x[0], +x[1], +x[2], +x[3], +x[4], +x[5]] as Candle);
+  if (!rows.length) throw new Error("no candles");
+  mexcCache.set(k, { at: Date.now(), rows: hit && limit <= 2 ? [...hit.rows.filter((c) => c[0] < rows[0][0]), ...rows] : rows });
+  return rows.slice(-limit);
+}
+
 export async function klines(symbol: string, tf: string, limit = 500): Promise<Candle[]> {
+  if (await mexcOnly(symbol)) return mexcKlines(symbol, tf, limit);
   if (isFutOnly(symbol)) {
     const rows = await get<any[]>(`/fapi/v1/klines?symbol=${bsym(symbol)}&interval=${tf}&limit=${Math.min(limit, 1500)}`, [FUTURES]);
     return rows.map((r) => [r[0], +r[1], +r[2], +r[3], +r[4], +r[5]] as Candle);
@@ -46,6 +68,7 @@ export async function klines(symbol: string, tf: string, limit = 500): Promise<C
 
 /** USDⓈ-M futures candles (the perpetual's own price); falls back to spot when futures are unreachable. */
 export async function fklines(symbol: string, tf: string, limit = 500): Promise<Candle[]> {
+  if (await mexcOnly(symbol)) return mexcKlines(symbol, tf, limit);
   try {
     const rows = await get<any[]>(`/fapi/v1/klines?symbol=${bsym(symbol)}&interval=${tf}&limit=${Math.min(limit, 1500)}`, [FUTURES]);
     return rows.map((r) => [r[0], +r[1], +r[2], +r[3], +r[4], +r[5]] as Candle);

@@ -71,3 +71,28 @@ def test_bot_mirrors_only_a_fresh_filled_record_call_on_the_same_side(monkeypatc
     assert eng._record_call(cfg, {"call": {**a["call"], "fill_status": "PENDING"}}, -1, T0) is False
     assert eng._record_call(cfg, {}, -1, T0) is False                             # not in the record: not taken
     assert eng._record_call({"timeframe": "1h", "demo_only": True}, {}, -1, T0) is None   # demo bots: own plan
+
+
+def test_only_trades_outside_the_record_are_removed_from_the_bot_books():
+    db = Database("sqlite:///:memory:")
+    cfg = {"id": "b", "mode": "decision", "timeframe": "15m"}
+    db.execute("INSERT INTO bots (id, config, state, reset_token, created_at) VALUES ('b', ?, ?, 'v', 1)",
+               (json.dumps(cfg), json.dumps({"cash": 1000.0, "positions": [], "pending": []})))
+    # record call 13:33 closed by the admin at 14:02; bot trade A from it (real close), bot trade B re-taken at 14:18
+    db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, status, closed_at) "
+               "VALUES ('c', 100, 'X/USDT', '15m', 1, 'BUY', 'BUY', 1, 1, 'EXPIRED', 2000)")
+    db.execute("INSERT INTO signal_adjustments (id, signal_id, at, field, old, new, note, by, price_at_change) "
+               "VALUES ('a', 'c', 2000, 'close', 1, 1, 'n', 'x', 1)")
+    for tid, o, c, pnl in (("A", 150, 2000, -5.0), ("B", 2_000_000, 9_000_000, -20.0), ("W", 2_000_000, 9_000_000, 12.0)):
+        db.execute("INSERT INTO bot_trades (id, bot_id, symbol, side, opened_at, closed_at, entry, exit, qty, pnl, fees, return_pct, "
+                   "r_multiple, exit_reason, correct, info) VALUES (?, 'b', 'X/USDT', 1, ?, ?, 1, 1, 1, ?, 0, 0, 0, ?, 0, '{}')",
+                   (tid, o, c, pnl, "closed by admin" if tid != "W" else "TP1"))
+    db.execute("INSERT INTO bot_equity (bot_id, ts, equity, benchmark) VALUES ('b', 9500000, 980.0, 0)")
+    eng = B.BotEngine.__new__(B.BotEngine)
+    eng.db = db
+    out = eng.remove_unrecorded_trades()
+    assert out == [{"bot": "b", "pnl": -20.0}]
+    assert {r["id"] for r in db.query("SELECT id FROM bot_trades")} == {"A", "W"}       # the real close and the win stay
+    assert json.loads(db.one("SELECT state FROM bots")["state"])["cash"] == 1020.0
+    assert db.one("SELECT equity FROM bot_equity")["equity"] == 1000.0
+    assert db.one("SELECT reason FROM bot_trades_removed WHERE id = 'B'")["reason"] == "not in the track record"

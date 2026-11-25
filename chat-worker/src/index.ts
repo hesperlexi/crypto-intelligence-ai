@@ -244,6 +244,7 @@ export default {
     if (url.pathname === "/watch/status" && req.method === "GET") return engineOnly(req, env, `/watch/status?since=${encodeURIComponent(url.searchParams.get("since") ?? "0")}`);
     if (url.pathname === "/v" && req.method === "GET") return views(req, url, env, h);
     if (url.pathname === "/px" && req.method === "GET") return mexcPrices(url, h);
+    if (url.pathname === "/kl" && req.method === "GET") return mexcKlines(url, h);
     if (url.pathname === "/edge-health") return edgeHealth(env, h);
     if (url.pathname !== "/chat" || req.method !== "POST") return json({ error: "Not found" }, 404, h);
     if (!env.GEMINI_API_KEY) return json({ error: "The assistant is not set up yet." }, 503, h);
@@ -358,6 +359,53 @@ async function mexcPrices(url: URL, h: Record<string, string>): Promise<Response
     } catch { /* that coin is left out */ }
   }));
   return new Response(JSON.stringify({ px: out, at: Date.now() }), { status: 200, headers: { ...h, "Content-Type": "application/json", "Cache-Control": "no-store" } });
+}
+
+// v3.1 (owner, 25 Nov 2026: "the chart of Anthropic is wrong"): candles of MEXC-only coins for the app's charts, in
+// Binance's kline shape [openMs, o, h, l, c, v]. 12h / 3d are built from 4h / 1d (epoch-aligned, like the engine).
+const KL = new Map<string, { at: number; v: string }>();
+const MEXC_TF: Record<string, [string, number, number]> = {        // app tf -> MEXC interval, its ms, candles per app candle
+  "1m": ["Min1", 60e3, 1], "5m": ["Min5", 300e3, 1], "15m": ["Min15", 900e3, 1], "30m": ["Min30", 1800e3, 1],
+  "1h": ["Min60", 3600e3, 1], "4h": ["Hour4", 14400e3, 1], "12h": ["Hour4", 14400e3, 3], "1d": ["Day1", 86400e3, 1],
+  "3d": ["Day1", 86400e3, 3], "1w": ["Week1", 604800e3, 1],
+};
+async function mexcKlines(url: URL, h: Record<string, string>): Promise<Response> {
+  const b = (url.searchParams.get("s") ?? "").toUpperCase();
+  const tf = url.searchParams.get("tf") ?? "1h";
+  const limit = Math.max(10, Math.min(1000, Number(url.searchParams.get("limit")) || 500));
+  const m = MEXC_TF[tf];
+  if (!/^[A-Z0-9]{1,20}$/.test(b) || !m) return json({ error: "bad request" }, 400, h);
+  const key = `${b}|${tf}|${limit}`;
+  const hit = KL.get(key);
+  const hdr = { ...h, "Content-Type": "application/json", "Cache-Control": "no-store" };
+  if (hit && Date.now() - hit.at < 20_000) return new Response(hit.v, { status: 200, headers: hdr });
+  const [iv, ms, k] = m;
+  const end = Math.floor(Date.now() / 1000);
+  const start = end - Math.ceil((limit * k + 2 * k) * ms / 1000);
+  try {
+    const r = await fetch(`https://contract.mexc.com/api/v1/contract/kline/${MEXC_NAME[b] ?? `${b}_USDT`}?interval=${iv}&start=${start}&end=${end}`);
+    const d: any = r.ok ? await r.json() : null;
+    const t = d?.data?.time ?? [];
+    let rows: number[][] = t.map((x: number, i: number) => {
+      const o = +d.data.open[i], c = +d.data.close[i];
+      return [x * 1000, o, Math.max(+d.data.high[i], o, c), Math.min(+d.data.low[i], o, c), c, +(d.data.vol?.[i] ?? 0)];
+    });
+    if (k > 1) {                               // 12h from 4h, 3d from 1d: epoch-aligned buckets
+      const span = ms * k, g = new Map<number, number[]>();
+      for (const x of rows) {
+        const s0 = x[0] - (x[0] % span), cur = g.get(s0);
+        if (!cur) g.set(s0, [s0, x[1], x[2], x[3], x[4], x[5]]);
+        else { cur[2] = Math.max(cur[2], x[2]); cur[3] = Math.min(cur[3], x[3]); cur[4] = x[4]; cur[5] += x[5]; }
+      }
+      rows = [...g.values()].sort((p, q) => p[0] - q[0]);
+    }
+    const v = JSON.stringify(rows.slice(-limit));
+    if (rows.length) KL.set(key, { at: Date.now(), v });
+    if (KL.size > 300) for (const [kk, vv] of KL) if (Date.now() - vv.at > 60_000) KL.delete(kk);
+    return new Response(v, { status: rows.length ? 200 : 502, headers: hdr });
+  } catch {
+    return json({ error: "MEXC not reachable" }, 502, h);
+  }
 }
 
 async function edgeHealth(env: Env, h: Record<string, string>): Promise<Response> {
