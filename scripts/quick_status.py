@@ -346,7 +346,9 @@ try:
     out["edge_side"] = {"edge_health": _eh, "health_at": (_vv.get("health") or {}).get("at"),
                         "health_tick": (((_vv.get("health") or {}).get("data") or {}).get("engine") or {}).get("last_tick_finished"),
                         "track_record_at": (_vv.get("track_record") or {}).get("at"),
-                        "mexc_px": json.load(_ur.urlopen(_ur.Request(_b + "/px?s=ANTHROPIC", headers={"User-Agent": "cia-status", "Origin": "https://cryptointelai.com"}), timeout=20))}
+                        "mexc_px": json.load(_ur.urlopen(_ur.Request(_b + "/px?s=ANTHROPIC", headers={"User-Agent": "cia-status", "Origin": "https://cryptointelai.com"}), timeout=20)),
+                        "mexc_kl_1h": (lambda r: {"n": len(r), "last_ts": r[-1][0] if r else None, "last_close": r[-1][4] if r else None})(
+                            json.load(_ur.urlopen(_ur.Request(_b + "/kl?s=ANTHROPIC&tf=1h&limit=50", headers={"User-Agent": "cia-status", "Origin": "https://cryptointelai.com"}), timeout=20)))}
 except Exception as exc:
     out["edge_side"] = {"error": str(exc)[:200]}
 print(json.dumps(out, indent=1, default=str))
