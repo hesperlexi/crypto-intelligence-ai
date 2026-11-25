@@ -294,5 +294,16 @@ try:
                             "engine_diag": st.get("engine_diag"), "fcm_check": st.get("fcm_check"), "price_tries": st.get("price_tries")}
 except Exception as exc:
     out["cloud_watcher"] = {"probe_error": str(exc)[:200]}
+# the Cloudflare copy (what members see) vs the Firestore copy
+try:
+    import hashlib as _hl, urllib.request as _ur
+    _k = _hl.sha256(("cia-edge-v1|" + os.environ["FIREBASE_SERVICE_ACCOUNT"]).encode()).hexdigest()
+    _b = "https://cia-chat.cryptointelai.workers.dev"
+    _eh = json.load(_ur.urlopen(_ur.Request(_b + "/edge-health", headers={"User-Agent": "cia-status"}), timeout=20))
+    _vv = json.load(_ur.urlopen(_ur.Request(_b + "/v?n=health,track_record&e=,", headers={"X-Edge-Key": _k, "User-Agent": "cia-status"}), timeout=30))["views"]
+    out["edge_side"] = {"edge_health": _eh, "health_at": (_vv.get("health") or {}).get("at"),
+                        "health_tick": (((_vv.get("health") or {}).get("data") or {}).get("engine") or {}).get("last_tick_finished"),
+                        "track_record_at": (_vv.get("track_record") or {}).get("at")}
+except Exception as exc:
+    out["edge_side"] = {"error": str(exc)[:200]}
 print(json.dumps(out, indent=1, default=str))
-
