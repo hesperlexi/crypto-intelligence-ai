@@ -197,6 +197,30 @@ try:
                                               for t in (_b.get("trades") or [])[:10]]
 except Exception as exc:
     out["bot15_trades"] = {"error": str(exc)[:200]}
+# v3.1: closed trades of the 15m bots vs the record (hashed, no coin / side / levels)
+try:
+    _bv = fs.document("views/bots").get().to_dict() or {}
+    _bj = json.loads(_bv["json"]) if _bv.get("json") else {}
+    _sig_all = sigs
+    _bt = []
+    for b in _bj.get("bots") or []:
+        cfg = b.get("config") or {}
+        if cfg.get("timeframe") != "15m":
+            continue
+        for t in (b.get("trades") or [])[:20]:
+            sym, side = t.get("symbol"), t.get("side")
+            oa = int(t.get("opened_at") or t.get("entry_ts") or 0)
+            match = [x for x in _sig_all if x.get("symbol") == sym and x.get("timeframe") == "15m"
+                     and (x.get("side") == "LONG") == (str(side).upper() in ("1", "LONG", "BUY"))
+                     and int(x.get("created_at") or 0) <= oa + 20 * 60_000 and (x.get("closed_at") is None or int(x.get("closed_at")) >= oa - 60_000)]
+            _bt.append({"bot": cfg.get("id"), "opened_at": oa, "closed_at": t.get("closed_at") or t.get("exit_ts"),
+                        "reason": t.get("reason") or t.get("exit_reason"), "pnl_sign": (1 if (t.get("pnl") or 0) > 0 else -1),
+                        "pnl_pct_of_equity": round(100 * float(t.get("pnl") or 0) / 30000, 3),
+                        "record_match": [(x.get("status"), x.get("exit_reason"), x.get("created_at")) for x in match][:2],
+                        "keys": sorted(t.keys())[:20]})
+    out["bot15_trades"] = _bt
+except Exception as exc:
+    out["bot15_trades"] = {"error": str(exc)[:200]}
 # v2.75 check: views/derivs summary + silver (XAG/USDT) models (counts / names only)
 try:
     dv = fs.document("views/derivs").get().to_dict()
