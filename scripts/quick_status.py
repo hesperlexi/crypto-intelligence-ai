@@ -276,6 +276,17 @@ try:
             r["min1"] = [(round((k[0] - c0) / 60_000), round((k[3] / e - 1) * 100, 2), round((k[2] / e - 1) * 100, 2), round((k[4] / e - 1) * 100, 2)) for k in near]
             r["stop_rel"] = round((float(x.get("stop")) / e - 1) * 100, 2)
             r["tp1_rel"] = round((float(x.get("tp1")) / e - 1) * 100, 2)
+    _hs = int(((_hj.get("current") or {}).get("started_at")) or _hj.get("since") or 0)
+    _ga = [x for x in sigs if x.get("grade") == "A" and int(x.get("created_at") or 0) >= _hs]
+    _taken = {t.get("signal_id") for t in (_hj.get("trades") or [])}
+    _ov = 0
+    for x in _ga:   # how many grade-A calls overlapped another grade-A call still running at their publication
+        c0 = int(x["created_at"])
+        if any(y is not x and int(y["created_at"]) < c0 and (y.get("closed_at") is None or int(y["closed_at"]) > c0) for y in _ga):
+            _ov += 1
+    out["challenge_cover"] = {"since": _hs, "grade_a_calls": len(_ga), "taken_by_hesper": sum(1 for x in _ga if x.get("id") in _taken),
+                              "overlapping": _ov, "by_tf": {t: sum(1 for x in _ga if x.get("timeframe") == t) for t in sorted({x.get("timeframe") for x in _ga})},
+                              "max_concurrent": max([sum(1 for y in _ga if int(y["created_at"]) <= int(x["created_at"]) and (y.get("closed_at") is None or int(y["closed_at"]) > int(x["created_at"]))) for x in _ga] or [0])}
     out["coin_check"] = {"record": _rows, "bots": _bt2, "challenge": _ht, "kl_n": len(_kl)}
 except Exception as exc:
     out["coin_check"] = {"error": str(exc)[:300]}
