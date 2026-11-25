@@ -1,90 +1,91 @@
-coins 35 seconds per timeframe {'15m': 145.1, '1h': 5.7, '4h': 5.4, '12h': 4.4, '1d': 3.5, '3d': 3.9} total 168.0
-15m repeat 0.9
-         317204617 function calls (314869211 primitive calls) in 167.906 seconds
+coins 35 seconds per timeframe {'15m': 123.7, '1h': 4.9, '4h': 5.1, '12h': 3.1, '1d': 3.3, '3d': 3.3} total 143.4
+normal cycle (15m/1h/4h, cold models) 29.7
+15m repeat 0.7
+         317368520 function calls (315033114 primitive calls) in 143.249 seconds
 
    Ordered by: cumulative time
-   List reduced from 4180 to 45 due to restriction <45>
+   List reduced from 4184 to 45 due to restriction <45>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-      210    0.056    0.000  168.027    0.800 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:297(analyze)
-     1463    0.030    0.000  123.793    0.085 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:145(model_forecast)
-      209    0.011    0.000   77.359    0.370 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:239(horizon_forecasts)
-     1689    0.007    0.000   68.301    0.040 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:479(load_bundle)
-      196    0.372    0.002   67.986    0.347 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:680(load)
-      196    0.001    0.000   67.586    0.345 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:619(_unpickle)
-  357/196   10.881    0.030   67.582    0.345 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1230(load)
-      419    0.030    0.000   54.369    0.130 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:163(_model_forecast)
-     2286    0.017    0.000   40.310    0.018 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:98(frame)
-      265    0.034    0.000   30.661    0.116 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/dataset.py:41(build_frame)
-     4538    0.128    0.000   27.377    0.006 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/models.py:32(proba3)
-      392    0.009    0.000   23.681    0.060 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:114(dataset)
-   833070    0.917    0.000   23.074    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:444(load_build)
- 33018366   10.564    0.000   19.343    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:281(read)
-      392    0.076    0.000   18.323    0.047 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:261(predict)
-     3394    0.011    0.000   17.006    0.005 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/models.py:49(predict_with_context)
-      196    0.066    0.000   14.846    0.076 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/dataset.py:236(make_dataset)
-      196    0.089    0.000   13.998    0.071 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/dataset.py:152(make_features)
-   625547    0.356    0.000   13.662    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:265(read)
-   625547    3.481    0.000   13.222    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:158(read_array)
-      498    0.016    0.000   12.354    0.025 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/ensemble/_forest.py:921(predict_proba)
-      498    0.002    0.000   12.141    0.024 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/utils/parallel.py:54(__call__)
-      498    0.024    0.000   12.138    0.024 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/parallel.py:1995(__call__)
-   100596    0.156    0.000   12.102    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/parallel.py:1914(_get_sequential_output)
-      241    0.042    0.000   11.304    0.047 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/indicators.py:176(compute_indicators)
-      196    0.005    0.000   10.922    0.056 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:341(explain_prediction)
-      196    0.036    0.000   10.708    0.055 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/explain.py:42(occlusion_attribution)
-    99600    2.864    0.000   10.673    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/utils/parallel.py:140(__call__)
-      196    0.010    0.000   10.649    0.054 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:242(fn)
-     2300    0.287    0.000    9.506    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:92(candles)
-   110536    0.120    0.000    9.463    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/pandas/core/ops/common.py:122(new_method)
-3616698/3505576    1.575    0.000    8.767    0.000 {method 'read' of '_io.BufferedReader' objects}
-     4932    3.851    0.001    8.649    0.002 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/db.py:161(query)
-     2300    2.324    0.001    8.637    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/data/store.py:45(load)
-   833392    2.415    0.000    8.089    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1754(load_build)
-      392    0.005    0.000    7.291    0.019 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:136(deriv_frame)
-       35    0.204    0.006    7.280    0.208 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/data/derivs.py:284(load_all)
-     2882    0.008    0.000    7.112    0.002 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:460(readinto)
-     2882    0.110    0.000    7.103    0.002 {function BinaryZlibFile.readinto at 0x7a3eafd500e0}
-44576481/44284457    5.296    0.000    7.036    0.000 {built-in method builtins.isinstance}
-     2882    0.012    0.000    6.992    0.002 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:445(read)
-     2882    0.177    0.000    6.978    0.002 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:417(_read_block)
-   120563    0.572    0.000    6.428    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/pandas/core/internals/managers.py:410(apply)
-   113789    0.147    0.000    6.406    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:379(_fill_buffer)
-      241    0.069    0.000    6.386    0.026 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/engine/scores.py:28(component_scores)
+      210    0.039    0.000  143.348    0.683 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:351(analyze)
+     1463    0.027    0.000  104.163    0.071 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:146(model_forecast)
+      209    0.010    0.000   65.610    0.314 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:289(horizon_forecasts)
+     1689    0.006    0.000   57.521    0.034 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:479(load_bundle)
+      196    0.370    0.002   57.269    0.292 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:680(load)
+      196    0.001    0.000   56.871    0.290 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:619(_unpickle)
+  357/196    9.202    0.026   56.867    0.290 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1230(load)
+      419    0.023    0.000   45.677    0.109 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/analysis.py:213(_model_forecast)
+     2286    0.015    0.000   35.375    0.015 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:98(frame)
+      265    0.028    0.000   25.350    0.096 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/dataset.py:41(build_frame)
+     4538    0.106    0.000   23.339    0.005 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/models.py:32(proba3)
+      392    0.008    0.000   19.544    0.050 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:114(dataset)
+   833070    0.776    0.000   19.428    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:444(load_build)
+ 33018366    8.426    0.000   16.064    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:281(read)
+      392    0.064    0.000   15.254    0.039 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:261(predict)
+     3394    0.009    0.000   14.166    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/models.py:49(predict_with_context)
+      196    0.060    0.000   11.989    0.061 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/dataset.py:236(make_dataset)
+   625547    0.292    0.000   11.606    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:265(read)
+      196    0.069    0.000   11.263    0.057 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/dataset.py:152(make_features)
+   625547    2.755    0.000   11.235    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:158(read_array)
+      498    0.012    0.000    9.929    0.020 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/ensemble/_forest.py:921(predict_proba)
+     2300    0.224    0.000    9.906    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:92(candles)
+      498    0.002    0.000    9.756    0.020 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/utils/parallel.py:54(__call__)
+      498    0.020    0.000    9.753    0.020 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/parallel.py:1995(__call__)
+   100596    0.115    0.000    9.722    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/parallel.py:1914(_get_sequential_output)
+      241    0.032    0.000    9.721    0.040 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/indicators.py:176(compute_indicators)
+      196    0.004    0.000    9.612    0.049 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:341(explain_prediction)
+      196    0.024    0.000    9.435    0.048 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/explain.py:42(occlusion_attribution)
+      196    0.007    0.000    9.385    0.048 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/trainer.py:242(fn)
+     2300    3.552    0.002    9.197    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/data/store.py:45(load)
+    99600    2.180    0.000    8.502    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/utils/parallel.py:140(__call__)
+   110536    0.104    0.000    7.832    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/pandas/core/ops/common.py:122(new_method)
+     5037    3.436    0.001    7.801    0.002 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/db.py:161(query)
+3616698/3505576    1.240    0.000    7.607    0.000 {method 'read' of '_io.BufferedReader' objects}
+   833392    1.933    0.000    6.700    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1754(load_build)
+      392    0.005    0.000    6.308    0.016 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/services/runtime.py:136(deriv_frame)
+       35    0.226    0.006    6.298    0.180 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/data/derivs.py:284(load_all)
+     2882    0.007    0.000    6.282    0.002 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:460(readinto)
+     2882    0.072    0.000    6.275    0.002 {function BinaryZlibFile.readinto at 0x7da5a574c220}
+     2882    0.011    0.000    6.203    0.002 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:445(read)
+44576849/44284825    4.691    0.000    6.198    0.000 {built-in method builtins.isinstance}
+     2882    0.142    0.000    6.189    0.002 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:417(_read_block)
+   113789    0.115    0.000    5.672    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/compressor.py:379(_fill_buffer)
+   120563    0.459    0.000    5.341    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/pandas/core/internals/managers.py:410(apply)
+   110926    5.325    0.000    5.325    0.000 {method 'decompress' of 'zlib.Decompress' objects}
 
 
 
-         317204617 function calls (314869211 primitive calls) in 167.906 seconds
+         317368520 function calls (315033114 primitive calls) in 143.249 seconds
 
    Ordered by: internal time
-   List reduced from 4180 to 25 due to restriction <25>
+   List reduced from 4184 to 25 due to restriction <25>
 
    ncalls  tottime  percall  cumtime  percall filename:lineno(function)
-  357/196   10.881    0.030   67.582    0.345 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1230(load)
- 33018366   10.564    0.000   19.343    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:281(read)
-   110926    5.958    0.000    5.958    0.000 {method 'decompress' of 'zlib.Decompress' objects}
-44576481/44284457    5.296    0.000    7.036    0.000 {built-in method builtins.isinstance}
-      585    4.014    0.007    4.233    0.007 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/xgboost/core.py:2561(inplace_predict)
-     4932    3.851    0.001    8.649    0.002 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/db.py:161(query)
- 32389831    3.699    0.000    3.699    0.000 {method 'read' of '_io.BytesIO' objects}
-   625547    3.481    0.000   13.222    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:158(read_array)
-44673587/43647985    3.444    0.000    3.665    0.000 {built-in method builtins.len}
-     4932    3.400    0.001    3.400    0.001 {method 'fetchall' of 'sqlite3.Cursor' objects}
-    99600    2.864    0.000   10.673    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/utils/parallel.py:140(__call__)
-    14752    2.506    0.000    3.153    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/pandas/core/window/rolling.py:582(calc)
-   833392    2.415    0.000    8.089    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1754(load_build)
-   355245    2.408    0.000    2.526    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/predictor.py:49(predict)
-     2300    2.324    0.001    8.637    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/data/store.py:45(load)
-      241    2.255    0.009    2.682    0.011 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/structure.py:25(market_structure)
-  6235345    2.132    0.000    5.548    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1659(load_binget)
-      585    2.028    0.003    2.054    0.004 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/lightgbm/basic.py:1216(__inner_predict_np2d)
-   126162    1.960    0.000    1.994    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/predictor.py:132(__setstate__)
- 19919666    1.951    0.000    1.951    0.000 {method 'append' of 'list' objects}
-     1709    1.802    0.001    1.878    0.001 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/distribution.py:91(first_passage_base_rate)
-   973945    1.781    0.000    1.781    0.000 {method 'reduce' of 'numpy.ufunc' objects}
-      482    1.754    0.004    1.760    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/structure.py:97(divergences)
-3616698/3505576    1.575    0.000    8.767    0.000 {method 'read' of '_io.BufferedReader' objects}
-     5206    1.446    0.000    1.446    0.000 {method 'execute' of 'sqlite3.Cursor' objects}
+  357/196    9.202    0.026   56.867    0.290 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1230(load)
+ 33018366    8.426    0.000   16.064    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:281(read)
+   110926    5.325    0.000    5.325    0.000 {method 'decompress' of 'zlib.Decompress' objects}
+44576849/44284825    4.691    0.000    6.198    0.000 {built-in method builtins.isinstance}
+      585    4.212    0.007    4.400    0.008 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/xgboost/core.py:2561(inplace_predict)
+     2300    3.552    0.002    9.197    0.004 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/data/store.py:45(load)
+     5037    3.436    0.001    7.801    0.002 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/db.py:161(query)
+     5037    3.250    0.001    3.250    0.001 {method 'fetchall' of 'sqlite3.Cursor' objects}
+ 32389831    3.099    0.000    3.099    0.000 {method 'read' of '_io.BytesIO' objects}
+44673587/43647985    3.069    0.000    3.256    0.000 {built-in method builtins.len}
+   625547    2.755    0.000   11.235    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle.py:158(read_array)
+    99600    2.180    0.000    8.502    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/utils/parallel.py:140(__call__)
+    14752    2.126    0.000    2.633    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/pandas/core/window/rolling.py:582(calc)
+      585    2.051    0.004    2.074    0.004 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/lightgbm/basic.py:1216(__inner_predict_np2d)
+   355245    2.038    0.000    2.134    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/predictor.py:49(predict)
+   833392    1.933    0.000    6.700    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1754(load_build)
+  6235345    1.801    0.000    4.708    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/pickle.py:1659(load_binget)
+ 19919666    1.719    0.000    1.719    0.000 {method 'append' of 'list' objects}
+      241    1.683    0.007    2.034    0.008 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/structure.py:25(market_structure)
+     1709    1.361    0.001    1.418    0.001 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/ml/distribution.py:91(first_passage_base_rate)
+   973945    1.358    0.000    1.358    0.000 {method 'reduce' of 'numpy.ufunc' objects}
+      482    1.355    0.003    1.360    0.003 /home/runner/work/crypto-intelligence-ai/crypto-intelligence-ai/backend/app/features/structure.py:97(divergences)
+   126162    1.335    0.000    1.363    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/sklearn/ensemble/_hist_gradient_boosting/predictor.py:132(__setstate__)
+3616698/3505576    1.240    0.000    7.607    0.000 {method 'read' of '_io.BufferedReader' objects}
+   625547    1.180    0.000    1.311    0.000 /opt/hostedtoolcache/Python/3.12.16/x64/lib/python3.12/site-packages/joblib/numpy_pickle_utils.py:51(_is_numpy_array_byte_order_mismatch)
 
 
 
