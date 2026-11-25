@@ -76,6 +76,7 @@ def test_addons_are_scored_by_default():
     from tests.helpers import shared_runtime
 
     rt, _ = shared_runtime()
+    rt.__dict__.pop("_fc_memo", None)              # v3.1: live forecasts are memoised per engine cycle
     calls = []
     with mock.patch.object(trade_filter, "score", lambda *a, **k: calls.append("filter")), \
             mock.patch.object(target_model, "lifts", lambda *a, **k: calls.append("target")), \
