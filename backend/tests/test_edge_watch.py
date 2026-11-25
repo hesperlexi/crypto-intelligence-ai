@@ -69,3 +69,17 @@ def test_watch_py_stays_quiet_only_while_the_cloud_watcher_is_fresh_and_error_fr
 def test_run_is_off_without_the_edge_key(monkeypatch):
     monkeypatch.setattr("app.sinks.edge_key", lambda: "")
     assert EW.run(None, None) == {"skipped": "off"}
+
+
+def test_devices_fall_back_to_the_cache_when_firestore_refuses():
+    from app.services import edge_watch as E
+    db = _db()
+    db.set_setting("edge_watch_tokens", {"at": 1, "devices": [["t1", "u1", "a@b.c", "d1"]]})
+
+    class S:
+        def list(self, c):
+            raise RuntimeError("429 Quota exceeded")
+    class RT:
+        pass
+    rt = RT(); rt.db = db
+    assert E._devices(rt, S()) == [("t1", "u1", "a@b.c", "d1")]

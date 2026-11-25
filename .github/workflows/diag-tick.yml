@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: "local (no publishing) or live"
+        description: "local (no publishing), live, or profile (time the analyses only)"
         default: local
 permissions:
   contents: write
@@ -43,7 +43,11 @@ jobs:
       - name: One cycle with stack dumps
         run: |
           ARGS=""; [ "${{ inputs.mode }}" = "live" ] || ARGS="--local /tmp/diag-out"
-          timeout 1200 python ../scripts/diag_tick.py $ARGS > /tmp/diag.log 2>&1 || echo "exit $?" >> /tmp/diag.log
+          if [ "${{ inputs.mode }}" = "profile" ]; then
+            timeout 1500 python ../scripts/profile_analyses.py > /tmp/diag.log 2>&1 || echo "exit $?" >> /tmp/diag.log
+          else
+            timeout 1200 python ../scripts/diag_tick.py $ARGS > /tmp/diag.log 2>&1 || echo "exit $?" >> /tmp/diag.log
+          fi
           tail -c 60000 /tmp/diag.log
       - if: always()
         working-directory: .

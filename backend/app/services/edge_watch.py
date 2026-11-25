@@ -162,7 +162,14 @@ def _devices(rt, sink) -> list[tuple]:
     cache = rt.db.get_setting("edge_watch_tokens", None) or {}
     if cache.get("devices") is not None and now_ms() - int(cache.get("at") or 0) < TOKENS_EVERY_S * 1000:
         return [tuple(d) for d in cache["devices"]]
-    devs = [((d.get("token") or i), d.get("uid"), (d.get("email") or "").lower(), i) for i, d in sink.list("push_tokens")]
+    try:
+        devs = [((d.get("token") or i), d.get("uid"), (d.get("email") or "").lower(), i) for i, d in sink.list("push_tokens")]
+    except Exception:
+        # v3.1 (25 Nov 2026): Firestore over its read quota - keep arming with the last known phones (the watcher went
+        # idle for 8 h because this read failed); tried again next tick
+        if cache.get("devices") is not None:
+            return [tuple(d) for d in cache["devices"]]
+        raise
     rt.db.set_setting("edge_watch_tokens", {"at": now_ms(), "devices": devs})
     return devs
 
