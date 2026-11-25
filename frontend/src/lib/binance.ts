@@ -48,8 +48,10 @@ async function mexcKlines(symbol: string, tf: string, limit: number): Promise<Ca
   const k = `${symbol}|${tf}`;
   const hit = mexcCache.get(k);
   if (hit && Date.now() - hit.at < 5000 && (limit <= 2 || hit.rows.length >= limit)) return hit.rows.slice(-limit);
-  const r = await fetch(`${EDGE_URL}/kl?s=${encodeURIComponent(symbol.split("/")[0])}&tf=${tf}&limit=${Math.max(limit, 2)}`, { cache: "no-store" });
-  if (!r.ok) throw new Error(`HTTP ${r.status}`);
+  const url = `${EDGE_URL}/kl?s=${encodeURIComponent(symbol.split("/")[0])}&tf=${tf}&limit=${Math.max(limit, 2)}`;
+  let r = await fetch(url, { cache: "no-store" });
+  if (!r.ok) { await new Promise((res) => setTimeout(res, 1500)); r = await fetch(url, { cache: "no-store" }); }   // one quiet retry
+  if (!r.ok) throw new Error("MEXC chart data not reachable right now - tap Retry in a moment");
   const rows = ((await r.json()) as number[][]).map((x) => [x[0], +x[1], +x[2], +x[3], +x[4], +x[5]] as Candle);
   if (!rows.length) throw new Error("no candles");
   mexcCache.set(k, { at: Date.now(), rows: hit && limit <= 2 ? [...hit.rows.filter((c) => c[0] < rows[0][0]), ...rows] : rows });

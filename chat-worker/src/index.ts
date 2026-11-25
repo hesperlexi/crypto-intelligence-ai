@@ -383,8 +383,12 @@ async function mexcKlines(url: URL, h: Record<string, string>): Promise<Response
   const end = Math.floor(Date.now() / 1000);
   const start = end - Math.ceil((limit * k + 2 * k) * ms / 1000);
   try {
-    const r = await fetch(`https://contract.mexc.com/api/v1/contract/kline/${MEXC_NAME[b] ?? `${b}_USDT`}?interval=${iv}&start=${start}&end=${end}`);
-    const d: any = r.ok ? await r.json() : null;
+    // MEXC sometimes refuses a request from Cloudflare for a moment: one retry, then the last good copy (up to 15 min old)
+    const u = `https://contract.mexc.com/api/v1/contract/kline/${MEXC_NAME[b] ?? `${b}_USDT`}?interval=${iv}&start=${start}&end=${end}`;
+    let r = await fetch(u, { headers: { "User-Agent": "cia-charts/1", Accept: "application/json" } });
+    if (!r.ok) { await new Promise((res) => setTimeout(res, 400)); r = await fetch(u, { headers: { "User-Agent": "cia-charts/1", Accept: "application/json" } }); }
+    const d: any = r.ok ? await r.json().catch(() => null) : null;
+    if (!d?.data?.time?.length && hit && Date.now() - hit.at < 900_000) return new Response(hit.v, { status: 200, headers: hdr });
     const t = d?.data?.time ?? [];
     let rows: number[][] = t.map((x: number, i: number) => {
       const o = +d.data.open[i], c = +d.data.close[i];
@@ -401,9 +405,10 @@ async function mexcKlines(url: URL, h: Record<string, string>): Promise<Response
     }
     const v = JSON.stringify(rows.slice(-limit));
     if (rows.length) KL.set(key, { at: Date.now(), v });
-    if (KL.size > 300) for (const [kk, vv] of KL) if (Date.now() - vv.at > 60_000) KL.delete(kk);
+    if (KL.size > 300) for (const [kk, vv] of KL) if (Date.now() - vv.at > 900_000) KL.delete(kk);
     return new Response(v, { status: rows.length ? 200 : 502, headers: hdr });
   } catch {
+    if (hit && Date.now() - hit.at < 900_000) return new Response(hit.v, { status: 200, headers: hdr });
     return json({ error: "MEXC not reachable" }, 502, h);
   }
 }
