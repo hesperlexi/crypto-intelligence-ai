@@ -1155,3 +1155,8 @@ body:has(.pl-bg) .cc-page .cc-panel { background: rgb(var(--panel) / 0.8) !impor
 @keyframes jr-ping { 0% { box-shadow: 0 0 0 0 currentColor; } 100% { box-shadow: 0 0 0 12px transparent; } }
 @media (max-width: 480px) { .jo-row { gap: 10px; } .jq-gate em, .jr-node em { font-size: 0.5625rem; } }
 @media (prefers-reduced-motion: reduce) { .jo-orb *, .jq-ring, .jq-stream i, .jr-flow, .jr-pulse { animation: none !important; } .jo-orb .jo-bub { opacity: 0; } }
+
+/* v3.1 (owner, 25 Nov 2026): the Coins page search list was hidden under the "Coins we follow" card - the search card
+   now sits above the cards after it and lets its list hang out of it; the list is solid (not see-through) */
+.coins-search, [data-glass] .panel.coins-search { position: relative; z-index: 40; overflow: visible !important; }
+.coins-search .csx-list { background: rgb(var(--panel)) !important; backdrop-filter: none !important; box-shadow: 0 18px 40px rgb(0 0 0 / 0.45); }
