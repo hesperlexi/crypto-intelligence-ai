@@ -31,6 +31,13 @@ def has(module: str) -> bool:
 
 def proba3(model: Any, X: np.ndarray) -> np.ndarray:
     """predict_proba mapped onto the fixed 3-class layout, even if a class was absent in training."""
+    if len(X) <= 64 and getattr(model, "n_jobs", None) not in (None, 1) and hasattr(model, "estimators_"):
+        # v3.1: a forest asked for a handful of rows spent ~40 ms starting and stopping a process pool per call (55 s a
+        # cycle); one worker gives the same numbers
+        try:
+            model.n_jobs = 1
+        except Exception:
+            pass
     p = np.asarray(model.predict_proba(X), float)
     classes = np.asarray(getattr(model, "classes_", [0, 1, 2])).astype(int)
     out = np.zeros((len(p), 3))

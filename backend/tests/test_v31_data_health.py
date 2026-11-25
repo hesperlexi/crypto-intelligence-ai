@@ -140,3 +140,19 @@ def test_bot_trades_not_in_the_record_close_once(monkeypatch):
     assert "admin_close" not in b[0] and b[1]["admin_close"]["price"] == 100.0
     for bid in ("d", "e"):                                               # demo timeframe / demo bot untouched
         assert not any("admin_close" in x for x in json.loads(db.one("SELECT state FROM bots WHERE id = ?", (bid,))["state"])["positions"])
+
+
+def test_live_forecast_is_computed_once_per_cycle(monkeypatch):
+    from app.services import analysis
+    calls = []
+    monkeypatch.setattr(analysis.trainer, "load_bundle", lambda s, tf, db: {"created_at": 5, "version_id": "v1"})
+    monkeypatch.setattr(analysis, "_model_forecast", lambda rt, s, tf, *a: calls.append((s, tf)) or {"available": True, "p": [1, 2]})
+    class RT:
+        db = None
+    rt = RT()
+    a = analysis.model_forecast(rt, "BTC/USDT", "1h")
+    a["p"].append(3)                                     # a caller changing its copy does not change the memo
+    b = analysis.model_forecast(rt, "BTC/USDT", "1h")
+    assert calls == [("BTC/USDT", "1h")] and b["p"] == [1, 2]
+    analysis.model_forecast(rt, "BTC/USDT", "1h", as_of=1)    # replays never use the memo
+    assert len(calls) == 2

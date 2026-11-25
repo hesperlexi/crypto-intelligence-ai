@@ -2,6 +2,7 @@
 into the structured output the API returns. Every number originates in an engine, a model or the database."""
 from __future__ import annotations
 
+import copy
 import os
 
 import time
@@ -144,7 +145,24 @@ def beats_costs(entry: float, stop: float, futures: bool = True, mult: float = C
 def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None = None,
                    bundle: dict[str, Any] | None = None, explain: bool = False,
                    multipliers: dict[str, float] | None = None) -> dict[str, Any]:
-    """Forecast for the next bar of `timeframe` from that timeframe's own model."""
+    """Forecast for the next bar of `timeframe` from that timeframe's own model.
+    v3.1 (25 Nov 2026, "loops" too long): a live forecast is computed once per engine cycle and coin / timeframe and
+    reused (each coin's six analyses asked for the same six horizon forecasts again: ~1,460 model runs a cycle instead
+    of ~210). Each cycle is a fresh process and the candles do not change inside it, so the result is identical."""
+    if as_of is not None or bundle is not None or multipliers is not None:
+        return _model_forecast(rt, symbol, timeframe, as_of, bundle, explain, multipliers)
+    memo = rt.__dict__.setdefault("_fc_memo", {})
+    b = trainer.load_bundle(symbol, timeframe, rt.db) if timeframe in MODEL_TIMEFRAMES else None
+    key = (symbol, timeframe, explain, (b or {}).get("created_at"), (b or {}).get("version_id") or id(b))
+    if key not in memo:
+        memo[key] = _model_forecast(rt, symbol, timeframe, None, b, explain, None) if b is not None \
+            else _model_forecast(rt, symbol, timeframe)
+    return copy.deepcopy(memo[key])
+
+
+def _model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None = None,
+                    bundle: dict[str, Any] | None = None, explain: bool = False,
+                    multipliers: dict[str, float] | None = None) -> dict[str, Any]:
     if timeframe not in MODEL_TIMEFRAMES:
         return {"available": False, "status": "NOT MODELLED",
                 "reason": f"no model is trained on {timeframe}; forecasts exist for {', '.join(MODEL_TIMEFRAMES)}"}
