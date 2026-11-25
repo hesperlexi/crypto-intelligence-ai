@@ -1,1815 +1,526 @@
 {
- "watchlist": [
-  "BTC/USDT",
-  "ETH/USDT",
-  "XRP/USDT",
-  "SOL/USDT",
-  "DOGE/USDT",
-  "AAVE/USDT",
-  "AVAX/USDT",
-  "PAXG/USDT",
-  "PEPE/USDT",
-  "ENA/USDT",
-  "GALA/USDT",
-  "TRX/USDT",
-  "LINK/USDT",
-  "SUI/USDT",
-  "DOT/USDT",
-  "ADA/USDT",
-  "BCH/USDT",
-  "WIF/USDT",
-  "BONK/USDT",
-  "APT/USDT",
-  "ETC/USDT",
-  "SEI/USDT",
-  "RARE/USDT",
-  "MSTR/USDT",
-  "ANTHROPIC/USDT",
-  "XAG/USDT",
-  "HYPE/USDT",
-  "HBAR/USDT",
-  "SHIB/USDT",
-  "WLD/USDT",
-  "BNB/USDT",
-  "FLOKI/USDT",
-  "NEAR/USDT",
-  "PROM/USDT",
-  "ZEC/USDT"
- ],
- "views": {
-  "15m": {
-   "rows": 35,
-   "updated": 1795555517044,
-   "with_plan": 30,
-   "grades": {
-    "None": 30
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "1h": {
-   "rows": 35,
-   "updated": 1795555517050,
-   "with_plan": 34,
-   "grades": {
-    "None": 34
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "4h": {
-   "rows": 35,
-   "updated": 1795555517055,
-   "with_plan": 33,
-   "grades": {
-    "None": 33
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "12h": {
-   "rows": 35,
-   "updated": 1795551575253,
-   "with_plan": 32,
-   "grades": {
-    "None": 32
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "1d": {
-   "rows": 35,
-   "updated": 1795551575258,
-   "with_plan": 32,
-   "grades": {
-    "None": 32
-   },
-   "statuses": [
-    "OK"
-   ],
-   "gold_row": true
-  },
-  "3d": {
-   "rows": 35,
-   "updated": 1795551575264,
-   "with_plan": 31,
-   "grades": {
-    "None": 31
-   },
-   "statuses": [
-    "INSUFFICIENT DATA",
-    "OK"
-   ],
-   "gold_row": true
-  }
- },
- "health": {
-  "status": "LIVE",
-  "engine": {
-   "last_tick_started": 1795557510684,
-   "last_tick_finished": 1795557776805,
-   "last_tick_seconds": 266.1,
-   "data_host": "https://data-api.binance.vision",
-   "failed_steps": [
-    "config"
-   ],
-   "schedule_minutes": 4,
-   "ticks": 7932,
-   "round_seconds_avg": 238.9,
-   "round_seconds_max": 352.1,
-   "rounds_measured": 48,
-   "watch_last_at": 1795557763097,
-   "watch_coins": 2,
-   "watch_priced": 2,
-   "watch_sent_total": 406,
-   "flow_last_at": 1795557770706,
-   "flow_coins": 32,
-   "flow_errors": 0,
-   "firestore_writes_today": 6039,
-   "firestore_write_budget": 15000,
-   "firestore_reads_today": 3811,
-   "firestore_read_limit": 50000,
-   "firestore_members_active": 5,
-   "firestore_member_reserve": 300,
-   "firestore_engine_budget": 14700,
-   "firestore_free_limit": 20000,
-   "firestore_lean": false
-  },
-  "quota": {},
-  "models_15m": [
-   {
-    "symbol": "PAXG/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "XAG/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "BTC/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "ETH/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "SOL/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "XRP/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "AAVE/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "AVAX/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "DOGE/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "PEPE/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "ENA/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "GALA/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "TRX/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "ADA/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "DOT/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "SUI/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "LINK/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "BCH/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "WIF/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "BONK/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "APT/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "ETC/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "RARE/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "SEI/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "MSTR/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "ANTHROPIC/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "HYPE/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "HBAR/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "SHIB/USDT",
-    "state": "active",
-    "message": ""
-   },
-   {
-    "symbol": "WLD/USDT",
-    "state": "active",
-    "message": ""
-   }
-  ],
-  "series_15m": [
-   {
-    "symbol": "PAXG/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "XAG/USDT",
-    "candles": 30238,
-    "status": "OK"
-   },
-   {
-    "symbol": "BTC/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "ETH/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "SOL/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "XRP/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "AAVE/USDT",
-    "candles": 32805,
-    "status": "OK"
-   },
-   {
-    "symbol": "AVAX/USDT",
-    "candles": 32805,
-    "status": "OK"
-   },
-   {
-    "symbol": "DOGE/USDT",
-    "candles": 32805,
-    "status": "OK"
-   },
-   {
-    "symbol": "PEPE/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "ENA/USDT",
-    "candles": 32806,
-    "status": "OK"
-   },
-   {
-    "symbol": "GALA/USDT",
-    "candles": 32412,
-    "status": "OK"
-   },
-   {
-    "symbol": "TRX/USDT",
-    "candles": 32804,
-    "status": "OK"
-   },
-   {
-    "symbol": "ADA/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "DOT/USDT",
-    "candles": 32806,
-    "status": "OK"
-   },
-   {
-    "symbol": "SUI/USDT",
-    "candles": 32805,
-    "status": "OK"
-   },
-   {
-    "symbol": "LINK/USDT",
-    "candles": 32805,
-    "status": "OK"
-   },
-   {
-    "symbol": "BCH/USDT",
-    "candles": 32805,
-    "status": "OK"
-   },
-   {
-    "symbol": "WIF/USDT",
-    "candles": 30986,
-    "status": "OK"
-   },
-   {
-    "symbol": "BONK/USDT",
-    "candles": 30981,
-    "status": "OK"
-   },
-   {
-    "symbol": "APT/USDT",
-    "candles": 32805,
-    "status": "OK"
-   },
-   {
-    "symbol": "ETC/USDT",
-    "candles": 30978,
-    "status": "OK"
-   },
-   {
-    "symbol": "RARE/USDT",
-    "candles": 30811,
-    "status": "OK"
-   },
-   {
-    "symbol": "SEI/USDT",
-    "candles": 30811,
-    "status": "OK"
-   },
-   {
-    "symbol": "MSTR/USDT",
-    "candles": 30774,
-    "status": "OK"
-   },
-   {
-    "symbol": "ANTHROPIC/USDT",
-    "candles": 21577,
-    "status": "OK"
-   },
-   {
-    "symbol": "HYPE/USDT",
-    "candles": 5900,
-    "status": "OK"
-   },
-   {
-    "symbol": "HBAR/USDT",
-    "candles": 32804,
-    "status": "OK"
-   },
-   {
-    "symbol": "SHIB/USDT",
-    "candles": 30984,
-    "status": "OK"
-   },
-   {
-    "symbol": "WLD/USDT",
-    "candles": 32804,
-    "status": "OK"
-   },
-   {
-    "symbol": "BNB/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "FLOKI/USDT",
-    "candles": 30029,
-    "status": "OK"
-   },
-   {
-    "symbol": "NEAR/USDT",
-    "candles": 32807,
-    "status": "OK"
-   },
-   {
-    "symbol": "PROM/USDT",
-    "candles": 30024,
-    "status": "OK"
-   },
-   {
-    "symbol": "ZEC/USDT",
-    "candles": 32803,
-    "status": "OK"
-   }
-  ]
- },
- "model_age_h": {
-  "15m": {
-   "n": 35,
-   "fresh_12h": 2,
-   "max": 700.4,
-   "missing": 0
-  },
-  "1h": {
-   "n": 35,
-   "fresh_12h": 2,
-   "max": 666.9,
-   "missing": 0
-  },
-  "4h": {
-   "n": 35,
-   "fresh_12h": 4,
-   "max": 666.9,
-   "missing": 1
-  },
-  "12h": {
-   "n": 35,
-   "fresh_12h": 4,
-   "max": 666.9,
-   "missing": 1
-  },
-  "1d": {
-   "n": 35,
-   "fresh_12h": 2,
-   "max": 666.7,
-   "missing": 3
-  },
-  "3d": {
-   "n": 35,
-   "fresh_12h": 2,
-   "max": 258.9,
-   "missing": 9
-  }
- },
- "last_train": {
-  "started_at": 1795523981331,
-  "finished_at": 1795524109704,
-  "detail": {
-   "shards": 15,
-   "imported": 4,
-   "skipped": 0,
-   "pruned_files": 0,
-   "failed": [],
-   "derivs": {
-    "funding": {
-     "calls": 26,
-     "rows": 78,
-     "unsupported": [
-      "XAG/USDT",
-      "RARE/USDT",
-      "MSTR/USDT",
-      "ANTHROPIC/USDT"
-     ],
-     "errors": []
-    },
-    "crowd": {
-     "files": 0,
-     "rows": 0,
-     "missing": [],
-     "errors": []
-    }
-   },
-   "series_policy": {
-    "series": 152,
-    "skipped": [],
-    "errors": [],
-    "entry": {
-     "3d": "old:0.0",
-     "1d": "confirm:0.1",
-     "12h": "confirm:0.25",
-     "4h": "old:0.0",
-     "1h": "old:0.0",
-     "15m": "old:0.0"
-    },
-    "filters": {
-     "3d": {
-      "enabled": true,
-      "keep_fraction": 0.6,
-      "n": 314,
-      "exam": {
-       "n": 79,
-       "kept": 29,
-       "avg_r_all": 0.3812471234608519,
-       "avg_r_kept": 0.42827175121366845
-      },
-      "threshold": 0.2909358864832468,
-      "reason": "kept trades earned +0.43R vs +0.38R for all, on unseen trades"
-     },
-     "1d": {
-      "enabled": true,
-      "keep_fraction": 0.8,
-      "n": 1452,
-      "exam": {
-       "n": 363,
-       "kept": 275,
-       "avg_r_all": -0.013857150161957061,
-       "avg_r_kept": 0.022457327978673048
-      },
-      "threshold": 0.38214905857908954,
-      "reason": "kept trades earned +0.02R vs -0.01R for all, on unseen trades"
-     },
-     "12h": {
-      "enabled": false,
-      "keep_fraction": 0.5,
-      "n": 3452,
-      "exam": {
-       "n": 863,
-       "kept": 474,
-       "avg_r_all": 0.1316483518439121,
-       "avg_r_kept": 0.1235524845328707
-      },
-      "reason": "the filter did not improve results on unseen trades"
-     },
-     "4h": {
-      "enabled": false,
-      "keep_fraction": 0.4,
-      "n": 7074,
-      "exam": {
-       "n": 1769,
-       "kept": 792,
-       "avg_r_all": 0.22026358151000172,
-       "avg_r_kept": 0.22647499394690745
-      },
-      "reason": "the filter did not improve results on unseen trades"
-     },
-     "1h": {
-      "enabled": true,
-      "keep_fraction": 0.7,
-      "n": 3453,
-      "exam": {
-       "n": 864,
-       "kept": 651,
-       "avg_r_all": 0.23344261272355674,
-       "avg_r_kept": 0.28387504069046154
-      },
-      "threshold": 0.47154831014597043,
-      "reason": "kept trades earned +0.28R vs +0.23R for all, on unseen trades"
-     },
-     "15m": {
-      "enabled": false,
-      "keep_fraction": 0.6,
-      "n": 3341,
-      "exam": {
-       "n": 836,
-       "kept": 562,
-       "avg_r_all": 0.06560138644715309,
-       "avg_r_kept": 0.055886077604481325
-      },
-      "reason": "the filter did not improve results on unseen trades"
-     }
-    },
-    "seconds": 91.7
-   }
-  }
- },
- "safety": [],
- "release": {
-  "updated_at": 1793386630880,
-  "version": "2.1.0",
-  "launched_at": 1793386630880
- },
- "track_record": {
-  "record_since": 1795511383715,
-  "live_signals": 8,
-  "updated": 1795555517032
- },
- "record_live": {
-  "summary": {
-   "closed": 6,
-   "win_rate": 0.8333333333333334,
-   "avg_return_pct": 0.3930420115988817,
-   "total_return_pct": 2.35825206959329,
-   "best_pct": 1.0597354793548266,
-   "worst_pct": -0.028445958877900968,
-   "profit_factor": 83.90288542269404,
-   "net": true,
-   "avg_gross_return_pct": 0.5423330582655483,
-   "total_gross_return_pct": 3.25399834959329,
-   "gross_win_rate": 1.0,
-   "avg_roi_pct": 1.3746565601377239,
-   "total_roi_pct": 8.247939360826344,
-   "best_roi_pct": 4.295355436175566,
-   "worst_roi_pct": -1.0240545196044348
-  },
-  "by_timeframe": {
-   "12h": {
-    "closed": 4,
-    "win_rate": 1.0,
-    "avg_return_pct": 0.5815567749420563,
-    "total_return_pct": 2.326227099768225,
-    "best_pct": 1.0597354793548266,
-    "worst_pct": 0.10287507863283335,
-    "profit_factor": null,
-    "net": true,
-    "avg_gross_return_pct": 0.7308058449420562,
-    "total_gross_return_pct": 2.923223379768225,
-    "gross_win_rate": 1.0,
-    "avg_roi_pct": 1.9854083622413816,
-    "total_roi_pct": 7.9416334489655265,
-    "best_roi_pct": 4.295355436175566,
-    "worst_roi_pct": 0.30862523589850005
-   },
-   "15m": {
-    "closed": 2,
-    "win_rate": 0.5,
-    "avg_return_pct": 0.01601248491253253,
-    "total_return_pct": 0.03202496982506506,
-    "best_pct": 0.060470928702966026,
-    "worst_pct": -0.028445958877900968,
-    "profit_factor": 2.12581790483936,
-    "net": true,
-    "avg_gross_return_pct": 0.16538748491253252,
-    "total_gross_return_pct": 0.33077496982506505,
-    "gross_win_rate": 1.0,
-    "avg_roi_pct": 0.1531529559304089,
-    "total_roi_pct": 0.3063059118608178,
-    "best_roi_pct": 1.3303604314652526,
-    "worst_roi_pct": -1.0240545196044348
-   }
-  },
-  "signals_by_status": {
-   "EXPIRED": 6,
-   "OPEN": 2
-  },
-  "signals_by_timeframe": {
-   "12h": 4,
-   "15m": 3,
-   "1h": 1
-  }
- },
- "counts": {
-  "paper": 10,
-  "paper_trades": 0,
-  "paper_futures_trades": 237,
-  "auto_paper_state": 4,
-  "jobs": 28
- },
- "bots": [
-  {
-   "id": "futures-signal-ab-1h",
-   "reset_token": "v3"
-  },
-  {
-   "id": "futures-signal-ab-4h",
-   "reset_token": "v3"
-  },
-  {
-   "id": "futures-signal-ab-12h",
-   "reset_token": "v3"
-  },
-  {
-   "id": "futures-signal-ab-15m",
-   "reset_token": "v3"
-  },
-  {
-   "id": "futures-signal-ab-3d",
-   "reset_token": "v3"
-  },
-  {
-   "id": "futures-test-tp08-15m",
-   "reset_token": "v3"
-  },
-  {
-   "id": "futures-demo-ab-1d",
-   "reset_token": "v3"
-  }
- ],
- "telegram": {
-  "has_token": true,
-  "has_channel": true,
-  "enabled": true,
-  "post_wins": true,
-  "post_teaser": true,
-  "post_weekly": true,
-  "keys": [
-   "channel",
-   "enabled",
-   "post_teaser",
-   "post_weekly",
-   "post_wins",
-   "updated_at"
-  ]
- },
- "telegram_status": {
+ "firestore": "429 Quota exceeded.",
+ "edge_health": {
   "ok": true,
-  "checked_at": 1795557915427,
-  "last_sent": [
-   "wins"
-  ],
-  "last_post_at": 1795536682606,
-  "updated_at": null,
-  "errors": 0
+  "views": 751,
+  "newest": 1795589902454,
+  "last_put": 1795589906292
  },
- "telegram_drafts": {
-  "n": 0,
-  "items": []
- },
- "push_tokens": 6,
- "telegram_post_jobs": [
-  {
-   "status": "done",
-   "created_at": 1795536155058,
-   "error": ""
-  },
-  {
-   "status": "done",
-   "created_at": 1795525617222,
-   "error": ""
-  },
-  {
-   "status": "done",
-   "created_at": 1795520594437,
-   "error": ""
-  },
-  {
-   "status": "done",
-   "created_at": 1795441385814,
-   "error": ""
-  },
-  {
-   "status": "done",
-   "created_at": 1795425110489,
-   "error": ""
-  }
- ],
- "jobs_summary": {
-  "adjust_signal": {
-   "n": 16,
-   "status": {
-    "done": 15,
-    "failed": 1
-   },
-   "errors": [
-    "this signal was not found"
-   ],
-   "oldest_queued_min": null
-  },
-  "telegram_post": {
-   "n": 10,
-   "status": {
-    "done": 10
-   },
-   "errors": [],
-   "oldest_queued_min": null
-  },
-  "laststand_start": {
-   "n": 1,
-   "status": {
-    "done": 1
-   },
-   "errors": [],
-   "oldest_queued_min": null
-  },
-  "guardian_dismiss": {
-   "n": 1,
-   "status": {
-    "done": 1
-   },
-   "errors": [],
-   "oldest_queued_min": null
-  }
- },
- "open_vs_record": {
-  "record_rows": 8,
-  "record_open": 2,
-  "record_open_tfs": [
-   "15m",
-   "1h"
-  ],
-  "record_since_tf": null,
-  "bots": [
-   {
-    "bot": "futures-signal-ab-1h",
-    "tf": "1h",
-    "pending": false,
-    "opened_at": 1795552352426,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "run_target",
-     "signal"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "bot": "futures-signal-ab-12h",
-    "tf": "12h",
-    "pending": false,
-    "opened_at": 1795530375069,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "run_target",
-     "signal"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "bot": "futures-signal-ab-15m",
-    "tf": "15m",
-    "pending": false,
-    "opened_at": 1795515499297,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "signal",
-     "size_mult"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "bot": "futures-signal-ab-15m",
-    "tf": "15m",
-    "pending": false,
-    "opened_at": 1795537752236,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "run_target",
-     "signal"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "bot": "futures-test-tp08-15m",
-    "tf": "15m",
-    "pending": false,
-    "opened_at": 1795515499297,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "signal",
-     "size_mult"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "bot": "futures-test-tp08-15m",
-    "tf": "15m",
-    "pending": false,
-    "opened_at": 1795537752236,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "run_target",
-     "signal"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "bot": "futures-demo-ab-1d",
-    "tf": "1d",
-    "pending": false,
-    "opened_at": 1795511382950,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "signal",
-     "size_mult"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": []
-   },
-   {
-    "bot": "futures-demo-ab-1d",
-    "tf": "1d",
-    "pending": false,
-    "opened_at": 1795511382950,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "signal",
-     "size_mult"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": []
-   },
-   {
-    "bot": "futures-demo-ab-1d",
-    "tf": "1d",
-    "pending": false,
-    "opened_at": 1795511382950,
-    "info_keys": [
-     "atr",
-     "bar_ts",
-     "confidence",
-     "decision",
-     "edge_confirmed",
-     "grade",
-     "leverage",
-     "model_version",
-     "p_down",
-     "p_up",
-     "predicted",
-     "rr",
-     "signal",
-     "size_mult"
-    ],
-    "sid": null,
-    "sid_in_record": null,
-    "sid_open_in_record": null,
-    "same_coin_tf_side_statuses": []
-   }
-  ],
-  "auto": [
-   {
-    "tf": "1h",
-    "grade": "A",
-    "at": 1795552505107,
-    "sid": "888b381c",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "tf": "1d",
-    "grade": "A",
-    "at": 1795060537712,
-    "sid": "616ba2ca",
-    "sid_in_record": false,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": []
-   },
-   {
-    "tf": "12h",
-    "grade": "A",
-    "at": 1795511499772,
-    "sid": "a1fcaf0f",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "15m",
-    "grade": "A",
-    "at": 1795537930021,
-    "sid": "7f0feb08",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "tf": "4h",
-    "grade": "A",
-    "at": 1795244678445,
-    "sid": "ca9b4285",
-    "sid_in_record": false,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": []
-   },
-   {
-    "tf": "15m",
-    "grade": "A",
-    "at": 1795512807185,
-    "sid": "9648ef13",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "12h",
-    "grade": "A",
-    "at": 1795511499772,
-    "sid": "a1fcaf0f",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "12h",
-    "grade": "B",
-    "at": 1795511484672,
-    "sid": "53815bb3",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "15m",
-    "grade": "A",
-    "at": 1795537930021,
-    "sid": "7f0feb08",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "tf": "1h",
-    "grade": "A",
-    "at": 1795552505107,
-    "sid": "888b381c",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "tf": "12h",
-    "grade": "A",
-    "at": 1795511499772,
-    "sid": "a1fcaf0f",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "12h",
-    "grade": "B",
-    "at": 1795511484672,
-    "sid": "53815bb3",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "1h",
-    "grade": "A",
-    "at": 1795552505107,
-    "sid": "888b381c",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "tf": "15m",
-    "grade": "A",
-    "at": 1795537930021,
-    "sid": "7f0feb08",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "tf": "1h",
-    "grade": "A",
-    "at": 1795552505107,
-    "sid": "888b381c",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   }
-  ]
- },
- "derivs": {
-  "exists": true,
-  "generated_at": 1795557773442,
-  "coins": 33,
-  "liq_maps": 6,
-  "volatility": [
-   "dvol",
-   "options",
-   "source"
-  ],
-  "macro": [
-   "DXY",
-   "GOLD",
-   "NDX",
-   "SPX",
-   "US10Y",
-   "source"
-  ],
-  "unlocks": 8
- },
- "xag_models": {
-  "15m": {
-   "exists": true,
-   "active": true,
-   "keys": [
-    "available",
-    "best_model",
-    "data_end",
-    "data_start",
-    "edge",
-    "failures",
-    "fast",
-    "features"
-   ]
-  },
-  "1h": {
-   "exists": true,
-   "active": true,
-   "keys": [
-    "available",
-    "best_model",
-    "data_end",
-    "data_start",
-    "edge",
-    "failures",
-    "fast",
-    "features"
-   ]
-  },
-  "4h": {
-   "exists": true,
-   "active": true,
-   "keys": [
-    "available",
-    "best_model",
-    "data_end",
-    "data_start",
-    "edge",
-    "failures",
-    "fast",
-    "features"
-   ]
-  },
-  "12h": {
-   "exists": true,
-   "active": true,
-   "keys": [
-    "available",
-    "best_model",
-    "data_end",
-    "data_start",
-    "edge",
-    "failures",
-    "fast",
-    "features"
-   ]
-  },
-  "1d": {
-   "exists": true,
-   "active": false,
-   "keys": [
-    "available",
-    "libraries",
-    "reason",
-    "symbol",
-    "timeframe",
-    "training"
-   ]
-  },
-  "3d": {
-   "exists": true,
-   "active": false,
-   "keys": [
-    "available",
-    "libraries",
-    "reason",
-    "symbol",
-    "timeframe",
-    "training"
-   ]
-  }
- },
- "risk_state": {
-  "state": "NORMAL",
-  "score": 1,
-  "at": 1795557734621,
-  "factors": {
-   "data": "ok",
-   "btc_vol": "ok",
-   "btc_move": "ok",
-   "breadth_vol": "ok",
-   "turn": "ok",
-   "sweep": "warn",
-   "liq": "ok",
-   "funding": "ok",
-   "news": "ok",
-   "record": "ok",
-   "streak": "ok",
-   "exposure": "ok"
-  }
- },
- "challenge_hesper": {
-  "keys": [
-   "auto_restart",
-   "current",
-   "curves",
-   "generated_at",
-   "goal",
-   "id",
-   "idle",
-   "label",
-   "laststand",
-   "max_leverage",
-   "min_balance",
-   "min_start",
-   "name",
-   "open_ended",
-   "policy",
-   "runs",
-   "score",
-   "since",
-   "start",
-   "started",
-   "title",
-   "trades"
-  ],
-  "runs": 1,
-  "trades": 10,
-  "at": 1795557139787,
-  "since": 1793784369074,
-  "current_run": 1,
-  "run_numbers": [
-   1
-  ],
-  "run_trades": [
-   10
-  ],
-  "laststand": {
-   "id": "laststand",
-   "name": "Last Stand",
-   "title": "Last Stand",
-   "auto_restart": false,
-   "min_start": 5.0,
-   "since": 1795240371118,
-   "start": 10.0,
-   "goal": 100.0,
-   "max_leverage": 25,
-   "idle": false,
-   "policy": null,
-   "min_balance": 1.0,
-   "started": true,
-   "generated_at": 1795557139787,
-   "current": null,
-   "score": null,
-   "open_ended": true,
-   "runs": 1,
-   "trades": 1,
-   "curves": null,
-   "label": "Demo \u00b7 virtual money \u00b7 not financial advice"
-  }
- },
- "challenge_laststand": {
-  "keys": [],
-  "runs": null,
-  "trades": null,
-  "at": null,
-  "since": null,
-  "current_run": null,
-  "run_numbers": [],
-  "run_trades": [],
-  "laststand": null
- },
- "news": {
-  "updated": 1795555517212,
-  "generated_at": 1795555517209,
-  "calendar_n": 7,
-  "high_usd": [
-   {
-    "title": "Core PCE Price Index m/m",
-    "ts": 1795613400000,
-    "past": false
-   },
-   {
-    "title": "Prelim GDP q/q",
-    "ts": 1795613400000,
-    "past": false
-   }
-  ],
-  "next_high": "Core PCE Price Index m/m",
-  "headlines_n": 30,
-  "errors": []
- },
- "alert_watcher": {
-  "at": 1795557493727,
-  "armed": 24,
-  "armed_at": 1795554696498,
-  "sent_total": 0,
-  "error": null,
-  "idle": null,
-  "engine_step": {
-   "at": 1795557500750,
-   "result": null
-  }
- },
- "hj_keys": [
-  "config",
-  "database",
-  "engine",
-  "exchange",
-  "fail_closed",
-  "generated_at",
-  "market_data",
-  "model_libraries",
-  "models",
-  "recent_errors_count",
-  "safety",
-  "series",
-  "status",
-  "uptime_s"
- ],
- "md": {
-  "status": "OK",
-  "transport": "engine snapshot (website streams live prices)",
-  "last_update_ms": 1795557525212,
-  "age_s": 388.969,
-  "reconnects": 0,
-  "last_error": null,
-  "quality_pct": 99.993,
-  "stale_series": 0,
-  "has_error": false
- },
- "md_stale": [],
- "series_status": {
-  "OK": 140
- },
- "series_sample": {
-  "timeframe": "15m",
-  "candles": 32807,
-  "missing": 0,
-  "duplicates": 0,
-  "malformed": 0,
-  "misaligned": 0,
-  "gaps": [],
-  "quality_pct": 100.0,
-  "recent_missing": 0,
-  "fresh": true,
-  "age_s": 314.2,
-  "first_ts": 1766031300000,
-  "last_ts": 1795556700000,
-  "status": "OK",
-  "symbol": "PAXG/USDT"
- },
- "step_avg": {
-  "analyses": 165.9,
-  "bots": 22.3,
-  "snapshot": 14.1,
-  "candles": 13.7,
-  "market_data": 4.5,
-  "crowd": 3.8,
-  "liquidations": 2.7,
-  "outcomes": 2.4,
-  "bootstrap": 1.8,
-  "rejected_outcomes": 1.7,
-  "derivs": 1.1,
-  "config": 0.9,
-  "guardian": 0.8,
-  "market_turn": 0.8,
-  "market_extras": 0.6
- },
- "step_max": {
-  "analyses": 250.2,
-  "liquidations": 123.0,
-  "bots": 41.2,
-  "market_data": 37.8,
-  "candles": 26.1,
-  "snapshot": 21.9,
-  "derivs": 17.6,
-  "news_sentiment": 12.1
- },
- "eng_watch": {
-  "last_tick_started": 1795557510684,
-  "last_tick_finished": 1795557776805,
-  "last_tick_seconds": 266.1,
-  "round_seconds_avg": 238.9,
-  "round_seconds_max": 352.1,
-  "rounds_measured": 48,
-  "watch_last_at": 1795557763097,
-  "watch_coins": 2,
-  "watch_priced": 2,
-  "watch_sent_total": 406,
-  "flow_last_at": 1795557770706,
-  "flow_coins": 32,
-  "flow_errors": 0,
-  "flow_alerts": {
-   "whales": {
-    "alerts": 209,
-    "p15": {
-     "n": 208,
-     "followed_pct": 49.5,
-     "avg_move_pct": -0.045
-    },
-    "p60": {
-     "n": 206,
-     "followed_pct": 52.9,
-     "avg_move_pct": 0.068
-    },
-    "p240": {
-     "n": 202,
-     "followed_pct": 54.0,
-     "avg_move_pct": 0.091
-    }
-   },
-   "wipeout": {
-    "alerts": 53,
-    "p15": {
-     "n": 53,
-     "followed_pct": 39.6,
-     "avg_move_pct": -0.187
-    },
-    "p60": {
-     "n": 53,
-     "followed_pct": 50.9,
-     "avg_move_pct": 0.079
-    },
-    "p240": {
-     "n": 53,
-     "followed_pct": 41.5,
-     "avg_move_pct": -0.642
-    }
-   }
-  },
-  "alert_watcher": {
-   "at": 1795557493727,
-   "armed": 24,
-   "armed_at": 1795554696498,
-   "sent_total": 0,
-   "error": null,
-   "idle": null,
-   "engine_step": {
-    "at": 1795557500750,
-    "result": null
-   }
-  }
- },
- "exchange": {
-  "name": "binance",
-  "errors": 0,
-  "last_error": null,
-  "last_ok_ms": 1795557734600,
-  "clock_skew_ms": -3,
-  "status": "OK",
-  "has_error": false
- },
- "ai_check": {
-  "warnings": [
-   "4h: the AI did worse than plain base rates this week (skill -4.0%) and worse than the month before",
-   "1d: the AI did worse than plain base rates this week (skill -7.8%) and worse than the month before"
-  ],
-  "by_tf": null,
-  "keys": [
-   "since",
-   "timeframes",
-   "warnings"
-  ]
- },
- "auto_trade": [
-  {
-   "n": 0,
-   "enabled": true,
-   "timeframes": [
-    "1h",
-    "4h",
-    "12h",
-    "1d",
-    "15m"
-   ],
-   "grades": "A",
-   "coins": "all",
-   "max_open": 10,
-   "max_same_side": 10,
-   "max_new_per_day": null,
-   "last2h": {
-    "15m|A|opened|": 1,
-    "1h|A|opened|": 1
-   },
-   "margin": {
-    "margin": 110
-   },
-   "state_updated": 1795552699446,
-   "recent": {
-    "15m|A|opened|": 1,
-    "1h|A|opened|": 1,
-    "15m|A|skipped|already 3 short trades open (same-direction limit)": 5,
-    "12h|A|opened|": 1,
-    "1h|A|skipped|already 3 short trades open (same-direction limit)": 1,
-    "12h|A|skipped|already 3 short trades open (same-direction limit)": 1
-   }
-  },
-  {
-   "n": 1,
-   "enabled": true,
-   "timeframes": [
-    "1h",
-    "4h",
-    "12h",
-    "15m",
-    "1d"
-   ],
-   "grades": "AB",
-   "coins": "all",
-   "max_open": 10,
-   "max_same_side": 10,
-   "max_new_per_day": null,
-   "last2h": {
-    "15m|A|skipped|a position or order on this coin is already open": 1,
-    "1h|A|opened|": 1
-   },
-   "margin": {
-    "margin": 100
-   },
-   "state_updated": 1795552699446,
-   "recent": {
-    "15m|A|skipped|a position or order on this coin is already open": 1,
-    "1h|A|opened|": 1,
-    "15m|A|opened|": 4,
-    "12h|A|opened|": 1,
-    "12h|B|opened|": 1,
-    "4h|B|skipped|a position or order on this coin is already open": 2,
-    "4h|B|skipped|already 5 short trades open (same-direction limit)": 3,
-    "1h|A|skipped|already 5 short trades open (same-direction limit)": 1,
-    "15m|A|skipped|already 5 short trades open (same-direction limit)": 1,
-    "12h|A|skipped|already 5 short trades open (same-direction limit)": 1
-   }
-  },
-  {
-   "n": 2,
-   "enabled": true,
-   "timeframes": [
-    "1h",
-    "4h",
-    "12h",
-    "1d"
-   ],
-   "grades": "AB",
-   "coins": "all",
-   "max_open": 10,
-   "max_same_side": 10,
-   "max_new_per_day": null,
-   "last2h": {
-    "1h|A|opened|": 1
-   },
-   "margin": {
-    "margin": 100
-   },
-   "state_updated": 1795552699446,
-   "recent": {
-    "1h|A|opened|": 1,
-    "12h|A|opened|": 1,
-    "12h|B|opened|": 1,
-    "4h|B|opened|": 3,
-    "1h|A|skipped|already 3 short trades open (same-direction limit)": 1,
-    "4h|B|skipped|already 3 short trades open (same-direction limit)": 2,
-    "12h|A|skipped|already 3 short trades open (same-direction limit)": 1
-   }
-  },
-  {
-   "n": 3,
-   "enabled": true,
-   "timeframes": [
-    "1h",
-    "4h",
-    "12h",
-    "1d",
-    "15m"
-   ],
-   "grades": "AB",
-   "coins": "all",
-   "max_open": 20,
-   "max_same_side": 10,
-   "max_new_per_day": null,
-   "last2h": {
-    "15m|A|skipped|a position or order on this coin is already open": 1,
-    "1h|A|opened|": 1
-   },
-   "margin": {
-    "margin": 100
-   },
-   "state_updated": 1795552699446,
-   "recent": {
-    "15m|A|skipped|a position or order on this coin is already open": 2,
-    "1h|A|opened|": 1,
-    "15m|A|opened|": 2,
-    "15m|A|skipped|exposure limit reached (50% of the account in use)": 2,
-    "12h|A|opened|": 1,
-    "12h|B|opened|": 1,
-    "4h|B|opened|": 4,
-    "1h|A|skipped|a position or order on this coin is already open": 1,
-    "4h|B|skipped|a position or order on this coin is already open": 1,
-    "12h|A|skipped|a position or order on this coin is already open": 1
-   }
-  }
- ],
  "cloud_watcher": {
-  "at": 1795557913837,
-  "armed": 24,
-  "armed_at": 1795554696498,
-  "sent": 0,
-  "sent_total": 0,
-  "due": 0,
-  "priced": 2,
+  "at": 1795590253763,
+  "armed": 25,
+  "priced": null,
+  "sent_total": null,
   "error": null,
-  "idle": null,
-  "sent_keys_n": 0,
-  "bad_tokens_n": 0,
-  "engine_diag": {
-   "devices": 6,
-   "with_uid": 6,
-   "admins_set": 1,
-   "levels": 8,
-   "rules_primed": 9
+  "idle": true,
+  "price_tries": null
+ },
+ "record_at": 1795589900266,
+ "record_open": [
+  {
+   "tf": "12h",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795586295927
   },
-  "fcm_check": {
-   "at": 1795556653919,
-   "ok": true,
-   "status": 200
+  {
+   "tf": "15m",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795583779384
   },
-  "price_tries": [
-   "data-api.binance.vision 403",
-   "api.binance.com 451",
-   "okx 200 1/1"
+  {
+   "tf": "3d",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795572961187
+  },
+  {
+   "tf": "1h",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795569656102
+  },
+  {
+   "tf": "12h",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795565393816
+  },
+  {
+   "tf": "1h",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795552505107
+  },
+  {
+   "tf": "15m",
+   "status": "OPEN",
+   "fill": "FILLED",
+   "created_at": 1795537930021
+  }
+ ],
+ "record_newest": [
+  {
+   "tf": "12h",
+   "status": "OPEN",
+   "created_at": 1795586295927
+  },
+  {
+   "tf": "15m",
+   "status": "OPEN",
+   "created_at": 1795583779384
+  },
+  {
+   "tf": "3d",
+   "status": "OPEN",
+   "created_at": 1795572961187
+  },
+  {
+   "tf": "1h",
+   "status": "OPEN",
+   "created_at": 1795569656102
+  },
+  {
+   "tf": "12h",
+   "status": "OPEN",
+   "created_at": 1795565393816
+  }
+ ],
+ "bots_open": [
+  {
+   "bot": "futures-signal-ab-1h",
+   "tf": "1h",
+   "opened_at": 1795552352426,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795552505107,
+     "fill_status": "FILLED",
+     "filled_at": 1795552505107,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 200,
+     "expires_at": 1796272505107,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-1h",
+   "tf": "1h",
+   "opened_at": 1795569494414,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795569656102,
+     "fill_status": "FILLED",
+     "filled_at": 1795569656102,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 200,
+     "expires_at": 1796289656102,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-12h",
+   "tf": "12h",
+   "opened_at": 1795565146667,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "B",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795565393816,
+     "fill_status": "FILLED",
+     "filled_at": 1795573800000,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 30,
+     "expires_at": 1796861393816,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-12h",
+   "tf": "12h",
+   "opened_at": 1795586091148,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "B",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795586295927,
+     "fill_status": "FILLED",
+     "filled_at": 1795587300000,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 30,
+     "expires_at": 1796882295927,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-15m",
+   "tf": "15m",
+   "opened_at": 1795583623668,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795583779384,
+     "fill_status": "FILLED",
+     "filled_at": 1795583779384,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 250,
+     "expires_at": 1795808779384,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-3d",
+   "tf": "3d",
+   "opened_at": 1795572803091,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795572961187,
+     "fill_status": "FILLED",
+     "filled_at": 1795572961187,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 30,
+     "expires_at": 1803348961187,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "tf": "15m",
+   "opened_at": 1795537752236,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795537930021,
+     "fill_status": "FILLED",
+     "filled_at": 1795537930021,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 250,
+     "expires_at": 1795762930021,
+     "tp1_hit": 1,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "tf": "15m",
+   "opened_at": 1795583623668,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "run_target",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": [
+    {
+     "status": "OPEN",
+     "created_at": 1795583779384,
+     "fill_status": "FILLED",
+     "filled_at": 1795583779384,
+     "closed_at": null,
+     "exit_reason": null,
+     "horizon_bars": 250,
+     "expires_at": 1795808779384,
+     "tp1_hit": 0,
+     "stop_hit": 0
+    }
+   ]
+  },
+  {
+   "bot": "futures-demo-ab-1d",
+   "tf": "1d",
+   "opened_at": 1795511382950,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": []
+  },
+  {
+   "bot": "futures-demo-ab-1d",
+   "tf": "1d",
+   "opened_at": 1795511382950,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": []
+  },
+  {
+   "bot": "futures-demo-ab-1d",
+   "tf": "1d",
+   "opened_at": 1795511382950,
+   "info_keys": [
+    "atr",
+    "bar_ts",
+    "confidence",
+    "decision",
+    "edge_confirmed",
+    "grade",
+    "leverage",
+    "model_version",
+    "p_down",
+    "p_up",
+    "predicted",
+    "rr",
+    "signal",
+    "size_mult",
+    "timeframe"
+   ],
+   "grade": "A",
+   "demo": null,
+   "pending_bars": 6,
+   "exit_at": null,
+   "record_same_coin_tf_side": []
+  }
+ ],
+ "calls_15m": {
+  "at": 1795589900282,
+  "with_plan": 26,
+  "record_status": [
+   "None"
+  ]
+ },
+ "calls_1h": {
+  "at": 1795589900288,
+  "with_plan": 34,
+  "record_status": [
+   "None"
+  ]
+ },
+ "calls_4h": {
+  "at": 1795589900294,
+  "with_plan": 33,
+  "record_status": [
+   "None"
+  ]
+ },
+ "calls_12h": {
+  "at": 1795587432804,
+  "with_plan": 32,
+  "record_status": [
+   "None",
+   "already_open"
   ]
  }
 }
