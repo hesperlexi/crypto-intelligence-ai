@@ -122,3 +122,45 @@ def first_passage_base_rate(high: np.ndarray, low: np.ndarray, close: np.ndarray
     ci = wilson(k, m)
     return {"probability": k / m, "n": m, "ci95": [ci[0], ci[1]], "stopped_first": float((state == -1).mean()),
             "unresolved": float((state == 0).mean()), "horizon_bars": horizon}
+
+
+def first_passage_rates(high: np.ndarray, low: np.ndarray, close: np.ndarray, atr: np.ndarray, ups_atr: list[float],
+                        down_atr: float, horizon: int, cond: np.ndarray | None = None,
+                        side: int = 1) -> dict[float, dict[str, Any]]:
+    """V3.2: `first_passage_base_rate` for several targets sharing one stop, in ONE pass over the horizon (identical
+    results). A target is reached first exactly when the best price on the bars BEFORE the stop bar reaches it (the stop
+    counts first on a bar touching both). Needed since the setup's horizon is the record's own (up to 250 bars)."""
+    n = len(close)
+    last = n - horizon
+    if last <= 0:
+        return {u: {"probability": None, "n": 0} for u in ups_atr}
+    idx = np.arange(last)
+    ok = np.isfinite(atr[:last]) & (atr[:last] > 0)
+    if cond is not None:
+        ok &= cond[:last]
+    idx = idx[ok]
+    if len(idx) < 50:
+        return {u: {"probability": None, "n": int(len(idx))} for u in ups_atr}
+    entry, a = close[idx], atr[idx]
+    stp = entry - side * down_atr * a
+    best = np.full(len(idx), -np.inf if side > 0 else np.inf)
+    stopped = np.zeros(len(idx), bool)
+    for h in range(1, horizon + 1):
+        hi, lo = high[idx + h], low[idx + h]
+        hit_stop = (lo <= stp) if side > 0 else (hi >= stp)
+        live = ~stopped & ~hit_stop
+        if side > 0:
+            best = np.where(live, np.fmax(best, hi), best)
+        else:
+            best = np.where(live, np.fmin(best, lo), best)
+        stopped |= hit_stop
+    m = int(len(idx))
+    out: dict[float, dict[str, Any]] = {}
+    for u in ups_atr:
+        tgt = entry + side * u * a
+        reached = (best >= tgt) if side > 0 else (best <= tgt)
+        k = int(reached.sum())
+        ci = wilson(k, m)
+        out[u] = {"probability": k / m, "n": m, "ci95": [ci[0], ci[1]], "stopped_first": float((stopped & ~reached).mean()),
+                  "unresolved": float((~stopped & ~reached).mean()), "horizon_bars": horizon}
+    return out

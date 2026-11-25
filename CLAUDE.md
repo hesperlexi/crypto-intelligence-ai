@@ -1542,3 +1542,39 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
 - **Owner removal (25 Nov 2026, testing mode, explicit exception to the ground rule):** `services/owner_removals.remove_anthropic_25nov` (flag `remove_anthropic_25nov_v31`): the two ANTHROPIC/USDT calls of 25 Nov (15m short 18:40 stopped, 1h admin-closed win) removed from `signals`, bots (`bot_trades`, cash + equity set back) and both challenges (trades, later balances of the run, state cash/trades/wins); copies kept in `removed_record`, `removed_bot_trades`, `removed_challenge_trades`.
 - **Challenges v3.2 (owner, 25 Nov 2026, live):** Hesper + Last Stand take up to `SLOTS` 5 fresh grade-A calls at once (one per coin); size = stop costs `RISK_PCT` of equity (Hesper 10, Last Stand 15; env `HESPER_RISK_PCT` / `LASTSTAND_RISK_PCT`, 0 = old all-in), margin ≤ free cash, leverage caps unchanged; each position keeps its own follow-up config (`info.cfg`, `Hesper._manage_all`); 2 losses in a row → `pause_until` +4 h; a single liquidation no longer ends the run (FAIL when flat and cash < MIN_BALANCE). View `current.opens/pendings/slots/risk_pct/pause_until`; Last Stand close per trade (`laststand_close` {fraction, id}) or all. tests/conftest sets CHALLENGE_SLOTS=1 + risk 0 for older tests; `tests/test_challenge_slots.py`.
 - Owner removal 25 Nov 2026: 15m bot PAXG trade opened 24 Nov 20:29 Dubai (break-even stop) removed (`owner_removals.remove_paxg_bot_trade_24nov`, flag `remove_paxg_bot_24nov_v31`), copy in `removed_bot_trades`.
+
+## V3.2 Stage 1 - Fable 5.2 audit fixes (26 Nov 2026, branch `stage1-fable-fixes`, checkpoint tag `checkpoint-pre-stage1` = 97bd3e3)
+- **R-01 guards fail closed.** `btc_shock.status` / `sweep_guard.status` return block / clear / unavailable (missing, fewer than
+  MIN_BARS, newest closed 1h candle older than `BTC_SHOCK_MAX_AGE_H` / `SWEEP_GUARD_MAX_AGE_H` = 2 h, or an error).
+  `risk_shadow.assess` lists rules it could not evaluate in `unavailable` (volatility: missing / <110 / stale 4h; loss stop:
+  query error; drift: error only - "not enough forecasts yet" is `drift_state` insufficient_history, shown, not blocking).
+  `analysis.entry_guards` (sweep → BTC shock → capital protection, same order as before) turns unavailable into NO TRADE
+  "CHECK UNAVAILABLE", `rt.record_error` + Health `gate_failures` (btc_shock, sweep_guard, capital_protection). New entries
+  only: exits, stops, reversals untouched (NO TRADE = side 0 for bots). `against()` kept for research/display.
+- **R-02 meta-model thresholds out-of-fold.** `ml/oof.py`: 5 time-ordered folds, expanding window, embargo in bars
+  (filter v1 / runner: 30 = their label horizon; filter 2: max(30, record horizon)). Live threshold = quantile of OOF
+  scores; `validated` = kept share on the unseen last fold within 10 points of keep_fraction. Filters and runner run in
+  SHADOW until validated AND owner switch `TRADE_FILTER_ENFORCE=1` / `RUNNER_MODEL_ENFORCE=1` (after 2 weeks of
+  `filter_shadow_stats|<model>|<tf>` kept share within tolerance). Shadow records `filter_bypassed`, `filter_shadow`,
+  `runner_shadow` (private, in the record payload). v2.64 safety net kept on every timeframe (≥10 shadowed calls with
+  avg net R < 0 → `filter_off_revoked|TF`, the filter blocks again). Old bundles (no `threshold_method`) = in-sample = shadow.
+- **R-03 research verdict.** `MIN_SHARE` 0.95, `p_value` per verdict, `finalize()` (Holm over every verdict of a study,
+  `n_variants` incl. computed-but-dropped ones, `register()` to fix variants before outcomes, seed / fingerprint / engine
+  version, holdout status); a historical PASS is at most "PROVISIONAL PASS", `promotable` False. Forward holdout = record
+  calls from 2026-11-26 00:00 UTC (`HOLDOUT_START`); `read_holdout` refuses until 300 closed; `verdict` refuses trades
+  inside it unless `holdout=True`; `research_engine._split` ends HORIZON bars before it (split frozen from then on).
+  Every study main + `research.py` run through `run_study` / `finalize`.
+- **R-14 honest entry.** `analysis.live_quote` → `price_quality` {price, source ticker|last_close, quality live|missing|
+  stale|invalid, ts, age_s} (`TICKER_MAX_AGE_S` 300 = one cycle; the snapshot is taken once per tick). `tracking._plan`
+  refuses a FILLED market entry unless quality is live (call not recorded → `only_recorded` makes it NO TRADE); pending
+  fills (pullback limit, confirm / pullback rules) unchanged; payload stores `price_quality`. Bots skip a non-record market
+  entry without a live ticker.
+- **R-10 horizon.** `build_setup(..., horizon=tracking.horizon_for(tf))` (15m 250, 1h 200, 4h 100, others 30): target odds
+  and TP2/TP3 picks over the call's own horizon. `distribution.first_passage_rates` = one-pass version (identical numbers).
+- **R-16** `risk_state` step runs before `analyses`. **R-18** dead duplicate body after `return` in `combo_gates.cap_block` removed.
+- **R-13 training freshness.** Slices pick due models with `worker.trainable` (is_current, or newest candle within
+  max(2 bars, `TRAIN_MAX_LAG_H` 6 h): the slice's state copy can be ~1 h old, which silently dropped 15m pairs). Manifests
+  list pairs / not_trainable / not_reached / not_exported; the merge reports due, trained, missing shards (`SHARDS`),
+  `stale_models` (>48 h) and `problems`, and records status "warn" instead of "ok". The 25 Nov 11:29 UTC merge (0 of 15)
+  was a daytime re-run: shards=15, records 0, failed 0 (nothing due was exported); exact per-pair cause needs those logs.
+- Tests: test_guards_fail_closed_v32, test_oof_thresholds_v32, test_research_verdict_v32, test_stage1_v32, test_train_merge_v32.

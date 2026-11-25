@@ -29,6 +29,7 @@ from .features.dataset import InsufficientData
 from .ml import trainer
 from .ml.models import default_models, model_status
 from .data import derivs
+from .data.base import tf_ms
 from .services import hesper, scalp_backfill
 from .services import briefing, coin_reports
 from .services import leaderboard, referrals
@@ -1649,6 +1650,10 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                 fired += len(evs)
                 fired_events.extend(evs)
         return fired
+    # V3.0 market risk state (services/risk_state.py): one deterministic state from recorded inputs every tick;
+    # shown + stored on calls (shadow), applied only to members' practice auto-trade.
+    # V3.2 (Fable 5.2 audit R-16): computed BEFORE the analyses, so each call stores this tick's state, not the last one
+    detail["risk_state"] = step("risk_state", lambda: risk_state.run(rt, sink))
     detail["alerts_fired"] = step("analyses", analyse)
     # v2.16 smarter alerts: entry / TP / early-close events of the public calls, and market-mood flips (own step)
     def call_alerts():
@@ -1695,9 +1700,6 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # never blocks the tick (it catches its own errors; the step wrapper catches anything else)
     if guardian.ENABLED:
         detail["guardian"] = step("guardian", lambda: guardian.Guardian(rt, sink).run(analyses))
-    # V3.0 market risk state (services/risk_state.py): one deterministic state from recorded inputs every tick;
-    # shown + stored on calls (shadow), applied only to members' practice auto-trade
-    detail["risk_state"] = step("risk_state", lambda: risk_state.run(rt, sink))
     # v2.22 live market data (OKX, stablecoins -> SQLite only) and the admin-only market turn detector (recommend-only,
     # never changes a call): hourly, each in its own step so a slow or failing source never stops the tick
     if fetch_context and now_ms() - int(rt.db.get_setting("market_turn_at", 0) or 0) >= turn_detector.PUBLISH_EVERY_S * 1000 - 120_000:
@@ -1889,18 +1891,42 @@ def train(rt: Runtime, sink: BaseSink, budget_s: float = 2700) -> dict[str, Any]
 TF_COST = {"15m": 6, "1h": 5, "4h": 3, "12h": 2, "1d": 2, "3d": 1}
 
 
-def shard_pairs(rt: Runtime, shard: int, of: int, max_age_h: float = 12) -> list[tuple[str, str]]:
+# V3.2 (Fable 5.2 audit R-13): a slice trains on a COPY of the engine state restored from the Actions cache, which the
+# engine saves about every 64 minutes. The live check `is_current` (newest candle within 2 bars) then silently dropped
+# 15m pairs whenever that copy was more than ~30 minutes old, and a pair whose feed lags never trained and was never
+# reported. Training does not need the forming candle: a pair is trainable when its newest candle is within
+# max(2 bars, TRAIN_MAX_LAG_H); everything due but not trainable is listed in the slice manifest and the merge report.
+TRAIN_MAX_LAG_H = float(os.environ.get("TRAIN_MAX_LAG_H", "6"))
+STALE_MODEL_H = 48
+
+
+def trainable(rt: Runtime, symbol: str, timeframe: str, now: int | None = None) -> bool:
+    if rt.store.is_current(rt.exchange, symbol, timeframe):
+        return True
+    last = rt.store.last_ts(rt.exchange, symbol, timeframe)
+    now = now_ms() if now is None else now
+    return last is not None and last + max(2 * tf_ms(timeframe), TRAIN_MAX_LAG_H * 3.6e6) >= now
+
+
+def shard_pairs(rt: Runtime, shard: int, of: int, max_age_h: float = 12,
+                explain: dict[str, Any] | None = None) -> list[tuple[str, str]]:
     """Every model that is missing, fast-only, missing a model family, or older than `max_age_h`, spread over
-    `of` slices so each gets a similar amount of work (heavy timeframes dealt out first)."""
-    pairs = []
+    `of` slices so each gets a similar amount of work (heavy timeframes dealt out first). `explain` (optional) receives
+    the pairs that were due but whose candles are too old to train on ('not_trainable')."""
+    pairs, blocked = [], []
     for s in rt.symbols():
         for tf in MODEL_TIMEFRAMES:
-            if not rt.store.is_current(rt.exchange, s, tf):
-                continue
             v = trainer.active_version(s, tf, rt.db)
-            if v is None or (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > max_age_h * 3.6e6 \
-                    or _missing_models(v.get("summary") or {}, tf):
-                pairs.append((s, tf))
+            due = v is None or (v.get("summary") or {}).get("fast") or now_ms() - v["created_at"] > max_age_h * 3.6e6 \
+                or _missing_models(v.get("summary") or {}, tf)
+            if not due:
+                continue
+            if not trainable(rt, s, tf):
+                blocked.append(f"{s} {tf}")
+                continue
+            pairs.append((s, tf))
+    if explain is not None:
+        explain["not_trainable"] = blocked
     # v2.16: within a cost tier, missing models first, then the oldest (new coins get their models on the first night,
     # and a pair a slice could not reach last night goes first the next night)
     age = {p: (lambda v: 0 if v is None else int(v["created_at"]))(trainer.active_version(p[0], p[1], rt.db)) for p in pairs}
@@ -1915,7 +1941,8 @@ def train_shard(rt: Runtime, shard: int, of: int, budget_s: float, out_dir: str)
     from pathlib import Path
 
     t0 = time.time()
-    pairs = shard_pairs(rt, shard, of)
+    why: dict[str, Any] = {}
+    pairs = shard_pairs(rt, shard, of, explain=why)
     done = train_until(rt, pairs, False, t0 + budget_s)
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
@@ -1932,10 +1959,31 @@ def train_shard(rt: Runtime, shard: int, of: int, budget_s: float, out_dir: str)
         src = trainer.active_version(s, tf, rt.db)["path"]
         shutil.copyfile(src, out / f"{rec['version']}.joblib")
         records.append(rec)
-    (out / "manifest.json").write_text(dumps({"shard": shard, "of": of, "records": records, "trained": done,
-                                              "seconds": round(time.time() - t0, 1)}))
+    not_exported = [d["pair"] for d in done if d.get("state") == "done"
+                    and not any(r.get("symbol") == d["pair"].rsplit(" ", 1)[0] and r.get("timeframe") == d["pair"].rsplit(" ", 1)[1]
+                                for r in records)]
+    (out / "manifest.json").write_text(dumps({
+        "shard": shard, "of": of, "records": records, "trained": done, "seconds": round(time.time() - t0, 1),
+        # V3.2 (audit R-13): enough to tell, from the merge report alone, why a slice exported nothing
+        "pairs": [f"{p[0]} {p[1]}" for p in pairs], "not_trainable": [p for i, p in enumerate(why.get("not_trainable", []))
+                                                                         if i % of == shard],
+        "not_reached": [f"{p[0]} {p[1]}" for p in pairs[len(done):]], "not_exported": not_exported,
+        "state_newest_candle": rt.store.last_ts(rt.exchange, "BTC/USDT", "15m")}))
     return {"shard": shard, "pairs": len(pairs), "trained": len(done), "exported": len(records),
             "remaining": max(0, len(pairs) - len(done))}
+
+
+def model_freshness(rt: Runtime, now: int | None = None) -> dict[str, Any]:
+    """Models older than STALE_MODEL_H (or missing), with whether their candles are trainable - never hidden."""
+    now = now_ms() if now is None else now
+    stale = []
+    for s in rt.symbols():
+        for tf in MODEL_TIMEFRAMES:
+            v = trainer.active_version(s, tf, rt.db)
+            age = None if v is None else round((now - int(v["created_at"])) / 3.6e6, 1)
+            if v is None or age > STALE_MODEL_H:
+                stale.append({"pair": f"{s} {tf}", "age_h": age, "trainable": trainable(rt, s, tf, now)})
+    return {"older_than_h": STALE_MODEL_H, "n": len(stale), "models": stale[:60]}
 
 
 def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
@@ -1946,15 +1994,25 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
     t0 = time.time()
     started = now_ms()
     imported, skipped, shards, failed = 0, 0, 0, []
+    due, trained_n, not_trainable, not_reached, not_exported, missing_file, older = 0, 0, [], [], [], [], []
     for m in sorted(Path(in_dir).glob("**/manifest.json")):
         shards += 1
         data = loads(m.read_text(), {}) or {}
+        due += len(data.get("pairs") or [])
+        trained_n += sum(1 for t in data.get("trained", []) if t.get("state") == "done")
+        not_trainable += data.get("not_trainable") or []
+        not_reached += data.get("not_reached") or []
+        not_exported += data.get("not_exported") or []
         for rec in data.get("records", []):
             f = m.parent / f"{rec['version']}.joblib"
-            if f.exists() and trainer.import_bundle(rec, str(f), rt.db):
+            if not f.exists():
+                missing_file.append(rec.get("version"))
+                skipped += 1
+            elif trainer.import_bundle(rec, str(f), rt.db):
                 imported += 1
             else:
                 skipped += 1
+                older.append(rec.get("version"))          # a newer model is already active (expected, not an error)
         failed += [t for t in data.get("trained", []) if t.get("state") == "failed"]
     pruned = trainer.prune_files(rt.db)
     try:
@@ -1968,9 +2026,33 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
         series_note = series_nightly.run(rt, budget_s=float(os.environ.get("SERIES_POLICY_BUDGET_S", 900)))
     except Exception as exc:
         series_note = f"failed: {type(exc).__name__}: {exc}"[:300]
+    expected = int(os.environ.get("SHARDS", "0") or 0)
+    fresh = model_freshness(rt)
+    problems = []
+    if expected and shards < expected:
+        problems.append(f"{expected - shards} of {expected} slice manifests missing (slice failed or artifact not uploaded)")
+    if missing_file:
+        problems.append(f"{len(missing_file)} exported models have no file in the artifact")
+    if failed:
+        problems.append(f"{len(failed)} models failed to train")
+    if not_reached:
+        problems.append(f"{len(not_reached)} due models not reached within the slice budget")
+    if not_trainable:
+        problems.append(f"{len(not_trainable)} due models skipped: their candles are too old to train on")
+    if fresh["n"]:
+        problems.append(f"{fresh['n']} models older than {STALE_MODEL_H} h or missing")
+    if shards and due == 0 and imported == 0:
+        problems.append("no model was due in any slice (all younger than 12 h, or every due pair untrainable)")
     detail = {"shards": shards, "imported": imported, "skipped": skipped, "pruned_files": pruned,
-              "failed": failed[:20], "derivs": derivs_note, "series_policy": series_note}
-    _record(rt, "train", started, "ok", detail)
+              "failed": failed[:20], "derivs": derivs_note, "series_policy": series_note,
+              # V3.2 (audit R-13): why a merge imported what it did
+              "expected_shards": expected or None, "due": due, "trained": trained_n,
+              "not_trainable": not_trainable[:60], "not_reached": not_reached[:60], "not_exported": not_exported[:20],
+              "missing_files": missing_file[:20], "skipped_older": len(older), "stale_models": fresh,
+              "problems": problems}
+    _record(rt, "train", started, "warn" if problems else "ok", detail)
+    if problems:
+        log.warning("train merge: %s", "; ".join(problems))
     publish_models(rt, sink)          # health/status stays with the 5-minute engine (it has the live price feed)
     sink.flush()
     return detail

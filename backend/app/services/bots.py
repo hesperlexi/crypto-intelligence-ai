@@ -786,6 +786,8 @@ class BotEngine:
                 # v3.1 (owner, 25 Nov 2026: bots must show what the record shows): the record's own levels, entry and
                 # leverage - the same trade, not a look-alike
                 stop, targets, px = rec["stop"], rec["targets"], rec["entry"]
+            elif a["decision"] != "BUY ON PULLBACK" and (a.get("price_quality") or {}).get("quality", "live") != "live":
+                continue                              # V3.2 (audit R-14): no market fill at an old candle close
             if cfg.get("tp1_only"):
                 targets = targets[:1]                 # v2.8 15m demo: the whole position closes at TP1
             # the plan must still make sense at the price the bot can actually get

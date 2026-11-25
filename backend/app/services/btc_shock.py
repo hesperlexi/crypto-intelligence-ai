@@ -8,7 +8,12 @@ total and lowered the drawdown, but missed one criterion (fewer than 100 calls d
 A BTC shock is measured in BTC's own normal size, not a fixed %: z = BTC's 12-hour return (closed 1h candles) divided by
 the standard deviation of all 12-hour returns over the previous 30 days. After an up-shock (z >= 1.5) no new SHORT for
 6 hours; after a down-shock (z <= -1.5) no new LONG. Calls WITH the move are untouched. Env BTC_SHOCK_GUARD=0 turns it
-off. NO TRADE flag "BTC SHOCK" (in proof_checks.FLAGS: held-back calls are followed in rejected_signals)."""
+off. NO TRADE flag "BTC SHOCK" (in proof_checks.FLAGS: held-back calls are followed in rejected_signals).
+
+V3.2 (Fable 5.2 audit R-01, 25 Nov 2026) fail closed: `status()` says "block", "clear" or "unavailable". Unavailable =
+the BTC 1h candles cannot be read, there are fewer than MIN_BARS of them (insufficient history), the newest closed one
+closed more than MAX_AGE_H hours ago (stale), or the calculation raised. `analysis.analyze` turns "unavailable" into
+NO TRADE "CHECK UNAVAILABLE" for new entries only (open positions and exits are not touched) and lists it on Health."""
 from __future__ import annotations
 
 import os
@@ -23,7 +28,13 @@ K = 1.5
 HOURS = 6.0
 ON = os.environ.get("BTC_SHOCK_GUARD", "1") != "0"
 FLAG = "BTC SHOCK"
+MIN_BARS = 30 * 24 + W + 2
+MAX_AGE_H = float(os.environ.get("BTC_SHOCK_MAX_AGE_H", "2"))
 _cache: dict[str, Any] = {}
+
+
+class Unavailable(Exception):
+    """The guard cannot give a verdict (missing, stale or too short BTC history)."""
 
 
 def shocks(rt: Any, now: int) -> list[tuple[int, float]]:
@@ -49,19 +60,42 @@ def shocks(rt: Any, now: int) -> list[tuple[int, float]]:
     return [(t, z, pct) for t, z, pct in _cache["z"][1] if now - t <= HOURS * H and abs(z) >= K]
 
 
-def against(rt: Any, side: int, now: int | None = None) -> dict[str, Any] | None:
-    """The BTC shock standing against a new call on `side` (an up-shock against a short, a down-shock against a long)."""
+def _check_data(rt: Any, now: int) -> None:
+    """Raise Unavailable unless the BTC 1h history is present, long enough and fresh."""
+    df = rt.candles("BTC/USDT", "1h")
+    if df is None or len(df) == 0:
+        raise Unavailable("no BTC 1h candles")
+    ts = df["ts"].to_numpy(np.int64) + H
+    n = int((ts <= now).sum())
+    if n < MIN_BARS:
+        raise Unavailable(f"insufficient BTC 1h history ({n} of {MIN_BARS} candles)")
+    age_h = (now - int(ts[ts <= now][-1])) / H
+    if age_h > MAX_AGE_H:
+        raise Unavailable(f"BTC 1h data is stale (newest closed candle {age_h:.1f} h old, limit {MAX_AGE_H:g} h)")
+
+
+def status(rt: Any, side: int, now: int | None = None) -> dict[str, Any]:
+    """{'state': 'block' | 'clear' | 'unavailable', 'hit': shock or None, 'reason': why unavailable or None}."""
     if not ON or not side:
-        return None
+        return {"state": "clear", "hit": None, "reason": None}
     now = int(time.time() * 1000) if now is None else int(now)
     try:
+        _check_data(rt, now)
         hits = [x for x in shocks(rt, now) if (x[1] > 0) == (side < 0)]
-    except Exception:
-        return None
+    except Unavailable as exc:
+        return {"state": "unavailable", "hit": None, "reason": str(exc)}
+    except Exception as exc:
+        return {"state": "unavailable", "hit": None, "reason": f"{type(exc).__name__}: {exc}"[:160]}
     if not hits:
-        return None
+        return {"state": "clear", "hit": None, "reason": None}
     t, z, pct = max(hits, key=lambda x: x[0])
-    return {"at": t, "z": round(z, 2), "move_pct": round(pct, 2)}
+    return {"state": "block", "hit": {"at": t, "z": round(z, 2), "move_pct": round(pct, 2)}, "reason": None}
+
+
+def against(rt: Any, side: int, now: int | None = None) -> dict[str, Any] | None:
+    """The BTC shock standing against a new call on `side` (an up-shock against a short, a down-shock against a long).
+    Research / display helper: None when clear OR unavailable. Live decisions use `status()` (fail closed)."""
+    return status(rt, side, now)["hit"]
 
 
 def reason(s: dict[str, Any], side: int) -> str:

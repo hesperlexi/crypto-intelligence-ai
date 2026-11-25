@@ -212,5 +212,6 @@ if __name__ == "__main__":
     ap.add_argument("--budget", type=float, default=14400)
     ap.add_argument("--out", default="-")
     a = ap.parse_args()
-    s = json.dumps(run(a.db, a.budget), indent=1, default=str)
+    from .research_verdict import run_study
+    s = json.dumps(run_study("sweep", lambda: run(a.db, a.budget), a.db), indent=1, default=str)
     print(s) if a.out == "-" else open(a.out, "w").write(s)

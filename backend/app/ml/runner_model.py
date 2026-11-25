@@ -9,6 +9,10 @@ The model learns, from the AI's own out-of-sample calls, which setups did better
 on the last quarter of those calls (never seen while fitting or choosing the threshold), "runner when the model says
 so, standard otherwise" beat "always standard" by at least MIN_GAIN_R per trade, with enough runner trades to trust
 it. Otherwise it stays off for that coin/timeframe and every trade uses the standard exit.
+
+V3.2 (Fable 5.2 audit R-02): the live threshold comes from time-ordered out-of-fold scores with a `horizon`-bar embargo
+(ml/oof.py), not from the refit's in-sample scores; `validated` = kept share on the unseen last fold within 10 points.
+Until validated (and enforcement switched on) analysis.py runs it in shadow: standard exits, would-run recorded.
 """
 from __future__ import annotations
 
@@ -117,7 +121,13 @@ def train(X: np.ndarray, P: np.ndarray, rows: np.ndarray, high: np.ndarray, low:
         return out
     final = _model().fit(F, y)
     p_all = final.predict_proba(F)[:, 1]
-    out.update(model=final, threshold=float(np.quantile(p_all, 1 - best_keep)) if best_keep < 1 else 0.0,
+    from . import oof
+    fit = oof.fit_threshold(F, y, np.asarray(rows)[keep].astype(float), best_keep, _model, embargo=horizon,
+                            in_sample=float(np.quantile(p_all, 1 - best_keep)) if best_keep < 1 else 0.0)
+    if fit["threshold"] is None:
+        out.update(enabled=False, reason="no out-of-fold scores to set a threshold from", **fit)
+        return out
+    out.update(model=final, **fit,
                reason=f"on unseen trades: {mixed:+.2f}R per trade with runners vs {base:+.2f}R always taking half at TP1")
     return out
 
@@ -130,4 +140,5 @@ def score(rm: dict[str, Any] | None, x_row: np.ndarray, probs: dict[str, float])
     F = _features(np.vstack([x_row, x_row]), P, np.array([1, -1]))
     p = rm["model"].predict_proba(F)[:, 1]
     return {"p_long": float(p[0]), "p_short": float(p[1]), "threshold": rm["threshold"], "run_r": rm.get("run_r", RUN_R),
-            "exam": rm.get("exam")}
+            "exam": rm.get("exam"), "validated": bool(rm.get("validated")),
+            "threshold_method": rm.get("threshold_method") or "in_sample"}

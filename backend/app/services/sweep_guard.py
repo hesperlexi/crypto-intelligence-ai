@@ -7,7 +7,11 @@ bootstrap 94 %, 204 calls held back: PASS. (Trading the sweeps themselves as sig
 
 A sweep = a 1h candle that pokes >= 0.1 ATR beyond the lowest low (highest high) of the previous 48 hours - where the
 stop-losses sit - and CLOSES back inside the range: the stop run and the reclaim in one candle. Env SWEEP_GUARD=0 turns
-the guard off; SWEEP_GUARD_HOURS (6) is the window."""
+the guard off; SWEEP_GUARD_HOURS (6) is the window.
+
+V3.2 (Fable 5.2 audit R-01) fail closed: `status()` says "block", "clear" or "unavailable" (the coin's 1h candles cannot
+be read, fewer than POOL + 16 of them, the newest closed one older than MAX_AGE_H hours, or the check raised).
+`analysis.analyze` turns "unavailable" into NO TRADE "CHECK UNAVAILABLE" for new entries only."""
 from __future__ import annotations
 
 import os
@@ -23,6 +27,8 @@ POKE_ATR = 0.1
 ON = os.environ.get("SWEEP_GUARD", "1") != "0"
 HOURS = float(os.environ.get("SWEEP_GUARD_HOURS", "6"))
 FLAG = "LIQUIDITY SWEEP"
+MIN_BARS = POOL + 16
+MAX_AGE_H = float(os.environ.get("SWEEP_GUARD_MAX_AGE_H", "2"))
 
 
 def recent_sweep(df: pd.DataFrame, now: int, hours: float = HOURS) -> dict[str, Any] | None:
@@ -49,17 +55,36 @@ def recent_sweep(df: pd.DataFrame, now: int, hours: float = HOURS) -> dict[str, 
     return best
 
 
-def against(rt: Any, symbol: str, side: int, now: int | None = None) -> dict[str, Any] | None:
-    """The sweep that stands against a new call on `side` (a bullish sweep against a short, a bearish one against a
-    long), or None."""
+def status(rt: Any, symbol: str, side: int, now: int | None = None) -> dict[str, Any]:
+    """{'state': 'block' | 'clear' | 'unavailable', 'hit': sweep or None, 'reason': why unavailable or None}."""
     if not ON or not side:
-        return None
+        return {"state": "clear", "hit": None, "reason": None}
+    now = int(time.time() * 1000) if now is None else int(now)
     try:
         df = rt.candles(symbol, "1h")
-    except Exception:
-        return None
-    s = recent_sweep(df, int(time.time() * 1000) if now is None else int(now))
-    return s if s and s["side"] == -side else None
+        if df is None or len(df) == 0:
+            return {"state": "unavailable", "hit": None, "reason": f"no {symbol} 1h candles"}
+        closes = df["ts"].to_numpy(np.int64) + H
+        n = int((closes <= now).sum())
+        if n < MIN_BARS:
+            return {"state": "unavailable", "hit": None,
+                    "reason": f"insufficient {symbol} 1h history ({n} of {MIN_BARS} candles)"}
+        age_h = (now - int(closes[closes <= now][-1])) / H
+        if age_h > MAX_AGE_H:
+            return {"state": "unavailable", "hit": None,
+                    "reason": f"{symbol} 1h data is stale (newest closed candle {age_h:.1f} h old, limit {MAX_AGE_H:g} h)"}
+        s = recent_sweep(df, now)
+    except Exception as exc:
+        return {"state": "unavailable", "hit": None, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+    if s and s["side"] == -side:
+        return {"state": "block", "hit": s, "reason": None}
+    return {"state": "clear", "hit": None, "reason": None}
+
+
+def against(rt: Any, symbol: str, side: int, now: int | None = None) -> dict[str, Any] | None:
+    """The sweep that stands against a new call on `side` (a bullish sweep against a short, a bearish one against a
+    long), or None (clear or unavailable). Live decisions use `status()` (fail closed)."""
+    return status(rt, symbol, side, now)["hit"]
 
 
 def reason(s: dict[str, Any], side: int) -> str:

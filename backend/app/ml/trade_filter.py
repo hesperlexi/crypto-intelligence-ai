@@ -10,6 +10,11 @@ Strict honesty about whether it helps (all on data the filter never trained on):
   * A (first 50 %) trains the filter, B (next 25 %) chooses how selective to be, C (last 25 %) is the exam;
   * it is switched on only if, on C, the trades it keeps earn clearly more R than all candidate trades.
 At run time a signal whose filter score falls below the threshold becomes NO TRADE.
+
+V3.2 (Fable 5.2 audit R-02): the live threshold is the (1 - keep) quantile of time-ordered out-of-fold scores with a
+HORIZON-bar embargo (ml/oof.py), not of the final model's in-sample scores. `validated` = the kept share on the last,
+unseen fold is within 10 points of keep_fraction. Until validated (and enforcement is switched on), analysis.py runs the
+filter in shadow: it records what it would have blocked and does not block.
 """
 from __future__ import annotations
 
@@ -113,7 +118,13 @@ def train(X: np.ndarray, P: np.ndarray, rows: np.ndarray, high: np.ndarray, low:
         return out
     final = _model().fit(F, y)
     p_all = final.predict_proba(F)[:, 1]
-    out.update(model=final, threshold=float(np.quantile(p_all, 1 - best_keep)),
+    from . import oof
+    fit = oof.fit_threshold(F, y, np.asarray(rows)[ok].astype(float), best_keep, _model, embargo=HORIZON,
+                            in_sample=float(np.quantile(p_all, 1 - best_keep)))
+    if fit["threshold"] is None:
+        out.update(enabled=False, reason="no out-of-fold scores to set a threshold from", **fit)
+        return out
+    out.update(model=final, **fit,
                reason=f"kept trades earned {exam['avg_r_kept']:+.2f}R vs {exam['avg_r_all']:+.2f}R for all, on unseen data")
     return out
 
@@ -126,4 +137,5 @@ def score(tf: dict[str, Any] | None, x_row: np.ndarray, probs: dict[str, float])
     F = _features(np.vstack([x_row, x_row]), P, np.array([1, -1]))
     p = tf["model"].predict_proba(F)[:, 1]
     return {"p_long": float(p[0]), "p_short": float(p[1]), "threshold": tf["threshold"],
-            "keep_fraction": tf["keep_fraction"], "exam": tf.get("exam")}
+            "keep_fraction": tf["keep_fraction"], "exam": tf.get("exam"),
+            "validated": bool(tf.get("validated")), "threshold_method": tf.get("threshold_method") or "in_sample"}

@@ -158,7 +158,7 @@ def run(rt: Runtime, budget_s: float = 900, symbols: list[str] | None = None) ->
     filters = {}
     for tf, P in pool.items():
         try:
-            f = TF2.train(np.array(P["F"]), np.array(P["R"]), np.array(P["ts"]))
+            f = TF2.train(np.array(P["F"]), np.array(P["R"]), np.array(P["ts"]), tf=tf)
             TF2.save(rt.db, tf, f)
             filters[tf] = {k: v for k, v in f.items() if k not in ("model", "features")}
         except Exception as exc:

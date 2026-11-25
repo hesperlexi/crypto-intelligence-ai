@@ -72,7 +72,7 @@ def _by_tf(base, new):
 
 def _slim(v):
     return {k: v.get(k) for k in ("verdict", "reason", "base", "new", "affected", "bootstrap_better_share",
-                                  "bootstrap_gain_r_5_50_95")} | {"halves": {h: {"base": x["base"].get("total_r"), "new": x["new"].get("total_r")}
+                                  "bootstrap_gain_r_5_50_95", "p_value")} | {"halves": {h: {"base": x["base"].get("total_r"), "new": x["new"].get("total_r")}
                                                                               for h, x in (v.get("halves") or {}).items()}}
 
 
@@ -106,5 +106,6 @@ if __name__ == "__main__":
     ap.add_argument("--budget", type=float, default=14400)
     ap.add_argument("--out", default="-")
     a = ap.parse_args()
-    s = json.dumps(run(a.db, a.budget), indent=1, default=str)
+    from .research_verdict import run_study
+    s = json.dumps(run_study("v265", lambda: run(a.db, a.budget), a.db), indent=1, default=str)
     print(s) if a.out == "-" else open(a.out, "w").write(s)

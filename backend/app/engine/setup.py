@@ -10,7 +10,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from ..ml.distribution import first_passage_base_rate
+from ..ml.distribution import first_passage_base_rate, first_passage_rates  # noqa: F401 (base_rate kept for callers)
 
 # v2.2 targets (every timeframe): TP1 at exactly 1:1 closes half the position (then the stop moves to
 # break-even); TP2 (between 1:1.25 and 1:2) and TP3 (between 1:2 and 1:3) are chosen from the data - how often
@@ -77,10 +77,31 @@ def build_setup(ind: pd.DataFrame, zones: dict[str, list[dict]], side: int, min_
     high, low, close, a = (ind[c].to_numpy(float) for c in ("high", "low", "close", "atr"))
     cond = (np.sign(ind["regime_score"].to_numpy(float)) == side)
 
+    # V3.2 (Fable 5.2 audit R-10): `horizon` is the trade's own horizon (tracking.horizon_for(timeframe), passed by
+    # analysis.py), so the target odds are for the time the call is actually followed. Every candidate target shares
+    # one stop: their base rates are computed in one pass (identical to first_passage_base_rate, ~9x faster).
+    all_r = sorted({TP1_R, *TP2_RANGE, *TP3_RANGE})
+    _rates: dict[bool, dict[float, dict[str, Any]]] = {}
+
+    def _table(conditional: bool) -> dict[float, dict[str, Any]]:
+        if conditional not in _rates:
+            _rates[conditional] = first_passage_rates(high, low, close, a, [m * dist / atr for m in all_r], dist / atr,
+                                                      horizon, cond if conditional else None, side)
+        return _rates[conditional]
+
     def base_rate(r_mult: float) -> dict[str, Any]:
-        br = first_passage_base_rate(high, low, close, a, r_mult * dist / atr, dist / atr, horizon, cond, side)
+        if r_mult not in all_r:
+            br = first_passage_base_rate(high, low, close, a, r_mult * dist / atr, dist / atr, horizon, cond, side)
+            if br["probability"] is None:
+                br = first_passage_base_rate(high, low, close, a, r_mult * dist / atr, dist / atr, horizon, None, side)
+                br["basis"] = "all historical bars"
+            else:
+                br["basis"] = "historical bars in a same-direction regime"
+            return br
+        key = r_mult * dist / atr
+        br = dict(_table(True)[key])
         if br["probability"] is None:    # too few similar-regime entries: fall back to all history
-            br = first_passage_base_rate(high, low, close, a, r_mult * dist / atr, dist / atr, horizon, None, side)
+            br = dict(_table(False)[key])
             br["basis"] = "all historical bars"
         else:
             br["basis"] = "historical bars in a same-direction regime"

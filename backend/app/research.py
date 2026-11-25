@@ -284,6 +284,12 @@ def main(argv: list[str] | None = None) -> int:
             since = int(db.get_setting("record_since", 0) or 0)
             body = giveback_report(sigs, candles, since) if a.command == "giveback" else compare_report(sigs, candles, a.cost_pct)
             out = {"ok": True, "command": a.command, "engine_version": ENGINE_VERSION, "signals_in_db": len(sigs), **body}
+    try:                                      # V3.2 (audit R-03): Holm correction, n_variants, holdout status
+        from .research_verdict import finalize
+        if isinstance(out, dict) and out.get("ok"):
+            finalize(out, str(a.command))
+    except Exception as exc:
+        out["finalize_error"] = f"{type(exc).__name__}: {exc}"[:200]
     text = json.dumps(json.loads(dumps(out)), indent=1)
     print(text)
     if a.out:

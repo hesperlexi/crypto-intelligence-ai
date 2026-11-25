@@ -7,7 +7,14 @@ worst losing streak 14 -> 11, both halves better, bootstrap 98 %, 113 calls diff
 * drift: the series' last 100 live forecasts whose next bar has closed hit the direction more than 2 standard errors
   less often than its model's own out-of-sample record.
 `analysis.analyze` applies it last, after every other check, to every live call (record, demo bots, Hesper, Last Stand,
-auto-trade all take their calls from there): NO TRADE "CAPITAL PROTECTION". Switch `RISK_VETO` (env, default on)."""
+auto-trade all take their calls from there): NO TRADE "CAPITAL PROTECTION". Switch `RISK_VETO` (env, default on).
+
+V3.2 (Fable 5.2 audit R-01) fail closed: `assess` lists every rule it could not evaluate in `unavailable` (with
+`unavailable_reason`). The volatility rule and the loss stop are required: no 4h candles, fewer than VOL_MIN_BARS of
+them, the newest older than VOL_MAX_AGE_BARS bars, or an error = unavailable. The drift rule is required only to run
+without error; "not enough live forecasts yet" is its designed warm-up state (`drift_state` = "insufficient_history",
+shown, not blocking: on 1d/3d it takes 100-300 days to fill). `analysis.analyze` turns a non-empty `unavailable` into
+NO TRADE "CHECK UNAVAILABLE" for new entries only. `would_block` still means "a rule fired"."""
 from __future__ import annotations
 
 import time
@@ -19,7 +26,29 @@ H4 = 4 * 3_600_000
 DAY = 86_400_000
 VOL_RATIO, DAY_R, WEEK_R = 1.5, 3.0, 6.0
 DRIFT_N = 100
+VOL_MIN_BARS = 110
+VOL_MAX_AGE_BARS = 2
 _cache: dict[str, Any] = {}
+
+
+def vol_check(rt: Any, symbol: str, now: int | None = None) -> tuple[bool | None, str | None]:
+    """(volatile, why unavailable). volatile is None exactly when the reason is set."""
+    try:
+        df = rt.candles(symbol, "4h")
+    except Exception as exc:
+        return None, f"4h candles unreadable ({type(exc).__name__}: {exc})"[:160]
+    if df is None or len(df) == 0:
+        return None, "no 4h candles"
+    if len(df) < VOL_MIN_BARS:
+        return None, f"insufficient 4h history ({len(df)} of {VOL_MIN_BARS} candles)"
+    if now is not None:
+        age = (int(now) - (int(df["ts"].iloc[-1]) + H4)) / H4
+        if age > VOL_MAX_AGE_BARS:
+            return None, f"4h data is stale (newest closed candle {age * 4:.1f} h old)"
+    try:
+        return volatile(rt, symbol), None
+    except Exception as exc:
+        return None, f"volatility check failed ({type(exc).__name__}: {exc})"[:160]
 
 
 def volatile(rt: Any, symbol: str) -> bool | None:
@@ -27,7 +56,7 @@ def volatile(rt: Any, symbol: str) -> bool | None:
         df = rt.candles(symbol, "4h")
     except Exception:
         return None
-    if df is None or len(df) < 110:
+    if df is None or len(df) < VOL_MIN_BARS:
         return None
     h, l, c = df["high"].to_numpy(float), df["low"].to_numpy(float), df["close"].to_numpy(float)
     prev = np.r_[c[0], c[:-1]]
@@ -119,18 +148,24 @@ def drift(rt: Any, symbol: str, timeframe: str) -> dict[str, Any] | None:
 
 def assess(rt: Any, symbol: str, now: int | None = None, timeframe: str | None = None) -> dict[str, Any]:
     now = int(time.time() * 1000) if now is None else int(now)
-    vol = volatile(rt, symbol)
+    unavailable: dict[str, str] = {}
+    vol, why_vol = vol_check(rt, symbol, now)
+    if why_vol:
+        unavailable["volatility"] = why_vol
     try:
         day, week = loss_sums(rt, now)
-    except Exception:
+    except Exception as exc:
         day = week = None
+        unavailable["loss_stop"] = f"closed-call totals unreadable ({type(exc).__name__}: {exc})"[:160]
     stop = day is not None and (day <= -DAY_R or week <= -WEEK_R)
-    dr = None
+    dr, drift_state = None, "off"
     if timeframe:
         try:
             dr = drift(rt, symbol, timeframe)
-        except Exception:
-            dr = None
+            drift_state = "ok" if dr else "insufficient_history"
+        except Exception as exc:
+            dr, drift_state = None, "error"
+            unavailable["drift"] = f"drift check failed ({type(exc).__name__}: {exc})"[:160]
     drift_block = bool(dr and dr.get("block"))
     reasons = []
     if vol:
@@ -140,5 +175,7 @@ def assess(rt: Any, symbol: str, now: int | None = None, timeframe: str | None =
     if drift_block:
         reasons.append(f"the model's recent direction hits ({dr['hit']:.0%}) fell well below its tested rate ({dr['ref']:.0%})")
     return {"volatile": vol, "day_r": day, "week_r": week, "loss_stop": bool(stop), "drift": dr,
-            "drift_block": drift_block, "would_block": bool(vol) or bool(stop) or drift_block,
-            "reason": "; ".join(reasons) if reasons else None}
+            "drift_block": drift_block, "drift_state": drift_state, "would_block": bool(vol) or bool(stop) or drift_block,
+            "reason": "; ".join(reasons) if reasons else None,
+            "unavailable": sorted(unavailable),
+            "unavailable_reason": "; ".join(f"{k}: {v}" for k, v in sorted(unavailable.items())) or None}

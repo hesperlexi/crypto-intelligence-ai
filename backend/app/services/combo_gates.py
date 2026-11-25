@@ -93,11 +93,4 @@ def cap_block(db: Any, side: int, timeframe: str | None = None) -> str | None:
                 return None                      # this timeframe's reserved slot
         return (f"{n} {'long' if side > 0 else 'short'} calls are already running (limit {SAME_SIDE_CAP}): one market "
                 "move could hit them all together")
-    return None
-    row = db.one("SELECT COUNT(*) AS n FROM signals WHERE status = 'OPEN' AND side = ? "
-                 "AND (fill_status IS NULL OR fill_status = 'FILLED')", (int(side),))
-    n = int((row or {}).get("n") or 0)
-    if n >= SAME_SIDE_CAP:
-        return (f"{n} {'long' if side > 0 else 'short'} calls are already running (limit {SAME_SIDE_CAP}): one market "
-                "move could hit them all together")
-    return None
+    return None                                  # V3.2 (audit R-18): unreachable duplicate body after this removed

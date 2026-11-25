@@ -103,11 +103,15 @@ def build(rt, symbol: str, tf: str, cache: dict) -> tuple[Any, Any] | None:
 
 
 def _split(ctx) -> tuple[np.ndarray, np.ndarray, int]:
-    t0, t1 = int(ctx.ts[0]), int(ctx.ts[-1])
+    # V3.2 (audit R-03): research never reads the frozen forward holdout. The replay ends HORIZON bars before
+    # HOLDOUT_START, so every test call has closed before it (and the split stops drifting as new candles arrive).
+    from .research_verdict import HOLDOUT_START
+    end = HOLDOUT_START - SP.HORIZON_BARS * tf_ms(ctx.tf)
+    t0, t1 = int(ctx.ts[0]), min(int(ctx.ts[-1]), end)
     cut = t0 + int((t1 - t0) * TUNE_SHARE)
     tune = ctx.ts < cut
     # the last tuning calls must have closed before the test begins: drop the horizon before the cut from the test start
-    test = ctx.ts >= cut + SP.HORIZON_BARS * tf_ms(ctx.tf)
+    test = (ctx.ts >= cut + SP.HORIZON_BARS * tf_ms(ctx.tf)) & (ctx.ts < end)
     return tune, test, cut
 
 
@@ -196,7 +200,8 @@ def evaluate(rt, symbols: list[str], tfs: list[str], deadline: float, cost: floa
     # ---- pooled trade filter per timeframe (trained on tuning trades only) ------------------------------------------
     filters = {}
     for tf, P in pool.items():
-        f = TF2.train(np.array(P["F"]) if P["F"] else np.zeros((0, len(TF2.FEATURES))), np.array(P["R"]), np.array(P["ts"]))
+        f = TF2.train(np.array(P["F"]) if P["F"] else np.zeros((0, len(TF2.FEATURES))), np.array(P["R"]), np.array(P["ts"]),
+                      tf=tf)
         filters[tf] = f
     # ---- test-set runs ---------------------------------------------------------------------------------------------
     variants = ["old", "gate", "conf", "entry", "struct", "filter"]

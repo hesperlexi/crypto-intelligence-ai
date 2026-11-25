@@ -391,6 +391,15 @@ def _plan(a: dict[str, Any], db: Database | None = None) -> dict[str, Any]:
             entry = rule["level"]
     elif mode == "market" or not pending:
         # entered now: at the price the engine saw when it made the call (what a member could actually get)
+        pq = a.get("price_quality")
+        if pq is not None and pq.get("quality") != "live":
+            # V3.2 (Fable 5.2 audit R-14): never a FILLED market entry at an old candle close
+            age = pq.get("age_s")
+            return {"side": side, "entry": None, "stop": setup.get("stop"), "tps": [None, None, None],
+                    "rr": setup.get("risk_reward"), "atr": setup.get("atr"), "fill_status": None, "entry_rule": None,
+                    "skip": (f"no valid live price ({pq.get('quality')} ticker"
+                             f"{f', {age:.0f} s old' if isinstance(age, (int, float)) else ''}): a market entry would be "
+                             "recorded at an old candle close")}
         px = float(a.get("price") or entry)
         stop = setup.get("stop")
         if stop is None or side * (px - float(stop)) <= 0:
@@ -456,9 +465,14 @@ def record_call(db: Database, a: dict[str, Any], now: int | None = None) -> dict
         payload["risk_shadow"] = a["risk_shadow"]
     if a.get("filter_bypassed"):              # v2.64: a trade filter would have blocked it (FILTER_OFF_TFS); watched
         payload["filter_bypassed"] = True
+    if a.get("filter_shadow"):                # V3.2 (audit R-02): which shadowed filter would have blocked, and its score
+        payload["filter_shadow"] = a["filter_shadow"]
+    if a.get("runner_shadow"):                # V3.2: the runner model would have let it run (shadow; standard exits used)
+        payload["runner_shadow"] = a["runner_shadow"]
     if tradable:
         from ..engine.futures import signal_leverage
         payload.update({"manage": manage_params(db), "live_price": a.get("price"),
+                        "price_quality": a.get("price_quality"),            # V3.2 (R-14): ticker source, time, quality
                         "horizon_bars": horizon_for(a["timeframe"]),
                         "leverage": signal_leverage(pl["entry"], pl["stop"], symbol=a.get("symbol"), grade=a.get("grade"),
                                                     timeframe=a.get("timeframe")),

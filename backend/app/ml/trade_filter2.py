@@ -9,6 +9,11 @@ regime, the BTC regime / technical score in the trade's direction, multi-timefra
 
 Honesty rules are those of ml/trade_filter.py: time order; A (first 50 %) fits, B (next 25 %) chooses how selective
 to be, C (last 25 %) is the exam; enabled only when the kept trades on C earned at least MIN_GAIN_R more than all of C.
+
+V3.2 (Fable 5.2 audit R-02): the live threshold is the (1 - keep) quantile of time-ordered out-of-fold scores (ml/oof.py)
+with an embargo of max(30, the record's horizon) bars of the timeframe, since each label follows the call over that
+horizon; `validated` = kept share on the unseen last fold within 10 points. Until validated (and enforcement switched
+on) analysis.py runs it in shadow.
 """
 from __future__ import annotations
 
@@ -111,6 +116,7 @@ def load(db: Any, tf: str) -> dict[str, Any] | None:
     if hit and hit[0] == mt:
         return hit[1]
     f = {**joblib.load(p), "enabled": True}
+    f["validated"] = bool((f.get("summary") or {}).get("validated"))         # V3.2: OOF threshold + kept-share check
     _cache[tf] = (mt, f)
     return f
 
@@ -122,12 +128,23 @@ def _model():
                                           l2_regularization=1.0, random_state=0)
 
 
-def train(F: np.ndarray, R: np.ndarray, ts: np.ndarray) -> dict[str, Any]:
-    """F: feature rows, R: trade results in R after costs, ts: decision times. Rows are sorted by time here."""
+def embargo_bars(tf: str | None) -> int:
+    """Labels follow the call over the record's horizon on this timeframe; never less than 30 bars."""
+    from .oof import EMBARGO_BARS
+    if not tf:
+        return EMBARGO_BARS
+    from ..services.tracking import horizon_for
+    return max(EMBARGO_BARS, int(horizon_for(tf)))
+
+
+def train(F: np.ndarray, R: np.ndarray, ts: np.ndarray, tf: str | None = None) -> dict[str, Any]:
+    """F: feature rows, R: trade results in R after costs, ts: decision times. Rows are sorted by time here.
+    `tf` sets the bar size for the out-of-fold embargo (without it, rows are spaced one 'bar' per row)."""
     o = np.argsort(ts, kind="stable")
     F, R = np.asarray(F, float)[o], np.asarray(R, float)[o]
+    T = np.asarray(ts, float)[o]
     ok = np.isfinite(F).all(axis=1) & np.isfinite(R)
-    F, R = F[ok], R[ok]
+    F, R, T = F[ok], R[ok], T[ok]
     n = len(R)
     if n < MIN_TRADES:
         return {"enabled": False, "reason": f"only {n} trades to learn from", "n": n}
@@ -155,7 +172,18 @@ def train(F: np.ndarray, R: np.ndarray, ts: np.ndarray) -> dict[str, Any]:
         out["reason"] = "the filter did not improve results on unseen trades"
         return out
     final = _model().fit(F, y)
-    out.update(model=final, threshold=float(np.quantile(final.predict_proba(F)[:, 1], 1 - best)),
+    from . import oof
+    if tf:
+        from ..data.base import tf_ms
+        pos = T / float(tf_ms(tf))
+    else:
+        pos = np.arange(len(T), dtype=float)
+    fit = oof.fit_threshold(F, y, pos, best, _model, embargo=embargo_bars(tf),
+                            in_sample=float(np.quantile(final.predict_proba(F)[:, 1], 1 - best)))
+    if fit["threshold"] is None:
+        out.update(enabled=False, reason="no out-of-fold scores to set a threshold from", **fit)
+        return out
+    out.update(model=final, **fit,
                reason=f"kept trades earned {exam['avg_r_kept']:+.2f}R vs {exam['avg_r_all']:+.2f}R for all, on unseen trades")
     return out
 

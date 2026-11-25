@@ -66,21 +66,84 @@ FILTER_OFF_CHECK_S = 600
 RISK_VETO = os.environ.get("RISK_VETO", "1") != "0"
 
 
-def _risk_shadow(rt: Any, symbol: str, timeframe: str | None = None) -> dict[str, Any] | None:
-    """v2.65 capital-protection assessment (services/risk_shadow.py); `would_block` = the veto's verdict."""
+def _risk_shadow(rt: Any, symbol: str, timeframe: str | None = None) -> dict[str, Any]:
+    """v2.65 capital-protection assessment (services/risk_shadow.py); `would_block` = the veto's verdict.
+    V3.2 (audit R-01): an error no longer returns None (= no veto); it returns an assessment marked unavailable."""
     try:
         from . import risk_shadow
         return risk_shadow.assess(rt, symbol, timeframe=timeframe)
+    except Exception as exc:
+        try:
+            rt.record_error(f"capital protection {symbol} {timeframe}", exc)
+        except Exception:
+            pass
+        why = f"assessment failed ({type(exc).__name__}: {exc})"[:160]
+        return {"would_block": False, "reason": None, "unavailable": ["assessment"], "unavailable_reason": why}
+
+
+def _guard_unavailable(rt: Any, gate: str, label: str, symbol: str, timeframe: str, detail: str) -> str:
+    """V3.2 (audit R-01): a new-entry guard that cannot give a verdict. Logged, listed on Health, NO TRADE reason."""
+    try:
+        rt.record_error(f"{gate} {symbol} {timeframe}", RuntimeError(detail))
     except Exception:
-        return None
+        pass
+    gate_failure(rt, gate, symbol, timeframe, detail)
+    return f"the {label} could not be checked ({detail}) - fail-safe: no new entry"
 
 
-def filter_off(rt: Any, timeframe: str) -> bool:
+# V3.2 (Fable 5.2 audit R-02): the trade filters and the runner model run in SHADOW until validated - they record what
+# they would have done (payload `filter_bypassed` / `filter_shadow` / `runner_shadow`, private) and do not block or change
+# exits. Validated = the bundle's live threshold came from embargoed out-of-fold scores AND its kept share on the
+# unseen last fold is within 10 points of keep_fraction (ml/oof.py). Enforcement then still needs the owner's switch
+# (TRADE_FILTER_ENFORCE=1 / RUNNER_MODEL_ENFORCE=1) after the live kept-share check (`filter_shadow_stats`, 2 weeks).
+# The v2.64 safety net stays: once >= 10 shadowed calls the filters would have blocked closed with an average net R
+# below 0, the filters block again on that timeframe (`filter_off_revoked|TF`).
+FILTER_ENFORCE = os.environ.get("TRADE_FILTER_ENFORCE", "0") == "1"
+RUNNER_ENFORCE = os.environ.get("RUNNER_MODEL_ENFORCE", "0") == "1"
+SHADOW_STATS_KEEP_MS = 14 * 86_400_000
+SHADOW_STATS_MAX = 3000
+
+
+def filter_bypass(rt: Any, timeframe: str, view: dict[str, Any] | None) -> bool:
+    """True = the trade filter only records (shadow); False = it may block this live call."""
+    if filter_off(rt, timeframe):                 # v2.64 FILTER_OFF_TFS rule, unchanged
+        return True
+    if FILTER_ENFORCE and (view or {}).get("validated"):
+        return False
+    return filter_off(rt, timeframe, any_tf=True)
+
+
+def runner_enforced(view: dict[str, Any] | None) -> bool:
+    return bool(RUNNER_ENFORCE and (view or {}).get("validated"))
+
+
+def shadow_stat(rt: Any, name: str, timeframe: str, symbol: str, bar_ts: int, score: float, threshold: float,
+                keep_fraction: float | None) -> None:
+    """Live kept-share log of a shadowed model (one row per coin and candle, last 14 days): Health / the 2-week check
+    compare the observed kept share with keep_fraction."""
+    try:
+        key = f"filter_shadow_stats|{name}|{timeframe}"
+        now = int(time.time() * 1000)
+        cur = rt.db.get_setting(key, None) or {}
+        rows = [r for r in (cur.get("rows") or []) if now - int(r[1]) < SHADOW_STATS_KEEP_MS]
+        rid = f"{symbol}|{int(bar_ts)}"
+        if any(r[0] == rid for r in rows):
+            return
+        rows.append([rid, now, 1 if score >= threshold else 0])
+        rows = rows[-SHADOW_STATS_MAX:]
+        kept = sum(r[2] for r in rows)
+        rt.db.set_setting(key, {"rows": rows, "n": len(rows), "kept_share": round(kept / len(rows), 4),
+                                "keep_fraction": keep_fraction, "at": now})
+    except Exception:
+        pass
+
+
+def filter_off(rt: Any, timeframe: str, any_tf: bool = False) -> bool:
     """v2.64 safety net (owner: "we don't need bad results"): the trade filters stay off on a FILTER_OFF_TFS timeframe only
     while the published calls they would have blocked are not losing. Once >= FILTER_OFF_MIN_CLOSED of them closed with an
     average net R below 0, the filters block again on that timeframe for good (setting `filter_off_revoked|TF`, shown on
     Health; clear it by hand to retry). Checked at most every FILTER_OFF_CHECK_S."""
-    if timeframe not in FILTER_OFF_TFS:
+    if timeframe not in FILTER_OFF_TFS and not any_tf:
         return False
     db = rt.db
     if db.get_setting(f"filter_off_revoked|{timeframe}", None):
@@ -115,7 +178,7 @@ def filter_off(rt: Any, timeframe: str) -> bool:
     return True
 
 # fields kept inside the engine only (bots read them from analyze() directly); stripped from published views
-PRIVATE_FIELDS = ("demo", "risk_shadow", "filter_bypassed")   # v2.65: shadow fields stay engine-side
+PRIVATE_FIELDS = ("demo", "risk_shadow", "filter_bypassed", "filter_shadow", "runner_shadow")   # v2.65: shadow fields stay engine-side
 
 
 def watch_gate(symbol: str, decision: str, grade: str | None) -> tuple[dict[str, Any] | None, tuple[str, str | None, str]]:
@@ -374,7 +437,11 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     fr = frames[timeframe]
     ind, last = fr.ind, fr.ind.iloc[-1]
     close = float(last["close"])
-    price = (rt.live_price(symbol) if live else None) or close
+    # V3.2 (Fable 5.2 audit R-14): the live price carries its source, timestamp and quality. Without a valid ticker the
+    # analysis still runs on the last close, but `price_quality` says so and the record refuses a market fill on it
+    # (tracking._plan); pending-fill entries (limit / confirm rules) are filled later from candles as before.
+    pq = live_quote(rt, symbol, close) if live else None
+    price = pq["price"] if pq else close
     regime = describe_regime(ind)
     matrix = mtf_engine.mtf_matrix(frames, unavailable)
     htf = mtf_engine.higher_tf_score(matrix, timeframe)
@@ -402,6 +469,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     levels = _levels(fr, price)
     lift_of = lambda side: ((fc.get("target_lift") or {}).get("long" if side > 0 else "short") if fc.get("available") else None)  # noqa: E731
     stop_kw = {"stop_mode": "struct", "struct_buffer_atr": settings.struct_stop_buffer_atr} if settings.struct_stops else {}
+    # V3.2 (Fable 5.2 audit R-10): target odds over the call's own horizon (the record follows it this long)
+    stop_kw["horizon"] = tracking.horizon_for(timeframe)
     setup = build_setup(ind, levels["zones"], direction, settings.min_risk_reward, live_price=price,
                         lift=lift_of(direction), **stop_kw) if direction else None
     if vol_state == "EXTREME":
@@ -512,12 +581,19 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     tf_view = (fc or {}).get("trade_filter") if fc.get("available") else None
     filter_score = None
     filter_bypassed = False
+    filter_shadow: list[dict[str, Any]] = []
     if tf_view and decision in TRADE_DECISIONS:
         tside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
         filter_score = tf_view["p_long"] if tside > 0 else tf_view["p_short"]
-        bypass = live and bundle is None and as_of is None and filter_off(rt, timeframe)
+        bypass = live and bundle is None and as_of is None and filter_bypass(rt, timeframe, tf_view)
+        if live and bundle is None and as_of is None:
+            shadow_stat(rt, "trade_filter", timeframe, symbol, int(last["ts"]), filter_score, tf_view["threshold"],
+                        tf_view.get("keep_fraction"))
         if filter_score < tf_view["threshold"] and bypass:
             filter_bypassed = True
+            filter_shadow.append({"filter": "trade_filter", "score": round(float(filter_score), 4),
+                                  "threshold": tf_view["threshold"], "validated": bool(tf_view.get("validated")),
+                                  "method": tf_view.get("threshold_method")})
         if filter_score < tf_view["threshold"] and not bypass:
             decision, why = "NO TRADE", (f"the trade filter scores this setup {filter_score:.0%}, below the "
                                          f"{tf_view['threshold']:.0%} bar at which past setups paid off")
@@ -545,9 +621,14 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
                 sc = TF2.score(f2, row)
                 if sc is not None:
                     filter2 = {"score": sc, "threshold": f2["threshold"]}
-                    bypass2 = live and as_of is None and filter_off(rt, timeframe)
+                    bypass2 = live and as_of is None and filter_bypass(rt, timeframe, f2)
+                    if live and as_of is None:
+                        shadow_stat(rt, "trade_filter2", timeframe, symbol, int(last["ts"]), sc, f2["threshold"],
+                                    (f2.get("summary") or {}).get("keep_fraction"))
                     if sc < f2["threshold"] and bypass2:
                         filter_bypassed = True
+                        filter_shadow.append({"filter": "trade_filter2", "score": round(float(sc), 4),
+                                              "threshold": f2["threshold"], "validated": bool(f2.get("validated"))})
                     if sc < f2["threshold"] and not bypass2:
                         decision, grade = "NO TRADE", None
                         why = (f"the {timeframe.upper()} trade filter scores this call {sc:.0%}, below the {f2['threshold']:.0%} "
@@ -629,10 +710,18 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     # let winners run (v2.3): where the runner model proved itself on unseen trades and scores this setup above its
     # threshold, the whole position stays open at TP1 and the stop follows the price up to the 1:4 runner target
     run_view = (fc or {}).get("runner") if fc.get("available") else None
+    runner_shadow = None
     if run_view and decision in TRADE_DECISIONS and setup and setup.get("valid"):
         rside = 1 if decision in ("BUY", "BUY ON PULLBACK") else -1
         rp = run_view["p_long"] if rside > 0 else run_view["p_short"]
-        if rp >= run_view["threshold"]:
+        if live and bundle is None and as_of is None:
+            shadow_stat(rt, "runner_model", timeframe, symbol, int(last["ts"]), rp, run_view["threshold"], None)
+        shadow_only = live and bundle is None and as_of is None and not runner_enforced(run_view)
+        if rp >= run_view["threshold"] and shadow_only:
+            # V3.2 (audit R-02): runner model in shadow - standard exits; what it would have done is recorded
+            runner_shadow = {"would_run": True, "score": round(float(rp), 4), "threshold": run_view["threshold"],
+                             "rr": float(run_view.get("run_r") or 4.0), "validated": bool(run_view.get("validated"))}
+        elif rp >= run_view["threshold"]:
             dist = abs(setup["ideal_entry"] - setup["stop"])
             rr = float(run_view.get("run_r") or 4.0)
             tgt = float(setup["ideal_entry"] + rside * rr * dist)
@@ -709,36 +798,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             risk_check["state_score"] = (rs or {}).get("score")
         except Exception:
             pass
-    # v2.79 liquidity-sweep guard (proven: research_sweep.py, PASS): no new call against a fresh stop run on the coin
     if decision in TRADE_DECISIONS and live and bundle is None:
-        try:
-            from . import sweep_guard
-            from .guardian import side_of
-            sd = side_of(decision)
-            sw = sweep_guard.against(rt, symbol, sd)
-            if sw:
-                decision, grade = "NO TRADE", None
-                why = sweep_guard.reason(sw, sd)
-                flags.append(sweep_guard.FLAG)
-        except Exception:
-            pass
-    # V3.0 adaptive BTC shock guard (proven: research_btc.py, PASS): no new call against an unusually large BTC move
-    if decision in TRADE_DECISIONS and live and bundle is None:
-        try:
-            from . import btc_shock
-            from .guardian import side_of
-            sd = side_of(decision)
-            bs = btc_shock.against(rt, sd)
-            if bs:
-                decision, grade = "NO TRADE", None
-                why = btc_shock.reason(bs, sd)
-                flags.append(btc_shock.FLAG)
-        except Exception:
-            pass
-    if RISK_VETO and risk_check and risk_check.get("would_block") and decision in TRADE_DECISIONS:
-        decision, grade = "NO TRADE", None
-        why = f"capital protection: {risk_check.get('reason')}"
-        flags.append("CAPITAL PROTECTION")
+        decision, grade, why = entry_guards(rt, symbol, timeframe, decision, grade, why, flags, risk_check)
     watch = None
     if live and bundle is None and as_of is None:
         watch, held = watch_gate(symbol, decision, grade)
@@ -762,7 +823,7 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
     tk = rt.ticker(symbol) if live else None
     out: dict[str, Any] = {
         **base, "status": "OK", "bar_ts": int(last["ts"]), "bar_close_ts": int(last["ts"]) + tf_ms(timeframe),
-        "price": price, "last_close": close,
+        "price": price, "last_close": close, "price_quality": pq,
         "change_24h_pct": tk.get("change_pct") if tk else None, "quote_volume_24h": tk.get("quote_volume") if tk else None,
         "regime": regime, "volatility": {
             "state": vol_state, "percentile": _n(last["vol_pct"]), "realized": _n(last["rv"]), "historical": _n(last["hv"]),
@@ -772,6 +833,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         "stale": stale,
         "signal": sig, "decision": decision, "decision_reason": why, "flags": list(dict.fromkeys(flags)), "trend_check": trend_check,
         "filter_bypassed": bool(filter_bypassed and decision in TRADE_DECISIONS),
+        "filter_shadow": filter_shadow if (filter_shadow and decision in TRADE_DECISIONS) else None,
+        "runner_shadow": runner_shadow if decision in TRADE_DECISIONS else None,
         "risk_shadow": risk_check,
         "safety": safety_state,
         "grade": grade, "demo": demo, "watch": watch, "decision_basis": basis, "direction_view": dv, "news_risk": news_risk,
@@ -823,6 +886,106 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             out["ai"] = ai
         rt.analysis_cache[key] = (time.time(), out)
     return out
+
+
+TICKER_MAX_AGE_S = float(os.environ.get("TICKER_MAX_AGE_S", "300"))   # one engine cycle (snapshot taken every tick)
+
+
+def live_quote(rt: Any, symbol: str, close: float, now: int | None = None) -> dict[str, Any]:
+    """{'price', 'source': 'ticker' | 'last_close', 'quality': 'live' | 'missing' | 'stale' | 'invalid', 'ts', 'age_s'}.
+    'live' = a ticker with a positive last price no older than TICKER_MAX_AGE_S."""
+    now = int(time.time() * 1000) if now is None else int(now)
+    try:
+        tk = rt.ticker(symbol)
+    except Exception:
+        tk = None
+    last = None
+    try:
+        last = float(tk.get("last")) if tk and tk.get("last") is not None else None
+    except (TypeError, ValueError):
+        last = None
+    ts = None
+    try:
+        ts = int(tk.get("ts")) if tk and tk.get("ts") else None
+    except (TypeError, ValueError):
+        ts = None
+    if ts is None:
+        feed = getattr(rt, "feed", None)
+        ts = getattr(feed, "taken_ms", None) or getattr(feed, "last_update_ms", None)
+    age = (now - int(ts)) / 1000 if ts else None
+    if tk is None or last is None:
+        q = "missing"
+    elif not np.isfinite(last) or last <= 0:
+        q = "invalid"
+    elif age is None or age > TICKER_MAX_AGE_S or age < -TICKER_MAX_AGE_S:
+        q = "stale"
+    else:
+        q = "live"
+    if q == "live":
+        return {"price": last, "source": "ticker", "quality": q, "ts": int(ts), "age_s": round(age, 1)}
+    return {"price": close, "source": "last_close", "quality": q, "ts": int(ts) if ts else None,
+            "age_s": round(age, 1) if age is not None else None}
+
+
+def entry_guards(rt: Any, symbol: str, timeframe: str, decision: str, grade: str | None, why: str | None,
+                 flags: list[str], risk_check: dict[str, Any] | None) -> tuple[str, str | None, str | None]:
+    """The last new-entry guards of a live call, in their live order: liquidity sweep, BTC shock, capital protection.
+    V3.2 (Fable 5.2 audit R-01): each one fails CLOSED - an error, missing / short / stale input = NO TRADE with flag
+    "CHECK UNAVAILABLE", a logged error and a Health entry (`gate_failures`). Only new entries are affected: open
+    positions, their stops and exits are managed elsewhere (engine/manage.py, tracking) and never read this.
+    Appends to `flags`; stores the per-guard state in risk_check['guards']."""
+    # v2.79 liquidity-sweep guard (proven: research_sweep.py, PASS): no new call against a fresh stop run on the coin.
+    # V3.2 (audit R-01): fail closed - missing, short or stale 1h history, or an error, = NO TRADE "CHECK UNAVAILABLE".
+    guard_status: dict[str, Any] = {}
+    if decision in TRADE_DECISIONS:
+        from . import sweep_guard
+        from .guardian import side_of
+        sd = side_of(decision)
+        try:
+            st = sweep_guard.status(rt, symbol, sd)
+        except Exception as exc:
+            st = {"state": "unavailable", "hit": None, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+        guard_status["sweep_guard"] = st["state"]
+        if st["state"] == "block":
+            decision, grade = "NO TRADE", None
+            why = sweep_guard.reason(st["hit"], sd)
+            flags.append(sweep_guard.FLAG)
+        elif st["state"] == "unavailable":
+            decision, grade = "NO TRADE", None
+            why = _guard_unavailable(rt, "sweep_guard", "liquidity-sweep guard", symbol, timeframe, st["reason"])
+            flags.append("CHECK UNAVAILABLE")
+    # V3.0 adaptive BTC shock guard (proven: research_btc.py, PASS): no new call against an unusually large BTC move.
+    # V3.2 (audit R-01): fail closed - BTC 1h candles missing, fewer than 30 days, newest older than 2 h, or an error.
+    if decision in TRADE_DECISIONS:
+        from . import btc_shock
+        from .guardian import side_of
+        sd = side_of(decision)
+        try:
+            bs = btc_shock.status(rt, sd)
+        except Exception as exc:
+            bs = {"state": "unavailable", "hit": None, "reason": f"{type(exc).__name__}: {exc}"[:160]}
+        guard_status["btc_shock"] = bs["state"]
+        if bs["state"] == "block":
+            decision, grade = "NO TRADE", None
+            why = btc_shock.reason(bs["hit"], sd)
+            flags.append(btc_shock.FLAG)
+        elif bs["state"] == "unavailable":
+            decision, grade = "NO TRADE", None
+            why = _guard_unavailable(rt, "btc_shock", "BTC shock guard", symbol, timeframe, bs["reason"])
+            flags.append("CHECK UNAVAILABLE")
+    if RISK_VETO and risk_check and risk_check.get("would_block") and decision in TRADE_DECISIONS:
+        decision, grade = "NO TRADE", None
+        why = f"capital protection: {risk_check.get('reason')}"
+        flags.append("CAPITAL PROTECTION")
+    # V3.2 (audit R-01): a capital-protection rule that could not be evaluated is not a pass
+    if RISK_VETO and risk_check and risk_check.get("unavailable") and decision in TRADE_DECISIONS:
+        decision, grade = "NO TRADE", None
+        why = _guard_unavailable(rt, "capital_protection", "capital-protection veto", symbol, timeframe,
+                                 risk_check.get("unavailable_reason") or ", ".join(risk_check["unavailable"]))
+        flags.append("CHECK UNAVAILABLE")
+    if risk_check is not None and guard_status:
+        risk_check["guards"] = guard_status
+    return decision, grade, why
 
 
 def leverage_gate(setup: dict[str, Any] | None, price: float | None, symbol: str | None, grade: str | None,
