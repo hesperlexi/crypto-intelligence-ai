@@ -116,26 +116,26 @@
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1795596395170,
-   "last_tick_finished": 1795596544184,
-   "last_tick_seconds": 149.0,
+   "last_tick_started": 1795596876439,
+   "last_tick_finished": 1795597026580,
+   "last_tick_seconds": 150.1,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 8008,
-   "round_seconds_avg": 240.2,
+   "ticks": 8010,
+   "round_seconds_avg": 234.4,
    "round_seconds_max": 372.9,
    "rounds_measured": 48,
-   "watch_last_at": 1795596538667,
+   "watch_last_at": 1795597018053,
    "watch_coins": 8,
    "watch_priced": 8,
    "watch_sent_total": 440,
-   "flow_last_at": 1795596525343,
+   "flow_last_at": 1795597005359,
    "flow_coins": 32,
    "flow_errors": 0,
-   "firestore_writes_today": 385,
+   "firestore_writes_today": 417,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 283,
+   "firestore_reads_today": 343,
    "firestore_read_limit": 50000,
    "firestore_members_active": 4,
    "firestore_member_reserve": 240,
@@ -478,37 +478,37 @@
   "15m": {
    "n": 35,
    "fresh_12h": 33,
-   "max": 125.7,
+   "max": 125.9,
    "missing": 0
   },
   "1h": {
    "n": 35,
    "fresh_12h": 34,
-   "max": 53.5,
+   "max": 53.7,
    "missing": 0
   },
   "4h": {
    "n": 35,
    "fresh_12h": 34,
-   "max": 3.3,
+   "max": 3.4,
    "missing": 1
   },
   "12h": {
    "n": 35,
    "fresh_12h": 31,
-   "max": 53.5,
+   "max": 53.6,
    "missing": 1
   },
   "1d": {
    "n": 35,
    "fresh_12h": 29,
-   "max": 53.4,
+   "max": 53.6,
    "missing": 3
   },
   "3d": {
    "n": 35,
    "fresh_12h": 26,
-   "max": 3.2,
+   "max": 3.4,
    "missing": 9
   }
  },
@@ -749,9 +749,9 @@
   "has_token": true,
   "has_channel": true,
   "enabled": true,
+  "post_wins": true,
   "post_weekly": true,
   "post_teaser": true,
-  "post_wins": true,
   "keys": [
    "channel",
    "enabled",
@@ -1195,17 +1195,6 @@
   ],
   "auto": [
    {
-    "tf": "15m",
-    "grade": "A",
-    "at": 1795537930021,
-    "sid": "7f0feb08",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
     "tf": "12h",
     "grade": "A",
     "at": 1795511499772,
@@ -1226,15 +1215,6 @@
     "same_coin_tf_statuses": []
    },
    {
-    "tf": "4h",
-    "grade": "A",
-    "at": 1795244678445,
-    "sid": "ca9b4285",
-    "sid_in_record": false,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": []
-   },
-   {
     "tf": "1h",
     "grade": "A",
     "at": 1795552505107,
@@ -1250,6 +1230,37 @@
     "grade": "A",
     "at": 1795590091530,
     "sid": "bec218fe",
+    "sid_in_record": true,
+    "sid_open_in_record": true,
+    "same_coin_tf_statuses": [
+     "OPEN"
+    ]
+   },
+   {
+    "tf": "4h",
+    "grade": "A",
+    "at": 1795244678445,
+    "sid": "ca9b4285",
+    "sid_in_record": false,
+    "sid_open_in_record": false,
+    "same_coin_tf_statuses": []
+   },
+   {
+    "tf": "15m",
+    "grade": "A",
+    "at": 1795537930021,
+    "sid": "7f0feb08",
+    "sid_in_record": true,
+    "sid_open_in_record": true,
+    "same_coin_tf_statuses": [
+     "OPEN"
+    ]
+   },
+   {
+    "tf": "12h",
+    "grade": "B",
+    "at": 1795565393816,
+    "sid": "aa336016",
     "sid_in_record": true,
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
@@ -1268,28 +1279,6 @@
     ]
    },
    {
-    "tf": "12h",
-    "grade": "B",
-    "at": 1795511484672,
-    "sid": "53815bb3",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "12h",
-    "grade": "B",
-    "at": 1795565393816,
-    "sid": "aa336016",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
     "tf": "1h",
     "grade": "A",
     "at": 1795552505107,
@@ -1309,6 +1298,17 @@
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
      "OPEN"
+    ]
+   },
+   {
+    "tf": "12h",
+    "grade": "B",
+    "at": 1795511484672,
+    "sid": "53815bb3",
+    "sid_in_record": true,
+    "sid_open_in_record": false,
+    "same_coin_tf_statuses": [
+     "EXPIRED"
     ]
    },
    {
@@ -1324,28 +1324,6 @@
    },
    {
     "tf": "12h",
-    "grade": "A",
-    "at": 1795511499772,
-    "sid": "a1fcaf0f",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "12h",
-    "grade": "B",
-    "at": 1795511484672,
-    "sid": "53815bb3",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "12h",
     "grade": "B",
     "at": 1795565393816,
     "sid": "aa336016",
@@ -1353,6 +1331,17 @@
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
      "OPEN"
+    ]
+   },
+   {
+    "tf": "12h",
+    "grade": "A",
+    "at": 1795511499772,
+    "sid": "a1fcaf0f",
+    "sid_in_record": true,
+    "sid_open_in_record": false,
+    "same_coin_tf_statuses": [
+     "EXPIRED"
     ]
    },
    {
@@ -1375,6 +1364,17 @@
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
      "OPEN"
+    ]
+   },
+   {
+    "tf": "12h",
+    "grade": "B",
+    "at": 1795511484672,
+    "sid": "53815bb3",
+    "sid_in_record": true,
+    "sid_open_in_record": false,
+    "same_coin_tf_statuses": [
+     "EXPIRED"
     ]
    },
    {
@@ -1571,7 +1571,7 @@
   ],
   "runs": 1,
   "trades": 10,
-  "at": 1795595836176,
+  "at": 1795596794037,
   "since": 1793784369074,
   "current_run": 1,
   "run_numbers": [
@@ -1594,7 +1594,7 @@
    "policy": null,
    "min_balance": 1.0,
    "started": true,
-   "generated_at": 1795595836176,
+   "generated_at": 1795596794037,
    "current": null,
    "score": null,
    "open_ended": true,
@@ -1636,16 +1636,16 @@
   "errors": []
  },
  "alert_watcher": {
-  "at": 1795596313970,
+  "at": 1795596793533,
   "armed": 43,
   "armed_at": 1795596072696,
   "sent_total": 18,
   "error": null,
   "idle": null,
   "engine_step": {
-   "at": 1795596323128,
+   "at": 1795596796744,
    "result": {
-    "watcher_at": 1795596313970,
+    "watcher_at": 1795596793533,
     "watcher_sent_total": 18,
     "bad_removed": 0,
     "armed": 43,
@@ -1672,8 +1672,8 @@
  "md": {
   "status": "OK",
   "transport": "engine snapshot (website streams live prices)",
-  "last_update_ms": 1795596409037,
-  "age_s": 143.72,
+  "last_update_ms": 1795596890587,
+  "age_s": 144.464,
   "reconnects": 0,
   "last_error": null,
   "quality_pct": 99.993,
@@ -1695,28 +1695,28 @@
   "quality_pct": 100.0,
   "recent_missing": 0,
   "fresh": true,
-  "age_s": -647.2,
+  "age_s": -164.9,
   "first_ts": 1766031300000,
   "last_ts": 1795596300000,
   "status": "OK",
   "symbol": "PAXG/USDT"
  },
  "step_avg": {
-  "analyses": 170.7,
-  "bots": 21.2,
+  "analyses": 166.0,
+  "bots": 21.4,
   "snapshot": 13.6,
   "candles": 12.8,
-  "crowd": 3.8,
-  "market_data": 3.8,
+  "crowd": 3.5,
+  "market_data": 3.1,
   "outcomes": 2.9,
-  "rejected_outcomes": 2.0,
+  "rejected_outcomes": 2.1,
   "bootstrap": 2.0,
   "guardian": 1.8,
   "derivs": 1.4,
-  "market_turn": 0.8,
-  "coin_reports": 0.7,
+  "market_turn": 0.7,
+  "coin_reports": 0.6,
   "context": 0.4,
-  "market_extras": 0.4
+  "news": 0.4
  },
  "step_max": {
   "analyses": 249.7,
@@ -1729,26 +1729,26 @@
   "outcomes": 8.6
  },
  "eng_watch": {
-  "last_tick_started": 1795596395170,
-  "last_tick_finished": 1795596544184,
-  "last_tick_seconds": 149.0,
-  "round_seconds_avg": 240.2,
+  "last_tick_started": 1795596876439,
+  "last_tick_finished": 1795597026580,
+  "last_tick_seconds": 150.1,
+  "round_seconds_avg": 234.4,
   "round_seconds_max": 372.9,
   "rounds_measured": 48,
-  "watch_last_at": 1795596538667,
+  "watch_last_at": 1795597018053,
   "watch_coins": 8,
   "watch_priced": 8,
   "watch_sent_total": 440,
-  "flow_last_at": 1795596525343,
+  "flow_last_at": 1795597005359,
   "flow_coins": 32,
   "flow_errors": 0,
   "flow_alerts": {
    "whales": {
     "alerts": 245,
     "p15": {
-     "n": 242,
-     "followed_pct": 47.9,
-     "avg_move_pct": -0.056
+     "n": 243,
+     "followed_pct": 48.1,
+     "avg_move_pct": -0.055
     },
     "p60": {
      "n": 237,
@@ -1781,16 +1781,16 @@
    }
   },
   "alert_watcher": {
-   "at": 1795596313970,
+   "at": 1795596793533,
    "armed": 43,
    "armed_at": 1795596072696,
    "sent_total": 18,
    "error": null,
    "idle": null,
    "engine_step": {
-    "at": 1795596323128,
+    "at": 1795596796744,
     "result": {
-     "watcher_at": 1795596313970,
+     "watcher_at": 1795596793533,
      "watcher_sent_total": 18,
      "bad_removed": 0,
      "armed": 43,
@@ -1803,8 +1803,8 @@
   "name": "binance",
   "errors": 0,
   "last_error": null,
-  "last_ok_ms": 1795596543824,
-  "clock_skew_ms": -1,
+  "last_ok_ms": 1795597026191,
+  "clock_skew_ms": 0,
   "status": "OK",
   "has_error": false
  },
@@ -1949,7 +1949,7 @@
   }
  ],
  "cloud_watcher": {
-  "at": 1795596614360,
+  "at": 1795597213883,
   "armed": 43,
   "armed_at": 1795596072696,
   "sent": 0,
@@ -1968,7 +1968,7 @@
    "rules_primed": 9
   },
   "fcm_check": {
-   "at": 1795593133479,
+   "at": 1795596793533,
    "ok": true,
    "status": 200
   },
@@ -1984,11 +1984,11 @@
   "edge_health": {
    "ok": true,
    "views": 751,
-   "newest": 1795596553488,
-   "last_put": 1795596558527
+   "newest": 1795597035139,
+   "last_put": 1795597039728
   },
-  "health_at": 1795596552841,
-  "health_tick": 1795596544184,
-  "track_record_at": 1795596552723
+  "health_at": 1795597035138,
+  "health_tick": 1795597026580,
+  "track_record_at": 1795597035017
  }
 }
