@@ -133,8 +133,10 @@ class Settings:
     # v2.57 (owner, 18 Nov 2026, model-set study results/modelset-12h-*.json): models left out per timeframe.
     # "12h:arima" - without ARIMA, 12h signals scored +0.090R vs +0.009R a trade on unseen data (better in 99% of
     # series resamples, smaller drawdown); on 15m removing it was clearly worse, elsewhere no clear difference.
+    # "1d:random_forest" (v3.1, 25 Nov 2026, ablation group rf): 1d without RF -0.087R -> +0.026R on the last 30 %
+    # (better in 97 % of resamples) and +0.049R -> +0.107R on the earlier 70 % (94 %); Brier slightly worse (0.664 -> 0.670).
     # Format "tf:model,tf:model"; MODEL_EXCLUDE="" restores every model everywhere.
-    model_exclude: dict[str, set[str]] = field(default_factory=lambda: _model_exclude(os.getenv("MODEL_EXCLUDE", "12h:arima")))
+    model_exclude: dict[str, set[str]] = field(default_factory=lambda: _model_exclude(os.getenv("MODEL_EXCLUDE", "12h:arima,1d:random_forest")))
     htf_gate_keep: list[str] = field(default_factory=lambda: [
         s.strip() for s in _env("HTF_GATE_KEEP", "SOL/USDT|15m").split(",") if s.strip()])
     # per-model trade filter v1 (ml.trade_filter), AI target lifts (ml.target_model; off = plain historical base rates

@@ -10,8 +10,9 @@ def test_parse():
     assert _model_exclude("") == {}
 
 
-def test_default_is_12h_arima_only():
-    assert settings.model_exclude == {"12h": {"arima"}}
+def test_default_is_12h_arima_and_1d_random_forest():
+    # v3.1 (25 Nov 2026): 1d without Random Forest passed on both windows (ablation group rf)
+    assert settings.model_exclude == {"12h": {"arima"}, "1d": {"random_forest"}}
 
 
 def test_default_models_per_timeframe(monkeypatch):
@@ -19,6 +20,9 @@ def test_default_models_per_timeframe(monkeypatch):
     assert "arima" not in models.default_models(timeframe="12h")
     for tf in ("15m", "1h", "4h", "1d", "3d", None):
         assert "arima" in models.default_models(timeframe=tf)
+    assert "random_forest" not in models.default_models(timeframe="1d")
+    for tf in ("15m", "1h", "4h", "12h", "3d"):
+        assert "random_forest" in models.default_models(timeframe=tf)
 
 
 def test_12h_bundle_without_arima_is_not_missing_models(monkeypatch):
