@@ -221,6 +221,53 @@ try:
     out["bot15_trades"] = _bt
 except Exception as exc:
     out["bot15_trades"] = {"error": str(exc)[:200]}
+# v3.1: one coin's calls vs the market at their time (relative numbers only; coin chosen by the owner)
+try:
+    import urllib.request as _ur2
+    _COIN = "ANTHROPIC/USDT"
+    _kl = json.load(_ur2.urlopen(_ur2.Request("https://cia-chat.cryptointelai.workers.dev/kl?s=ANTHROPIC&tf=15m&limit=1000",
+                                              headers={"User-Agent": "cia-status"}), timeout=25))
+    def _bar(ts):
+        c = [k for k in _kl if k[0] <= ts < k[0] + 900_000]
+        return c[0] if c else None
+    _rows = []
+    for x in sigs:
+        if x.get("symbol") != _COIN:
+            continue
+        b = _bar(int(x.get("created_at") or 0))
+        e = float(x.get("entry") or 0)
+        _rows.append({"tf": x.get("timeframe"), "status": x.get("status"), "fill": x.get("fill_status"), "created": x.get("created_at"),
+                      "closed": x.get("closed_at"), "exit": x.get("exit_reason"), "ret": x.get("return_pct"),
+                      "entry_vs_bar_close_pct": round((e / b[4] - 1) * 100, 3) if b and e else None,
+                      "entry_in_bar_range": (b[3] <= e <= b[2]) if b and e else None,
+                      "stop_dist_pct": round(abs(float(x.get("stop") or 0) / e - 1) * 100, 3) if e else None})
+    _bt2 = []
+    for b in (_bj.get("bots") or []):
+        for t in (b.get("trades") or []) + [dict(p, _open=True) for p in (b.get("positions") or [])]:
+            if t.get("symbol") != _COIN:
+                continue
+            k = _bar(int(t.get("opened_at") or 0))
+            _bt2.append({"bot": (b.get("config") or {}).get("id"), "open": bool(t.get("_open")), "opened": t.get("opened_at"),
+                         "closed": t.get("closed_at"), "reason": t.get("exit_reason"), "pnl": round(float(t.get("pnl") or 0), 2),
+                         "entry_vs_bar_close_pct": round((float(t["entry"]) / k[4] - 1) * 100, 3) if k and t.get("entry") else None})
+    _hz = fs.document("views/hesper").get().to_dict() or {}
+    _hj = json.loads(_hz["json"]) if _hz.get("json") else {}
+    _ht = []
+    for src, h in (("hesper", _hj), ("laststand", _hj.get("laststand") or {})):
+        for t in (h.get("trades") or []):
+            if t.get("symbol") != _COIN:
+                continue
+            k = _bar(int(t.get("opened_at") or 0))
+            _ht.append({"src": src, "run": t.get("run"), "opened": t.get("opened_at"), "closed": t.get("closed_at"), "reason": t.get("exit_reason"),
+                        "pnl": round(float(t.get("pnl") or 0), 2),
+                        "entry_vs_bar_close_pct": round((float(t["entry"]) / k[4] - 1) * 100, 3) if k and t.get("entry") else None})
+        cur = h.get("current") or {}
+        for t in [cur.get("position")] if cur.get("position") else []:
+            if t.get("symbol") == _COIN:
+                _ht.append({"src": src, "open": True, "opened": t.get("opened_at")})
+    out["coin_check"] = {"record": _rows, "bots": _bt2, "challenge": _ht, "kl_n": len(_kl)}
+except Exception as exc:
+    out["coin_check"] = {"error": str(exc)[:300]}
 # v2.75 check: views/derivs summary + silver (XAG/USDT) models (counts / names only)
 try:
     dv = fs.document("views/derivs").get().to_dict()
