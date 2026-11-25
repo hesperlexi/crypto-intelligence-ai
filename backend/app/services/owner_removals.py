@@ -85,3 +85,23 @@ def remove_anthropic_25nov(rt: Any) -> dict[str, Any]:
         if st:
             db.set_setting(cls.STATE_KEY, st)
     return out
+
+
+def remove_paxg_bot_trade_24nov(rt: Any) -> list[dict[str, Any]]:
+    """Owner, 25 Nov 2026 (testing mode): the 15m bot's PAXG trade opened 24 Nov 20:29 Dubai (break-even stop, made
+    with the bot's old targets before it mirrored the record) is removed; cash and later equity points set back."""
+    db = rt.db
+    out = []
+    for t in db.query("SELECT * FROM bot_trades WHERE bot_id = 'futures-signal-ab-15m' AND symbol = 'PAXG/USDT' "
+                      "AND exit_reason = 'breakeven stop' AND opened_at BETWEEN 1795537200000 AND 1795538400000"):
+        pnl = float(t["pnl"] or 0.0)
+        _keep(db, "removed_bot_trades", t["bot_id"], t)
+        db.execute("DELETE FROM bot_trades WHERE id = ?", (t["id"],))
+        row = db.one("SELECT id, state FROM bots WHERE id = ?", (t["bot_id"],))
+        if row:
+            st = loads(row["state"], {})
+            st["cash"] = float(st.get("cash", 0.0)) - pnl
+            db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(st), row["id"]))
+        db.execute("UPDATE bot_equity SET equity = equity - ? WHERE bot_id = ? AND ts >= ?", (pnl, t["bot_id"], int(t["closed_at"])))
+        out.append({"bot": t["bot_id"], "pnl": round(pnl, 2)})
+    return out
