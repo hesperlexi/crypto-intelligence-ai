@@ -1158,7 +1158,7 @@ def run_job(rt: Runtime, job: dict[str, Any], deadline: float, sink: BaseSink | 
                 fraction = float(p.get("fraction", 1))
             except (TypeError, ValueError):
                 raise ValueError("choose Close all or Close 50%") from None
-            res = ls.admin_close(fraction, by=by)
+            res = ls.admin_close(fraction, by=by, pos_id=(str(p.get("id")) if p.get("id") else None))
             ev = res.pop("event", None)
             if ev and sink is not None:
                 try:

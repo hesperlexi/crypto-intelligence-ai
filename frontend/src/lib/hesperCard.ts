@@ -22,7 +22,7 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
   y += 64;
   txt(g, `Hesper Challenge  ·  run #${cur.run ?? "—"}`, M, y, { f: sora, w: 600, px: 26, color: L.soft });
   y += 36;
-  txt(g, `All-in demo bot, virtual money, ${usd(start, 0)} start`, M, y, { w: 500, px: 21, color: L.mute });
+  txt(g, `Demo bot, up to 5 grade-A trades at once, virtual money, ${usd(start, 0)} start`, M, y, { w: 500, px: 21, color: L.mute });
   const bal = isNum(balance) ? balance : cur.balance;
   const up = (bal ?? start) >= start;
   y += 128;
@@ -56,7 +56,7 @@ export async function drawHesperCard(cv: HTMLCanvasElement, v: any, balance: num
     ["best peak", usd(sc.best_peak?.peak ?? sc.all_time_peak, 0), L.gold],
   ], 50);
   luxFooter(g, W, M, H - 150, "Watch the challenge in the app", [
-    "All-in demo bot on the app's public grade-A calls. Virtual money only, no real orders.",
+    "Demo bot on the app's public grade-A calls, up to 5 at once. Virtual money only, no real orders.",
     "Past results don't guarantee future results. Not financial advice.",
   ]);
 }
@@ -79,7 +79,7 @@ export const liqDistance = (o: any, px: number | null) =>
 
 function smallPrint(g: CanvasRenderingContext2D, W: number, M: number, H: number) {
   luxFooter(g, W, M, H - 150, "Watch the challenge in the app", [
-    "All-in demo on the app's public grade-A calls. Virtual money only, no real orders.",
+    "Demo on the app's public grade-A calls, up to 5 at once. Virtual money only, no real orders.",
     "Past results don't guarantee future results. Not financial advice.",
   ]);
 }
@@ -97,7 +97,7 @@ export async function drawLastStandCard(cv: HTMLCanvasElement, v: any, balance: 
   y += 64;
   txt(g, `Last Stand  ·  run #${cur.run ?? "—"}`, M, y, { f: sora, w: 600, px: 26, color: L.soft });
   y += 36;
-  txt(g, `All-in from ${usd(start, start < 100 ? 2 : 0)}, until liquidation`, M, y, { w: 500, px: 21, color: L.mute });
+  txt(g, `From ${usd(start, start < 100 ? 2 : 0)}, up to 5 trades at once`, M, y, { w: 500, px: 21, color: L.mute });
   const bal = isNum(balance) ? balance : cur.balance;
   const up = (bal ?? start) >= start;
   y += 128;

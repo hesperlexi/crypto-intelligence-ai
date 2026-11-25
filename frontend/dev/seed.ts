@@ -664,6 +664,13 @@ function scalping() {
 
 /** views/hesper: the shape backend/app/services/hesper.view publishes (Road to Rich, admin only). Sample runs. */
 function hesper() {
+  const v = hesperBase();
+  extraTrades(v.current, 10);
+  extraTrades(v.laststand.current, 15);
+  return v;
+}
+
+function hesperBase(): any {
   const coins = ["BTC/USDT", "ETH/USDT", "SOL/USDT", "XRP/USDT", "BNB/USDT", "DOGE/USDT", "AVAX/USDT", "LTC/USDT", "AAVE/USDT", "PAXG/USDT"];
   const tfs = ["15m", "1h", "4h", "12h", "1h", "4h", "1d", "1h"];
   const reasons: Record<string, string> = { w1: "TP1", w2: "TP2", w3: "TP3", be: "breakeven stop", tr: "trailing stop", l: "stop", t: "time exit", liq: "liquidated" };
@@ -721,7 +728,8 @@ function hesper() {
     current: { run: cur.run, started_at: cur.started_at, cash: cash - margin / 2 + margin * 0.5 * 0.025 * lev, balance: cash * 1.06, peak: cur.peak, trades: cur.trades, wins: cur.wins, updated_at: NOW - 4 * 60_000,
       open: { id: "hopen", symbol: "SOL/USDT", timeframe: "4h", side: 1, entry, stop: entry, stop0: entry * 0.975, targets: [entry * 1.025, entry * 1.044, entry * 1.06], tp_hit: 1,
         leverage: lev, qty, qty_open: qty / 2, margin, coll: entry / lev, liq: entry * (1 - 1 / lev + 0.005), realized: margin * 0.5 * 0.025 * lev, opened_at: NOW - 7 * H,
-        signal_id: "s-sol", confidence: 0.64, horizon_bars: 100, run_target: null, balance_before: cash }, pending: null },
+        signal_id: "s-sol", confidence: 0.64, horizon_bars: 100, run_target: null, balance_before: cash, risk_pct: 10 }, pending: null,
+      slots: 5, risk_pct: 10, pause_until: null, loss_streak: 0 },
     score: { successes: succ.length, failures: fails.length, stopped: done.filter((r) => r.result === "STOPPED").length,
       milestones: runs.filter((r) => r.result === "SUCCESS" || r.goal_reached_at).length, liquidations: fails.filter((r) => r.reason === "liquidated").length, busted: fails.filter((r) => r.reason === "busted").length,
       runs: runs.length, finished: done.length, best_peak: { run: bestRun.run, peak: bestRun.peak }, all_time_peak: bestRun.peak,
@@ -730,6 +738,20 @@ function hesper() {
     runs: [...runs].reverse(), trades: [...trades].reverse(), curves, label: "Demo · virtual money · not financial advice",
     laststand: laststand(),
   };
+}
+
+
+/** v3.2: several open trades per challenge (up to 5): the seed's first trade + two more and a waiting order. */
+function extraTrades(cur: any, risk: number) {
+  const mk = (id: string, symbol: string, tf: string, side: number, move: number, lev: number, hours: number) => {
+    const px = PRICES[symbol].p, entry = px * (1 - side * move), stop = entry * (1 - side * 0.02), margin = 12 * (risk / 10), qty = margin * lev / entry;
+    return { id, symbol, timeframe: tf, side, entry, stop, stop0: stop, targets: [entry * (1 + side * 0.02), entry * (1 + side * 0.03), entry * (1 + side * 0.045)], tp_hit: 0,
+      leverage: lev, qty, qty_open: qty, margin, coll: entry / lev, liq: entry * (1 - side / lev + side * 0.005), realized: -margin * 0.01, opened_at: NOW - hours * H,
+      signal_id: `s-${id}`, horizon_bars: 200, run_target: null, risk_pct: risk, admin_partials: 0 };
+  };
+  cur.opens = [cur.open, mk(`${cur.open.id}-b`, "BTC/USDT", "1h", -1, -0.004, 20, 2), mk(`${cur.open.id}-x`, "XRP/USDT", "15m", 1, 0.006, 25, 1)];
+  cur.pendings = [{ id: `${cur.open.id}-p`, symbol: "DOGE/USDT", timeframe: "4h", side: 1, limit: PRICES["DOGE/USDT"].p * 0.985, stop: PRICES["DOGE/USDT"].p * 0.96, leverage: 15, reserved: 10, placed_at: NOW - 30 * 60_000, expires_at: NOW + 20 * H }];
+  return cur;
 }
 
 /** v2.63 Last Stand inside views/hesper: two liquidated runs and a live one that started from $10. */
@@ -767,7 +789,8 @@ function laststand() {
       start_balance: 10, goal: 100, goal_reached_at: null, pending: null,
       open: { id: "lsopen", symbol: "ETH/USDT", timeframe: "1h", side: 1, entry, stop: entry * 0.985, stop0: entry * 0.985, targets: [entry * 1.015, entry * 1.025, entry * 1.035], tp_hit: 0,
         leverage: lev, qty, qty_open: qty, margin, coll: entry / lev, liq: entry * (1 - 1 / lev + 0.005), realized: -margin * 0.012, opened_at: NOW - 3 * H,
-        signal_id: "s-eth", confidence: 0.66, horizon_bars: 200, run_target: null, balance_before: cash, admin_partials: 0 } },
+        signal_id: "s-eth", confidence: 0.66, horizon_bars: 200, run_target: null, balance_before: cash, admin_partials: 0, risk_pct: 15 },
+      slots: 5, risk_pct: 15, pause_until: null, loss_streak: 1 },
     score: { runs: 3, finished: 2, failures: 2, liquidations: 2, busted: 0, stopped: 0, successes: 0, milestones: 0, trades: trades.length,
       wins: trades.filter((x) => x.pnl > 0).length, streak: { kind: "win", n: 2 }, best_peak: { run: 3, peak: cur.peak }, all_time_peak: cur.peak },
     runs: [...runs].reverse(), trades: [...trades].reverse(), curves, label: "Demo · virtual money · not financial advice",

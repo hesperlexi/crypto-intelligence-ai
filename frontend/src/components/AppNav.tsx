@@ -82,7 +82,7 @@ const TITLES: [string, string, string][] = [
   ["/report", "Weekly report", "Week summary"],
   ["/achievements", "Achievements", "Record milestones"],
   ["/health", "Health", "Engine and data"],
-  ["/rich", "Hesper Challenge", "All-in demo run"],
+  ["/rich", "Hesper Challenge", "Demo runs on grade-A calls"],
   ["/guardian", "Trade Guardian", "Open-call warnings"],
   ["/lab", "Performance Lab", "What works, what does not"],
   ["/users", "Users", "Members and payments"],

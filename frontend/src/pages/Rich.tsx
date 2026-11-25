@@ -17,7 +17,7 @@ import { download } from "../lib/cardCanvas";
 import { base, fmtDate, fmtPrice, isNum, slug } from "../lib/format";
 import { drawHesperCard, drawLastStandCard, drawRunCard, drawTradeCard, lasted, liqDistance, progressOf, usd } from "../lib/hesperCard";
 import { postToTelegram } from "../lib/telegramShare";
-import { useTickerThrottled } from "../lib/live";
+import { useLive, useTickerThrottled } from "../lib/live";
 import { useIsAdmin } from "../lib/session";
 
 const pct = (v: unknown, d = 1) => (isNum(v) ? `${v > 0 ? "+" : ""}${v.toFixed(d)}%` : "—");
@@ -33,17 +33,32 @@ const dur = (ms: unknown) => {
 };
 const REASON: Record<string, string> = { goal: "Goal reached", liquidated: "Liquidated", busted: "Busted", stopped: "Stopped by admin" };
 
-/** Live balance and open P/L of the current trade (ticker at most once a second). */
+/** v3.2: every open trade of the run (several since 25 Nov 2026; older views carry only `open`). */
+const opensOf = (cur: any): any[] => (cur?.opens?.length ? cur.opens : cur?.open ? [cur.open] : []);
+const pendingsOf = (cur: any): any[] => (cur?.pendings?.length ? cur.pendings : cur?.pending ? [cur.pending] : []);
+
+type LiveTrade = { px: number | null; pnl: number | null; roi: number | null };
+/** Live balance (cash + every open trade's value + waiting orders) and each trade's live P/L (prices ≤ 2 updates/s). */
 function useLiveRun(cur: any) {
-  const o = cur?.open;
-  const t = useTickerThrottled(o?.symbol, 1000);
-  const px = isNum(t?.last) ? t!.last : null;
-  if (!cur) return { px: null, balance: null as number | null, pnl: null as number | null, roi: null as number | null };
-  if (!o || px == null) return { px, balance: isNum(cur.balance) ? cur.balance : cur.cash, pnl: null, roi: null };
-  const upnl = o.side * o.qty_open * (px - o.entry);
-  const value = Math.max(0, o.qty_open * o.coll + upnl);
-  const pnl = (o.realized ?? 0) + upnl;
-  return { px, balance: cur.cash + value, pnl, roi: o.margin ? (pnl / o.margin) * 100 : null };
+  const { tickers } = useLive();
+  const first = opensOf(cur)[0];
+  const t = useTickerThrottled(first?.symbol, 1000);
+  if (!cur) return { px: null, balance: null as number | null, pnl: null as number | null, roi: null as number | null, by: {} as Record<string, LiveTrade> };
+  const by: Record<string, LiveTrade> = {};
+  let value = 0, known = true;
+  for (const o of opensOf(cur)) {
+    const p = o.id === first?.id && isNum(t?.last) ? t!.last : tickers[o.symbol]?.last;
+    const px = isNum(p) ? p : null;
+    if (px == null) { known = false; by[o.id] = { px: null, pnl: null, roi: null }; value += o.qty_open * o.coll; continue; }
+    const upnl = o.side * o.qty_open * (px - o.entry);
+    value += Math.max(0, o.qty_open * o.coll + upnl);
+    const pnl = (o.realized ?? 0) + upnl;
+    by[o.id] = { px, pnl, roi: o.margin ? (pnl / o.margin) * 100 : null };
+  }
+  const reserved = pendingsOf(cur).reduce((a, o) => a + (o.reserved ?? 0), 0);
+  const balance = opensOf(cur).length ? cur.cash + value + reserved : isNum(cur.balance) ? cur.balance : cur.cash;
+  const f = first ? by[first.id] : null;
+  return { px: f?.px ?? null, balance: known || !isNum(cur.balance) ? balance : cur.balance, pnl: f?.pnl ?? null, roi: f?.roi ?? null, by };
 }
 
 function Tile({ k, v, sub, cls = "" }: { k: string; v: string; sub?: string; cls?: string }) {
@@ -76,8 +91,8 @@ function Level({ k, v, cls = "" }: { k: string; v: string; cls?: string }) {
   return <div className="min-w-0"><div className="label">{k}</div><div className={`num mt-0.5 truncate text-sm font-semibold ${cls}`}>{v}</div></div>;
 }
 
-function OpenTrade({ o, live }: { o: any; live: ReturnType<typeof useLiveRun> }) {
-  const targets: number[] = o.targets ?? [];
+function OpenTrade({ o, live: run, extra }: { o: any; live: ReturnType<typeof useLiveRun>; extra?: React.ReactNode }) {
+  const live = run.by?.[o.id] ?? { px: run.px, pnl: run.pnl, roi: run.roi };
   return (
     <div className="rounded-xl border border-accent/25 bg-accent/[0.04] p-3.5">
       <div className="flex flex-wrap items-center gap-2">
@@ -90,7 +105,42 @@ function OpenTrade({ o, live }: { o: any; live: ReturnType<typeof useLiveRun> })
           <span className={`num ml-2 text-sm ${tone(live.roi)}`}>{pct(live.roi)}</span>
         </span>
       </div>
-      <div className="mt-3"><PositionGrid p={botFacts(o, live.px)} allTps note={`Opened ${fmtDate(o.opened_at)}`} /></div>
+      <div className="mt-3"><PositionGrid p={botFacts(o, live.px)} allTps note={`Opened ${fmtDate(o.opened_at)}${isNum(o.risk_pct) ? ` · risk ${o.risk_pct}% of the balance at the stop` : ""}`} /></div>
+      {extra}
+    </div>
+  );
+}
+
+function SlotsLine({ cur }: { cur: any }) {
+  if (!isNum(cur?.slots)) return null;
+  const n = opensOf(cur).length + pendingsOf(cur).length;
+  const rest = isNum(cur.pause_until) && cur.pause_until > Date.now();
+  return (
+    <p className="text-xs text-mute">
+      {n} of {cur.slots} trades open · each risks {cur.risk_pct}% of the balance at its stop
+      {rest ? <span className="text-warn"> · resting after 2 losses in a row until {new Date(cur.pause_until).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}</span> : null}
+    </p>
+  );
+}
+
+function Trades({ cur, live, empty, liq = false, close }: { cur: any; live: ReturnType<typeof useLiveRun>; empty: string; liq?: boolean; close?: (o: any) => React.ReactNode }) {
+  const opens = opensOf(cur), pend = pendingsOf(cur);
+  if (!opens.length && !pend.length) return <div className="rounded-xl border border-dashed border-glass/15 p-3.5 text-sm text-mute">{empty}</div>;
+  return (
+    <div className="grid items-start gap-3 lg:grid-cols-2">
+      {opens.map((o) => (
+        <OpenTrade key={o.id} o={o} live={live} extra={<>
+          {liq && <div className="mt-3"><LiqMeter o={o} px={live.by?.[o.id]?.px ?? null} /></div>}
+          {close && <div className="mt-3">{close(o)}</div>}
+        </>} />
+      ))}
+      {pend.map((p) => (
+        <div key={p.id ?? p.symbol} className="rounded-xl border border-glass/10 p-3.5 text-sm">
+          <span className="font-semibold">{coinName(p.symbol)}</span> <span className="text-mute">{p.timeframe} · {sideTxt(p.side)} {Math.round(p.leverage)}x</span>
+          <span className="text-mute"> · waiting for entry at </span><span className="num font-semibold">{fmtPrice(p.limit)}</span>
+          {close && <div className="mt-2">{close({ ...p, pending: true })}</div>}
+        </div>
+      ))}
     </div>
   );
 }
@@ -116,14 +166,9 @@ function RunCard({ v, live }: { v: any; live: ReturnType<typeof useLiveRun> }) {
           ✓ {usd(goal, 0)} reached {fmtDate(cur.goal_reached_at)}{isNum(live.balance) ? ` · ${(live.balance / start).toFixed(1)}x` : ""}
         </div>
       )}
-      <div className="mt-4">
-        {cur.open ? <OpenTrade o={cur.open} live={live} />
-          : cur.pending ? (
-            <div className="rounded-xl border border-glass/10 p-3.5 text-sm">
-              <span className="font-semibold">{base(cur.pending.symbol)}</span> <span className="text-mute">{cur.pending.timeframe} · {sideTxt(cur.pending.side)} {Math.round(cur.pending.leverage)}x</span>
-              <span className="text-mute"> · waiting for entry at </span><span className="num font-semibold">{fmtPrice(cur.pending.limit)}</span>
-            </div>
-          ) : <div className="rounded-xl border border-dashed border-glass/15 p-3.5 text-sm text-mute">Waiting for a fresh grade-A call.</div>}
+      <div className="mt-4 space-y-2">
+        <SlotsLine cur={cur} />
+        <Trades cur={cur} live={live} empty="Waiting for a fresh grade-A call." />
       </div>
     </section>
   );
@@ -171,7 +216,7 @@ function ResultTag({ r }: { r: any }) {
 
 const esc = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const coinName = (s: unknown) => (String(s ?? "").startsWith("PAXG") ? "GOLD" : base(String(s ?? "")));
-const NOTE = "All-in demo on our public grade-A calls. Virtual money, no real orders. Not financial advice.";
+const NOTE = "Demo on our public grade-A calls, up to 5 trades at once. Virtual money, no real orders. Not financial advice.";
 
 /** Share image: a 1080 x 1080 picture drawn in the browser. Download it, or (v2.63) post it to the Telegram channel. */
 function ShareSheet({ label, file, kind, caption, draw, onClose }: {
@@ -421,7 +466,7 @@ function CloseTrade({ open, pending, onDone }: { open: any; pending: any; onDone
   const go = async (f: 0.5 | 1) => {
     setAsk(null); setBusy(true); setMsg("Closing on the next engine run (within 5 min)…");
     try {
-      const j = await queueJob("laststand_close", { fraction: f });
+      const j = await queueJob("laststand_close", open?.all ? { fraction: 1 } : { fraction: f, id: (open ?? pending)?.id });
       const r: any = await j.done;
       setMsg(r?.cancelled_order ? "Entry order cancelled." : r?.closed === "half" ? `Half closed, ${signedUsd(r.pnl)}. The rest stays open.`
         : r?.closed ? `Closed, ${signedUsd(r.pnl)}. Balance ${usd(r.balance)}.` : "Done.");
@@ -429,23 +474,23 @@ function CloseTrade({ open, pending, onDone }: { open: any; pending: any; onDone
     } catch (e: any) { setMsg(`Not closed: ${e?.message ?? e}`); }
     setBusy(false);
   };
-  const what = open ? `${coinName(open.symbol)} ${sideTxt(open.side)}` : pending ? `${coinName(pending.symbol)} entry order` : "";
+  const what = open?.all ? "every open trade" : open ? `${coinName(open.symbol)} ${sideTxt(open.side)}` : pending ? `${coinName(pending.symbol)} entry order` : "";
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {open && <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setAsk(0.5)}>Close 50%</button>}
-      <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => setAsk(1)}>{open ? "Close all" : "Cancel order"}</button>
+      {open && !open.all && <button type="button" className="btn btn-sm" disabled={busy} onClick={() => setAsk(0.5)}>Close 50%</button>}
+      <button type="button" className="btn btn-sm btn-danger" disabled={busy} onClick={() => setAsk(1)}>{open?.all ? "Close all trades" : open ? "Close" : "Cancel order"}</button>
       {msg && <span className="text-xs text-mute" role="status">{msg}</span>}
       {ask != null && createPortal(
         <div className="fixed inset-0 z-[70] flex items-end justify-center bg-black/70 p-0 backdrop-blur-sm sm:items-center sm:p-4" onClick={() => setAsk(null)}>
           <div ref={ref} role="alertdialog" aria-modal="true" aria-label="Close the Last Stand trade" onClick={(e) => e.stopPropagation()}
             className="panel popover animate-in w-full max-w-md rounded-b-none p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:rounded-2xl sm:pb-5">
-            <h2 className="text-base font-semibold">{!open ? `Cancel the ${what}?` : ask === 1 ? `Close all of ${what}?` : `Close half of ${what}?`}</h2>
+            <h2 className="text-base font-semibold">{!open ? `Cancel the ${what}?` : open.all ? "Close every open trade?" : ask === 1 ? `Close all of ${what}?` : `Close half of ${what}?`}</h2>
             <p className="mt-2 text-sm text-mute">{!open ? "The money goes back to the balance and the run waits for the next call."
               : ask === 1 ? "The trade closes at the engine's price. The run goes on with the next grade-A call."
               : "Half of what is still open closes at the engine's price. The rest keeps its stop and targets."} Only this Last Stand trade changes.</p>
             <div className="mt-4 flex justify-end gap-2">
               <button type="button" className="btn btn-sm" onClick={() => setAsk(null)}>Keep it</button>
-              <button type="button" className="btn btn-sm btn-primary" onClick={() => void go(ask)}>{!open ? "Cancel order" : ask === 1 ? "Close all" : "Close 50%"}</button>
+              <button type="button" className="btn btn-sm btn-primary" onClick={() => void go(ask)}>{!open ? "Cancel order" : open.all ? "Close all trades" : ask === 1 ? "Close" : "Close 50%"}</button>
             </div>
           </div>
         </div>, document.body)}
@@ -490,7 +535,7 @@ function LastStandPanel({ v, owner, reload }: { v: any; owner: boolean; reload: 
   const bestTrade = trades.reduce<any>((a, t) => (!a || t.pnl > a.pnl ? t : a), null);
   const lsShare = (): ShareReq => ({
     label: "Last Stand share image", file: `last-stand-run-${cur?.run ?? 0}.png`, kind: "challenge_laststand",
-    caption: `<b>Last Stand · run #${cur?.run}</b>\nAll-in from ${esc(cents(start))}, until liquidation. Now ${esc(cents(live.balance))}${mult != null ? ` (${mult.toFixed(2)}x)` : ""} after ${cur?.trades ?? 0} trades, alive ${esc(lasted(Date.now() - (cur?.started_at ?? Date.now())))}.\n<i>${NOTE}</i>`,
+    caption: `<b>Last Stand · run #${cur?.run}</b>\nFrom ${esc(cents(start))}, up to 5 trades at once. Now ${esc(cents(live.balance))}${mult != null ? ` (${mult.toFixed(2)}x)` : ""} after ${cur?.trades ?? 0} trades, alive ${esc(lasted(Date.now() - (cur?.started_at ?? Date.now())))}.\n<i>${NOTE}</i>`,
     draw: (cv) => drawLastStandCard(cv, v, live.balance, live.px),
   });
   return (
@@ -498,7 +543,7 @@ function LastStandPanel({ v, owner, reload }: { v: any; owner: boolean; reload: 
       {!cur && (
         <section className="panel panel-hero p-4 sm:p-6" aria-label="Last Stand">
           <div className="font-display text-lg font-semibold">Last Stand</div>
-          <p className="mt-1 max-w-2xl text-sm text-mute">One account, all-in on every fresh grade-A call, one trade at a time. It starts from any amount and keeps going until it is liquidated.</p>
+          <p className="mt-1 max-w-2xl text-sm text-mute">One account on every fresh grade-A call: up to 5 trades at once, each risking a fixed share of the balance at its stop. It starts from any amount and keeps going until it is wiped out.</p>
           {last && (
             <p className="num mt-3 text-sm">
               Run #{last.run} <span className={last.result === "FAIL" ? "text-bear" : "text-text"}>{(REASON[last.reason] ?? last.result).toLowerCase()}</span> at {cents(last.end_balance)} after {last.trades} trades
@@ -523,19 +568,13 @@ function LastStandPanel({ v, owner, reload }: { v: any; owner: boolean; reload: 
             </div>
           </div>
           <div className="mx-auto mt-3 max-w-4xl"><SingularityJourney start={start} goal={start * 10} balance={live.balance} /></div>
-          {cur.open && <div className="mt-4 max-w-xl"><LiqMeter o={cur.open} px={live.px} /></div>}
-          <div className="mt-4">
-            {cur.open ? <OpenTrade o={cur.open} live={live} />
-              : cur.pending ? (
-                <div className="rounded-xl border border-glass/10 p-3.5 text-sm">
-                  <span className="font-semibold">{coinName(cur.pending.symbol)}</span> <span className="text-mute">{cur.pending.timeframe} · {sideTxt(cur.pending.side)} {Math.round(cur.pending.leverage)}x</span>
-                  <span className="text-mute"> · waiting for entry at </span><span className="num font-semibold">{fmtPrice(cur.pending.limit)}</span>
-                </div>
-              ) : <div className="rounded-xl border border-dashed border-glass/15 p-3.5 text-sm text-mute">Flat. The whole balance goes into the next fresh grade-A call.</div>}
+          <div className="mt-4 space-y-2">
+            <SlotsLine cur={cur} />
+            <Trades cur={cur} live={live} liq empty="Flat. The next fresh grade-A call is taken." close={owner ? (o) => <CloseTrade open={o.pending ? null : o} pending={o.pending ? o : null} onDone={reload} /> : undefined} />
           </div>
           {owner && (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-              {(cur.open || cur.pending) ? <CloseTrade open={cur.open} pending={cur.pending} onDone={reload} /> : <span />}
+              {opensOf(cur).length > 1 ? <CloseTrade open={{ all: true }} pending={null} onDone={reload} /> : <span />}
               <div className="flex flex-wrap items-center gap-2">
                 <ShareBtn req={lsShare} />
                 <StopRun run={cur.run} onDone={reload} job="laststand_stop" label="End run" />

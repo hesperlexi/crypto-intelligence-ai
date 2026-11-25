@@ -25,6 +25,7 @@ training and wins_today never see it. It only reads `signals`. Admin-only view `
 from __future__ import annotations
 
 import math
+import os
 from typing import Any
 
 from ..data.base import tf_ms
@@ -92,6 +93,13 @@ class Hesper(BotEngine):
     AUTO_START = True            # run 1 starts by itself (one time)
     AUTO_RESTART = True          # after a liquidation / bust the next run starts at once with the same amount
     MIN_START, MAX_START = 10.0, 1_000_000.0
+    # v3.2 (owner, 25 Nov 2026: "the challenge is missing important grade-A entries ... I want quick money"): up to SLOTS
+    # trades at once; each is sized so its stop costs RISK_PCT of the balance (equity) - margin capped by the free cash
+    # and the leverage cap; after PAUSE_AFTER losses in a row no new trade for PAUSE_MS (open trades keep running)
+    SLOTS = int(os.environ.get("CHALLENGE_SLOTS", "5"))
+    RISK_PCT = float(os.environ.get("HESPER_RISK_PCT", "10"))
+    PAUSE_AFTER = 2
+    PAUSE_MS = 4 * 3_600_000
 
     def __init__(self, rt: Runtime):
         super().__init__(rt)
@@ -137,14 +145,14 @@ class Hesper(BotEngine):
             return []
         events: list[dict[str, Any]] = []
         self._funding(state, now)
-        cfg = state.get("trade_cfg")
-        if cfg and (state["positions"] or state["pending"]):
+        if state["positions"] or state["pending"]:
             before = {q["id"]: int(q.get("tp_hit") or 0) for q in state["positions"]}
-            events += self._manage_decision(cfg, state, now)
-            for e in events:                   # v2.30: the run and the cash after a close, for the notification
+            evs = self._manage_all(state, now)
+            for e in evs:                      # v2.30: the run and the cash after a close, for the notification
                 e.setdefault("run", state["run"])
                 if e.get("type") in ("close", "liquidated"):
                     e.setdefault("balance", float(state["cash"]))
+            events += evs
             # v2.30: a target reached on a trade that is still open (a close reports its own targets)
             for q in state["positions"]:
                 for n in range(before.get(q["id"], 0) + 1, int(q.get("tp_hit") or 0) + 1):
@@ -159,6 +167,7 @@ class Hesper(BotEngine):
                 state = self.load() or state
                 if state.get("idle"):          # v2.63 Last Stand: waits for the admin's next "Start run"
                     return events
+        if not state.get("idle"):
             events += self._enter(state, now)
         for e in events:
             e.setdefault("run", state["run"])
@@ -248,10 +257,10 @@ class Hesper(BotEngine):
         """Flat: has the run ended by itself? Liquidation or a balance below MIN_BALANCE -> FAIL. (v2.22: reaching
         GOAL no longer ends a run - see `_milestone`; the admin ends a run with `stop_run`.)"""
         cash = float(state["cash"])
-        if state.get("end") == "liquidated":
+        if state.get("end") == "liquidated":               # older runs (one trade at a time)
             result, reason = "FAIL", "liquidated"
         elif cash < MIN_BALANCE:
-            result, reason = "FAIL", "busted"
+            result, reason = "FAIL", "liquidated" if state.get("last_end_reason") == "liquidated" else "busted"
         else:
             return None
         self._finish(state, now, result, reason, int(state.get("end_at") or now), start_next=self.AUTO_RESTART)
@@ -279,14 +288,53 @@ class Hesper(BotEngine):
         out.sort(key=lambda r: (-(r.get("confidence") or 0.0), -int(r["created_at"])))
         return out
 
+    def _manage_all(self, state: dict[str, Any], now: int) -> list[dict[str, Any]]:
+        """v3.2: each trade is followed with its own config (timeframe, time limit, leverage) - several can be open."""
+        def key(x: dict[str, Any]) -> str:
+            return dumps((x.get("info") or {}).get("cfg") or state.get("trade_cfg") or {})
+        groups: dict[str, dict[str, Any]] = {}
+        for x in state["positions"]:
+            groups.setdefault(key(x), {"pos": [], "pend": []})["pos"].append(x)
+        for x in state["pending"]:
+            groups.setdefault(key(x), {"pos": [], "pend": []})["pend"].append(x)
+        all_pos, all_pend = list(state["positions"]), list(state["pending"])
+        events: list[dict[str, Any]] = []
+        kept_pos: list[dict[str, Any]] = []
+        kept_pend: list[dict[str, Any]] = []
+        for k, g in groups.items():
+            cfg = loads(k, {}) or None
+            if not cfg:
+                kept_pos += g["pos"]
+                kept_pend += g["pend"]
+                continue
+            state["positions"], state["pending"] = list(g["pos"]), list(g["pend"])
+            events += self._manage_decision(cfg, state, now)
+            kept_pos += state["positions"]
+            kept_pend += state["pending"]
+        state["positions"], state["pending"] = kept_pos, kept_pend
+        del all_pos, all_pend
+        return events
+
+    def open_count(self, state: dict[str, Any]) -> int:
+        return len(state.get("positions") or []) + len(state.get("pending") or [])
+
     def _enter(self, state: dict[str, Any], now: int) -> list[dict[str, Any]]:
         if float(state["cash"]) < MIN_BALANCE:
             return []
+        if int(state.get("pause_until") or 0) > now:
+            return []                          # v3.2: resting after PAUSE_AFTER losses in a row
+        busy = {x["symbol"] for x in (state.get("positions") or []) + (state.get("pending") or [])}
+        out = []
         for r in self.candidates(now, state.get("taken")):
+            if self.open_count(state) >= self.SLOTS or float(state["cash"]) < MIN_BALANCE:
+                break
+            if r["symbol"] in busy:
+                continue                       # one trade per coin
             ev = self._enter_call(state, r, now)
             if ev:
-                return [ev]
-        return []
+                out.append(ev)
+                busy.add(r["symbol"])
+        return out
 
     def _enter_call(self, state: dict[str, Any], r: dict[str, Any], now: int) -> dict[str, Any] | None:
         sym, side, tf = r["symbol"], int(r["side"]), r["timeframe"]
@@ -306,19 +354,26 @@ class Hesper(BotEngine):
         if lev is None:
             return None
         fee_rate = F.FUTURES_FEE_RATE
-        qty = float(state["cash"]) * ALL_IN / (entry * (1 / lev + fee_rate))
-        if qty <= 0:
+        # v3.2: the stop costs RISK_PCT of the balance (equity incl. open trades); never more margin than the free cash
+        eq = float(self.equity(state))
+        risk_amt = eq * self.RISK_PCT / 100
+        qty_risk = risk_amt / (abs(entry - stop) + 2 * entry * fee_rate)
+        qty_cash = float(state["cash"]) * ALL_IN / (entry * (1 / lev + fee_rate))
+        qty = min(qty_risk, qty_cash) if self.RISK_PCT > 0 else qty_cash     # RISK_PCT 0 = the old all-in sizing
+        if qty <= 0 or qty * entry / lev < MIN_BALANCE * 0.5:
             return None
         p = r["payload"]
         horizon = int(p.get("horizon_bars") or tracking.horizon_for(tf))
         info = {"signal_id": r["id"], "signal": r.get("signal"), "decision": r["decision"], "grade": p.get("grade"),
                 "confidence": r.get("confidence"), "bar_ts": r["bar_ts"], "timeframe": tf, "rr": r.get("rr"),
                 "atr": r.get("atr"), "leverage": lev, "horizon_bars": horizon, "run": state["run"],
-                "balance_before": float(state["cash"]), "published_at": r["created_at"]}
+                "balance_before": float(self.equity(state)), "published_at": r["created_at"],
+                "risk_pct": self.RISK_PCT}
         run = p.get("runner") or {}
         if run.get("on") and run.get("target"):
             info["run_target"] = float(run["target"])
         cfg = _trade_cfg(tf, horizon, lev, self.BOT_ID, self.NAME)
+        info["cfg"] = cfg                      # v3.2: each trade keeps its own follow-up config
         state["taken"] = (list(state.get("taken") or []) + [r["id"]])[-50:]
         state["last_entry_bar"][sym] = r["bar_ts"]
         if pullback:
@@ -377,7 +432,20 @@ class Hesper(BotEngine):
                         (state["trades"], state["wins"], state["peak"], dumps(best) if best else None, trade["run"]))
         state["end_at"] = int(now)
         if reason == "liquidated":
-            state["end"] = "liquidated"
+            state["liquidations"] = int(state.get("liquidations", 0)) + 1
+            state["last_end_reason"] = "liquidated"
+            if self.SLOTS <= 1:
+                state["end"] = "liquidated"            # one trade at a time (old rule): a liquidation ends the run
+        else:
+            state["last_end_reason"] = None
+        # v3.2: PAUSE_AFTER losses in a row -> no new trade for PAUSE_MS
+        if pnl > 0:
+            state["loss_streak"] = 0
+        else:
+            state["loss_streak"] = int(state.get("loss_streak", 0)) + 1
+            if state["loss_streak"] >= self.PAUSE_AFTER:
+                state["pause_until"] = int(now) + self.PAUSE_MS
+                state["loss_streak"] = 0
         return trade
 
     # ---- admin changes on the call Hesper holds (adjust.py) ----------------------------------------------------
@@ -416,7 +484,8 @@ class Hesper(BotEngine):
         return n
 
     # ---- v2.63 admin "Close all" / "Close 50%" on the challenge's own trade (never the call, never the other run) ----
-    def admin_close(self, fraction: float, now: int | None = None, by: str = "", px: float | None = None) -> dict[str, Any]:
+    def admin_close(self, fraction: float, now: int | None = None, by: str = "", px: float | None = None,
+                    pos_id: str | None = None) -> dict[str, Any]:
         """Close the open trade now at the engine's price: all of it (fraction 1) or half of what is still open
         (0.5). The run goes on. A half close scales the remaining target legs so TP1-3 still take 50 / 25 / 25 of what
         is left. "Close all" also cancels a waiting entry order."""
@@ -427,7 +496,32 @@ class Hesper(BotEngine):
         state = self.load()
         if not state or state.get("idle"):
             raise ValueError("no run in progress")
-        pos = (state.get("positions") or [None])[0]
+        if pos_id is None and fraction == 1.0 and len(state.get("positions") or []) > 1:
+            # v3.2 "Close all trades": every open trade closes at the engine's price, waiting orders are cancelled
+            total, evs = 0.0, []
+            for q in list(state["positions"]):
+                price = float(self._price(q["symbol"]) or q["entry"])
+                self._reduce(state, q, float(q["qty_open"]), price, False)
+                t = self._close_trade(self.BOT_ID, state, q, now, "closed by admin")
+                total += float(t["pnl"])
+            for o in list(state.get("pending") or []):
+                state["cash"] = state.get("cash", 0.0) + o.get("reserved", 0.0)
+            state["pending"], state["trade_cfg"] = [], None
+            state["equity"] = self.equity(state)
+            self.save(state)
+            return {"closed": "all trades", "pnl": round(total, 4), "balance": round(float(state["cash"]), 2), "by": by,
+                    "event": {"bot": self.BOT_ID, "type": "close", "symbol": "all", "reason": "closed by admin",
+                              "pnl": total, "run": state["run"], "balance": float(state["cash"])}}
+        cand = [q for q in state.get("positions") or [] if pos_id is None or q["id"] == pos_id]
+        if pos_id is not None and not cand:
+            pend = [o for o in state.get("pending") or [] if o.get("id") == pos_id]
+            if pend:
+                state["cash"] = state.get("cash", 0.0) + pend[0].get("reserved", 0.0)
+                state["pending"] = [o for o in state["pending"] if o.get("id") != pos_id]
+                self.save(state)
+                return {"cancelled_order": True, "balance": round(float(state["cash"]), 2), "by": by}
+            raise ValueError("that trade is no longer open")
+        pos = cand[0] if cand else None
         if pos is None:
             pend = list(state.get("pending") or [])
             if pend and fraction == 1.0:
@@ -468,6 +562,7 @@ class LastStand(Hesper):
     starts each run with any amount, can close its trade (all / 50%), and the run goes on until it is liquidated (or too
     small to trade). Nothing starts by itself: after a liquidation it waits for the admin's next "Start run"."""
     BOT_ID, NAME, TITLE = "laststand", "Last Stand", "Last Stand"
+    RISK_PCT = float(os.environ.get("LASTSTAND_RISK_PCT", "15"))
     STATE_KEY, FLAG, SINCE = "laststand_state", "laststand_v1", "laststand_since"
     RUNS, TRADES = "laststand_runs", "laststand_trades"
     AUTO_START = False
@@ -562,6 +657,24 @@ def view(rt: Any, cls: type[Hesper] = Hesper) -> dict[str, Any]:
                    "wins": st.get("wins", 0), "updated_at": st.get("updated_at"), "open": None, "pending": None,
                    "goal_reached_at": st.get("goal_reached_at"), "start_balance": _start_of(st),
                    "goal": float(st.get("goal") or goal_of(_start_of(st)))}
+        current.update({"slots": cls.SLOTS, "risk_pct": cls.RISK_PCT, "pause_until": st.get("pause_until"),
+                        "loss_streak": st.get("loss_streak", 0), "opens": [], "pendings": []})
+        for q in st.get("positions") or []:
+            i = q.get("info") or {}
+            current["opens"].append({"id": q["id"], "symbol": q["symbol"], "timeframe": i.get("timeframe"), "side": q["side"],
+                                     "entry": q["entry"], "stop": q["stop"], "stop0": q.get("stop0"),
+                                     "targets": q.get("targets"), "tp_hit": q["tp_hit"], "leverage": q.get("lev"),
+                                     "qty": q["qty"], "qty_open": q["qty_open"], "margin": q.get("margin"),
+                                     "coll": q.get("coll"), "liq": q.get("liq"), "realized": q.get("realized"),
+                                     "opened_at": q["opened_at"], "signal_id": i.get("signal_id"),
+                                     "horizon_bars": i.get("horizon_bars"), "run_target": i.get("run_target"),
+                                     "risk_pct": i.get("risk_pct"), "admin_partials": len(q.get("admin_partials") or [])})
+        for o in st.get("pending") or []:
+            i = o.get("info") or {}
+            current["pendings"].append({"id": o.get("id"), "symbol": o["symbol"], "timeframe": i.get("timeframe"),
+                                        "side": o["side"], "limit": o["limit"], "stop": o["stop"], "leverage": o.get("lev"),
+                                        "reserved": o.get("reserved"), "placed_at": o.get("placed_at"),
+                                        "expires_at": o.get("expires_at")})
         if pos:
             i = pos.get("info") or {}
             current["open"] = {"id": pos["id"], "symbol": pos["symbol"], "timeframe": i.get("timeframe"), "side": pos["side"],
