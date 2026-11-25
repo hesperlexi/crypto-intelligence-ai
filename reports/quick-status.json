@@ -114,26 +114,26 @@
  "health": {
   "status": "LIVE",
   "engine": {
-   "last_tick_started": 1795613310267,
-   "last_tick_finished": 1795613468362,
-   "last_tick_seconds": 158.1,
+   "last_tick_started": 1795613550764,
+   "last_tick_finished": 1795613703813,
+   "last_tick_seconds": 153.0,
    "data_host": "https://data-api.binance.vision",
    "failed_steps": [],
    "schedule_minutes": 4,
-   "ticks": 8072,
-   "round_seconds_avg": 160.5,
+   "ticks": 8073,
+   "round_seconds_avg": 159.4,
    "round_seconds_max": 207.5,
    "rounds_measured": 48,
-   "watch_last_at": 1795613454467,
+   "watch_last_at": 1795613694600,
    "watch_coins": 6,
    "watch_priced": 6,
    "watch_sent_total": 458,
-   "flow_last_at": 1795613441830,
+   "flow_last_at": 1795613681831,
    "flow_coins": 32,
    "flow_errors": 0,
-   "firestore_writes_today": 2653,
+   "firestore_writes_today": 2674,
    "firestore_write_budget": 15000,
-   "firestore_reads_today": 2501,
+   "firestore_reads_today": 2531,
    "firestore_read_limit": 50000,
    "firestore_members_active": 5,
    "firestore_member_reserve": 300,
@@ -297,177 +297,177 @@
   "series_15m": [
    {
     "symbol": "PAXG/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "XAG/USDT",
-    "candles": 30300,
+    "candles": 30301,
     "status": "OK"
    },
    {
     "symbol": "BTC/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "ETH/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "SOL/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "XRP/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "AAVE/USDT",
-    "candles": 32867,
+    "candles": 32868,
     "status": "OK"
    },
    {
     "symbol": "AVAX/USDT",
-    "candles": 32867,
+    "candles": 32868,
     "status": "OK"
    },
    {
     "symbol": "DOGE/USDT",
-    "candles": 32867,
+    "candles": 32868,
     "status": "OK"
    },
    {
     "symbol": "PEPE/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "ENA/USDT",
-    "candles": 32868,
+    "candles": 32869,
     "status": "OK"
    },
    {
     "symbol": "GALA/USDT",
-    "candles": 32474,
+    "candles": 32475,
     "status": "OK"
    },
    {
     "symbol": "TRX/USDT",
-    "candles": 32866,
+    "candles": 32867,
     "status": "OK"
    },
    {
     "symbol": "ADA/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "DOT/USDT",
-    "candles": 32868,
+    "candles": 32869,
     "status": "OK"
    },
    {
     "symbol": "SUI/USDT",
-    "candles": 32867,
+    "candles": 32868,
     "status": "OK"
    },
    {
     "symbol": "LINK/USDT",
-    "candles": 32867,
+    "candles": 32868,
     "status": "OK"
    },
    {
     "symbol": "BCH/USDT",
-    "candles": 32867,
+    "candles": 32868,
     "status": "OK"
    },
    {
     "symbol": "WIF/USDT",
-    "candles": 31048,
+    "candles": 31049,
     "status": "OK"
    },
    {
     "symbol": "BONK/USDT",
-    "candles": 31043,
+    "candles": 31044,
     "status": "OK"
    },
    {
     "symbol": "APT/USDT",
-    "candles": 32867,
+    "candles": 32868,
     "status": "OK"
    },
    {
     "symbol": "ETC/USDT",
-    "candles": 31040,
+    "candles": 31041,
     "status": "OK"
    },
    {
     "symbol": "RARE/USDT",
-    "candles": 30873,
+    "candles": 30874,
     "status": "OK"
    },
    {
     "symbol": "SEI/USDT",
-    "candles": 30873,
+    "candles": 30874,
     "status": "OK"
    },
    {
     "symbol": "MSTR/USDT",
-    "candles": 30836,
+    "candles": 30837,
     "status": "OK"
    },
    {
     "symbol": "ANTHROPIC/USDT",
-    "candles": 21639,
+    "candles": 21640,
     "status": "OK"
    },
    {
     "symbol": "HYPE/USDT",
-    "candles": 5962,
+    "candles": 5963,
     "status": "OK"
    },
    {
     "symbol": "HBAR/USDT",
-    "candles": 32866,
+    "candles": 32867,
     "status": "OK"
    },
    {
     "symbol": "SHIB/USDT",
-    "candles": 31046,
+    "candles": 31047,
     "status": "OK"
    },
    {
     "symbol": "WLD/USDT",
-    "candles": 32866,
+    "candles": 32867,
     "status": "OK"
    },
    {
     "symbol": "BNB/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "FLOKI/USDT",
-    "candles": 30091,
+    "candles": 30092,
     "status": "OK"
    },
    {
     "symbol": "NEAR/USDT",
-    "candles": 32869,
+    "candles": 32870,
     "status": "OK"
    },
    {
     "symbol": "PROM/USDT",
-    "candles": 30086,
+    "candles": 30087,
     "status": "OK"
    },
    {
     "symbol": "ZEC/USDT",
-    "candles": 32865,
+    "candles": 32866,
     "status": "OK"
    }
   ]
@@ -476,37 +476,37 @@
   "15m": {
    "n": 35,
    "fresh_12h": 33,
-   "max": 130.4,
+   "max": 130.5,
    "missing": 0
   },
   "1h": {
    "n": 35,
    "fresh_12h": 34,
-   "max": 58.2,
+   "max": 58.3,
    "missing": 0
   },
   "4h": {
    "n": 35,
    "fresh_12h": 34,
-   "max": 8.0,
+   "max": 8.1,
    "missing": 1
   },
   "12h": {
    "n": 35,
    "fresh_12h": 31,
-   "max": 58.2,
+   "max": 58.3,
    "missing": 1
   },
   "1d": {
    "n": 35,
    "fresh_12h": 29,
-   "max": 58.1,
+   "max": 58.2,
    "missing": 3
   },
   "3d": {
    "n": 35,
    "fresh_12h": 26,
-   "max": 7.9,
+   "max": 8.0,
    "missing": 9
   }
  },
@@ -766,9 +766,9 @@
   "has_token": true,
   "has_channel": true,
   "post_teaser": true,
-  "post_weekly": true,
-  "enabled": true,
   "post_wins": true,
+  "enabled": true,
+  "post_weekly": true,
   "keys": [
    "channel",
    "enabled",
@@ -1184,14 +1184,14 @@
   ],
   "auto": [
    {
-    "tf": "1h",
+    "tf": "12h",
     "grade": "A",
-    "at": 1795590091530,
-    "sid": "bec218fe",
+    "at": 1795511499772,
+    "sid": "a1fcaf0f",
     "sid_in_record": true,
-    "sid_open_in_record": true,
+    "sid_open_in_record": false,
     "same_coin_tf_statuses": [
-     "OPEN"
+     "EXPIRED"
     ]
    },
    {
@@ -1204,23 +1204,14 @@
     "same_coin_tf_statuses": []
    },
    {
-    "tf": "4h",
+    "tf": "1h",
     "grade": "A",
-    "at": 1795244678445,
-    "sid": "ca9b4285",
-    "sid_in_record": false,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": []
-   },
-   {
-    "tf": "12h",
-    "grade": "A",
-    "at": 1795511499772,
-    "sid": "a1fcaf0f",
+    "at": 1795552505107,
+    "sid": "888b381c",
     "sid_in_record": true,
-    "sid_open_in_record": false,
+    "sid_open_in_record": true,
     "same_coin_tf_statuses": [
-     "EXPIRED"
+     "OPEN"
     ]
    },
    {
@@ -1235,10 +1226,19 @@
     ]
    },
    {
+    "tf": "4h",
+    "grade": "A",
+    "at": 1795244678445,
+    "sid": "ca9b4285",
+    "sid_in_record": false,
+    "sid_open_in_record": false,
+    "same_coin_tf_statuses": []
+   },
+   {
     "tf": "1h",
     "grade": "A",
-    "at": 1795552505107,
-    "sid": "888b381c",
+    "at": 1795590091530,
+    "sid": "bec218fe",
     "sid_in_record": true,
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
@@ -1246,10 +1246,21 @@
     ]
    },
    {
-    "tf": "1h",
+    "tf": "12h",
     "grade": "A",
-    "at": 1795590091530,
-    "sid": "bec218fe",
+    "at": 1795511499772,
+    "sid": "a1fcaf0f",
+    "sid_in_record": true,
+    "sid_open_in_record": false,
+    "same_coin_tf_statuses": [
+     "EXPIRED"
+    ]
+   },
+   {
+    "tf": "12h",
+    "grade": "B",
+    "at": 1795565393816,
+    "sid": "aa336016",
     "sid_in_record": true,
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
@@ -1290,6 +1301,17 @@
     ]
    },
    {
+    "tf": "1h",
+    "grade": "A",
+    "at": 1795590091530,
+    "sid": "bec218fe",
+    "sid_in_record": true,
+    "sid_open_in_record": true,
+    "same_coin_tf_statuses": [
+     "OPEN"
+    ]
+   },
+   {
     "tf": "12h",
     "grade": "A",
     "at": 1795511499772,
@@ -1305,17 +1327,6 @@
     "grade": "B",
     "at": 1795565393816,
     "sid": "aa336016",
-    "sid_in_record": true,
-    "sid_open_in_record": true,
-    "same_coin_tf_statuses": [
-     "OPEN"
-    ]
-   },
-   {
-    "tf": "1h",
-    "grade": "A",
-    "at": 1795590091530,
-    "sid": "bec218fe",
     "sid_in_record": true,
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
@@ -1356,21 +1367,10 @@
     ]
    },
    {
-    "tf": "12h",
+    "tf": "1h",
     "grade": "A",
-    "at": 1795511499772,
-    "sid": "a1fcaf0f",
-    "sid_in_record": true,
-    "sid_open_in_record": false,
-    "same_coin_tf_statuses": [
-     "EXPIRED"
-    ]
-   },
-   {
-    "tf": "12h",
-    "grade": "B",
-    "at": 1795565393816,
-    "sid": "aa336016",
+    "at": 1795590091530,
+    "sid": "bec218fe",
     "sid_in_record": true,
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
@@ -1380,8 +1380,8 @@
    {
     "tf": "1h",
     "grade": "A",
-    "at": 1795590091530,
-    "sid": "bec218fe",
+    "at": 1795552505107,
+    "sid": "888b381c",
     "sid_in_record": true,
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
@@ -1402,8 +1402,8 @@
    {
     "tf": "1h",
     "grade": "A",
-    "at": 1795552505107,
-    "sid": "888b381c",
+    "at": 1795590091530,
+    "sid": "bec218fe",
     "sid_in_record": true,
     "sid_open_in_record": true,
     "same_coin_tf_statuses": [
@@ -1412,246 +1412,293 @@
    }
   ]
  },
- "bot15_trades": {
-  "futures-signal-ab-15m": [
-   {
-    "opened": 1795537752236,
-    "closed": 1795573800000,
-    "reason": "breakeven stop",
-    "win": false,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "TP2",
-      1795537930021
-     ]
+ "bot15_trades": [
+  {
+   "bot": "futures-signal-ab-15m",
+   "opened_at": 1795537752236,
+   "closed_at": 1795573800000,
+   "reason": "breakeven stop",
+   "pnl_sign": -1,
+   "pnl_pct_of_equity": -0.047,
+   "record_match": [
+    [
+     "TP2",
+     "trail",
+     1795537930021
     ]
-   },
-   {
-    "opened": 1795515499297,
-    "closed": 1795555847504,
-    "reason": "closed by admin",
-    "win": false,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "EXPIRED",
-      1795512807185
-     ]
+   ],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-15m",
+   "opened_at": 1795515499297,
+   "closed_at": 1795555847504,
+   "reason": "closed by admin",
+   "pnl_sign": -1,
+   "pnl_pct_of_equity": -0.161,
+   "record_match": [],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-15m",
+   "opened_at": 1795512747175,
+   "closed_at": 1795514575772,
+   "reason": "closed by admin",
+   "pnl_sign": -1,
+   "pnl_pct_of_equity": -0.008,
+   "record_match": [
+    [
+     "EXPIRED",
+     "admin_close",
+     1795512807185
     ]
-   },
-   {
-    "opened": 1795512747175,
-    "closed": 1795514575772,
-    "reason": "closed by admin",
-    "win": false,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "EXPIRED",
-      1795512807185
-     ]
+   ],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-signal-ab-15m",
+   "opened_at": 1795512747175,
+   "closed_at": 1795513274643,
+   "reason": "closed by admin",
+   "pnl_sign": 1,
+   "pnl_pct_of_equity": 0.011,
+   "record_match": [
+    [
+     "EXPIRED",
+     "admin_close",
+     1795512878139
     ]
-   },
-   {
-    "opened": 1795512747175,
-    "closed": 1795513274643,
-    "reason": "closed by admin",
-    "win": true,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "EXPIRED",
-      1795512878139
-     ]
+   ],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "opened_at": 1795583623668,
+   "closed_at": 1795596300000,
+   "reason": "breakeven stop",
+   "pnl_sign": -1,
+   "pnl_pct_of_equity": -0.093,
+   "record_match": [
+    [
+     "OPEN",
+     null,
+     1795583779384
     ]
-   }
-  ],
-  "futures-test-tp08-15m": [
-   {
-    "opened": 1795583623668,
-    "closed": 1795596300000,
-    "reason": "breakeven stop",
-    "win": false,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "OPEN",
-      1795583779384
-     ]
+   ],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "opened_at": 1795537752236,
+   "closed_at": 1795596300000,
+   "reason": "trailing stop",
+   "pnl_sign": 1,
+   "pnl_pct_of_equity": 0.346,
+   "record_match": [
+    [
+     "TP2",
+     "trail",
+     1795537930021
     ]
-   },
-   {
-    "opened": 1795537752236,
-    "closed": 1795596300000,
-    "reason": "trailing stop",
-    "win": true,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "TP2",
-      1795537930021
-     ]
+   ],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "opened_at": 1795515499297,
+   "closed_at": 1795555847504,
+   "reason": "closed by admin",
+   "pnl_sign": -1,
+   "pnl_pct_of_equity": -0.161,
+   "record_match": [],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "opened_at": 1795512747175,
+   "closed_at": 1795514575772,
+   "reason": "closed by admin",
+   "pnl_sign": -1,
+   "pnl_pct_of_equity": -0.008,
+   "record_match": [
+    [
+     "EXPIRED",
+     "admin_close",
+     1795512807185
     ]
-   },
-   {
-    "opened": 1795515499297,
-    "closed": 1795555847504,
-    "reason": "closed by admin",
-    "win": false,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "EXPIRED",
-      1795512807185
-     ]
+   ],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  },
+  {
+   "bot": "futures-test-tp08-15m",
+   "opened_at": 1795512747175,
+   "closed_at": 1795513274643,
+   "reason": "closed by admin",
+   "pnl_sign": 1,
+   "pnl_pct_of_equity": 0.011,
+   "record_match": [
+    [
+     "EXPIRED",
+     "admin_close",
+     1795512878139
     ]
-   },
-   {
-    "opened": 1795512747175,
-    "closed": 1795514575772,
-    "reason": "closed by admin",
-    "win": false,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "EXPIRED",
-      1795512807185
-     ]
-    ]
-   },
-   {
-    "opened": 1795512747175,
-    "closed": 1795513274643,
-    "reason": "closed by admin",
-    "win": true,
-    "keys": [
-     "bot_id",
-     "closed_at",
-     "correct",
-     "entry",
-     "exit",
-     "exit_reason",
-     "fees",
-     "id",
-     "info",
-     "opened_at",
-     "pnl",
-     "qty"
-    ],
-    "record_same": [
-     [
-      "EXPIRED",
-      1795512878139
-     ]
-    ]
-   }
-  ]
- },
+   ],
+   "keys": [
+    "bot_id",
+    "closed_at",
+    "correct",
+    "entry",
+    "exit",
+    "exit_reason",
+    "fees",
+    "id",
+    "info",
+    "opened_at",
+    "pnl",
+    "qty",
+    "r_multiple",
+    "return_pct",
+    "side",
+    "symbol"
+   ]
+  }
+ ],
  "derivs": {
   "exists": true,
   "generated_at": 1795612516819,
@@ -1800,7 +1847,7 @@
   ],
   "runs": 1,
   "trades": 11,
-  "at": 1795612750028,
+  "at": 1795613712202,
   "since": 1793784369074,
   "current_run": 1,
   "run_numbers": [
@@ -1823,7 +1870,7 @@
    "policy": null,
    "min_balance": 1.0,
    "started": true,
-   "generated_at": 1795612750029,
+   "generated_at": 1795613712202,
    "current": null,
    "score": null,
    "open_ended": true,
@@ -1865,16 +1912,16 @@
   "errors": []
  },
  "alert_watcher": {
-  "at": 1795613173584,
+  "at": 1795613474226,
   "armed": 26,
   "armed_at": 1795612990495,
   "sent_total": 69,
   "error": null,
   "idle": null,
   "engine_step": {
-   "at": 1795613232392,
+   "at": 1795613481069,
    "result": {
-    "watcher_at": 1795613173584,
+    "watcher_at": 1795613474226,
     "watcher_sent_total": 69,
     "bad_removed": 0,
     "armed": 26,
@@ -1901,8 +1948,8 @@
  "md": {
   "status": "OK",
   "transport": "engine snapshot (website streams live prices)",
-  "last_update_ms": 1795613326425,
-  "age_s": 151.392,
+  "last_update_ms": 1795613565750,
+  "age_s": 146.478,
   "reconnects": 0,
   "last_error": null,
   "quality_pct": 99.993,
@@ -1915,7 +1962,7 @@
  },
  "series_sample": {
   "timeframe": "15m",
-  "candles": 32869,
+  "candles": 32870,
   "missing": 0,
   "duplicates": 0,
   "malformed": 0,
@@ -1924,25 +1971,25 @@
   "quality_pct": 100.0,
   "recent_missing": 0,
   "fresh": true,
-  "age_s": 77.8,
+  "age_s": -587.8,
   "first_ts": 1766031300000,
-  "last_ts": 1795612500000,
+  "last_ts": 1795613400000,
   "status": "OK",
   "symbol": "PAXG/USDT"
  },
  "step_avg": {
-  "analyses": 95.5,
-  "bots": 21.9,
+  "analyses": 94.7,
+  "bots": 22.4,
   "snapshot": 14.0,
-  "candles": 13.3,
-  "market_data": 2.9,
+  "candles": 13.2,
   "rejected_outcomes": 2.6,
-  "outcomes": 2.4,
+  "outcomes": 2.5,
+  "market_data": 2.2,
   "bootstrap": 1.9,
   "guardian": 1.6,
   "config": 0.9,
   "derivs": 0.7,
-  "market_turn": 0.5,
+  "market_turn": 0.4,
   "context": 0.3,
   "news": 0.3,
   "market_extras": 0.3
@@ -1958,36 +2005,36 @@
   "ai_advisor": 8.7
  },
  "step_last": {
-  "analyses": 86.8,
-  "bots": 31.7,
-  "candles": 14.1,
+  "analyses": 85.3,
+  "bots": 27.8,
   "snapshot": 14.1,
-  "rejected_outcomes": 3.7,
-  "outcomes": 2.5,
+  "candles": 13.0,
+  "outcomes": 5.2,
+  "guardian": 2.5,
   "bootstrap": 1.9,
-  "guardian": 1.5,
+  "rejected_outcomes": 1.4,
   "config": 0.8,
-  "derivs": 0.3,
+  "derivs": 0.4,
   "context": 0.2,
-  "news": 0.2
+  "news": 0.1
  },
  "eng_watch": {
-  "last_tick_started": 1795613310267,
-  "last_tick_finished": 1795613468362,
-  "last_tick_seconds": 158.1,
-  "round_seconds_avg": 160.5,
+  "last_tick_started": 1795613550764,
+  "last_tick_finished": 1795613703813,
+  "last_tick_seconds": 153.0,
+  "round_seconds_avg": 159.4,
   "round_seconds_max": 207.5,
   "rounds_measured": 48,
-  "watch_last_at": 1795613454467,
+  "watch_last_at": 1795613694600,
   "watch_coins": 6,
   "watch_priced": 6,
   "watch_sent_total": 458,
-  "flow_last_at": 1795613441830,
+  "flow_last_at": 1795613681831,
   "flow_coins": 32,
   "flow_errors": 0,
   "flow_alerts": {
    "whales": {
-    "alerts": 260,
+    "alerts": 261,
     "p15": {
      "n": 259,
      "followed_pct": 47.5,
@@ -2005,7 +2052,7 @@
     }
    },
    "wipeout": {
-    "alerts": 59,
+    "alerts": 60,
     "p15": {
      "n": 59,
      "followed_pct": 35.6,
@@ -2024,16 +2071,16 @@
    }
   },
   "alert_watcher": {
-   "at": 1795613173584,
+   "at": 1795613474226,
    "armed": 26,
    "armed_at": 1795612990495,
    "sent_total": 69,
    "error": null,
    "idle": null,
    "engine_step": {
-    "at": 1795613232392,
+    "at": 1795613481069,
     "result": {
-     "watcher_at": 1795613173584,
+     "watcher_at": 1795613474226,
      "watcher_sent_total": 69,
      "bad_removed": 0,
      "armed": 26,
@@ -2046,7 +2093,7 @@
   "name": "binance",
   "errors": 0,
   "last_error": null,
-  "last_ok_ms": 1795613468105,
+  "last_ok_ms": 1795613703688,
   "clock_skew_ms": 0,
   "status": "OK",
   "has_error": false
@@ -2187,9 +2234,9 @@
   }
  ],
  "cloud_watcher": {
-  "at": 1795613653672,
-  "armed": 26,
-  "armed_at": 1795612990495,
+  "at": 1795613773454,
+  "armed": 25,
+  "armed_at": 1795613713148,
   "sent": 0,
   "sent_total": 69,
   "due": 0,
@@ -2202,7 +2249,7 @@
    "devices": 7,
    "with_uid": 7,
    "admins_set": 1,
-   "levels": 26,
+   "levels": 25,
    "rules_primed": 9
   },
   "fcm_check": {
@@ -2221,22 +2268,22 @@
   "edge_health": {
    "ok": true,
    "views": 751,
-   "newest": 1795613480918,
-   "last_put": 1795613486996
+   "newest": 1795613712892,
+   "last_put": 1795613720680
   },
-  "health_at": 1795613477903,
-  "health_tick": 1795613468362,
-  "track_record_at": 1795613477780,
+  "health_at": 1795613712314,
+  "health_tick": 1795613703813,
+  "track_record_at": 1795613712187,
   "mexc_px": {
    "px": {
     "ANTHROPIC": {
-     "last": 78.53,
-     "change": 0.9199999999999999,
-     "qv": 68255951.32982,
-     "ts": 1795613672907
+     "last": 78.61,
+     "change": 1.02,
+     "qv": 68297484.80773,
+     "ts": 1795613783143
     }
    },
-   "at": 1795613675538
+   "at": 1795613785030
   }
  }
 }
