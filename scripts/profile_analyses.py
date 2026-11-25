@@ -29,6 +29,16 @@ for tf in ("15m", "1h", "4h", "12h", "1d", "3d"):
     pr.disable()
     per[tf] = round(time.time() - t0, 1)
 print("coins", len(syms), "seconds per timeframe", per, "total", round(sum(per.values()), 1))
+# a normal (non-hourly) cycle: fresh models + memo, only 15m / 1h / 4h analysed (what most engine cycles do)
+from app.ml import trainer  # noqa: E402
+rt.__dict__.pop("_fc_memo", None)
+trainer._cache.clear()
+rt.analysis_cache.clear() if hasattr(rt, "analysis_cache") else None
+t0 = time.time()
+for tf in ("15m", "1h", "4h"):
+    for s in syms:
+        analysis.analyze(rt, s, tf, detail=True, use_cache=False)
+print("normal cycle (15m/1h/4h, cold models)", round(time.time() - t0, 1))
 # second pass on 15m: what a repeat analysis on the same candle costs
 t0 = time.time()
 for s in syms:

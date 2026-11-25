@@ -145,7 +145,7 @@ def test_bot_trades_not_in_the_record_close_once(monkeypatch):
 def test_live_forecast_is_computed_once_per_cycle(monkeypatch):
     from app.services import analysis
     calls = []
-    monkeypatch.setattr(analysis.trainer, "load_bundle", lambda s, tf, db: {"created_at": 5, "version_id": "v1"})
+    monkeypatch.setattr(analysis.trainer, "load_bundle", lambda s, tf, db: {"created_at": 5, "version": "v1"})
     monkeypatch.setattr(analysis, "_model_forecast", lambda rt, s, tf, *a: calls.append((s, tf)) or {"available": True, "p": [1, 2]})
     class RT:
         db = None
@@ -156,3 +156,27 @@ def test_live_forecast_is_computed_once_per_cycle(monkeypatch):
     assert calls == [("BTC/USDT", "1h")] and b["p"] == [1, 2]
     analysis.model_forecast(rt, "BTC/USDT", "1h", as_of=1)    # replays never use the memo
     assert len(calls) == 2
+
+
+def test_slow_horizons_reuse_the_stored_forecast_until_a_new_candle_or_model():
+    import pandas as pd
+    from app.db import Database
+    from app.services import analysis
+    db = Database("sqlite:///:memory:")
+    db.execute("INSERT INTO model_versions (id, symbol, timeframe, created_at, active) VALUES ('m1', 'BTC/USDT', '1d', 1, 1)")
+    class RT:
+        pass
+    rt = RT(); rt.db = db; rt.record_error = lambda *a: None
+    last = {"ts": 100}
+    rt.candles = lambda s, tf: pd.DataFrame({"ts": [50, last["ts"]]})
+    fc = {"available": True, "expected_return": 0.01, "distribution": {}, "probabilities": {"up": .5, "down": .3, "neutral": .2},
+          "predicted": "up", "confidence": {"confidence": .6}, "edge_confirmed": True, "bar_ts": 100, "model_version": "m1"}
+    analysis._fc_store_put(rt, "BTC/USDT", "1d", fc)
+    assert analysis._fc_store_get(rt, "BTC/USDT", "1d")["probabilities"]["up"] == .5
+    last["ts"] = 200                                              # a new daily candle closed -> computed again
+    assert analysis._fc_store_get(rt, "BTC/USDT", "1d") is None
+    last["ts"] = 100
+    db.execute("UPDATE model_versions SET active = 0")
+    db.execute("INSERT INTO model_versions (id, symbol, timeframe, created_at, active) VALUES ('m2', 'BTC/USDT', '1d', 2, 1)")
+    assert analysis._fc_store_get(rt, "BTC/USDT", "1d") is None   # retrained -> computed again
+    assert analysis._fc_store_get(rt, "BTC/USDT", "1h") is None    # quick timeframes are never reused

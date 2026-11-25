@@ -3,6 +3,7 @@ into the structured output the API returns. Every number originates in an engine
 from __future__ import annotations
 
 import copy
+import json
 import os
 
 import time
@@ -153,11 +154,60 @@ def model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None =
         return _model_forecast(rt, symbol, timeframe, as_of, bundle, explain, multipliers)
     memo = rt.__dict__.setdefault("_fc_memo", {})
     b = trainer.load_bundle(symbol, timeframe, rt.db) if timeframe in MODEL_TIMEFRAMES else None
-    key = (symbol, timeframe, explain, (b or {}).get("created_at"), (b or {}).get("version_id") or id(b))
+    key = (symbol, timeframe, explain, (b or {}).get("created_at"), (b or {}).get("version") or id(b))
     if key not in memo:
         memo[key] = _model_forecast(rt, symbol, timeframe, None, b, explain, None) if b is not None \
             else _model_forecast(rt, symbol, timeframe)
+        if memo[key].get("available"):
+            _fc_store_put(rt, symbol, timeframe, memo[key])
     return copy.deepcopy(memo[key])
+
+
+# v3.1: the slow timeframes' forecasts only change when a new candle closes (or the model is retrained), yet every
+# cycle loaded their models again just to show the 12H / 24H / 3D horizons on the quicker timeframes' pages. The last
+# live forecast is kept per coin / timeframe with its candle and model version, and reused for those horizon rows only
+# while both are unchanged (trade decisions always use a forecast made in the current cycle).
+HORIZON_REUSE_TFS = ("12h", "1d", "3d")
+
+
+def _fc_store_table(db: Any) -> None:
+    db.execute("CREATE TABLE IF NOT EXISTS fc_store (symbol TEXT NOT NULL, timeframe TEXT NOT NULL, bar_ts INTEGER, "
+               "model_version TEXT, at INTEGER, json TEXT, PRIMARY KEY (symbol, timeframe))")
+
+
+def _fc_store_put(rt: Runtime, symbol: str, timeframe: str, fc: dict[str, Any]) -> None:
+    if timeframe not in HORIZON_REUSE_TFS:
+        return
+    try:
+        _fc_store_table(rt.db)
+        keep = {k: fc.get(k) for k in ("available", "expected_return", "distribution", "probabilities", "predicted",
+                                        "confidence", "edge_confirmed", "bar_ts", "model_version")}
+        rt.db.execute("INSERT INTO fc_store (symbol, timeframe, bar_ts, model_version, at, json) VALUES (?, ?, ?, ?, ?, ?) "
+                      "ON CONFLICT (symbol, timeframe) DO UPDATE SET bar_ts = excluded.bar_ts, model_version = "
+                      "excluded.model_version, at = excluded.at, json = excluded.json",
+                      (symbol, timeframe, int(fc.get("bar_ts") or 0), str(fc.get("model_version")), int(time.time() * 1000),
+                       json.dumps(keep, default=float)))
+    except Exception as exc:                         # a cache never breaks an analysis
+        rt.record_error("forecast store", exc)
+
+
+def _fc_store_get(rt: Runtime, symbol: str, timeframe: str) -> dict[str, Any] | None:
+    """The stored forecast when its candle is still the latest closed one and its model is still the active one."""
+    if timeframe not in HORIZON_REUSE_TFS:
+        return None
+    try:
+        _fc_store_table(rt.db)
+        row = rt.db.one("SELECT bar_ts, model_version, json FROM fc_store WHERE symbol = ? AND timeframe = ?", (symbol, timeframe))
+        if not row:
+            return None
+        av = trainer.active_version(symbol, timeframe, rt.db)
+        df = rt.candles(symbol, timeframe)
+        if av is None or df is None or not len(df) or str(av.get("id")) != str(row["model_version"]) \
+                or int(df["ts"].iloc[-1]) != int(row["bar_ts"]):
+            return None
+        return json.loads(row["json"])
+    except Exception:
+        return None
 
 
 def _model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None = None,
@@ -239,8 +289,12 @@ def _model_forecast(rt: Runtime, symbol: str, timeframe: str, as_of: int | None 
 def horizon_forecasts(rt: Runtime, symbol: str, as_of: int | None = None) -> list[dict[str, Any]]:
     """1H / 4H / 12H / 24H / 3D / 7D - each from the model of the matching timeframe, never extrapolated."""
     out = []
+    memo = rt.__dict__.get("_fc_memo", {}) if as_of is None else {}
     for label, tf in HORIZONS.items():
-        fc = model_forecast(rt, symbol, tf, as_of)
+        fc = None
+        if as_of is None and not any(k[0] == symbol and k[1] == tf for k in memo):
+            fc = _fc_store_get(rt, symbol, tf)
+        fc = fc or model_forecast(rt, symbol, tf, as_of)
         row: dict[str, Any] = {"horizon": label, "timeframe": tf, "available": fc["available"]}
         if fc["available"]:
             dist = fc.get("distribution") or {}
