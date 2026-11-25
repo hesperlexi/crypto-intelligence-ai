@@ -347,7 +347,14 @@ try:
     _bb = [{"bot": (b.get("config") or {}).get("id"), "trades": [(t.get("opened_at"), t.get("exit_reason"), round(100 * float(t.get("pnl") or 0) / 30000, 3))
                                                                for t in (b.get("trades") or [])[:6]]}
            for b in ((_vb.get("data") or {}).get("bots") or []) if (b.get("config") or {}).get("timeframe") == "15m"]
-    out["edge_side"] = {"edge_bots_15m": _bb, "edge_bots_at": _vb.get("at"), "edge_health": _eh, "health_at": (_vv.get("health") or {}).get("at"),
+    _klt = {}
+    for _tf, _lim in (("15m", 400), ("4h", 400), ("4h", 1000), ("12h", 400), ("1d", 400), ("3d", 400), ("1w", 200)):
+        try:
+            _r = json.load(_ur.urlopen(_ur.Request(f"{_b}/kl?s=ANTHROPIC&tf={_tf}&limit={_lim}", headers={"User-Agent": "cia-status"}), timeout=25))
+            _klt[f"{_tf}/{_lim}"] = len(_r)
+        except Exception as _x:
+            _klt[f"{_tf}/{_lim}"] = str(_x)[:60]
+    out["edge_side"] = {"kl_by_tf": _klt, "edge_bots_15m": _bb, "edge_bots_at": _vb.get("at"), "edge_health": _eh, "health_at": (_vv.get("health") or {}).get("at"),
                         "health_tick": (((_vv.get("health") or {}).get("data") or {}).get("engine") or {}).get("last_tick_finished"),
                         "track_record_at": (_vv.get("track_record") or {}).get("at"),
                         "mexc_px": json.load(_ur.urlopen(_ur.Request(_b + "/px?s=ANTHROPIC", headers={"User-Agent": "cia-status", "Origin": "https://cryptointelai.com"}), timeout=20)),
