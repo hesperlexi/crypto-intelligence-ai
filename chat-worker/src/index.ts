@@ -243,6 +243,7 @@ export default {
     if (url.pathname === "/watch/arm" && req.method === "POST") return engineOnly(req, env, "/watch/arm");
     if (url.pathname === "/watch/status" && req.method === "GET") return engineOnly(req, env, `/watch/status?since=${encodeURIComponent(url.searchParams.get("since") ?? "0")}`);
     if (url.pathname === "/v" && req.method === "GET") return views(req, url, env, h);
+    if (url.pathname === "/px" && req.method === "GET") return mexcPrices(url, h);
     if (url.pathname === "/edge-health") return edgeHealth(env, h);
     if (url.pathname !== "/chat" || req.method !== "POST") return json({ error: "Not found" }, 404, h);
     if (!env.GEMINI_API_KEY) return json({ error: "The assistant is not set up yet." }, 503, h);
@@ -333,6 +334,30 @@ async function views(req: Request, url: URL, env: Env, h: Record<string, string>
     else parts.push(`${JSON.stringify(n)}:{"etag":${JSON.stringify(m.etag)},"at":${m.at},"data":${m.body}}`);
   }
   return new Response(`{"views":{${parts.join(",")}},"at":${now}}`, { status: 200, headers: { ...h, "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" } });
+}
+
+// v3.1 (owner, 25 Nov 2026: "why is Anthropic price not live?"): coins traded only as MEXC perpetuals (not listed on
+// Binance, e.g. ANTHROPIC) had no live price in the browser. Public prices, cached 5 s per coin in this isolate, at
+// most 6 coins per request; the app asks every 10 s only for such coins and only while on screen.
+const PX = new Map<string, { at: number; v: any }>();
+const MEXC_NAME: Record<string, string> = { MSTR: "MSTRSTOCK_USDT", XAG: "SILVER_USDT" };
+async function mexcPrices(url: URL, h: Record<string, string>): Promise<Response> {
+  const bases = [...new Set((url.searchParams.get("s") ?? "").toUpperCase().split(",").map((x) => x.trim()).filter((x) => /^[A-Z0-9]{1,20}$/.test(x)))].slice(0, 6);
+  const out: Record<string, unknown> = {};
+  await Promise.all(bases.map(async (b) => {
+    const hit = PX.get(b);
+    if (hit && Date.now() - hit.at < 5000) { out[b] = hit.v; return; }
+    try {
+      const r = await fetch(`https://contract.mexc.com/api/v1/contract/ticker?symbol=${MEXC_NAME[b] ?? `${b}_USDT`}`);
+      const d: any = r.ok ? await r.json() : null;
+      const t = d?.data;
+      if (t && Number(t.lastPrice) > 0) {
+        const v = { last: Number(t.lastPrice), change: Number(t.riseFallRate) * 100, qv: Number(t.amount24) || null, ts: Number(t.timestamp) || Date.now() };
+        PX.set(b, { at: Date.now(), v }); out[b] = v;
+      }
+    } catch { /* that coin is left out */ }
+  }));
+  return new Response(JSON.stringify({ px: out, at: Date.now() }), { status: 200, headers: { ...h, "Content-Type": "application/json", "Cache-Control": "no-store" } });
 }
 
 async function edgeHealth(env: Env, h: Record<string, string>): Promise<Response> {

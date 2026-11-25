@@ -13,6 +13,9 @@ import { usePageAwake } from "./awake";
 import { localNotify } from "./push";
 import { myUid } from "./session";
 
+// v3.1: the Cloudflare Worker (same as the chat) also serves MEXC-only coin prices
+const CHAT_URL = (import.meta.env.VITE_CHAT_URL as string | undefined)?.replace(/\/$/, "") ?? "";
+
 export interface Ticker {
   symbol: string;
   last: number | null;
@@ -272,12 +275,33 @@ export function LiveProvider({ children }: { children: ReactNode }) {
         timer = window.setTimeout(connect, Math.min(15000, 1000 * 2 ** Math.min(attempt, 4)));
       });
     };
-    listedPairs().then(({ fut: listed }) => {
+    // v3.1: futures-only coins Binance does not list (MEXC perpetuals, e.g. ANTHROPIC) - price every 10 s from the
+    // Cloudflare Worker's MEXC proxy (no Firestore), only while the app is on screen
+    let mexc: string[] = [];
+    const loadMexc = async () => {
+      if (closed || document.hidden || !mexc.length || !CHAT_URL) return;
+      try {
+        const r = await fetch(`${CHAT_URL}/px?s=${encodeURIComponent(mexc.map((s) => s.split("/")[0]).join(","))}`, { cache: "no-store" });
+        const d: any = r.ok ? await r.json() : null;
+        for (const s of mexc) {
+          const v = d?.px?.[s.split("/")[0].toUpperCase()];
+          if (!v || !(v.last > 0)) continue;
+          if (isFinite(v.change)) opens[s] = v.last / (1 + v.change / 100);
+          stats[s] = { ...(stats[s] ?? { symbol: s }), symbol: s, quote_volume: v.qv ?? undefined };
+          put(s, v.last, Date.now());
+          futFrame.current = Date.now();
+        }
+      } catch { /* try again in 10 s */ }
+    };
+    listedPairs().then(({ fut: listed, spot }) => {
       if (closed) return;
       syms = all0.filter((s) => listed.has(bsym(s)));
+      mexc = all0.filter((s) => isFutOnly(s) && !listed.has(bsym(s)) && !spot.has(bsym(s)));
+      if (mexc.length) loadMexc();
       if (!syms.length) return;
       loadStats().then(connect);
     }).catch(() => {});
+    const mexcTimer = window.setInterval(loadMexc, 10000);
     const statsTimer = window.setInterval(loadStats, 20000);
     const watchdog = window.setInterval(() => {
       if (!document.hidden && syms.length && lastFrame && Date.now() - lastFrame > 20000) { attempt = 0; connect(); }
@@ -294,6 +318,7 @@ export function LiveProvider({ children }: { children: ReactNode }) {
     return () => {
       closed = true;
       window.clearTimeout(timer); window.clearInterval(statsTimer); window.clearInterval(watchdog); window.clearInterval(flush);
+      window.clearInterval(mexcTimer);
       document.removeEventListener("visibilitychange", wake);
       race?.close();
     };
