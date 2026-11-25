@@ -265,6 +265,17 @@ try:
         for t in [cur.get("position")] if cur.get("position") else []:
             if t.get("symbol") == _COIN:
                 _ht.append({"src": src, "open": True, "opened": t.get("opened_at")})
+    _k1 = json.load(_ur2.urlopen(_ur2.Request("https://cia-chat.cryptointelai.workers.dev/kl?s=ANTHROPIC&tf=1m&limit=600",
+                                              headers={"User-Agent": "cia-status"}), timeout=25))
+    for r, x in zip(_rows, [x for x in sigs if x.get("symbol") == _COIN]):
+        c0 = int(x.get("created_at") or 0)
+        e = float(x.get("entry") or 0)
+        near = [k for k in _k1 if c0 - 10 * 60_000 <= k[0] <= c0 + 25 * 60_000]
+        if near and e:
+            r["side"] = x.get("side")
+            r["min1"] = [(round((k[0] - c0) / 60_000), round((k[3] / e - 1) * 100, 2), round((k[2] / e - 1) * 100, 2), round((k[4] / e - 1) * 100, 2)) for k in near]
+            r["stop_rel"] = round((float(x.get("stop")) / e - 1) * 100, 2)
+            r["tp1_rel"] = round((float(x.get("tp1")) / e - 1) * 100, 2)
     out["coin_check"] = {"record": _rows, "bots": _bt2, "challenge": _ht, "kl_n": len(_kl)}
 except Exception as exc:
     out["coin_check"] = {"error": str(exc)[:300]}
