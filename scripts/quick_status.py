@@ -180,6 +180,23 @@ try:
                              "record_since_tf": trj.get("record_since_tf"), "bots": rows, "auto": aut}
 except Exception as exc:
     out["open_vs_record"] = {"error": str(exc)[:300]}
+# v3.1: closed trades of the 15m bots (time, reason, win/loss only; no coin, side or prices)
+try:
+    _bv = fs.document("views/bots").get().to_dict() or {}
+    _bj = json.loads(_bv["json"]) if _bv.get("json") else {}
+    _rec = {x.get("id"): x for x in sigs}
+    out["bot15_trades"] = {}
+    for _b in _bj.get("bots") or []:
+        _c = _b.get("config") or {}
+        if _c.get("timeframe") != "15m":
+            continue
+        out["bot15_trades"][_c.get("id")] = [{"opened": t.get("opened_at"), "closed": t.get("closed_at"), "reason": t.get("reason") or t.get("exit_reason"),
+                                               "win": (t.get("pnl") or 0) > 0, "keys": sorted(t.keys())[:12],
+                                               "record_same": [(x.get("status"), x.get("created_at")) for x in sigs if x.get("timeframe") == "15m"
+                                                               and x.get("symbol") == t.get("symbol")][:3]}
+                                              for t in (_b.get("trades") or [])[:10]]
+except Exception as exc:
+    out["bot15_trades"] = {"error": str(exc)[:200]}
 # v2.75 check: views/derivs summary + silver (XAG/USDT) models (counts / names only)
 try:
     dv = fs.document("views/derivs").get().to_dict()
