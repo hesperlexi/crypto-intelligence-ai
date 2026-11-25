@@ -343,7 +343,11 @@ try:
     _b = "https://cia-chat.cryptointelai.workers.dev"
     _eh = json.load(_ur.urlopen(_ur.Request(_b + "/edge-health", headers={"User-Agent": "cia-status"}), timeout=20))
     _vv = json.load(_ur.urlopen(_ur.Request(_b + "/v?n=health,track_record&e=,", headers={"X-Edge-Key": _k, "User-Agent": "cia-status"}), timeout=30))["views"]
-    out["edge_side"] = {"edge_health": _eh, "health_at": (_vv.get("health") or {}).get("at"),
+    _vb = json.load(_ur.urlopen(_ur.Request(_b + "/v?n=bots&e=", headers={"X-Edge-Key": _k, "User-Agent": "cia-status"}), timeout=30))["views"].get("bots") or {}
+    _bb = [{"bot": (b.get("config") or {}).get("id"), "trades": [(t.get("opened_at"), t.get("exit_reason"), round(100 * float(t.get("pnl") or 0) / 30000, 3))
+                                                               for t in (b.get("trades") or [])[:6]]}
+           for b in ((_vb.get("data") or {}).get("bots") or []) if (b.get("config") or {}).get("timeframe") == "15m"]
+    out["edge_side"] = {"edge_bots_15m": _bb, "edge_bots_at": _vb.get("at"), "edge_health": _eh, "health_at": (_vv.get("health") or {}).get("at"),
                         "health_tick": (((_vv.get("health") or {}).get("data") or {}).get("engine") or {}).get("last_tick_finished"),
                         "track_record_at": (_vv.get("track_record") or {}).get("at"),
                         "mexc_px": json.load(_ur.urlopen(_ur.Request(_b + "/px?s=ANTHROPIC", headers={"User-Agent": "cia-status", "Origin": "https://cryptointelai.com"}), timeout=20)),
