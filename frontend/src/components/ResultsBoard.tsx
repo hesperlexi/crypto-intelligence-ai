@@ -149,7 +149,10 @@ function Quality({ rows }: { rows: Row[] }) {
     for (const x of r) { cum += x; peak = Math.max(peak, cum); dd = Math.max(dd, peak - cum); }
     const byTf = new Map<string, number[]>();
     for (const x of ordered) { const k = String(x.timeframe ?? "").toUpperCase(); byTf.set(k, [...(byTf.get(k) ?? []), x.return_pct as number]); }
-    return { n: r.length, avg: r.length ? r.reduce((a, b) => a + b, 0) / r.length : null, pf: gl > 0 ? gw / gl : null,
+    const fees = ordered.reduce((a, x: any) => a + (isNum(x.gross_return_pct) && isNum(x.return_pct) ? x.gross_return_pct - x.return_pct : 0), 0);
+    const first = ordered[0]?.closed_at, lastAt = ordered[ordered.length - 1]?.closed_at;
+    return { n: r.length, total: cum, fees, first, lastAt, rf: dd > 0 ? cum / dd : null,
+      avg: r.length ? r.reduce((a, b) => a + b, 0) / r.length : null, pf: gl > 0 ? gw / gl : null,
       avgWin: wins.length ? gw / wins.length : null, avgLoss: losses.length ? -gl / losses.length : null, dd,
       tfs: [...byTf.entries()].sort((a, b) => ["15M", "1H", "4H", "12H", "1D", "3D"].indexOf(a[0]) - ["15M", "1H", "4H", "12H", "1D", "3D"].indexOf(b[0])) };
   }, [rows]);
@@ -157,13 +160,21 @@ function Quality({ rows }: { rows: Row[] }) {
     <section className="panel p-0" aria-label="Quality of the results">
       <header className="card-head flex items-center justify-between border-b px-4 py-2.5"><h2 className="label">Quality of the results</h2>
         <span className="hidden text-xs text-mute sm:inline">after fees · equal size · no leverage</span></header>
-      <dl className="statement-facts grid grid-cols-2 sm:grid-cols-5 [&>*:last-child]:col-span-2 sm:[&>*:last-child]:col-span-1">
+      <dl className="statement-facts grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
         <Fact k="Expectancy" v={pct(q.avg, 2)} cls={tone(q.avg)} sub="average per signal" />
         <Fact k="Profit factor" v={isNum(q.pf) ? q.pf.toFixed(2) : "—"} cls={isNum(q.pf) ? (q.pf >= 1 ? "text-bull" : "text-bear") : ""} sub="wins ÷ losses" />
         <Fact k="Average win" v={pct(q.avgWin, 2)} cls="text-bull" />
         <Fact k="Average loss" v={pct(q.avgLoss, 2)} cls="text-bear" />
         <Fact k="Largest drop" v={q.n ? pct(-q.dd, 2) : "—"} cls={q.dd > 0 ? "text-bear" : ""} sub="peak to low, summed" />
+        <Fact k="Recovery factor" v={isNum(q.rf) ? q.rf.toFixed(2) : "—"} cls={isNum(q.rf) ? tone(q.rf) : ""} sub="total ÷ largest drop" />
       </dl>
+      {q.n > 0 && (
+        <p className="px-4 pt-2 text-xs text-mute sm:px-5">
+          <span className="v3-pill v3-muted mr-2">Paper results</span>
+          {q.n} closed signals{q.first ? `, ${new Date(q.first).toLocaleDateString(undefined, { day: "numeric", month: "short" })} – ${new Date(q.lastAt).toLocaleDateString(undefined, { day: "numeric", month: "short", year: "numeric" })}` : ""}
+          {q.fees > 0 ? ` · fees and funding already taken off: ${q.fees.toFixed(2)}% in total` : ""}. Real prices, no real money: nothing here is a live-money result.
+        </p>
+      )}
       {q.n > 0 && q.n < 30 && <p className="px-4 pb-1 pt-2 text-xs text-warn sm:px-5">{q.n} closed signals so far: too few to judge reliably (30 or more needed).</p>}
       {q.tfs.length > 0 && (
         <div className="overflow-x-auto px-4 pb-4 pt-2 sm:px-5">

@@ -67,11 +67,11 @@ const ART = {
 };
 
 const STEPS: Step[] = [
-  { title: "Welcome! Start with Signals", text: "Every trade idea the AI finds, on six timeframes. Long = it expects the price to rise, Short = to fall.", to: "/signals", cta: "Open Signals", art: ART.signals },
+  { title: "Welcome! Start with Signals", text: "Opportunities → Signals: every trade idea the AI finds, on six timeframes. Long = it expects the price to rise, Short = to fall.", to: "/signals", cta: "Open Signals", art: ART.signals },
   { title: "Read a signal in 10 seconds", text: "Entry is where to open, the stop-loss limits the loss, TP1-TP3 are the targets. Grade A is the strongest. Tap \"Why this signal?\" for the reasons.", to: "/signals", cta: "See a signal", art: ART.read },
-  { title: "Practise first, with virtual money", text: "Your practice account starts with $1,000 of virtual USDT. Try any signal and see how it plays out - nothing real is ever traded.", to: "/paper", cta: "Open practice", art: ART.practice },
-  { title: "Let the app tell you", text: "Turn on notifications to hear about new signals, targets hit and stops, even when the app is closed.", to: "/alerts", cta: "Set up alerts", art: ART.alerts },
-  { title: "Check the honest record", text: "Results shows every published signal, wins and losses, after fees. Judge the AI over many signals, not one.", to: "/results?tab=track", cta: "See results", art: ART.results },
+  { title: "Practise first, with virtual money", text: "Portfolio → Trade: your practice account starts with $1,000 of virtual USDT. Try any signal and see how it plays out - nothing real is ever traded.", to: "/paper", cta: "Open practice", art: ART.practice },
+  { title: "Let the app tell you", text: "Settings & System → Alerts: turn on notifications to hear about new signals, targets hit and stops, even when the app is closed.", to: "/alerts", cta: "Set up alerts", art: ART.alerts },
+  { title: "Check the honest record", text: "Performance → Results shows every published signal, wins and losses, after fees. Judge the AI over many signals, not one.", to: "/results?tab=track", cta: "See results", art: ART.results },
 ];
 
 export default function WelcomeTour() {

@@ -146,6 +146,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "context": return view("context");
     case "market-context": return view("market_context");
     case "risk-state": return view("risk_state");
+    case "market-regime": return view("market_regime");      // V3.4 Stage 3A: one market label with its evidence
     case "auto-paper": return rawDoc(["auto_paper", myUid()]);  // V3.0: the member's auto-trade protection settings               // V3.0 market risk state (members)
     case "derivs": return view("derivs");                   // v2.75 open interest, funding, liquidation map, options, macro, unlocks
     // v2.16 AI coin reports: one document for all coins (views/coin_reports); /coin-reports/<slug> picks one coin
@@ -159,6 +160,7 @@ function resolve(path: string, refreshMs: number): Sub {
     // v2.19 Trade Guardian: admin-only recommendations (views/guardian; the rules refuse everyone else)
     case "guardian": return view("guardian");
     case "perf-lab": return view("perf_lab");
+    case "model-registry": return view("model_registry");   // V3.4 Stage 4 admin model governance
     // v2.16 practice leaderboard: views/leaderboard (members), admin/leaderboard (admin: uids, flags, winners as JSON),
     // owner/leaderboard (admin: prizes awarded, members excluded)
     case "leaderboard":

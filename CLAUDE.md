@@ -1685,3 +1685,31 @@ desktop + phone screenshots before anything goes live.
   setting `strategy_suitability`, refreshed with the Lab). `advise` → analysis `strategy_fit` {action TRADE | WAIT |
   NO TRADE | STRATEGY UNSUITABLE | INSUFFICIENT DATA, reason}; advisory only, the decision stays the one trade authority.
   The fast strategy steps aside on a coin where the main record holds the opposite side (`main_conflict`).
+
+## V3.4 Stage 5 - six destinations + premium pass (26 Nov 2026, branch `stages-3-7`; NOT deployed)
+- Menu = six destinations (`frontend/src/lib/hubs.ts` `HUBS`): Overview · Market Intelligence (AI Intelligence, Market
+  regime, Risk, Coins, Money flow, News) · Opportunities (Signals, Fast radar, Radar) · Portfolio (Positions & risk, Trade)
+  · Performance (Results, Community, admin: Hesper Challenge, Performance Lab, Backtest, Replay) · Settings & System
+  (Settings, Alerts, System status, admin: Control room, Trade Guardian, Users, Share kit). Every page keeps its address;
+  `components/HubTabs.tsx` shows the family tabs above each page; sidebar / tablet row / phone bar (Overview · Market ·
+  Signals · Portfolio · More) light the destination of the current page (`hubOf`, aria-current; sidebar via
+  `ADMIN_ALIASES` = `HUB_ALIASES`). Redirects /market, /opportunities, /performance. Old Tools/Admin menus and the
+  control-room `AdminTabs` strip are gone (Share kit keeps its pair).
+- New pages: `/regime` (`pages/Regime.tsx`: label, agreement, data quality, evidence table with `DataStatus`, pending
+  change, log, Volatility & options + Traditional markets moved here), `/fast` (`pages/Fast.tsx`: Experimental banner,
+  meme / alt `FastRadar category`, "How past appearances did"), `/system` (`pages/SystemStatus.tsx`, members: engine,
+  market data, models, regime inputs; admin link to Control room). `components/DataStatus.tsx` (Live / Delayed /
+  Estimate / Unavailable + legend).
+- Signal cards: `components/SetupScore.tsx` (setup checklist 0-100 "not a chance of winning", parts, for / against,
+  warnings, held-back reasons) + strategy fit line, from board rows `opportunity` / `strategy_fit` (`engine/futures.futures_view`).
+  Live signals (journeys, calmer `.jo/.jq` CSS) now live on Signals (`LiveJourneys`, folded on phones, key `cia-sig-journeys`);
+  AI Intelligence links there instead.
+- Removed (owner-approved): Overview `ThinkingSpectrum` dial (→ `StatusPanel`: regime, Fear & Greed, signals running,
+  engine, market data with status tags), Radar page `RadarScope` sweep, AI Intelligence `PriceLines` + dead `LogoPlanet`,
+  Lab orbit + hive (→ `ResultStrip`, `HeatGrid`), the Overview market board (→ link to Coins). **Kept (owner):** spinning
+  Earth globe, News Intercept + orbit calendar, logo animations, Hesper Challenge page and journeys.
+- Overview "My capital" shows today's drawdown (closed + open, UTC day). Portfolio adds `Exposure` (size, at risk to stop,
+  BTC correlation of each position from public 1h candles, long / short exposure in BTC-linked coins). Results Quality adds
+  recovery factor, "Paper results" label, closed count + date range, fees already taken off. Lab adds market-regime split,
+  setup-checklist check, Fast strategy card; Control room adds `ModelRegistry`. Preview seed: market_regime,
+  model_registry, fast radar categories / tracking, board rows opportunity / strategy_fit, perf_lab stage 3-4 fields.

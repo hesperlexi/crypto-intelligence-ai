@@ -12,6 +12,7 @@ import { AdjustButton, AdjustHistory, adjustedPlan, UpdatedBadge } from "./Signa
 import { Explain, PLAIN, useIsPro } from "../lib/mode";
 import { useIsAdmin } from "../lib/session";
 import { TradeProgress, WhyChips } from "./Premium";
+import SetupScore from "./SetupScore";
 import ShareSignal from "./ShareSignal";
 import WhySignal from "./WhySignal";
 
@@ -213,6 +214,7 @@ export default function TradeCall({ r, market, m, compact = false }: { r: any; m
               )}
             </div>
           )}
+          {!compact && (r.opportunity || r.strategy_fit) && <div className="mt-3"><SetupScore op={r.opportunity} fit={r.strategy_fit} /></div>}
           {v.tone === "wait" && (
             <p className="mt-1.5 text-sm text-mute">
               Models lean <span className={r.lean === "LONG" ? "text-bull" : r.lean === "SHORT" ? "text-bear" : ""}>{r.lean ?? "neither way"}</span> ({upPct}% up · {downPct}% down){r.decision_reason ? `, but ${r.decision_reason}` : ""}.

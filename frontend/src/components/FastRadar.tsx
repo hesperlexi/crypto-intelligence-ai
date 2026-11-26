@@ -16,7 +16,7 @@ function Row({ c }: { c: any }) {
     <li className="border-b border-glass/[0.06] last:border-0">
       <button type="button" onClick={() => setOpen(!open)} aria-expanded={open}
         className="grid w-full grid-cols-[2rem_1fr_auto] items-center gap-2 px-4 py-2.5 text-left sm:grid-cols-[2rem_7rem_1fr_6rem_6rem_6rem]">
-        <span className="num text-xs text-mute">#{c.rank}</span>
+        <span className="num text-xs text-mute">#{c.category_rank ?? c.rank}</span>
         <span className="font-semibold">{c.coin}{warn > 0 && <span className="ml-2 text-xs font-normal text-warn sm:hidden">⚠ {warn}</span>}</span>
         <span className="hidden truncate text-xs text-mute sm:block">{(c.reasons ?? [])[0] ?? "no standout strength"}</span>
         <span className={`num text-right text-sm ${tone(c.rs_24h_pct)}`} title="vs BTC, 24 h">{pct(c.rs_24h_pct)}</span>
@@ -49,13 +49,13 @@ function Row({ c }: { c: any }) {
   );
 }
 
-export default function FastRadar({ fast }: { fast: any }) {
+export default function FastRadar({ fast, category, title = "Fast movers · 1h" }: { fast: any; category?: "meme" | "alt"; title?: string }) {
   if (!fast) return null;
-  const list = (fast.coins ?? []).filter((c: any) => isNum(c.score));
+  const list = (fast.coins ?? []).filter((c: any) => isNum(c.score) && (!category || c.category === category));
   return (
     <section className="panel p-0">
       <div className="card-head flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
-        <h2 className="label">Fast movers · 1h</h2>
+        <h2 className="label">{title}</h2>
         <span className="text-xs text-mute">
           Display only · not a signal{fast.generated_at ? ` · updated ${ago(fast.generated_at)}` : ""}
           {fast.regime && ` · market risk ${String(fast.regime).toLowerCase()}`}
@@ -75,7 +75,7 @@ export default function FastRadar({ fast }: { fast: any }) {
         </>
       )}
       <p className="px-4 py-2 text-xs text-mute">
-        {(fast.not_covered ?? []).length > 0 && `Not covered (no Binance spot pair): ${fast.not_covered.join(", ")}. `}
+        {!category && (fast.not_covered ?? []).length > 0 && `Not covered (no Binance or MEXC spot pair): ${fast.not_covered.join(", ")}. `}
         <Info label="How fast movers are ranked">
           Each coin gets points for strength against BTC (24 h and 7 days), its 1h trend, momentum and a volume surge; every
           warning (parabolic move, thin volume, wide spread, wick-heavy candles, a one-candle pump, volume without a price

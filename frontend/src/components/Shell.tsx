@@ -111,6 +111,8 @@ const NAV_ICON: Record<string, string> = {
   signals: "M3 17l6-6 4 4 8-8M15 7h6v6",
   trade: "M7 4v16M7 4l-3 3M7 4l3 3M17 20V4M17 20l-3-3M17 20l3-3",
   results: "M4 20V10M10 20V4M16 20v-7M22 20H2",
+  market: "M12 9a3 3 0 100 6 3 3 0 000-6zM5 5a2 2 0 100 4 2 2 0 000-4zM19 5a2 2 0 100 4 2 2 0 000-4zM5 15a2 2 0 100 4 2 2 0 000-4zM19 15a2 2 0 100 4 2 2 0 000-4zM6.7 8.3l3 2M17.3 8.3l-3 2M6.7 15.7l3-2M17.3 15.7l-3-2",
+  portfolio: "M3 7h18v13H3zM8 7V4h8v3M3 12h18",
   more: "M5 12h.01M12 12h.01M19 12h.01",
 };
 export function NavIcon({ name }: { name: keyof typeof NAV_ICON | string }) {

@@ -86,6 +86,9 @@ const TITLES: [string, string, string][] = [
   ["/guardian", "Trade Guardian", "Open-call warnings"],
   ["/lab", "Performance Lab", "What works, what does not"],
   ["/users", "Users", "Members and payments"],
+  ["/regime", "Market regime", "One reading of the whole market, with its evidence"],
+  ["/fast", "Fast radar", "Experimental: fast movers, never a signal"],
+  ["/system", "System status", "Engine, data and models"],
 ];
 export function pageTitle(path: string): [string, string] {
   if (path === "/" || path === "") return ["Overview", "Market today"];

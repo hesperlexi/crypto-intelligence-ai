@@ -15,8 +15,6 @@ import { isAdmin } from "../lib/session";
 import { useKlines } from "../lib/klines";
 import LazyMount from "../components/LazyMount";
 import { CoinCompare } from "../components/CommandPlus";
-import { SignalJourneysV2 } from "../components/TradeJourneys";
-import { PriceLines } from "../components/PriceLines";
 const MarketGlobe = lazy(() => import("../components/MarketGlobe"));
 import { useLive, useTicker, useTickerThrottled } from "../lib/live";
 import { ago, base, fmtCompact, fmtPrice, isNum, slug } from "../lib/format";
@@ -147,25 +145,6 @@ function Readout({ symbol, row, f, tf, onScan }: { symbol: string; row: any; f: 
 }
 
 const regimeWord = (r?: string) => (!r ? "—" : r.charAt(0) + r.slice(1).toLowerCase());
-
-/** v2.58 (owner, 18 Nov 2026): the galaxy's centre is the brand itself - the round logo artwork as a planet: lit from
- *  the upper left, a gold atmosphere, a tilted ring that passes behind and in front of it, a small moon on the ring. */
-function LogoPlanet({ x, y, r }: { x: number; y: number; r: number }) {
-  // V3.0 (no space): the AI core is the logo medallion with a soft gold glow and the logo's cyan dashed ring
-  return (
-    <g aria-label="Crypto Intelligence AI" role="img">
-      <defs>
-        <clipPath id="lp-clip"><circle cx={x} cy={y} r={r} /></clipPath>
-        <radialGradient id="lp-atmo"><stop offset="60%" stopColor="rgb(var(--accent) / 0.25)" /><stop offset="100%" stopColor="rgb(var(--accent) / 0)" /></radialGradient>
-      </defs>
-      <circle cx={x} cy={y} r={r * 1.45} fill="url(#lp-atmo)" />
-      <circle cx={x} cy={y} r={r * 1.18} fill="none" stroke="rgb(var(--ai) / 0.5)" strokeWidth={1.4} strokeDasharray="2 6" />
-      <circle cx={x} cy={y} r={r} fill="rgb(var(--ink))" />
-      <image href="/brand/logo-art-384.webp" x={x - r} y={y - r} width={r * 2} height={r * 2} clipPath="url(#lp-clip)" preserveAspectRatio="xMidYMid slice" />
-      <circle cx={x} cy={y} r={r} fill="none" stroke="rgb(var(--accent))" strokeWidth={1.6} />
-    </g>
-  );
-}
 
 /* ---------------------------------------------------------------- radar */
 function Radar({ boards, onSel, tf }: { boards: any[][]; onSel: (s: string) => void; tf?: string }) {
@@ -514,7 +493,6 @@ export default function Command() {
   if (dash.error) return <ErrorBox error={dash.error} retry={dash.reload} />;
   return (
     <div className="cc-page space-y-4">
-      <PriceLines />
       <Defs />
       <MissionStrip tf={tf} setTf={setTf} status={dash.data?.market_status} open={track.data} health={health.data} connected={connected} />
       {/* v2.74 Observatory (owner's pick, 22 Nov 2026): galaxy beside its readout */}
@@ -529,18 +507,11 @@ export default function Command() {
         <Readout symbol={shown} row={rows.find((r) => r.symbol === shown)} f={(boards[TFS.indexOf(tf as any)]?.data?.rows ?? []).find((r: any) => r.symbol === shown)} tf={tf}
           onScan={() => { setSel(shown); scan(); }} />
       </div>
-      {/* signals in flight: the timeframe radar beside the journeys, one card */}
-      <section ref={flightRef} className="cc-panel cc-flight" aria-label="Live signals">
-        <div className="cc-flight-radar">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Live signals</h2><span className="text-xs text-mute">by timeframe</span></div>
-          <div className="flex flex-1 flex-col justify-center"><Radar boards={boards.map((b) => b.data?.rows ?? [])} onSel={pick} tf={tf} /></div>
-          <div className="mt-3 flex flex-wrap justify-center gap-3 text-xs text-mute"><span className="text-bull">● long</span><span className="text-bear">● short</span><span className="text-accent">◎ grade A</span></div>
-        </div>
-        <div className="cc-flight-lanes">
-          <div className="flex items-baseline justify-between"><h2 className="font-display text-lg font-semibold">Journeys</h2><span className="text-xs text-mute">stop · entry · targets · now</span></div>
-          <div className="flex-1"><SignalJourneysV2 track={track.data} /></div>
-        </div>
-      </section>
+      {/* V3.4 Stage 5: live signals live in one place, Opportunities → Signals (no repeat here) */}
+      <Link to="/signals" className="cc-panel flex items-center justify-between gap-3 p-4 text-sm hover:border-accent/40">
+        <span><b className="font-semibold">Live signals</b><span className="ml-2 text-mute">running calls with stop, entry, targets and price now</span></span>
+        <span className="text-accent">Open Signals →</span>
+      </Link>
       {/* market forces: universe beside mission control, then the globe full width */}
       <div className="cc-forces">
         <section className="cc-panel flex flex-col p-4 sm:p-5" aria-label="Racing BTC">

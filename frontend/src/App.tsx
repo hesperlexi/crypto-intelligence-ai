@@ -25,6 +25,8 @@ import { AlertsBell, LiveChip, NavGroup, PageTitle, PriceChips, ProfileMenu, Sid
 import { ModeSwitch } from "./lib/mode";
 import { PaymentPanel, RenewBanner, SupportLink } from "./components/Membership";
 import { TickerTape } from "./components/Polish";
+import HubTabs from "./components/HubTabs";
+import { HUBS, hubOf, visibleTabs } from "./lib/hubs";
 import TelegramLink from "./components/TelegramLink";
 import { fmtDate, useMyRecord } from "./lib/membership";
 import { startPresence } from "./lib/presence";
@@ -68,6 +70,9 @@ const Risk = page(() => import("./pages/Risk"));
 const Portfolio = page(() => import("./pages/Portfolio"));
 const Flow = page(() => import("./pages/Flow"));
 const Community = page(() => import("./pages/Community"));
+const Regime = page(() => import("./pages/Regime"));
+const Fast = page(() => import("./pages/Fast"));
+const SystemStatus = page(() => import("./pages/SystemStatus"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
 const TrustPage = page(() => import("./pages/Trust"));
 const TrustContent = page(() => import("./pages/Trust").then((m) => ({ default: m.TrustContent })));
@@ -76,38 +81,7 @@ try { window.setTimeout(() => sessionStorage.removeItem("chunk-reload"), 15000);
 const prefetch = () => { void import("./pages/Signals"); void import("./pages/Paper"); void import("./pages/Results"); void import("./pages/Asset"); };
 if (typeof window !== "undefined") window.setTimeout(() => ((window as any).requestIdleCallback ?? ((f: () => void) => f()))(prefetch), 2500);
 
-const NAV = [
-  ["/", "Overview"],
-  ["/signals", "Signals"],
-  ["/paper", "Trade"],
-  ["/news", "News"],
-  ["/radar", "Radar"],
-  ["/results", "Results"],
-  ["/community", "Community"],
-  ["/alerts", "Alerts"],
-  ["/settings", "Settings"],
-] as const;
-// owner-only tools: marketing material and system health
-// v2.60: Control room = Health · Trade Guardian · Performance Lab, Share kit = Weekly report · Achievements (AdminTabs)
-const ADMIN_NAV = [["/health", "Control room"], ["/rich", "Hesper Challenge"], ["/report", "Share kit"]] as const;
-// research tools (also reachable from Results → Tools): one "Tools" menu on desktop, one group in the phone More sheet
-// v2.76 (owner): Scanner replaced by Coins (the market board + search); Backtest / Replay are admin tools
-const TOOLS_NAV = [["/backtest", "Backtest"], ["/replay", "Replay"]] as const;
-const COINS = ["/coins", "Coins"] as const;
-// desktop top bar groups: trading core · information & community · settings (admin tools sit in their own menu);
-// the Tools menu sits after Radar in the second group
-// v2.45: Command Centre sits with the market pages (an extra page; nothing else moves)
-const COMMAND = ["/command", "AI Intelligence"] as const;   // V3.0: was "Command Centre"
-const RISK = ["/risk", "Risk"] as const;                     // V3.0 market risk state
-const PORTFOLIO = ["/portfolio", "Portfolio"] as const;      // V3.0 practice capital + protection
-const FLOW_NAV = ["/flow", "Money flow"] as const;   // v2.62
-const NAV_GROUPS: (readonly (readonly [string, string])[])[] = [[NAV[0], COMMAND, RISK, NAV[1], NAV[2], PORTFOLIO, NAV[5]], [COINS, FLOW_NAV, NAV[4], NAV[3], NAV[7], NAV[6]], [NAV[8]]];
-// phone More sheet (v2.15): grouped instead of one flat grid
-const MORE_GROUPS: [string, (readonly [string, string])[]][] = [
-  ["Intelligence", [COMMAND, RISK, PORTFOLIO]],
-  ["Markets", [COINS, FLOW_NAV, NAV[4], NAV[3]]],
-  ["Account", [NAV[7], NAV[6], NAV[8]]],
-];
+// V3.4 Stage 5: the old menu lists (NAV, Tools, Admin, groups) gave way to the six destinations in lib/hubs.
 
 /** A small count next to a menu item (unread alerts, pending users). */
 function Count({ n, tone = "warn" }: { n: number; tone?: "warn" | "accent" }) {
@@ -115,41 +89,10 @@ function Count({ n, tone = "warn" }: { n: number; tone?: "warn" | "accent" }) {
   return <span className={`num ml-1.5 shrink-0 rounded-full px-1.5 text-xs font-bold leading-5 ${tone === "warn" ? "bg-warn/15 text-warn" : "bg-accent/15 text-accent"}`} aria-label={`${n} new`}>{n}</span>;
 }
 
-/** A compact dropdown in the desktop top bar (Tools; Admin: Weekly report, Achievements, Health, Hesper Challenge, Trade Guardian, Users). */
-function NavMenu({ label, items, pending = 0 }: { label: string; items: (readonly [string, string])[]; pending?: number }) {
-  const loc = useLocation();
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const activeHere = items.some(([to]) => loc.pathname.startsWith(to));
-  useEffect(() => setOpen(false), [loc.pathname]);
-  useEffect(() => {
-    if (!open) return;
-    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
-    const esc = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("mousedown", close);
-    document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", esc); };
-  }, [open]);
-  return (
-    <div className="relative" ref={ref}>
-      <button type="button" className="nav-link gap-1.5" aria-haspopup="menu" aria-expanded={open} aria-current={activeHere ? "page" : undefined} onClick={() => setOpen((v) => !v)}>
-        {label}
-        {pending > 0 && <span className="num rounded-full bg-warn/15 px-1.5 text-xs font-bold leading-4 text-warn">{pending}</span>}
-        <svg aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" className={`transition-transform ${open ? "rotate-180" : ""}`}><path d="M6 9l6 6 6-6" /></svg>
-      </button>
-      {open && (
-        <div role="menu" className="panel popover animate-in absolute right-0 top-[calc(100%+8px)] z-50 w-52 p-1.5">
-          {items.map(([to, label]) => (
-            <NavLink key={to} to={to} role="menuitem" className={({ isActive }) => `menu-item ${isActive ? "is-active" : ""}`}>{label}</NavLink>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// phone bottom bar: four main sections + "More" for the rest
-const PRIMARY: [string, string, string][] = [["/", "Overview", "home"], ["/signals", "Signals", "signals"], ["/paper", "Trade", "trade"], ["/results", "Results", "results"]];
+// phone bottom bar: the first four destinations + "More" (Performance, Settings & System)
+const PRIMARY: [string, string, string][] = [["/", "Overview", "home"], ["/command", "Market", "market"], ["/signals", "Signals", "signals"], ["/portfolio", "Portfolio", "portfolio"]];
+// V3.4 Stage 5: the six destinations (lib/hubs) are the whole menu; every page lives under one of them
+const HUB_NAV = HUBS.map((h) => [h.to, h.label] as const);
 
 function StatusPill({ user }: { user: User }) {
   // phones / tablets: the same market clock as the computer top bar (v2.49), compact below 640 px
@@ -314,17 +257,12 @@ function Shell({ user }: { user: User }) {
   const navCls = "nav-link";
   const unread = useLive().alerts.length;       // in-app alerts not dismissed yet
   const navLabel = (to: string, label: string) => (to === "/alerts" ? <>{label}<Count n={unread} tone="accent" /></> : label);
-  const adminItems: (readonly [string, string])[] = admin ? [...ADMIN_NAV, ["/users", pending ? `Users (${pending})` : "Users"] as const] : [];
   // sidebar groups (v2.20): main · markets · tools (folds) · account · admin. Memoised: the shell re-renders with every
   // live-price snapshot, the sidebar only when these change.
-  const sideGroups = useMemo<NavGroup[]>(() => [
-    { title: "", items: [NAV[0], COMMAND, RISK, NAV[1], NAV[2], PORTFOLIO, NAV[5]] },
-    { title: "Markets", items: [COINS, FLOW_NAV, NAV[4], NAV[3]] },
-    ...(admin ? [{ title: "Tools", items: [...TOOLS_NAV], fold: true }] : []),
-    { title: "Account", items: [NAV[6], NAV[7], NAV[8]] },
-    ...(admin ? [{ title: "Admin", items: [...ADMIN_NAV, ["/users", "Users"] as const], fold: true, icon: "/guardian" }] : []),
-  ], [admin]);
-  const sideCounts = useMemo<Record<string, number>>(() => ({ "/alerts": unread, "/users": pending }), [unread, pending]);
+  const sideGroups = useMemo<NavGroup[]>(() => [{ title: "", items: [...HUB_NAV] }], []);
+  const curHub = hubOf(loc.pathname)?.to;
+  const sideCounts = useMemo<Record<string, number>>(() => ({ "/settings": unread + pending }), [unread, pending]);
+  const tabCounts = useMemo<Record<string, number>>(() => ({ "/alerts": unread, "/users": pending }), [unread, pending]);
   const brand = (wrap = false) => (
     <div className="flex min-w-0 items-center gap-2.5">
       <AnimatedLogo size={34} className="shrink-0" />
@@ -380,23 +318,18 @@ function Shell({ user }: { user: User }) {
           </div>
           {/* tablets (768-1023 px) always, computers too when the top bar was chosen */}
           <nav className={`nav-top mx-auto hidden ${width} flex-wrap items-center gap-y-0.5 px-3 pb-1.5 sm:px-4 md:flex ${side ? "lg:hidden" : ""}`} aria-label="Sections">
-            {NAV_GROUPS.map((g, i) => (
-              <div key={i} className={`flex items-center gap-0.5 ${i ? "nav-group" : ""}`}>
-                {g.map(([to, label]) => (
-                  <span key={to} className="contents">
-                    <NavLink to={to} end={to === "/"} className={navCls}>{navLabel(to, label)}</NavLink>
-                    {to === "/radar" && admin && <NavMenu label="Tools" items={[...TOOLS_NAV]} />}
-                  </span>
-                ))}
-              </div>
-            ))}
-            {admin && <div className="ml-auto"><NavMenu label="Admin" items={adminItems} pending={pending} /></div>}
+            <div className="flex items-center gap-0.5">
+              {HUB_NAV.map(([to, label]) => (
+                <Link key={to} to={to} aria-current={curHub === to ? "page" : undefined} className={navCls}>{to === "/settings" ? <>{label}<Count n={unread + pending} tone={pending ? "warn" : "accent"} /></> : label}</Link>
+              ))}
+            </div>
           </nav>
         </header>
         <AppChromeBanner />
         {TAPE_PATHS.has(loc.pathname) && <TickerTape />}
         {!admin && <RenewBanner />}
         <main className={`mx-auto w-full ${width} flex-1 px-3 py-4 sm:px-4`}>
+          <HubTabs admin={admin} counts={tabCounts} />
           <div key={loc.pathname} className="page-enter route-fade">
           <Suspense fallback={<RouteSkeleton />}>
           <Routes>
@@ -432,6 +365,12 @@ function Shell({ user }: { user: User }) {
             <Route path="/settings" element={<Settings />} />
             <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="/community" element={<Community />} />
+            <Route path="/regime" element={<Regime />} />
+            <Route path="/fast" element={<Fast />} />
+            <Route path="/system" element={<SystemStatus />} />
+            <Route path="/market" element={<Navigate to="/command" replace />} />
+            <Route path="/opportunities" element={<Navigate to="/signals" replace />} />
+            <Route path="/performance" element={<Navigate to="/results" replace />} />
             {/* audit F-07: members' /risk is the Risk page; the disclosure lives at /risk-disclosure */}
             {Object.entries(TRUST).filter(([path]) => path !== "/risk").map(([path, kind]) => <Route key={path} path={path} element={<TrustContent kind={kind} />} />)}
             <Route path="*" element={<NotFound />} />
@@ -446,10 +385,10 @@ function Shell({ user }: { user: User }) {
       <nav className="glass-bar safe-bottom fixed inset-x-0 bottom-0 z-50 border-t md:hidden" aria-label="Main sections">
         <div className="grid grid-cols-5">
           {PRIMARY.map(([to, label, icon]) => (
-            <NavLink key={to} to={to} end={to === "/"} onClick={() => setMore(false)}
+            <Link key={to} to={to} aria-current={curHub === to ? "page" : undefined} onClick={() => setMore(false)}
               className="tab-link flex min-h-[56px] flex-col items-center justify-center gap-0.5 py-1.5 text-xs">
               <span className="tab-ico"><NavIcon name={icon} /></span>{label}
-            </NavLink>
+            </Link>
           ))}
           <button onClick={() => setMore((v) => !v)} aria-expanded={more} aria-controls="more-sheet"
             className="tab-link flex min-h-[56px] flex-col items-center justify-center gap-0.5 py-1.5 text-xs">
@@ -465,7 +404,7 @@ function Shell({ user }: { user: User }) {
           {/* the panel itself scrolls (rounded corners stay visible); the wrapper only places it between the top edge and the bar */}
           <div className="panel popover sheet-in pointer-events-auto max-h-full overflow-y-auto overscroll-contain p-2" onClick={(e) => e.stopPropagation()}>
             <div className="nav-sheet space-y-2">
-              {[...MORE_GROUPS, ...(admin ? [["Tools", [...TOOLS_NAV]] as [string, (readonly [string, string])[]], ["Admin", adminItems] as [string, (readonly [string, string])[]]] : [])].map(([title, items], i) => (
+              {HUBS.filter((h) => h.tabs.length).map((h) => [h.label, visibleTabs(h, admin).map((t) => [t.to, t.label] as const)] as [string, (readonly [string, string])[]]).map(([title, items], i) => (
                 <div key={title} className={i ? "border-t border-glass/[0.06] pt-2" : ""}>
                   <div className="label px-3 pb-1">{title}</div>
                   {/* auto-fill columns: 3 on wide phones, 2 on most phones, 1 on the narrowest (Z Fold cover); long labels

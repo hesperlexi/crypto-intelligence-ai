@@ -71,6 +71,13 @@ function futuresRows(tf: string) {
       side, decision: d, decision_reason: side ? null : "the AI and the trend disagree", lean: p_up > p_down + 0.03 ? "LONG" : p_down > p_up + 0.03 ? "SHORT" : "NEUTRAL",
       p_up, p_down, p_neutral: 1 - p_up - p_down, confidence: side ? 0.66 - ((i + 2 * k) % 9) * 0.012 : 0.52, grade: side ? (i % 3 === 1 && (tf === "4h" || tf === "12h") ? "B" : "A") : null,
       decision_basis: side ? "4H trend and the AI ensemble agree; 1D trend supports it" : null,
+      // V3.4 preview: setup checklist + advisory strategy fit
+      opportunity: { score: side ? 74 - (i % 5) * 6 : 41, coverage: side ? 1 : 0.83, side: side > 0 ? "LONG" : "SHORT",
+        positive: ["trend: BULL, ADX 28", "reward: 1 : 1.90", "liquidity: $412M 24 h, spread 1.1 bps"], negative: side ? ["momentum: RSI 71"] : ["regime: market weak bear"],
+        warnings: [], rejection: side ? [] : ["TOO MANY SAME-SIDE CALLS"],
+        components: { trend: 85, momentum: 55, relative: 66, volume: 75, liquidity: 85, volatility: 80, regime: side ? 85 : 20, entry: 90, reward: 70, stop: 80, costs: 70, correlation: 62 } },
+      strategy_fit: side ? { action: i % 4 === 3 ? "STRATEGY UNSUITABLE" : "TRADE", reason: i % 4 === 3 ? "this strategy has lost in this market (34 past trades in a weak bear market); the call stands, treat it with care" : "not yet proven here (12 past trades in a weak bull market)" }
+        : { action: "WAIT", reason: "a setup exists but timing / limits hold it back: TOO MANY SAME-SIDE CALLS" },
       filter_score: side ? 0.61 : null, filter_threshold: 0.55, regime: REG[i], signal: SIG[i], funding_rate: 0.0001,
       record_status: side ? "logged" : "not_logged", stale: false,
       ai: side ? { rationale: "Price is holding above the rising 4H trend after a shallow pullback; momentum is recovering and the stop sits under the last swing low.", regime: "trend", model: "advisor", at: NOW - 20 * 60_000 } : undefined,
@@ -538,6 +545,8 @@ export function seed(): Record<string, any> {
     "views/guardian": v(guardian()),
     "views/market_turn": v(marketTurn()),
     "views/risk_state": v(riskState()),
+    "views/market_regime": v(marketRegime()),
+    "views/model_registry": v(modelRegistry()),
     "views/perf_lab": v(perfLab()),
     ...leaderboard(),
     "config/hesper": { visibility: "members", updated_at: Date.now(), by: "owner" },   // preview: members see the challenge tab
@@ -992,6 +1001,13 @@ function perfLab() {
   };
   return {
     ...stage2,
+    by_market_regime: [{ key: "weak_bull", n: 31, avg_r: 0.11, total_r: 3.4, ci95_avg_r: [-0.2, 0.42] }, { key: "sideways", n: 22, avg_r: -0.06, total_r: -1.3 }, { key: "not recorded", n: 12, avg_r: 0.05, total_r: 0.6 }],
+    opportunity_check: { all: { n: 64, score: { n: 64, enough: false, top_third_avg_r: 0.21, bottom_third_avg_r: -0.12, spread_r: 0.33 },
+      reward: { n: 64, enough: false, top_third_avg_r: 0.18, bottom_third_avg_r: -0.02, spread_r: 0.2 }, regime: { n: 58, enough: false, top_third_avg_r: 0.09, bottom_third_avg_r: 0.03, spread_r: 0.06 } } },
+    fast_strategy: { config: { risk_pct: 0.25 }, stats: { overall: { n: 23, win_rate: 0.43, avg_r: -0.04, profit_factor: 0.93, max_dd_r: 4.1 }, open: 2, net_pnl: -18.4, fees: 31.2,
+      basis: "paper only; net of fee, slippage and half spread; R = P/L / planned risk" },
+      promotion: { eligible: false, requirements: { min_closed: 300 }, failed: ["23 of 300 closed paper trades under the current rules", "net expectancy not shown above zero (95 % interval)", "protected forward holdout verdict not yet run (owner step: research_verdict.read_holdout_once)"] },
+      authority: "isolated paper strategy: never a signal, never in the record, bots or members' accounts" },
     generated_at: NOW - 25 * 60_000, since: NOW - 14 * 24 * H, calls: 71, open: 5, missed: 2, overall: st(all),
     no_admin: st(all.map((x, i) => (dots[i].a ? x * 0.6 : x))), admin: { touched: dots.filter((d) => d.a).length, stored: st([]), without: st([]) },
     by_tf: grp((d) => d.tf), by_side: grp((d) => (d.side === "L" ? "LONG" : "SHORT")), by_grade: grp((d) => d.g), by_coin: grp((d) => d.coin),
@@ -1084,7 +1100,8 @@ function fastRadar() {
   const c = (rank: number, coin: string, price: number, r24: number, rs24: number, rs7: number, rsi: number, qv: number, vx: number,
     spread: number, reasons: string[], warnings: string[]) => ({ rank, coin, symbol: `${coin}/USDT`, status: "ok", price, ret_24h_pct: r24,
     rs_24h_pct: rs24, rs_7d_pct: rs7, rsi14: rsi, quote_volume_24h: qv, volume_expansion: vx, spread_bps: spread,
-    score: 0.6 - rank * 0.08, points: {}, reasons, warnings, regime_compatibility: "compatible" });
+    score: 0.6 - rank * 0.08, points: {}, reasons, warnings, regime_compatibility: "compatible",
+    category: ["SUI", "INJ", "SOL", "TIA"].includes(coin) ? "alt" : "meme", category_rank: rank });
   return {
     available: true, display_only: true, generated_at: at, regime: "CAUTION",
     coins: [
@@ -1095,5 +1112,43 @@ function fastRadar() {
       c(5, "FLOKI", 0.000142, 3.1, 1.0, -2.4, 58, 9.0e6, 3.2, 26.0, [], ["thin liquidity: under $15M traded in 24 h", "wide spread: 26 bps just to get in and out"]),
     ],
     not_covered: ["HYPE", "SPX", "FARTCOIN"],
+    tracking: { basis: "price move after the coin first appeared, vs BTC, before costs; not a trade result", tracking: 4,
+      meme: { n: 11, worked_share: 0.45, avg_rs_24h_pct: -0.8, ci95: [-4.1, 2.5], enough: false },
+      alt: { n: 9, worked_share: 0.56, avg_rs_24h_pct: 0.9, ci95: [-1.7, 3.5], enough: false },
+      all: { n: 20, worked_share: 0.5, avg_rs_24h_pct: -0.04, ci95: [-2.1, 2.0], enough: false },
+      recent: [{ coin: "WIF", category: "meme", first_seen: at - 26 * 3_600_000, rs_4h: 2.1, rs_24h: -3.4, rs_72h: null },
+        { coin: "SUI", category: "alt", first_seen: at - 50 * 3_600_000, rs_4h: 0.8, rs_24h: 2.6, rs_72h: 4.9 },
+        { coin: "PEPE", category: "meme", first_seen: at - 80 * 3_600_000, rs_4h: 4.2, rs_24h: 1.1, rs_72h: -6.3 }] },
   };
+}
+
+function marketRegime() {
+  const at = Date.now() - 6 * 60_000;
+  const e = (input: string, reading: string, supports: string, status = "confirmed") => ({ input, reading, supports, status, source: "engine" });
+  return {
+    generated_at: at, primary: "weak_bull", regime: "weak_bull", regime_word: "Weak uptrend", word: "Weak uptrend", labels: ["weak_bull", "high_volatility"],
+    volatility: "high", confidence: "medium", agreement: 0.67, data_quality: "good", inputs: { confirmed: 10, unavailable: 1, total: 12 },
+    reasons: ["BTC 4h BULL, 1d BULLISH CONSOLIDATION, breadth 58%"], risk_flags: ["BTC volatility"],
+    evidence: [e("BTC regime 4h", "BULL", "bull"), e("BTC regime 1d", "BULLISH CONSOLIDATION", "bull"), e("BTC 4h structure", "inside range", "neutral"),
+      e("BTC volatility", "high", "risk"), e("Breadth (above 4h EMA50)", "58%", "neutral"), e("ETH vs BTC, 7 d", "+2.4%", "bull"),
+      e("Altcoins vs BTC, 7 d (median)", "-1.2%", "neutral"), e("BTC dominance, 7 d", "-0.40 pts", "neutral"), e("BTC funding per 8 h", "+0.012%", "neutral"),
+      e("BTC open interest, 24 h", "+3.1%", "neutral"), e("BTC liquidations, 24 h", "62% longs", "neutral", "delayed"), e("BTC spot volume vs 30 d", "unavailable", "none", "unavailable")],
+    transition: { confirmed: "weak_bull", since: at - 19 * 3_600_000, previous: "sideways", pending: null },
+    log: [{ at: at - 19 * 3_600_000, from: "sideways", to: "weak_bull", confidence: "medium", data_quality: "good" },
+      { at: at - 3 * 86_400_000, from: "weak_bear", to: "sideways", confidence: "low", data_quality: "partial" }],
+    authority: "context only - never blocks, approves or sizes a trade",
+  };
+}
+
+function modelRegistry() {
+  const now = Date.now();
+  const m = (s: string, tf: string, status: string, age: number, reasons: string[] = [], drift = false) => ({ symbol: s, timeframe: tf, status, age_h: age, n_oos: 640,
+    validation: { brier: 0.648, directional_accuracy: 0.54 }, live: { recent: { n: 100, hit: drift ? 0.44 : 0.53 }, drift: { drifting: drift } }, reasons });
+  return { generated_at: now - 40 * 60_000, counts: { active: 176, stale: 3, held: 4, invalid: 1 }, drifting: 2,
+    training: { finished_at: now - 6 * 3_600_000, status: "warn", outcome: { completed: 88, held: 4, failed_validation: 1, not_reached: 2 } },
+    models: [m("ANTHROPIC/USDT", "15m", "invalid", 30, ["newest version failed validation: only 12 out-of-sample predictions (< 30)"]),
+      m("XRP/USDT", "1d", "stale", 61, ["trained 61 h ago (> 48 h)"]), m("SOL/USDT", "4h", "held", 9, ["newer version held: the live model was better on shared unseen bars"]),
+      m("DOGE/USDT", "1h", "active", 8, ["live hit rate 44% vs 54% out-of-sample"], true), m("BTC/USDT", "4h", "active", 7)],
+    trade_quality: { overall: { n: 64, avg_r: 0.06 }, by_confidence: { "0.55-0.60": { n: 21, avg_r: -0.04 }, "0.60-0.65": { n: 30, avg_r: 0.09 }, "0.65-1.00": { n: 13, avg_r: 0.15 } } },
+    rule: "a model goes live only after its file loads, it has >= MODEL_MIN_OOS out-of-sample predictions and (with the champion check on) it is not clearly worse than the live one" };
 }

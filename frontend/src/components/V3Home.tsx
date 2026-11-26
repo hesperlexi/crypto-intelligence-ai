@@ -92,7 +92,7 @@ export function MyCapital() {
       right={<Link to="/paper" className="text-xs text-accent hover:underline">Trade ›</Link>} className="h-full">
       <div className="grid grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3">
         <div><div className="v3-k">Account value</div><div className="num mt-0.5 text-xl">{usd(eq)}</div><div className="text-xs text-mute">deposited {usd(acc?.deposited)}</div></div>
-        <div><div className="v3-k">Today (closed)</div><div className={`num mt-0.5 text-xl ${today > 0 ? "text-bull" : today < 0 ? "text-bear" : ""}`}>{acc ? usd(today, true) : DASH}</div><div className="text-xs text-mute">UTC day</div></div>
+        <div><div className="v3-k">Today (closed)</div><div className={`num mt-0.5 text-xl ${today > 0 ? "text-bull" : today < 0 ? "text-bear" : ""}`}>{acc ? usd(today, true) : DASH}</div><div className="text-xs text-mute">UTC day{acc && isNum(eq) && eq > 0 ? (() => { const t = today + (acc.unrealized_pnl ?? 0); const dd = Math.min(0, t) / Math.max(1, eq - t) * 100; return ` · drawdown ${dd.toFixed(1)}%`; })() : ""}</div></div>
         <div><div className="v3-k">Open P&amp;L</div><div className={`num mt-0.5 text-xl ${(acc?.unrealized_pnl ?? 0) > 0 ? "text-bull" : (acc?.unrealized_pnl ?? 0) < 0 ? "text-bear" : ""}`}>{acc ? usd(acc.unrealized_pnl, true) : DASH}</div><div className="text-xs text-mute">{acc ? `${acc.positions?.length ?? 0} open` : ""}</div></div>
         <div><div className="v3-k">Capital in use</div><div className="num mt-0.5 text-xl">{isNum(exp) ? `${exp.toFixed(0)}%` : DASH}</div>
           <div className="v3-bar mt-1.5"><i style={{ width: `${Math.min(100, ((exp ?? 0) / expMax) * 100)}%`, background: `rgb(var(${(exp ?? 0) >= expMax ? "--bear" : "--accent"}))` }} /></div>

@@ -169,3 +169,52 @@ body {
 @keyframes mood-tf-fill { from { transform: scaleX(0); } to { transform: scaleX(1); } }
 @media (prefers-reduced-motion: reduce) { .mood-tf-bar { animation: none; } }
 @media (max-width: 639px) { .mood-tf { float: none; margin: 0 0 .75rem; } }
+
+/* ===================================================================== V3.4 Stage 5 (owner-approved 26 Nov 2026)
+   Six destinations: the family tab strip, experimental banner, setup checklist, calmer journeys. Graphite + logo gold,
+   hairlines, restrained glass; no space decoration. */
+.hub-tabs { display: flex; align-items: center; gap: 14px; margin: -2px 0 14px; padding-bottom: 0; border-bottom: 1px solid var(--hair); }
+.hub-name { display: none; font-size: 0.75rem; letter-spacing: 0.06em; text-transform: uppercase; color: rgb(var(--mute)); white-space: nowrap; }
+@media (min-width: 1024px) { .hub-name { display: inline; } }
+.hub-strip { display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; min-width: 0; }
+.hub-strip::-webkit-scrollbar { display: none; }
+.hub-tab { position: relative; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; padding: 9px 12px 10px; font-size: 0.875rem;
+  color: rgb(var(--mute)); border-radius: 8px 8px 0 0; transition: color .15s ease, background-color .15s ease; }
+.hub-tab:hover { color: rgb(var(--text)); background: rgb(var(--glass) / 0.04); }
+.hub-tab.is-on { color: rgb(var(--text)); font-weight: 600; }
+.hub-tab.is-on::after { content: ""; position: absolute; left: 10px; right: 10px; bottom: -1px; height: 2px; border-radius: 2px; background: rgb(var(--accent)); }
+.hub-tab.is-admin { color: rgb(var(--mute) / 0.9); }
+.hub-tab.is-admin::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: rgb(var(--accent) / 0.6); }
+.hub-count { border-radius: 999px; padding: 0 6px; font-size: 0.75rem; font-weight: 700; line-height: 1.25rem; background: rgb(var(--accent) / 0.15); color: rgb(var(--accent)); }
+@media (max-width: 767px), (pointer: coarse) { .hub-tab { min-height: 44px; } }
+
+.exp-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 14px; border-radius: var(--r-card, 12px);
+  border: 1px solid rgb(var(--warn) / 0.28); background: rgb(var(--warn) / 0.06); font-size: 0.875rem; color: rgb(var(--text) / 0.9); }
+
+.setup-score { border-top: 1px solid var(--hair); padding-top: 10px; }
+.setup-head { display: grid; grid-template-columns: auto minmax(60px, 1fr) auto auto; align-items: center; gap: 10px; width: 100%; text-align: left; }
+.setup-bar { height: 6px; border-radius: 6px; background: rgb(var(--glass) / 0.08); overflow: hidden; }
+.setup-bar > span { display: block; height: 100%; border-radius: 6px; opacity: 0.85; }
+@media (max-width: 767px), (pointer: coarse) { .setup-head { min-height: 44px; } }
+
+/* calmer journeys (owner: keep the Lane look, quieter): slower, softer, no halo pulse */
+.jo-orb .jo-halo { animation: none; filter: none; opacity: 0.55; }
+.jo-orb .jo-wave { animation-duration: 7s; }
+.jo-orb .jo-wave2 { animation-duration: 10s; }
+.jo-orb .jo-bub { animation-duration: 6s; }
+.jq-ring { animation-duration: 40s; border-color: rgb(var(--ai) / 0.18); }
+.jq-ring::after { box-shadow: none; opacity: 0.7; }
+.jq-gate.is-hit { box-shadow: none; }
+.jq-stream i { box-shadow: none; animation-duration: 3.2s; opacity: 0.7; }
+.jq-now { box-shadow: 0 0 0 3px rgb(var(--panel) / 0.6); }
+
+/* plain Lab charts */
+.lab-strip { display: grid; grid-template-columns: 3.2rem 1fr; align-items: center; gap: 10px; }
+.lab-heat { display: grid; grid-template-columns: 3.2rem repeat(4, minmax(0, 1fr)); gap: 4px; font-size: 0.75rem; }
+.lab-heat > div { border-radius: 6px; padding: 8px 4px; text-align: center; }
+.ov-status { align-self: stretch; min-width: 0; border-left: 1px solid var(--hair); padding-left: 18px; }
+.ov-status ul > li { border-color: var(--hair); }
+@media (max-width: 1023px) { .ov-status { border-left: 0; border-top: 1px solid var(--hair); padding: 10px 0 0; margin-top: 10px; } }
+.ov-status-list { display: flex; flex-direction: column; justify-content: space-between; height: 100%; gap: 2px; }
+.ov-status-row { padding: 8px 0; border-bottom: 1px solid var(--hair); }
+.ov-status-row:last-child { border-bottom: 0; }

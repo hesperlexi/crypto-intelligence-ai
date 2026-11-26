@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { useMarkVisited } from "../components/Premium";
 import { PageHeader } from "../components/kit";
+import { SignalJourneysV2 } from "../components/TradeJourneys";
 import { useSearchParams } from "react-router-dom";
 import { TfTabs, useSymbols } from "../components/Pickers";
 import { CoinAvatar } from "../components/Polish";
@@ -129,6 +130,8 @@ export default function Signals() {
           <TfTabs value={tf} onChange={setTf} options={TF_OPTIONS} notes={TF_NOTES} />
         </>} />
 
+      {/* V3.4 Stage 5: the one place for live signals (AI Intelligence and Overview link here) */}
+      <LiveJourneys />
       {(allRows.length > 0 || (all && !boardsLoading && !boardsEmpty)) && (
         <div className="sig-toolbar relative z-30 flex flex-wrap items-center gap-2" aria-label="Filters">
           <label className="min-w-0 flex-1 sm:w-auto sm:flex-none">
@@ -286,5 +289,26 @@ function RowExtras({ r, show, market, px }: { r: any; show: boolean; market: Mar
     </div>
     {c?.adjustments?.length > 0 && <AdjustHistory adj={c.adjustments.slice(-1)} compact />}
     </>
+  );
+}
+
+
+/** V3.4: running calls as journeys (stop · entry · targets · price now), folded away on request (remembered). */
+function LiveJourneys() {
+  const track = useApi<any>("/track-record");
+  const [open, setOpen] = useState(() => {
+    try { const v = localStorage.getItem("cia-sig-journeys"); if (v) return v === "1"; } catch { /* ignore */ }
+    return typeof window === "undefined" || window.innerWidth >= 1024;            // phones start folded: the cards come first
+  });
+  const n = (track.data?.live?.signals ?? []).filter((x: any) => x.status === "OPEN").length;
+  if (!track.data || !n) return null;
+  const flip = () => { setOpen((v) => { try { localStorage.setItem("cia-sig-journeys", v ? "0" : "1"); } catch { /* ignore */ } return !v; }); };
+  return (
+    <section className="panel p-4">
+      <button type="button" className="flex w-full items-baseline justify-between gap-2 text-left" aria-expanded={open} onClick={flip}>
+        <h2 className="label">Live signals · {n} running</h2><span className="text-xs text-mute">{open ? "Hide" : "Show"}</span>
+      </button>
+      {open && <div className="mt-3"><SignalJourneysV2 track={track.data} /></div>}
+    </section>
   );
 }

@@ -9,8 +9,7 @@ import { Badge, PageHeader, Segmented, Tile } from "../components/kit";
 import { Empty, ErrorBox } from "../components/ui";
 import { useApi } from "../lib/api";
 import { ago, isNum } from "../lib/format";
-import AdminTabs from "../components/AdminTabs";
-import { MlShadowCard, PortfolioCard, RegimeCard } from "../components/LabRisk";
+import { FastStrategyCard, MarketRegimeCard, MlShadowCard, OpportunityCheckCard, PortfolioCard, RegimeCard } from "../components/LabRisk";
 
 type St = { n: number; win_rate?: number; avg_r?: number; total_r?: number; profit_factor?: number | null; max_dd_r?: number; best_r?: number; worst_r?: number };
 type Grp = St & { key: string };
@@ -27,7 +26,6 @@ export default function Lab() {
   const v = q.data;
   return (
     <div className="xeno space-y-4">
-      <AdminTabs family="control" />
       <PageHeader title="Performance Lab" sub={v ? `Net R after fees · since ${v.since ? new Date(v.since).toLocaleDateString(undefined, { day: "numeric", month: "short" }) : "the restart"} · updated ${ago(v.generated_at)}` : undefined} />
       {q.error && !v && <ErrorBox error={q.error} retry={q.reload} />}
       {!v && !q.error && <div className="skeleton h-96 rounded-xl" />}
@@ -41,7 +39,7 @@ function LabBody({ v }: { v: any }) {
   return (
     <>
       <section className="xeno-panel grid gap-4 p-4 lg:grid-cols-[minmax(0,420px)_1fr] lg:items-center">
-        <Orbit dots={v.dots ?? []} total={o.total_r} win={o.win_rate} />
+        <ResultStrip dots={v.dots ?? []} total={o.total_r} />
         <div className="space-y-3">
           <div className="metric-strip">
             <Tile variant="strip" label="Closed calls" value={String(o.n)} sub={`${v.open} running · ${v.missed} not filled`} />
@@ -50,10 +48,7 @@ function LabBody({ v }: { v: any }) {
             <Tile variant="strip" label="Max drawdown" value={r2(-(o.max_dd_r ?? 0))} valueClass="text-bear" sub={`streaks: ${v.streaks?.wins ?? 0} wins · ${v.streaks?.losses ?? 0} losses`} />
           </div>
           <AdminEffect v={v} />
-          <ul className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-mute">
-            {TFS.filter((t) => (v.dots ?? []).some((d: Dot) => d.tf === t)).map((t, i) => <li key={t}><span className="xeno-ring-key" style={{ ["--i" as any]: i }} />{t.toUpperCase()} ring</li>)}
-            <li>Dot size = size of the result · outer edge = bigger win</li>
-          </ul>
+          <p className="text-xs text-mute">Each dot is one closed call at its result in R (after costs), one row per timeframe; an outlined dot was changed by the admin.</p>
         </div>
       </section>
 
@@ -65,7 +60,7 @@ function LabBody({ v }: { v: any }) {
       <Splits v={v} />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <section className="xeno-panel p-4"><h2 className="label mb-2">Weekday heat · weekday × session (UTC)</h2><Hive heat={v.heat ?? []} /></section>
+        <section className="xeno-panel p-4"><h2 className="label mb-2">Weekday heat · weekday × session (UTC)</h2><HeatGrid heat={v.heat ?? []} /></section>
         <section className="xeno-panel space-y-3 p-4">
           <h2 className="label">Notable calls</h2>
           <Specimen k="Losers that were in profit first" v={`${v.losers?.reached_profit?.["0.5"] ?? 0} of ${v.losers?.n ?? 0} reached +0.5R · ${v.losers?.reached_profit?.["1.0"] ?? 0} reached +1R`} />
@@ -84,6 +79,12 @@ function LabBody({ v }: { v: any }) {
         <RegimeCard rows={v.by_regime ?? []} />
       </div>
       <MlShadowCard m={v.ml_shadow} />
+      {/* V3.4 Stage 3 / 4: market regime split, setup checklist check, the isolated fast strategy */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <MarketRegimeCard rows={v.by_market_regime ?? []} />
+        <OpportunityCheckCard c={v.opportunity_check} />
+      </div>
+      <FastStrategyCard f={v.fast_strategy} />
     </>
   );
 }
@@ -270,5 +271,56 @@ function Hive({ heat }: { heat: { wd: string; cells: (St & { s: string })[] }[] 
         </g>
       ))}
     </svg>
+  );
+}
+
+
+/** V3.4 Stage 5 (owner: plain charts instead of the orbit): each closed call as a dot at its net R, one row per timeframe. */
+function ResultStrip({ dots, total }: { dots: Dot[]; total?: number }) {
+  const rows = TFS.filter((t) => dots.some((d) => d.tf === t));
+  const lo = Math.min(-1.5, ...dots.map((d) => d.r ?? 0)), hi = Math.max(2, ...dots.map((d) => d.r ?? 0));
+  const W = 400, X = (r: number) => 8 + ((r - lo) / (hi - lo)) * (W - 16);
+  return (
+    <div className="space-y-2" role="img" aria-label={`Closed calls by result in R, total ${r2(total)}`}>
+      {rows.map((tf) => (
+        <div key={tf} className="lab-strip">
+          <span className="num text-xs text-mute">{tf.toUpperCase()}</span>
+          <svg viewBox={`0 0 ${W} 26`} className="w-full" preserveAspectRatio="none">
+            <line x1={X(0)} x2={X(0)} y1={2} y2={24} stroke="rgb(var(--glass) / 0.25)" />
+            {dots.filter((d) => d.tf === tf && isNum(d.r)).map((d, i) => (
+              <circle key={i} cx={X(d.r as number)} cy={13 + ((i % 5) - 2) * 3} r={3.2}
+                fill={(d.r as number) > 0 ? "rgb(var(--bull) / 0.75)" : "rgb(var(--bear) / 0.75)"}
+                stroke={d.a ? "rgb(var(--warn))" : "none"} strokeWidth={1.2}><title>{`${d.coin} ${d.side} · ${r2(d.r)}`}</title></circle>
+            ))}
+          </svg>
+        </div>
+      ))}
+      <div className="lab-strip text-xs text-mute"><span /><span className="flex justify-between"><span>{r2(lo)}</span><span>0</span><span>{r2(hi)}</span></span></div>
+      <p className="text-sm">Total <b className={tn(total)}>{r2(total)}</b> <span className="text-mute">· {dots.length} closed calls shown (latest 300)</span></p>
+    </div>
+  );
+}
+
+/** V3.4 Stage 5: weekday × session as a plain grid (average net R; n in each cell). */
+function HeatGrid({ heat }: { heat: { wd: string; cells: (St & { s: string })[] }[] }) {
+  const S = ["Asia", "Europe", "US", "Late"];
+  const max = Math.max(0.25, ...heat.flatMap((d) => d.cells.map((c) => Math.abs(c.avg_r ?? 0))));
+  return (
+    <div className="lab-heat">
+      <span />{S.map((s) => <span key={s} className="text-center text-mute">{s}</span>)}
+      {heat.map((d) => [
+        <span key={d.wd} className="self-center text-mute">{d.wd}</span>,
+        ...S.map((s) => {
+          const c = d.cells.find((x) => x.s === s);
+          const v = c?.avg_r, a = isNum(v) ? Math.min(1, Math.abs(v as number) / max) : 0;
+          return (
+            <div key={d.wd + s} title={c?.n ? `${c.n} calls · avg ${r2(v, 3)}` : "no calls"}
+              style={{ background: c?.n ? `rgb(var(${(v ?? 0) >= 0 ? "--bull" : "--bear"}) / ${0.08 + a * 0.4})` : "rgb(var(--glass) / 0.03)" }}>
+              <div className="num font-medium">{c?.n ? r2(v, 2) : "–"}</div><div className="text-mute">{c?.n ?? 0}</div>
+            </div>
+          );
+        }),
+      ])}
+    </div>
   );
 }

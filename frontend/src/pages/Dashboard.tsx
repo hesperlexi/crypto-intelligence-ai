@@ -4,10 +4,11 @@ import { Link } from "react-router-dom";
 import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
 import { Decisions, MarketStatus, MyCapital, MyPositions } from "../components/V3Home";
-import { ThinkingSpectrum } from "../components/Instruments";
+import DataStatus from "../components/DataStatus";
+import { ago } from "../lib/format";
 import { BriefingPanel } from "../components/Polish";
-import MarketBoard, { IntelBrief } from "../components/MarketBoard";
-import { MacroCard, UnlocksList, VolOptionsCard } from "../components/Derivs";
+import { IntelBrief } from "../components/MarketBoard";
+import { UnlocksList } from "../components/Derivs";
 import { BtcCard, BtcChartCard, GuardianCard, MarketCapCard, PerformanceCard, RecentActivityCard, SentimentCard, VolatilityCard } from "../components/Overview";
 import { useIsAdmin, useSession } from "../lib/session";
 import NewsBanner, { countdown } from "../components/NewsBanner";
@@ -51,7 +52,7 @@ export default function Dashboard() {
             <MarketStatus status4={moodData?.market_status} rows={moodData?.rows} embedded tfLabel={moodTf.toUpperCase()} />
             <TodayLine track={track.data} />
           </div>
-          <ThinkingSpectrum rows={moodData?.rows} status={moodData?.market_status} fg={sentiment?.value} fgLabel={sentiment?.label} tfLabel={moodTf.toUpperCase()} />
+          <StatusPanel sentiment={sentiment} openCount={openCount} />
         </div>
       </section>
 
@@ -82,12 +83,11 @@ export default function Dashboard() {
       </div>
 
       </PhoneFold>
-      <PhoneFold id="coins" title="Coins" sub="Every coin we follow: trend, signal, AI outlook">
-      {/* D the watchlist: one board for every coin (table or heatmap) */}
-      {dash.error && <ErrorBox error={dash.error} retry={dash.reload} />}
-      <MarketBoard d={d} tf={tf} onTf={setTf} loading={dash.loading} />
-
-      </PhoneFold>
+      {/* V3.4 Stage 5: the coin board lives on Market Intelligence → Coins (no repeat here) */}
+      <Link to="/coins" className="panel flex items-center justify-between gap-3 p-4 text-sm hover:border-accent/40">
+        <span><b className="font-semibold">Every coin we follow</b><span className="ml-2 text-mute">trend, signal and AI outlook for each coin, as a table or heatmap</span></span>
+        <span className="shrink-0 text-accent">Open Coins →</span>
+      </Link>
       <PhoneFold id="activity" title="Recent developments" sub="Activity, signal performance, market context">
       {/* G recent developments + signal performance + market context */}
       <div className="grid-even grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
@@ -115,10 +115,7 @@ export default function Dashboard() {
       <PhoneFold id="details" title="Market details" sub="Dominance, altcoin season, options, traditional markets">
       <DetailsFold>
         <MarketInsights />
-        <div className="grid-even grid gap-4 lg:grid-cols-2">
-          <VolOptionsCard />
-          <MacroCard />
-        </div>
+        <p className="text-sm text-mute">Options, volatility and traditional markets: <Link to="/regime" className="text-accent hover:underline">Market regime →</Link></p>
       </DetailsFold>
       </PhoneFold>
     </div>
@@ -299,5 +296,35 @@ function MoodTfSwitch({ rot }: { rot: ReturnType<typeof useMoodRotation> }) {
       <button type="button" className={`mood-tf-auto ${rot.held ? "" : "on"}`} aria-pressed={!rot.held} onClick={rot.auto}
         title="Turn through 15M, 1H and 4H every 10 seconds">{rot.held ? "▶ Auto" : "Auto"}</button>
     </div>
+  );
+}
+
+
+/** V3.4 Stage 5: the right side of the mood card - market regime, engine & data health, Fear & Greed, open signals.
+ *  Plain figures with their data status (replaces the animated dial). */
+function StatusPanel({ sentiment, openCount }: { sentiment?: any; openCount: number }) {
+  const reg = useApi<any>("/market-regime", 300_000).data;
+  const h = useApi<any>("/system", 60_000).data;
+  const last = h?.engine?.last_tick_finished ?? h?.generated_at;
+  const age = last ? (Date.now() - last) / 60_000 : null;
+  const eng = age == null ? "unavailable" : age <= 15 ? "confirmed" : age <= 60 ? "delayed" : "unavailable";
+  const word = (k?: string) => (k ? k.replace(/_/g, " ").replace(/^./, (c) => c.toUpperCase()) : "—");
+  const row = (k: string, v: any, st?: string, to?: string, sub?: string) => (
+    <li className="ov-status-row">
+      <span className="flex items-center justify-between gap-2"><span className="text-xs text-mute">{k}</span>{st && <DataStatus status={st} />}</span>
+      <span className="mt-0.5 block text-sm font-medium">{to ? <Link to={to} className="hover:text-accent">{v}</Link> : v}{sub && <span className="ml-1.5 text-xs font-normal text-mute">{sub}</span>}</span>
+    </li>
+  );
+  const mdOk = ["ok", "live"].includes(String(h?.market_data?.status ?? "").toLowerCase());
+  return (
+    <aside className="ov-status" aria-label="Market and system status">
+      <ul className="ov-status-list">
+        {row("Market regime", reg ? reg.regime_word ?? word(reg.regime) : "—", reg ? (reg.data_quality === "good" ? "confirmed" : reg.data_quality === "partial" ? "delayed" : "unavailable") : "unavailable", "/regime", reg ? `${reg.confidence} confidence` : undefined)}
+        {row("Fear & Greed", isNum(sentiment?.value) ? `${sentiment.value} · ${sentiment.label ?? ""}` : "—", isNum(sentiment?.value) ? "confirmed" : "unavailable")}
+        {row("Signals running", String(openCount), undefined, "/signals")}
+        {row("Engine", last ? `last cycle ${ago(last)}` : "no reading", eng, "/system")}
+        {row("Market data", h?.market_data?.status ? (mdOk ? "Fresh" : String(h.market_data.status).toLowerCase()) : "—", h?.market_data?.status ? (mdOk ? "confirmed" : "delayed") : "unavailable", "/system")}
+      </ul>
+    </aside>
   );
 }

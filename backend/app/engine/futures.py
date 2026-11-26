@@ -228,6 +228,15 @@ def futures_view(a: dict[str, Any], funding: dict[str, Any] | None, max_leverage
         # v1 contract: the tracked call, whether this call is in the record, stale data, the advisor note
         "call": a.get("call"), "record_status": a.get("record_status"), "stale": bool(a.get("stale")),
     }
+    # V3.4: the setup checklist score (not a win chance) and the advisory strategy fit, compact for the boards
+    op = a.get("opportunity")
+    if op:
+        out["opportunity"] = {"score": op.get("score"), "coverage": op.get("coverage"), "side": op.get("side"),
+                              "positive": (op.get("positive") or [])[:3], "negative": (op.get("negative") or [])[:3],
+                              "warnings": (op.get("warnings") or [])[:3], "rejection": (op.get("rejection") or [])[:3],
+                              "components": {k: (c or {}).get("score") for k, c in (op.get("components") or {}).items()}}
+    if a.get("strategy_fit"):
+        out["strategy_fit"] = {k: a["strategy_fit"].get(k) for k in ("action", "reason")}
     if a.get("ai"):
         out["ai"] = a["ai"]
     w = a.get("watch")
