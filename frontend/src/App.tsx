@@ -161,7 +161,7 @@ export default function App() {
   const unverified = needsVerification(user);
   useEffect(() => (user && !unverified ? watchRole(user, setRole) : undefined), [user, unverified, verified]);
   useEffect(() => { if (user && !unverified && role !== "loading") startPresence(); }, [user, unverified, role]);
-  const username = useMyUsername(user && !unverified && role !== "loading" && role !== "blocked" ? user.uid : null, role === "admin");
+  const username = useMyUsername(user && !unverified && role !== "loading" && role !== "blocked" && role !== "unreachable" ? user.uid : null, role === "admin");
   // trust pages are public: shown straight away signed out, to email accounts that have not confirmed their address
   // yet, and to people waiting for access
   const publicTrust = trust && (user === null || (user && (unverified || role === "pending" || role === "expired" || role === "blocked")));
@@ -170,12 +170,29 @@ export default function App() {
   if (user === undefined || (user && role === "loading")) return <BootLoader />;
   if (!user) return <ErrorBoundary resetKey={loc.pathname}><Suspense fallback={<BootLoader />}><Landing error={null} /></Suspense></ErrorBoundary>;
   // new accounts are offered a username once (skippable); nobody is blocked: it is only required to post in Community
-  if (role !== "blocked" && username === null && shouldAskUsername(user.uid))
+  if (role !== "blocked" && role !== "unreachable" && username === null && shouldAskUsername(user.uid))
     return <UsernameScreen user={user} admin={role === "admin"} onDone={() => { answeredUsername(user.uid); setVerified((n) => n + 1); }} />;
   const session = { uid: user.uid, email: user.email ?? "", name: user.displayName ?? "", role, username: username ?? "" };
   setSession(session);
+  if (role === "unreachable") return <UnreachableScreen user={user} />;
   if (role === "pending" || role === "expired" || role === "blocked") return <AccessScreen user={user} role={role} />;
   return <SessionCtx.Provider value={session}><LiveProvider><ErrorBoundary resetKey={loc.pathname}><Shell user={user} /></ErrorBoundary></LiveProvider></SessionCtx.Provider>;
+}
+
+/** V3.4: the database could not be read (daily limit, network, anti-bot check). Never shown as "no access". */
+function UnreachableScreen({ user }: { user: User }) {
+  return (
+    <div className="flex min-h-full items-center justify-center px-4">
+      <div className="panel w-full max-w-sm p-7 text-center">
+        <HeroLogo size={96} title="Crypto Intelligence AI logo" className="mx-auto mb-4" />
+        <h1 className="text-xl font-semibold tracking-tight">Can't reach the database right now</h1>
+        <p className="mt-2 text-sm text-mute">You are signed in as <span className="text-text">{user.email}</span>. Your account is fine; the app will try again by itself in a few seconds.</p>
+        <button className="btn btn-primary mt-5 w-full" onClick={() => window.location.reload()}>Try again now</button>
+        <button className="btn mt-2 w-full" onClick={() => signOut(auth)}>Use another account</button>
+        <SupportLink className="mt-3 block text-sm text-accent hover:underline" label="Still not working? Contact support" />
+      </div>
+    </div>
+  );
 }
 
 function AccessScreen({ user, role }: { user: User; role: Role }) {

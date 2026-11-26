@@ -5,7 +5,7 @@ name: Website preview channel (temporary address; the live site is not touched)
 on:
   push:
     branches: [firebase-upgrade]
-    paths: [".github/workflows/preview-channel.yml", "frontend/package.json", "frontend/package-lock.json"]
+    paths: [".github/workflows/preview-channel.yml", "frontend/package.json", "frontend/package-lock.json", "frontend/src/**"]
   workflow_dispatch:
 
 concurrency:

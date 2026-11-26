@@ -9,7 +9,7 @@ import { markNewAccount, providerOf } from "./account";
 import { newUserRecord } from "./writeShapes";
 import { clearRef, pendingReferral } from "./referral";
 
-export type Role = "loading" | "admin" | "member" | "pending" | "expired" | "blocked";
+export type Role = "loading" | "admin" | "member" | "pending" | "expired" | "blocked" | "unreachable";
 export interface Session { uid: string; email: string; name: string; role: Role; username?: string }
 
 let current: Session | null = null;
@@ -40,6 +40,7 @@ export function watchRole(user: User, cb: (role: Role) => void): () => void {
   let last: any = null;
   let timer: any = null;
   let creating = false;
+  let retry: any = null;
   probeAdmin().then((admin) => {
     if (!alive) return;
     if (admin) { cb("admin"); return; }
@@ -58,16 +59,20 @@ export function watchRole(user: User, cb: (role: Role) => void): () => void {
             .then((r) => setDoc(ref, newUserRecord(user, providerOf(user), Date.now(), r))
               .catch((e) => (r ? setDoc(ref, newUserRecord(user, providerOf(user), Date.now())) : Promise.reject(e))))
             .then(clearRef)
-            .catch(() => cb("blocked"));
+            .catch(() => { creating = false; cb("unreachable"); });
         }
         cb("pending");
         return;
       }
       last = d;
       cb(roleOf(d));
-    }, () => cb("blocked"));
+    }, () => {
+      // V3.4: a read the database refused (daily limit, network, anti-bot check) is NOT "no access": say so and retry
+      cb("unreachable");
+      if (alive && !retry) retry = setTimeout(() => { retry = null; if (alive) { stop(); if (timer) clearInterval(timer); stop = watchRole(user, cb); } }, 20_000);
+    });
     // memberships end while the app is open too
     timer = setInterval(() => { if (last) cb(roleOf(last)); }, 60_000);
   });
-  return () => { alive = false; stop(); if (timer) clearInterval(timer); };
+  return () => { alive = false; stop(); if (timer) clearInterval(timer); if (retry) clearTimeout(retry); };
 }
