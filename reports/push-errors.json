@@ -51,13 +51,13 @@
    "ok_at": 1793016659991
   },
   {
-   "step": null,
-   "code": null,
-   "message": "None",
-   "app": null,
-   "android": null,
-   "browser": null,
-   "at": null,
+   "step": "permission",
+   "code": "denied",
+   "message": "permission denied",
+   "app": "android-app",
+   "android": "Android 10",
+   "browser": "Chrome/158",
+   "at": 1795711505015,
    "ok_at": 1795608033424
   }
  ],
