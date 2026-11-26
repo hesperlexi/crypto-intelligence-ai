@@ -82,6 +82,27 @@ def run(db: Database) -> dict:
             ds = []
         seen.append({"tf": v["tf"], "after_removal": [{"ts": d["ts"], "rule": d["rule"]} for d in ds][-12:]})
     out["decisions_after_removal"] = seen
+    # phone notifications sent by the ticks of the last 4 hours (counts and error types only)
+    pushes = []
+    try:
+        newest = int((db.one("SELECT MAX(started_at) AS t FROM engine_runs WHERE kind = 'tick'") or {}).get("t") or 0)
+        for r in db.query("SELECT started_at, detail FROM engine_runs WHERE kind = 'tick' AND started_at >= ? ORDER BY started_at",
+                          (newest - 4 * 3_600_000,)):
+            det = loads(r["detail"], {}) or {}
+            p = det.get("push")
+            if p is not None:
+                errs = (p or {}).get("errors") or []
+                pushes.append({"at": r["started_at"], "sent": (p or {}).get("sent"), "devices": (p or {}).get("devices"),
+                               "error": (str((p or {}).get("error"))[:120] if (p or {}).get("error") else None),
+                               "error_types": sorted({str(e).split(":")[0] for e in errs}),
+                               "reason": (p or {}).get("reason")})
+            st = (det.get("steps") or {}).get("push")
+            if st and not st.get("ok"):
+                pushes.append({"at": r["started_at"], "step_error": str(st.get("error"))[:160]})
+    except Exception as e:
+        pushes.append({"error": str(e)[:200]})
+    out["pushes"] = pushes
+    out["fs"] = {k: db.get_setting(k, None) for k in ("fs_blocked_until", "fs_reads_blocked_until")}
     return out
 
 
