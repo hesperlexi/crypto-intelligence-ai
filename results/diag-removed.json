@@ -49,5 +49,36 @@
   "pending": 0
  },
  "bot_positions_since_cutoff": [],
- "state_newest_signal": 1795687309238
+ "state_newest_signal": 1795687309238,
+ "state_newest_prediction": 1795687309237,
+ "decisions_after_removal": [
+  {
+   "tf": "15m",
+   "after_removal": []
+  },
+  {
+   "tf": "1h",
+   "after_removal": []
+  },
+  {
+   "tf": "4h",
+   "after_removal": []
+  },
+  {
+   "tf": "12h",
+   "after_removal": []
+  },
+  {
+   "tf": "12h",
+   "after_removal": []
+  },
+  {
+   "tf": "12h",
+   "after_removal": []
+  },
+  {
+   "tf": "12h",
+   "after_removal": []
+  }
+ ]
 }
