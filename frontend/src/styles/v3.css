@@ -218,3 +218,10 @@ body {
 .ov-status-list { display: flex; flex-direction: column; justify-content: space-between; height: 100%; gap: 2px; }
 .ov-status-row { padding: 8px 0; border-bottom: 1px solid var(--hair); }
 .ov-status-row:last-child { border-bottom: 0; }
+/* owner 26 Nov 2026: the coin dial is back beside the mood text; the status sits as one strip under both */
+.ov-status.ov-status-row-strip { border-left: 0; padding: 12px 0 0; margin-top: 14px; border-top: 1px solid var(--hair); }
+.ov-status-row-strip .ov-status-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 18px; height: auto; }
+@media (min-width: 640px) { .ov-status-row-strip .ov-status-list { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (min-width: 1280px) { .ov-status-row-strip .ov-status-list { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.ov-status-row-strip .ov-status-row { border-bottom: 0; padding: 6px 0; }
+.ov-status-row > span:first-child { min-height: 24px; }

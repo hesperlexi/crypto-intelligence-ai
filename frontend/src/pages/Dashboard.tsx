@@ -5,6 +5,7 @@ import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
 import { Decisions, MarketStatus, MyCapital, MyPositions } from "../components/V3Home";
 import DataStatus from "../components/DataStatus";
+import { ThinkingSpectrum } from "../components/Instruments";
 import { ago } from "../lib/format";
 import { BriefingPanel } from "../components/Polish";
 import { IntelBrief } from "../components/MarketBoard";
@@ -52,8 +53,9 @@ export default function Dashboard() {
             <MarketStatus status4={moodData?.market_status} rows={moodData?.rows} embedded tfLabel={moodTf.toUpperCase()} />
             <TodayLine track={track.data} />
           </div>
-          <StatusPanel sentiment={sentiment} openCount={openCount} />
+          <ThinkingSpectrum rows={moodData?.rows} status={moodData?.market_status} fg={sentiment?.value} fgLabel={sentiment?.label} tfLabel={moodTf.toUpperCase()} />
         </div>
+        <StatusPanel sentiment={sentiment} openCount={openCount} />
       </section>
 
       <FirstWeekGuide />
@@ -317,7 +319,7 @@ function StatusPanel({ sentiment, openCount }: { sentiment?: any; openCount: num
   );
   const mdOk = ["ok", "live"].includes(String(h?.market_data?.status ?? "").toLowerCase());
   return (
-    <aside className="ov-status" aria-label="Market and system status">
+    <aside className="ov-status ov-status-row-strip" aria-label="Market and system status">
       <ul className="ov-status-list">
         {row("Market regime", reg ? reg.regime_word ?? word(reg.regime) : "—", reg ? (reg.data_quality === "good" ? "confirmed" : reg.data_quality === "partial" ? "delayed" : "unavailable") : "unavailable", "/regime", reg ? `${reg.confidence} confidence` : undefined)}
         {row("Fear & Greed", isNum(sentiment?.value) ? `${sentiment.value} · ${sentiment.label ?? ""}` : "—", isNum(sentiment?.value) ? "confirmed" : "unavailable")}

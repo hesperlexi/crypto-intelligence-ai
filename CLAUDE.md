@@ -1704,7 +1704,7 @@ desktop + phone screenshots before anything goes live.
   warnings, held-back reasons) + strategy fit line, from board rows `opportunity` / `strategy_fit` (`engine/futures.futures_view`).
   Live signals (journeys, calmer `.jo/.jq` CSS) now live on Signals (`LiveJourneys`, folded on phones, key `cia-sig-journeys`);
   AI Intelligence links there instead.
-- Removed (owner-approved): Overview `ThinkingSpectrum` dial (→ `StatusPanel`: regime, Fear & Greed, signals running,
+- Removed (owner-approved): Overview `ThinkingSpectrum` dial - RESTORED by the owner the same day (26 Nov, "include this with its time frames": dial beside the mood text, 15M/1H/4H rotation; `StatusPanel` is now a strip under both: regime, Fear & Greed, signals running,
   engine, market data with status tags), Radar page `RadarScope` sweep, AI Intelligence `PriceLines` + dead `LogoPlanet`,
   Lab orbit + hive (→ `ResultStrip`, `HeatGrid`), the Overview market board (→ link to Coins). **Kept (owner):** spinning
   Earth globe, News Intercept + orbit calendar, logo animations, Hesper Challenge page and journeys.
