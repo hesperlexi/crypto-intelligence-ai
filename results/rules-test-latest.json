@@ -1,8 +1,8 @@
 {
-  "at": "2026-11-26T03:23:56.908Z",
-  "sha": "a66a20e39bf4a2b5e186e08332eeb947c3207df5",
-  "total": 143,
-  "passed": 143,
+  "at": "2026-11-26T04:46:19.894Z",
+  "sha": "82fce365be96078076e47ffeaf7bc52c9c246f8c",
+  "total": 144,
+  "passed": 144,
   "failed": 0,
   "results": [
     {
@@ -447,6 +447,10 @@
     },
     {
       "name": "market turn: only the admin reads views/market_turn; nobody writes it",
+      "ok": true
+    },
+    {
+      "name": "model registry: only the admin reads views/model_registry; nobody writes it",
       "ok": true
     },
     {
