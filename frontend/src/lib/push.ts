@@ -31,7 +31,8 @@ try {
 } catch { /* ignore */ }
 /** Level of the installed Android app (0 = unknown / not in the app). */
 export function installedApkLevel(): number {
-  try { return inAndroidApp() ? Number(localStorage.getItem(LS_APK) || 0) : 0; } catch { return 0; }
+  // 26 Nov 2026: inside the Android app with no level remembered = an older APK (level 1), however it was opened
+  try { return inAndroidApp() ? Number(localStorage.getItem(LS_APK) || 1) : 0; } catch { return 0; }
 }
 export function inAndroidApp(): boolean {
   try { return localStorage.getItem("cia-android-app") === "1"; } catch { return false; }
