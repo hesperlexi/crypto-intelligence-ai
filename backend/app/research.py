@@ -219,7 +219,7 @@ def compare_report(sigs: list[dict[str, Any]], candles, cost_pct: float) -> dict
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="python -m app.research")
-    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15", "exits", "models-value", "ablation"])
+    ap.add_argument("command", choices=["giveback", "compare", "engine", "v213", "coin-candidate", "coin-baseline", "guard15", "exits", "exits-v34", "models-value", "ablation"])
     ap.add_argument("--group", default="g1", help="ablation: variant group g1 | g2 | g3")
     ap.add_argument("--db", default=settings.database_url)
     ap.add_argument("--out", default=None, help="also write the JSON to this file")
@@ -253,6 +253,9 @@ def main(argv: list[str] | None = None) -> int:
         elif a.command == "exits":
             from . import research_exits
             out = {"ok": True, "command": a.command, **research_exits.run(a.db, a.budget)}
+        elif a.command == "exits-v34":            # V3.4 Stage 3E trade-management study (research only)
+            from . import research_exits_v34
+            out = {"ok": True, "command": a.command, **research_exits_v34.run(a.db, a.budget)}
         elif a.command == "guard15":
             from . import research_guard15
             out = {"ok": True, "command": a.command, **research_guard15.run(a.db, a.budget)}

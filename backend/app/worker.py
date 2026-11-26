@@ -34,7 +34,7 @@ from .services import hesper, scalp_backfill
 from .services import briefing, coin_reports
 from .services import leaderboard, referrals
 from .services import guardian
-from .services import market_data, market_intel, risk_state, turn_detector
+from .services import market_data, market_intel, market_regime, risk_state, turn_detector
 from .services import perf_lab
 from .services import market_extras
 from .services import coin_scorecard
@@ -1656,6 +1656,9 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     detail["risk_state"] = step("risk_state", lambda: risk_state.run(rt, sink))
     # V3.3 market intelligence (context only: stored with each call and shown to the admin, never decides)
     detail["market_intel"] = step("market_intel", lambda: market_intel.run(rt))
+    # V3.4 Stage 3A market regime (context only: one label for the whole market with its evidence; never decides)
+    if os.environ.get("MARKET_REGIME", "1") != "0":
+        detail["market_regime"] = step("market_regime", lambda: market_regime.run(rt, sink))
     detail["alerts_fired"] = step("analyses", analyse)
     # v2.16 smarter alerts: entry / TP / early-close events of the public calls, and market-mood flips (own step)
     def call_alerts():
@@ -1796,6 +1799,14 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                     r["fast"] = fast_radar.scan(rt.db, rt.provider)
                 except Exception as exc:
                     rt.record_error("fast radar", exc)
+            # V3.4 Stage 3D isolated Fast Opportunity PAPER strategy (own book, own record, central portfolio check;
+            # never a signal; results only in admin reports, never in this member view)
+            if os.environ.get("FAST_STRATEGY", "1") != "0":
+                try:
+                    from .services import fast_strategy
+                    detail["fast_strategy"] = fast_strategy.run(rt)
+                except Exception as exc:
+                    rt.record_error("fast strategy", exc)
             rt.db.set_setting("radar_at", now_ms())
             sink.view("radar", r)
             return {"screened": r["screened"], "picks": [p["symbol"] for p in r["picks"][:5]]}

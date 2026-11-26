@@ -277,7 +277,7 @@ export default {
 // (signed-in, active members only - same check as the chat), served from Cloudflare's cache for 20 s, so 1 or 1,000
 // members cost the same. Firestore keeps a slower copy as the fallback; the app falls back to it on any problem.
 // Only views every active member may read are accepted (never admin-only or per-person documents).
-const EDGE_RE = /^(health|meta|track_record|market_context|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$/;
+const EDGE_RE = /^(health|meta|track_record|market_context|market_regime|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$/;
 const EDGE_TTL_S = 20;
 const MAX_NAMES = 40;
 

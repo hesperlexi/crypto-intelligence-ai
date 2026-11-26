@@ -31,12 +31,34 @@ from typing import Any
 import numpy as np
 
 H = 3_600_000
-DEFAULT_COINS = ("DOGE", "SHIB", "PEPE", "BONK", "FLOKI", "WIF", "PENGU", "TRUMP", "SOL", "SUI", "AVAX", "NEAR", "APT",
-                 "SEI", "INJ", "FET", "TIA", "HYPE", "PUMP", "SPX", "FARTCOIN")
+# V3.4 Stage 3C: two separate, configurable watchlists (verified each scan: a coin with no usable market is listed in
+# `not_covered`, never guessed). Setting `fast_radar_watchlists` {"meme": [...], "alt": [...]}, else env FAST_RADAR_MEME /
+# FAST_RADAR_ALT, else these defaults. The older single list (`fast_radar_coins` / FAST_RADAR_COINS) still works.
+MEME_DEFAULT = ("DOGE", "PEPE", "BONK", "SHIB", "WIF", "FLOKI", "PENGU", "PUMP", "SPX", "FARTCOIN")
+ALT_DEFAULT = ("SOL", "HYPE", "SUI", "SEI", "JUP", "INJ", "TIA", "WLD")
+DEFAULT_COINS = MEME_DEFAULT + ALT_DEFAULT
+KNOWN_MEME = set(MEME_DEFAULT) | {"TRUMP", "BOME", "MEME", "NEIRO", "TURBO", "MOG", "POPCAT", "BRETT", "1000SATS"}
 MIN_QUOTE_VOL = 15e6
 MAX_SPREAD_BPS = 20.0
 BARS = 200
 WEIGHTS = {"rs_7d": 0.30, "rs_24h": 0.20, "trend": 0.20, "momentum": 0.15, "volume": 0.15}
+
+
+def watchlists(db: Any = None) -> dict[str, list[str]]:
+    """{"meme": [...], "alt": [...]} (upper case, each at most 30)."""
+    v = db.get_setting("fast_radar_watchlists", None) if db is not None else None
+    if isinstance(v, dict) and (v.get("meme") or v.get("alt")):
+        return {k: [str(x).upper() for x in (v.get(k) or [])][:30] for k in ("meme", "alt")}
+    em, ea = os.environ.get("FAST_RADAR_MEME", "").strip(), os.environ.get("FAST_RADAR_ALT", "").strip()
+    if em or ea:
+        sp = lambda t: [c.strip().upper() for c in t.split(",") if c.strip()][:30]  # noqa: E731
+        return {"meme": sp(em), "alt": sp(ea)}
+    legacy = db.get_setting("fast_radar_coins", None) if db is not None else None
+    env = os.environ.get("FAST_RADAR_COINS", "").strip()
+    if (isinstance(legacy, list) and legacy) or env:
+        cs = coins(db)
+        return {"meme": [c for c in cs if c in KNOWN_MEME], "alt": [c for c in cs if c not in KNOWN_MEME]}
+    return {"meme": list(MEME_DEFAULT), "alt": list(ALT_DEFAULT)}
 
 
 def coins(db: Any = None) -> list[str]:
@@ -102,7 +124,8 @@ def features(k: np.ndarray, btc: np.ndarray) -> dict[str, Any] | None:
         "volume_expansion": _r(vol_exp), "volatility_expansion": _r(atr24 / atr168) if atr168 else None,
         "above_ema20": bool(c[-1] > e20[-1]), "above_ema50": bool(c[-1] > e50[-1]),
         "ema20_slope_6h_pct": _r((e20[-1] / e20[-7] - 1) * 100), "rsi14": _r(_rsi(c)), "wick_share_24h": _r(wick),
-        "largest_1h_move_pct": _r(float(moves.max())), "bars": n, "closed_at": int(k[-1, 0]) + H}
+        "largest_1h_move_pct": _r(float(moves.max())), "bars": n, "closed_at": int(k[-1, 0]) + H,
+        "atr_24": _r(atr24, 10)}
 
 
 def _r(x: Any, d: int = 3) -> float | None:
@@ -169,15 +192,182 @@ def rank(items: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return ok
 
 
+# ---- V3.4 Stage 3C: more detections ------------------------------------------------------------------------------------
+
+MEXC_SPOT = "https://api.mexc.com"
+TRACK_HOURS = (4, 24, 72)
+FLAG_TOP = 5                      # per category: an opportunity "appears" when it ranks in the top 5 with a score > 0
+REFLAG_GAP_H = 24                 # the same coin appearing again after 24 h off the list is a new opportunity
+
+
+def extras(k: np.ndarray, btc: np.ndarray, f: dict[str, Any], spread_bps: float | None, prev_spread: float | None,
+           market_regime: str | None) -> dict[str, Any]:
+    """Momentum acceleration, relative-strength breakout, trend continuation, liquidity deterioration, sudden spread
+    expansion, BTC regime incompatibility (pure, closed candles only)."""
+    sig, warn = [], []
+    c, l, qv = k[:, 4], k[:, 3], k[:, 5]
+    n = len(c)
+    if n > 12:
+        r6, p6 = (c[-1] / c[-7] - 1) * 100, (c[-7] / c[-13] - 1) * 100
+        if r6 > 1.0 and r6 > 2 * max(p6, 0.25):
+            sig.append(f"momentum accelerating: {r6:+.1f}% in 6 h after {p6:+.1f}% the 6 h before")
+    bt = dict(zip(btc[:, 0].astype(np.int64).tolist(), btc[:, 4].tolist()))
+    ratio = np.array([c[i] / bt[int(k[i, 0])] if bt.get(int(k[i, 0])) else np.nan for i in range(n)])
+    if n > 170 and np.isfinite(ratio[-1]):
+        prior = ratio[-169:-24]
+        prior = prior[np.isfinite(prior)]
+        if len(prior) > 100 and ratio[-1] > prior.max():
+            sig.append("relative-strength breakout: price vs BTC above its high of the previous 6 days")
+    if n > 50:
+        e50 = _ema(c, 50)
+        if f.get("above_ema20") and f.get("above_ema50") and (f.get("ema20_slope_6h_pct") or 0) > 0 and \
+                float(l[-24:].min()) > float(e50[-24:].min()):
+            sig.append("trend continuation: 24 h pullbacks held above the 1h EMA50")
+    ve = f.get("volume_expansion")
+    if ve is not None and ve < 0.5:
+        warn.append(f"liquidity deteriorating: 24 h volume {ve:.2f}x its recent daily average")
+    if spread_bps is not None and prev_spread and spread_bps > max(8.0, 2 * prev_spread):
+        warn.append(f"spread expanded suddenly: {spread_bps:.0f} bps vs {prev_spread:.0f} bps an hour ago")
+    if market_regime in ("strong_bear", "weak_bear", "breakdown", "unstable"):
+        warn.append(f"BTC regime incompatible: market {market_regime.replace('_', ' ')}")
+    return {"signals": sig, "warnings": warn}
+
+
+def _mexc_get(provider: Any, path: str, params: dict[str, Any]) -> Any:
+    """MEXC spot (Binance-compatible paths) for coins Binance spot does not list. Only with a real HTTP session (tests
+    and offline runs simply report the coin as not covered)."""
+    fn = getattr(provider, "mexc_get", None)
+    if fn:
+        return fn(path, params)
+    sess = getattr(provider, "session", None)
+    if sess is None:
+        raise RuntimeError("no MEXC access")
+    r = sess.get(MEXC_SPOT + path, params=params, timeout=15)
+    r.raise_for_status()
+    return r.json()
+
+
+def _mexc_coin(provider: Any, coin: str, now: int) -> tuple[np.ndarray, dict, dict] | None:
+    s = f"{coin}USDT"
+    try:
+        t = _mexc_get(provider, "/api/v3/ticker/24hr", {"symbol": s})
+        b = _mexc_get(provider, "/api/v3/ticker/bookTicker", {"symbol": s})
+        k = closed_rows(_mexc_get(provider, "/api/v3/klines", {"symbol": s, "interval": "60m", "limit": BARS}), now)
+    except Exception:
+        return None
+    if not isinstance(t, dict) or not t.get("quoteVolume"):
+        return None
+    return k, t, b if isinstance(b, dict) else {}
+
+
+# ---- opportunity tracking (SQLite, never deleted) ----------------------------------------------------------------------
+
+def ensure(db: Any) -> None:
+    db.execute("""CREATE TABLE IF NOT EXISTS radar_opportunities (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, coin TEXT NOT NULL, category TEXT, source TEXT, first_seen INTEGER NOT NULL,
+        last_seen INTEGER NOT NULL, bar_ts INTEGER, price REAL, btc_price REAL, score REAL, rank INTEGER, reasons TEXT,
+        warnings TEXT, regime TEXT, status TEXT DEFAULT 'tracking', ret_4h REAL, rs_4h REAL, ret_24h REAL, rs_24h REAL,
+        ret_72h REAL, rs_72h REAL, max_up_72h REAL, max_down_72h REAL, worked INTEGER)""")
+    db.execute("CREATE INDEX IF NOT EXISTS radar_opp_coin ON radar_opportunities (coin, last_seen)")
+
+
+def track(db: Any, items: list[dict[str, Any]], series: dict[str, np.ndarray], btc: np.ndarray, now: int,
+          regime: str | None = None) -> dict[str, Any]:
+    """Record new appearances and fill in what happened 4 / 24 / 72 h later (closed 1h closes; vs BTC). `worked` =
+    beat BTC over 24 h. A record of the radar's own quality: not a trade, before costs."""
+    import json as _j
+    ensure(db)
+    added = 0
+    bt = dict(zip(btc[:, 0].astype(np.int64).tolist(), btc[:, 4].tolist())) if len(btc) else {}
+    for x in items:
+        if not x.get("flagged"):
+            continue
+        last = db.one("SELECT id, last_seen FROM radar_opportunities WHERE coin = ? ORDER BY last_seen DESC LIMIT 1", (x["coin"],))
+        bar = int(x["closed_at"]) - H
+        if last and now - int(last["last_seen"]) <= REFLAG_GAP_H * H:
+            db.execute("UPDATE radar_opportunities SET last_seen = ? WHERE id = ?", (now, last["id"]))
+            continue
+        db.execute("INSERT INTO radar_opportunities (coin, category, source, first_seen, last_seen, bar_ts, price, btc_price, "
+                   "score, rank, reasons, warnings, regime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+                   (x["coin"], x.get("category"), x.get("source"), now, now, bar, x["price"], bt.get(bar), x["score"],
+                    x.get("category_rank"), _j.dumps(x.get("reasons") or []), _j.dumps(x.get("warnings") or []), regime))
+        added += 1
+    filled = 0
+    for r in db.query("SELECT * FROM radar_opportunities WHERE status = 'tracking'"):
+        k = series.get(r["coin"])
+        if k is None or not len(k) or not r["price"]:
+            if now - int(r["first_seen"]) > 9 * 24 * H:
+                db.execute("UPDATE radar_opportunities SET status = 'no_data' WHERE id = ?", (r["id"],))
+            continue
+        closes = dict(zip(k[:, 0].astype(np.int64).tolist(), k[:, 4].tolist()))
+        upd: dict[str, Any] = {}
+        for h in TRACK_HOURS:
+            if r[f"ret_{h}h"] is not None:
+                continue
+            t = int(r["bar_ts"]) + h * H
+            if t in closes:
+                ret = (closes[t] / r["price"] - 1) * 100
+                upd[f"ret_{h}h"] = round(ret, 3)
+                if r["btc_price"] and bt.get(t):
+                    upd[f"rs_{h}h"] = round(ret - (bt[t] / r["btc_price"] - 1) * 100, 3)
+        if "rs_24h" in upd:
+            upd["worked"] = int(upd["rs_24h"] > 0)
+        if r["ret_72h"] is None and "ret_72h" in upd:
+            win = k[(k[:, 0] > r["bar_ts"]) & (k[:, 0] <= r["bar_ts"] + 72 * H)]
+            if len(win):
+                upd["max_up_72h"] = round((float(win[:, 2].max()) / r["price"] - 1) * 100, 3)
+                upd["max_down_72h"] = round((float(win[:, 3].min()) / r["price"] - 1) * 100, 3)
+            upd["status"] = "done"
+        elif now - int(r["first_seen"]) > 9 * 24 * H:
+            upd["status"] = "no_data"
+        if upd:
+            db.execute(f"UPDATE radar_opportunities SET {', '.join(f'{c} = ?' for c in upd)} WHERE id = ?",
+                       (*upd.values(), r["id"]))
+            filled += 1
+    return {"added": added, "updated": filled}
+
+
+def track_summary(db: Any, limit: int = 20) -> dict[str, Any]:
+    """How the radar's appearances did, per category (24 h vs BTC), with 95 % intervals."""
+    import json as _j
+    import math
+    ensure(db)
+    out: dict[str, Any] = {"basis": "price move after the coin first appeared, vs BTC, before costs; not a trade result"}
+    for cat in ("meme", "alt", None):
+        rows = db.query("SELECT rs_24h, worked FROM radar_opportunities WHERE rs_24h IS NOT NULL"
+                        + (" AND category = ?" if cat else ""), (cat,) if cat else ())
+        x = np.array([float(r["rs_24h"]) for r in rows], float)
+        m = float(x.mean()) if len(x) else None
+        h = 1.96 * float(x.std(ddof=1)) / math.sqrt(len(x)) if len(x) > 1 else None
+        out[cat or "all"] = {"n": len(x), "worked_share": round(float(np.mean([r["worked"] for r in rows])), 3) if rows else None,
+                             "avg_rs_24h_pct": round(m, 3) if m is not None else None,
+                             "ci95": [round(m - h, 3), round(m + h, 3)] if h is not None else None, "enough": len(x) >= 30}
+    out["recent"] = [{**{k: r[k] for k in ("coin", "category", "source", "first_seen", "price", "score", "status", "ret_4h",
+                                          "rs_4h", "ret_24h", "rs_24h", "ret_72h", "rs_72h", "max_up_72h", "max_down_72h",
+                                          "worked")},
+                      "reasons": _j.loads(r["reasons"] or "[]")[:3]}
+                     for r in db.query("SELECT * FROM radar_opportunities ORDER BY first_seen DESC LIMIT ?", (limit,))]
+    out["tracking"] = (db.one("SELECT COUNT(*) AS n FROM radar_opportunities WHERE status = 'tracking'") or {}).get("n", 0)
+    return out
+
+
 def scan(db: Any, provider: Any, now: int | None = None) -> dict[str, Any]:
-    """Hourly scan (provider = BinancePublicProvider: `_get_sync`). Never raises for one coin; a total failure returns
-    {'available': False, 'reason'}."""
+    """Hourly scan (provider = BinancePublicProvider: `_get_sync`, `session`). Never raises for one coin; a total failure
+    returns {'available': False, 'reason'}. Binance spot first; a coin Binance does not list is tried on MEXC spot."""
     now = int(time.time() * 1000) if now is None else int(now)
-    wanted = coins(db)
-    regime = None
+    lists = watchlists(db)
+    wanted = list(dict.fromkeys(lists["meme"] + lists["alt"]))
+    cat = {c: "meme" for c in lists["meme"]} | {c: "alt" for c in lists["alt"] if c not in lists["meme"]}
+    regime = mregime = None
     try:
         from . import risk_state
         regime = (risk_state.current(db) or {}).get("state")
+    except Exception:
+        pass
+    try:
+        mr = db.get_setting("market_regime", None) or {}
+        if mr and now - int(mr.get("at") or 0) <= 2 * H:
+            mregime = mr.get("regime")
     except Exception:
         pass
     try:
@@ -185,13 +375,13 @@ def scan(db: Any, provider: Any, now: int | None = None) -> dict[str, Any]:
         syms = [f"{c}USDT" for c in wanted]
         tick = provider._get_sync("/api/v3/ticker/24hr", {"symbols": json.dumps(syms, separators=(",", ":"))}) \
             if syms else []
-    except Exception as exc:
+    except Exception:
         # one unknown symbol fails the batch: retry one by one
         try:
             tick = []
-            for s in [f"{c}USDT" for c in wanted]:
+            for s_ in [f"{c}USDT" for c in wanted]:
                 try:
-                    tick.append(provider._get_sync("/api/v3/ticker/24hr", {"symbol": s}))
+                    tick.append(provider._get_sync("/api/v3/ticker/24hr", {"symbol": s_}))
                 except Exception:
                     continue
             btc = closed_rows(provider._get_sync("/api/v3/klines", {"symbol": "BTCUSDT", "interval": "1h", "limit": BARS}), now)
@@ -205,32 +395,71 @@ def scan(db: Any, provider: Any, now: int | None = None) -> dict[str, Any]:
     except Exception:
         books = []
     bmap = {b.get("symbol"): b for b in books if isinstance(b, dict)}
-    items, not_covered = [], []
+    state = db.get_setting("fast_radar_state", {}) or {}
+    prev_spread = state.get("spread", {}) if isinstance(state, dict) else {}
+    items, not_covered, series = [], [], {}
     for c in wanted:
-        s = f"{c}USDT"
-        if s not in tmap:
-            not_covered.append(c)
-            continue
-        t, b = tmap[s], bmap.get(s) or {}
-        try:
-            k = closed_rows(provider._get_sync("/api/v3/klines", {"symbol": s, "interval": "1h", "limit": BARS}), now)
-        except Exception:
-            items.append({"coin": c, "symbol": f"{c}/USDT", "score": None, "status": "unavailable", "reason": "candles unavailable"})
-            continue
+        s_ = f"{c}USDT"
+        src = "Binance spot"
+        if s_ in tmap:
+            t, b = tmap[s_], bmap.get(s_) or {}
+            try:
+                k = closed_rows(provider._get_sync("/api/v3/klines", {"symbol": s_, "interval": "1h", "limit": BARS}), now)
+            except Exception:
+                items.append({"coin": c, "symbol": f"{c}/USDT", "category": cat[c], "source": src, "score": None,
+                              "status": "unavailable", "reason": "candles unavailable"})
+                continue
+        else:
+            got = _mexc_coin(provider, c, now)
+            if got is None:
+                not_covered.append(c)
+                continue
+            k, t, b = got
+            src = "MEXC spot"
+        series[c] = k
         f = features(k, btc)
         qv = float(t.get("quoteVolume") or 0)
         bid, ask = float(b.get("bidPrice") or 0), float(b.get("askPrice") or 0)
         spread = (ask - bid) / ((ask + bid) / 2) * 1e4 if bid > 0 and ask > 0 else None
         if f is None:
-            items.append({"coin": c, "symbol": f"{c}/USDT", "score": None, "status": "unavailable",
-                          "reason": "fewer than 50 closed 1h candles", "quote_volume_24h": qv})
+            items.append({"coin": c, "symbol": f"{c}/USDT", "category": cat[c], "source": src, "score": None,
+                          "status": "unavailable", "reason": "fewer than 50 closed 1h candles", "quote_volume_24h": qv})
             continue
         j = judge(f, qv, spread, regime)
-        items.append({"coin": c, "symbol": f"{c}/USDT", "status": "ok", **f, **j, "quote_volume_24h": round(qv, 0),
-                      "spread_bps": _r(spread, 2)})
+        ex = extras(k, btc, f, spread, prev_spread.get(c), mregime)
+        j["reasons"] = j["reasons"] + ex["signals"]
+        j["warnings"] = j["warnings"] + ex["warnings"]
+        j["score"] = round(j["score"] - 0.15 * len(ex["warnings"]), 4)
+        items.append({"coin": c, "symbol": f"{c}/USDT", "category": cat[c], "source": src, "status": "ok", **f, **j,
+                      "detections": ex["signals"], "quote_volume_24h": round(qv, 0), "spread_bps": _r(spread, 2),
+                      "liquidity_ok": qv >= MIN_QUOTE_VOL and spread is not None and spread <= MAX_SPREAD_BPS})
     ranked = rank(items)
-    return {"available": True, "generated_at": now, "display_only": True, "regime": regime,
+    for cname in ("meme", "alt"):
+        for i_, x in enumerate([x for x in ranked if x.get("category") == cname], 1):
+            x["category_rank"] = i_
+            x["flagged"] = bool(i_ <= FLAG_TOP and x["score"] > 0)
+    try:
+        tr = track(db, ranked, series, btc, now, mregime)
+        summary = track_summary(db)
+    except Exception as exc:
+        tr, summary = {"error": type(exc).__name__}, None
+    try:
+        db.set_setting("fast_radar_state", {"at": now, "spread": {x["coin"]: x.get("spread_bps") for x in ranked
+                                                                  if x.get("spread_bps") is not None}})
+        # compact copy for the isolated paper strategy (services/fast_strategy reads this setting, never this module)
+        db.set_setting("radar_fast_snapshot", {"at": now, "regime": regime, "market_regime": mregime, "coins": [
+            {k: x.get(k) for k in ("coin", "symbol", "category", "source", "score", "category_rank", "flagged", "price",
+                                   "closed_at", "warnings", "liquidity_ok", "spread_bps", "quote_volume_24h",
+                                   "volatility_expansion", "rs_24h_pct", "rs_7d_pct", "above_ema20", "above_ema50", "atr_24")}
+            | {"recent_bars": [[int(b[0]), float(b[2]), float(b[3]), float(b[4])] for b in series.get(x["coin"], np.zeros((0, 6)))[-6:]]}
+            for x in ranked]})
+    except Exception:
+        pass
+    return {"available": True, "generated_at": now, "display_only": True, "regime": regime, "market_regime": mregime,
             "note": "Display only: a ranked list of fast movers with reasons and warnings. Not a signal, never traded.",
             "coins": ranked + [x for x in items if x.get("score") is None], "not_covered": not_covered,
-            "config": {"watchlist": wanted, "min_quote_volume": MIN_QUOTE_VOL, "max_spread_bps": MAX_SPREAD_BPS,
-                       "weights": WEIGHTS, "timeframe": "1h", "source": "Binance spot"}}
+            "categories": {k: [x["coin"] for x in ranked if x.get("category") == k] for k in ("meme", "alt")},
+            "tracking": summary, "tracked": tr,
+            "config": {"watchlists": lists, "watchlist": wanted, "min_quote_volume": MIN_QUOTE_VOL,
+                       "max_spread_bps": MAX_SPREAD_BPS, "weights": WEIGHTS, "timeframe": "1h",
+                       "source": "Binance spot, else MEXC spot", "flag_top": FLAG_TOP}}

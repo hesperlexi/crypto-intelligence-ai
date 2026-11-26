@@ -14,7 +14,7 @@ type Sub = (cb: (v: any) => void, err: (e: Error) => void) => () => void;
 type Listener = { cb: (v: any) => void; err: (e: Error) => void; map: (v: any) => any; fsUnsub?: () => void; fs?: Sub };
 type Entry = { name: string; etag: string; data?: any; mode: "edge" | "fs"; listeners: Set<Listener> };
 
-export const EDGE_RE = /^(health|meta|track_record|market_context|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$/;
+export const EDGE_RE = /^(health|meta|track_record|market_context|market_regime|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$/;
 const POLL_MS = 30_000;
 const RETRY_MS = 5 * 60_000;
 

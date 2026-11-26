@@ -28,7 +28,7 @@ MAX_DOC_BYTES = 1_000_000
 # and keeps Firestore only as the fallback. While the edge works, those views go to Firestore at most every
 # EDGE_FS_EVERY_S (a call change - `core` - still goes at once), which saves most of the daily Firestore writes.
 # Must match EDGE_RE in chat-worker/src/index.ts and EDGE_VIEWS in frontend/src/lib/edge.ts.
-EDGE_RE = re.compile(r"^(health|meta|track_record|market_context|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$")
+EDGE_RE = re.compile(r"^(health|meta|track_record|market_context|market_regime|context|radar|news|coin_reports|leaderboard|bots|signals|cross_asset_1d|models_status|weekly_report|performance|wins_today|replay_ranges|(dashboard|futures)_(15m|1h|4h|12h|1d|3d)|(analysis|perf|models)_[A-Z0-9]{2,24}_(15m|1h|4h|12h|1d|3d|1w))$")
 EDGE_URL = os.environ.get("EDGE_URL", "https://cia-chat.cryptointelai.workers.dev").rstrip("/")
 EDGE_FS_EVERY_S = int(os.environ.get("EDGE_FS_EVERY_S", "3600"))  # v2.69: was 900 (writes ~13.8K/day)
 EDGE_HEALTHY_MS = 30 * 60_000

@@ -38,6 +38,7 @@ VARIANTS: dict[str, dict[str, Any]] = {
     "h_x4": {"hmult": 4},
     "no_limit": {"hmult": 20},          # 15m 5000 / 1h 4000 / 4h 2000 candles: in practice only stop or target closes
 }
+OPT_KEYS = ("arm", "lock", "back", "split", "tp1_lock", "trail_r", "fail_n", "fail_r", "trend_n")
 import os as _os
 if _os.environ.get("RESEARCH_EXITS_VARIANTS"):
     _keep = {"base", *_os.environ["RESEARCH_EXITS_VARIANTS"].split(",")}
@@ -46,7 +47,8 @@ if _os.environ.get("RESEARCH_EXITS_VARIANTS"):
 
 def follow_x(side: int, entry: float, stop: float, tps, high, low, close, first_is_fill: bool = False,
              complete: bool = True, open_=None, arm: float | None = None, lock: float = 0.0,
-             back: float | None = None) -> Outcome | None:
+             back: float | None = None, split: tuple | None = None, tp1_lock: float = 0.0, trail_r: float | None = None,
+             fail_n: int | None = None, fail_r: float = 0.3, trend_n: int | None = None) -> Outcome | None:
     """Candle-by-candle version of series_sim.follow (stop first inside a candle, gap fills at the open) plus the
     early-protection rules. With no options it equals series_sim.follow (checked in `_selfcheck`)."""
     n = len(high)
@@ -65,7 +67,7 @@ def follow_x(side: int, entry: float, stop: float, tps, high, low, close, first_
 
     def done(status, reason, idx, fallback):
         px = [legs[k] if legs[k] is not None else fallback for k in range(3)]
-        ret = sum(w * s * (p / entry - 1) for w, p in zip(S.TP_SPLIT, px)) * 100
+        ret = sum(w * s * (p / entry - 1) for w, p in zip(split or S.TP_SPLIT, px)) * 100
         return Outcome(status, reason, float(ret), float(risk_pct), int(idx))
 
     def gap(i, level):
@@ -75,6 +77,9 @@ def follow_x(side: int, entry: float, stop: float, tps, high, low, close, first_
         return o if (s > 0 and o < level) or (s < 0 and o > level) else float(level)
 
     status = lambda: ("STOPPED", "TP1", "TP2", "TP3")[hit]  # noqa: E731
+    best = float(entry)                   # V3.4: best price on closed candles (for the R trail)
+    ema = float(entry)                    # V3.4: EMA of the path's closes, seeded at the entry (trend exit)
+    k_ema = 2 / (trend_n + 1) if trend_n else 0.0
     for i in range(n):
         hi, lo, cl = float(high[i]), float(low[i]), float(close[i])
         adv, fav = (lo, hi) if s > 0 else (hi, lo)
@@ -88,7 +93,7 @@ def follow_x(side: int, entry: float, stop: float, tps, high, low, close, first_
                 if hit == 3:
                     return done("TP3", "tp3", i, tp[2])
                 if hit == 1:
-                    new, reason_stop = entry, "break_even"
+                    new, reason_stop = entry + s * tp1_lock * risk, "break_even"
                 else:
                     new, reason_stop = tp[0], "trail"
                 if s * (new - lvl) > 0:
@@ -96,6 +101,19 @@ def follow_x(side: int, entry: float, stop: float, tps, high, low, close, first_
                 # series_sim: after a fill on this candle, the new level applies from the next candle only
                 # except TP1->TP2 in the same candle (handled by the while)
         peak = max(peak, s * (fav - entry) / risk)
+        # V3.4 Stage 3E options (all off by default: then identical to series_sim.follow, see _selfcheck)
+        best = max(best, fav) if s > 0 else min(best, fav)
+        if trail_r is not None and hit >= 1:
+            new = best - s * trail_r * risk
+            if s * (new - lvl) > 0:
+                lvl, reason_stop = new, "trail_r"
+        if trend_n:
+            prev_ema = ema
+            ema = k_ema * cl + (1 - k_ema) * ema
+            if i >= trend_n // 2 and s * (cl - ema) < 0 and s * (ema - prev_ema) < 0:
+                return done(status(), "trend_exit", i, cl)
+        if fail_n is not None and hit == 0 and i < fail_n and peak >= 0.3 and s * (cl - entry) <= -fail_r * risk:
+            return done("STOPPED", "failed_breakout", i, cl)
         if hit == 0:
             if back is not None and peak >= back and s * (cl - entry) <= 0:
                 return done("STOPPED", "give_back", i, cl)
@@ -138,7 +156,8 @@ def _stats(tr: list[dict[str, Any]]) -> dict[str, Any]:
     if tr:
         st = [t.get("status") for t in tr]
         c["tp1_hit"] = round(float(np.mean([x in ("TP1", "TP2", "TP3") for x in st])), 3)
-        c["early_exits"] = sum(1 for t in tr if t.get("exit") in ("give_back", "early_lock"))
+        c["early_exits"] = sum(1 for t in tr if t.get("exit") in ("give_back", "early_lock", "trail_r", "trend_exit",
+                                                                   "failed_breakout"))
     return c
 
 
@@ -206,7 +225,7 @@ def replay(db_url: str, budget_s: float, raw: bool = False) -> dict[str, Any]:
             for name, v in VARIANTS.items():
                 SP.HORIZON_BARS = int(h0 * v.get("hmult", 1))
                 lad = v.get("ladder")
-                opts = {k: v[k] for k in ("arm", "lock", "back") if k in v}
+                opts = {k: v[k] for k in OPT_KEYS if k in v}
                 S.follow = (lambda *a, _o=opts, **k: follow_x(*a, **k, **_o)) if opts else orig_follow
                 S.ladder = (lambda side, e, st, mult=None, _l=lad: orig_ladder(side, e, st, _l)) if lad else orig_ladder
                 for part, m in (("tune", tune), ("test", test)):

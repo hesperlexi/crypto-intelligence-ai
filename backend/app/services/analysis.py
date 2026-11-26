@@ -794,6 +794,8 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         try:                                   # V3.3: market + coin context at publication (context only, never decides)
             from . import market_intel
             risk_check["intel"] = market_intel.coin_context(rt, symbol)
+            from . import market_regime
+            risk_check["regime"] = market_regime.compact(market_regime.current(rt.db))
         except Exception:
             pass
         try:                                   # V3.0: market risk state at publication (shadow; judged by replay later)
@@ -865,6 +867,19 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
         out["indicators"] = _snapshot(last)
         out["data_quality"] = quality
     out["commentary"] = build_commentary(out)
+    # V3.4 Stage 3B opportunity score: a checklist of the setup's quality (context only, never decides, not a probability)
+    try:
+        from . import opportunity_score as OS
+        if risk_check is not None:
+            octx = OS.context(rt, symbol, OS.side_of(out), risk_check)
+        else:
+            from . import market_regime
+            octx = {"regime": market_regime.compact(market_regime.current(rt.db)) if live and bundle is None else None}
+        out["opportunity"] = OS.score(out, octx)
+        if risk_check is not None:
+            risk_check["opportunity"] = OS.compact(out["opportunity"])
+    except Exception:
+        out["opportunity"] = None
     if live and bundle is None:
         if fc["available"]:
             tracking.log_prediction(rt.db, symbol, timeframe, fc)

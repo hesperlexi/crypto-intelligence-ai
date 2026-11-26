@@ -1617,3 +1617,48 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   `trainer._summary`); `perf_lab` adds `by_regime`, `by_tf_side`, `ci95_avg_r`, `max_losing_streak`, `portfolio`,
   `ml_shadow`, `basis`. UI `components/LabRisk.tsx` at the end of Performance Lab. Enforcement of filters stays off.
 - Tests: test_portfolio_risk_v33, test_market_intel_v33, test_fast_radar_v33, test_ml_shadow_v33.
+
+## V3.4 Stage 3 - advanced trading intelligence (26 Nov 2026, branch `stages-3-7`; NOT deployed)
+- **Market regime** `services/market_regime.py` (worker step `market_regime` after `market_intel`, `MARKET_REGIME=0` off):
+  one market label (strong/weak bull/bear, sideways, breakout, breakdown, unstable, uncertain + high/low volatility
+  overlay) from BTC 4h/1d regime, BTC 4h structure + volume, volatility, breadth, ETH vs BTC, altcoins vs BTC, BTC
+  dominance (`market_snapshots`, fetched_at <= now), funding, OI, liquidations, spot volume. Every input in `evidence`
+  with its data status; `agreement` = share of directional inputs agreeing (a count, not a probability); confidence
+  high/medium/low; a new label is confirmed after 3 runs and 30 min (`transition`), log `market_regime_log`. Setting
+  `market_regime`, member view `views/market_regime` (edge list, min 1800 s). Calls store `risk_shadow.regime`. Never decides.
+- **Opportunity score** `services/opportunity_score.py`: 12 components (trend, momentum, relative, volume, liquidity,
+  volatility, regime, entry, reward, stop, costs, correlation) 0-100 with readings; overall = plain mean (equal weights,
+  none proven better), `coverage`, positive / negative evidence, rejection reasons, freshness, warnings. On every
+  analysis as `opportunity`; trade calls also `risk_shadow.opportunity`. `evaluate()` tests each component on its own
+  (top vs bottom third net R with 95 % intervals) → Performance Lab `opportunity_check` (record + held-back calls). Never decides.
+- **Fast radar v3.4** (`services/fast_radar.py`): meme / alt watchlists (setting `fast_radar_watchlists`, env
+  FAST_RADAR_MEME / FAST_RADAR_ALT; defaults DOGE PEPE BONK SHIB WIF FLOKI PENGU PUMP SPX FARTCOIN | SOL HYPE SUI SEI JUP
+  INJ TIA WLD; legacy `fast_radar_coins` still works); Binance spot, else MEXC spot (`api.mexc.com`, interval 60m), else
+  `not_covered`; new detections (momentum acceleration, RS breakout vs BTC, trend continuation, liquidity deterioration,
+  sudden spread expansion vs last scan, BTC regime incompatibility); category ranks; top 5 per category with score > 0 =
+  "appeared" → table `radar_opportunities` (first seen, then 4/24/72 h move and vs BTC, worked = beat BTC over 24 h;
+  `track_summary` in `views/radar.fast.tracking`, before costs, not a trade result). State `fast_radar_state`.
+- **Isolated Fast Opportunity paper strategy** `services/fast_strategy.py` (run after the radar scan, `FAST_STRATEGY=0`
+  off): reads only setting `radar_fast_snapshot` (never the radar module); long only, top 3 per category, no warnings,
+  liquidity ok, above 1h EMA20/50; no entries in down / breakdown / unstable / uncertain regimes or HIGH/SEVERE risk;
+  0.25 % risk (capped in code), notional ≤ 20 % equity, stop 2 ATR(24, 1h), BE after +1R, target 2R, trend exit below
+  EMA50, 72 h time exit, closed 1h bars only (stop first; gapped stop fills at the close); fee 0.10 % + slippage (meme 15 /
+  alt 8 bps) + half spread both ways; one per coin, a radar bar never twice, 24 h cooldown, 2 losses → 12 h pause,
+  drawdown 8R → halted; central `portfolio_risk.book_check` before every entry. Table `fast_trades`, state
+  `fast_strategy_state`, config `fast_strategy_config`. `promotion()` (report only, never automatic): ≥300 closed under
+  the current `config_hash`, CI of avg R > 0, PF ≥ 1.1, DD ≤ 15R, no negative category / regime with enough trades, ≥5
+  coins with 20+ trades, no errors 7 d, a forward holdout verdict. Shown only in Performance Lab (`fast_strategy`).
+- **Exit research** `research_exits_v34.py` (`python -m app.research exits-v34`, workflow `research-exits-v34.yml` on
+  push to `stages-3-7`, results `research-results/results/exits-v34-*.json`): R trail 1.0/1.5 after TP1, splits 34/33/33
+  and 70/15/15, half time limit, targets 1/2/3R and 1/1.5/2R, +0.25R lock at TP1, failed-breakout exit, EMA20 trend
+  exit; `research_exits.follow_x` options are off by default (self-check = live simulator); 40 registered verdicts, Holm.
+  Live exits unchanged whatever it finds.
+
+## Stage 5 design decisions (owner, 26 Nov 2026)
+Approved: 6 destinations (Overview · Market Intelligence · Opportunities · Portfolio · Performance · Settings & System),
+every page kept as a tab, old links redirect. Remove: AI Intelligence galaxy map + logo planet + solar-system BTC link
+map, Radar page sweep, Overview breathing AI-core dial, drifting price lines background, Lab orbit / hexagon charts,
+duplicated market board / live signals. **KEEP (owner): the spinning Earth globe, News Intercept dish + orbit calendar,
+the logo animations unchanged.** Keep the Hesper Challenge page and its journeys; keep the "Lane" journeys look but
+calmer; Results gets tabs + sample-size labels, track record kept. Stage 5 is built only after Stages 3-4, with
+desktop + phone screenshots before anything goes live.

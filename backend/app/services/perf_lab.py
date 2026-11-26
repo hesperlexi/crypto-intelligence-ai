@@ -96,6 +96,43 @@ def _ml_shadow(rt: Any, now: int) -> dict[str, Any] | None:
         return {"available": False, "reason": type(exc).__name__}
 
 
+def _fast_strategy(rt: Any) -> dict[str, Any] | None:
+    """V3.4 Stage 3D: the isolated paper strategy's own figures (admin report only)."""
+    try:
+        from . import fast_strategy
+        return fast_strategy.report(rt.db)
+    except Exception as exc:
+        return {"error": type(exc).__name__}
+
+
+def _opportunity_check(rt: Any, rc: str, rp: Any) -> dict[str, Any]:
+    """V3.4 Stage 3B: each opportunity-score component checked on its own against what closed calls really did (record
+    calls and the followed calls the filters held back, separately and together). Report only."""
+    from . import opportunity_score as OS
+    from . import tracking as T
+    out: dict[str, Any] = {}
+    sets = {"record": (f"SELECT * FROM signals WHERE side != 0 AND status != 'INFO' AND {rc}", rp),
+            "held_back": ("SELECT * FROM rejected_signals WHERE side != 0", ())}
+    allrows: list[dict[str, Any]] = []
+    for name, (sql, params) in sets.items():
+        rows = []
+        try:
+            for r in rt.db.query(sql, params):
+                if r["status"] not in CLOSED or r.get("return_pct") is None:
+                    continue
+                op = ((loads(r.get("payload"), {}) or {}).get("risk_shadow") or {}).get("opportunity")
+                rk, n = _risk_pct(r), T.net_pct(r)
+                if op and rk and n is not None:
+                    rows.append({"opportunity": op, "net_r": n / rk})
+        except Exception:
+            rows = []
+        out[name] = OS.evaluate(rows)
+        allrows += rows
+    out["all"] = OS.evaluate(allrows)
+    out["note"] = "a component is useful only if its top third beats its bottom third with intervals apart on enough calls"
+    return out
+
+
 def build(rt: Any, now: int | None = None) -> dict[str, Any]:
     from .. import views
     from . import tracking as T
@@ -123,7 +160,9 @@ def build(rt: Any, now: int | None = None) -> dict[str, Any]:
              "peak_r": r.get("peak_r"), "exit": r.get("exit_reason"), "tp1": int(r.get("tp1_hit") or 0),
              "hold_h": round((r["closed_at"] - (r.get("filled_at") or r["created_at"])) / 3.6e6, 1) if r.get("closed_at") else None,
              "closed_at": r.get("closed_at"),
-             "regime": ((p.get("risk_shadow") or {}).get("state")) or "unknown"}
+             "regime": ((p.get("risk_shadow") or {}).get("state")) or "unknown",
+             # V3.4: market regime label at publication (services/market_regime; context only)
+             "mregime": (((p.get("risk_shadow") or {}).get("regime") or {}).get("regime")) or "not recorded"}
         if r["status"] in CLOSED and r.get("return_pct") is not None and rk:
             n = T.net_pct(r)
             x["r"] = round(n / rk, 3) if n is not None else None
@@ -183,6 +222,9 @@ def build(rt: Any, now: int | None = None) -> dict[str, Any]:
         # V3.3 (Stage 2 phase D): market risk state at publication; side split per timeframe
         "by_regime": group(closed, lambda x: x["regime"]),
         "by_tf_side": group(closed, lambda x: f"{x['tf']} {x['side']}", order=lambda k: (TF_ORDER.get(k.split()[0], 9), k)),
+        "by_market_regime": group(closed, lambda x: x["mregime"]),
+        "opportunity_check": _opportunity_check(rt, rc, rp),
+        "fast_strategy": _fast_strategy(rt),
         "portfolio": _portfolio(rt),
         "ml_shadow": _ml_shadow(rt, now),
         "basis": {"r": "net R: after the record's 0.15 % round trip and funding, per call's planned risk",
