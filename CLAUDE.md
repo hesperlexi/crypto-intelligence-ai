@@ -1725,3 +1725,10 @@ desktop + phone screenshots before anything goes live.
 - `tests/test_e2e_v34.py`: normal path is advisory only, poor-liquidity rejection, restart with an open paper position,
   stale regime never used. Exit study v3.4 (`results/exits-v34-latest.json`, 26 Nov): nothing passes after Holm
   (split_33 raw PASS, corrected FAIL; trend_20 / tp_tight clearly worse) → live exits unchanged.
+
+## V3.5 Telegram cards (owner, 26 Nov 2026, branch `cards-v35`)
+`services/cards.py` redrawn: 1280 x 1024 landscape (Telegram showed the tall 4:5 cards trimmed, hiding the logo / footer),
+safe frame 64 px, audit section J look (graphite, one gold accent, green / red only for P/L, cyan only for AI, IBM Plex Sans,
+no glow / mesh / gradients). Headline = NET price move; leverage ROI is a secondary line ("leverage magnifies losses too");
+"Paper trading" line on every card; fewer than 300 closed = "too few to judge". Every text goes through `_t` (box recorded);
+`layout_boxes` + `overlaps` power `tests/test_cards_v35.py` (no overlaps, inside the safe frame, long names / tiny prices / huge figures).
