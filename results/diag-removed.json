@@ -37,20 +37,170 @@
    "removed_at": 1795672844000
   }
  ],
- "calls_since_cutoff": [],
+ "calls_since_cutoff": [
+  {
+   "n": 1,
+   "tf": "12h",
+   "created_at": 1795691720679,
+   "fill": "FILLED",
+   "filled_at": 1795691720679,
+   "status": "OPEN",
+   "closed_at": null,
+   "same_id_as_removed": false,
+   "same_coin_tf_as_removed": true,
+   "same_candle_as_removed": false,
+   "minutes_after_removal": 314.6,
+   "entry_mode": "market",
+   "alert_events_near_publication": [
+    "NEW_SIGNAL"
+   ],
+   "alert_events_n": 9
+  },
+  {
+   "n": 2,
+   "tf": "12h",
+   "created_at": 1795691732526,
+   "fill": "FILLED",
+   "filled_at": 1795691732526,
+   "status": "OPEN",
+   "closed_at": null,
+   "same_id_as_removed": false,
+   "same_coin_tf_as_removed": true,
+   "same_candle_as_removed": false,
+   "minutes_after_removal": 314.8,
+   "entry_mode": "market",
+   "alert_events_near_publication": [
+    "NEW_SIGNAL"
+   ],
+   "alert_events_n": 9
+  },
+  {
+   "n": 3,
+   "tf": "12h",
+   "created_at": 1795691761600,
+   "fill": "FILLED",
+   "filled_at": 1795691761600,
+   "status": "OPEN",
+   "closed_at": null,
+   "same_id_as_removed": false,
+   "same_coin_tf_as_removed": false,
+   "same_candle_as_removed": false,
+   "minutes_after_removal": null,
+   "entry_mode": "market",
+   "alert_events_near_publication": [
+    "NEW_SIGNAL"
+   ],
+   "alert_events_n": 9
+  },
+  {
+   "n": 4,
+   "tf": "12h",
+   "created_at": 1795691781795,
+   "fill": "FILLED",
+   "filled_at": 1795691781795,
+   "status": "OPEN",
+   "closed_at": null,
+   "same_id_as_removed": false,
+   "same_coin_tf_as_removed": false,
+   "same_candle_as_removed": false,
+   "minutes_after_removal": null,
+   "entry_mode": "market",
+   "alert_events_near_publication": [
+    "NEW_SIGNAL"
+   ],
+   "alert_events_n": 9
+  },
+  {
+   "n": 5,
+   "tf": "12h",
+   "created_at": 1795691790685,
+   "fill": "FILLED",
+   "filled_at": 1795691790685,
+   "status": "OPEN",
+   "closed_at": null,
+   "same_id_as_removed": false,
+   "same_coin_tf_as_removed": true,
+   "same_candle_as_removed": false,
+   "minutes_after_removal": 315.8,
+   "entry_mode": "market",
+   "alert_events_near_publication": [
+    "NEW_SIGNAL"
+   ],
+   "alert_events_n": 9
+  },
+  {
+   "n": 6,
+   "tf": "12h",
+   "created_at": 1795698234112,
+   "fill": "FILLED",
+   "filled_at": 1795698234112,
+   "status": "OPEN",
+   "closed_at": null,
+   "same_id_as_removed": false,
+   "same_coin_tf_as_removed": false,
+   "same_candle_as_removed": false,
+   "minutes_after_removal": null,
+   "entry_mode": "market",
+   "alert_events_near_publication": [
+    "NEW_SIGNAL"
+   ],
+   "alert_events_n": 9
+  }
+ ],
  "hesper_trades": [],
  "laststand_trades": [],
  "hesper_state": {
-  "open": [],
+  "open": [
+   {
+    "opened_at": 1795691908944,
+    "signal_in_record": true,
+    "signal_was_removed": false
+   },
+   {
+    "opened_at": 1795691908944,
+    "signal_in_record": true,
+    "signal_was_removed": false
+   }
+  ],
   "pending": 0
  },
  "laststand_state": {
-  "open": [],
+  "open": [
+   {
+    "opened_at": 1795691908944,
+    "signal_in_record": true,
+    "signal_was_removed": false
+   },
+   {
+    "opened_at": 1795691908944,
+    "signal_in_record": true,
+    "signal_was_removed": false
+   }
+  ],
   "pending": 0
  },
- "bot_positions_since_cutoff": [],
- "state_newest_signal": 1795687309238,
- "state_newest_prediction": 1795687309237,
+ "bot_positions_since_cutoff": [
+  {
+   "bot_tf": "12h",
+   "opened_at": 1795691661696,
+   "signal_in_record": true,
+   "signal_was_removed": false
+  },
+  {
+   "bot_tf": "12h",
+   "opened_at": 1795691661696,
+   "signal_in_record": true,
+   "signal_was_removed": false
+  },
+  {
+   "bot_tf": "12h",
+   "opened_at": 1795691661696,
+   "signal_in_record": true,
+   "signal_was_removed": false
+  }
+ ],
+ "state_newest_signal": 1795698253386,
+ "state_newest_prediction": 1795698274556,
  "decisions_after_removal": [
   {
    "tf": "15m",
@@ -66,7 +216,33 @@
   },
   {
    "tf": "12h",
-   "after_removal": []
+   "after_removal": [
+    {
+     "ts": 1795691720679,
+     "rule": "logged"
+    },
+    {
+     "ts": 1795691800145,
+     "rule": "ai_rationale"
+    },
+    {
+     "ts": 1795691806083,
+     "rule": "skip_already_open"
+    }
+   ]
+  },
+  {
+   "tf": "12h",
+   "after_removal": [
+    {
+     "ts": 1795691732526,
+     "rule": "logged"
+    },
+    {
+     "ts": 1795691806149,
+     "rule": "skip_already_open"
+    }
+   ]
   },
   {
    "tf": "12h",
@@ -74,11 +250,20 @@
   },
   {
    "tf": "12h",
-   "after_removal": []
-  },
-  {
-   "tf": "12h",
-   "after_removal": []
+   "after_removal": [
+    {
+     "ts": 1795691790685,
+     "rule": "logged"
+    },
+    {
+     "ts": 1795691800145,
+     "rule": "ai_rationale"
+    },
+    {
+     "ts": 1795691806416,
+     "rule": "skip_already_open"
+    }
+   ]
   }
  ]
 }
