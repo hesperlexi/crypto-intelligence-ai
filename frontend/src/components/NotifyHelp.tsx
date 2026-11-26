@@ -2,6 +2,7 @@
 //   BlockedHelp       what to do when notifications are blocked (Android: short collapsible steps)
 //   ChromeWarning     the Android app runs without Chrome-backed notifications: install Chrome / the newest app
 //   AppChromeBanner   the same as a slim app-wide banner (dismissible for the session)
+//   AppUpdateBanner   the installed Android app is older than the newest APK (icon / name changed): update it
 //   useApkInfo        version + build number of the newest APK (/download/android.json, written by deploy.yml)
 import { useEffect, useState } from "react";
 import * as push from "../lib/push";
@@ -49,7 +50,38 @@ export function AppChromeBanner() {
   );
 }
 
-export interface ApkInfo { version?: string; code?: number; url?: string; bytes?: number }
+export interface ApkInfo { version?: string; code?: number; level?: number; url?: string; bytes?: number }
+
+/** True when this is the Android app and a newer APK level is out. */
+export function apkUpdateDue(info?: ApkInfo | null): boolean {
+  const have = push.installedApkLevel();
+  return have > 0 && !!info?.level && have < info.level;
+}
+const UPD_KEY = "cia-apk-update-later";
+const UPD_SNOOZE_MS = 3 * 24 * 3600 * 1000;
+/** Android app only: "A new version of the app is ready" with an Update button (snoozed 3 days by Later). */
+export function AppUpdateBanner() {
+  const apk = useApkInfo();
+  const [later, setLater] = useState(() => { try { return Date.now() - Number(localStorage.getItem(UPD_KEY) || 0) < UPD_SNOOZE_MS; } catch { return false; } });
+  const [tapped, setTapped] = useState(false);
+  if (later || !apkUpdateDue(apk)) return null;
+  const size = apk?.bytes ? ` · ${(apk.bytes / 1048576).toFixed(1)} MB` : "";
+  return (
+    <div className="apk-upd border-b border-accent/30 bg-accent/10 px-3 py-2 text-sm" role="status">
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-3 gap-y-2">
+        <img src="/brand/logo-96.png" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg max-[359px]:hidden" />
+        <span className="min-w-0 flex-1 basis-[13rem]">
+          <b className="text-text">New app version ready</b>
+          <span className="block text-mute">{tapped ? "Open the downloaded file and tap Update. You stay signed in." : `New logo and fixes${size}`}</span>
+        </span>
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          <button type="button" className="btn btn-ghost" onClick={() => { setLater(true); try { localStorage.setItem(UPD_KEY, String(Date.now())); } catch { /* ignore */ } }}>Later</button>
+          <a className="btn btn-primary" href={apk?.url ?? push.APK_URL} onClick={() => setTapped(true)}>Update</a>
+        </span>
+      </div>
+    </div>
+  );
+}
 let cached: Promise<ApkInfo | null> | null = null;
 /** Newest APK's version name + build number (null when the file is not there, e.g. local builds). */
 export function useApkInfo(): ApkInfo | null | undefined {

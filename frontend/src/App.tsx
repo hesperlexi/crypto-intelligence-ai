@@ -8,7 +8,7 @@ import AskAI from "./components/AskAI";
 import InstallButton from "./components/InstallButton";
 import UpdateNotice from "./components/UpdateNotice";
 import NotifyPrompt from "./components/NotifyPrompt";
-import { AppChromeBanner, apkVersion, useApkInfo } from "./components/NotifyHelp";
+import { AppChromeBanner, AppUpdateBanner, apkVersion, useApkInfo } from "./components/NotifyHelp";
 import { APK_URL } from "./lib/push";
 import { Badge } from "./components/ui";
 import { useApi } from "./lib/api";
@@ -342,6 +342,7 @@ function Shell({ user }: { user: User }) {
             </div>
           </nav>
         </header>
+        <AppUpdateBanner />
         <AppChromeBanner />
         {TAPE_PATHS.has(loc.pathname) && <TickerTape />}
         {!admin && <RenewBanner />}

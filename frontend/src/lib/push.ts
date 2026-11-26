@@ -13,6 +13,26 @@ const LS_TOKEN = "cia-push-token";
 
 // The Android app opens the site with an android-app:// referrer on its first page; remember it for the session.
 try { if (document.referrer.startsWith("android-app://")) localStorage.setItem("cia-android-app", "1"); } catch { /* ignore */ }
+// Installed APK level (v3.5): newer APKs open "/?apk=<level>" (deploy.yml, frontend/package.json "apkLevel"). An app
+// opened from the Android app without it, with nothing remembered yet, is an older APK = level 1. The query is removed.
+const LS_APK = "cia-apk-level";
+try {
+  const q = new URLSearchParams(location.search);
+  const lv = q.get("apk");
+  if (lv && /^\d{1,4}$/.test(lv)) {
+    localStorage.setItem("cia-android-app", "1");
+    localStorage.setItem(LS_APK, lv);
+    q.delete("apk");
+    const rest = q.toString();
+    history.replaceState(history.state, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
+  } else if (document.referrer.startsWith("android-app://") && !localStorage.getItem(LS_APK)) {
+    localStorage.setItem(LS_APK, "1");
+  }
+} catch { /* ignore */ }
+/** Level of the installed Android app (0 = unknown / not in the app). */
+export function installedApkLevel(): number {
+  try { return inAndroidApp() ? Number(localStorage.getItem(LS_APK) || 0) : 0; } catch { return 0; }
+}
 export function inAndroidApp(): boolean {
   try { return localStorage.getItem("cia-android-app") === "1"; } catch { return false; }
 }

@@ -1752,3 +1752,9 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   (v3.css "V3.5 logo"): 1 neural arc rocks ±4° (`lg5-neural`), 2 C breathes (`lg5-c`), 3 arrow draws itself + head pops
   (`lg5-line` / `lg5-head`, its dark cut too), 4 "AI" floats (`lg5-ai`), 5 gear turns (`lg5-gear`, inside the fixed
   `gearClip`). Still under prefers-reduced-motion. `Logo` = still PNG. Manual screenshots retaken (member preview) + PDF rebuilt.
+- **Android app update prompt** (owner, 26 Nov 2026): `frontend/package.json` "apkLevel" (raise by hand only when the APK
+  itself changes: icon, name, Android settings) → deploy.yml puts it in the TWA start URL `/?apk=<level>` and in
+  `/download/android.json` `level`. `push.ts` stores the installed level (`cia-apk-level`; opened from the app without it and
+  nothing stored = old APK = 1; query removed). `NotifyHelp.AppUpdateBanner` (under the header, Android app only, installed <
+  newest): "New app version ready" + Update (APK link) / Later (3 days); Settings → About "Update available". Same signing
+  key, so installing over the old app keeps the sign-in. Level 2 = V3.5 logo.

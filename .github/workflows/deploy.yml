@@ -80,7 +80,9 @@ jobs:
           exec > >(tee build.log) 2>&1
           set -x
           ver=$(python3 -c 'import json;print(json.load(open("../frontend/package.json"))["version"])')   # one source: frontend/package.json
-          sed -e "s/__VERSION_NAME__/${ver}/g" -e "s/__VERSION_CODE__/${GITHUB_RUN_NUMBER}/" twa-manifest.template.json > twa-manifest.json
+          # apkLevel: raised by hand only when the APK itself changes (icon, name); the site asks older installs to update
+          lvl=$(python3 -c 'import json;print(int(json.load(open("../frontend/package.json")).get("apkLevel",1)))')
+          sed -e "s/__VERSION_NAME__/${ver}/g" -e "s/__VERSION_CODE__/${GITHUB_RUN_NUMBER}/" -e "s/__APK_LEVEL__/${lvl}/" twa-manifest.template.json > twa-manifest.json
           mkdir -p ~/.bubblewrap
           echo "{\"jdkPath\": \"${JAVA_HOME}\", \"androidSdkPath\": \"${ANDROID_SDK_ROOT:-$ANDROID_HOME}\"}" > ~/.bubblewrap/config.json
           SDK="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
@@ -99,7 +101,7 @@ jobs:
           cp app-release-signed.apk out/download/crypto-intelligence-ai.apk
           printf '[{"relation":["delegate_permission/common.handle_all_urls"],"target":{"namespace":"android_app","package_name":"com.hesper.cryptoai","sha256_cert_fingerprints":["%s"]}}]\n' "$SHA256_FINGERPRINT" > out/.well-known/assetlinks.json
           url="https://github.com/${GITHUB_REPOSITORY}/releases/download/android/crypto-intelligence-ai.apk"
-          echo "{\"version\": \"${ver}\", \"code\": ${GITHUB_RUN_NUMBER}, \"bytes\": $(stat -c%s out/download/crypto-intelligence-ai.apk), \"url\": \"${url}\"}" > out/download/android.json
+          echo "{\"version\": \"${ver}\", \"code\": ${GITHUB_RUN_NUMBER}, \"level\": ${lvl}, \"bytes\": $(stat -c%s out/download/crypto-intelligence-ai.apk), \"url\": \"${url}\"}" > out/download/android.json
       - name: Publish the APK on the repository's Releases page (the free Firebase plan does not host APK files)
         env:
           GH_TOKEN: ${{ github.token }}

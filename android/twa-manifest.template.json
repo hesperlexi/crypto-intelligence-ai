@@ -12,7 +12,7 @@
   "navigationDividerColorDark": "#111215",
   "backgroundColor": "#111215",
   "enableNotifications": true,
-  "startUrl": "/",
+  "startUrl": "/?apk=__APK_LEVEL__",
   "iconUrl": "http://127.0.0.1:8765/icon-512.png",
   "maskableIconUrl": "http://127.0.0.1:8765/maskable-512.png",
   "splashScreenFadeOutDuration": 300,

@@ -18,7 +18,7 @@ import TelegramCard from "../components/TelegramCard";
 import InviteCard from "../components/InviteCard";
 import { post, put, queueJob, useApi } from "../lib/api";
 import { fmtProb } from "../lib/format";
-import { apkVersion, BlockedHelp, ChromeWarning, useApkInfo } from "../components/NotifyHelp";
+import { apkUpdateDue, apkVersion, BlockedHelp, ChromeWarning, useApkInfo } from "../components/NotifyHelp";
 
 const RISK_FIELDS: [string, string][] = [
   ["portfolio", "Portfolio size ($)"], ["risk_per_trade_pct", "Maximum risk per trade (%)"], ["max_daily_loss_pct", "Maximum daily loss (%)"],
@@ -195,7 +195,7 @@ function AboutCard() {
     <Card title="About">
       <Row k="App" v="Crypto Intelligence AI" />
       <Row k="Version" v={`v${APP_VERSION} · build ${BUILD_ID}`} />
-      {push.inAndroidApp() && <Row k="Android app" v={apk?.version ? `newest${apkVersion(apk)}` : "…"} />}
+      {push.inAndroidApp() && <Row k="Android app" v={apkUpdateDue(apk) ? <a className="font-semibold text-accent underline" href={apk?.url ?? push.APK_URL}>Update available{apkVersion(apk)}</a> : apk?.version ? `up to date${apkVersion(apk)}` : "…"} />}
       <div className="mt-3 flex flex-wrap items-center gap-3">
         <button className="btn" onClick={async () => { setMsg("Checking…"); setMsg((await checkForUpdate(true)) ? "Updating…" : "You have the latest version."); }}>Check for updates</button>
         {msg && <span className="text-sm text-mute">{msg}</span>}
