@@ -231,3 +231,22 @@ body {
 .side-link.side-ico svg { display: block; flex: 0 0 auto; margin: 0; }
 /* phone More sheet: solid, so the page behind never shows through it (looked like repeated menu items) */
 #more-sheet .popover, [data-glass] #more-sheet .popover { background: rgb(var(--raised)) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+
+/* V3.5 logo (owner, 26 Nov 2026): five parts, each with its own motion (Logo.tsx LiveLogo, ids from data/logoV35.ts) */
+.lg5 { position: relative; display: inline-block; flex: none; line-height: 0; }
+.lg5 svg { display: block; overflow: visible; }
+.lg5-gear   { transform-origin: 845px 478px; animation: lg5-turn 16s linear infinite; }
+.lg5-neural { transform-origin: 575px 610px; animation: lg5-rock 7s ease-in-out infinite; }
+.lg5-c      { transform-origin: 628px 606px; animation: lg5-breathe 4.2s ease-in-out infinite; }
+.lg5-ai     { transform-origin: 845px 650px; animation: lg5-float 3.6s ease-in-out infinite; }
+.lg5-arrow .lg5-line { stroke-dasharray: 470; animation: lg5-draw 5.5s cubic-bezier(.6,0,.2,1) infinite; }
+.lg5-arrow .lg5-head { transform-box: fill-box; transform-origin: center; animation: lg5-pop 5.5s ease-out infinite; }
+@keyframes lg5-turn { to { transform: rotate(360deg); } }
+@keyframes lg5-rock { 0%, 100% { transform: rotate(-4deg); } 50% { transform: rotate(4deg); } }
+@keyframes lg5-breathe { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+@keyframes lg5-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-14px); } }
+@keyframes lg5-draw { 0% { stroke-dashoffset: 470; } 32%, 88% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -470; } }
+@keyframes lg5-pop { 0%, 26% { transform: scale(0); opacity: 0; } 36% { transform: scale(1.18); opacity: 1; } 44%, 86% { transform: scale(1); opacity: 1; } 96%, 100% { transform: scale(0); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) {
+  .lg5-gear, .lg5-neural, .lg5-c, .lg5-ai, .lg5-arrow .lg5-line, .lg5-arrow .lg5-head { animation: none; }
+}

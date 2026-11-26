@@ -1740,3 +1740,15 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
 - Telegram approval (owner, 26 Nov 2026: "keep everything autopost - except the wins and trades"): "Ask me before posting"
   holds only `telegram.APPROVE_KINDS` (win, wins; owner 11:10: daily free signal auto too); briefings, news heads-ups, week7 / weekly reports and
   the daily free trade's RESULT (win or loss - never held back) post directly (`needs_approval`).
+
+## V3.5 logo (owner, 26 Nov 2026: chose the neural arc + C + rising arrow + "AI" + gear design; "brighter, HD, gold, 3D, crystal glass")
+- `frontend/brand-source/make_logo_v35.py` → `logo-v35.svg` (graphite glass tile), `logo-v35-mark.svg` (bare mark) and
+  `src/data/logoV35.ts` (the five parts as strings, ids prefixed `__P__`, replaced per instance). 3D = SVG lighting
+  filter `metal` (bevel + two speculars + drop shadow) + two glass shine passes (`shine`, `streak`) per part.
+  `render_logo_v35.cjs` (Playwright) → brand/logo-{96,192,384}.png(+webp via Pillow), brand/logo-art-{192,384}.webp
+  (mark on a round graphite disc), icons/* (tile; apple / maskable = mark on full-bleed graphite), favicon, og-image,
+  backend/app/assets/logo.png + logo-art.png. Old `make_logo.py` / `render_logo_assets.cjs` are the previous logo.
+- `components/Logo.tsx` `LiveLogo` (also AnimatedLogo / HeroLogo / LogoSpinner): inline SVG, each part moves on its own
+  (v3.css "V3.5 logo"): 1 neural arc rocks ±4° (`lg5-neural`), 2 C breathes (`lg5-c`), 3 arrow draws itself + head pops
+  (`lg5-line` / `lg5-head`, its dark cut too), 4 "AI" floats (`lg5-ai`), 5 gear turns (`lg5-gear`, inside the fixed
+  `gearClip`). Still under prefers-reduced-motion. `Logo` = still PNG. Manual screenshots retaken (member preview) + PDF rebuilt.
