@@ -1,0 +1,53 @@
+{
+ "flag": true,
+ "removed": [
+  {
+   "tf": "15m",
+   "created_at": 1795617642892,
+   "removed_at": 1795625632034
+  },
+  {
+   "tf": "1h",
+   "created_at": 1795569656102,
+   "removed_at": 1795625632034
+  },
+  {
+   "tf": "4h",
+   "created_at": 1795642937581,
+   "removed_at": 1795672844000
+  },
+  {
+   "tf": "12h",
+   "created_at": 1795642974042,
+   "removed_at": 1795672844000
+  },
+  {
+   "tf": "12h",
+   "created_at": 1795642974641,
+   "removed_at": 1795672844000
+  },
+  {
+   "tf": "12h",
+   "created_at": 1795643650249,
+   "removed_at": 1795672844000
+  },
+  {
+   "tf": "12h",
+   "created_at": 1795646736976,
+   "removed_at": 1795672844000
+  }
+ ],
+ "calls_since_cutoff": [],
+ "hesper_trades": [],
+ "laststand_trades": [],
+ "hesper_state": {
+  "open": [],
+  "pending": 0
+ },
+ "laststand_state": {
+  "open": [],
+  "pending": 0
+ },
+ "bot_positions_since_cutoff": [],
+ "state_newest_signal": 1795687309238
+}
