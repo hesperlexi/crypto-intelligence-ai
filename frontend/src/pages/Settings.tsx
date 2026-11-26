@@ -219,6 +219,20 @@ function NotificationsCard() {
     try { const t = await fn(); if (t) setMsg({ ok: true, text: t }); } catch (e: any) { setMsg({ ok: false, text: e.message }); }
     finally { setBusy(false); setPerm(push.permission()); setToken(push.savedToken()); }
   };
+  // back from the phone's / browser's settings: read the permission again (it was read only once before, so the
+  // card kept saying "blocked" after the person had allowed it) and register this phone at once when allowed
+  useEffect(() => {
+    if (perm !== "denied" && perm !== "default") return;
+    const check = () => {
+      const p = push.permission();
+      if (p === perm) return;
+      setPerm(p);
+      if (p === "granted" && !push.savedToken()) void act(push.enable);
+    };
+    const t = window.setInterval(check, 2000);
+    document.addEventListener("visibilitychange", check); window.addEventListener("focus", check);
+    return () => { window.clearInterval(t); document.removeEventListener("visibilitychange", check); window.removeEventListener("focus", check); };
+  }, [perm]);
   return (
     <section id="notifications">
       <Card title="Notifications">

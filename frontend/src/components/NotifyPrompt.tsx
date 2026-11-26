@@ -113,7 +113,7 @@ export default function NotifyPrompt() {
     return (
       <div className="panel notify-solid animate-in fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] mx-auto max-w-md p-3 text-sm sm:inset-x-auto sm:bottom-4 sm:right-4" role="dialog" aria-label="Notifications">
         <p className="font-semibold">Notifications are off for this app</p>
-        <p className="mt-1 text-mute">{msg ?? (link ? (push.installedApkLevel() >= 6 ? "Tap Turn on notifications, set Notifications to Allow, then go back." : "One tap: your phone asks again, or opens the app's notification switch.") : "Update the app first: the new version turns them on with one tap.")}</p>
+        <p className="mt-1 text-mute">{msg ?? (link ? (push.installedApkLevel() >= 6 ? "Tap Turn on notifications, set Notifications to Allow, then press back: the app restarts once." : "One tap: your phone asks again, or opens the app's notification switch.") : "Update the app first: the new version turns them on with one tap.")}</p>
         <div className="mt-2 flex gap-2">
           {link ? <a className="btn btn-primary" href={link}>Turn on notifications</a>
             : <a className="btn btn-primary" href={push.APK_URL}>Update the app</a>}

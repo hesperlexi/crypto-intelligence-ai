@@ -238,10 +238,20 @@ public class NotifySettingsActivity extends Activity {{
             Intent i = new Intent();
             i.setClassName(getPackageName(), "com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity");
             startActivity(i);
-            finish();                                        // back from the browser's page = back in the app
+            siteOpen = true;                                 // stay; onRestart = the person came back from that page
         }} catch (Exception e) {{
             back();
         }}
+    }}
+
+    private boolean siteOpen = false;
+
+    /** Back from the browser's site page: restart the app fully, so the browser reads the new setting (a plain
+     *  return keeps the old "blocked" answer in the open page). */
+    @Override
+    protected void onRestart() {{
+        super.onRestart();
+        if (siteOpen) {{ siteOpen = false; back(); }}
     }}
 
     private void openSettings() {{

@@ -1792,3 +1792,7 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   (`com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity`, same as the "Site settings" icon shortcut) and
   finishes; website `NotifyPrompt` re-checks permission on focus / visibility / every 2 s while the message shows and
   registers the phone once allowed (`reportFix("granted-on-return")`).
+- Notifications fix v5 (owner 22:48: Chrome's site page showed Allowed, the app still said "blocked in phone settings").
+  apkLevel 7: `NotifySettingsActivity` stays behind Chrome's site page and on `onRestart` (person came back) restarts the
+  app fully (`back()`, CLEAR_TASK) so Chrome re-reads the setting; Settings → Notifications card re-checks the permission
+  on focus / visibility / every 2 s (it read it once at mount, so it kept saying "blocked") and registers the phone at once.
