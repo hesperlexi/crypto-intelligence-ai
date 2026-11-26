@@ -205,6 +205,14 @@ def run(rt: Any, now: int | None = None) -> dict[str, Any]:
                 if now - int(st["cooldown"].get(coin) or 0) < int(c["cooldown_h"]) * H:
                     out["skipped"].append(f"{coin}: cooldown")
                     continue
+                try:                                           # V3.4 Stage 4D: the main strategy has precedence
+                    from .strategy_select import main_conflict
+                    conflict = main_conflict(db, x["symbol"], 1)
+                except Exception:
+                    conflict = True
+                if conflict:
+                    out["skipped"].append(f"{coin}: the main record holds the opposite side")
+                    continue
                 gate = _portfolio(rt, db, x["symbol"])
                 if not gate.get("allowed", False):
                     out["skipped"].append(f"{coin}: {gate.get('reason') or 'portfolio limit'}")

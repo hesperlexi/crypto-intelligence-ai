@@ -212,7 +212,8 @@ service cloud.firestore {
         || (id == 'guardian' && isAdmin())
         || (id == 'market_turn' && isAdmin())
         || (id == 'perf_lab' && isAdmin())
-        || (id != 'scalping' && id != 'hesper' && id != 'health_errors' && id != 'health_admin' && id != 'guardian' && id != 'market_turn' && id != 'perf_lab' && allowed()
+        || (id == 'model_registry' && isAdmin())
+        || (id != 'scalping' && id != 'hesper' && id != 'health_errors' && id != 'health_admin' && id != 'guardian' && id != 'market_turn' && id != 'perf_lab' && id != 'model_registry' && allowed()
             && (!id.matches('alerts_u_.*') || isAdmin() || id == 'alerts_u_' + me()));
       allow write: if false;
     }

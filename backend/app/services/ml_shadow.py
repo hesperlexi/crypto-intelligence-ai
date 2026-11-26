@@ -90,6 +90,7 @@ def build(rt: Any, now: int | None = None) -> dict[str, Any]:
     by_regime: dict[str, dict[str, list[float]]] = {}
     by_model: dict[str, list[float]] = {m: [] for m in MODELS}
     counts = {"calls": len(rows), "would_block": 0, "would_run": 0}
+    per_filter: list[tuple[int, set, float]] = []          # V3.4: (created_at, filters that would block, net R)
     for r in rows:
         p = loads(r.get("payload"), {}) or {}
         fs = p.get("filter_shadow") or []
@@ -111,6 +112,7 @@ def build(rt: Any, now: int | None = None) -> dict[str, Any]:
         for f in fs:
             if f.get("filter") in by_model:
                 by_model[f["filter"]].append(x)
+        per_filter.append((int(r["created_at"]), {f.get("filter") for f in fs if f.get("filter")}, x))
     stats_tf = {tf: {k: _stats(v) for k, v in g.items()} for tf, g in sorted(by_tf.items())}
     stats_reg = {k: {kk: _stats(vv) for kk, vv in g.items()} for k, g in sorted(by_regime.items())}
     preds = {}
@@ -138,5 +140,53 @@ def build(rt: Any, now: int | None = None) -> dict[str, Any]:
         "would_block": wb, "allowed": al, "would_run": _stats(groups["would_run"]), "standard": _stats(groups["standard"]),
         "by_filter": {m: _stats(v) for m, v in by_model.items()}, "by_tf": stats_tf, "by_regime": stats_reg,
         "verdict": verdict, "min_n": MIN_N, "freshness": model_freshness(db, now),
+        "recommendations": recommend(per_filter, kept),
         "note": "Net R after the record's costs. Model scores are rankings, not win probabilities.",
     }
+
+
+# ---- V3.4 Stage 4C: each filter judged on its own, recommendation only -------------------------------------------------
+REC_MIN_BLOCKED = 100          # blocked calls (closed) a filter needs before its evidence is read at all
+KEPT_TOLERANCE = 0.10          # live kept share must match the intended keep fraction within 10 points
+
+
+def recommend(rows: list[tuple[int, set, float]], kept: dict[str, Any] | None = None) -> dict[str, Any]:
+    """For each trade filter separately: the calls IT would have blocked vs the calls it would have let through (other
+    filters ignored), overall and in the earlier / later half of the period. Enforcement is suggested only when all of:
+    >= REC_MIN_BLOCKED blocked calls, blocked calls worse with the 95 % intervals apart, worse in BOTH halves, and the
+    filter keeps about the share it was built to keep. Never switched on here: the owner flips TRADE_FILTER_ENFORCE."""
+    out: dict[str, Any] = {}
+    rows = sorted(rows, key=lambda t: t[0])
+    mid = rows[len(rows) // 2][0] if rows else 0
+    for f in ("trade_filter", "trade_filter2"):
+        blk = [x for _, fs, x in rows if f in fs]
+        let = [x for _, fs, x in rows if f not in fs]
+        b, a = _stats(blk), _stats(let)
+        halves = {}
+        for name, cond in (("earlier", lambda t: t < mid), ("later", lambda t: t >= mid)):
+            hb = [x for t, fs, x in rows if f in fs and cond(t)]
+            ha = [x for t, fs, x in rows if f not in fs and cond(t)]
+            halves[name] = {"blocked": _stats(hb), "allowed": _stats(ha),
+                            "blocked_worse": bool(hb and ha and _stats(hb)["avg_r"] < _stats(ha)["avg_r"])}
+        kp = [v for k, v in (kept or {}).items() if k.startswith(f + "|") and v.get("kept_share") is not None
+              and v.get("keep_fraction") is not None]
+        kept_ok = bool(kp) and all(abs(float(v["kept_share"]) - float(v["keep_fraction"])) <= KEPT_TOLERANCE for v in kp)
+        reasons = []
+        if b["n"] < REC_MIN_BLOCKED:
+            reasons.append(f"only {b['n']} closed calls it would have blocked (needs {REC_MIN_BLOCKED})")
+        if b.get("ci95_avg_r") and a.get("ci95_avg_r") and not b["ci95_avg_r"][1] < a["ci95_avg_r"][0]:
+            reasons.append("blocked and allowed calls not clearly apart (95 % intervals overlap)")
+        if b["n"] and a["n"] and b["avg_r"] >= a["avg_r"]:
+            reasons.append("the calls it would block did as well or better")
+        if not all(h["blocked_worse"] for h in halves.values()):
+            reasons.append("not worse in both halves of the period")
+        if not kept_ok:
+            reasons.append("live kept share differs from its design (or not measured yet)")
+        out[f] = {"blocked": b, "allowed": a, "halves": halves, "kept_share_ok": kept_ok,
+                  "recommendation": "evidence supports enforcement (owner decision)" if not reasons else "keep in shadow",
+                  "reasons": reasons}
+    out["runner_model"] = {"recommendation": "keep in shadow",
+                           "reasons": ["its calls are followed with the standard exits, so their runner result is not observed; "
+                                       "judging it needs a replay of those calls with the runner exits"]}
+    out["note"] = "recommendations only - nothing is enforced automatically"
+    return out

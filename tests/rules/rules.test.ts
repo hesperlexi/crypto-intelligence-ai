@@ -611,6 +611,15 @@ async function main() {
     await assertFails(setDoc(doc(admin(), "views", "market_turn"), { json: "{}" }));
   });
 
+  // ---------------------------------------------------------------- views/model_registry (V3.4 model governance, admin only)
+  await test("model registry: only the admin reads views/model_registry; nobody writes it", async () => {
+    await seed({ ...member, "views/model_registry": { json: "{}", updated_at: NOW() } });
+    await assertSucceeds(readView(admin(), "model_registry"));
+    await assertFails(readView(as("m1", "m1@example.com"), "model_registry"));
+    await assertFails(readView(env.unauthenticatedContext().firestore() as unknown as Firestore, "model_registry"));
+    await assertFails(setDoc(doc(admin(), "views", "model_registry"), { json: "{}" }));
+  });
+
   // ---------------------------------------------------------------- views/perf_lab (v2.25 Performance Lab, admin only)
   await test("perf lab: only the admin reads views/perf_lab; nobody writes it", async () => {
     await seed({ ...member, "views/perf_lab": { json: "{}", updated_at: NOW() } });

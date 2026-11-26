@@ -136,5 +136,5 @@ def test_regime_has_no_trade_authority():
     assert uses, "regime should be stored with calls"
     for i in uses:              # only ever stored as context (the call's risk_check, the opportunity score), never decides
         line = text[text.rfind("\n", 0, i) + 1:text.find("\n", i)]
-        assert 'risk_check["regime"]' in line or "octx = " in line, line
+        assert 'risk_check["regime"]' in line or "octx = " in line or "reg = (market_regime" in line, line
         assert "decision" not in line

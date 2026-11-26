@@ -880,6 +880,17 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             risk_check["opportunity"] = OS.compact(out["opportunity"])
     except Exception:
         out["opportunity"] = None
+    # V3.4 Stage 4D advisory strategy fit (never changes the decision: the decision stays the one trade authority)
+    try:
+        from . import strategy_select as SS
+        reg = None
+        if live and bundle is None:
+            from . import market_regime
+            reg = (market_regime.current(rt.db) or {}).get("regime")
+        out["strategy_fit"] = SS.advise({**out, "timeframe": timeframe}, rt.db.get_setting("strategy_suitability", None)
+                                        if live and bundle is None else None, reg)
+    except Exception:
+        out["strategy_fit"] = None
     if live and bundle is None:
         if fc["available"]:
             tracking.log_prediction(rt.db, symbol, timeframe, fc)

@@ -1662,3 +1662,26 @@ duplicated market board / live signals. **KEEP (owner): the spinning Earth globe
 the logo animations unchanged.** Keep the Hesper Challenge page and its journeys; keep the "Lane" journeys look but
 calmer; Results gets tabs + sample-size labels, track record kept. Stage 5 is built only after Stages 3-4, with
 desktop + phone screenshots before anything goes live.
+
+## V3.4 Stage 4 - AI/ML governance (26 Nov 2026, branch `stages-3-7`; NOT deployed)
+- **Activation needs validation** (`ml/trainer.validate_candidate`, used by `save_bundle` and `import_bundle`): the file
+  loads and holds that version with models, ≥ `MODEL_MIN_OOS` (30) out-of-sample predictions, a data range, a finite
+  metric; any problem → stored INACTIVE (live model kept). Then the champion check (`CHALLENGER_ENFORCE`, on). Every
+  decision in setting `model_activation_log` (last 400). `register(..., problems=)` - production callers always pass it (test).
+- Nightly merge `outcome` {completed, held, failed_validation, failed_training, unverified, skipped_older, not_reached,
+  not_trainable}, lists `invalid` / `held_by_champion`; held by the champion is not a problem, failed validation is.
+- **Model registry** `services/model_registry.py` → `views/model_registry` (admin only, rules + rules test; every 2 h with
+  the Lab, min 7200 s): per coin × TF version, trained at, data range, samples / OOS, models, top features, inputs,
+  ensemble validation (Brier, ECE, precision / recall up / down, directional accuracy + n, ROC AUC), live hit of the last
+  100 resolved forecasts vs OOS (drift at −2 se), status active / stale (> 48 h) / missing / held / invalid with reasons,
+  last activation; `trade_quality` (closed record calls by confidence bucket, timeframe, market regime, net R + 95 %
+  intervals - what calls earned, not next-candle hits); last nightly merge outcome.
+- **ML shadow recommendations** (`ml_shadow.recommend`, in the Lab's `ml_shadow`): each trade filter on its own (its
+  would-block vs its allowed calls, earlier / later half); "evidence supports enforcement (owner decision)" only with
+  ≥ 100 blocked closed calls, 95 % intervals apart, worse in both halves, kept share within 10 points of design; runner
+  stays in shadow (its runner result is not observed). Nothing is enforced automatically.
+- **Strategy selection** `services/strategy_select.py`: measured suitability per strategy (main by TF × market regime,
+  fast by category × regime; ≥ 30 trades and the 95 % interval above / below 0 = suitable / unsuitable, else unproven;
+  setting `strategy_suitability`, refreshed with the Lab). `advise` → analysis `strategy_fit` {action TRADE | WAIT |
+  NO TRADE | STRATEGY UNSUITABLE | INSUFFICIENT DATA, reason}; advisory only, the decision stays the one trade authority.
+  The fast strategy steps aside on a coin where the main record holds the opposite side (`main_conflict`).

@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import hashlib
 import logging
+import os
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -372,11 +373,52 @@ def _summary(bundle: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+MIN_OOS = int(os.environ.get("MODEL_MIN_OOS", "30"))
+ACTIVATION_LOG = "model_activation_log"
+
+
+def validate_candidate(rec: dict[str, Any], path: str) -> tuple[list[str], dict[str, Any] | None]:
+    """V3.4 Stage 4A: a model may become active only after its file loads and its own validation exists.
+    Returns (problems, loaded bundle). Problems: file does not load / is another version / has no models; fewer than
+    MIN_OOS walk-forward out-of-sample predictions; no data range; summary without a single finite metric."""
+    problems: list[str] = []
+    b = None
+    try:
+        b = joblib.load(path)
+    except Exception as exc:
+        problems.append(f"file does not load ({type(exc).__name__})")
+    if b is not None:
+        if not isinstance(b, dict) or b.get("version") != rec.get("version"):
+            problems.append("file holds another version")
+        elif not b.get("models"):
+            problems.append("bundle has no models")
+    if int(rec.get("n_oos") or 0) < MIN_OOS:
+        problems.append(f"only {int(rec.get('n_oos') or 0)} out-of-sample predictions (< {MIN_OOS})")
+    if not rec.get("data_start") or not rec.get("data_end") or int(rec["data_end"]) <= int(rec["data_start"]):
+        problems.append("no training data range")
+    if not any(np.isfinite(float(v)) for _, _, v in rec.get("metrics") or []):
+        problems.append("no finite validation metric")
+    return problems, (b if not problems else None)
+
+
+def _log_activation(db: Database, rec: dict[str, Any], activated: bool, problems: list[str] | None, source: str) -> None:
+    try:
+        log_ = list(db.get_setting(ACTIVATION_LOG, None) or [])[-399:]
+        log_.append({"at": int(time.time() * 1000), "symbol": rec.get("symbol"), "tf": rec.get("timeframe"),
+                     "version": rec.get("version"), "activated": bool(activated), "problems": problems or [],
+                     "source": source})
+        db.set_setting(ACTIVATION_LOG, log_)
+    except Exception:
+        pass
+
+
 def save_bundle(bundle: dict[str, Any], db: Database) -> str:
     Path(settings.model_dir).mkdir(parents=True, exist_ok=True)
     path = str(Path(settings.model_dir) / f"{bundle['version']}.joblib")
     joblib.dump(bundle, path, compress=3)
-    if register(bundle_record(bundle), path, db):        # v2.65: a held challenger is never served from the cache
+    rec = bundle_record(bundle)
+    problems, _ = validate_candidate(rec, path)          # V3.4: the written file must load before it can go live
+    if register(rec, path, db, problems=problems, source="local"):   # v2.65: a held challenger is never cached
         _cache[f"{bundle['symbol']}|{bundle['timeframe']}"] = bundle
     return path
 
@@ -395,8 +437,13 @@ def bundle_record(bundle: dict[str, Any]) -> dict[str, Any]:
             "challenger": bundle.get("challenger")}
 
 
-def register(rec: dict[str, Any], path: str, db: Database) -> bool:
-    activate = activate_or_hold(rec, db)
+def register(rec: dict[str, Any], path: str, db: Database, problems: list[str] | None = None,
+             source: str = "direct") -> bool:
+    """Write a model version. Production callers (save_bundle, import_bundle) pass the validation `problems`
+    (validate_candidate); any problem keeps the version INACTIVE and the live model in place. Every decision is in
+    setting `model_activation_log`."""
+    activate = activate_or_hold(rec, db) if not problems else False
+    _log_activation(db, rec, activate, problems, source)
     if activate:
         db.execute("UPDATE model_versions SET active = 0 WHERE symbol = ? AND timeframe = ?", (rec["symbol"], rec["timeframe"]))
     db.execute(
@@ -442,8 +489,10 @@ def import_bundle(rec: dict[str, Any], file: str, db: Database) -> bool:
     Path(settings.model_dir).mkdir(parents=True, exist_ok=True)
     path = str(Path(settings.model_dir) / f"{rec['version']}.joblib")
     shutil.copyfile(file, path)
-    register(rec, path, db)
+    problems, loaded = validate_candidate(rec, path)     # V3.4: never activate a file that does not load
     _cache.pop(f"{rec['symbol']}|{rec['timeframe']}", None)
+    if register(rec, path, db, problems=problems, source="import") and loaded is not None:
+        _cache[f"{rec['symbol']}|{rec['timeframe']}"] = loaded
     # keep the slices' feature-test decisions, so each is re-run monthly instead of every night
     keys = {"htf_gate": "htf_gate1", "deriv_gate": "deriv_gate2"}
     for k, g in (rec.get("gates") or {}).items():

@@ -1719,6 +1719,11 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # v2.25 Performance Lab (admin, read-only study of the record): every 2 h, its own step
     if now_ms() - int(rt.db.get_setting("perf_lab_at", 0) or 0) >= perf_lab.EVERY_S * 1000 - 120_000:
         detail["perf_lab"] = step("perf_lab", lambda: perf_lab.publish(rt, sink))
+        # V3.4 Stage 4 model registry + health (admin only, report; changes nothing)
+        from .services import model_registry
+        detail["model_registry"] = step("model_registry", lambda: model_registry.publish(rt, sink))
+        from .services import strategy_select           # V3.4 Stage 4D measured suitability per strategy x regime
+        detail["strategy_suitability"] = step("strategy_suitability", lambda: strategy_select.refresh(rt))
         rt.db.set_setting("perf_lab_at", now_ms())
     # publish what the cycle has so far before running website jobs: a "train" job takes minutes, and signals must
     # not wait for it
@@ -2014,6 +2019,8 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
     started = now_ms()
     imported, skipped, shards, failed = 0, 0, 0, []
     due, trained_n, not_trainable, not_reached, not_exported, missing_file, older = 0, 0, [], [], [], [], []
+    invalid: list[dict[str, Any]] = []        # V3.4: failed validation (file does not load, too few OOS predictions ...)
+    held: list[str] = []                      # V3.4: valid but the live (champion) model was kept
     verified, unverified = 0, []
     for m in sorted(Path(in_dir).glob("**/manifest.json")):
         shards += 1
@@ -2039,7 +2046,15 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
                 if act is not None and act["id"] == rec["version"] and b is not None and b.get("version") == rec["version"]:
                     verified += 1
                 else:
-                    unverified.append(rec.get("version"))
+                    # V3.4 Stage 4E: say WHY it is not live - failed validation, held by the champion, or unverified
+                    last = next((e for e in reversed(rt.db.get_setting(trainer.ACTIVATION_LOG, []) or [])
+                                 if e.get("version") == rec.get("version")), None)
+                    if last and last.get("problems"):
+                        invalid.append({"version": rec.get("version"), "problems": last["problems"][:3]})
+                    elif last and not last.get("activated"):
+                        held.append(rec.get("version"))
+                    else:
+                        unverified.append(rec.get("version"))
             else:
                 skipped += 1
                 older.append(rec.get("version"))          # a newer model is already active (expected, not an error)
@@ -2063,6 +2078,8 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
         problems.append(f"{expected - shards} of {expected} slice manifests missing (slice failed or artifact not uploaded)")
     if unverified:
         problems.append(f"{len(unverified)} imported models are not active / do not load after import")
+    if invalid:
+        problems.append(f"{len(invalid)} trained models failed validation and were kept inactive (live models unchanged)")
     if missing_file:
         problems.append(f"{len(missing_file)} exported models have no file in the artifact")
     if failed:
@@ -2080,6 +2097,11 @@ def train_merge(rt: Runtime, sink: BaseSink, in_dir: str) -> dict[str, Any]:
               # V3.2 (audit R-13): why a merge imported what it did
               "expected_shards": expected or None, "due": due, "trained": trained_n,
               "imported_verified": verified, "imported_unverified": unverified[:20],
+              "invalid": invalid[:20], "held_by_champion": held[:40],
+              "outcome": {"completed": verified, "held": len(held), "failed_validation": len(invalid),
+                          "failed_training": len(failed), "unverified": len(unverified),
+                          "skipped_older": len(older), "not_reached": len(not_reached),
+                          "not_trainable": len(not_trainable)},
               "not_trainable": not_trainable[:60], "not_reached": not_reached[:60], "not_exported": not_exported[:20],
               "missing_files": missing_file[:20], "skipped_older": len(older), "stale_models": fresh,
               "problems": problems}
