@@ -1,0 +1,51 @@
+name: Website preview channel (temporary address; the live site is not touched)
+
+# Builds the branch and deploys ONLY hosting to a Firebase preview channel that expires after 3 days. No Firestore rules,
+# no Android app, no engine. The channel address is written to reports/preview-channel.json on the reports branch.
+on:
+  push:
+    branches: [firebase-upgrade]
+    paths: [".github/workflows/preview-channel.yml", "frontend/package.json", "frontend/package-lock.json"]
+  workflow_dispatch:
+
+concurrency:
+  group: preview-channel
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Build the website
+        working-directory: frontend
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
+      - name: Deploy to a preview channel
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: |
+          echo "$FIREBASE_SERVICE_ACCOUNT" > "$RUNNER_TEMP/sa.json"
+          export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/sa.json"
+          npx --yes firebase-tools@13 hosting:channel:deploy fbtest --expires 3d --project crypapp-6a9b9 --json > /tmp/ch.json
+          rm -f "$RUNNER_TEMP/sa.json"
+          python3 -c "import json; d=json.load(open('/tmp/ch.json')); r=d.get('result') or {}; v=next(iter(r.values()), {}) if isinstance(r, dict) else {}; print(json.dumps({'status': d.get('status'), 'url': v.get('url'), 'expire': v.get('expireTime'), 'commit': '${GITHUB_SHA}'}))" > /tmp/preview-channel.json
+          cat /tmp/preview-channel.json
+      - name: Publish the address on the reports branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for i in 1 2 3; do
+            rm -rf ../rp; git worktree prune
+            git fetch --depth 1 origin reports && git worktree add ../rp FETCH_HEAD && git -C ../rp checkout -B reports || exit 1
+            mkdir -p ../rp/reports && cp /tmp/preview-channel.json ../rp/reports/preview-channel.json
+            (cd ../rp && git add reports && { git commit -m "Preview channel for ${GITHUB_SHA::7}" || exit 0; } && git push origin HEAD:reports) && break
+            sleep 5
+          done
