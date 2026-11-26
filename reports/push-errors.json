@@ -54,10 +54,10 @@
    "step": "permission",
    "code": "denied",
    "message": "permission denied",
-   "app": "android-app",
+   "app": "browser",
    "android": "Android 10",
    "browser": "Chrome/158",
-   "at": 1795711505015,
+   "at": 1795713980790,
    "ok_at": 1795608033424
   }
  ],
