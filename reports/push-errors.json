@@ -51,14 +51,14 @@
    "ok_at": 1793016659991
   },
   {
-   "step": "permission",
-   "code": "denied",
-   "message": "permission denied",
-   "app": "browser",
-   "android": "Android 10",
-   "browser": "Chrome/158",
-   "at": 1795713980790,
-   "ok_at": 1795608033424
+   "step": null,
+   "code": null,
+   "message": "None",
+   "app": null,
+   "android": null,
+   "browser": null,
+   "at": null,
+   "ok_at": 1795721728701
   }
  ],
  "tokens": [
@@ -69,6 +69,10 @@
   {
    "app": "browser",
    "browser": "Chrome/155"
+  },
+  {
+   "app": "android-app",
+   "browser": "Chrome/158"
   },
   {
    "app": "browser",
