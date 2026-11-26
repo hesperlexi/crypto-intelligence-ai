@@ -79,8 +79,17 @@ export function blockedHelp(): string {
 }
 
 /** 26 Nov 2026: what happened with the Android "Turn on notifications" fix (sanitised by scripts/push_errors.py). */
-export function reportFix(code: string) {
-  void report("notify-fix", { code, message: `perm ${permission()} level ${installedApkLevel()}` });
+/** What the page sees after the Android app's notification screen (app details passed back as ?d=). Waits up to
+ *  20 s for the sign-in, which is not ready when the page has just opened (reports were lost before). */
+export function reportFix(code: string, appInfo = "") {
+  void (async () => {
+    let q = "n/a";
+    try { q = (await navigator.permissions.query({ name: "notifications" as PermissionName })).state; } catch { /* ignore */ }
+    const sa = (() => { try { return matchMedia("(display-mode: standalone)").matches ? "standalone" : "tab"; } catch { return "?"; } })();
+    const msg = `perm ${permission()} query ${q} level ${installedApkLevel()} ${sa} ref ${document.referrer.slice(0, 40) || "-"} app ${appInfo || "-"}`;
+    for (let i = 0; i < 40 && !myUid(); i++) await new Promise((r) => setTimeout(r, 500));
+    await report("notify-fix", { code, message: msg });
+  })();
 }
 
 /** Keeps the last failure on the account so the owner can see what went wrong on the Users page. */

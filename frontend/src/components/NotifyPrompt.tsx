@@ -57,18 +57,20 @@ export default function NotifyPrompt() {
   useEffect(() => {
     // back from the Android app's notification screen: /settings?notify=on|off|update
     let back: string | null = null;
+    let appInfo = "";
     try {
       const q = new URLSearchParams(location.search);
       back = q.get("notify");
+      appInfo = q.get("d") ?? "";
       if (back) {
-        q.delete("notify");
+        q.delete("notify"); q.delete("d");
         const rest = q.toString();
         history.replaceState(history.state, "", location.pathname + (rest ? `?${rest}` : "") + location.hash);
       }
     } catch { /* ignore */ }
     if (!installed() && !back) return;
     const p = push.permission();
-    if (back) push.reportFix(back);
+    if (back) push.reportFix(back, appInfo);
     if (p === "granted") {
       remember("granted");
       if (!push.savedToken()) void push.enable().catch(() => { /* Settings shows the state */ });   // allowed already: register

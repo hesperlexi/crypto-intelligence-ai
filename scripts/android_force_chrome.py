@@ -216,6 +216,25 @@ public class NotifySettingsActivity extends Activity {{
         return true;
     }}
 
+    /** What Android says, sent back to the website for the owner's report: sdk, app switch, each channel's importance,
+     *  the browser that runs the app. */
+    private String info() {{
+        StringBuilder b = new StringBuilder("sdk" + Build.VERSION.SDK_INT);
+        try {{
+            NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+            if (nm != null && Build.VERSION.SDK_INT >= 24) b.append(" on").append(nm.areNotificationsEnabled() ? 1 : 0);
+            if (nm != null && Build.VERSION.SDK_INT >= 26) {{
+                for (android.app.NotificationChannel ch : nm.getNotificationChannels()) {{
+                    b.append(" ").append(ch.getId()).append(":").append(ch.getImportance());
+                }}
+            }}
+        }} catch (Exception e) {{ b.append(" err"); }}
+        b.append(siteWasOpened ? " site" : "");
+        return b.length() > 300 ? b.substring(0, 300) : b.toString();
+    }}
+
+    private boolean siteWasOpened = false;
+
     private boolean granted() {{
         if (Build.VERSION.SDK_INT >= 33) {{
             return checkSelfPermission(PERM) == android.content.pm.PackageManager.PERMISSION_GRANTED;
@@ -239,6 +258,7 @@ public class NotifySettingsActivity extends Activity {{
             i.setClassName(getPackageName(), "com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity");
             startActivity(i);
             siteOpen = true;                                 // stay; onRestart = the person came back from that page
+            siteWasOpened = true;
         }} catch (Exception e) {{
             back();
         }}
@@ -278,7 +298,7 @@ public class NotifySettingsActivity extends Activity {{
     private void back() {{
         Intent t = new Intent(this, LauncherActivity.class);
         t.setAction(Intent.ACTION_VIEW);
-        t.setData(Uri.parse("https://" + getString(R.string.hostName) + "/settings?notify=" + (enabled() ? "on" : "off")));
+        t.setData(Uri.parse("https://" + getString(R.string.hostName) + "/settings?notify=" + (enabled() ? "on" : "off") + "&d=" + Uri.encode(info())));
         // a fresh start (not just a page reload): the browser re-reads the app's notification permission only then
         t.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(t);

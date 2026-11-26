@@ -1796,3 +1796,7 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   apkLevel 7: `NotifySettingsActivity` stays behind Chrome's site page and on `onRestart` (person came back) restarts the
   app fully (`back()`, CLEAR_TASK) so Chrome re-reads the setting; Settings → Notifications card re-checks the permission
   on focus / visibility / every 2 s (it read it once at mount, so it kept saying "blocked") and registers the phone at once.
+- Notifications diagnostics (26 Nov 23:20, apkLevel 8): owner still blocked after v5. `push.reportFix` used to run before the
+  sign-in was ready (no uid → nothing saved, so no report since 21:26); now waits ≤ 20 s and saves permission + Permissions
+  API state, standalone/tab, referrer and the app's own view (`?d=`: sdk, app switch, each channel id:importance, "site" =
+  went via Chrome's site page). Read with `push-errors.yml`. Signature vs assetlinks checked (`twa-probe.yml`): match.
