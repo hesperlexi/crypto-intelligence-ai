@@ -77,7 +77,9 @@ export default function NotifyPrompt() {
       remember("denied");
       if (back || fixDue()) {
         setFix(true);
-        setMsg(back === "off" ? "Still off. Switch on “Allow notifications” for Crypto AI, then come back." : null);
+        setMsg(back === "off" ? "Still off. Switch on “Allow notifications” (and every type under it) for Crypto AI, then come back."
+          : back === "on" ? "Notifications are on in your phone. Close the app fully (swipe it away from recent apps) and open it again to finish."
+          : null);
         setShow(true);
       }
       return;

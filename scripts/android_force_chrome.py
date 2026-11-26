@@ -121,17 +121,33 @@ public class NotifySettingsActivity extends Activity {{
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) return;            // recreated while waiting: the result still comes here
         if (enabled()) {{ back(); return; }}
-        if (Build.VERSION.SDK_INT >= 33) {{
+        if (Build.VERSION.SDK_INT >= 33 && !granted()) {{
             requestPermissions(new String[]{{PERM}}, ASK);
             return;
         }}
-        openSettings();
+        openSettings();                                     // allowed, but a notification type is switched off
     }}
 
+    /** The app's switch AND every notification type (channel) it has: one switched-off channel (e.g. the website's
+     *  "General") makes the website read "blocked" although the app itself is allowed. */
     private boolean enabled() {{
         if (Build.VERSION.SDK_INT < 24) return true;
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        return nm == null || nm.areNotificationsEnabled();
+        if (nm == null) return true;
+        if (!nm.areNotificationsEnabled()) return false;
+        if (Build.VERSION.SDK_INT >= 26) {{
+            for (android.app.NotificationChannel ch : nm.getNotificationChannels()) {{
+                if (ch.getImportance() == NotificationManager.IMPORTANCE_NONE) return false;
+            }}
+        }}
+        return true;
+    }}
+
+    private boolean granted() {{
+        if (Build.VERSION.SDK_INT >= 33) {{
+            return checkSelfPermission(PERM) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        }}
+        return true;
     }}
 
     @Override
@@ -139,8 +155,8 @@ public class NotifySettingsActivity extends Activity {{
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if (requestCode != ASK) return;
         if (enabled()) {{ back(); return; }}
-        // no question was shown (Android blocks it after two "Don't allow"): go to the switch instead
-        if (Build.VERSION.SDK_INT >= 33 && !shouldShowRequestPermissionRationale(PERM)) openSettings();
+        // allowed but a type is off, or no question was shown (Android blocks it after two "Don't allow"): the switch
+        if (granted() || (Build.VERSION.SDK_INT >= 33 && !shouldShowRequestPermissionRationale(PERM))) openSettings();
         else back();
     }}
 
@@ -169,6 +185,8 @@ public class NotifySettingsActivity extends Activity {{
         Intent t = new Intent(this, LauncherActivity.class);
         t.setAction(Intent.ACTION_VIEW);
         t.setData(Uri.parse("https://" + getString(R.string.hostName) + "/settings?notify=" + (enabled() ? "on" : "off")));
+        // a fresh start (not just a page reload): the browser re-reads the app's notification permission only then
+        t.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
         startActivity(t);
         finish();
     }}

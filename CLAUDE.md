@@ -1775,3 +1775,8 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   load (tap only), registers the phone silently once allowed, shows "Notifications are off for this app" with Turn on
   notifications (level 3) / Update the app (older), Later 3 days (`cia-notify-fix-later`); Settings + Alerts buttons use the
   link when blocked; ANDROID_STEPS rewritten; `.notify-solid` (opaque). Java checked with javac + stubs (no SDK here).
+- Notifications fix v2 (owner test 26 Nov 20:53: "Turn on notifications" only reloaded the app): the app-level switch was on
+  but a notification CHANNEL (the site's, e.g. "General") was off or the browser still held the old "blocked" answer.
+  `NotifySettingsActivity.enabled()` now also requires no channel at IMPORTANCE_NONE (Android 8+); allowed-but-channel-off
+  opens the app's notification settings; `back()` restarts the app (NEW_TASK | CLEAR_TASK) so Chrome re-reads the
+  permission. `?notify=on` while the page still reads blocked → "close the app fully and open it again". apkLevel 4.
