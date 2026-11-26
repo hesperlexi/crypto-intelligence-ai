@@ -32,7 +32,11 @@ jobs:
           mkdir -p ../out
           python -m app.diag_removed --out ../out/diag-removed.json 2> ../err.txt \
             || python3 -c "import json; print(json.dumps({'ok': False, 'reason': open('../err.txt').read()[-1500:]}))" > ../out/diag-removed.json
-          head -c 3000 ../out/diag-removed.json
+          python3 -c "
+          import json
+          s = json.dumps(json.load(open('../out/diag-removed.json')), separators=(',', ':'))
+          for i in range(0, min(len(s), 24000), 3500): print('::notice title=part' + str(i // 3500) + '::' + s[i:i + 3500])
+          "
       - name: Commit to research-results
         working-directory: .
         run: |

@@ -3,6 +3,7 @@
 //   ChromeWarning     the Android app runs without Chrome-backed notifications: install Chrome / the newest app
 //   AppChromeBanner   the same as a slim app-wide banner (dismissible for the session)
 //   AppUpdateBanner   the installed Android app is older than the newest APK (icon / name changed): update it
+//   IconUpdateBanner  iPhone / Android home-screen web app installed before the V3.5 logo: how to get the new icon
 //   useApkInfo        version + build number of the newest APK (/download/android.json, written by deploy.yml)
 import { useEffect, useState } from "react";
 import * as push from "../lib/push";
@@ -96,3 +97,45 @@ export function useApkInfo(): ApkInfo | null | undefined {
 }
 /** " v2.1.0 (184)" or "" when unknown. */
 export const apkVersion = (i?: ApkInfo | null) => (i?.version ? ` v${i.version}${i.code ? ` (${i.code})` : ""}` : "");
+
+// ---- home-screen icon (V3.5 logo, 26 Nov 2026) ----------------------------------------------------------------
+// A web app added to the home screen keeps the icon it had when it was added: iPhone never refreshes it, Chrome on
+// Android does by itself within about a day. index.html marks an install that already had saved data as "old".
+const ICON_DONE = "cia-icon-v35-ok";
+const ICON_LATER = "cia-icon-v35-later";
+function standaloneApp(): boolean {
+  try { return matchMedia("(display-mode: standalone)").matches || (navigator as unknown as { standalone?: boolean }).standalone === true; } catch { return false; }
+}
+function isIOS(): boolean {
+  try { return /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1); } catch { return false; }
+}
+export function iconUpdateKind(): "ios" | "android" | null {
+  try {
+    if (push.inAndroidApp() || !standaloneApp() || localStorage.getItem("cia-installed") !== "old") return null;
+    if (localStorage.getItem(ICON_DONE)) return null;
+    if (Date.now() - Number(localStorage.getItem(ICON_LATER) || 0) < UPD_SNOOZE_MS) return null;
+    return isIOS() ? "ios" : /android/i.test(navigator.userAgent) ? "android" : null;
+  } catch { return null; }
+}
+export function IconUpdateBanner() {
+  const [kind, setKind] = useState(iconUpdateKind);
+  if (!kind) return null;
+  const close = (key: string) => { try { localStorage.setItem(key, key === ICON_DONE ? "1" : String(Date.now())); } catch { /* ignore */ } setKind(null); };
+  return (
+    <div className="apk-upd border-b border-accent/30 bg-accent/10 px-3 py-2 text-sm" role="status">
+      <div className="mx-auto flex max-w-[1600px] flex-wrap items-center gap-x-3 gap-y-2">
+        <img src="/brand/logo-96.png?v=35" alt="" width={32} height={32} className="h-8 w-8 shrink-0 rounded-lg max-[359px]:hidden" />
+        <span className="min-w-0 flex-1 basis-[13rem]">
+          <b className="text-text">New app icon</b>
+          <span className="block text-mute">{kind === "ios"
+            ? "To see it: delete Crypto AI from your home screen, open cryptointelai.com in Safari, then Share → Add to Home Screen. You sign in once more."
+            : "Chrome updates it by itself within about a day. To get it now: remove the app, then in Chrome open cryptointelai.com → ⋮ → Install app."}</span>
+        </span>
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          <button type="button" className="btn btn-ghost" onClick={() => close(ICON_LATER)}>Later</button>
+          <button type="button" className="btn btn-primary" onClick={() => close(ICON_DONE)}>Got it</button>
+        </span>
+      </div>
+    </div>
+  );
+}

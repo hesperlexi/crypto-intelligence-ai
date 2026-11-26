@@ -1758,3 +1758,9 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   nothing stored = old APK = 1; query removed). `NotifyHelp.AppUpdateBanner` (under the header, Android app only, installed <
   newest): "New app version ready" + Update (APK link) / Later (3 days); Settings → About "Update available". Same signing
   key, so installing over the old app keeps the sign-in. Level 2 = V3.5 logo.
+- 26 Nov 2026 (owner): phones start in Compact density (`appearance.densityChosen`; an explicit choice in Settings is kept;
+  index.html applies the same rule before the first paint). Home-screen icon: manifest / apple-touch-icon URLs `?v=35`;
+  index.html marks an install that already had saved data `cia-installed = old`; `NotifyHelp.IconUpdateBanner` (standalone,
+  old, not the Android APK): iPhone "delete and Add to Home Screen again" (iOS never refreshes a home-screen icon), Android
+  Chrome "updates by itself within about a day" + reinstall steps; Got it / Later (3 days). `.mood-grid` one column
+  `minmax(0,1fr)` below 1024 px (the mood card was wider than 280 px phones).

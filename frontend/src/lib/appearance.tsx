@@ -15,6 +15,7 @@ export interface Appearance {
   theme: ThemeId;
   nav: "top" | "side";             // desktop navigation (v2.20: sidebar by default on screens ≥ 1024 px)
   navChosen?: boolean;             // true once the person picked top / side themselves (then their choice is kept)
+  densityChosen?: boolean;         // 26 Nov 2026: true once the person picked a density; until then phones get compact
   sideCollapsed?: boolean;         // desktop sidebar folded to icons
   density: "comfortable" | "compact";
   width: "contained" | "wide";
@@ -38,10 +39,13 @@ function load(): Appearance {
     a.theme = normalizeTheme(a.theme);
     // v2.20: the whole object used to be saved with the old default nav "top"; only an explicit choice is kept
     if (!a.navChosen) a.nav = "side";
+    // owner, 26 Nov 2026: phones start compact (an explicit choice in Settings is kept)
+    if (!a.densityChosen) a.density = isPhone() ? "compact" : "comfortable";
     return a;
   } catch { return DEFAULTS; }
 }
 
+const isPhone = () => { try { return window.matchMedia("(max-width: 767px)").matches; } catch { return false; } };
 const darkQuery = () => (typeof window !== "undefined" && window.matchMedia ? window.matchMedia("(prefers-color-scheme: dark)") : null);
 const reducedMotion = () => typeof window !== "undefined" && !!window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
 
@@ -92,7 +96,7 @@ export function AppearanceProvider({ children }: { children: ReactNode }) {
     return () => { if (timer) { window.clearTimeout(timer); el.classList.remove("theme-switching"); } };
   }, [a, resolved]);
 
-  return <Ctx.Provider value={{ a, resolved, set: (p) => setA((x) => ({ ...x, ...p, ...("nav" in p ? { navChosen: true } : {})})) }}>{children}</Ctx.Provider>;
+  return <Ctx.Provider value={{ a, resolved, set: (p) => setA((x) => ({ ...x, ...p, ...("nav" in p ? { navChosen: true } : {}), ...("density" in p ? { densityChosen: true } : {})})) }}>{children}</Ctx.Provider>;
 }
 
 export const useAppearance = () => useContext(Ctx);
