@@ -1,0 +1,94 @@
+{
+ "errors": [
+  {
+   "step": "token",
+   "code": "messaging/permission-blocked",
+   "message": "Messaging: The notification permission was not granted and blocked instead. (messaging/permission-blocked).",
+   "app": "android-app",
+   "android": "Android 10",
+   "browser": "SamsungBrowser/30",
+   "at": 1793286608689,
+   "ok_at": null
+  },
+  {
+   "step": "permission",
+   "code": "denied",
+   "message": "permission denied",
+   "app": "android-app",
+   "android": "Android 10",
+   "browser": "Chrome/156",
+   "at": 1793063685106,
+   "ok_at": null
+  },
+  {
+   "step": null,
+   "code": null,
+   "message": "None",
+   "app": null,
+   "android": null,
+   "browser": null,
+   "at": null,
+   "ok_at": 1793015931111
+  },
+  {
+   "step": null,
+   "code": null,
+   "message": "None",
+   "app": null,
+   "android": null,
+   "browser": null,
+   "at": null,
+   "ok_at": 1795691094266
+  },
+  {
+   "step": null,
+   "code": null,
+   "message": "None",
+   "app": null,
+   "android": null,
+   "browser": null,
+   "at": null,
+   "ok_at": 1793016659991
+  },
+  {
+   "step": null,
+   "code": null,
+   "message": "None",
+   "app": null,
+   "android": null,
+   "browser": null,
+   "at": null,
+   "ok_at": 1795608033424
+  }
+ ],
+ "tokens": [
+  {
+   "app": "browser",
+   "browser": "Chrome/157"
+  },
+  {
+   "app": "browser",
+   "browser": "Chrome/155"
+  },
+  {
+   "app": "browser",
+   "browser": "Chrome/155"
+  },
+  {
+   "app": "android-app",
+   "browser": "SamsungBrowser/30"
+  },
+  {
+   "app": "browser",
+   "browser": null
+  },
+  {
+   "app": "browser",
+   "browser": "Chrome/158"
+  },
+  {
+   "app": "browser",
+   "browser": null
+  }
+ ]
+}
