@@ -1780,3 +1780,9 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   `NotifySettingsActivity.enabled()` now also requires no channel at IMPORTANCE_NONE (Android 8+); allowed-but-channel-off
   opens the app's notification settings; `back()` restarts the app (NEW_TASK | CLEAR_TASK) so Chrome re-reads the
   permission. `?notify=on` while the page still reads blocked → "close the app fully and open it again". apkLevel 4.
+- Notifications fix v3 (owner 21:04: still only reloads - the website's intent link never reached the app, Chrome fell back
+  to the page). apkLevel 5: the LAUNCHER itself shows a native AlertDialog "Notifications are off · Turn on / Not now" at
+  start whenever the permission, the app switch or any channel is off (`ciaNotifyOff`; Not now = 24 h `cia_notify.later_until`);
+  Turn on = ask Android while it allows, else the app's notification settings; the TWA launches after (Chrome re-reads the
+  permission). Website fallback `/settings?notify=reopen` → "close the app fully and open it again". `push.reportFix` writes
+  `user_state.push_error` {stage notify-fix, code, perm, level}; `push-errors.yml` prints it as job notices.

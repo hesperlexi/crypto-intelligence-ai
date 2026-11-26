@@ -50,7 +50,7 @@ export function appWithoutChrome(): boolean {
  *  Older apps (no such screen) fall back to /settings?notify=update. Null outside the Android app or on older apps. */
 export function appNotifyLink(): string | null {
   if (!inAndroidApp() || installedApkLevel() < 3) return null;
-  const back = encodeURIComponent(`${location.origin}/settings?notify=update`);
+  const back = encodeURIComponent(`${location.origin}/settings?notify=${installedApkLevel() >= 5 ? "reopen" : "update"}`);
   return `intent://notifications#Intent;scheme=cryptoai;package=com.hesper.cryptoai;S.browser_fallback_url=${back};end`;
 }
 /** @deprecated name kept for older call sites */
@@ -76,6 +76,11 @@ export function blockedHelp(): string {
   if (/android/i.test(ua)) return `Notifications are blocked for this site in Chrome. Tap the lock icon next to the address (or Chrome menu → Settings → Site settings → Notifications), allow ${location.hostname || SITE_HOST}, then tap Turn on again. Also check phone Settings → Apps → Chrome → Notifications.`;
   if (/iphone|ipad|ipod/i.test(ua)) return "On iPhone: open the app from the Home Screen icon (not Safari), then Settings → Notifications → Crypto Intelligence AI → Allow Notifications.";
   return "Notifications are blocked. Lock icon in the address bar → Site settings → Notifications → Allow, then reload.";
+}
+
+/** 26 Nov 2026: what happened with the Android "Turn on notifications" fix (sanitised by scripts/push_errors.py). */
+export function reportFix(code: string) {
+  void report("notify-fix", { code, message: `perm ${permission()} level ${installedApkLevel()}` });
 }
 
 /** Keeps the last failure on the account so the owner can see what went wrong on the Users page. */

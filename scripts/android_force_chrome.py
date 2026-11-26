@@ -56,40 +56,111 @@ if f'<package android:name="{CHROME}"' not in m:
 #     then returns to the app's Settings page (…/settings?notify=on|off), where the website registers the phone.
 src = act.read_text()
 pkg = re.search(r"^\s*package\s+([\w.]+)\s*;", src, re.M).group(1)
-if "ciaAskAtLaunch" not in src:
+if "ciaNotifyOff" not in src:
     method = '''
     private static final int CIA_NOTIFY_REQ = 4711;
+    private static final int CIA_SETTINGS_REQ = 4714;
+    private static final String CIA_PERM = "android.permission.POST_NOTIFICATIONS";
     private boolean ciaWaiting = false;
 
-    private boolean ciaAskAtLaunch() {
-        if (Build.VERSION.SDK_INT < 33) return false;
-        if (checkSelfPermission("android.permission.POST_NOTIFICATIONS")
-                == android.content.pm.PackageManager.PERMISSION_GRANTED) return false;
-        android.content.SharedPreferences prefs = getSharedPreferences("cia_notify", MODE_PRIVATE);
-        if (prefs.getBoolean("asked_at_launch_v1", false)) return false;
-        prefs.edit().putBoolean("asked_at_launch_v1", true).apply();
+    private android.content.SharedPreferences ciaPrefs() {
+        return getSharedPreferences("cia_notify", MODE_PRIVATE);
+    }
+
+    private boolean ciaGranted() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            return checkSelfPermission(CIA_PERM) == android.content.pm.PackageManager.PERMISSION_GRANTED;
+        }
         return true;
+    }
+
+    /** Notifications off for this app: the permission, the app's switch, or one of its notification types. */
+    private boolean ciaNotifyOff() {
+        if (!ciaGranted()) return true;
+        if (Build.VERSION.SDK_INT < 24) return false;
+        android.app.NotificationManager nm = (android.app.NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        if (nm == null) return false;
+        if (!nm.areNotificationsEnabled()) return true;
+        if (Build.VERSION.SDK_INT >= 26) {
+            for (android.app.NotificationChannel ch : nm.getNotificationChannels()) {
+                if (ch.getImportance() == android.app.NotificationManager.IMPORTANCE_NONE) return true;
+            }
+        }
+        return false;
     }
 
     @Override
     protected boolean shouldLaunchImmediately() {
-        // Android 13+: ask for notifications once, before the website loads (the question would otherwise only come
-        // from the website, where one dismissed question blocks it for good)
-        if (Build.VERSION.SDK_INT >= 33 && ciaAskAtLaunch()) {
+        android.content.SharedPreferences prefs = ciaPrefs();
+        // 1. Android 13+: the first start after install / update asks Android directly (before the website loads)
+        if (Build.VERSION.SDK_INT >= 33 && !ciaGranted() && !prefs.getBoolean("asked_at_launch_v1", false)) {
+            prefs.edit().putBoolean("asked_at_launch_v1", true).apply();
             ciaWaiting = true;
-            requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, CIA_NOTIFY_REQ);
+            requestPermissions(new String[]{CIA_PERM}, CIA_NOTIFY_REQ);
+            return false;
+        }
+        // 2. still off: offer to turn them on (at most once a day after "Not now")
+        long later = prefs.getLong("later_until", 0L);
+        if (ciaNotifyOff() && System.currentTimeMillis() > later) {
+            ciaWaiting = true;
+            new android.app.AlertDialog.Builder(this)
+                    .setTitle("Notifications are off")
+                    .setMessage("Turn them on to get new signals, target hits and stop alerts.")
+                    .setCancelable(false)
+                    .setPositiveButton("Turn on", (d, w) -> ciaTurnOn())
+                    .setNegativeButton("Not now", (d, w) -> {
+                        ciaPrefs().edit().putLong("later_until", System.currentTimeMillis() + 86400000L).apply();
+                        ciaLaunch();
+                    })
+                    .show();
             return false;
         }
         return true;
     }
 
+    private void ciaTurnOn() {
+        if (Build.VERSION.SDK_INT >= 33 && !ciaGranted() && shouldShowRequestPermissionRationale(CIA_PERM)) {
+            requestPermissions(new String[]{CIA_PERM}, CIA_NOTIFY_REQ);   // Android still allows asking
+            return;
+        }
+        ciaOpenSettings();
+    }
+
+    private void ciaOpenSettings() {
+        android.content.Intent i;
+        if (Build.VERSION.SDK_INT >= 26) {
+            i = new android.content.Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS);
+            i.putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, getPackageName());
+        } else {
+            i = new android.content.Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                    Uri.fromParts("package", getPackageName(), null));
+        }
+        try {
+            startActivityForResult(i, CIA_SETTINGS_REQ);
+        } catch (Exception e) {
+            ciaLaunch();
+        }
+    }
+
+    private void ciaLaunch() {
+        if (!ciaWaiting) return;
+        ciaWaiting = false;
+        launchTwa();
+    }
+
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if (requestCode == CIA_NOTIFY_REQ && ciaWaiting) {
-            ciaWaiting = false;
-            launchTwa();
-        }
+        if (requestCode != CIA_NOTIFY_REQ) return;
+        // allowed but a notification type is still off: straight to the switch
+        if (ciaGranted() && ciaNotifyOff()) { ciaOpenSettings(); return; }
+        ciaLaunch();
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, android.content.Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == CIA_SETTINGS_REQ) ciaLaunch();
     }
 '''
     idx = src.rstrip().rfind("}")

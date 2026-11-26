@@ -68,17 +68,19 @@ export default function NotifyPrompt() {
     } catch { /* ignore */ }
     if (!installed() && !back) return;
     const p = push.permission();
+    if (back) push.reportFix(back);
     if (p === "granted") {
       remember("granted");
       if (!push.savedToken()) void push.enable().catch(() => { /* Settings shows the state */ });   // allowed already: register
       return;
     }
-    if (push.inAndroidApp() && (p === "denied" || back === "off" || back === "update")) {
+    if (push.inAndroidApp() && (p === "denied" || back === "off" || back === "update" || back === "reopen")) {
       remember("denied");
       if (back || fixDue()) {
         setFix(true);
         setMsg(back === "off" ? "Still off. Switch on “Allow notifications” (and every type under it) for Crypto AI, then come back."
           : back === "on" ? "Notifications are on in your phone. Close the app fully (swipe it away from recent apps) and open it again to finish."
+          : back === "reopen" || push.installedApkLevel() >= 5 ? "Close the app fully (swipe it away from recent apps) and open it again: the app will offer to turn them on."
           : null);
         setShow(true);
       }

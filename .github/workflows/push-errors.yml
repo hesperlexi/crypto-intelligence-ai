@@ -15,7 +15,13 @@ jobs:
       - run: pip install --quiet firebase-admin
       - env:
           FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-        run: python scripts/push_errors.py > /tmp/push-errors.json && cat /tmp/push-errors.json | head -80
+        run: |
+          python scripts/push_errors.py > /tmp/push-errors.json && cat /tmp/push-errors.json | head -80
+          python3 -c "
+          import json
+          s = json.dumps(json.load(open('/tmp/push-errors.json')), separators=(',', ':'))
+          for i in range(0, min(len(s), 20000), 3500): print('::notice title=part' + str(i // 3500) + '::' + s[i:i + 3500])
+          "
       - run: |
           git config user.name "github-actions"; git config user.email "github-actions@users.noreply.github.com"
           git fetch origin reports && git switch -c reports origin/reports && mkdir -p reports
