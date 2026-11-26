@@ -791,6 +791,11 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             risk_check["turn"] = turn_watch.against(rt, symbol, side_of(decision))
         except Exception:
             pass
+        try:                                   # V3.3: market + coin context at publication (context only, never decides)
+            from . import market_intel
+            risk_check["intel"] = market_intel.coin_context(rt, symbol)
+        except Exception:
+            pass
         try:                                   # V3.0: market risk state at publication (shadow; judged by replay later)
             from . import risk_state
             rs = risk_state.current(rt.db)
@@ -800,6 +805,10 @@ def analyze(rt: Runtime, symbol: str, timeframe: str = "4h", as_of: int | None =
             pass
     if decision in TRADE_DECISIONS and live and bundle is None:
         decision, grade, why = entry_guards(rt, symbol, timeframe, decision, grade, why, flags, risk_check)
+    # V3.3 portfolio risk controller (services/portfolio_risk.py): calls that would enter the public record
+    if (decision in TRADE_DECISIONS and live and bundle is None and timeframe not in DEMO_ONLY_TFS
+            and symbol not in WATCH_ONLY_COINS):
+        decision, grade, why = portfolio_gate(rt, symbol, timeframe, decision, grade, why, flags, risk_check)
     watch = None
     if live and bundle is None and as_of is None:
         watch, held = watch_gate(symbol, decision, grade)
@@ -944,6 +953,28 @@ def live_quote(rt: Any, symbol: str, close: float, now: int | None = None, atr: 
     return {"price": close, "source": "last_close", "quality": q, "ts": int(ts) if ts else None,
             "age_s": round(age, 1) if age is not None else None,
             "ticker_price": last if (last is not None and np.isfinite(last)) else None, "max_dev": dev_lim}
+
+
+def portfolio_gate(rt: Any, symbol: str, timeframe: str, decision: str, grade: str | None, why: str | None,
+                   flags: list[str], risk_check: dict[str, Any] | None) -> tuple[str, str | None, str | None]:
+    """V3.3: aggregate open risk, per side / BTC-correlated / per coin, conflicting positions and the drawdown halt.
+    Unreadable portfolio data = NO TRADE "CHECK UNAVAILABLE" (Health gate `portfolio`). Shadow mode only records."""
+    from . import portfolio_risk as PR
+    from .guardian import side_of
+    try:
+        g = PR.record_gate(rt, symbol, timeframe, side_of(decision))
+    except Exception as exc:
+        g = {"state": "unavailable", "reason": f"{type(exc).__name__}: {exc}"[:160], "mode": PR.MODE}
+    if risk_check is not None:
+        risk_check["portfolio"] = {k: g.get(k) for k in ("state", "reason", "metrics", "drawdown", "mode", "flag")}
+    if g["state"] == "unavailable":
+        decision, grade = "NO TRADE", None
+        why = _guard_unavailable(rt, "portfolio", "portfolio risk check", symbol, timeframe, g["reason"])
+        flags.append("CHECK UNAVAILABLE")
+    elif g["state"] == "block" and PR.MODE == "enforce":
+        decision, grade, why = "NO TRADE", None, g["reason"]
+        flags.append(g.get("flag") or PR.FLAG)
+    return decision, grade, why
 
 
 def entry_guards(rt: Any, symbol: str, timeframe: str, decision: str, grade: str | None, why: str | None,

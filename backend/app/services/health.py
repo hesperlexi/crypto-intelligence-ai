@@ -64,11 +64,31 @@ def report(rt: Runtime, full: bool = True) -> dict[str, Any]:
         "series": series, "models": models, "model_libraries": model_status(),
         "recent_errors": rt.errors[-20:][::-1],
         "fail_closed": _gate_failures(rt),
+        "portfolio": _portfolio(rt),
+        "market_intel": _intel(rt),
         "config": {"exchange": settings.exchange, "background_jobs": settings.enable_background_jobs,
                    "websocket_feed": settings.enable_websocket_feed, "deep_models": settings.enable_deep_models,
                    "forecast_refresh_s": rt.refresh_seconds(), "retrain_interval_h": settings.retrain_interval_h,
                    "mode": "ANALYSIS ONLY - no real orders are ever placed"},
     }
+
+
+def _portfolio(rt: Runtime) -> dict[str, Any]:
+    """V3.3: the record's aggregate open risk and drawdown state (admin Health; never raises)."""
+    try:
+        from .portfolio_risk import summary
+        return summary(rt)
+    except Exception as exc:
+        return {"available": False, "reason": f"{type(exc).__name__}"}
+
+
+def _intel(rt: Runtime) -> dict[str, Any] | None:
+    """V3.3: the market context with each field's data status (admin Health; context only)."""
+    try:
+        from .market_intel import current
+        return current(rt.db)
+    except Exception:
+        return None
 
 
 ERRORS_VIEW = "health_errors"        # views/health_errors: admin only (firestore rules); views/health stays member-readable

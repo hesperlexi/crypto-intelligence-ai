@@ -1588,3 +1588,32 @@ card removed (the readout covers it). v2.73: the planet card no longer floats ov
   of the timeframe, `TICKER_MIN_DEV_PCT` 0.5 %) from the analysis close ("deviant"). (3) Hesper / Last Stand enter only at
   the coin's live ticker when a feed is installed (never the 15m-close fallback). (4) The merge proves each import
   (`imported_verified`: active version = the record and the bundle loads). Tests: test_stage1_verify_v32.
+
+## V3.3 Stage 2 - portfolio intelligence, capital protection, fast radar (26 Nov 2026, branch `stage2-portfolio`, checkpoint tag `checkpoint-pre-stage2` = ad27d60; NOT deployed)
+- **Portfolio risk controller** `services/portfolio_risk.py` (`PORTFOLIO_GATE` enforce | shadow | off). Unit R = one trade's
+  planned risk; at the reference 0.25 %/trade (`RISK_PER_TRADE_PCT_REF`; NOTE the bots still risk 1 %/trade and
+  `RiskProfile` defaults to 1 % - no 0.25 % default exists in code; not changed). Limits (env): open 8R, per side 6R, BTC-correlated
+  same side 5R (1h corr >= 0.7 over 72 h; unknown corr = correlated), per coin 1R across timeframes (de-risked = stop at
+  BE frees it), no long + short on one coin, record drawdown 10R -> HALT 24 h -> PROBATION (open / side / corr limits
+  halved, per-coin rule kept) -> NORMAL at <= 6R or after 7 days; +3R deeper during probation halts again. Remaining risk =
+  open share x (entry - stop in force) / original risk; pending = 1R. Record: `analysis.portfolio_gate` after the entry guards
+  (not demo-only TFs / watch-only coins; the call's own coin+TF call is left out) -> NO TRADE "PORTFOLIO LIMIT" /
+  "PORTFOLIO DRAWDOWN" (in `proof_checks.FLAGS`: followed in rejected_signals); unreadable data -> "CHECK UNAVAILABLE",
+  Health gate `portfolio`. Bot books and Hesper / Last Stand books: `book_check` before an entry. Entries only. Settings
+  `portfolio_state`, `portfolio_state_log`; Health admin `portfolio`. Existing guards, same-side cap 12 and the -3R/-6R
+  loss stop unchanged.
+- **Market intelligence** `services/market_intel.py`: every field {value, status confirmed | delayed | unavailable, as_of,
+  age_h, source}; closed candles / known_at only. Market (worker step `market_intel` before analyses, setting
+  `market_intel`, Health admin): BTC regime 4h/1d, BTC trend, volatility, breadth, risk state. Coin (`coin_context`): RS vs
+  BTC, liquidity + spread, funding, OI (OKX, else Binance archive = delayed), Coinalyze liquidations. CONTEXT ONLY: stored in
+  `risk_shadow.intel` of each live call; nothing decides on it (test checks).
+- **Fast Opportunity Radar** `services/fast_radar.py` (display only; `FAST_RADAR=0` off): watchlist setting
+  `fast_radar_coins` / env `FAST_RADAR_COINS` / `DEFAULT_COINS`; Binance spot 1h closed candles + 24 h ticker + book;
+  volume / volatility expansion, RS 24h / 7d, trend, momentum, liquidity, spread, regime fit; warnings (parabolic, thin,
+  wide spread, wick-heavy, one-candle pump, volume without price, short history, risk-off); transparent points. Published
+  in `views/radar.fast` (hourly radar step). UI `components/FastRadar.tsx` on Radar. Only worker.py imports it (test).
+- **Reports**: `services/ml_shadow.py` (would-block vs let-through net R with 95 % intervals, by TF / regime / filter,
+  would-run, scored-candle kept share, model ages, add-on validation from bundle summary `addons`, new in
+  `trainer._summary`); `perf_lab` adds `by_regime`, `by_tf_side`, `ci95_avg_r`, `max_losing_streak`, `portfolio`,
+  `ml_shadow`, `basis`. UI `components/LabRisk.tsx` at the end of Performance Lab. Enforcement of filters stays off.
+- Tests: test_portfolio_risk_v33, test_market_intel_v33, test_fast_radar_v33, test_ml_shadow_v33.

@@ -34,7 +34,7 @@ from .services import hesper, scalp_backfill
 from .services import briefing, coin_reports
 from .services import leaderboard, referrals
 from .services import guardian
-from .services import market_data, risk_state, turn_detector
+from .services import market_data, market_intel, risk_state, turn_detector
 from .services import perf_lab
 from .services import market_extras
 from .services import coin_scorecard
@@ -1654,6 +1654,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # shown + stored on calls (shadow), applied only to members' practice auto-trade.
     # V3.2 (Fable 5.2 audit R-16): computed BEFORE the analyses, so each call stores this tick's state, not the last one
     detail["risk_state"] = step("risk_state", lambda: risk_state.run(rt, sink))
+    # V3.3 market intelligence (context only: stored with each call and shown to the admin, never decides)
+    detail["market_intel"] = step("market_intel", lambda: market_intel.run(rt))
     detail["alerts_fired"] = step("analyses", analyse)
     # v2.16 smarter alerts: entry / TP / early-close events of the public calls, and market-mood flips (own step)
     def call_alerts():
@@ -1788,6 +1790,12 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
                 r["scorecard"] = coin_scorecard.build(rt, rt.watchlist())
             except Exception as exc:
                 rt.record_error("coin scorecard", exc)
+            if os.environ.get("FAST_RADAR", "1") != "0":   # V3.3 Fast Opportunity Radar: display only, never traded
+                try:
+                    from .services import fast_radar
+                    r["fast"] = fast_radar.scan(rt.db, rt.provider)
+                except Exception as exc:
+                    rt.record_error("fast radar", exc)
             rt.db.set_setting("radar_at", now_ms())
             sink.view("radar", r)
             return {"screened": r["screened"], "picks": [p["symbol"] for p in r["picks"][:5]]}

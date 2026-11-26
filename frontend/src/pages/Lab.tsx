@@ -10,6 +10,7 @@ import { Empty, ErrorBox } from "../components/ui";
 import { useApi } from "../lib/api";
 import { ago, isNum } from "../lib/format";
 import AdminTabs from "../components/AdminTabs";
+import { MlShadowCard, PortfolioCard, RegimeCard } from "../components/LabRisk";
 
 type St = { n: number; win_rate?: number; avg_r?: number; total_r?: number; profit_factor?: number | null; max_dd_r?: number; best_r?: number; worst_r?: number };
 type Grp = St & { key: string };
@@ -76,6 +77,13 @@ function LabBody({ v }: { v: any }) {
           {(v.proof?.calibration?.warnings ?? []).map((w: string) => <p key={w} className="text-sm text-bear">{w}</p>)}
         </section>
       </div>
+
+      {/* V3.3 Stage 2: portfolio risk, results by market regime, AI filters in shadow */}
+      <div className="grid gap-4 lg:grid-cols-2">
+        <PortfolioCard p={v.portfolio} />
+        <RegimeCard rows={v.by_regime ?? []} />
+      </div>
+      <MlShadowCard m={v.ml_shadow} />
     </>
   );
 }

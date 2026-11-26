@@ -365,6 +365,10 @@ def _summary(bundle: dict[str, Any]) -> dict[str, Any]:
         "failures": bundle["failures"], "importance": bundle["importance"],
         "models": sorted(bundle["models"]), "uses_btc": bundle["uses_btc"], "fast": bundle.get("fast", False),
         "uses_htf": bundle.get("uses_htf"), "selective": bundle.get("selective"),
+        # V3.3: add-on validation status (reports read it without unpickling the bundle)
+        "addons": {k: {f: (bundle.get(k) or {}).get(f) for f in ("enabled", "validated", "threshold_method",
+                                                                  "kept_share_unseen", "keep_fraction")}
+                   for k in ("trade_filter", "runner_model")},
     }
 
 

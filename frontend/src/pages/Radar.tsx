@@ -11,6 +11,7 @@ import { useLimits } from "../lib/limits";
 import { useIsAdmin } from "../lib/session";
 import CoinScorecard from "../components/CoinScorecard";
 import RadarScope from "../components/RadarScope";
+import FastRadar from "../components/FastRadar";
 
 const pct = (v: unknown, d = 0) => (isNum(v) ? `${v > 0 ? "+" : ""}${(v * 100).toFixed(d)}%` : "—");
 const tone = (v: unknown) => (isNum(v) ? (v > 0 ? "text-bull" : v < 0 ? "text-bear" : "") : "text-mute");
@@ -85,6 +86,7 @@ export default function Radar() {
       <RadarScope picks={d.picks ?? []} extended={d.extended ?? []} updated={d.generated_at}
         onPick={(s) => document.getElementById(`pick-${s.replace("/", "-")}`)?.scrollIntoView({ behavior: "smooth", block: "center" })} />
       <CoinScorecard card={d.scorecard} admin={admin} />
+      <FastRadar fast={d.fast} />
       <h2 className="label">New coins worth a look</h2>
       <ul className="grid gap-3 md:grid-cols-2 md:[&>li:last-child:nth-child(odd)]:col-span-2">{(d.picks ?? []).map((p: any) => <PickCard key={p.symbol} p={p} following={have.has(p.symbol)} onAdd={add} />)}</ul>
       {(d.extended ?? []).length > 0 && (

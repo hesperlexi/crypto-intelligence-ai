@@ -352,6 +352,10 @@ class Hesper(BotEngine):
             return None
         stop = float(r["stop"])
         targets = [float(t) for t in (r.get("tp1"), r.get("tp2"), r.get("tp3")) if t is not None]
+        # V3.3 portfolio risk controller on the challenge book (same limits; unreadable book = no new entry)
+        from . import portfolio_risk as PR
+        if not PR.book_check(self.rt, state, sym, side).get("allowed", False):
+            return None
         # the plan must still make sense at the price Hesper can get (the bots' rule)
         if side * (px - stop) <= 0 or side * (targets[0] - px) <= 0:
             return None

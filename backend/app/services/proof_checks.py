@@ -28,7 +28,8 @@ DAY = 86_400_000
 # demo-only routing are not filters of the call itself and are left out)
 FLAGS = ("AGAINST BIGGER TREND", "NO PROVEN EDGE", "FILTERED", "TARGET TOO SMALL FOR COSTS", "STOP TOO WIDE",
          "VOLUME WALL AHEAD", "STOP TOO TIGHT FOR FEES", "TOO MANY SAME-SIDE CALLS", "TIMEFRAME PAUSED", "GRADE A ONLY",
-         "CALL STILL RUNNING", "NEWS RISK", "CAPITAL PROTECTION", "WATCH ONLY", "LIQUIDITY SWEEP", "BTC SHOCK")
+         "CALL STILL RUNNING", "NEWS RISK", "CAPITAL PROTECTION", "WATCH ONLY", "LIQUIDITY SWEEP", "BTC SHOCK",
+         "PORTFOLIO LIMIT", "PORTFOLIO DRAWDOWN")
 SKIP_FLAGS = ("CHECK UNAVAILABLE", "WITHDRAWN BY ADMIN", "COIN BEING REMOVED", "PAUSED", "STALE DATA", "DEMO BOTS ONLY")
 MIN_JUDGE = 10            # closed rejected calls before a filter gets a verdict
 DRIFT_MIN_N = 150         # resolved forecasts in the last 7 days before drift is judged

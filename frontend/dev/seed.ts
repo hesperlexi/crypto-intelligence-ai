@@ -498,7 +498,7 @@ export function seed(): Record<string, any> {
     "views/news": v({ generated_at: NOW - 12 * 60_000, errors: [], calendar: [{ id: "ppi", title: "PPI m/m", ts: NOW - 3 * H, impact: "High", forecast: "0.2%", previous: "0.1%", actual: "0.4%", country: "USD", after: { verdict: "bearish", data_read: "bearish", move_1h: -1.12, move_4h: -1.64, swing_1h: 1.9, summary: "Came in hotter than expected (0.4% vs 0.2% forecast). Hot inflation keeps interest rates high, which usually weighs on crypto. BTC fell 1.12% in the hour after (-1.64% after 4 h)." } }, { id: "cpi", title: "CPI m/m", ts: NOW + 26 * H, impact: "High", forecast: "0.2%", previous: "0.3%", country: "US" }, { id: "nfp", title: "Non-Farm Employment Change", ts: NOW + 50 * H, impact: "High", forecast: "150K", previous: "142K", country: "US" }], headlines: newsHeads(), sources: { calendar: "Forex Factory weekly economic calendar", headlines: "CoinDesk, Cointelegraph, Decrypt" }, next_high: { title: "CPI m/m", ts: NOW + 26 * H }, last_high: { id: "ppi", title: "PPI m/m", ts: NOW - 3 * H, impact: "High", country: "USD", after: { verdict: "bearish", data_read: "bearish", move_1h: -1.12, move_4h: -1.64, summary: "Came in hotter than expected (0.4% vs 0.2% forecast). Hot inflation keeps interest rates high, which usually weighs on crypto. BTC fell 1.12% in the hour after (-1.64% after 4 h)." } },
       sentiment: { latest: { market: { score: 0.28, ts: NOW - 0.4 * H, source: "headlines", headlines: 18 }, BTC: { score: 0.41, ts: NOW - 0.4 * H }, ETH: { score: 0.12, ts: NOW - 0.4 * H }, alts: { score: -0.18, ts: NOW - 0.4 * H } },
         series: Array.from({ length: 48 }, (_, i) => ({ ts: NOW - (47 - i) * H, score: Math.round((0.25 * Math.sin(i / 6) + i / 120) * 100) / 100 })) } }),
-    "views/radar": v({ picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {}, scorecard: {
+    "views/radar": v({ fast: fastRadar(), picks: [{ rank: 1, symbol: "SUI/USDT", price: 1.92, change_24h_pct: 6.1, quote_volume: 4.1e8, rs_7d: 0.142, rs_30d: 0.31, reasons: [] }, { rank: 2, symbol: "INJ/USDT", price: 21.4, change_24h_pct: 3.4, quote_volume: 1.2e8, rs_7d: 0.096, rs_30d: 0.12, reasons: [] }, { rank: 3, symbol: "TIA/USDT", price: 5.2, change_24h_pct: 2.2, quote_volume: 0.9e8, rs_7d: 0.061, rs_30d: -0.02, reasons: [] }], historical: {}, live: {}, scorecard: {
       since: Date.now() - 10 * 864e5, days: 10, counts: {}, suggest_remove: ["GALA/USDT", "BARD/USDT", "UNI/USDT"],
       labels: { best: "Best results", working: "Making money", early: "Too early to judge", losing: "Losing after fees", quiet: "No signals" },
       method: "From the real record only, after fees (sample data in preview).",
@@ -976,7 +976,22 @@ function perfLab() {
   const WD = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"], SS = ["Asia", "Europe", "US", "Late"];
   const heat = WD.map((wd, i) => ({ wd, cells: SS.map((s, j) => ({ s, ...st(dots.filter((_, k) => k % 7 === i && Math.floor(k / 7) % 4 === j).map((d) => d.r)) })) }));
   const all = dots.map((d) => d.r);
+  const stage2 = {
+    portfolio: { available: true, mode: "enforce", positions: 5, pending: 1, open_r: 3.5, by_side_r: { long: 1, short: 2.5 },
+      btc_correlated_r: { long: 1, short: 2 }, risk_per_trade_pct_ref: 0.25, equity_at_risk_pct_ref: 0.875,
+      limits: { max_open_r: 8, max_side_r: 6, max_corr_r: 5, max_coin_r: 1, dd_limit_r: 10 },
+      drawdown_state: { state: "NORMAL" }, drawdown: { dd_r: 3.2 } },
+    by_regime: [{ key: "NORMAL", n: 41, avg_r: 0.08, total_r: 3.3, ci95_avg_r: [-0.21, 0.37] },
+      { key: "CAUTION", n: 18, avg_r: -0.05, total_r: -0.9, ci95_avg_r: [-0.52, 0.42] }, { key: "unknown", n: 6, avg_r: 0.2, total_r: 1.2 }],
+    ml_shadow: { mode: { trade_filter_enforce: false }, verdict: "too few closed calls to judge",
+      would_block: { n: 9, avg_r: 0.12, total_r: 1.1 }, allowed: { n: 56, avg_r: 0.04, total_r: 2.2, ci95_avg_r: [-0.18, 0.26] },
+      would_run: { n: 3, avg_r: 0.4, total_r: 1.2 }, shadow_scored: { "trade_filter|4h": { n: 212, kept_share: 0.44, keep_fraction: 0.5 } },
+      freshness: { ages: { "15m": { n: 35, median_h: 9.5, older_than_48h: 0 }, "4h": { n: 35, median_h: 9.1, older_than_48h: 1 } },
+        addons: { trade_filter: { enabled: 12, validated: 7, unknown: 4 }, runner_model: { enabled: 3, validated: 2, unknown: 4 } } },
+      note: "Net R after the record's costs. Model scores are rankings, not win probabilities." },
+  };
   return {
+    ...stage2,
     generated_at: NOW - 25 * 60_000, since: NOW - 14 * 24 * H, calls: 71, open: 5, missed: 2, overall: st(all),
     no_admin: st(all.map((x, i) => (dots[i].a ? x * 0.6 : x))), admin: { touched: dots.filter((d) => d.a).length, stored: st([]), without: st([]) },
     by_tf: grp((d) => d.tf), by_side: grp((d) => (d.side === "L" ? "LONG" : "SHORT")), by_grade: grp((d) => d.g), by_coin: grp((d) => d.coin),
@@ -1059,5 +1074,26 @@ function assetAnalysis() {
     setup: null, risk: null, indicators: {}, events: [],
     liquidity: { relative_volume: 1.2, buy_pressure: 0.14, volume_spike: false },
     commentary: "BTC is in a 4H uptrend; the AI ensemble leans up but has no proven edge on this timeframe yet.",
+  };
+}
+
+
+// V3.3 Fast Opportunity Radar sample (display only)
+function fastRadar() {
+  const at = Date.now() - 20 * 60_000;
+  const c = (rank: number, coin: string, price: number, r24: number, rs24: number, rs7: number, rsi: number, qv: number, vx: number,
+    spread: number, reasons: string[], warnings: string[]) => ({ rank, coin, symbol: `${coin}/USDT`, status: "ok", price, ret_24h_pct: r24,
+    rs_24h_pct: rs24, rs_7d_pct: rs7, rsi14: rsi, quote_volume_24h: qv, volume_expansion: vx, spread_bps: spread,
+    score: 0.6 - rank * 0.08, points: {}, reasons, warnings, regime_compatibility: "compatible" });
+  return {
+    available: true, display_only: true, generated_at: at, regime: "CAUTION",
+    coins: [
+      c(1, "SUI", 1.92, 7.4, 5.1, 18.2, 66, 4.1e8, 2.1, 1.2, ["+18.2% vs BTC over 7 days", "+5.1% vs BTC in 24 h", "1h uptrend: above EMA20 and EMA50, EMA20 rising", "volume 2.1x its recent daily average"], []),
+      c(2, "WIF", 1.31, 11.8, 9.6, 12.4, 74, 2.6e8, 2.8, 3.4, ["+12.4% vs BTC over 7 days", "+9.6% vs BTC in 24 h", "volume 2.8x its recent daily average"], ["wick-heavy candles: stop hunting / manipulation risk"]),
+      c(3, "PEPE", 0.0000124, 28.5, 26.1, 31.0, 86, 9.8e8, 4.4, 2.1, ["+31.0% vs BTC over 7 days", "+26.1% vs BTC in 24 h"], ["parabolic: chasing this move is the classic way to buy the top", "one-candle pump: most of the day's move came in a single hour"]),
+      c(4, "INJ", 21.4, 1.2, -0.8, 6.3, 54, 1.2e8, 1.1, 2.8, ["+6.3% vs BTC over 7 days"], []),
+      c(5, "FLOKI", 0.000142, 3.1, 1.0, -2.4, 58, 9.0e6, 3.2, 26.0, [], ["thin liquidity: under $15M traded in 24 h", "wide spread: 26 bps just to get in and out"]),
+    ],
+    not_covered: ["HYPE", "SPX", "FARTCOIN"],
   };
 }

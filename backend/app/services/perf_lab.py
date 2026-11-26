@@ -41,9 +41,14 @@ def stats(v: list[float]) -> dict[str, Any]:
         cum += x
         peak = max(peak, cum)
         dd = max(dd, peak - cum)
-    return {"n": len(v), "win_rate": round(sum(1 for x in v if x > 0) / len(v), 3), "avg_r": round(sum(v) / len(v), 3),
+    n, m = len(v), sum(v) / len(v)
+    se = (sum((x - m) ** 2 for x in v) / (n - 1)) ** 0.5 / n ** 0.5 if n > 1 else None
+    return {"n": n, "win_rate": round(sum(1 for x in v if x > 0) / n, 3), "avg_r": round(m, 3),
             "total_r": round(sum(v), 2), "profit_factor": round(gains / losses, 2) if losses else None,
-            "max_dd_r": round(dd, 2), "best_r": round(max(v), 2), "worst_r": round(min(v), 2)}
+            "max_dd_r": round(dd, 2), "best_r": round(max(v), 2), "worst_r": round(min(v), 2),
+            # V3.3: 95 % interval of the average (normal approx.; shown from 10 calls) - small samples prove nothing
+            "ci95_avg_r": [round(m - 1.96 * se, 3), round(m + 1.96 * se, 3)] if se is not None and n >= 10 else None,
+            "max_losing_streak": streaks(v)["losses"]}
 
 
 def group(rows: list[dict[str, Any]], fn, key: str = "r", order=None) -> list[dict[str, Any]]:
@@ -75,6 +80,22 @@ def streaks(v: list[float]) -> dict[str, int]:
     return {"wins": best, "losses": -worst, "current": cur}
 
 
+def _portfolio(rt: Any) -> dict[str, Any] | None:
+    try:
+        from .portfolio_risk import summary
+        return summary(rt)
+    except Exception as exc:
+        return {"available": False, "reason": type(exc).__name__}
+
+
+def _ml_shadow(rt: Any, now: int) -> dict[str, Any] | None:
+    try:
+        from .ml_shadow import build as ml_build
+        return ml_build(rt, now)
+    except Exception as exc:
+        return {"available": False, "reason": type(exc).__name__}
+
+
 def build(rt: Any, now: int | None = None) -> dict[str, Any]:
     from .. import views
     from . import tracking as T
@@ -101,7 +122,8 @@ def build(rt: Any, now: int | None = None) -> dict[str, Any]:
              "hour": dt.hour, "wd": WEEKDAYS[dt.weekday()], "admin": r["id"] in adj_ids,
              "peak_r": r.get("peak_r"), "exit": r.get("exit_reason"), "tp1": int(r.get("tp1_hit") or 0),
              "hold_h": round((r["closed_at"] - (r.get("filled_at") or r["created_at"])) / 3.6e6, 1) if r.get("closed_at") else None,
-             "closed_at": r.get("closed_at")}
+             "closed_at": r.get("closed_at"),
+             "regime": ((p.get("risk_shadow") or {}).get("state")) or "unknown"}
         if r["status"] in CLOSED and r.get("return_pct") is not None and rk:
             n = T.net_pct(r)
             x["r"] = round(n / rk, 3) if n is not None else None
@@ -158,6 +180,14 @@ def build(rt: Any, now: int | None = None) -> dict[str, Any]:
         "by_session": group(closed, lambda x: session(x["hour"]), order=lambda k: ["Asia", "Europe", "US", "Late"].index(k)),
         "by_entry": group(closed, lambda x: x["entry"]),
         "by_runner": group(closed, lambda x: "let it run" if x["runner"] else "standard"),
+        # V3.3 (Stage 2 phase D): market risk state at publication; side split per timeframe
+        "by_regime": group(closed, lambda x: x["regime"]),
+        "by_tf_side": group(closed, lambda x: f"{x['tf']} {x['side']}", order=lambda k: (TF_ORDER.get(k.split()[0], 9), k)),
+        "portfolio": _portfolio(rt),
+        "ml_shadow": _ml_shadow(rt, now),
+        "basis": {"r": "net R: after the record's 0.15 % round trip and funding, per call's planned risk",
+                  "confidence": "model scores are rankings, not verified win probabilities",
+                  "costs_gap": "one flat cost for every coin; memecoins / thin coins cost more in reality"},
         "heat": [{"wd": d, "cells": [{"s": s, **stats(heat[d][s])} for s in ("Asia", "Europe", "US", "Late")]} for d in WEEKDAYS],
         "histogram": histogram(rv), "streaks": streaks(rv), "curve": curve[-400:],
         "losers": {"n": len(lose), "reached_profit": {f"{t}": sum(1 for x in lose if (x.get("peak_r") or 0) >= t)

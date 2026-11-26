@@ -775,6 +775,11 @@ class BotEngine:
             same = sum(1 for p in state["positions"] if p["side"] == side) + sum(1 for o in state["pending"] if o["side"] == side)
             if same >= max_same:
                 continue
+            # V3.3 portfolio risk controller on this bot's own book (open risk, per side, BTC-correlated, per coin,
+            # conflicting positions); an unreadable book refuses the entry. Open positions are never touched.
+            from . import portfolio_risk as PR
+            if not PR.book_check(self.rt, state, s, side).get("allowed", False):
+                continue
             px = self._price(s)
             if px is None:
                 continue
