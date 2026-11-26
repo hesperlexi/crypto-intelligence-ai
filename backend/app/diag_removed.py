@@ -68,6 +68,20 @@ def run(db: Database) -> dict:
         out["state_newest_signal"] = (db.one("SELECT MAX(created_at) AS t FROM signals") or {}).get("t")
     except Exception as e:
         out["state_newest_signal"] = str(e)
+    try:
+        out["state_newest_prediction"] = (db.one("SELECT MAX(created_at) AS t FROM predictions") or {}).get("t")
+    except Exception as e:
+        out["state_newest_prediction"] = str(e)
+    # what the engine decided on each removed coin / timeframe after the removal (rule names only)
+    seen = []
+    for v in rem.values():
+        try:
+            ds = db.query("SELECT ts, rule FROM decisions WHERE symbol = ? AND timeframe = ? AND ts >= ? ORDER BY ts",
+                          (v["symbol"], v["tf"], v["removed_at"]))
+        except Exception:
+            ds = []
+        seen.append({"tf": v["tf"], "after_removal": [{"ts": d["ts"], "rule": d["rule"]} for d in ds][-12:]})
+    out["decisions_after_removal"] = seen
     return out
 
 
