@@ -1713,3 +1713,15 @@ desktop + phone screenshots before anything goes live.
   recovery factor, "Paper results" label, closed count + date range, fees already taken off. Lab adds market-regime split,
   setup-checklist check, Fast strategy card; Control room adds `ModelRegistry`. Preview seed: market_regime,
   model_registry, fast radar categories / tracking, board rows opportunity / strategy_fit, perf_lab stage 3-4 fields.
+
+## V3.4 Stages 6-7 (26 Nov 2026, branch `stages-3-7`; NOT deployed)
+- `react-router-dom` 6.26.2 → 6.30.6 (open-redirect / XSS advisories; same major). Firebase 10.14.1 advisories
+  (undici, grpc-js: Node-side packages, not used by the browser bundle) need a major Firebase upgrade that touches sign-in:
+  left for an owner decision. `pip-audit -r requirements-worker.txt`: none. Secret scan: only the public web API key and
+  test fixtures.
+- Market regime step at most every `MARKET_REGIME_EVERY_S` (600 s; build ~0.1 s for 32 coins).
+- `docs/operations.md`: deploy, rollback (code + env switches), DB compatibility (additive only), model rollback,
+  restart / outage / failed-training recovery, what is never automatic.
+- `tests/test_e2e_v34.py`: normal path is advisory only, poor-liquidity rejection, restart with an open paper position,
+  stale regime never used. Exit study v3.4 (`results/exits-v34-latest.json`, 26 Nov): nothing passes after Holm
+  (split_33 raw PASS, corrected FAIL; trend_20 / tp_tight clearly worse) → live exits unchanged.

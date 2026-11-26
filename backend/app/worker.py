@@ -1657,7 +1657,8 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
     # V3.3 market intelligence (context only: stored with each call and shown to the admin, never decides)
     detail["market_intel"] = step("market_intel", lambda: market_intel.run(rt))
     # V3.4 Stage 3A market regime (context only: one label for the whole market with its evidence; never decides)
-    if os.environ.get("MARKET_REGIME", "1") != "0":
+    if os.environ.get("MARKET_REGIME", "1") != "0" and now_ms() - int((rt.db.get_setting("market_regime", {}) or {}).get("at") or 0) \
+            >= int(os.environ.get("MARKET_REGIME_EVERY_S", "600")) * 1000 - 30_000:
         detail["market_regime"] = step("market_regime", lambda: market_regime.run(rt, sink))
     detail["alerts_fired"] = step("analyses", analyse)
     # v2.16 smarter alerts: entry / TP / early-close events of the public calls, and market-mood flips (own step)
