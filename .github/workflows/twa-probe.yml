@@ -1,0 +1,20 @@
+name: twa-probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Compare the APK signature with assetlinks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release download android -R "$GITHUB_REPOSITORY" -p crypto-intelligence-ai.apk -O app.apk
+          bt=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
+          apk=$($bt/apksigner verify --print-certs app.apk | grep -i "SHA-256 digest" | head -1 | awk '{print $NF}' | sed 's/../&:/g;s/:$//' | tr a-z A-Z)
+          echo "::notice title=apk::$apk"
+          for h in crypapp-6a9b9.web.app cryptointelai.com; do
+            j=$(curl -s -m 20 -D - https://$h/.well-known/assetlinks.json | tr -d '\r' | tr '\n' ' ' | cut -c1-900)
+            echo "::notice title=$h::$j"
+          done
+          $bt/aapt dump xmltree app.apk AndroidManifest.xml | grep -i -A2 "DelegationService\|ManageData\|hostName\|asset_statements" | tr '\n' ' ' | cut -c1-900 | sed 's/^/::notice title=manifest::/'
+          $bt/aapt dump resources app.apk 2>/dev/null | grep -i "asset_statements\|hostName" | head | tr '\n' ' ' | sed 's/^/::notice title=res::/'
