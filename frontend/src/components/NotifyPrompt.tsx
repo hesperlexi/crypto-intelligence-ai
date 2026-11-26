@@ -80,7 +80,7 @@ export default function NotifyPrompt() {
         setFix(true);
         setMsg(back === "off" ? "Still off. Switch on “Allow notifications” (and every type under it) for Crypto AI, then come back."
           : back === "on" ? "Notifications are on in your phone. Close the app fully (swipe it away from recent apps) and open it again to finish."
-          : back === "reopen" || push.installedApkLevel() >= 5 ? "Close the app fully (swipe it away from recent apps) and open it again: the app will offer to turn them on."
+          : back === "reopen" ? "Close the app fully (swipe it away from recent apps) and open it again: the app will offer to turn them on."
           : null);
         setShow(true);
       }
@@ -91,6 +91,21 @@ export default function NotifyPrompt() {
     setShow(true);                                       // a tap asks (never a surprise question on load)
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // back from the phone's / browser's notification setting: allowed now → register this phone and close the message
+  useEffect(() => {
+    if (!fix || !show) return;
+    const check = () => {
+      if (document.visibilityState !== "visible" || push.permission() !== "granted") return;
+      push.reportFix("granted-on-return");
+      setShow(false); setFix(false); remember("granted");
+      void push.enable().catch(() => { /* Settings shows the state */ });
+    };
+    document.addEventListener("visibilitychange", check);
+    window.addEventListener("focus", check);
+    const t = window.setInterval(check, 2000);
+    return () => { document.removeEventListener("visibilitychange", check); window.removeEventListener("focus", check); window.clearInterval(t); };
+  }, [fix, show]);
+
   if (!show) return null;
   if (fix) {
     const link = push.appNotifyLink();
@@ -98,7 +113,7 @@ export default function NotifyPrompt() {
     return (
       <div className="panel notify-solid animate-in fixed inset-x-3 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-[60] mx-auto max-w-md p-3 text-sm sm:inset-x-auto sm:bottom-4 sm:right-4" role="dialog" aria-label="Notifications">
         <p className="font-semibold">Notifications are off for this app</p>
-        <p className="mt-1 text-mute">{msg ?? (link ? "One tap: your phone asks again, or opens the app's notification switch." : "Update the app first: the new version turns them on with one tap.")}</p>
+        <p className="mt-1 text-mute">{msg ?? (link ? (push.installedApkLevel() >= 6 ? "Tap Turn on notifications, set Notifications to Allow, then go back." : "One tap: your phone asks again, or opens the app's notification switch.") : "Update the app first: the new version turns them on with one tap.")}</p>
         <div className="mt-2 flex gap-2">
           {link ? <a className="btn btn-primary" href={link}>Turn on notifications</a>
             : <a className="btn btn-primary" href={push.APK_URL}>Update the app</a>}

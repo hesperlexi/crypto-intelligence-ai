@@ -191,7 +191,9 @@ public class NotifySettingsActivity extends Activity {{
     protected void onCreate(Bundle savedInstanceState) {{
         super.onCreate(savedInstanceState);
         if (savedInstanceState != null) return;            // recreated while waiting: the result still comes here
-        if (enabled()) {{ back(); return; }}
+        // the phone allows notifications, yet the website reads "blocked": the browser's own setting for this site is
+        // off (Android 12 and older have no app question at all) - open exactly that page (Site settings → Allow)
+        if (enabled()) {{ openSiteSettings(); return; }}
         if (Build.VERSION.SDK_INT >= 33 && !granted()) {{
             requestPermissions(new String[]{{PERM}}, ASK);
             return;
@@ -229,6 +231,17 @@ public class NotifySettingsActivity extends Activity {{
         // allowed but a type is off, or no question was shown (Android blocks it after two "Don't allow"): the switch
         if (granted() || (Build.VERSION.SDK_INT >= 33 && !shouldShowRequestPermissionRationale(PERM))) openSettings();
         else back();
+    }}
+
+    private void openSiteSettings() {{
+        try {{
+            Intent i = new Intent();
+            i.setClassName(getPackageName(), "com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity");
+            startActivity(i);
+            finish();                                        // back from the browser's page = back in the app
+        }} catch (Exception e) {{
+            back();
+        }}
     }}
 
     private void openSettings() {{

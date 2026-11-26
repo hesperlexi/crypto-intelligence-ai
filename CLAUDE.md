@@ -1786,3 +1786,9 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   Turn on = ask Android while it allows, else the app's notification settings; the TWA launches after (Chrome re-reads the
   permission). Website fallback `/settings?notify=reopen` → "close the app fully and open it again". `push.reportFix` writes
   `user_state.push_error` {stage notify-fix, code, perm, level}; `push-errors.yml` prints it as job notices.
+- Notifications fix v4 (owner's phone = Android 10: no runtime question; the phone allowed notifications but CHROME's own
+  site setting for the origin was blocked - push_errors 20:45 "permission denied", Chrome/158, before it ran in Samsung
+  Internet). apkLevel 6: `NotifySettingsActivity` with the phone allowing → opens the browser's site settings for the app
+  (`com.google.androidbrowserhelper.trusted.ManageDataLauncherActivity`, same as the "Site settings" icon shortcut) and
+  finishes; website `NotifyPrompt` re-checks permission on focus / visibility / every 2 s while the message shows and
+  registers the phone once allowed (`reportFix("granted-on-return")`).
