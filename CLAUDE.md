@@ -1737,3 +1737,6 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   Owner removal (testing mode, flag `remove_waiting_ena_26nov_v31`, `owner_removals.remove_waiting_and_ena_26nov`): record
   calls still WAITING for entry (fill PENDING) published since 25 Nov 18:00 Dubai + their bot / challenge orders (reserved
   cash back), and the challenges' ENA/USDT trade(s) since then (balances set back); copies in `removed_*`.
+- Telegram approval (owner, 26 Nov 2026: "keep everything autopost - except the wins and trades"): "Ask me before posting"
+  holds only `telegram.APPROVE_KINDS` (win, wins, teaser, daily_call); briefings, news heads-ups, week7 / weekly reports and
+  the daily free trade's RESULT (win or loss - never held back) post directly (`needs_approval`).

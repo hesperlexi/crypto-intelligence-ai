@@ -273,7 +273,7 @@ def run(rt, sink, wins_view: dict[str, Any] | None, weekly_view: dict[str, Any] 
             return
         try:
             png = _card(*card) if card else None
-            draft = cfg["approve_first"] and not direct
+            draft = needs_approval(cfg, kind)
             if draft:
                 add_draft(sink, kind, text, png, now, card)
             else:
@@ -610,6 +610,16 @@ def news_text(m: dict[str, Any]) -> str:
                       f"<i>{html.escape(brand.FOOTER)}</i>"])
 
 
+# owner, 26 Nov 2026: "keep everything autopost - except the wins and trades". "Ask me before posting" now holds only
+# these kinds (wins and trade calls); briefings, news heads-ups and weekly reports always post directly. The result of a
+# posted free trade (win OR loss) also posts on its own, so a losing result can never be held back.
+APPROVE_KINDS = frozenset({"win", "wins", "teaser", "daily_call"})
+
+
+def needs_approval(cfg: dict[str, Any], kind: str) -> bool:
+    return bool(cfg.get("approve_first")) and kind in APPROVE_KINDS
+
+
 def post_news(sink, items: list[dict[str, Any]], session: Any = None) -> dict[str, Any]:
     """High-impact US release heads-up (the same items as the phone notification). v3.1: waits for the owner's Post /
     Skip while "Ask me before posting" is on (until the release time), otherwise sent directly. Never raises."""
@@ -618,7 +628,7 @@ def post_news(sink, items: list[dict[str, Any]], session: Any = None) -> dict[st
         return {"sent": 0}
     sent, errors = 0, []
     for m in items:
-        if cfg["approve_first"]:
+        if needs_approval(cfg, "news"):              # 26 Nov 2026: news always posts directly (owner)
             # v3.1 (owner, 24 Nov 2026): with "Ask me before posting" on, the heads-up waits in the drafts (Post / Skip)
             # like every other card, until the release time; after that it can no longer be posted
             try:

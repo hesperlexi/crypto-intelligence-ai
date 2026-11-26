@@ -112,15 +112,15 @@ def test_approve_first_keeps_the_card_until_the_owner_posts_it(tmp_path):
     assert T.post_draft(sink, items[0]["id"], fake)["sent"] is False                 # not twice
 
 
-def test_news_heads_up_waits_for_approval_when_ask_me_is_on_else_goes_directly(tmp_path):
+def test_news_heads_up_always_posts_directly(tmp_path):
     sink, fake = LocalSink(tmp_path), Fake()
     item = {"title": "High-impact news in 30 min", "body": "US CPI at 12:30 UTC. Expect volatility.", "tag": "econ-1",
             "at": str(T.now_ms() + 1_800_000)}
     assert T.post_news(sink, [item], fake)["sent"] == 0                 # autopilot off: nothing
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "approve_first": True})
-    assert T.post_news(sink, [item], fake)["sent"] == 1                 # v3.1: held for Post / Skip
-    drafts = sink.get("owner/telegram_drafts")["items"]
-    assert not fake.sent and drafts[0]["kind"] == "news" and drafts[0]["expires_at"] == int(item["at"])
+    assert T.post_news(sink, [item], fake)["sent"] == 1                 # 26 Nov 2026: news posts directly even then
+    assert sink.get("owner/telegram_drafts") is None and "US CPI" in fake.sent[0]["text"]
+    fake.sent.clear()
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "approve_first": False})
     assert T.post_news(sink, [item], fake)["sent"] == 1 and "US CPI" in fake.sent[0]["text"]
     sink.set("owner/telegram", {"enabled": True, "token": "x", "channel": "@c", "post_news": False})
