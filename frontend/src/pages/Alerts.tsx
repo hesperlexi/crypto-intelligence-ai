@@ -127,7 +127,8 @@ export default function Alerts() {
             : <span className="text-mute">off</span>}
         </span>
         <span className="flex flex-wrap gap-2">
-          {perm !== "granted" && perm !== "unsupported" && <button className="btn btn-primary px-3 py-1 text-xs" onClick={turnOn}>{perm === "denied" ? "Try again" : "Turn on"}</button>}
+          {perm === "denied" && push.appNotifyLink() ? <a className="btn btn-primary px-3 py-1 text-xs" href={push.appNotifyLink()!}>Turn on</a>
+            : perm !== "granted" && perm !== "unsupported" && <button className="btn btn-primary px-3 py-1 text-xs" onClick={turnOn}>{perm === "denied" ? "Try again" : "Turn on"}</button>}
           <Link className="btn px-3 py-1 text-xs" to="/settings#notifications">Notification settings</Link>
         </span>
         {perm === "denied" && <BlockedHelp className="w-full" />}

@@ -2,7 +2,7 @@
   "name": "crypto-intelligence-ai-frontend",
   "private": true,
   "version": "3.1.0",
-  "apkLevel": 2,
+  "apkLevel": 3,
   "type": "module",
   "scripts": {
     "dev": "vite",

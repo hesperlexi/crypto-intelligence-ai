@@ -225,7 +225,8 @@ function NotificationsCard() {
         <Row k="This device" v={perm === "granted" ? (token ? "on — also when the app is closed" : "on while the app is open") : perm === "denied" ? (push.inAndroidApp() ? "blocked in phone settings" : "blocked in browser settings") : perm === "unsupported" ? "not supported" : "off"} />
         {admin && <Row k="Push key" v={hasKey == null ? "…" : hasKey ? "added" : "not added yet"} />}
         <div className="mt-3 flex flex-wrap gap-2">
-          {perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy} onClick={() => act(push.enable)}>{perm === "denied" ? "Try again" : "Turn on notifications"}</button>
+          {perm === "denied" && push.appNotifyLink() ? <a className="btn btn-primary" href={push.appNotifyLink()!}>Turn on notifications</a>
+            : perm !== "granted" || !token ? <button className="btn btn-primary" disabled={busy} onClick={() => act(push.enable)}>{perm === "denied" ? "Try again" : "Turn on notifications"}</button>
             : <button className="btn" disabled={busy} onClick={() => act(async () => { await push.disable(); return "Notifications turned off on this device."; })}>Turn off on this device</button>}
           <button className="btn" disabled={busy} onClick={() => act(async () => { await queueJob("test_push", { uid: myUid() }); return "Test queued: arrives within about 5 minutes."; })}>Send a test notification</button>
         </div>

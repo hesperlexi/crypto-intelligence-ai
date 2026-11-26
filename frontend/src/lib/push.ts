@@ -45,6 +45,14 @@ export function appWithoutChrome(): boolean {
   if (!inAndroidApp()) return false;
   try { return /SamsungBrowser|Firefox|EdgA|OPR|YaBrowser|UCBrowser|MiuiBrowser|HuaweiBrowser/i.test(navigator.userAgent) || !pushSupported(); } catch { return false; }
 }
+/** Android app level 3+ (26 Nov 2026): a link that opens the app's own notification fix. It asks Android again while
+ *  Android still allows that, otherwise opens this app's notification switch, then returns to /settings?notify=on|off.
+ *  Older apps (no such screen) fall back to /settings?notify=update. Null outside the Android app or on older apps. */
+export function appNotifyLink(): string | null {
+  if (!inAndroidApp() || installedApkLevel() < 3) return null;
+  const back = encodeURIComponent(`${location.origin}/settings?notify=update`);
+  return `intent://notifications#Intent;scheme=cryptoai;package=com.hesper.cryptoai;S.browser_fallback_url=${back};end`;
+}
 /** @deprecated name kept for older call sites */
 export const oldApk = appWithoutChrome;
 
@@ -52,17 +60,19 @@ export const APK_URL = "https://github.com/hesperlexi/crypto-intelligence-ai/rel
 
 /** Step-by-step fix for the Android app when notifications are blocked (shown collapsible). */
 export const ANDROID_STEPS: readonly string[] = [
+  "Install the newest app: More → Download Android app (it installs over the old one; you stay signed in).",
+  "In the app: Settings → Notifications → Turn on notifications, then tap Allow.",
+  "No question? The app opens its notification switch: turn on Allow notifications, then go back.",
   "Make sure Google Chrome is installed and turned on (Play Store → Chrome).",
-  "Install the newest app: More → Download Android app.",
-  "Phone Settings → Apps → Crypto AI → Notifications → Allow.",
-  "Also allow notifications for Chrome, and turn battery saver off for the app.",
-  "In the app: Settings → Notifications → Turn on, then Send a test notification.",
+  "Turn battery saver off for the app, then Send a test notification.",
 ];
 
 /** What to do when notifications are blocked, for the device the person is on. */
 export function blockedHelp(): string {
   const ua = navigator.userAgent;
-  if (inAndroidApp()) return "Notifications are switched off for the Crypto AI app. Allow them in your phone's Settings → Apps → Crypto AI → Notifications, then tap Turn on again.";
+  if (inAndroidApp()) return appNotifyLink()
+    ? "Notifications are off for the Crypto AI app. Tap Turn on notifications: your phone asks again or opens the app's switch."
+    : "Notifications are off for the Crypto AI app. Update the app (the new version turns them on with one tap), or allow them in your phone's Settings → Apps → Crypto AI → Notifications.";
   if (/android/i.test(ua)) return `Notifications are blocked for this site in Chrome. Tap the lock icon next to the address (or Chrome menu → Settings → Site settings → Notifications), allow ${location.hostname || SITE_HOST}, then tap Turn on again. Also check phone Settings → Apps → Chrome → Notifications.`;
   if (/iphone|ipad|ipod/i.test(ua)) return "On iPhone: open the app from the Home Screen icon (not Safari), then Settings → Notifications → Crypto Intelligence AI → Allow Notifications.";
   return "Notifications are blocked. Lock icon in the address bar → Site settings → Notifications → Allow, then reload.";

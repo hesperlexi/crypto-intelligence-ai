@@ -1764,3 +1764,14 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   old, not the Android APK): iPhone "delete and Add to Home Screen again" (iOS never refreshes a home-screen icon), Android
   Chrome "updates by itself within about a day" + reinstall steps; Got it / Later (3 days). `.mood-grid` one column
   `minmax(0,1fr)` below 1024 px (the mood card was wider than 280 px phones).
+- **Android notifications fix** (owner, 26 Nov 2026: testers could not turn notifications on in the APK). Cause: Google's
+  androidbrowserhelper marks "asked" (`PrefUtils.HAS_REQUESTED_NOTIFICATION_PERMISSION`) the first time the website asks;
+  one dismissed / declined Android question then reads as BLOCK on the website for good, and the site auto-asked on load
+  (surprise dialog). Fix (apkLevel 3): `scripts/android_force_chrome.py` patches the APK: LauncherActivity asks
+  POST_NOTIFICATIONS itself once at start on Android 13+ (`shouldLaunchImmediately` false → `launchTwa` after the answer;
+  pref `cia_notify.asked_at_launch_v1`); `NotifySettingsActivity` (deep link `cryptoai://notifications`, framework APIs only)
+  asks again while Android allows it, else opens the app's notification switch, then returns to `/settings?notify=on|off`.
+  Website: `push.appNotifyLink()` (intent URL, fallback `/settings?notify=update` on older apps); `NotifyPrompt` never asks on
+  load (tap only), registers the phone silently once allowed, shows "Notifications are off for this app" with Turn on
+  notifications (level 3) / Update the app (older), Later 3 days (`cia-notify-fix-later`); Settings + Alerts buttons use the
+  link when blocked; ANDROID_STEPS rewritten; `.notify-solid` (opaque). Java checked with javac + stubs (no SDK here).
