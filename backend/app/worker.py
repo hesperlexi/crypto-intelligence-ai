@@ -429,7 +429,7 @@ MIGRATION_FLAGS = (
     "bots_spotcap_v23", "bots_cleanup_v22", "fresh_start_v2", "tracking_be_v23b", "scalping_since_nov1",
     "scalp_backfill_v1", "honest_record_v213", "fresh_restart_v214", "fresh_restart_v218",
     "coins_growth_v216", "test_tp08_v240", "exclude_15m_b_v242", "mstr_v249", "anthropic_v265", "silver_v269", "mexc_clean_v269",
-    "fresh_restart_v3", "restore_hesper_v3", "auto_limits_10_v31", "remove_xmr_v31", "bots_unrecorded_v31", "bots_unrecorded_trades_v31", "remove_anthropic_25nov_v31", "remove_paxg_bot_24nov_v31",
+    "fresh_restart_v3", "restore_hesper_v3", "auto_limits_10_v31", "remove_xmr_v31", "bots_unrecorded_v31", "bots_unrecorded_trades_v31", "remove_anthropic_25nov_v31", "remove_paxg_bot_24nov_v31", "remove_waiting_ena_26nov_v31",
 )
 MIGRATIONS_DOC = "admin/migrations"
 MIGRATIONS_RECHECK_MS = 6 * 3_600_000      # Firestore is read again at most this often while a flag is missing locally
@@ -1685,6 +1685,11 @@ def tick(rt: Runtime, sink: BaseSink, budget_s: float = 600, now: int | None = N
         from .services import owner_removals
         detail["remove_anthropic_25nov"] = step("remove_anthropic_25nov", lambda: owner_removals.remove_anthropic_25nov(rt))
         rt.db.set_setting("remove_anthropic_25nov_v31", True)
+    if not rt.db.get_setting("remove_waiting_ena_26nov_v31", False):
+        # owner, 26 Nov 2026 (testing mode): calls still waiting for entry + the challenges' ENA trade from the updates night
+        from .services import owner_removals as _orw
+        detail["remove_waiting_ena_26nov"] = step("remove_waiting_ena_26nov", lambda: _orw.remove_waiting_and_ena_26nov(rt))
+        rt.db.set_setting("remove_waiting_ena_26nov_v31", True)
     if not rt.db.get_setting("bots_unrecorded_trades_v31", False):
         # one-time (owner, 25 Nov 2026): the trades closed by the cleanup below never belonged in the bot books
         detail["bots_unrecorded_removed"] = step("bots_unrecorded_removed", lambda: BotEngine(rt).remove_unrecorded_trades())

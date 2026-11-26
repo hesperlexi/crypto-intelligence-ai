@@ -105,3 +105,92 @@ def remove_paxg_bot_trade_24nov(rt: Any) -> list[dict[str, Any]]:
         db.execute("UPDATE bot_equity SET equity = equity - ? WHERE bot_id = ? AND ts >= ?", (pnl, t["bot_id"], int(t["closed_at"])))
         out.append({"bot": t["bot_id"], "pnl": round(pnl, 2)})
     return out
+
+
+WAIT_REASON = "owner removal 26 Nov 2026 (testing mode): calls waiting for entry and the ENA challenge trade made during the updates"
+UPDATES_FROM_MS = 1795615200000                      # 25 Nov 2026 18:00 Dubai (updates night) -> the run time
+
+
+def remove_waiting_and_ena_26nov(rt: Any, now: int | None = None) -> dict[str, Any]:
+    """Owner, 26 Nov 2026: "remove them and let's wait for fresh signals". (1) Every record call still WAITING for its
+    entry (fill_status PENDING) published since the updates began is taken out (it never filled, so no result changes),
+    with the bots' / challenges' waiting orders for it (reserved cash returned). (2) The ENA/USDT trade(s) the challenges
+    took in that window are taken out and the run's balance set back as if never taken (an open one: margin and fees
+    returned). Copies of every row go to `removed_*` first. Runs once (flag in worker.MIGRATION_FLAGS)."""
+    global REASON
+    old, REASON = REASON, WAIT_REASON
+    try:
+        return _remove_waiting_and_ena(rt, int(now or now_ms()))
+    finally:
+        REASON = old
+
+
+def _remove_waiting_and_ena(rt: Any, now: int) -> dict[str, Any]:
+    db = rt.db
+    out: dict[str, Any] = {"waiting": [], "orders": [], "ena": []}
+    waiting = db.query("SELECT * FROM signals WHERE side != 0 AND fill_status = 'PENDING' AND created_at >= ? AND created_at <= ?",
+                       (UPDATES_FROM_MS, now))
+    ids = {c["id"] for c in waiting}
+    for c in waiting:
+        _keep(db, "removed_record", "signals", c)
+        db.execute("DELETE FROM signals WHERE id = ?", (c["id"],))
+        out["waiting"].append({"symbol": c["symbol"], "tf": c["timeframe"]})
+    keys = {(c["symbol"], int(c["side"]), c["timeframe"]) for c in waiting}
+
+    def drop_orders(state: dict[str, Any], who: str, tf: str | None) -> None:
+        for o in list(state.get("pending") or []):
+            info = o.get("info") or {}
+            sid = info.get("signal_id")
+            otf = info.get("timeframe") or tf
+            mine = (sid in ids) if sid else ((o.get("symbol"), int(o.get("side") or 0), otf) in keys
+                                             and int(o.get("placed_at") or 0) >= UPDATES_FROM_MS)
+            if mine:
+                state["cash"] = float(state.get("cash", 0.0)) + float(o.get("reserved") or 0.0)
+                state["pending"].remove(o)
+                out["orders"].append({"who": who, "symbol": o.get("symbol")})
+
+    for row in db.query("SELECT id, config, state FROM bots"):
+        cfg, state = loads(row["config"], {}), loads(row["state"], {})
+        n = len(state.get("pending") or [])
+        drop_orders(state, cfg.get("id", row["id"]), cfg.get("timeframe"))
+        if len(state.get("pending") or []) != n:
+            db.execute("UPDATE bots SET state = ? WHERE id = ?", (dumps(state), row["id"]))
+
+    from .hesper import Hesper, LastStand
+    sym = "ENA/USDT"
+    for cls in (Hesper, LastStand):
+        st = dict(db.get_setting(cls.STATE_KEY, None) or {})
+        if st:
+            st.setdefault("pending", [])
+            drop_orders(st, cls.BOT_ID, None)
+            for p in list(st.get("positions") or []):            # an ENA trade still open
+                if p.get("symbol") == sym and int(p.get("opened_at") or 0) >= UPDATES_FROM_MS:
+                    share = float(p.get("qty_open") or 0.0) / float(p.get("qty") or 1.0)
+                    st["cash"] = float(st.get("cash", 0.0)) + float(p.get("margin") or 0.0) * share - float(p.get("realized") or 0.0)
+                    st["positions"].remove(p)
+                    _keep(db, "removed_challenge_trades", cls.BOT_ID, {"id": p.get("id"), "open_position": p})
+                    out["ena"].append({"who": cls.BOT_ID, "open": True})
+        try:
+            trades = db.query(f"SELECT * FROM {cls.TRADES} WHERE symbol = ? AND opened_at >= ?", (sym, UPDATES_FROM_MS))
+        except Exception:
+            trades = []
+        for t in trades:                                          # an ENA trade already closed
+            pnl, run = float(t["pnl"] or 0.0), int(t["run"])
+            _keep(db, "removed_challenge_trades", cls.BOT_ID, t)
+            db.execute(f"DELETE FROM {cls.TRADES} WHERE id = ?", (t["id"],))
+            db.execute(f"UPDATE {cls.TRADES} SET balance_before = balance_before - ?, balance_after = balance_after - ? "
+                       f"WHERE run = ? AND closed_at > ?", (pnl, pnl, run, int(t["closed_at"])))
+            r = db.one(f"SELECT trades, wins FROM {cls.RUNS} WHERE run = ?", (run,))
+            if r:
+                db.execute(f"UPDATE {cls.RUNS} SET trades = ?, wins = ? WHERE run = ?",
+                           (max(0, int(r["trades"] or 0) - 1), max(0, int(r["wins"] or 0) - (1 if pnl > 0 else 0)), run))
+            if st and int(st.get("run") or 0) == run:
+                st["cash"] = float(st.get("cash", 0.0)) - pnl
+                st["trades"] = max(0, int(st.get("trades", 0)) - 1)
+                st["wins"] = max(0, int(st.get("wins", 0)) - (1 if pnl > 0 else 0))
+                if "equity" in st:
+                    st["equity"] = float(st["equity"]) - pnl
+            out["ena"].append({"who": cls.BOT_ID, "run": run, "pnl": round(pnl, 2)})
+        if st:
+            db.set_setting(cls.STATE_KEY, st)
+    return out

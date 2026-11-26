@@ -421,7 +421,7 @@ function Shell({ user }: { user: User }) {
           {/* the panel itself scrolls (rounded corners stay visible); the wrapper only places it between the top edge and the bar */}
           <div className="panel popover sheet-in pointer-events-auto max-h-full overflow-y-auto overscroll-contain p-2" onClick={(e) => e.stopPropagation()}>
             <div className="nav-sheet space-y-2">
-              {HUBS.filter((h) => h.tabs.length).map((h) => [h.label, visibleTabs(h, admin).map((t) => [t.to, t.label] as const)] as [string, (readonly [string, string])[]]).map(([title, items], i) => (
+              {HUBS.filter((h) => h.tabs.length && !PRIMARY.some(([to]) => to === h.to)).map((h) => [h.label, visibleTabs(h, admin).map((t) => [t.to, t.label] as const)] as [string, (readonly [string, string])[]]).map(([title, items], i) => (
                 <div key={title} className={i ? "border-t border-glass/[0.06] pt-2" : ""}>
                   <div className="label px-3 pb-1">{title}</div>
                   {/* auto-fill columns: 3 on wide phones, 2 on most phones, 1 on the narrowest (Z Fold cover); long labels

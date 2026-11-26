@@ -1732,3 +1732,8 @@ safe frame 64 px, audit section J look (graphite, one gold accent, green / red o
 no glow / mesh / gradients). Headline = NET price move; leverage ROI is a secondary line ("leverage magnifies losses too");
 "Paper trading" line on every card; fewer than 300 closed = "too few to judge". Every text goes through `_t` (box recorded);
 `layout_boxes` + `overlaps` power `tests/test_cards_v35.py` (no overlaps, inside the safe frame, long names / tiny prices / huge figures).
+- 26 Nov 2026 (owner): phone More sheet solid (`#more-sheet .popover` opaque in v3.css; the page behind showed through and
+  looked like repeated menu items); collapsed sidebar theme / help icons share `.side-ico` (equal centred boxes).
+  Owner removal (testing mode, flag `remove_waiting_ena_26nov_v31`, `owner_removals.remove_waiting_and_ena_26nov`): record
+  calls still WAITING for entry (fill PENDING) published since 25 Nov 18:00 Dubai + their bot / challenge orders (reserved
+  cash back), and the challenges' ENA/USDT trade(s) since then (balances set back); copies in `removed_*`.

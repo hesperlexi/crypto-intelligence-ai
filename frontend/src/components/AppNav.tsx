@@ -132,7 +132,7 @@ export function ThemeToggle({ collapsed }: { collapsed: boolean }) {
   };
   const label = light ? "Switch to a dark theme" : "Switch to the light theme (Ivory)";
   if (collapsed) {
-    return <button type="button" onClick={flip} className="side-link justify-center" title={label} aria-label={label}><Ico name={light ? "moon" : "sun"} /></button>;
+    return <button type="button" onClick={flip} className="side-link side-ico w-full" title={label} aria-label={label}><Ico name={light ? "moon" : "sun"} /></button>;
   }
   return (
     <div className="flex items-center justify-between gap-2 rounded-lg border border-glass/[0.08] bg-glass/[0.03] px-3 py-2">
@@ -186,7 +186,7 @@ export const Sidebar = memo(function Sidebar({ groups, counts, collapsed, onTogg
       <div className="space-y-1 border-t border-glass/[0.06] px-2 py-3">
         {!collapsed && <SideStatus />}
         <ThemeToggle collapsed={collapsed} />
-        <a href={`mailto:${BRAND.supportEmail}?subject=${encodeURIComponent("Crypto Intelligence AI: help")}`} className={`side-link ${collapsed ? "justify-center" : ""}`}
+        <a href={`mailto:${BRAND.supportEmail}?subject=${encodeURIComponent("Crypto Intelligence AI: help")}`} className={`side-link w-full ${collapsed ? "side-ico" : ""}`}
           title={collapsed ? "Help & support" : BRAND.supportEmail} aria-label={collapsed ? "Help and support (email)" : undefined}>
           <Ico name="help" />{!collapsed && <span className="truncate">Help &amp; support</span>}
         </a>

@@ -225,3 +225,9 @@ body {
 @media (min-width: 1280px) { .ov-status-row-strip .ov-status-list { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
 .ov-status-row-strip .ov-status-row { border-bottom: 0; padding: 6px 0; }
 .ov-status-row > span:first-child { min-height: 24px; }
+
+/* collapsed sidebar footer: theme + help icons in identical centred boxes (owner 26 Nov: "?" not aligned) */
+.side-link.side-ico { justify-content: center; padding: 0; height: 40px; min-height: 40px; }
+.side-link.side-ico svg { display: block; flex: 0 0 auto; margin: 0; }
+/* phone More sheet: solid, so the page behind never shows through it (looked like repeated menu items) */
+#more-sheet .popover, [data-glass] #more-sheet .popover { background: rgb(var(--raised)) !important; -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
