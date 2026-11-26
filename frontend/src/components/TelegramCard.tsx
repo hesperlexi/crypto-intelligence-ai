@@ -54,7 +54,7 @@ export default function TelegramCard() {
         <label className="block"><span className="text-xs text-mute">Channel</span>
           <input className="input mt-1" value={s.channel} onChange={(e) => setS({ ...s, channel: e.target.value.trim() })} placeholder="@yourchannel" /></label>
         <div className="flex flex-wrap gap-x-5 gap-y-2">
-          {([["approve_first", "Ask me before posting wins and trades"], ["post_each_win", "Every win (target 1, 2 or 3, after fees)"], ["post_wins", "Wins of the day"],
+          {([["approve_first", "Ask me before posting wins"], ["post_each_win", "Every win (target 1, 2 or 3, after fees)"], ["post_wins", "Wins of the day"],
              ["post_daily_call", "Free signal of the day + its result"], ["post_briefing", "Market briefing (2x a day)"], ["post_week7", "Last 7 days (Mondays)"], ["post_news", "High-impact US news heads-up (30 min before; waits for you when \"Ask me\" is on)"],
              ...(s.post_week7 ? [] : [["post_weekly", "Weekly results (old card)"]]), ...(s.post_daily_call ? [] : [["post_teaser", "Teaser signal (old)"]])] as [string, string][]).map(([k, l]) => (
             <label key={k} className="flex items-center gap-2"><input type="checkbox" checked={(s as any)[k]} onChange={(e) => setS({ ...s, [k]: e.target.checked })} />{l}</label>

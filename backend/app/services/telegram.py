@@ -611,9 +611,9 @@ def news_text(m: dict[str, Any]) -> str:
 
 
 # owner, 26 Nov 2026: "keep everything autopost - except the wins and trades". "Ask me before posting" now holds only
-# these kinds (wins and trade calls); briefings, news heads-ups and weekly reports always post directly. The result of a
+# these kinds (wins); briefings, news heads-ups and weekly reports always post directly. The result of a
 # posted free trade (win OR loss) also posts on its own, so a losing result can never be held back.
-APPROVE_KINDS = frozenset({"win", "wins", "teaser", "daily_call"})
+APPROVE_KINDS = frozenset({"win", "wins"})   # owner 26 Nov 11:10: the daily free signal posts on its own
 
 
 def needs_approval(cfg: dict[str, Any], kind: str) -> bool:

@@ -381,9 +381,7 @@ def test_daily_call_is_the_first_filled_grade_a_call_and_its_result_always_follo
     assert fake.sent == []                                                # the earlier call holds the choice back
     rt.db.execute("UPDATE signals SET status = 'NOT_FILLED', fill_status = 'NOT_FILLED', closed_at = ? WHERE id = 'p'", (day + 7 * H,))
     T.run(rt, sink, None, None, day + 7 * H, fake)
-    items = sink.get(T.DRAFTS)["items"]                                   # 26 Nov 2026: trade calls wait for approval
-    assert fake.sent == [] and [x["kind"] for x in items] == ["daily_call"]
-    T.post_draft(sink, items[0]["id"], fake)
+    assert sink.get(T.DRAFTS) is None                                     # the daily free signal posts on its own
     assert len(fake.sent) == 1 and "Free signal of the day" in fake.sent[0]["text"] and "ETH/USDT LONG" in fake.sent[0]["text"]
     assert fake.sent[0]["photo"]
     assert rt.db.get_setting("tg_daily_calls", {})["2026-11-03"]["signal_id"] == "f"
