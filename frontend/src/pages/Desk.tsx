@@ -214,40 +214,45 @@ const Torus = memo(function Torus({ strands }: { strands: { c: string; w: number
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, Hh);
-      const cx = W * 0.42, cy = Hh / 2, R = Math.min(W * 0.3, Hh * 0.4) * 0.5, rr = R * 0.96;
-      const tilt = 0.62, ct = Math.cos(tilt), st = Math.sin(tilt);
-      // rays from the shell's right side to the panel edge (towards the live trades)
+      // the "tire": a torus of thread that keeps turning (it spins about a slanted vertical axis, so its outline changes
+      // like the reference) while the strands also flow along themselves
+      const E = Math.min(W * (W < 520 ? 0.52 : 0.32), Hh * 0.82) / 2, R = E / 1.96, rr = R * 0.96;
+      const cx = W * 0.4, cy = Hh / 2;
+      const b = 0.9 + a * 0.55, cb = Math.cos(b), sb = Math.sin(b), c = 0.45, cc = Math.cos(c), sc = Math.sin(c);
+      const hx = cx, hy = cy;
       ctx.lineWidth = 0.5;
       for (let i = 0; i < 46; i++) {
-        const f = i / 45, ang = -1.15 + f * 2.3;
-        const sx = cx + Math.cos(ang) * R * 2.3, sy = cy + Math.sin(ang) * R * 1.9;
+        const f = i / 45, ang = -1.1 + f * 2.2;
+        const sx = cx + Math.cos(ang) * E * 1.02, sy = cy + Math.sin(ang) * E * 1.02;
         ctx.strokeStyle = `rgba(210,225,255,${0.05 + 0.1 * Math.sin(f * Math.PI)})`;
         ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(W, cy + (f - 0.5) * Hh * 1.1); ctx.stroke();
       }
       ctx.globalCompositeOperation = "lighter";
       all.forEach((s, k) => {
-        const ph = s.seed * 6.283, n = 1 + (k % 5), off = (k * 0.37) % 6.283;
-        ctx.lineWidth = s.c ? 0.7 : 0.45;
-        ctx.strokeStyle = s.c ? s.c.replace(/[\d.]+\)$/, ".22)") : `rgba(220,230,255,${0.07 + (k % 7) * 0.013})`;
+        const ph = s.seed * 6.283, off = (k * 2.39996) % 6.283, n = 1 + (k % 4);
+        ctx.lineWidth = s.c ? 0.8 : 0.5;
+        ctx.strokeStyle = s.c ? s.c.replace(/[\d.]+\)$/, ".35)") : `rgba(225,233,255,${0.06 + (k % 7) * 0.013})`;
         ctx.beginPath();
         for (let i = 0; i <= pts; i++) {
           const t = (i / pts) * 6.283;
-          const u = t + off + a, v = ph + n * t * 0.5 + a * (1.6 + (k % 4) * 0.35);
-          const x = (R + rr * Math.cos(v)) * Math.cos(u), y = (R + rr * Math.cos(v)) * Math.sin(u), z = rr * Math.sin(v);
-          const xs = x * ct + z * st;
-          const px = cx + xs * 1.18, py = cy + y;
+          const u = off + t, v = ph + n * t + a * (0.9 + (k % 3) * 0.3);
+          const ring = R + rr * Math.cos(v);
+          const x = ring * Math.cos(u), y = ring * Math.sin(u), z = rr * Math.sin(v);
+          const x1 = x * cb + z * sb, z1 = -x * sb + z * cb;
+          const y2 = y * cc - z1 * sc;
+          const px = cx + x1, py = cy + y2;
           i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
         }
         ctx.stroke();
       });
-      // bright crescent where the strands converge into the hole
-      const hx = cx + R * 0.15, g = ctx.createRadialGradient(hx, cy, 0, hx, cy, R * 0.6);
-      g.addColorStop(0, "rgba(255,255,255,.55)"); g.addColorStop(0.4, "rgba(220,235,255,.18)"); g.addColorStop(1, "rgba(220,235,255,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, cy, R * 0.6, 0, 6.283); ctx.fill();
+      // bright knot where the strands converge
+      const g = ctx.createRadialGradient(hx, hy, 0, hx, hy, R * 0.55);
+      g.addColorStop(0, "rgba(255,255,255,.35)"); g.addColorStop(0.35, "rgba(220,235,255,.22)"); g.addColorStop(1, "rgba(220,235,255,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, hy, R * 0.55, 0, 6.283); ctx.fill();
       ctx.globalCompositeOperation = "source-over";
       // gold link from the shell to the live trades column
       ctx.strokeStyle = "#E8B637"; ctx.lineWidth = 1.4; ctx.shadowColor = "#E8B637"; ctx.shadowBlur = 6;
-      ctx.beginPath(); ctx.moveTo(hx, cy - R * 0.1); ctx.bezierCurveTo(cx + R * 1.6, cy - R * 0.2, W - 60, cy - R * 1.6, W - 2, 18); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(hx, cy - R * 0.1); ctx.bezierCurveTo(cx + E * 0.9, cy - E * 0.1, W - 60, cy - E * 0.9, W - 2, 18); ctx.stroke();
       ctx.shadowBlur = 0;
       ctx.fillStyle = "rgba(150,165,190,.7)"; ctx.font = "11px 'IBM Plex Sans', sans-serif";
       ["0°", "90°", "180°"].forEach((t, i) => ctx.fillText(t, 6, 24 + i * (Hh * 0.27)));
@@ -278,11 +283,11 @@ function Shell({ closed, open, board }: { closed: any[]; open: any[]; board: any
 }
 
 function Trades({ trips, closed }: { trips: any[]; closed: any[] }) {
-  const recent = closed.slice().sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0)).slice(0, 3);
+  const recent = closed.slice().sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0)).slice(0, 2);
   return (
     <Panel title="Live trades · all timeframes" tag={`${trips.length} running`} className="qd-trades">
       <ul className="qd-tl">
-        {trips.slice(0, 7).map((t) => (
+        {trips.slice(0, 5).map((t) => (
           <li key={t.x.id} className={t.s > 0 ? "is-long" : "is-short"}>
             <Link to={`/asset/${slug(t.x.symbol)}?tf=${t.x.timeframe}`}>
               <span className={`qd-pill ${t.s > 0 ? "qd-bg-up" : "qd-bg-dn"}`}>{t.s > 0 ? "Long" : "Short"}</span>
@@ -369,7 +374,7 @@ function Trace({ decisions }: { decisions: any[] }) {
   return (
     <Panel title="Decision trace · engine log" live className="qd-trace">
       <ol className="qd-log">
-        {decisions.slice(0, 16).map((d, i) => (
+        {decisions.slice(0, 12).map((d, i) => (
           <li key={i} className="num"><span className="qd-mute">{hhmm(d.ts)}</span><b>{base(d.symbol ?? "")} {(d.timeframe ?? "").toUpperCase()}</b><span className={/stop|skip|block|no/i.test(d.rule ?? "") ? "qd-dn" : /fill|open|tp|entry/i.test(d.rule ?? "") ? "qd-up" : "qd-gold"}>{String(d.rule ?? "").replace(/_/g, " ")}</span></li>
         ))}
         {!decisions.length && <li className="qd-empty">No engine decisions yet</li>}
@@ -446,11 +451,8 @@ export default function Desk() {
         <div className="qd-c1"><Wallet stats={stats} /><Bowtie stats={stats} /></div>
         <div className="qd-c2"><ModelBook open={open} board={rows} /><Curve closed={closed} /></div>
         <div className="qd-c3"><Phase trips={trips} /></div>
-        <div className="qd-c4"><Shell closed={closed} open={open} board={rows} /></div>
+        <div className="qd-c4"><Shell closed={closed} open={open} board={rows} /><div className="qd-pair"><Edge closed={closed} /><Trace decisions={decisions} /></div><Arrivals all={sigs} /></div>
         <div className="qd-c5"><Trades trips={trips} closed={closed} /><Quant board={rows} /></div>
-        <div className="qd-c6"><Edge closed={closed} /></div>
-        <div className="qd-c7"><Trace decisions={decisions} /></div>
-        <div className="qd-c8"><Arrivals all={sigs} /></div>
       </div>
       <div className="qd-foot">Record net of 0.15% fees + funding · paper trading · not advice</div>
     </div>
