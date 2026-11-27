@@ -1241,3 +1241,79 @@ body:has(.pl-bg) .cc-page .cc-panel { background: rgb(var(--panel) / 0.8) !impor
 .jo-top { position: relative; padding-right: 40px; } .jo-top > .look-cycle { position: absolute; top: 0; right: 0; }
 .tg-board { max-width: min(420px, calc(100% - 16px)); }
 .tg-wrap { overflow: hidden; padding: 4px 0; }
+
+/* ===== Quant desk (owner, 27 Nov 2026): one dark terminal screen, same look in every theme ===== */
+.qd { --qd-bg: #070b12; --qd-panel: #0b111b; --qd-line: #1b2637; --qd-text: #d7dfeb; --qd-mute: #7d8aa0; --qd-cyan: #5DF1DD;
+  background: var(--qd-bg); color: var(--qd-text); border: 1px solid var(--qd-line); border-radius: 10px; padding: 8px; font-size: 12px; letter-spacing: .02em; }
+.qd .num { font-variant-numeric: tabular-nums; }
+.qd-up { color: #0ecb81; } .qd-dn { color: #f6465d; } .qd-mute { color: var(--qd-mute); } .qd-gold { color: #E8B637; }
+.qd-bg-up { background: #0ecb81; } .qd-bg-dn { background: #f6465d; } .qd-bg-mute { background: #3a4558; }
+.qd-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px; padding: 6px 6px 8px; border-bottom: 1px solid var(--qd-line); }
+.qd-brand { display: flex; gap: 10px; align-items: center; min-width: 0; }
+.qd-brand small { display: block; font-size: 9px; color: var(--qd-mute); letter-spacing: .12em; }
+.qd-brand b { display: block; font-size: 15px; color: #7cc4ff; font-weight: 600; } .qd-brand b i { color: var(--qd-mute); font-style: normal; }
+.qd-logo { width: 34px; height: 34px; border-radius: 6px; display: grid; place-items: center; font-weight: 700; background: #1d4ed8; color: #fff; flex: none; }
+.qd-hstats { display: flex; flex-wrap: wrap; gap: 4px 18px; align-items: flex-end; }
+.qd-hstats small { display: block; font-size: 9px; color: var(--qd-mute); letter-spacing: .12em; } .qd-hstats b { font-size: 14px; }
+.qd-clock { border-left: 1px solid var(--qd-line); padding-left: 14px; } .qd-clock b { font-size: 16px; }
+.qd-feed { display: flex; align-items: center; gap: 10px; overflow: hidden; border-bottom: 1px solid var(--qd-line); padding: 5px 4px; white-space: nowrap; font-size: 11px; }
+.qd-feedtag { position: relative; z-index: 1; box-shadow: 8px 0 8px var(--qd-bg); color: #fff; background: #f6465d; padding: 1px 8px; border-radius: 3px; font-weight: 700; font-size: 10px; flex: none; }
+.qd-feedtrack { display: flex; animation: qd-marq 70s linear infinite; color: #9fb3cc; } .qd-feedtrack span { padding-right: 8px; }
+@keyframes qd-marq { to { transform: translateX(-50%); } }
+.qd-grid { display: grid; gap: 8px; padding-top: 8px; grid-template-columns: minmax(0, 1fr); }
+.qd-grid > div { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+@media (min-width: 1100px) {
+  .qd-grid { grid-template-columns: 1fr 1.55fr 1.1fr; }
+  .qd-c4 { grid-column: 1 / 3; } .qd-c5 { grid-column: 3; }
+  .qd-c6, .qd-c7, .qd-c8 { grid-column: auto; }
+}
+.qd-panel { background: var(--qd-panel); border: 1px solid var(--qd-line); border-radius: 6px; display: flex; flex-direction: column; min-width: 0; flex: 1 1 auto; }
+.qd-ph { display: flex; align-items: center; gap: 8px; padding: 6px 10px; border-bottom: 1px solid var(--qd-line); font-size: 10px; font-weight: 600; letter-spacing: .12em; }
+.qd-ph > span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; } .qd-ph em { white-space: nowrap; font-style: normal; color: #f6465d; margin-left: auto; font-size: 9px; } .qd-ph em + .qd-live { margin-left: 8px; }
+.qd-live { color: #0ecb81; font-size: 9px; margin-left: auto; animation: qd-blink 2s steps(2) infinite; }
+@keyframes qd-blink { 50% { opacity: .35; } }
+.qd-pb { padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; flex: 1; min-height: 0; }
+.qd-lbl, .qd-trio small, .qd-zones small { font-size: 9px; color: var(--qd-mute); letter-spacing: .12em; }
+.qd-big { font-size: 30px; font-weight: 600; line-height: 1.1; }
+.qd-sub { font-size: 10px; color: var(--qd-mute); letter-spacing: .06em; } .qd-sub b { color: var(--qd-text); }
+.qd-chip { margin-left: 6px; padding: 1px 6px; border-radius: 3px; background: #E8B637; color: #111; font-weight: 700; font-size: 9px; }
+.qd-trio { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; } .qd-trio b { display: block; font-size: 14px; }
+.qd-bow { display: grid; grid-template-columns: 1fr 1.2fr 1fr; align-items: end; gap: 6px; text-align: center; }
+.qd-bowcol { display: flex; flex-direction: column; align-items: center; gap: 2px; } .qd-bowcol small { font-size: 9px; color: var(--qd-mute); }
+.qd-bowbar { width: 26px; border-radius: 2px; opacity: .8; min-height: 2px; } .qd-bowsvg { width: 100%; height: 80px; }
+.qd-spark { width: 100%; height: 150px; display: block; } .qd-grid line.qd-grid, .qd-grid { stroke: #1b2637; }
+svg .qd-grid { stroke: #172234; stroke-width: 1; }
+.qd-bookgrid { display: grid; grid-template-columns: minmax(0, 1fr) 96px; gap: 8px; align-items: stretch; }
+.qd-zones { border-left: 1px solid var(--qd-line); padding-left: 8px; display: flex; flex-direction: column; gap: 2px; }
+.qd-zones div { display: flex; justify-content: space-between; font-size: 11px; } .qd-zones b { font-size: 13px; }
+.qd-phasesvg { width: 100%; height: auto; } .qd-svgt { fill: #8ca0bc; font-size: 9px; letter-spacing: .06em; }
+.qd-kv { display: flex; justify-content: space-between; font-size: 11px; color: var(--qd-mute); } .qd-kv b { color: var(--qd-text); font-size: 13px; }
+.qd-shell .qd-pb { position: relative; } .qd-torus { position: relative; flex: 1 1 auto; min-height: 420px; } .qd-torus canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.qd-legend { display: flex; gap: 6px 12px; flex-wrap: wrap; align-items: center; font-size: 10px; color: var(--qd-mute); }
+.qd-legend i { width: 10px; height: 3px; display: inline-block; margin-right: -6px; }
+.qd-shellnote { position: absolute; left: 14px; bottom: 34px; border: 1px solid #E8B637; color: #E8B637; padding: 4px 8px; border-radius: 3px; font-size: 10px; background: rgb(7 11 18 / .8); }
+.qd-tl { display: flex; flex-direction: column; gap: 5px; }
+.qd-tl li, .qd-tl li > a { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; }
+.qd-tl li { border: 1px solid var(--qd-line); border-left-width: 3px; border-radius: 4px; padding: 5px 8px; }
+.qd-tl li > a { grid-column: 1 / -1; color: inherit; }
+.qd-tl li.is-long { border-left-color: #0ecb81; } .qd-tl li.is-short { border-left-color: #f6465d; } .qd-tl li.is-done { border-left-color: #E8B637; }
+.qd-tl small { grid-column: 1 / -1; font-size: 10px; }
+.qd-pill { font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 3px; color: #071018; }
+.qd-qgrid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }
+.qd-candles { width: 100%; height: 140px; }
+.qd-movers { display: flex; flex-direction: column; gap: 3px; }
+.qd-movers li { display: grid; grid-template-columns: 54px minmax(0, 1fr) 54px; gap: 6px; align-items: center; font-size: 10px; }
+.qd-movers i { height: 6px; background: rgb(255 255 255 / .04); border-radius: 2px; overflow: hidden; } .qd-movers em { display: block; height: 100%; }
+.qd-movers b { text-align: right; }
+.qd-hist { width: 100%; height: 130px; }
+.qd-log { display: flex; flex-direction: column; font-size: 11px; }
+.qd-log li { display: grid; grid-template-columns: 42px 86px minmax(0, 1fr); gap: 6px; padding: 2px 0; border-bottom: 1px solid #111a28; }
+.qd-log li span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.qd-heat { display: flex; flex-direction: column; gap: 3px; }
+.qd-heatrow { display: grid; grid-template-columns: 34px repeat(24, minmax(0, 1fr)); gap: 2px; align-items: center; font-size: 9px; color: var(--qd-mute); }
+.qd-heatrow i { height: 14px; border-radius: 1px; }
+.qd-heatax { display: flex; justify-content: space-between; padding-left: 36px; font-size: 9px; color: var(--qd-mute); }
+.qd-empty { color: var(--qd-mute); font-size: 11px; padding: 6px 0; }
+.qd-foot { margin-top: 8px; padding: 6px 4px 2px; border-top: 1px solid var(--qd-line); font-size: 9px; letter-spacing: .14em; color: var(--qd-mute); }
+@media (max-width: 640px) { .qd-torus { min-height: 300px; } .qd-big { font-size: 26px; } .qd-clock { border: 0; padding: 0; } }
+@media (prefers-reduced-motion: reduce) { .qd-feedtrack, .qd-live { animation: none; } }

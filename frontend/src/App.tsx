@@ -71,6 +71,7 @@ const Portfolio = page(() => import("./pages/Portfolio"));
 const Flow = page(() => import("./pages/Flow"));
 const Community = page(() => import("./pages/Community"));
 const Regime = page(() => import("./pages/Regime"));
+const Desk = page(() => import("./pages/Desk"));
 const Fast = page(() => import("./pages/Fast"));
 const SystemStatus = page(() => import("./pages/SystemStatus"));
 // public information pages (About, Contact, Terms, Risk): own layout signed out, inside the app signed in
@@ -385,6 +386,7 @@ function Shell({ user }: { user: User }) {
             <Route path="/users" element={<AdminOnly><Users /></AdminOnly>} />
             <Route path="/community" element={<Community />} />
             <Route path="/regime" element={<Regime />} />
+            <Route path="/desk" element={<Desk />} />
             <Route path="/fast" element={<Fast />} />
             <Route path="/system" element={<SystemStatus />} />
             <Route path="/market" element={<Navigate to="/command" replace />} />

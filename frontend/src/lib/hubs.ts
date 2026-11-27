@@ -9,6 +9,7 @@ export const HUBS: Hub[] = [
     id: "market", to: "/command", label: "Market Intelligence", short: "Market", icon: "/command",
     tabs: [
       { to: "/command", label: "AI Intelligence" },
+      { to: "/desk", label: "Quant desk" },
       { to: "/regime", label: "Market regime" },
       { to: "/risk", label: "Risk" },
       { to: "/coins", label: "Coins", also: ["/asset/"] },

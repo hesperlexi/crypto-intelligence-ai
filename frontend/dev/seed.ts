@@ -496,6 +496,7 @@ export function seed(): Record<string, any> {
     "config/limits": { member_coin_limit: 5, member_coins_max: 0 },
     "views/meta": v({ watchlist: COINS.map(([s], i) => ({ symbol: s, pinned: i < 2 ? 1 : 0 })), policy: { min_confidence: 0.55, min_model_agreement: 0.6, min_risk_reward: 1.25, require_edge_for_ml: true, require_edge_for_trade: true, edge_alpha: 0.05 }, costs: { fee_rate: 0.001, slippage_bps: 2, spread_bps: 1 } }),
     "views/track_record": v(trackRecord()),
+    "views/decisions_recent": v({ decisions: [["BTC/USDT","4h","tp1_hit"],["SOL/USDT","1h","open_market"],["ETH/USDT","1h","pending_limit"],["XRP/USDT","15m","runner_on"],["DOGE/USDT","15m","stop_hit"],["AVAX/USDT","4h","open_market"],["LTC/USDT","1h","skip_entry"],["BNB/USDT","4h","break_even"],["AAVE/USDT","4h","tp2_hit"],["PAXG/USDT","12h","open_market"],["SOL/USDT","15m","fill_limit"],["BTC/USDT","15m","open_market"]].map(([symbol, timeframe, rule], i) => ({ ts: NOW - i * 23 * 60_000, symbol, timeframe, rule, inputs: {} })) }),
     "views/public_record": v(publicRecord()),
     "views/wins_today": v({ period: "today", window_hours: 24, closed: 7, losses: 2, wins: [
       { symbol: "XRP/USDT", timeframe: "1h", side: "LONG", entry: 0.5081, status: "TP3", return_pct: 3.12, leverage: 10, roi_pct: 31.2, closed_at: NOW - 2 * H, target: 0.5292 },

@@ -153,6 +153,7 @@ function resolve(path: string, refreshMs: number): Sub {
     case "coin-reports": return p[1] ? view("coin_reports", (d) => (d?.reports ?? {})[toSymbol(p[1])] ?? null) : view("coin_reports");
     case "news": return view("news");
     case "track-record": return view("track_record");
+    case "decisions": return view("decisions_recent");      // Quant desk: the engine's latest decisions (member-readable)
     // admin scalping scorecard (views/scalping; the rules let members read it only when config/scalping says so)
     case "scalping": return p[1] === "config" ? rawDoc(["config", "scalping"]) : view("scalping");
     // Hesper challenge / Road to Rich (views/hesper; members read it only when config/hesper.visibility is "members")

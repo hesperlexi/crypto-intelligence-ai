@@ -87,6 +87,7 @@ const TITLES: [string, string, string][] = [
   ["/lab", "Performance Lab", "What works, what does not"],
   ["/users", "Users", "Members and payments"],
   ["/regime", "Market regime", "One reading of the whole market, with its evidence"],
+  ["/desk", "Quant desk", "Record, live calls and engine log on one terminal screen"],
   ["/fast", "Fast radar", "Experimental: fast movers, never a signal"],
   ["/system", "System status", "Engine, data and models"],
 ];

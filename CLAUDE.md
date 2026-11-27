@@ -1827,3 +1827,9 @@ on that side (was 1). Tests `tests/test_tf_quota_v35.py`.
   Rail · Race track (`.rc-*`) · Liquid tubes (`Tubes`, `.tb-*`) · Target (`Target`, `.tg-*`). Overview mood dial
   (`Instruments.MoodDial`, key `cia-mood-look`): Spectrum (`ThinkingSpectrum`) · Liquid orb · Chronograph · LED stadium
   (`.md-*`). Same data, animations off under reduced motion.
+- **Quant desk** (owner, 27 Nov 2026, `/desk`, Market Intelligence tab after AI Intelligence, members; `pages/Desk.tsx`,
+  CSS `.qd-*` in observatory.css, dark terminal look in every theme): owner's reference = a trading-bot terminal video;
+  same layout, ONLY our data (track_record, `/decisions` = views/decisions_recent, dashboard_1h, BTC klines, live prices).
+  Panels: record, payoff bowtie, model book (BTC 1h + running BTC call band), running total, phase portrait (running calls),
+  neural shell torus (canvas, strand per call / coin), live trades, quant metrics, edge significance (R histogram, 95 %
+  range, "TOO EARLY" < 30), decision trace, signal arrival heat grid. Seed `views/decisions_recent`.
