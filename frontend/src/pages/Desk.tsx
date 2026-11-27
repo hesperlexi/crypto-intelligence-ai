@@ -127,7 +127,9 @@ function Spark({ pts, w = 600, h = 150, zero, band }: { pts: number[]; w?: numbe
 
 function ModelBook({ open, board }: { open: any[]; board: any[] }) {
   const { data } = useKlines("BTC/USDT", "1h", 120);
+  const live = useTickerThrottled("BTC/USDT", 1000);
   const closes = (data ?? []).map((c) => c[4]).filter(isNum) as number[];
+  if (closes.length && isNum(live?.last)) closes[closes.length - 1] = live!.last;
   const btcCall = open.find((x) => x.symbol === "BTC/USDT");
   const ups = board.filter((r) => r.lean === "LONG" || (isNum(r.p_up) && isNum(r.p_down) && r.p_up > r.p_down)).length;
   return (
@@ -190,68 +192,143 @@ function Curve({ closed }: { closed: any[] }) {
   );
 }
 
-/** The "neural shell": every coin on the board and every call of the record as a strand around a torus. Slow turn,
- *  still under reduced motion, paused while the tab is hidden. Strand colour = the call's result (green / red / gold open). */
-const Torus = memo(function Torus({ strands }: { strands: { c: string; w: number; seed: number }[] }) {
+/** The "neural shell" (owner's reference video, 27 Nov 2026): a horn torus of fine thread seen at an angle, so the strands
+ *  pour into a funnel on its right. It spins on its axis and wobbles, the tint drifts, spikes stand off the rim. Every
+ *  call of the record is one coloured strand (green won, red lost, gold running) among neutral threads; running calls
+ *  also sit on the surface as dots. Batched strokes per colour keep it smooth; fewer threads on phones. */
+type Strand = { kind: "base" | "win" | "loss" | "open"; seed: number };
+const TINTS = [[232, 236, 255], [255, 226, 150], [150, 240, 230]];
+const Torus = memo(function Torus({ strands, spinRef }: { strands: Strand[]; spinRef: React.MutableRefObject<HTMLElement | null> }) {
   const ref = useRef<HTMLCanvasElement>(null);
   useEffect(() => {
     const cv = ref.current; if (!cv) return;
     const ctx = cv.getContext("2d"); if (!ctx) return;
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
-    // owner's pick (27 Nov 2026): open loops of colour around a soft grey core, always turning
-    const all = [...strands];
-    while (all.length < 60) all.push({ c: "rgba(93,241,221,.10)", w: 0.6, seed: (all.length * 0.6180339) % 1 });
-    let raf = 0, a = 0, last = 0, prev = 0;
+    const phone = matchMedia("(max-width: 640px)").matches;
+    const rnd = (k: number) => { const x = Math.sin(k * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
+    // geometry in torus space, built once: meridian-like threads with a little jitter, some with a spike off the rim
+    const base = phone ? 300 : 820, M = phone ? 34 : 44;
+    const list: Strand[] = [...strands, ...Array.from({ length: base }, (_, i) => ({ kind: "base" as const, seed: rnd(i + 1) }))];
+    const geo = list.map((st, k) => {
+      const u0 = st.seed * 6.283 + rnd(k * 3) * 0.4, j = 0.04 + rnd(k * 7) * 0.06, sk = rnd(k * 11);
+      const pts: number[] = [];
+      for (let i = 0; i <= M; i++) {
+        const v = (i / M) * 6.283 + rnd(k) * 6.283;
+        const u = u0 + 0.22 * Math.sin(v * 1.5 + k) + (rnd(k * 5) - 0.5) * 0.3;
+        const r = 1 + j * Math.sin(v * 3 + k * 1.7);
+        const ring = (1 + Math.cos(v)) * r;
+        pts.push(ring * Math.cos(u), ring * Math.sin(u), Math.sin(v) * r);
+      }
+      const spike = sk < 0.28 ? { u: u0 + rnd(k * 13) * 0.3, len: 0.08 + rnd(k * 17) * 0.22 } : null;
+      return { st, pts, spike };
+    });
+    const dots = list.map((st, k) => ({ st, k })).filter((x) => x.st.kind === "open").map(({ k }) => ({ u: rnd(k * 19) * 6.283, v: rnd(k * 23) * 6.283 }));
+    let raf = 0, spin = 0, t = 0, last = 0, prev = 0;
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
-      if (document.hidden || now - last < 33) return;
+      if (document.hidden || now - last < (phone ? 50 : 33)) return;
       last = now;
-      a += Math.min(0.1, (now - (prev || now)) / 1000) * (still ? 0.08 : 0.3);
-      prev = now;
+      const dt = Math.min(0.1, (now - (prev || now)) / 1000); prev = now;
+      t += dt; spin += dt * (still ? 0.05 : 0.22);
       const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, Hh = cv.clientHeight;
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, Hh);
-      const cx = W / 2, cy = Hh / 2, R = Math.min(W * 0.62, Hh) * 0.27, rr = R * 0.58;
-      const cy2 = cy - Hh * 0.04;
+      const S = Math.min(W * (W < 520 ? 0.4 : 0.3), Hh * 0.4) / 2.05, cx = W * 0.44, cy = Hh * 0.5;
+      // spin about the torus axis, then tilt it so the funnel faces right (with a slow wobble)
+      const cs = Math.cos(spin), ss = Math.sin(spin);
+      const by = 0.85 + (still ? 0 : 0.07 * Math.sin(t * 0.4)), cb = Math.cos(by), sb = Math.sin(by);
+      const bx = 0.18 + (still ? 0 : 0.05 * Math.sin(t * 0.31)), cxx = Math.cos(bx), sxx = Math.sin(bx);
+      const P = (x: number, y: number, z: number): [number, number, number] => {
+        const x1 = x * cs - y * ss, y1 = x * ss + y * cs;
+        const x2 = x1 * cb + z * sb, z2 = -x1 * sb + z * cb;
+        const y3 = y1 * cxx - z2 * sxx, z3 = y1 * sxx + z2 * cxx;
+        return [cx + x2 * S, cy + y3 * S, z3];
+      };
+      // tint drifts white -> gold -> cyan
+      const ph = (t * 0.05) % 3, i0 = Math.floor(ph), f = ph - i0, A = TINTS[i0], B = TINTS[(i0 + 1) % 3];
+      const tint = A.map((c, n) => Math.round(c + (B[n] - c) * f)).join(",");
       ctx.globalCompositeOperation = "lighter";
-      all.forEach((s, k) => {
-        ctx.strokeStyle = s.c; ctx.lineWidth = s.w; ctx.beginPath();
-        const ph = s.seed * 6.283, tw = 3 + (k % 7);
-        for (let i = 0; i <= 120; i++) {
-          const u = (i / 120) * 6.283, v = ph + tw * u * 0.5 + a * (0.6 + (k % 3) * 0.2);
-          const x3 = (R + rr * Math.cos(v)) * Math.cos(u + a), y3 = (R + rr * Math.cos(v)) * Math.sin(u + a), z3 = rr * Math.sin(v);
-          const px = cx + x3, py = cy2 + y3 * 0.82 + z3 * 0.45;
-          i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
+      const groups: Record<string, { w: number; c: string; ks: number[] }> = {
+        b1: { w: 0.5, c: `rgba(${tint},.13)`, ks: [] }, b2: { w: 0.6, c: `rgba(${tint},.22)`, ks: [] }, b3: { w: 0.7, c: `rgba(${tint},.36)`, ks: [] },
+        win: { w: 0.8, c: "rgba(14,203,129,.45)", ks: [] }, loss: { w: 0.8, c: "rgba(246,70,93,.45)", ks: [] }, open: { w: 0.9, c: "rgba(232,182,55,.5)", ks: [] },
+      };
+      geo.forEach((g, k) => (g.st.kind === "base" ? groups[["b1", "b2", "b3"][k % 3]] : groups[g.st.kind]).ks.push(k));
+      const tips: [number, number][] = [];
+      for (const gname in groups) {
+        const gr = groups[gname];
+        // front half bright, back half dim, so the funnel opening reads as a hole like the reference
+        const front = new Path2D(), back = new Path2D();
+        for (const k of gr.ks) {
+          const p = geo[k].pts;
+          let px = 0, py = 0, pz = 0;
+          for (let i = 0; i < p.length; i += 3) {
+            const [x, y, z] = P(p[i], p[i + 1], p[i + 2]);
+            if (i) { const path = (z + pz) / 2 > -0.15 ? front : back; path.moveTo(px, py); path.lineTo(x, y); }
+            px = x; py = y; pz = z;
+          }
+          const sp = geo[k].spike;
+          if (sp) {
+            const [x0, y0] = P(2 * Math.cos(sp.u), 2 * Math.sin(sp.u), 0), [x1, y1] = P(2 * (1 + sp.len) * Math.cos(sp.u), 2 * (1 + sp.len) * Math.sin(sp.u), 0);
+            front.moveTo(x0, y0); front.lineTo(x1, y1); tips.push([x1, y1]);
+          }
         }
-        ctx.stroke();
-      });
+        ctx.lineWidth = gr.w;
+        ctx.strokeStyle = gr.c.replace(/[\d.]+\)$/, (m) => `${(parseFloat(m) * 0.3).toFixed(3)})`); ctx.stroke(back);
+        ctx.strokeStyle = gr.c; ctx.stroke(front);
+      }
       ctx.globalCompositeOperation = "source-over";
-      const g = ctx.createRadialGradient(cx, cy2, 0, cx, cy2, R * 0.5);
-      g.addColorStop(0, "rgba(255,255,255,.35)"); g.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy2, R * 0.5, 0, 6.283); ctx.fill();
+      ctx.fillStyle = `rgba(${tint},.85)`;
+      for (const [x, y] of tips) { ctx.beginPath(); ctx.arc(x, y, 1.4, 0, 6.283); ctx.fill(); }
+      // funnel glow where every thread converges
+      const [fx, fy] = P(0, 0, 0);
+      const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, S * 0.28);
+      g.addColorStop(0, "rgba(255,255,255,.55)"); g.addColorStop(1, "rgba(255,255,255,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, S * 0.28, 0, 6.283); ctx.fill();
+      // running calls as dots on the surface
+      for (const d of dots) {
+        const ring = 1 + Math.cos(d.v), [x, y, z] = P(ring * Math.cos(d.u), ring * Math.sin(d.u), Math.sin(d.v));
+        ctx.fillStyle = z > 0 ? "rgba(246,70,93,.95)" : "rgba(246,70,93,.45)"; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 6.283); ctx.fill();
+      }
+      // link from the funnel to the live trades column (colour drifts gold -> green)
+      const lc = `rgb(${Math.round(232 - 218 * (0.5 + 0.5 * Math.sin(t * 0.5)))},${Math.round(182 + 21 * (0.5 + 0.5 * Math.sin(t * 0.5)))},${Math.round(55 + 74 * (0.5 + 0.5 * Math.sin(t * 0.5)))})`;
+      ctx.strokeStyle = lc; ctx.lineWidth = 1.6; ctx.shadowColor = lc; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.bezierCurveTo(W * 0.8, fy, W - 30, fy, W - 24, Hh * 0.35); ctx.lineTo(W - 24, 30); ctx.quadraticCurveTo(W - 24, 14, W - 2, 14); ctx.stroke();
+      ctx.shadowBlur = 0;
+      // degree scale on the left
+      ctx.fillStyle = "rgba(150,165,190,.75)"; ctx.font = "11px 'IBM Plex Sans', sans-serif"; ctx.strokeStyle = "rgba(150,165,190,.35)"; ctx.lineWidth = 1;
+      ["0°", "45°", "90°", "135°", "180°", "225°", "270°", "315°"].forEach((lab, i) => {
+        const y = 18 + i * ((Hh - 36) / 7); ctx.beginPath(); ctx.moveTo(4, y); ctx.lineTo(12, y); ctx.stroke(); ctx.fillText(lab, 16, y + 4);
+      });
+      if (spinRef.current) spinRef.current.textContent = `Spin ${(((spin * 180) / Math.PI) % 360).toFixed(1)}° · axis lock`;
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [strands]);
+  }, [strands, spinRef]);
   return <div className="qd-torus"><canvas ref={ref} aria-hidden="true" /></div>;
 });
 
 function Shell({ closed, open, board }: { closed: any[]; open: any[]; board: any[] }) {
+  const spinRef = useRef<HTMLElement | null>(null);
   const strands = useMemo(() => {
-    const out: { c: string; w: number; seed: number }[] = [];
+    const out: Strand[] = [];
     const h = (s: string) => { let x = 7; for (const ch of s) x = (x * 31 + ch.charCodeAt(0)) % 9973; return x / 9973; };
-    board.forEach((r) => out.push({ c: "rgba(140,160,200,.16)", w: 0.6, seed: h(r.symbol) }));
-    closed.forEach((x) => { const n = net(x) ?? 0; out.push({ c: n > 0 ? "rgba(14,203,129,.40)" : "rgba(246,70,93,.40)", w: 0.9, seed: h(x.id + "c") }); });
-    open.forEach((x) => out.push({ c: "rgba(232,182,55,.55)", w: 1.1, seed: h(x.id + "o") }));
+    closed.forEach((x) => out.push({ kind: (net(x) ?? 0) > 0 ? "win" : "loss", seed: h(x.id + "c") }));
+    open.forEach((x) => out.push({ kind: "open", seed: h(x.id + "o") }));
     return out;
-  }, [closed, open, board]);
+  }, [closed, open]);
   const last = closed.slice().sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0))[0];
+  const best = open.slice().sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0))[0];
   return (
     <Panel title="Neural shell · record torus" tag={`Calls ${closed.length + open.length} · coins ${board.length}`} className="qd-shell">
-      <Torus strands={strands} />
-      <div className="qd-legend"><i className="qd-bg-up" /> won <i className="qd-bg-dn" /> lost <i style={{ background: "#E8B637" }} /> running <i style={{ background: "#8ca0c8" }} /> watched coins</div>
-      {last && <div className="qd-shellnote num">Last close · {base(last.symbol)} {last.timeframe.toUpperCase()} {last.side} · <span className={col(net(last))}>{sgn(net(last))}%</span> · {hhmm(last.closed_at)} UTC</div>}
+      <div className="qd-shellwrap">
+        <Torus strands={strands} spinRef={spinRef} />
+        <div className="qd-shellhead"><b>Record torus</b><small>{closed.length + open.length + (typeof window !== "undefined" && matchMedia("(max-width: 640px)").matches ? 300 : 820)} strands · {open.length} running</small></div>
+        <small ref={spinRef} className="qd-spin num" />
+        {best && <div className="qd-scan num">[Scan · {base(best.symbol)} {best.timeframe.toUpperCase()}]<br />{best.side} @ {fmtPrice(best.entry)} · grade {best.grade ?? DASH}</div>}
+        {last && <div className="qd-shellnote num">Last close · {base(last.symbol)} {last.timeframe.toUpperCase()} {last.side} · <span className={col(net(last))}>{sgn(net(last))}%</span> · {hhmm(last.closed_at)} UTC</div>}
+      </div>
+      <div className="qd-legend"><i className="qd-bg-up" /> won <i className="qd-bg-dn" /> lost <i style={{ background: "#E8B637" }} /> running <i style={{ background: "#dfe6f5" }} /> neural threads</div>
     </Panel>
   );
 }
@@ -335,12 +412,47 @@ function Edge({ closed }: { closed: any[] }) {
         <line x1={(2 / 6.5) * W} x2={(2 / 6.5) * W} y1="0" y2={Hh} stroke="#E8B637" strokeDasharray="3 3" />
         <text x="4" y={Hh - 1} className="qd-svgt">−2R</text><text x={(2 / 6.5) * W + 3} y="10" className="qd-svgt">0R</text><text x={W - 22} y={Hh - 1} className="qd-svgt">+4R</text>
       </svg>
+      <EdgeExtras rs={rs} />
       <div className="qd-trio">
         <div><small>Mean</small><b className={`num ${col(mean)}`}>{rs.length ? `${sgn(mean)}R` : DASH}</b></div>
         <div><small>95% range</small><b className="num">{rs.length > 1 ? `${sgn(mean - 1.96 * se)} … ${sgn(mean + 1.96 * se)}` : DASH}</b></div>
         <div><small>Verdict</small><b className={rs.length < 30 ? "qd-gold" : mean - 1.96 * se > 0 ? "qd-up" : mean + 1.96 * se < 0 ? "qd-dn" : "qd-gold"}>{rs.length < 30 ? "Too early" : mean - 1.96 * se > 0 ? "Edge" : mean + 1.96 * se < 0 ? "Negative" : "Not proven"}</b></div>
       </div>
     </Panel>
+  );
+}
+
+/** CUSUM of R (running sum minus the mean: drifting down = losing edge) and a bootstrap of the mean R (1,000
+ *  resamples of the real closed calls, fixed seed so it does not jump on every render). */
+function EdgeExtras({ rs }: { rs: number[] }) {
+  const { cus, boot } = useMemo(() => {
+    const m = rs.length ? rs.reduce((a, b) => a + b, 0) / rs.length : 0;
+    let c = 0; const cus = [0, ...rs.map((r) => (c += r - m))];
+    let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const boot: number[] = [];
+    if (rs.length >= 3) for (let i = 0; i < 1000; i++) { let s = 0; for (let j = 0; j < rs.length; j++) s += rs[Math.floor(rnd() * rs.length)]; boot.push(s / rs.length); }
+    return { cus, boot };
+  }, [rs]);
+  if (rs.length < 3) return null;
+  const W = 170, Hh = 70;
+  const lo = Math.min(...cus), hi = Math.max(...cus);
+  const cy = (v: number) => Hh - 6 - ((v - lo) / Math.max(1e-9, hi - lo)) * (Hh - 12);
+  const bl = Math.min(...boot), bh = Math.max(...boot), nb = 24;
+  const bc = Array.from({ length: nb }, (_, i) => boot.filter((v) => Math.min(nb - 1, Math.floor(((v - bl) / Math.max(1e-9, bh - bl)) * nb)) === i).length);
+  const bm = Math.max(1, ...bc), share = boot.filter((v) => v > 0).length / boot.length;
+  return (
+    <div className="qd-edgex">
+      <div><small>CUSUM · drift of R</small>
+        <svg viewBox={`0 0 ${W} ${Hh}`} preserveAspectRatio="none" aria-hidden="true">
+          <path d={cus.map((v, i) => `${i ? "L" : "M"}${((i / (cus.length - 1)) * W).toFixed(1)} ${cy(v).toFixed(1)}`).join(" ")} fill="none" stroke="#f59e0b" strokeWidth="1.4" vectorEffect="non-scaling-stroke" />
+          <line x1="0" x2={W} y1={cy(0)} y2={cy(0)} stroke="#3a4558" strokeDasharray="3 3" />
+        </svg></div>
+      <div><small>Bootstrap · {Math.round(share * 100)}% above 0R</small>
+        <svg viewBox={`0 0 ${W} ${Hh}`} preserveAspectRatio="none" aria-hidden="true">
+          {bc.map((c, i) => <rect key={i} x={(i / nb) * W + 0.5} width={W / nb - 1} y={Hh - 4 - (c / bm) * (Hh - 10)} height={(c / bm) * (Hh - 10)} fill="#8b7cf6" opacity=".8" />)}
+          {bl < 0 && bh > 0 && <line x1={((0 - bl) / (bh - bl)) * W} x2={((0 - bl) / (bh - bl)) * W} y1="0" y2={Hh} stroke="#E8B637" strokeDasharray="3 3" />}
+        </svg></div>
+    </div>
   );
 }
 
