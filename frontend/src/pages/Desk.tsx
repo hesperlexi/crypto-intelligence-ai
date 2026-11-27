@@ -1,10 +1,12 @@
 // Quant desk (owner, 27 Nov 2026): one dense terminal screen in the style of a trading-desk monitor.
 // Only our own real data: the record (views/track_record), the engine's decisions (views/decisions_recent), the 1H
 // market board (views/dashboard_1h), BTC candles (public Binance REST) and live prices. Nothing is simulated.
-import { memo, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useApi } from "../lib/api";
 import { useKlines } from "../lib/klines";
+import { fklines } from "../lib/binance";
+import type { Candle } from "../lib/ta";
 import { useLive, useTickerThrottled } from "../lib/live";
 import { LiveLogo } from "../components/Logo";
 import { base, DASH, fmtPctRaw, fmtPrice, isNum, slug } from "../lib/format";
@@ -192,142 +194,126 @@ function Curve({ closed }: { closed: any[] }) {
   );
 }
 
-/** The "neural shell" (owner's reference video, 27 Nov 2026): a horn torus of fine thread seen at an angle, so the strands
- *  pour into a funnel on its right. It spins on its axis and wobbles, the tint drifts, spikes stand off the rim. Every
- *  call of the record is one coloured strand (green won, red lost, gold running) among neutral threads; running calls
- *  also sit on the surface as dots. Batched strokes per colour keep it smooth; fewer threads on phones. */
-type Strand = { kind: "base" | "win" | "loss" | "open"; seed: number };
-const TINTS = [[232, 236, 255], [255, 226, 150], [150, 240, 230]];
-const Torus = memo(function Torus({ strands, spinRef }: { strands: Strand[]; spinRef: React.MutableRefObject<HTMLElement | null> }) {
+/** Live R streams (owner, 28 Nov 2026: "replace it with something making sense"): every running record call as a line of
+ *  its result in R (0 = entry, -1 = stop, +1 = target 1) over the last hour. History from public 1-minute candles,
+ *  then a new point from the live price every 2 s; the chart scrolls with the clock. */
+type Stream = { id: string; label: string; s: number; entry: number; risk: number; from: number; pts: [number, number][] };
+const SPAN = 60 * 60_000;
+
+function useStreams(open: any[]) {
+  const { tickers } = useLive();
+  const tk = useRef(tickers); tk.current = tickers;
+  const [streams, setStreams] = useState<Stream[]>([]);
+  const key = open.filter((x) => x.fill_status !== "PENDING").map((x) => x.id).join(",");
+  useEffect(() => {
+    let dead = false;
+    const calls = open.filter((x) => x.fill_status !== "PENDING" && isNum(x.entry) && isNum(x.stop) && x.entry !== x.stop);
+    const base: Stream[] = calls.map((x) => ({ id: x.id, label: `${base_(x.symbol)} ${x.timeframe.toUpperCase()}`, s: x.side === "SHORT" ? -1 : 1, entry: x.entry,
+      risk: Math.abs(x.entry - x.stop), from: Number(x.filled_at ?? x.created_at ?? 0), pts: [] }));
+    setStreams(base);
+    const syms = [...new Set(calls.map((x) => x.symbol))];
+    (async () => {
+      const hist: Record<string, Candle[]> = {};
+      for (const sym of syms) { try { hist[sym] = await fklines(sym, "1m", 61); } catch { /* live points only */ } if (dead) return; }
+      setStreams((cur) => cur.map((st, i) => {
+        const c = calls[i]; const rows = hist[c?.symbol] ?? [];
+        const pts = rows.filter((k) => k[0] + 60_000 >= st.from).map((k) => [k[0] + 60_000, (st.s * (k[4] - st.entry)) / st.risk] as [number, number]);
+        return { ...st, pts: [...pts, ...st.pts.filter((p) => !pts.length || p[0] > pts[pts.length - 1][0])] };
+      }));
+    })();
+    const id = setInterval(() => {
+      const now = Date.now();
+      setStreams((cur) => cur.map((st, i) => {
+        const px = tk.current[calls[i]?.symbol]?.last;
+        if (!isNum(px)) return st;
+        const pts = [...st.pts, [now, (st.s * (px - st.entry)) / st.risk] as [number, number]].filter((p) => p[0] >= now - SPAN - 120_000);
+        return { ...st, pts };
+      }));
+    }, 2000);
+    return () => { dead = true; clearInterval(id); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key]);
+  return streams;
+}
+const base_ = (s: string) => base(s);
+
+function LiveR({ streams }: { streams: Stream[] }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const data = useRef(streams); data.current = streams;
   useEffect(() => {
     const cv = ref.current; if (!cv) return;
     const ctx = cv.getContext("2d"); if (!ctx) return;
-    const phone = matchMedia("(max-width: 640px)").matches;
-    const rnd = (k: number) => { const x = Math.sin(k * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
-    // geometry in torus space, built once: meridian-like threads with a little jitter, some with a spike off the rim
-    const base = phone ? 300 : 820, M = phone ? 34 : 44;
-    const list: Strand[] = [...strands, ...Array.from({ length: base }, (_, i) => ({ kind: "base" as const, seed: rnd(i + 1) }))];
-    const geo = list.map((st, k) => {
-      const u0 = st.seed * 6.283 + rnd(k * 3) * 0.4, j = 0.04 + rnd(k * 7) * 0.06, sk = rnd(k * 11);
-      const pts: number[] = [];
-      for (let i = 0; i <= M; i++) {
-        const v = (i / M) * 6.283 + rnd(k) * 6.283;
-        const u = u0 + 0.22 * Math.sin(v * 1.5 + k) + (rnd(k * 5) - 0.5) * 0.3;
-        const r = 1 + j * Math.sin(v * 3 + k * 1.7);
-        const ring = (1 + Math.cos(v)) * r;
-        pts.push(ring * Math.cos(u), ring * Math.sin(u), Math.sin(v) * r);
-      }
-      const spike = sk < 0.28 ? { u: u0 + rnd(k * 13) * 0.3, len: 0.08 + rnd(k * 17) * 0.22 } : null;
-      return { st, pts, spike };
-    });
-    const dots = list.map((st, k) => ({ st, k })).filter((x) => x.st.kind === "open").map(({ k }) => ({ u: rnd(k * 19) * 6.283, v: rnd(k * 23) * 6.283 }));
-    let raf = 0, spin = 0, t = 0, last = 0, prev = 0;
+    let raf = 0, last = 0;
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
-      if (document.hidden || now - last < (phone ? 50 : 33)) return;
+      if (document.hidden || now - last < 50) return;
       last = now;
-      const dt = Math.min(0.1, (now - (prev || now)) / 1000); prev = now;
-      t += dt; spin += dt * 0.5;
       const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, Hh = cv.clientHeight;
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      ctx.clearRect(0, 0, W, Hh);
-      const S = Math.min(W * (W < 520 ? 0.4 : 0.3), Hh * 0.4) / 2.05, cx = W * 0.44, cy = Hh * 0.5;
-      // spin about the torus axis, then tilt it so the funnel faces right (with a slow wobble)
-      const cs = Math.cos(spin), ss = Math.sin(spin);
-      const by = 0.85 + 0.28 * Math.sin(t * 0.5), cb = Math.cos(by), sb = Math.sin(by);
-      const bx = 0.18 + 0.12 * Math.sin(t * 0.37), cxx = Math.cos(bx), sxx = Math.sin(bx);
-      const P = (x: number, y: number, z: number): [number, number, number] => {
-        const x1 = x * cs - y * ss, y1 = x * ss + y * cs;
-        const x2 = x1 * cb + z * sb, z2 = -x1 * sb + z * cb;
-        const y3 = y1 * cxx - z2 * sxx, z3 = y1 * sxx + z2 * cxx;
-        return [cx + x2 * S, cy + y3 * S, z3];
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.clearRect(0, 0, W, Hh);
+      const narrow = W < 520, L = narrow ? 40 : 46, Rm = narrow ? 112 : 128, T = 14, B = 26, t1 = Date.now(), t0 = t1 - SPAN;
+      const all = data.current.filter((st) => st.pts.length);
+      const vals = all.flatMap((st) => st.pts.filter((p) => p[0] >= t0).map((p) => p[1]));
+      const lo = Math.min(-1.3, ...vals) - 0.1, hi = Math.max(1.5, ...vals) + 0.2;
+      const X = (t: number) => L + ((t - t0) / SPAN) * (W - L - Rm), Y = (r: number) => T + ((hi - r) / (hi - lo)) * (Hh - T - B);
+      ctx.font = `${narrow ? 10 : 11}px 'IBM Plex Sans', sans-serif`;
+      // zones and levels
+      ctx.fillStyle = "rgba(246,70,93,.07)"; ctx.fillRect(L, Y(-1), W - L - Rm, Hh - B - Y(-1));
+      ctx.fillStyle = "rgba(14,203,129,.05)"; ctx.fillRect(L, T, W - L - Rm, Y(1) - T);
+      const lvl = (r: number, c: string, lab: string, dash: number[]) => {
+        if (r < lo || r > hi) return;
+        ctx.strokeStyle = c; ctx.setLineDash(dash); ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(L, Y(r)); ctx.lineTo(W - Rm, Y(r)); ctx.stroke(); ctx.setLineDash([]);
+        ctx.fillStyle = c; ctx.textAlign = "right"; ctx.fillText(lab, L - 6, Y(r) + 4); ctx.textAlign = "left";
       };
-      // tint drifts white -> gold -> cyan
-      const ph = (t * 0.05) % 3, i0 = Math.floor(ph), f = ph - i0, A = TINTS[i0], B = TINTS[(i0 + 1) % 3];
-      const tint = A.map((c, n) => Math.round(c + (B[n] - c) * f)).join(",");
-      ctx.globalCompositeOperation = "lighter";
-      const groups: Record<string, { w: number; c: string; ks: number[] }> = {
-        b1: { w: 0.5, c: `rgba(${tint},.13)`, ks: [] }, b2: { w: 0.6, c: `rgba(${tint},.22)`, ks: [] }, b3: { w: 0.7, c: `rgba(${tint},.36)`, ks: [] },
-        win: { w: 0.8, c: "rgba(14,203,129,.45)", ks: [] }, loss: { w: 0.8, c: "rgba(246,70,93,.45)", ks: [] }, open: { w: 0.9, c: "rgba(232,182,55,.5)", ks: [] },
-      };
-      geo.forEach((g, k) => (g.st.kind === "base" ? groups[["b1", "b2", "b3"][k % 3]] : groups[g.st.kind]).ks.push(k));
-      const tips: [number, number][] = [];
-      for (const gname in groups) {
-        const gr = groups[gname];
-        // front half bright, back half dim, so the funnel opening reads as a hole like the reference
-        const front = new Path2D(), back = new Path2D();
-        for (const k of gr.ks) {
-          const p = geo[k].pts;
-          let px = 0, py = 0, pz = 0;
-          for (let i = 0; i < p.length; i += 3) {
-            const [x, y, z] = P(p[i], p[i + 1], p[i + 2]);
-            if (i) { const path = (z + pz) / 2 > -0.15 ? front : back; path.moveTo(px, py); path.lineTo(x, y); }
-            px = x; py = y; pz = z;
-          }
-          const sp = geo[k].spike;
-          if (sp) {
-            const [x0, y0] = P(2 * Math.cos(sp.u), 2 * Math.sin(sp.u), 0), [x1, y1] = P(2 * (1 + sp.len) * Math.cos(sp.u), 2 * (1 + sp.len) * Math.sin(sp.u), 0);
-            front.moveTo(x0, y0); front.lineTo(x1, y1); tips.push([x1, y1]);
-          }
-        }
-        ctx.lineWidth = gr.w;
-        ctx.strokeStyle = gr.c.replace(/[\d.]+\)$/, (m) => `${(parseFloat(m) * 0.3).toFixed(3)})`); ctx.stroke(back);
-        ctx.strokeStyle = gr.c; ctx.stroke(front);
+      for (let r = Math.ceil(lo); r <= Math.floor(hi); r++) if (r !== 0 && r !== -1 && r !== 1) lvl(r, "rgba(125,138,160,.35)", `${r > 0 ? "+" : ""}${r}R`, [2, 4]);
+      lvl(-1, "rgba(246,70,93,.8)", "Stop", [4, 4]); lvl(0, "rgba(232,182,55,.9)", "Entry", []); lvl(1, "rgba(14,203,129,.8)", "TP1", [4, 4]);
+      // time axis
+      ctx.fillStyle = "rgba(125,138,160,.8)";
+      for (let m = 60; m >= 0; m -= 15) { const x = X(t1 - m * 60_000); ctx.fillText(m ? `−${m}m` : "now", x - (m ? 12 : 10), Hh - 8); ctx.strokeStyle = "rgba(255,255,255,.05)"; ctx.beginPath(); ctx.moveTo(x, T); ctx.lineTo(x, Hh - B); ctx.stroke(); }
+      // the streams
+      const ends: { y: number; r: number; lab: string; c: string }[] = [];
+      for (const st of all) {
+        const pts = st.pts.filter((p) => p[0] >= t0 - 60_000);
+        if (!pts.length) continue;
+        const r = pts[pts.length - 1][1], c = r > 0.1 ? "#0ecb81" : r < -0.1 ? "#f6465d" : "#E8B637";
+        ctx.strokeStyle = c; ctx.lineWidth = 1.6; ctx.globalAlpha = 0.85; ctx.beginPath();
+        pts.forEach((p, i) => { const x = Math.max(L, X(p[0])), y = Y(p[1]); i ? ctx.lineTo(x, y) : ctx.moveTo(x, y); });
+        ctx.lineTo(X(t1), Y(r)); ctx.stroke(); ctx.globalAlpha = 1;
+        const pulse = 3 + 2 * (0.5 + 0.5 * Math.sin(now / 300 + st.entry));
+        ctx.fillStyle = c; ctx.shadowColor = c; ctx.shadowBlur = 10; ctx.beginPath(); ctx.arc(X(t1), Y(r), pulse, 0, 6.283); ctx.fill(); ctx.shadowBlur = 0;
+        ends.push({ y: Y(r), r, lab: `${st.label} ${r > 0 ? "+" : ""}${r.toFixed(2)}R`, c });
       }
-      ctx.globalCompositeOperation = "source-over";
-      ctx.fillStyle = `rgba(${tint},.85)`;
-      for (const [x, y] of tips) { ctx.beginPath(); ctx.arc(x, y, 1.4, 0, 6.283); ctx.fill(); }
-      // funnel glow where every thread converges
-      const [fx, fy] = P(0, 0, 0);
-      const g = ctx.createRadialGradient(fx, fy, 0, fx, fy, S * 0.28);
-      g.addColorStop(0, "rgba(255,255,255,.55)"); g.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(fx, fy, S * 0.28, 0, 6.283); ctx.fill();
-      // running calls as dots on the surface
-      for (const d of dots) {
-        const ring = 1 + Math.cos(d.v), [x, y, z] = P(ring * Math.cos(d.u), ring * Math.sin(d.u), Math.sin(d.v));
-        ctx.fillStyle = z > 0 ? "rgba(246,70,93,.95)" : "rgba(246,70,93,.45)"; ctx.beginPath(); ctx.arc(x, y, 2.4, 0, 6.283); ctx.fill();
-      }
-      // link from the funnel to the live trades column (colour drifts gold -> green)
-      const lc = `rgb(${Math.round(232 - 218 * (0.5 + 0.5 * Math.sin(t * 0.5)))},${Math.round(182 + 21 * (0.5 + 0.5 * Math.sin(t * 0.5)))},${Math.round(55 + 74 * (0.5 + 0.5 * Math.sin(t * 0.5)))})`;
-      ctx.strokeStyle = lc; ctx.lineWidth = 1.6; ctx.shadowColor = lc; ctx.shadowBlur = 6;
-      ctx.beginPath(); ctx.moveTo(fx, fy); ctx.bezierCurveTo(W * 0.8, fy, W - 30, fy, W - 24, Hh * 0.35); ctx.lineTo(W - 24, 30); ctx.quadraticCurveTo(W - 24, 14, W - 2, 14); ctx.stroke();
-      ctx.shadowBlur = 0;
-      // degree scale on the left
-      ctx.fillStyle = "rgba(150,165,190,.75)"; ctx.font = "11px 'IBM Plex Sans', sans-serif"; ctx.strokeStyle = "rgba(150,165,190,.35)"; ctx.lineWidth = 1;
-      ["0°", "45°", "90°", "135°", "180°", "225°", "270°", "315°"].forEach((lab, i) => {
-        const y = 18 + i * ((Hh - 36) / 7); ctx.beginPath(); ctx.moveTo(4, y); ctx.lineTo(12, y); ctx.stroke(); ctx.fillText(lab, 16, y + 4);
-      });
-      if (spinRef.current) spinRef.current.textContent = `Spin ${(((spin * 180) / Math.PI) % 360).toFixed(1)}° · axis lock`;
+      // labels on the right, pushed apart so they never overlap
+      ends.sort((a, b) => a.y - b.y);
+      for (let i = 1; i < ends.length; i++) if (ends[i].y - ends[i - 1].y < 14) ends[i].y = ends[i - 1].y + 14;
+      const over = ends.length ? ends[ends.length - 1].y - (Hh - B) : 0;
+      if (over > 0) ends.forEach((e) => (e.y -= over));
+      for (const e of ends) { ctx.fillStyle = e.c; ctx.fillText(e.lab, W - Rm + 10, e.y + 4); }
+      if (!all.length) { ctx.fillStyle = "rgba(125,138,160,.9)"; ctx.textAlign = "center"; ctx.fillText("No running calls with a filled entry right now", (L + W - Rm) / 2, Hh / 2); ctx.textAlign = "left"; }
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
-  }, [strands, spinRef]);
-  return <div className="qd-torus"><canvas ref={ref} aria-hidden="true" /></div>;
-});
+  }, []);
+  return <div className="qd-torus"><canvas ref={ref} role="img" aria-label="Result of every running call in R over the last hour" /></div>;
+}
 
-function Shell({ closed, open, board }: { closed: any[]; open: any[]; board: any[] }) {
-  const spinRef = useRef<HTMLElement | null>(null);
-  const strands = useMemo(() => {
-    const out: Strand[] = [];
-    const h = (s: string) => { let x = 7; for (const ch of s) x = (x * 31 + ch.charCodeAt(0)) % 9973; return x / 9973; };
-    closed.forEach((x) => out.push({ kind: (net(x) ?? 0) > 0 ? "win" : "loss", seed: h(x.id + "c") }));
-    open.forEach((x) => out.push({ kind: "open", seed: h(x.id + "o") }));
-    return out;
-  }, [closed, open]);
+function Shell({ closed, open }: { closed: any[]; open: any[]; board?: any[] }) {
+  const streams = useStreams(open);
+  const now = streams.map((st) => ({ st, r: st.pts.length ? st.pts[st.pts.length - 1][1] : null })).filter((x) => x.r != null) as { st: Stream; r: number }[];
+  const sum = now.reduce((a, x) => a + x.r, 0);
+  const best = now.slice().sort((a, b) => b.r - a.r)[0], worst = now.slice().sort((a, b) => a.r - b.r)[0];
+  const waiting = open.filter((x) => x.fill_status === "PENDING").length;
   const last = closed.slice().sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0))[0];
-  const best = open.slice().sort((a, b) => (b.created_at ?? 0) - (a.created_at ?? 0))[0];
   return (
-    <Panel title="Neural shell · record torus" tag={`Calls ${closed.length + open.length} · coins ${board.length}`} className="qd-shell">
-      <div className="qd-shellwrap">
-        <Torus strands={strands} spinRef={spinRef} />
-        <div className="qd-shellhead"><b>Record torus</b><small>{closed.length + open.length + (typeof window !== "undefined" && matchMedia("(max-width: 640px)").matches ? 300 : 820)} strands · {open.length} running</small></div>
-        <small ref={spinRef} className="qd-spin num" />
-        {best && <div className="qd-scan num">[Scan · {base(best.symbol)} {best.timeframe.toUpperCase()}]<br />{best.side} @ {fmtPrice(best.entry)} · grade {best.grade ?? DASH}</div>}
-        {last && <div className="qd-shellnote num">Last close · {base(last.symbol)} {last.timeframe.toUpperCase()} {last.side} · <span className={col(net(last))}>{sgn(net(last))}%</span> · {hhmm(last.closed_at)} UTC</div>}
+    <Panel title="Live R · last hour" tag={`${now.length} running${waiting ? ` · ${waiting} waiting` : ""}`} live className="qd-shell">
+      <LiveR streams={streams} />
+      <div className="qd-rsum">
+        <div><small>Open result now</small><b className={`num ${col(sum)}`}>{now.length ? `${sgn(sum)}R` : DASH}</b></div>
+        <div><small>Best</small><b className="num">{best ? <>{best.st.label} <span className={col(best.r)}>{sgn(best.r)}R</span></> : DASH}</b></div>
+        <div><small>Worst</small><b className="num">{worst ? <>{worst.st.label} <span className={col(worst.r)}>{sgn(worst.r)}R</span></> : DASH}</b></div>
+        <div><small>Last close</small><b className="num">{last ? <>{base(last.symbol)} {last.timeframe.toUpperCase()} <span className={col(net(last))}>{sgn(net(last))}%</span></> : DASH}</b></div>
       </div>
-      <div className="qd-legend"><i className="qd-bg-up" /> won <i className="qd-bg-dn" /> lost <i style={{ background: "#E8B637" }} /> running <i style={{ background: "#dfe6f5" }} /> neural threads</div>
+      <p className="qd-sub">1 R = the distance from entry to stop. Lines move with the live price every 2 seconds.</p>
     </Panel>
   );
 }

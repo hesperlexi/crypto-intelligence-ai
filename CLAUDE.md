@@ -1831,5 +1831,6 @@ on that side (was 1). Tests `tests/test_tf_quota_v35.py`.
   CSS `.qd-*` in observatory.css, dark terminal look in every theme): owner's reference = a trading-bot terminal video;
   same layout, ONLY our data (track_record, `/decisions` = views/decisions_recent, dashboard_1h, BTC klines, live prices).
   Panels: record, payoff bowtie, model book (BTC 1h + running BTC call band), running total, phase portrait (running calls),
-  neural shell torus (canvas, strand per call / coin), live trades, quant metrics, edge significance (R histogram, 95 %
+  Live R streams (replaced the neural-shell torus, owner 28 Nov: every running filled call's R over the last hour, history
+  from public 1m klines then live price every 2 s, Stop / Entry / TP1 lines, labels pushed apart), live trades, quant metrics, edge significance (R histogram, 95 %
   range, "TOO EARLY" < 30), decision trace, signal arrival heat grid. Seed `views/decisions_recent`.
