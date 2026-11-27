@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { base, DASH, fmtPctRaw, fmtPrice, isNum, slug } from "../lib/format";
 import { useTickerThrottled } from "../lib/live";
 import { TickFlash } from "./kit";
+import { LookCycle } from "./TradeJourneys";
 
 const ICONS = "/coins";   // v2.75: self-hosted (spothq/cryptocurrency-icons 0.18.1, CC0) - no third-party request per logo
 const MISSING = new Set<string>();
@@ -321,5 +322,170 @@ export function SonarScope({ rows, size = 300 }: { rows?: SonarRow[]; size?: num
           : <><span className="text-bull">▲ {up.length} leaning up</span> · <span className="text-bear">▼ {dn.length} leaning down</span> · farther out = stronger</>}
       </figcaption>
     </figure>
+  );
+}
+
+/* ================================================================== Mood dial looks (V3.5, owner 27 Nov 2026)
+   Same data as ThinkingSpectrum (the chosen timeframe's dashboard rows, Fear & Greed, BTC live); one button turns through
+   Spectrum → Liquid orb → Chronograph → LED stadium (remembered on this device). */
+type MoodProps = { rows?: any[]; fg?: number | null; fgLabel?: string; status?: any; tfLabel?: string };
+const MOOD_LOOKS = [["spectrum", "Spectrum"], ["orb", "Liquid orb"], ["watch", "Chronograph"], ["led", "LED stadium"]] as const;
+type MoodLook = (typeof MOOD_LOOKS)[number][0];
+const MOOD_KEY = "cia-mood-look";
+
+function useMoodData({ rows, fg, status }: MoodProps) {
+  const list = useMemo(() => (rows ?? []).filter((x) => x?.symbol).map((x) => {
+    const v = leanOf(x), sc = isNum(x.score) ? Math.max(0, Math.min(100, x.score)) / 100 : 0.5;
+    return { x, v, k: Math.max(0.18, Math.min(1, 0.15 + 0.5 * Math.abs(v) + 0.35 * sc)) };
+  }).sort((a, b) => a.v - b.v || b.k - a.k), [rows]);
+  const n = list.length;
+  const bull = status?.bull ?? list.filter((p) => p.v > 0).length;
+  const bear = status?.bear ?? list.filter((p) => p.v < 0).length;
+  const fv = isNum(fg) ? Math.max(0, Math.min(100, fg)) : null;
+  const fgCol = fv == null ? "rgb(var(--mute))" : fv < 25 ? BEAR : fv < 45 ? "rgb(var(--warn))" : fv <= 55 ? "rgb(var(--mute))" : BULL;
+  const net = n ? (bull - bear) / n : 0;
+  const word = !n ? "Waiting" : net <= -0.5 ? "Bearish" : net < -0.15 ? "Leaning bearish" : net >= 0.5 ? "Bullish" : net > 0.15 ? "Leaning bullish" : "Mixed";
+  const tone = net < -0.15 ? BEAR : net > 0.15 ? BULL : "rgb(var(--mute))";
+  return { list, n, bull, bear, fv, fgCol, net, word, tone };
+}
+
+function MoodCap({ d, tfLabel, fgLabel }: { d: ReturnType<typeof useMoodData>; tfLabel: string; fgLabel?: string }) {
+  return (
+    <figcaption className="ins-cap">
+      <span><b className="text-bull">{d.bull}</b> bullish · <b className="text-bear">{d.bear}</b> bearish <span className="text-mute">of {d.n} coins · {tfLabel}</span></span>
+      <span className="text-mute">Fear &amp; Greed <b className="num" style={{ color: d.fgCol }}>{d.fv ?? DASH}</b>{fgLabel ? ` · ${fgLabel}` : ""}</span>
+    </figcaption>
+  );
+}
+
+function BtcLine({ y, size = 13 }: { y: number; size?: number }) {
+  const t = useTickerThrottled("BTC/USDT", 1000);
+  const ch = t?.change_pct;
+  return (
+    <>
+      <text x="180" y={y} textAnchor="middle" fontSize={size + 5} fontWeight="700" fill="rgb(var(--text))" className="num">{isNum(t?.last) ? `$${fmtPrice(t.last)}` : "BTC"}</text>
+      {isNum(ch) && <text x="180" y={y + size + 4} textAnchor="middle" fontSize={size - 2} fill={ch >= 0 ? BULL : BEAR}>BTC {ch >= 0 ? "▲" : "▼"} {fmtPctRaw(Math.abs(ch))}</text>}
+    </>
+  );
+}
+
+const MoodOrb = memo(function MoodOrb(p: MoodProps) {
+  const id = useId().replace(/:/g, "");
+  const d = useMoodData(p);
+  const bearSide = d.bear >= d.bull;
+  const share = d.n ? (bearSide ? d.bear : d.bull) / d.n : 0;
+  const col = !d.n ? "rgb(var(--mute))" : bearSide ? BEAR : BULL;
+  const top = 330 - share * 300;
+  const wave = (yy: number, a: number) => `M-40 ${yy} q20 ${-a} 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 V400 H-40Z`;
+  const floaters = (bearSide ? d.list.filter((q) => q.v < 0) : [...d.list].reverse().filter((q) => q.v > 0)).slice(0, 3);
+  return (
+    <figure className="ins-dial md-orb">
+      <svg viewBox="0 0 360 360" role="img" aria-label={`Liquid orb: ${Math.round(share * 100)}% of coins ${bearSide ? "bearish" : "bullish"}`}>
+        <BeadDefs id={id} />
+        <defs>
+          <clipPath id={`${id}-o`}><circle cx="180" cy="180" r="150" /></clipPath>
+          <radialGradient id={`${id}-g`} cx="35%" cy="28%" r="80%"><stop offset="0" stopColor="#fff" stopOpacity=".22" /><stop offset=".45" stopColor="#fff" stopOpacity=".03" /><stop offset="1" stopColor="#000" stopOpacity=".35" /></radialGradient>
+        </defs>
+        <circle cx="180" cy="180" r="166" fill="none" stroke="rgb(var(--accent) / 0.45)" strokeWidth="1.5" />
+        {d.fv != null && d.fv > 0 && <path d={arcPath(180, 180, 166, -Math.PI / 2, -Math.PI / 2 + Math.max(0.02, (d.fv / 100) * TAU))} fill="none" stroke={d.fgCol} strokeWidth="3.5" strokeLinecap="round" />}
+        <circle cx="180" cy="180" r="150" fill="rgb(var(--ink))" />
+        <g clipPath={`url(#${id}-o)`}>
+          <path className="md-wave2" d={wave(top + 4, 7)} fill={col} opacity=".45" />
+          <path className="md-wave" d={wave(top, 9)} fill={col} opacity=".9" />
+          {floaters.map((q, i) => (
+            <g key={q.x.symbol} className="md-float" style={{ animationDelay: `${i * 1.1}s` }}>
+              <CoinBead id={id} symbol={q.x.symbol} x={120 + i * 62} y={Math.min(300, Math.max(top + 40, 250 - (i % 2) * 34))} r={15} tone="rgb(255 255 255 / 0.5)" ring={1} />
+            </g>
+          ))}
+        </g>
+        <circle cx="180" cy="180" r="150" fill={`url(#${id}-g)`} stroke="rgb(var(--glass) / 0.25)" />
+        <ellipse cx="128" cy="92" rx="44" ry="20" fill="#fff" opacity=".13" transform="rotate(-30 128 92)" />
+        <text x="180" y="150" textAnchor="middle" fontSize="50" fontWeight="700" fill="#fff" style={{ paintOrder: "stroke" }} stroke="rgb(0 0 0 / 0.35)" strokeWidth="3" className="num">{d.n ? `${Math.round(share * 100)}%` : DASH}</text>
+        <text x="180" y="174" textAnchor="middle" fontSize="14" fill="#fff" opacity=".85">{d.n ? (bearSide ? "bearish" : "bullish") : "waiting for data"}</text>
+        <BtcLine y={212} />
+      </svg>
+      <MoodCap d={d} tfLabel={p.tfLabel ?? "4H"} fgLabel={p.fgLabel} />
+    </figure>
+  );
+});
+
+const MoodWatch = memo(function MoodWatch(p: MoodProps) {
+  const id = useId().replace(/:/g, "");
+  const d = useMoodData(p);
+  const ang = Math.max(-1, Math.min(1, d.net)) * 120;
+  const ticks = Array.from({ length: 41 }, (_, i) => {
+    const a = ((-120 + i * 6) * Math.PI) / 180, big = i % 5 === 0, r1 = 150, r2 = big ? 136 : 142;
+    return { x1: 180 + r1 * Math.sin(a), y1: 180 - r1 * Math.cos(a), x2: 180 + r2 * Math.sin(a), y2: 180 - r2 * Math.cos(a), big };
+  });
+  return (
+    <figure className="ins-dial md-watch">
+      <svg viewBox="0 0 360 360" role="img" aria-label={`Chronograph: market mood ${d.word}; Fear and Greed ${d.fv ?? "unknown"}`}>
+        <defs>
+          <linearGradient id={`${id}-gold`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#F6E37A" /><stop offset=".5" stopColor="#E8B637" /><stop offset="1" stopColor="#9C7417" /></linearGradient>
+          <radialGradient id={`${id}-face`} cx="50%" cy="40%" r="70%"><stop offset="0" stopColor="rgb(var(--raised))" /><stop offset="1" stopColor="rgb(var(--ink))" /></radialGradient>
+          <linearGradient id={`${id}-arc`} x1="0" y1="0" x2="1" y2="0"><stop offset="0" stopColor="rgb(var(--bear))" /><stop offset=".5" stopColor="rgb(var(--mute))" /><stop offset="1" stopColor="rgb(var(--bull))" /></linearGradient>
+        </defs>
+        <circle cx="180" cy="180" r="174" fill={`url(#${id}-gold)`} />
+        <circle cx="180" cy="180" r="163" fill={`url(#${id}-face)`} />
+        <path d="M 73.8 241.3 A 122.6 122.6 0 1 1 286.2 241.3" fill="none" stroke={`url(#${id}-arc)`} strokeWidth="10" strokeLinecap="round" />
+        {ticks.map((t, i) => <line key={i} x1={t.x1} y1={t.y1} x2={t.x2} y2={t.y2} stroke={t.big ? "#E8B637" : "rgb(var(--glass) / 0.35)"} strokeWidth={t.big ? 2 : 1} />)}
+        <text x="64" y="280" fontSize="11" fill={BEAR} letterSpacing="1">BEAR</text>
+        <text x="180" y="44" fontSize="11" fill="rgb(var(--mute))" textAnchor="middle" letterSpacing="1">NEUTRAL</text>
+        <text x="296" y="280" fontSize="11" fill={BULL} textAnchor="end" letterSpacing="1">BULL</text>
+        <circle cx="133" cy="226" r="29" fill="rgb(var(--ink))" stroke="rgb(var(--accent) / 0.35)" />
+        <text x="133" y="228" fontSize="17" fontWeight="700" fill={d.fgCol} textAnchor="middle" className="num">{d.fv ?? DASH}</text>
+        <text x="133" y="242" fontSize="7.5" fill="rgb(var(--mute))" textAnchor="middle">FEAR &amp; GREED</text>
+        <circle cx="227" cy="226" r="29" fill="rgb(var(--ink))" stroke="rgb(var(--accent) / 0.35)" />
+        <text x="227" y="228" fontSize="15" fontWeight="700" fill={d.tone} textAnchor="middle" className="num">{d.bull}/{d.bear}</text>
+        <text x="227" y="242" fontSize="7.5" fill="rgb(var(--mute))" textAnchor="middle">BULL / BEAR</text>
+        <g className="md-needle" style={{ transform: `rotate(${ang}deg)` }}>
+          <path d="M176.5 180 L180 70 L183.5 180 Z" fill="rgb(var(--text))" />
+          <path d="M178 180 L180 204 L182 180 Z" fill="#E8B637" />
+        </g>
+        <circle cx="180" cy="180" r="11" fill={`url(#${id}-gold)`} />
+        <circle cx="180" cy="180" r="4" fill="rgb(var(--ink))" />
+        <BtcLine y={300} size={12} />
+      </svg>
+      <MoodCap d={d} tfLabel={p.tfLabel ?? "4H"} fgLabel={p.fgLabel} />
+    </figure>
+  );
+});
+
+const MoodLed = memo(function MoodLed(p: MoodProps) {
+  const d = useMoodData(p);
+  const n = Math.max(1, d.n);
+  return (
+    <figure className="ins-dial md-led">
+      <svg viewBox="0 0 360 360" role="img" aria-label={`LED stadium: ${d.bear} red bearish, ${d.bull} green bullish of ${d.n} coins`}>
+        <circle cx="180" cy="180" r="160" fill="none" stroke="rgb(var(--glass) / 0.08)" strokeWidth="34" />
+        {d.list.map((q, i) => (
+          <Link key={q.x.symbol} to={`/asset/${slug(q.x.symbol)}`} aria-label={`${base(q.x.symbol)}: ${words(q.v)}`}>
+            <rect className="md-seg" x="173" y="12" width="14" height="30" rx="6" fill={q.v > 0 ? BULL : q.v < 0 ? BEAR : "rgb(var(--mute))"}
+              opacity={(0.35 + 0.65 * q.k).toFixed(2)} transform={`rotate(${((i + 0.5) * 360 / n).toFixed(1)} 180 180)`} style={{ animationDelay: `${(i * 0.08).toFixed(2)}s` }}>
+              <title>{`${base(q.x.symbol)} · ${words(q.v)}`}</title>
+            </rect>
+          </Link>
+        ))}
+        <circle className="md-chase" cx="180" cy="180" r="136" fill="none" stroke="#E8B637" strokeWidth="2" strokeDasharray="44 811" strokeLinecap="round" />
+        <circle cx="180" cy="180" r="122" fill="rgb(var(--ink))" stroke="rgb(var(--accent) / 0.35)" />
+        <text x="180" y="146" fontSize="11" fill="rgb(var(--mute))" textAnchor="middle" letterSpacing="2">MOOD</text>
+        <text x="180" y="182" fontSize={d.word.length > 9 ? 24 : 34} fontWeight="700" fill={d.tone} textAnchor="middle">{d.word}</text>
+        <text x="180" y="206" fontSize="13" fill="rgb(var(--mute))" textAnchor="middle">{d.n ? `${Math.max(d.bull, d.bear)} of ${d.n} coins` : ""}</text>
+        <BtcLine y={238} size={11} />
+      </svg>
+      <MoodCap d={d} tfLabel={p.tfLabel ?? "4H"} fgLabel={p.fgLabel} />
+    </figure>
+  );
+});
+
+/** The Overview mood dial with one button that turns through its looks. */
+export function MoodDial(p: MoodProps) {
+  const [look, setLook] = useState<MoodLook>(() => { try { const v = localStorage.getItem(MOOD_KEY); return (MOOD_LOOKS.find(([k]) => k === v)?.[0] ?? "spectrum") as MoodLook; } catch { return "spectrum"; } });
+  const pick = (v: MoodLook) => { setLook(v); try { localStorage.setItem(MOOD_KEY, v); } catch { /* private mode */ } };
+  return (
+    <div className="md-wrap">
+      {look === "orb" ? <MoodOrb {...p} /> : look === "watch" ? <MoodWatch {...p} /> : look === "led" ? <MoodLed {...p} /> : <ThinkingSpectrum {...p} />}
+      <LookCycle looks={MOOD_LOOKS} value={look} onChange={pick} label="Mood dial look" />
+    </div>
   );
 }

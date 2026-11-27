@@ -82,10 +82,25 @@ export function Orb({ tone, fill, size = 64, label }: { tone: Tone; fill: number
   );
 }
 
+// V3.5 (owner, 27 Nov 2026): five looks, one button that turns through them (remembered on this device).
+const LOOKS = [["lane", "Lane"], ["rail", "Rail"], ["race", "Race track"], ["tubes", "Liquid tubes"], ["target", "Target"]] as const;
+type Look = (typeof LOOKS)[number][0];
+
+/** One small button that turns through the looks: Lane → Rail → Race track → Liquid tubes → Target → Lane. */
+export function LookCycle<T extends string>({ looks, value, onChange, label }: { looks: readonly (readonly [T, string])[]; value: T; onChange: (v: T) => void; label: string }) {
+  const i = Math.max(0, looks.findIndex(([k]) => k === value));
+  const next = looks[(i + 1) % looks.length];
+  return (
+    <button type="button" className="look-cycle" onClick={() => onChange(next[0])} title={`${label}: switch to ${next[1]}`} aria-label={`${label}: ${looks[i][1]}. Switch to ${next[1]}`}>
+      <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 6.5A5.5 5.5 0 0 0 3.2 4.4M2.5 9.5a5.5 5.5 0 0 0 10.3 2.1M3 1.8v2.9h2.9M13 14.2v-2.9h-2.9" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+    </button>
+  );
+}
+
 export function SignalJourneysV2({ track }: { track: any }) {
   const { tickers } = useLive();
-  const [look, setLook] = useState<"lane" | "rail">(() => { try { return localStorage.getItem(KEY) === "rail" ? "rail" : "lane"; } catch { return "lane"; } });
-  const pick = (v: "lane" | "rail") => { setLook(v); try { localStorage.setItem(KEY, v); } catch { /* private mode */ } };
+  const [look, setLook] = useState<Look>(() => { try { const v = localStorage.getItem(KEY); return (LOOKS.find(([k]) => k === v)?.[0] ?? "lane") as Look; } catch { return "lane"; } });
+  const pick = (v: Look) => { setLook(v); try { localStorage.setItem(KEY, v); } catch { /* private mode */ } };
   const all: any[] = (track?.live?.signals ?? []).filter((x: any) => x.status === "OPEN");
   const trips = all.slice(0, JOURNEY_MAX).map((x) => tripOf(x, tickers[x.symbol]?.last ?? undefined)).sort((a, b) => (b.r ?? -99) - (a.r ?? -99));
   const live = trips.filter((t) => t.r != null);
@@ -101,21 +116,21 @@ export function SignalJourneysV2({ track }: { track: any }) {
           <span><b className="num text-bear">{red}</b> in loss</span>
           <span>avg <b className={`num ${(avg ?? 0) >= 0 ? "text-bull" : "text-bear"}`}>{rTxt(avg)}</b></span>
         </div>
-        <div className="jo-switch" role="group" aria-label="Journeys look">
-          {(["lane", "rail"] as const).map((v) => (
-            <button key={v} type="button" aria-pressed={look === v} className={look === v ? "is-on" : ""} onClick={() => pick(v)}>{v === "lane" ? "Lane" : "Rail"}</button>
-          ))}
-        </div>
+        <LookCycle looks={LOOKS} value={look} onChange={pick} label="Live signals look" />
       </div>
-      {!all.length ? <p className="py-6 text-center text-sm text-mute">No signals running right now. New calls appear here the moment they open.</p> : (
-        <ul className={`jo-list is-${look}`}>{trips.map((t) => <Row key={t.x.id ?? `${t.x.symbol}${t.x.created_at}`} t={t} look={look} />)}</ul>
-      )}
+      {!all.length ? <p className="py-6 text-center text-sm text-mute">No signals running right now. New calls appear here the moment they open.</p>
+        : look === "tubes" ? <Tubes trips={trips} />
+        : look === "target" ? <Target trips={trips} />
+        : <ul className={`jo-list is-${look}`}>{trips.map((t) => <Row key={t.x.id ?? `${t.x.symbol}${t.x.created_at}`} t={t} look={look} />)}</ul>}
       {all.length > JOURNEY_MAX && <Link to="/results?tab=track" className="mt-1 block text-center text-xs font-medium text-accent hover:underline">+{all.length - JOURNEY_MAX} more running · see all in Results</Link>}
     </div>
   );
 }
 
-function Row({ t, look }: { t: Trip; look: "lane" | "rail" }) {
+const keyOf = (t: Trip) => t.x.id ?? `${t.x.symbol}${t.x.created_at}`;
+const tag = (sym: string) => name(sym).slice(0, 3);
+
+function Row({ t, look }: { t: Trip; look: Look }) {
   const { x } = t;
   const c = COL[t.tone];
   const a = Math.min(t.e, t.c), b = Math.max(t.e, t.c);
@@ -136,6 +151,25 @@ function Row({ t, look }: { t: Trip; look: "lane" | "rail" }) {
       <span>Stop {t.stopTxt}</span>
     </div>
   );
+  if (look === "race") {
+    return (
+      <li className="jo-row rc-row" aria-label={aria}>
+        <div className="jo-body">
+          <div className="jo-line1">{head}<span className="jo-r num" style={{ color: c }}>{t.pending ? "Waiting" : rTxt(t.r)}</span></div>
+          <div className="rc-track">
+            <i className="rc-haz" style={{ width: P(t.e) }} />
+            <i className="rc-go" style={{ left: P(t.e), width: P(1 - t.e) }} />
+            <i className="rc-start" style={{ left: P(t.e) }} />
+            {marks.map((m) => m.p < 0.97 && <i key={m.lab} className={`rc-gate ${m.hit ? "is-hit" : ""}`} style={{ left: P(m.p) }} />)}
+            <i className="rc-fin" />
+            {!t.pending && t.r != null && b - a > 0.005 && <i className={`rc-trail ${t.c < t.e ? "is-back" : ""}`} style={{ left: P(a), width: P(b - a), color: c }} />}
+            <span className={`rc-bead ${t.pending ? "is-wait" : ""}`} style={{ left: P(t.c), color: c }}>{tag(x.symbol)}</span>
+          </div>
+          {foot}
+        </div>
+      </li>
+    );
+  }
   if (look === "rail") {
     return (
       <li className="jo-row" aria-label={aria}>
@@ -174,5 +208,68 @@ function Row({ t, look }: { t: Trip; look: "lane" | "rail" }) {
         {foot}
       </div>
     </li>
+  );
+}
+
+/** Liquid tubes: each call a glass tube, empty at the stop, full at the last target; gold line = entry. */
+function Tubes({ trips }: { trips: Trip[] }) {
+  return (
+    <div className="tb-grid">
+      {trips.map((t) => {
+        const c = COL[t.tone];
+        return (
+          <Link key={keyOf(t)} to={`/asset/${slug(t.x.symbol)}?tf=${t.x.timeframe}`} className="tb-col"
+            aria-label={`${name(t.x.symbol)} ${t.x.timeframe} ${t.s > 0 ? "long" : "short"}: ${t.pending ? "waiting for entry" : rTxt(t.r)}`}>
+            <span className="tb-tube">
+              <span className="tb-liq" style={{ height: P(t.pending ? 0 : t.c), color: c }}>
+                <i className="tb-wave" /><i className="tb-bub" /><i className="tb-bub" style={{ left: "60%", animationDelay: "1.3s" }} />
+              </span>
+              <i className="tb-mark is-en" style={{ bottom: P(t.e) }} />
+              {t.tps.map((p, k) => <i key={k} className={`tb-mark ${t.hits[k] ? "is-hit" : ""}`} style={{ bottom: P(p) }} />)}
+              <i className="tb-glint" />
+            </span>
+            <b>{name(t.x.symbol)}</b>
+            <span className="jo-sub">{String(t.x.timeframe).toUpperCase()} · <span className={t.s > 0 ? "text-bull" : "text-bear"}>{t.s > 0 ? "Long" : "Short"}</span></span>
+            <span className="num tb-r" style={{ color: c }}>{t.pending ? "Waiting" : rTxt(t.r)}</span>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Target: the closer to the centre, the closer to the last target. Red ring = stop, gold ring = entry. */
+function Target({ trips }: { trips: Trip[] }) {
+  const n = Math.max(1, trips.length);
+  const spot = (t: Trip, i: number) => {
+    const f = t.r == null ? 0.25 : clamp((t.r + 1) / 4);
+    const rf = 1 - f, a = (i / n) * Math.PI * 2 - Math.PI / 2 + 0.35;
+    return { left: `${50 + 41 * rf * Math.cos(a)}%`, top: `${50 + 41 * rf * Math.sin(a)}%` };
+  };
+  return (
+    <div className="tg-wrap">
+      <div className="tg-board" role="img" aria-label={`Target board with ${trips.length} running calls`}>
+        <i className="tg-ring is-sl" /><i className="tg-ring is-en" /><i className="tg-ring is-tp1" /><i className="tg-ring is-tp2" />
+        <i className="tg-eye" /><i className="tg-sweep" />
+        <em className="tg-lab" style={{ top: "7%" }}>STOP</em><em className="tg-lab is-en" style={{ top: "18%" }}>ENTRY</em>
+        <em className="tg-lab is-tp" style={{ top: "29%" }}>TP1</em><em className="tg-lab is-tp" style={{ top: "55%" }}>TP3</em>
+        {trips.map((t, i) => (
+          <span key={keyOf(t)} className={`tg-bead ${t.pending ? "is-wait" : ""}`} style={{ ...spot(t, i), color: COL[t.tone] }}>
+            <i className="tg-ping" />{tag(t.x.symbol)}
+          </span>
+        ))}
+      </div>
+      <ul className="tg-list">
+        {trips.map((t) => (
+          <li key={keyOf(t)}>
+            <Link to={`/asset/${slug(t.x.symbol)}?tf=${t.x.timeframe}`} className="tg-item">
+              <i style={{ background: COL[t.tone] }} /><b>{name(t.x.symbol)}</b>
+              <span className="jo-sub">{String(t.x.timeframe).toUpperCase()} · <span className={t.s > 0 ? "text-bull" : "text-bear"}>{t.s > 0 ? "Long" : "Short"}</span></span>
+              <span className="num tg-r" style={{ color: COL[t.tone] }}>{t.pending ? "Waiting" : rTxt(t.r)}</span>
+            </Link>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }

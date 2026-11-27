@@ -5,7 +5,7 @@ import { FirstWeekGuide } from "../components/TodayPulse";
 import WelcomeTour from "../components/WelcomeTour";
 import { Decisions, MarketStatus, MyCapital, MyPositions } from "../components/V3Home";
 import DataStatus from "../components/DataStatus";
-import { ThinkingSpectrum } from "../components/Instruments";
+import { MoodDial } from "../components/Instruments";
 import { ago } from "../lib/format";
 import { BriefingPanel } from "../components/Polish";
 import { IntelBrief } from "../components/MarketBoard";
@@ -53,7 +53,7 @@ export default function Dashboard() {
             <MarketStatus status4={moodData?.market_status} rows={moodData?.rows} embedded tfLabel={moodTf.toUpperCase()} />
             <TodayLine track={track.data} />
           </div>
-          <ThinkingSpectrum rows={moodData?.rows} status={moodData?.market_status} fg={sentiment?.value} fgLabel={sentiment?.label} tfLabel={moodTf.toUpperCase()} />
+          <MoodDial rows={moodData?.rows} status={moodData?.market_status} fg={sentiment?.value} fgLabel={sentiment?.label} tfLabel={moodTf.toUpperCase()} />
         </div>
         <StatusPanel sentiment={sentiment} openCount={openCount} />
       </section>

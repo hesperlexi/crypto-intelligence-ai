@@ -1822,3 +1822,8 @@ on that side (was 1). Tests `tests/test_tf_quota_v35.py`.
   Tracking and the isolated paper strategy stay on 1h. UI: `FastRadar` 1H / 4H switch per card (localStorage
   `cia-fast-tf-<category>`), meta line on its own row so both cards align. Seed `fastRadar().tf_4h`. Test in
   `tests/test_fast_radar_v33.py`.
+- Looks switch (owner, 27 Nov 2026: "one small round switch"): `TradeJourneys.LookCycle` = small round gold button
+  (`.look-cycle`), each click moves to the next look. Live signals (`SignalJourneysV2`, key `cia-journeys-look`): Lane ·
+  Rail · Race track (`.rc-*`) · Liquid tubes (`Tubes`, `.tb-*`) · Target (`Target`, `.tg-*`). Overview mood dial
+  (`Instruments.MoodDial`, key `cia-mood-look`): Spectrum (`ThinkingSpectrum`) · Liquid orb · Chronograph · LED stadium
+  (`.md-*`). Same data, animations off under reduced motion.
