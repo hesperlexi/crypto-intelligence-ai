@@ -1,1 +1,63 @@
-no build log
+++ python3 -c 'import json;print(json.load(open("../frontend/package.json"))["version"])'
++ ver=3.1.0
+++ python3 -c 'import json;print(int(json.load(open("../frontend/package.json")).get("apkLevel",1)))'
++ lvl=8
++ sed -e s/__VERSION_NAME__/3.1.0/g -e s/__VERSION_CODE__/455/ -e s/__APK_LEVEL__/8/ twa-manifest.template.json
++ mkdir -p /home/runner/.bubblewrap
++ echo '{"jdkPath": "/opt/hostedtoolcache/Java_Temurin-Hotspot_jdk/17.0.21-2/x64", "androidSdkPath": "/usr/local/lib/android/sdk"}'
++ SDK=/usr/local/lib/android/sdk
++ '[' -e /usr/local/lib/android/sdk/tools ']'
++ sudo ln -s /usr/local/lib/android/sdk/cmdline-tools/latest /usr/local/lib/android/sdk/tools
++ yes
++ /usr/local/lib/android/sdk/cmdline-tools/latest/bin/sdkmanager --licenses
+Warning: Observed package id 'cmdline-tools;20.0' in inconsistent location '/usr/local/lib/android/sdk/tools' (Expected '/usr/local/lib/android/sdk/cmdline-tools/20.0')
+Warning: Observed package id 'cmdline-tools;20.0' in inconsistent location '/usr/local/lib/android/sdk/cmdline-tools/latest' (Expected '/usr/local/lib/android/sdk/cmdline-tools/20.0')
+Warning: Observed package id 'cmdline-tools;20.0' in inconsistent location '/usr/local/lib/android/sdk/tools' (Expected '/usr/local/lib/android/sdk/cmdline-tools/20.0')
+Warning: Already observed package id 'cmdline-tools;20.0' in '/usr/local/lib/android/sdk/cmdline-tools/latest'. Skipping duplicate at '/usr/local/lib/android/sdk/tools'
+yes: standard output: Broken pipe
++ true
++ ls /usr/local/lib/android/sdk/build-tools
++ tail -3
+36.0.0
+36.1.0
+37.0.0
++ npm install -g @bubblewrap/cli@1.21.0
+npm warn deprecated phin@3.7.1: Package no longer supported. Contact Support at https://www.npmjs.com/support for more info.
+npm warn deprecated google-p12-pem@3.1.4: Package is no longer maintained
+npm warn deprecated @types/gapi.client.androidpublisher@3.0.2: use @types/gapi.client.androidpublisher-v3 instead; see https://github.com/Maxim-Mazurok/google-api-typings-generator/issues/652 for details
+npm warn deprecated uuid@8.3.2: uuid@10 and below is no longer supported.  For ESM codebases, update to uuid@latest.  For CommonJS codebases, use uuid@11 (but be aware this version will likely be deprecated in 2028).
++ cd ../frontend/public/icons
++ sleep 1
++ python3 -m http.server 8765 --bind 127.0.0.1
++ bubblewrap update --skipVersionUpgrade
+,-----.        ,--.  ,--.  ,--.
+|  |) /_,--.,--|  |-.|  |-.|  |,---.,--.   ,--,--.--.,--,--.,---.
+|  .-.  |  ||  | .-. | .-. |  | .-. |  |.'.|  |  .--' ,-.  | .-. |
+|  '--' '  ''  | `-' | `-' |  \   --|   .'.   |  |  \ '-'  | '-' '
+`------' `----' `---' `---'`--'`----'--'   '--`--'   `--`--|  |-'
+                                                           `--'    
+Generating Android Project.
+
+Project updated successfully.
+Build it by running bubblewrap build
++ python3 ../scripts/android_force_chrome.py
+patched app/src/main/java/com/hesper/cryptoai/LauncherActivity.java
+patched app/src/main/AndroidManifest.xml
+patched app/src/main/java/com/hesper/cryptoai/LauncherActivity.java (ask at launch)
+wrote app/src/main/java/com/hesper/cryptoai/NotifySettingsActivity.java
+patched app/src/main/AndroidManifest.xml (NotifySettingsActivity)
++ bubblewrap build --skipPwaValidation
+,-----.        ,--.  ,--.  ,--.
+|  |) /_,--.,--|  |-.|  |-.|  |,---.,--.   ,--,--.--.,--,--.,---.
+|  .-.  |  ||  | .-. | .-. |  | .-. |  |.'.|  |  .--' ,-.  | .-. |
+|  '--' '  ''  | `-' | `-' |  \   --|   .'.   |  |  \ '-'  | '-' '
+`------' `----' `---' `---'`--'`----'--'   '--`--'   `--`--|  |-'
+                                                           `--'    
+Using passwords set in the BUBBLEWRAP_KEYSTORE_PASSWORD and BUBBLEWRAP_KEY_PASSWORD environmental variables.
+
+Building the Android App...
+
+
+[7mcli[0m [31mERROR stderr maxBuffer length exceeded[0m
+
+
