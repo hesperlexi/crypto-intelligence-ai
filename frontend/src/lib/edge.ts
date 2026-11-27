@@ -28,6 +28,7 @@ let offUntil = 0;
 let timer = 0;
 let soon = 0;
 let busy = false;
+let again = false;          // a view was added while a poll was in flight: poll once more right after it
 
 export const edgeEligible = (name: string) => ENABLED && EDGE_RE.test(name);
 export function edgeStats() {
@@ -60,12 +61,19 @@ function backToEdge() {
 }
 
 async function poll() {
-  if (busy || document.hidden) return;
+  // v3.5 (owner, 27 Nov 2026: the Overview mood dial often stayed empty until another page was opened and closed):
+  // views opened while the first poll was still waiting for the sign-in token were skipped (busy) and then waited
+  // for the 30-second timer. Now they are polled right after the running one finishes.
+  if (busy) { again = true; return; }
+  if (document.hidden) return;
   backToEdge();
   const live = [...entries.values()].filter((e) => e.mode === "edge" && e.listeners.size);
   if (!live.length) return;
   busy = true;
   try {
+    // the app's first poll can run before Firebase has restored the sign-in: wait for it instead of giving up on the
+    // edge for 5 minutes (the Firestore fallback was also slower at start)
+    try { await (auth as any).authStateReady?.(); } catch { /* ignore */ }
     const user = auth.currentUser;
     if (!user) { allToFirestore(); return; }
     const [token, ac] = await Promise.all([user.getIdToken(), appCheckToken()]);
@@ -85,6 +93,7 @@ async function poll() {
     allToFirestore();
   } finally {
     busy = false;
+    if (again) { again = false; window.setTimeout(() => { void poll(); }, 0); }
   }
 }
 

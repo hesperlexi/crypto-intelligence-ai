@@ -1812,3 +1812,7 @@ direction / correlated limits no longer apply to the record. Kept shared: 1R per
 one coin, the drawdown brake (halt / probation halves the quota). Bot / challenge books (`book_check`) keep the shared
 limits. Same-side cap 12 (`combo_gates`): each timeframe may still open while it has < `SAME_SIDE_TF_QUOTA` 3 running calls
 on that side (was 1). Tests `tests/test_tf_quota_v35.py`.
+- Overview mood dial empty on open (owner, 27 Nov 2026: "loads only after going to another page and back"): `lib/edge.ts`
+  skipped views registered while the first edge poll was still waiting for the sign-in token (`busy`) until the 30 s
+  timer; now `again` re-polls right after, and the poll waits for `auth.authStateReady()` instead of falling back to
+  Firestore for 5 min when the sign-in is not restored yet.
