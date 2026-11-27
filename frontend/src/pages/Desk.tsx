@@ -197,33 +197,58 @@ const Torus = memo(function Torus({ strands }: { strands: { c: string; w: number
     const cv = ref.current; if (!cv) return;
     const ctx = cv.getContext("2d"); if (!ctx) return;
     const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const phone = matchMedia("(max-width: 640px)").matches;
+    // the record's strands first (tinted), then fine silver filler strands so the shell reads as one dense ball
+    const N = phone ? 260 : 520;
+    const all = [...strands.filter((s) => !s.c.startsWith("rgba(140")), ...Array.from({ length: Math.max(0, N - strands.length) }, (_, i) => ({ c: "", w: 0.5, seed: (i * 0.6180339) % 1 }))];
+    const pts = phone ? 64 : 84;
     let raf = 0, a = 0, last = 0;
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
-      if (document.hidden || now - last < 40) return;
+      if (document.hidden || now - last < (phone ? 60 : 40)) return;
       last = now;
       const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, Hh = cv.clientHeight;
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.clearRect(0, 0, W, Hh);
-      const cx = W / 2, cy = Hh / 2, R = Math.min(W * 0.6, Hh) * 0.4, rr = R * 0.58;
+      const cx = W * 0.42, cy = Hh / 2, R = Math.min(W * 0.3, Hh * 0.4) * 0.5, rr = R * 0.96;
+      const tilt = 0.62, ct = Math.cos(tilt), st = Math.sin(tilt);
+      // rays from the shell's right side to the panel edge (towards the live trades)
+      ctx.lineWidth = 0.5;
+      for (let i = 0; i < 46; i++) {
+        const f = i / 45, ang = -1.15 + f * 2.3;
+        const sx = cx + Math.cos(ang) * R * 2.3, sy = cy + Math.sin(ang) * R * 1.9;
+        ctx.strokeStyle = `rgba(210,225,255,${0.05 + 0.1 * Math.sin(f * Math.PI)})`;
+        ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(W, cy + (f - 0.5) * Hh * 1.1); ctx.stroke();
+      }
       ctx.globalCompositeOperation = "lighter";
-      strands.forEach((s, k) => {
-        ctx.strokeStyle = s.c; ctx.lineWidth = s.w; ctx.beginPath();
-        const ph = s.seed * 6.283, tw = 3 + (k % 7);
-        for (let i = 0; i <= 90; i++) {
-          const u = (i / 90) * 6.283, v = ph + tw * u * 0.5 + a * (0.6 + (k % 3) * 0.2);
-          const x3 = (R + rr * Math.cos(v)) * Math.cos(u + a), y3 = (R + rr * Math.cos(v)) * Math.sin(u + a), z3 = rr * Math.sin(v);
-          const px = cx + x3, py = cy + y3 * 0.82 + z3 * 0.45;
+      all.forEach((s, k) => {
+        const ph = s.seed * 6.283, n = 1 + (k % 5), off = (k * 0.37) % 6.283;
+        ctx.lineWidth = s.c ? 0.7 : 0.45;
+        ctx.strokeStyle = s.c ? s.c.replace(/[\d.]+\)$/, ".22)") : `rgba(220,230,255,${0.07 + (k % 7) * 0.013})`;
+        ctx.beginPath();
+        for (let i = 0; i <= pts; i++) {
+          const t = (i / pts) * 6.283;
+          const u = t + off + a, v = ph + n * t * 0.5 + a * 0.7;
+          const x = (R + rr * Math.cos(v)) * Math.cos(u), y = (R + rr * Math.cos(v)) * Math.sin(u), z = rr * Math.sin(v);
+          const xs = x * ct + z * st;
+          const px = cx + xs * 1.18, py = cy + y;
           i ? ctx.lineTo(px, py) : ctx.moveTo(px, py);
         }
         ctx.stroke();
       });
+      // bright crescent where the strands converge into the hole
+      const hx = cx + R * 0.15, g = ctx.createRadialGradient(hx, cy, 0, hx, cy, R * 0.6);
+      g.addColorStop(0, "rgba(255,255,255,.55)"); g.addColorStop(0.4, "rgba(220,235,255,.18)"); g.addColorStop(1, "rgba(220,235,255,0)");
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(hx, cy, R * 0.6, 0, 6.283); ctx.fill();
       ctx.globalCompositeOperation = "source-over";
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * 0.5);
-      g.addColorStop(0, "rgba(255,255,255,.35)"); g.addColorStop(1, "rgba(255,255,255,0)");
-      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(cx, cy, R * 0.5, 0, 6.283); ctx.fill();
-      if (!still) a += 0.004;
+      // gold link from the shell to the live trades column
+      ctx.strokeStyle = "#E8B637"; ctx.lineWidth = 1.4; ctx.shadowColor = "#E8B637"; ctx.shadowBlur = 6;
+      ctx.beginPath(); ctx.moveTo(hx, cy - R * 0.1); ctx.bezierCurveTo(cx + R * 1.6, cy - R * 0.2, W - 60, cy - R * 1.6, W - 2, 18); ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.fillStyle = "rgba(150,165,190,.7)"; ctx.font = "9px 'IBM Plex Sans', sans-serif";
+      ["0 DEG", "90 DEG", "180 DEG"].forEach((t, i) => ctx.fillText(t, 6, 24 + i * (Hh * 0.27)));
+      if (!still) a += 0.0035;
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
@@ -236,16 +261,15 @@ function Shell({ closed, open, board }: { closed: any[]; open: any[]; board: any
     const out: { c: string; w: number; seed: number }[] = [];
     const h = (s: string) => { let x = 7; for (const ch of s) x = (x * 31 + ch.charCodeAt(0)) % 9973; return x / 9973; };
     board.forEach((r) => out.push({ c: "rgba(140,160,200,.10)", w: 0.6, seed: h(r.symbol) }));
-    closed.forEach((x) => { const n = net(x) ?? 0; out.push({ c: n > 0 ? "rgba(14,203,129,.30)" : "rgba(246,70,93,.30)", w: 0.8, seed: h(x.id + "c") }); });
+    closed.forEach((x) => { const n = net(x) ?? 0; out.push({ c: n > 0 ? "rgba(14,203,129,.45)" : "rgba(246,70,93,.45)", w: 0.8, seed: h(x.id + "c") }); });
     open.forEach((x) => out.push({ c: "rgba(232,182,55,.55)", w: 1.1, seed: h(x.id + "o") }));
-    while (out.length < 60) out.push({ c: "rgba(93,241,221,.07)", w: 0.5, seed: (out.length * 0.6180339) % 1 });
     return out;
   }, [closed, open, board]);
   const last = closed.slice().sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0))[0];
   return (
     <Panel title="NEURAL SHELL · RECORD TORUS" tag={`CALLS ${closed.length + open.length} · COINS ${board.length}`} className="qd-shell">
       <Torus strands={strands} />
-      <div className="qd-legend"><i className="qd-bg-up" /> won <i className="qd-bg-dn" /> lost <i style={{ background: "#E8B637" }} /> running <i style={{ background: "#8ca0c8" }} /> watched coins</div>
+      <div className="qd-legend"><i className="qd-bg-up" /> won <i className="qd-bg-dn" /> lost <i style={{ background: "#E8B637" }} /> running <i style={{ background: "#dfe6f5" }} /> market strands</div>
       {last && <div className="qd-shellnote num">LAST CLOSE · {base(last.symbol)} {last.timeframe.toUpperCase()} {last.side} · <span className={col(net(last))}>{sgn(net(last))}%</span> · {hhmm(last.closed_at)} UTC</div>}
     </Panel>
   );

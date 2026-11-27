@@ -1288,7 +1288,7 @@ svg .qd-grid { stroke: #172234; stroke-width: 1; }
 .qd-zones div { display: flex; justify-content: space-between; font-size: 11px; } .qd-zones b { font-size: 13px; }
 .qd-phasesvg { width: 100%; height: auto; } .qd-svgt { fill: #8ca0bc; font-size: 9px; letter-spacing: .06em; }
 .qd-kv { display: flex; justify-content: space-between; font-size: 11px; color: var(--qd-mute); } .qd-kv b { color: var(--qd-text); font-size: 13px; }
-.qd-shell .qd-pb { position: relative; } .qd-torus { position: relative; flex: 1 1 auto; min-height: 420px; } .qd-torus canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+.qd-shell .qd-pb { position: relative; } .qd-torus { position: relative; flex: 1 1 auto; min-height: 520px; } .qd-torus canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 .qd-legend { display: flex; gap: 6px 12px; flex-wrap: wrap; align-items: center; font-size: 10px; color: var(--qd-mute); }
 .qd-legend i { width: 10px; height: 3px; display: inline-block; margin-right: -6px; }
 .qd-shellnote { position: absolute; left: 14px; bottom: 34px; border: 1px solid #E8B637; color: #E8B637; padding: 4px 8px; border-radius: 3px; font-size: 10px; background: rgb(7 11 18 / .8); }
