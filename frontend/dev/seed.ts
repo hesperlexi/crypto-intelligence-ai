@@ -1112,6 +1112,12 @@ function fastRadar() {
       c(5, "FLOKI", 0.000142, 3.1, 1.0, -2.4, 58, 9.0e6, 3.2, 26.0, [], ["thin liquidity: under $15M traded in 24 h", "wide spread: 26 bps just to get in and out"]),
     ],
     not_covered: ["HYPE", "SPX", "FARTCOIN"],
+    tf_4h: { available: true, generated_at: at, timeframe: "4h", coins: [
+      { ...c(1, "INJ", 21.4, 1.2, -0.8, 6.3, 61, 1.2e8, 1.4, 2.8, ["+6.3% vs BTC over 7 days", "4h uptrend: above EMA20 and EMA50, EMA20 rising"], []), tf: "4h" },
+      { ...c(2, "SUI", 1.92, 7.4, 5.1, 18.2, 71, 4.1e8, 2.1, 1.2, ["+18.2% vs BTC over 7 days", "+5.1% vs BTC in 24 h"], ["one-candle pump: most of the move came in a single candle"]), tf: "4h" },
+      { ...c(1, "PEPE", 0.0000124, 28.5, 26.1, 31.0, 79, 9.8e8, 4.4, 2.1, ["+31.0% vs BTC over 7 days", "4h uptrend: above EMA20 and EMA50, EMA20 rising"], ["parabolic: chasing this move is the classic way to buy the top"]), tf: "4h" },
+      { ...c(2, "WIF", 1.31, 11.8, 9.6, 12.4, 66, 2.6e8, 2.8, 3.4, ["+12.4% vs BTC over 7 days"], []), tf: "4h" },
+    ] },
     tracking: { basis: "price move after the coin first appeared, vs BTC, before costs; not a trade result", tracking: 4,
       meme: { n: 11, worked_share: 0.45, avg_rs_24h_pct: -0.8, ci95: [-4.1, 2.5], enough: false },
       alt: { n: 9, worked_share: 0.56, avg_rs_24h_pct: 0.9, ci95: [-1.7, 3.5], enough: false },

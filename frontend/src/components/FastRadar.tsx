@@ -1,7 +1,7 @@
 // V3.3 Fast Opportunity Radar (display only): a ranked list of fast-moving coins on 1h data with the reasons and the
 // warnings for each. Comes inside views/radar as `fast` (hourly). Never a signal: no trade button, nothing is followed.
 import { useState } from "react";
-import { Badge } from "./kit";
+import { Badge, Segmented } from "./kit";
 import { Info } from "./ui";
 import { ago, fmtPrice, isNum } from "../lib/format";
 
@@ -49,22 +49,35 @@ function Row({ c }: { c: any }) {
   );
 }
 
-export default function FastRadar({ fast, category, title = "Fast movers · 1h" }: { fast: any; category?: "meme" | "alt"; title?: string }) {
+type Tf = "1h" | "4h";
+const TF_KEY = "cia-fast-tf";
+
+export default function FastRadar({ fast, category, title = "Fast movers" }: { fast: any; category?: "meme" | "alt"; title?: string }) {
+  // V3.5 (owner, 27 Nov 2026): 1H / 4H switch per card (4h = the same ranking on closed 4h candles, views/radar.fast.tf_4h)
+  const [tf, setTf] = useState<Tf>(() => {
+    try { return (localStorage.getItem(`${TF_KEY}-${category ?? "all"}`) as Tf) === "4h" ? "4h" : "1h"; } catch { return "1h"; }
+  });
+  const pick = (v: Tf) => { setTf(v); try { localStorage.setItem(`${TF_KEY}-${category ?? "all"}`, v); } catch { /* ignore */ } };
   if (!fast) return null;
-  const list = (fast.coins ?? []).filter((c: any) => isNum(c.score) && (!category || c.category === category));
+  const src = tf === "4h" ? fast.tf_4h : fast;
+  const ready = tf === "4h" ? !!src?.available : fast.available;
+  const list = (src?.coins ?? []).filter((c: any) => isNum(c.score) && (!category || c.category === category));
   return (
     <section className="panel p-0">
       <div className="card-head flex flex-wrap items-center justify-between gap-2 border-b border-glass/[0.06] px-4 py-2.5">
-        <h2 className="label">{title}</h2>
-        <span className="text-xs text-mute">
+        <div className="flex items-center gap-2.5">
+          <h2 className="label">{title}</h2>
+          <Segmented value={tf} onChange={pick} label="Candle timeframe" upper options={[["1h", "1H"], ["4h", "4H"]] as const} />
+        </div>
+        <span className="w-full text-xs text-mute">
           Display only · not a signal{fast.generated_at ? ` · updated ${ago(fast.generated_at)}` : ""}
           {fast.regime && ` · market risk ${String(fast.regime).toLowerCase()}`}
         </span>
       </div>
-      {!fast.available ? (
-        <p className="px-4 py-3 text-sm text-mute">The fast scan is not available right now.</p>
+      {!ready ? (
+        <p className="px-4 py-3 text-sm text-mute">{tf === "4h" && fast.available ? "The 4H ranking appears after the next hourly scan." : "The fast scan is not available right now."}</p>
       ) : list.length === 0 ? (
-        <p className="px-4 py-3 text-sm text-mute">No coin has enough 1h history yet.</p>
+        <p className="px-4 py-3 text-sm text-mute">No coin has enough {tf.toUpperCase()} history yet.</p>
       ) : (
         <>
           <div className="hidden grid-cols-[2rem_7rem_1fr_6rem_6rem_6rem] gap-2 px-4 pt-2 text-xs text-mute sm:grid">
@@ -77,7 +90,7 @@ export default function FastRadar({ fast, category, title = "Fast movers · 1h" 
       <p className="px-4 py-2 text-xs text-mute">
         {!category && (fast.not_covered ?? []).length > 0 && `Not covered (no Binance or MEXC spot pair): ${fast.not_covered.join(", ")}. `}
         <Info label="How fast movers are ranked">
-          Each coin gets points for strength against BTC (24 h and 7 days), its 1h trend, momentum and a volume surge; every
+          Each coin gets points for strength against BTC (24 h and 7 days), its trend on the chosen candles (1H or 4H), momentum and a volume surge; every
           warning (parabolic move, thin volume, wide spread, wick-heavy candles, a one-candle pump, volume without a price
           move, short history, a risk-off market) takes points away. Only closed candles are used. Memecoins cost more to
           trade than the large coins, and nothing here is traded or followed by the app.

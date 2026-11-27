@@ -3,7 +3,7 @@ import { Card, ErrorBox } from "../components/ui";
 import { useApi } from "../lib/api";
 import { ago, isNum } from "../lib/format";
 
-/* V3.4 Stage 5 · Opportunities → Fast radar (EXPERIMENTAL, display only). Meme coins and altcoins ranked on closed 1h
+/* V3.4 Stage 5 · Opportunities → Fast radar (EXPERIMENTAL, display only). Meme coins and altcoins ranked on closed 1h or 4h
    data with every reason and warning (views/radar.fast). It is never a signal: nothing here is traded or published, and
    the "how they did" figures are price moves after a coin appeared, before costs - not trade results. */
 
@@ -65,8 +65,8 @@ export default function Fast() {
       {f && (
         <>
           <div className="grid-even grid gap-4 xl:grid-cols-2">
-            <FastRadar fast={f} category="meme" title="Meme coins · 1h" />
-            <FastRadar fast={f} category="alt" title="Altcoins · 1h" />
+            <FastRadar fast={f} category="meme" title="Meme coins" />
+            <FastRadar fast={f} category="alt" title="Altcoins" />
           </div>
           {(f.not_covered ?? []).length > 0 && <p className="text-xs text-mute">Not covered (no Binance or MEXC spot pair): {f.not_covered.join(", ")}.</p>}
           <Tracked t={f.tracking} />

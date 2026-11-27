@@ -89,34 +89,36 @@ def _atr(h: np.ndarray, l: np.ndarray, c: np.ndarray, n: int) -> float:
     return float(tr[-n:].mean())
 
 
-def closed_rows(rows: list[list[Any]], now: int) -> np.ndarray:
+def closed_rows(rows: list[list[Any]], now: int, bar_ms: int = H) -> np.ndarray:
     """Binance klines -> [open_ts, o, h, l, c, quote_volume] of candles that have CLOSED by `now`."""
     out = [[int(r[0]), float(r[1]), float(r[2]), float(r[3]), float(r[4]), float(r[7])] for r in rows
-           if int(r[0]) + H <= now]
+           if int(r[0]) + bar_ms <= now]
     return np.array(out, float) if out else np.zeros((0, 6))
 
 
-def features(k: np.ndarray, btc: np.ndarray) -> dict[str, Any] | None:
-    """k, btc: closed 1h rows aligned on time. None when the history is too short to say anything."""
+def features(k: np.ndarray, btc: np.ndarray, bar_h: int = 1) -> dict[str, Any] | None:
+    """k, btc: closed candles (1h, or 4h with bar_h=4) aligned on time; the 24 h / 7 day windows are the same in time.
+    None when the history is too short to say anything."""
     if len(k) < 50 or len(btc) < 50:
         return None
+    D, W = 24 // bar_h, 168 // bar_h
     o, h, l, c, qv = (k[:, i] for i in (1, 2, 3, 4, 5))
     n = len(c)
     bt = dict(zip(btc[:, 0].astype(np.int64).tolist(), btc[:, 4].tolist()))
     def btc_ret(bars: int) -> float | None:
         a, b = bt.get(int(k[-1, 0])), bt.get(int(k[-1 - bars, 0])) if n > bars else None
         return (a / b - 1) * 100 if a and b else None
-    ret24 = (c[-1] / c[-25] - 1) * 100 if n > 24 else None
-    ret7 = (c[-1] / c[-169] - 1) * 100 if n > 168 else None
-    b24, b7 = btc_ret(24), btc_ret(168)
-    day = qv[-24:].sum()
-    prior = [qv[-24 * (i + 1):-24 * i].sum() for i in range(1, 7) if n >= 24 * (i + 1)]
+    ret24 = (c[-1] / c[-D - 1] - 1) * 100 if n > D else None
+    ret7 = (c[-1] / c[-W - 1] - 1) * 100 if n > W else None
+    b24, b7 = btc_ret(D), btc_ret(W)
+    day = qv[-D:].sum()
+    prior = [qv[-D * (i + 1):-D * i].sum() for i in range(1, 7) if n >= D * (i + 1)]
     vol_exp = day / np.mean(prior) if prior and np.mean(prior) > 0 else None
-    atr24, atr168 = _atr(h, l, c, 24), (_atr(h, l, c, 168) if n > 168 else None)
+    atr24, atr168 = _atr(h, l, c, D), (_atr(h, l, c, W) if n > W else None)
     e20, e50 = _ema(c, 20), _ema(c, 50)
-    rng_ = np.maximum(h[-24:] - l[-24:], 1e-12)
-    wick = float(np.mean(((h[-24:] - np.maximum(o[-24:], c[-24:])) + (np.minimum(o[-24:], c[-24:]) - l[-24:])) / rng_))
-    moves = np.abs(c[-24:] / o[-24:] - 1) * 100
+    rng_ = np.maximum(h[-D:] - l[-D:], 1e-12)
+    wick = float(np.mean(((h[-D:] - np.maximum(o[-D:], c[-D:])) + (np.minimum(o[-D:], c[-D:]) - l[-D:])) / rng_))
+    moves = np.abs(c[-D:] / o[-D:] - 1) * 100
     return {
         "price": float(c[-1]), "ret_24h_pct": _r(ret24), "ret_7d_pct": _r(ret7),
         "rs_24h_pct": _r(ret24 - b24) if ret24 is not None and b24 is not None else None,
@@ -124,8 +126,8 @@ def features(k: np.ndarray, btc: np.ndarray) -> dict[str, Any] | None:
         "volume_expansion": _r(vol_exp), "volatility_expansion": _r(atr24 / atr168) if atr168 else None,
         "above_ema20": bool(c[-1] > e20[-1]), "above_ema50": bool(c[-1] > e50[-1]),
         "ema20_slope_6h_pct": _r((e20[-1] / e20[-7] - 1) * 100), "rsi14": _r(_rsi(c)), "wick_share_24h": _r(wick),
-        "largest_1h_move_pct": _r(float(moves.max())), "bars": n, "closed_at": int(k[-1, 0]) + H,
-        "atr_24": _r(atr24, 10)}
+        "largest_1h_move_pct": _r(float(moves.max())), "bars": n, "closed_at": int(k[-1, 0]) + bar_h * H,
+        "atr_24": _r(atr24, 10), "tf": f"{bar_h}h", "short_history": bool(n <= W)}
 
 
 def _r(x: Any, d: int = 3) -> float | None:
@@ -148,7 +150,7 @@ def judge(f: dict[str, Any], quote_vol: float | None, spread_bps: float | None, 
     tr = (0.4 if f["above_ema20"] else -0.4) + (0.3 if f["above_ema50"] else -0.3) + clip((f["ema20_slope_6h_pct"] or 0) / 2, -0.3, 0.3)
     pts["trend"] = tr
     if f["above_ema20"] and f["above_ema50"] and (f["ema20_slope_6h_pct"] or 0) > 0:
-        reasons.append("1h uptrend: above EMA20 and EMA50, EMA20 rising")
+        reasons.append(f"{f.get('tf') or '1h'} uptrend: above EMA20 and EMA50, EMA20 rising")
     rsi = f.get("rsi14") or 50
     pts["momentum"] = clip(((f.get("ret_24h_pct") or 0) / 10) * 0.6 + ((rsi - 50) / 30) * 0.4, -1, 1)
     ve = f.get("volume_expansion")
@@ -172,11 +174,12 @@ def judge(f: dict[str, Any], quote_vol: float | None, spread_bps: float | None, 
         warnings.append("wick-heavy candles: stop hunting / manipulation risk")
     if (f.get("largest_1h_move_pct") or 0) >= 8 and abs(f.get("ret_24h_pct") or 0) > 0 and \
             f["largest_1h_move_pct"] >= 0.5 * abs(f["ret_24h_pct"]):
-        warnings.append("one-candle pump: most of the day's move came in a single hour")
+        warnings.append("one-candle pump: most of the day's move came in a single hour" if (f.get("tf") or "1h") == "1h"
+                        else "one-candle pump: most of the move came in a single candle")
     if ve is not None and ve >= 3 and abs(f.get("ret_24h_pct") or 0) < 2:
         warnings.append("volume without price: possible wash trading or absorption")
-    if f["bars"] < 169:
-        warnings.append("short history: under 7 days of 1h candles")
+    if f.get("short_history", f["bars"] < 169):
+        warnings.append(f"short history: under 7 days of {f.get('tf') or '1h'} candles")
     compat = "incompatible" if regime in ("HIGH", "SEVERE") else "unknown" if regime in (None, "UNKNOWN") else "compatible"
     if compat == "incompatible":
         warnings.append(f"market risk is {regime}: fast coins tend to fall hardest in risk-off markets")
@@ -434,6 +437,7 @@ def scan(db: Any, provider: Any, now: int | None = None) -> dict[str, Any]:
                       "detections": ex["signals"], "quote_volume_24h": round(qv, 0), "spread_bps": _r(spread, 2),
                       "liquidity_ok": qv >= MIN_QUOTE_VOL and spread is not None and spread <= MAX_SPREAD_BPS})
     ranked = rank(items)
+    tf4 = _scan_4h(provider, [x for x in items if x.get("status") == "ok"], cat, now, regime, mregime)
     for cname in ("meme", "alt"):
         for i_, x in enumerate([x for x in ranked if x.get("category") == cname], 1):
             x["category_rank"] = i_
@@ -459,7 +463,47 @@ def scan(db: Any, provider: Any, now: int | None = None) -> dict[str, Any]:
             "note": "Display only: a ranked list of fast movers with reasons and warnings. Not a signal, never traded.",
             "coins": ranked + [x for x in items if x.get("score") is None], "not_covered": not_covered,
             "categories": {k: [x["coin"] for x in ranked if x.get("category") == k] for k in ("meme", "alt")},
-            "tracking": summary, "tracked": tr,
+            "tracking": summary, "tracked": tr, "tf_4h": tf4,
             "config": {"watchlists": lists, "watchlist": wanted, "min_quote_volume": MIN_QUOTE_VOL,
                        "max_spread_bps": MAX_SPREAD_BPS, "weights": WEIGHTS, "timeframe": "1h",
                        "source": "Binance spot, else MEXC spot", "flag_top": FLAG_TOP}}
+
+
+def _scan_4h(provider: Any, ok_1h: list[dict[str, Any]], cat: dict[str, str], now: int, regime: str | None,
+             mregime: str | None) -> dict[str, Any]:
+    """V3.5 (owner, 27 Nov 2026: "make 1hr and 4hr live"): the same ranking on closed 4h candles (EMA20 / EMA50, RSI on 4h;
+    24 h and 7-day windows unchanged), for the coins the 1h scan reached. Display only; the opportunity tracking and the
+    isolated paper strategy stay on 1h. Never raises."""
+    try:
+        btc = closed_rows(provider._get_sync("/api/v3/klines", {"symbol": "BTCUSDT", "interval": "4h", "limit": BARS}), now, 4 * H)
+    except Exception as exc:
+        return {"available": False, "reason": f"{type(exc).__name__}"[:80], "generated_at": now}
+    items = []
+    for x in ok_1h:
+        c, s_ = x["coin"], f"{x['coin']}USDT"
+        try:
+            if x.get("source") == "MEXC spot":
+                raw = _mexc_get(provider, "/api/v3/klines", {"symbol": s_, "interval": "4h", "limit": BARS})
+            else:
+                raw = provider._get_sync("/api/v3/klines", {"symbol": s_, "interval": "4h", "limit": BARS})
+            k = closed_rows(raw, now, 4 * H)
+        except Exception:
+            continue
+        f = features(k, btc, bar_h=4)
+        if f is None:
+            continue
+        j = judge(f, x.get("quote_volume_24h"), x.get("spread_bps"), regime)
+        if f.get("volume_expansion") is not None and f["volume_expansion"] < 0.5:
+            j["warnings"].append(f"liquidity deteriorating: 24 h volume {f['volume_expansion']:.2f}x its recent daily average")
+            j["score"] = round(j["score"] - 0.15, 4)
+        if mregime in ("strong_bear", "weak_bear", "breakdown", "unstable"):
+            j["warnings"].append(f"BTC regime incompatible: market {mregime.replace('_', ' ')}")
+            j["score"] = round(j["score"] - 0.15, 4)
+        items.append({"coin": c, "symbol": f"{c}/USDT", "category": cat.get(c), "source": x.get("source"), "status": "ok",
+                      **f, **j, "quote_volume_24h": x.get("quote_volume_24h"), "spread_bps": x.get("spread_bps")})
+    ranked = rank(items)
+    for cname in ("meme", "alt"):
+        for i_, y in enumerate([y for y in ranked if y.get("category") == cname], 1):
+            y["category_rank"] = i_
+    return {"available": True, "generated_at": now, "timeframe": "4h", "coins": ranked,
+            "categories": {k: [y["coin"] for y in ranked if y.get("category") == k] for k in ("meme", "alt")}}

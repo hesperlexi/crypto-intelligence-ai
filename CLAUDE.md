@@ -1816,3 +1816,9 @@ on that side (was 1). Tests `tests/test_tf_quota_v35.py`.
   skipped views registered while the first edge poll was still waiting for the sign-in token (`busy`) until the 30 s
   timer; now `again` re-polls right after, and the poll waits for `auth.authStateReady()` instead of falling back to
   Firestore for 5 min when the sign-in is not restored yet.
+- Fast radar 1H + 4H (owner, 27 Nov 2026: "make 1hr and 4hr live"): `fast_radar.features(k, btc, bar_h)` (24 h / 7-day
+  windows in bars, `tf`, `short_history`), `closed_rows(..., bar_ms)`, `_scan_4h` (closed 4h candles of the coins the 1h scan
+  reached, Binance / MEXC "4h"; judge + liquidity / BTC-regime warnings; no 1h-only detections) → `views/radar.fast.tf_4h`.
+  Tracking and the isolated paper strategy stay on 1h. UI: `FastRadar` 1H / 4H switch per card (localStorage
+  `cia-fast-tf-<category>`), meta line on its own row so both cards align. Seed `fastRadar().tf_4h`. Test in
+  `tests/test_fast_radar_v33.py`.

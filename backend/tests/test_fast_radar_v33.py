@@ -117,3 +117,31 @@ def test_radar_is_never_connected_to_trading():
     assert users == ["worker.py"]                              # only the hourly radar step publishes it
     src = (app / "worker.py").read_text()
     assert 'r["fast"] = fast_radar.scan(rt.db, rt.provider)' in src
+
+
+def _klines4(n=200, drift=0.0, seed=0):
+    rows = _klines(n, drift, seed, end_open=NOW // (4 * H) * 4 * H - 4 * H)
+    t0 = rows[-1][0]
+    return [[t0 - 4 * H * (n - 1 - i), *r[1:]] for i, r in enumerate(rows)]
+
+
+def test_four_hour_ranking_is_published_beside_the_hour():
+    """V3.5 (owner, 27 Nov 2026): the same ranking on closed 4h candles, display only."""
+    class P4(Provider):
+        def _get_sync(self, path, params=None):
+            if path == "/api/v3/klines" and params.get("interval") == "4h":
+                self.calls.append((path, params))
+                return self.series4[params["symbol"]]
+            return super()._get_sync(path, params)
+    db = Database("sqlite:///:memory:")
+    db.set_setting("fast_radar_watchlists", {"meme": ["UPP"], "alt": ["FLT"]})
+    p = P4({"BTCUSDT": _klines(seed=1), "UPPUSDT": _klines(seed=2), "FLTUSDT": _klines(seed=3)},
+           {s: _tick(s) for s in ("UPPUSDT", "FLTUSDT")}, {s: _book(s) for s in ("UPPUSDT", "FLTUSDT")})
+    p.series4 = {"BTCUSDT": _klines4(seed=1), "UPPUSDT": _klines4(drift=0.004, seed=2), "FLTUSDT": _klines4(seed=3)}
+    out = FR.scan(db, p, NOW)
+    t4 = out["tf_4h"]
+    assert t4["available"] and {c["coin"] for c in t4["coins"]} == {"UPP", "FLT"}
+    up = next(c for c in t4["coins"] if c["coin"] == "UPP")
+    assert up["tf"] == "4h" and up["category_rank"] == 1 and up["rs_7d_pct"] > 0
+    assert all(c["closed_at"] <= NOW for c in t4["coins"])
+    assert out["config"]["timeframe"] == "1h"                     # tracking / strategy stay on 1h
