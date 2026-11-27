@@ -203,7 +203,6 @@ const Torus = memo(function Torus({ strands, spinRef }: { strands: Strand[]; spi
   useEffect(() => {
     const cv = ref.current; if (!cv) return;
     const ctx = cv.getContext("2d"); if (!ctx) return;
-    const still = matchMedia("(prefers-reduced-motion: reduce)").matches;
     const phone = matchMedia("(max-width: 640px)").matches;
     const rnd = (k: number) => { const x = Math.sin(k * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); };
     // geometry in torus space, built once: meridian-like threads with a little jitter, some with a spike off the rim
@@ -229,7 +228,7 @@ const Torus = memo(function Torus({ strands, spinRef }: { strands: Strand[]; spi
       if (document.hidden || now - last < (phone ? 50 : 33)) return;
       last = now;
       const dt = Math.min(0.1, (now - (prev || now)) / 1000); prev = now;
-      t += dt; spin += dt * (still ? 0.05 : 0.22);
+      t += dt; spin += dt * 0.5;
       const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, Hh = cv.clientHeight;
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -237,8 +236,8 @@ const Torus = memo(function Torus({ strands, spinRef }: { strands: Strand[]; spi
       const S = Math.min(W * (W < 520 ? 0.4 : 0.3), Hh * 0.4) / 2.05, cx = W * 0.44, cy = Hh * 0.5;
       // spin about the torus axis, then tilt it so the funnel faces right (with a slow wobble)
       const cs = Math.cos(spin), ss = Math.sin(spin);
-      const by = 0.85 + (still ? 0 : 0.07 * Math.sin(t * 0.4)), cb = Math.cos(by), sb = Math.sin(by);
-      const bx = 0.18 + (still ? 0 : 0.05 * Math.sin(t * 0.31)), cxx = Math.cos(bx), sxx = Math.sin(bx);
+      const by = 0.85 + 0.28 * Math.sin(t * 0.5), cb = Math.cos(by), sb = Math.sin(by);
+      const bx = 0.18 + 0.12 * Math.sin(t * 0.37), cxx = Math.cos(bx), sxx = Math.sin(bx);
       const P = (x: number, y: number, z: number): [number, number, number] => {
         const x1 = x * cs - y * ss, y1 = x * ss + y * cs;
         const x2 = x1 * cb + z * sb, z2 = -x1 * sb + z * cb;
