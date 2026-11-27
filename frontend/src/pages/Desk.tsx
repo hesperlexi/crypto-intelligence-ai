@@ -6,6 +6,7 @@ import { Link } from "react-router-dom";
 import { useApi } from "../lib/api";
 import { useKlines } from "../lib/klines";
 import { useLive, useTickerThrottled } from "../lib/live";
+import { LiveLogo } from "../components/Logo";
 import { base, DASH, fmtPctRaw, fmtPrice, isNum, slug } from "../lib/format";
 
 const H = 3_600_000;
@@ -21,7 +22,7 @@ const col = (v: number | null | undefined) => (!isNum(v) || Math.abs(v) < 1e-9 ?
 function Panel({ title, tag, live, className = "", children }: { title: string; tag?: string; live?: boolean; className?: string; children: React.ReactNode }) {
   return (
     <section className={`qd-panel ${className}`}>
-      <header className="qd-ph"><span>◆ {title}</span>{tag && <em>{tag}</em>}{live && <b className="qd-live">● LIVE</b>}</header>
+      <header className="qd-ph"><span>◆ {title}</span>{tag && <em>{tag}</em>}{live && <b className="qd-live">● Live</b>}</header>
       <div className="qd-pb">{children}</div>
     </section>
   );
@@ -40,17 +41,17 @@ function Header({ open, stats }: { open: any[]; stats: any }) {
   return (
     <div className="qd-head">
       <div className="qd-brand">
-        <span className="qd-logo">CI</span>
-        <div><small>AI SIGNAL ENGINE · RECORD · RISK · {TFS.map((x) => x.toUpperCase()).join(" / ")}</small>
-          <b>crypto intel ai <i>//</i> QUANT DESK</b>
-          <small>PAPER TRADING · NET OF FEES · REAL RECORD ONLY</small></div>
+        <LiveLogo size={40} className="qd-logo" title="Crypto Intelligence AI" />
+        <div><small>AI signal engine · record · risk · {TFS.map((x) => x.toUpperCase()).join(" / ")}</small>
+          <b>Crypto Intelligence <span className="qd-gold">AI</span> <i>/</i> Quant desk</b>
+          <small>Paper trading · net of fees · real record only</small></div>
       </div>
       <div className="qd-hstats">
         <div><small>BTC</small><b className="num">{isNum(btc?.last) ? `$${fmtPrice(btc!.last)}` : DASH}</b></div>
-        <div><small>LONG / SHORT</small><b className="num">{open.length ? `${longs} / ${open.length - longs}` : DASH}</b></div>
-        <div><small>WIN RATE</small><b className="num">{isNum(stats.wr) ? `${(stats.wr * 100).toFixed(1)}%` : DASH}</b></div>
-        <div><small>CLOSED</small><b className="num">{stats.n}</b></div>
-        <div className="qd-clock"><b className="num">{new Date(t).toISOString().slice(11, 19)} UTC</b><small>{isNum(btc?.change_pct) ? `BTC 24H ${sgn(btc!.change_pct)}%` : ""}</small></div>
+        <div><small>Long / short</small><b className="num">{open.length ? `${longs} / ${open.length - longs}` : DASH}</b></div>
+        <div><small>Win rate</small><b className="num">{isNum(stats.wr) ? `${(stats.wr * 100).toFixed(1)}%` : DASH}</b></div>
+        <div><small>Closed</small><b className="num">{stats.n}</b></div>
+        <div className="qd-clock"><b className="num">{new Date(t).toISOString().slice(11, 19)} UTC</b><small>{isNum(btc?.change_pct) ? `BTC 24h ${sgn(btc!.change_pct)}%` : ""}</small></div>
       </div>
     </div>
   );
@@ -60,7 +61,7 @@ function Feed({ items }: { items: string[] }) {
   if (!items.length) return null;
   const line = items.join("   ·   ");
   return (
-    <div className="qd-feed"><span className="qd-feedtag">● LIVE FEED</span>
+    <div className="qd-feed"><span className="qd-feedtag">● Live feed</span>
       <div className="qd-feedtrack"><span>{line}   ·   </span><span aria-hidden="true">{line}   ·   </span></div>
     </div>
   );
@@ -68,16 +69,16 @@ function Feed({ items }: { items: string[] }) {
 
 function Wallet({ stats }: { stats: any }) {
   return (
-    <Panel title="RECORD" tag="SINCE START" className="qd-wallet">
-      <small className="qd-lbl">TOTAL NET RETURN (EQUAL SIZE)</small>
+    <Panel title="Record" tag="Since start" className="qd-wallet">
+      <small className="qd-lbl">Total net return (equal size)</small>
       <div className={`qd-big num ${col(stats.total)}`}>{isNum(stats.total) ? fmtPctRaw(stats.total) : DASH}</div>
-      <p className="qd-sub num">▲ AVG {sgn(stats.avg)}% · MED {sgn(stats.med)}% · {sgn(stats.totalR, 1)}R</p>
+      <p className="qd-sub num">Avg {sgn(stats.avg)}% · median {sgn(stats.med)}% · {sgn(stats.totalR, 1)}R</p>
       <div className="qd-trio">
-        <div><small>TRADES</small><b className="num">{stats.n}</b></div>
-        <div><small>WIN RATE</small><b className="num qd-up">{isNum(stats.wr) ? `${(stats.wr * 100).toFixed(1)}%` : DASH}</b></div>
-        <div><small>AVG HOLD</small><b className="num">{stats.hold ? hm(stats.hold) : DASH}</b></div>
+        <div><small>Trades</small><b className="num">{stats.n}</b></div>
+        <div><small>Win rate</small><b className="num qd-up">{isNum(stats.wr) ? `${(stats.wr * 100).toFixed(1)}%` : DASH}</b></div>
+        <div><small>Avg hold</small><b className="num">{stats.hold ? hm(stats.hold) : DASH}</b></div>
       </div>
-      <p className="qd-sub">LONG {stats.longShare}% · SHORT {100 - stats.longShare}% <span className="qd-chip">{stats.n < 30 ? "SMALL SAMPLE" : "SAMPLE OK"}</span></p>
+      <p className="qd-sub">Long {stats.longShare}% · short {100 - stats.longShare}% <span className="qd-chip">{stats.n < 30 ? "Small sample" : "Sample OK"}</span></p>
     </Panel>
   );
 }
@@ -85,11 +86,11 @@ function Wallet({ stats }: { stats: any }) {
 function Bowtie({ stats }: { stats: any }) {
   const max = Math.max(1e-9, Math.abs(stats.avgWin ?? 0), Math.abs(stats.avgLoss ?? 0));
   return (
-    <Panel title="PAYOFF BOWTIE" tag="WIN / LOSS" live>
+    <Panel title="Payoff bowtie" tag="Win / loss" live>
       <div className="qd-bow">
         <div className="qd-bowcol">
           <div className="qd-bowbar qd-bg-up" style={{ height: `${(Math.abs(stats.avgWin ?? 0) / max) * 70}px` }} />
-          <small>AVG WIN</small><b className="num qd-up">{sgn(stats.avgWin)}%</b><small>{stats.wins} trades</small>
+          <small>Avg win</small><b className="num qd-up">{sgn(stats.avgWin)}%</b><small>{stats.wins} trades</small>
         </div>
         <svg viewBox="0 0 120 80" className="qd-bowsvg" aria-hidden="true">
           <path d={`M0 ${40 - (Math.abs(stats.avgWin ?? 0) / max) * 34} L60 40 L0 ${40 + 2} Z`} fill="rgb(14 203 129 / .35)" stroke="#0ecb81" />
@@ -98,10 +99,10 @@ function Bowtie({ stats }: { stats: any }) {
         </svg>
         <div className="qd-bowcol">
           <div className="qd-bowbar qd-bg-dn" style={{ height: `${(Math.abs(stats.avgLoss ?? 0) / max) * 70}px` }} />
-          <small>AVG LOSS</small><b className="num qd-dn">{sgn(stats.avgLoss)}%</b><small>{stats.losses} trades</small>
+          <small>Avg loss</small><b className="num qd-dn">{sgn(stats.avgLoss)}%</b><small>{stats.losses} trades</small>
         </div>
       </div>
-      <p className="qd-sub">PROFIT FACTOR <b className="num">{isNum(stats.pf) ? stats.pf.toFixed(2) : DASH}</b> · EXPECTANCY <b className={`num ${col(stats.avg)}`}>{sgn(stats.avg)}%</b></p>
+      <p className="qd-sub">Profit factor <b className="num">{isNum(stats.pf) ? stats.pf.toFixed(2) : DASH}</b> · expectancy <b className={`num ${col(stats.avg)}`}>{sgn(stats.avg)}%</b></p>
     </Panel>
   );
 }
@@ -130,15 +131,15 @@ function ModelBook({ open, board }: { open: any[]; board: any[] }) {
   const btcCall = open.find((x) => x.symbol === "BTC/USDT");
   const ups = board.filter((r) => r.lean === "LONG" || (isNum(r.p_up) && isNum(r.p_down) && r.p_up > r.p_down)).length;
   return (
-    <Panel title="MODEL BOOK · BTC 1H" tag={btcCall ? `${btcCall.side} ${btcCall.timeframe.toUpperCase()} RUNNING` : "NO BTC CALL"} className="qd-book">
+    <Panel title="Model book · BTC 1H" tag={btcCall ? `${btcCall.side} ${btcCall.timeframe.toUpperCase()} running` : "No BTC call"} className="qd-book">
       <div className="qd-bookgrid">
         <Spark pts={closes} band={btcCall && isNum(btcCall.stop) && isNum(btcCall.tp1) ? [btcCall.stop, btcCall.tp1] : null} />
         <div className="qd-zones">
-          <small>AI LEAN 1H</small>
-          <div><span>UP</span><b className="num qd-up">{board.length ? `${Math.round((ups / board.length) * 100)}%` : DASH}</b></div>
-          <div><span>DOWN</span><b className="num qd-dn">{board.length ? `${100 - Math.round((ups / board.length) * 100)}%` : DASH}</b></div>
-          <small>COINS</small><b className="num">{board.length}</b>
-          <small>120 H RANGE</small><b className="num">{closes.length ? `${(((Math.max(...closes) / Math.min(...closes)) - 1) * 100).toFixed(1)}%` : DASH}</b>
+          <small>AI lean 1H</small>
+          <div><span>Up</span><b className="num qd-up">{board.length ? `${Math.round((ups / board.length) * 100)}%` : DASH}</b></div>
+          <div><span>Down</span><b className="num qd-dn">{board.length ? `${100 - Math.round((ups / board.length) * 100)}%` : DASH}</b></div>
+          <small>Coins</small><b className="num">{board.length}</b>
+          <small>120 h range</small><b className="num">{closes.length ? `${(((Math.max(...closes) / Math.min(...closes)) - 1) * 100).toFixed(1)}%` : DASH}</b>
         </div>
       </div>
       <p className="qd-sub">{btcCall ? "Gold band = the running BTC call's stop → target 1" : "Gold band appears when a BTC call is running"}</p>
@@ -150,10 +151,10 @@ function Phase({ trips }: { trips: any[] }) {
   const netR = trips.reduce((a, t) => a + (t.r ?? 0) * t.s, 0);
   const W = 300, Hh = 210, cx = 40, cy = Hh / 2;
   return (
-    <Panel title="INVENTORY PHASE PORTRAIT" live className="qd-phase">
+    <Panel title="Inventory phase portrait" live className="qd-phase">
       <svg viewBox={`0 0 ${W} ${Hh}`} className="qd-phasesvg" role="img" aria-label="Running calls fanned out by direction and result">
         {[-1, -0.5, 0, 0.5, 1].map((f) => <line key={f} x1={cx} y1={cy} x2={W - 10} y2={cy - f * (Hh / 2 - 12)} className="qd-grid" />)}
-        <text x="8" y="16" className="qd-svgt">LONG ↑</text><text x="8" y={Hh - 6} className="qd-svgt">SHORT ↓</text>
+        <text x="8" y="16" className="qd-svgt">Long ↑</text><text x="8" y={Hh - 6} className="qd-svgt">Short ↓</text>
         {trips.map((t) => {
           const r = Math.max(-1.5, Math.min(3, t.r ?? 0));
           const len = 60 + ((r + 1.5) / 4.5) * (W - 110);
@@ -172,7 +173,7 @@ function Phase({ trips }: { trips: any[] }) {
         })}
         <circle cx={cx} cy={cy} r="5" fill="#5DF1DD" />
       </svg>
-      <div className="qd-kv"><span>net directional value</span><b className={`num ${col(netR)}`}>{trips.length ? `${netR > 0 ? "LONG" : netR < 0 ? "SHORT" : "FLAT"} ${Math.abs(netR).toFixed(2)}R` : DASH}</b></div>
+      <div className="qd-kv"><span>net directional value</span><b className={`num ${col(netR)}`}>{trips.length ? `${netR > 0 ? "Long" : netR < 0 ? "Short" : "Flat"} ${Math.abs(netR).toFixed(2)}R` : DASH}</b></div>
       <div className="qd-kv"><span>running calls</span><b className="num">{trips.length}</b></div>
     </Panel>
   );
@@ -182,9 +183,9 @@ function Curve({ closed }: { closed: any[] }) {
   const pts = useMemo(() => { let a = 0; return [0, ...closed.slice().sort((x, y) => (x.closed_at ?? 0) - (y.closed_at ?? 0)).map((x) => (a += net(x) ?? 0))]; }, [closed]);
   let peak = 0, dd = 0; for (const v of pts) { peak = Math.max(peak, v); dd = Math.min(dd, v - peak); }
   return (
-    <Panel title="WHERE IT LANDS · RUNNING TOTAL" tag="NET %">
+    <Panel title="Where it lands · running total" tag="Net %">
       <Spark pts={pts} h={120} zero />
-      <p className="qd-sub num">FILLS {closed.length} · TOTAL {sgn(pts[pts.length - 1])}% · LARGEST DROP {dd.toFixed(2)}%</p>
+      <p className="qd-sub num">Closed {closed.length} · total {sgn(pts[pts.length - 1])}% · largest drop {dd.toFixed(2)}%</p>
     </Panel>
   );
 }
@@ -202,11 +203,13 @@ const Torus = memo(function Torus({ strands }: { strands: { c: string; w: number
     const N = phone ? 260 : 520;
     const all = [...strands.filter((s) => !s.c.startsWith("rgba(140")), ...Array.from({ length: Math.max(0, N - strands.length) }, (_, i) => ({ c: "", w: 0.5, seed: (i * 0.6180339) % 1 }))];
     const pts = phone ? 64 : 84;
-    let raf = 0, a = 0, last = 0;
+    let raf = 0, a = 0, last = 0, prev = 0;
     const draw = (now: number) => {
       raf = requestAnimationFrame(draw);
       if (document.hidden || now - last < (phone ? 60 : 40)) return;
       last = now;
+      a += Math.min(0.1, (now - (prev || now)) / 1000) * (still ? 0.12 : 0.45);
+      prev = now;
       const dpr = Math.min(2, devicePixelRatio || 1), W = cv.clientWidth, Hh = cv.clientHeight;
       if (cv.width !== Math.round(W * dpr) || cv.height !== Math.round(Hh * dpr)) { cv.width = Math.round(W * dpr); cv.height = Math.round(Hh * dpr); }
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
@@ -229,7 +232,7 @@ const Torus = memo(function Torus({ strands }: { strands: { c: string; w: number
         ctx.beginPath();
         for (let i = 0; i <= pts; i++) {
           const t = (i / pts) * 6.283;
-          const u = t + off + a, v = ph + n * t * 0.5 + a * 0.7;
+          const u = t + off + a, v = ph + n * t * 0.5 + a * (1.6 + (k % 4) * 0.35);
           const x = (R + rr * Math.cos(v)) * Math.cos(u), y = (R + rr * Math.cos(v)) * Math.sin(u), z = rr * Math.sin(v);
           const xs = x * ct + z * st;
           const px = cx + xs * 1.18, py = cy + y;
@@ -246,9 +249,8 @@ const Torus = memo(function Torus({ strands }: { strands: { c: string; w: number
       ctx.strokeStyle = "#E8B637"; ctx.lineWidth = 1.4; ctx.shadowColor = "#E8B637"; ctx.shadowBlur = 6;
       ctx.beginPath(); ctx.moveTo(hx, cy - R * 0.1); ctx.bezierCurveTo(cx + R * 1.6, cy - R * 0.2, W - 60, cy - R * 1.6, W - 2, 18); ctx.stroke();
       ctx.shadowBlur = 0;
-      ctx.fillStyle = "rgba(150,165,190,.7)"; ctx.font = "9px 'IBM Plex Sans', sans-serif";
-      ["0 DEG", "90 DEG", "180 DEG"].forEach((t, i) => ctx.fillText(t, 6, 24 + i * (Hh * 0.27)));
-      if (!still) a += 0.0035;
+      ctx.fillStyle = "rgba(150,165,190,.7)"; ctx.font = "11px 'IBM Plex Sans', sans-serif";
+      ["0°", "90°", "180°"].forEach((t, i) => ctx.fillText(t, 6, 24 + i * (Hh * 0.27)));
     };
     raf = requestAnimationFrame(draw);
     return () => cancelAnimationFrame(raf);
@@ -267,10 +269,10 @@ function Shell({ closed, open, board }: { closed: any[]; open: any[]; board: any
   }, [closed, open, board]);
   const last = closed.slice().sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0))[0];
   return (
-    <Panel title="NEURAL SHELL · RECORD TORUS" tag={`CALLS ${closed.length + open.length} · COINS ${board.length}`} className="qd-shell">
+    <Panel title="Neural shell · record torus" tag={`Calls ${closed.length + open.length} · coins ${board.length}`} className="qd-shell">
       <Torus strands={strands} />
       <div className="qd-legend"><i className="qd-bg-up" /> won <i className="qd-bg-dn" /> lost <i style={{ background: "#E8B637" }} /> running <i style={{ background: "#dfe6f5" }} /> market strands</div>
-      {last && <div className="qd-shellnote num">LAST CLOSE · {base(last.symbol)} {last.timeframe.toUpperCase()} {last.side} · <span className={col(net(last))}>{sgn(net(last))}%</span> · {hhmm(last.closed_at)} UTC</div>}
+      {last && <div className="qd-shellnote num">Last close · {base(last.symbol)} {last.timeframe.toUpperCase()} {last.side} · <span className={col(net(last))}>{sgn(net(last))}%</span> · {hhmm(last.closed_at)} UTC</div>}
     </Panel>
   );
 }
@@ -278,23 +280,23 @@ function Shell({ closed, open, board }: { closed: any[]; open: any[]; board: any
 function Trades({ trips, closed }: { trips: any[]; closed: any[] }) {
   const recent = closed.slice().sort((a, b) => (b.closed_at ?? 0) - (a.closed_at ?? 0)).slice(0, 3);
   return (
-    <Panel title="LIVE TRADES · ALL TIMEFRAMES" tag={`${trips.length} RUNNING`} className="qd-trades">
+    <Panel title="Live trades · all timeframes" tag={`${trips.length} running`} className="qd-trades">
       <ul className="qd-tl">
         {trips.slice(0, 7).map((t) => (
           <li key={t.x.id} className={t.s > 0 ? "is-long" : "is-short"}>
             <Link to={`/asset/${slug(t.x.symbol)}?tf=${t.x.timeframe}`}>
-              <span className={`qd-pill ${t.s > 0 ? "qd-bg-up" : "qd-bg-dn"}`}>{t.s > 0 ? "LONG" : "SHORT"}</span>
+              <span className={`qd-pill ${t.s > 0 ? "qd-bg-up" : "qd-bg-dn"}`}>{t.s > 0 ? "Long" : "Short"}</span>
               <b>{base(t.x.symbol)} {t.x.timeframe.toUpperCase()}</b>
               <span className="num qd-mute">@ {fmtPrice(t.x.entry)}</span>
-              <span className="num qd-mute">{t.x.grade ? `GRADE ${t.x.grade}` : ""}</span>
-              <b className={`num ${col(t.r)}`}>{t.pending ? "WAITING" : `${sgn(t.r)}R`}</b>
+              <span className="num qd-mute">{t.x.grade ? `Grade ${t.x.grade}` : ""}</span>
+              <b className={`num ${col(t.r)}`}>{t.pending ? "Waiting" : `${sgn(t.r)}R`}</b>
               <small className="qd-mute">{[t.x.tp1_hit && "TP1", t.x.tp2_hit && "TP2", t.x.tp3_hit && "TP3"].filter(Boolean).join(" · ") || "no target yet"} · {hm(Date.now() - (t.x.created_at ?? Date.now()))} ago</small>
             </Link>
           </li>
         ))}
         {recent.map((x) => (
           <li key={x.id} className="is-done">
-            <span className="qd-pill qd-bg-mute">CLOSED</span>
+            <span className="qd-pill qd-bg-mute">Closed</span>
             <b>{base(x.symbol)} {x.timeframe.toUpperCase()} {x.side}</b>
             <span className="num qd-mute">{x.status}</span><span />
             <b className={`num ${col(net(x))}`}>{sgn(net(x))}%</b>
@@ -316,7 +318,7 @@ function Quant({ board }: { board: any[] }) {
   const bars = board.filter((r) => isNum(r.change_24h_pct)).sort((a, b) => b.change_24h_pct - a.change_24h_pct);
   const mx = Math.max(1, ...bars.map((r) => Math.abs(r.change_24h_pct)));
   return (
-    <Panel title="QUANT METRICS · BTC 1H + 24H MOVERS" live className="qd-quant">
+    <Panel title="Quant metrics · BTC 1H + 24H movers" live className="qd-quant">
       <div className="qd-qgrid">
         {cs.length ? (
           <svg viewBox={`0 0 ${W} ${Hh}`} preserveAspectRatio="none" className="qd-candles" aria-hidden="true">
@@ -347,7 +349,7 @@ function Edge({ closed }: { closed: any[] }) {
   const W = 360, Hh = 130;
   const bell = sd > 0 ? Array.from({ length: 61 }, (_, i) => { const x = -2 + (i / 60) * 6.5; return [((x + 2) / 6.5) * W, Hh - 10 - Math.exp(-((x - mean) ** 2) / (2 * sd * sd)) * (Hh - 24)]; }) : [];
   return (
-    <Panel title="EDGE SIGNIFICANCE · R PER TRADE" tag={`n=${rs.length}`} className="qd-edge">
+    <Panel title="Edge significance · R per trade" tag={`n=${rs.length}`} className="qd-edge">
       <svg viewBox={`0 0 ${W} ${Hh}`} className="qd-hist" aria-hidden="true">
         {counts.map((c, i) => <rect key={i} x={(i / bins.length) * W + 2} width={W / bins.length - 4} y={Hh - 10 - (c / mx) * (Hh - 24)} height={(c / mx) * (Hh - 24)} fill={bins[i] >= 0 ? "rgb(14 203 129 / .55)" : "rgb(246 70 93 / .55)"} />)}
         {bell.length > 0 && <path d={bell.map((p, i) => `${i ? "L" : "M"}${p[0].toFixed(1)} ${p[1].toFixed(1)}`).join(" ")} fill="none" stroke="#a78bfa" strokeWidth="1.5" />}
@@ -355,9 +357,9 @@ function Edge({ closed }: { closed: any[] }) {
         <text x="4" y={Hh - 1} className="qd-svgt">−2R</text><text x={(2 / 6.5) * W + 3} y="10" className="qd-svgt">0R</text><text x={W - 22} y={Hh - 1} className="qd-svgt">+4R</text>
       </svg>
       <div className="qd-trio">
-        <div><small>MEAN</small><b className={`num ${col(mean)}`}>{rs.length ? `${sgn(mean)}R` : DASH}</b></div>
-        <div><small>95% RANGE</small><b className="num">{rs.length > 1 ? `${sgn(mean - 1.96 * se)} … ${sgn(mean + 1.96 * se)}` : DASH}</b></div>
-        <div><small>VERDICT</small><b className={rs.length < 30 ? "qd-gold" : mean - 1.96 * se > 0 ? "qd-up" : mean + 1.96 * se < 0 ? "qd-dn" : "qd-gold"}>{rs.length < 30 ? "TOO EARLY" : mean - 1.96 * se > 0 ? "EDGE" : mean + 1.96 * se < 0 ? "NEGATIVE" : "NOT PROVEN"}</b></div>
+        <div><small>Mean</small><b className={`num ${col(mean)}`}>{rs.length ? `${sgn(mean)}R` : DASH}</b></div>
+        <div><small>95% range</small><b className="num">{rs.length > 1 ? `${sgn(mean - 1.96 * se)} … ${sgn(mean + 1.96 * se)}` : DASH}</b></div>
+        <div><small>Verdict</small><b className={rs.length < 30 ? "qd-gold" : mean - 1.96 * se > 0 ? "qd-up" : mean + 1.96 * se < 0 ? "qd-dn" : "qd-gold"}>{rs.length < 30 ? "Too early" : mean - 1.96 * se > 0 ? "Edge" : mean + 1.96 * se < 0 ? "Negative" : "Not proven"}</b></div>
       </div>
     </Panel>
   );
@@ -365,7 +367,7 @@ function Edge({ closed }: { closed: any[] }) {
 
 function Trace({ decisions }: { decisions: any[] }) {
   return (
-    <Panel title="DECISION TRACE · ENGINE LOG" live className="qd-trace">
+    <Panel title="Decision trace · engine log" live className="qd-trace">
       <ol className="qd-log">
         {decisions.slice(0, 16).map((d, i) => (
           <li key={i} className="num"><span className="qd-mute">{hhmm(d.ts)}</span><b>{base(d.symbol ?? "")} {(d.timeframe ?? "").toUpperCase()}</b><span className={/stop|skip|block|no/i.test(d.rule ?? "") ? "qd-dn" : /fill|open|tp|entry/i.test(d.rule ?? "") ? "qd-up" : "qd-gold"}>{String(d.rule ?? "").replace(/_/g, " ")}</span></li>
@@ -384,7 +386,7 @@ function Arrivals({ all }: { all: any[] }) {
   const week = all.filter((x) => x.created_at >= now - 7 * 24 * H).length;
   const filled = all.filter((x) => x.fill_status === "FILLED").length;
   return (
-    <Panel title="SIGNAL ARRIVAL · BY TIMEFRAME" tag="LAST 7 DAYS" className="qd-arrive">
+    <Panel title="Signal arrival · by timeframe" tag="Last 7 days" className="qd-arrive">
       <div className="qd-heat">
         {grid.map((row, r) => (
           <div key={TFS[r]} className="qd-heatrow"><span>{TFS[r].toUpperCase()}</span>
@@ -450,7 +452,7 @@ export default function Desk() {
         <div className="qd-c7"><Trace decisions={decisions} /></div>
         <div className="qd-c8"><Arrivals all={sigs} /></div>
       </div>
-      <div className="qd-foot">BTC · ETH · SOL · XRP · {TFS.map((x) => x.toUpperCase()).join(" / ")} · RECORD NET OF 0.15% FEES + FUNDING · PAPER TRADING · NOT ADVICE</div>
+      <div className="qd-foot">Record net of 0.15% fees + funding · paper trading · not advice</div>
     </div>
   );
 }
