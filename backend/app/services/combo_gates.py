@@ -77,6 +77,9 @@ def fee_block(timeframe: str, price: float, stop: float | None) -> str | None:
 # calls differ (too few to prove: INCONCLUSIVE); per-timeframe caps (4 or 5 each, total 12 / 16 / 20) FAILED - they
 # helped 15m / 1h / 12h but cut 4h, the strongest timeframe, by a third. Env SAME_SIDE_RESERVE=0 turns the reserve off.
 SAME_SIDE_RESERVE = os.environ.get("SAME_SIDE_RESERVE", "1") != "0"
+# V3.5 (owner, 27 Nov 2026): each timeframe keeps up to this many running calls per direction even when the shared
+# limit is full (was 1), matching the portfolio's per-timeframe quota.
+SAME_SIDE_TF_QUOTA = int(os.environ.get("SAME_SIDE_TF_QUOTA", "3"))
 
 
 def cap_block(db: Any, side: int, timeframe: str | None = None) -> str | None:
@@ -89,8 +92,8 @@ def cap_block(db: Any, side: int, timeframe: str | None = None) -> str | None:
         if SAME_SIDE_RESERVE and timeframe:
             mine = db.one("SELECT COUNT(*) AS n FROM signals WHERE status = 'OPEN' AND side = ? AND timeframe = ? "
                           "AND (fill_status IS NULL OR fill_status = 'FILLED')", (int(side), timeframe))
-            if not int((mine or {}).get("n") or 0):
-                return None                      # this timeframe's reserved slot
+            if int((mine or {}).get("n") or 0) < max(1, SAME_SIDE_TF_QUOTA):
+                return None                      # inside this timeframe's own quota
         return (f"{n} {'long' if side > 0 else 'short'} calls are already running (limit {SAME_SIDE_CAP}): one market "
                 "move could hit them all together")
     return None                                  # V3.2 (audit R-18): unreachable duplicate body after this removed

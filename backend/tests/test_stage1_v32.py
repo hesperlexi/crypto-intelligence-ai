@@ -123,7 +123,8 @@ def test_cap_block_unchanged_after_dead_code_removal(monkeypatch):
     monkeypatch.setattr(combo_gates, "SAME_SIDE_CAP", 12)
     monkeypatch.setattr(combo_gates, "SAME_SIDE_RESERVE", True)
     assert combo_gates.cap_block(_DB(11, 0), 1, "4h") is None
-    assert "12 long calls" in combo_gates.cap_block(_DB(12, 2), 1, "4h")
+    assert "12 long calls" in combo_gates.cap_block(_DB(12, 3), 1, "4h")
+    assert combo_gates.cap_block(_DB(12, 2), 1, "4h") is None              # V3.5: 3 per timeframe
     assert combo_gates.cap_block(_DB(12, 0), 1, "4h") is None              # the timeframe's reserved slot
     monkeypatch.setattr(combo_gates, "SAME_SIDE_CAP", 0)
     assert combo_gates.cap_block(_DB(50, 5), -1, "4h") is None

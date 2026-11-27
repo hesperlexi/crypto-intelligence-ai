@@ -55,6 +55,8 @@ def test_same_side_cap_reserves_one_slot_per_timeframe():
                    "VALUES (?, 0, ?, '4h', ?, 'BUY', 'BUY', 1, 1, 'OPEN', 'FILLED')", (f"s{i}", f"C{i}/USDT", i))
     assert CG.cap_block(db, 1, "4h")                       # 4h already has calls: blocked
     assert CG.cap_block(db, 1, "15m") is None              # 15m has none: its reserved slot
-    db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, status, fill_status) "
-               "VALUES ('r', 0, 'X/USDT', '15m', 1, 'BUY', 'BUY', 1, 1, 'OPEN', 'FILLED')")
-    assert CG.cap_block(db, 1, "15m")                      # the slot is used
+    for j in range(CG.SAME_SIDE_TF_QUOTA):
+        assert CG.cap_block(db, 1, "15m") is None
+        db.execute("INSERT INTO signals (id, created_at, symbol, timeframe, bar_ts, signal, decision, price, side, status, fill_status) "
+                   "VALUES (?, 0, ?, '15m', ?, 'BUY', 'BUY', 1, 1, 'OPEN', 'FILLED')", (f"r{j}", f"X{j}/USDT", j))
+    assert CG.cap_block(db, 1, "15m")                      # V3.5: the timeframe's quota (3) is used

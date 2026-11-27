@@ -53,6 +53,12 @@ LIMITS = {
     "max_side_r": _f("PORTFOLIO_MAX_SIDE_R", 6.0),
     "max_corr_r": _f("PORTFOLIO_MAX_CORR_R", 5.0),
     "max_coin_r": _f("PORTFOLIO_MAX_COIN_R", 1.0),
+    # V3.5 (owner, 27 Nov 2026: "a quota for each timeframe rather than limited signals on all timeframes"): record
+    # calls are judged per timeframe - each timeframe may carry this much risk per direction, so 12h calls can never use
+    # up the room of a rare 15m call. Replaces the shared open / direction / BTC-correlated limits for the record; the
+    # per-coin rule, the long-and-short conflict rule and the drawdown brake stay shared. PORTFOLIO_TF_QUOTA=0 = old rules.
+    "tf_quota": os.environ.get("PORTFOLIO_TF_QUOTA", "1") != "0",
+    "max_tf_side_r": _f("PORTFOLIO_MAX_TF_SIDE_R", 3.0),
     "block_conflict": os.environ.get("PORTFOLIO_BLOCK_CONFLICT", "1") != "0",
     "corr_min": _f("PORTFOLIO_CORR_MIN", 0.7),
     "corr_bars": int(_f("PORTFOLIO_CORR_BARS", 72)),
@@ -247,9 +253,14 @@ def record_state(rt: Any, now: int | None = None) -> dict[str, Any]:
 # ---- the check --------------------------------------------------------------------------------------------------------
 
 def check(positions: list[dict[str, Any]], symbol: str, side: int, corr: Callable[[str], float | None],
-          new_risk: float = 1.0, factor: float = 1.0, lim: dict[str, Any] | None = None) -> dict[str, Any]:
-    """Would one more position (symbol, side, new_risk R) stay inside the limits? Pure; `factor` scales the R limits."""
+          new_risk: float = 1.0, factor: float = 1.0, lim: dict[str, Any] | None = None,
+          timeframe: str | None = None) -> dict[str, Any]:
+    """Would one more position (symbol, side, new_risk R) stay inside the limits? Pure; `factor` scales the R limits.
+    With `timeframe` (record calls) and the timeframe quota on, the shared open / direction / correlated limits are
+    replaced by one budget per timeframe and direction (`max_tf_side_r`)."""
     lim = lim or LIMITS
+    if timeframe and lim.get("tf_quota"):
+        return _check_tf(positions, symbol, side, timeframe, new_risk, factor, lim)
     side = 1 if side > 0 else -1
     cmemo: dict[str, float | None] = {}
 
@@ -286,6 +297,27 @@ def check(positions: list[dict[str, Any]], symbol: str, side: int, corr: Callabl
     return {"allowed": why is None, "reason": why, "metrics": m}
 
 
+def _check_tf(positions: list[dict[str, Any]], symbol: str, side: int, timeframe: str, new_risk: float,
+              factor: float, lim: dict[str, Any]) -> dict[str, Any]:
+    side = 1 if side > 0 else -1
+    tf_r = sum(p["risk_r"] for p in positions if p["side"] == side and p.get("timeframe") == timeframe)
+    coin_r = sum(p["risk_r"] for p in positions if p["symbol"] == symbol and p["side"] == side)
+    m = {"tf_r": round(tf_r, 3), "coin_r": round(coin_r, 3), "new_r": new_risk, "factor": factor, "timeframe": timeframe,
+         "open_r": round(sum(p["risk_r"] for p in positions), 3), "n_positions": len(positions), "quota": True}
+    why = None
+    conflict = [p for p in positions if p["symbol"] == symbol and p["side"] == -side]
+    if lim["block_conflict"] and conflict:
+        why = (f"conflicting position: a {'short' if side > 0 else 'long'} on {symbol.split('/')[0]} is open "
+               f"({', '.join(sorted({str(p.get('timeframe') or '?') for p in conflict}))})")
+    elif coin_r + new_risk > lim["max_coin_r"] + EPS:
+        why = (f"{symbol.split('/')[0]} already carries {coin_r:.2f}R on this side (limit {lim['max_coin_r']:g}R "
+               "per coin across timeframes)")
+    elif tf_r + new_risk > lim["max_tf_side_r"] * factor + EPS:
+        why = (f"{timeframe} {'long' if side > 0 else 'short'} risk {tf_r:.2f}R + {new_risk:g}R would pass this "
+               f"timeframe's quota of {lim['max_tf_side_r'] * factor:g}R per direction")
+    return {"allowed": why is None, "reason": why, "metrics": m}
+
+
 def record_gate(rt: Any, symbol: str, timeframe: str, side: int, now: int | None = None) -> dict[str, Any]:
     """{'state': 'clear' | 'block' | 'unavailable', 'flag', 'reason', 'metrics', 'drawdown', 'mode'} for a new record call.
     The record's own running call on this coin and timeframe is the same call, not a new entry, so it is left out."""
@@ -305,7 +337,7 @@ def record_gate(rt: Any, symbol: str, timeframe: str, side: int, now: int | None
                 "reason": f"portfolio drawdown halt: {st.get('why')} (new entries resume after the cooling-off period)"}
     factor = LIMITS["probation_factor"] if st["state"] == "PROBATION" else 1.0
     try:
-        r = check(pos, symbol, side, lambda s: btc_corr(rt, s), factor=factor)
+        r = check(pos, symbol, side, lambda s: btc_corr(rt, s), factor=factor, timeframe=timeframe)
     except Exception as exc:
         return {**out, "state": "unavailable", "reason": f"portfolio check failed ({type(exc).__name__}: {exc})"[:160]}
     out["metrics"] = r["metrics"]

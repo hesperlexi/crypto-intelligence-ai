@@ -1800,3 +1800,15 @@ no glow / mesh / gradients). Headline = NET price move; leverage ROI is a second
   sign-in was ready (no uid → nothing saved, so no report since 21:26); now waits ≤ 20 s and saves permission + Permissions
   API state, standalone/tab, referrer and the app's own view (`?d=`: sdk, app switch, each channel id:importance, "site" =
   went via Chrome's site page). Read with `push-errors.yml`. Signature vs assetlinks checked (`twa-probe.yml`): match.
+
+## V3.5 per-timeframe quota (owner, 27 Nov 2026: "a quota for each time frame rather than limited signals on all time frames")
+Ops review `scripts/ops_review.py` (workflow `ops-review.yml`, counts only, annotations): 30 h after the 26 Nov update only
+6 calls (all 12h shorts, open, in loss); 15m held back mainly by GRADE A ONLY (~20/day before and after); the portfolio
+limit held back 5 x 4h + 1 x 12h (six 12h shorts filled the shared 6R direction / 5R BTC-correlated limits); nothing broken.
+Owner chose 3 per timeframe and keep the shared safety. `portfolio_risk.LIMITS.tf_quota` (env `PORTFOLIO_TF_QUOTA`, default
+on) + `max_tf_side_r` 3 (`PORTFOLIO_MAX_TF_SIDE_R`): record calls (`record_gate` → `check(..., timeframe=)` →
+`_check_tf`) are limited per timeframe and direction (remaining R, break-even trades count 0, pending 1); the shared open /
+direction / correlated limits no longer apply to the record. Kept shared: 1R per coin across timeframes, no long + short on
+one coin, the drawdown brake (halt / probation halves the quota). Bot / challenge books (`book_check`) keep the shared
+limits. Same-side cap 12 (`combo_gates`): each timeframe may still open while it has < `SAME_SIDE_TF_QUOTA` 3 running calls
+on that side (was 1). Tests `tests/test_tf_quota_v35.py`.
