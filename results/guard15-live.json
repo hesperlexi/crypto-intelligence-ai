@@ -1,136 +1,111 @@
 {
  "ok": true,
  "all": {
-  "since": 1793784369962,
+  "since": 1795511383715,
   "published_15m": {
-   "n": 16,
-   "win_rate": 0.562,
-   "avg_r": 0.3024,
-   "total_r": 4.84
+   "n": 5,
+   "win_rate": 0.8,
+   "avg_r": 0.6537,
+   "total_r": 3.27
   },
   "published_15m_open_or_unfilled": 0,
   "rejected_by_filter": {
    "AGAINST BIGGER TREND": {
-    "blocked": 6,
-    "closed": 6,
-    "win_rate": 0.0,
-    "avg_r": -1.0689,
-    "total_r": -6.41
-   },
-   "FILTERED": {
-    "blocked": 78,
-    "closed": 78,
-    "win_rate": 0.692,
-    "avg_r": 0.2997,
-    "total_r": 23.38
+    "blocked": 2,
+    "closed": 2,
+    "win_rate": 1.0,
+    "avg_r": 0.9404,
+    "total_r": 1.88
    },
    "GRADE A ONLY": {
-    "blocked": 16,
-    "closed": 16,
-    "win_rate": 0.812,
-    "avg_r": 0.5056,
-    "total_r": 8.09
+    "blocked": 53,
+    "closed": 53,
+    "win_rate": 0.792,
+    "avg_r": 0.5349,
+    "total_r": 28.35
+   },
+   "LIQUIDITY SWEEP": {
+    "blocked": 3,
+    "closed": 3,
+    "win_rate": 0.333,
+    "avg_r": -0.3931,
+    "total_r": -1.18
    },
    "STOP TOO WIDE": {
     "blocked": 1,
     "closed": 1,
     "win_rate": 0.0,
-    "avg_r": -1.0106,
-    "total_r": -1.01
-   },
-   "TARGET TOO SMALL FOR COSTS": {
-    "blocked": 5,
-    "closed": 5,
-    "win_rate": 0.6,
-    "avg_r": 0.1894,
-    "total_r": 0.95
-   },
-   "TOO MANY SAME-SIDE CALLS": {
-    "blocked": 66,
-    "closed": 64,
-    "win_rate": 0.656,
-    "avg_r": 0.2308,
-    "total_r": 14.77
+    "avg_r": -1.0257,
+    "total_r": -1.03
    },
    "VOLUME WALL AHEAD": {
-    "blocked": 14,
-    "closed": 13,
-    "win_rate": 0.615,
-    "avg_r": 0.1397,
-    "total_r": 1.82
+    "blocked": 10,
+    "closed": 10,
+    "win_rate": 0.6,
+    "avg_r": 0.2184,
+    "total_r": 2.18
    }
   },
   "rejected_all_15m": {
-   "blocked": 186,
-   "n": 183,
-   "win_rate": 0.656,
-   "avg_r": 0.2272,
-   "total_r": 41.58
+   "blocked": 69,
+   "n": 69,
+   "win_rate": 0.739,
+   "avg_r": 0.4378,
+   "total_r": 30.21
   }
  },
  "since": {
   "from": 1794787200000,
   "published": {
-   "calls": 0,
-   "n": 0
+   "calls": 5,
+   "n": 5,
+   "win_rate": 0.8,
+   "avg_r": 0.6537,
+   "total_r": 3.27
   },
   "rejected_by_filter": {
    "AGAINST BIGGER TREND": {
-    "blocked": 6,
-    "n": 6,
-    "win_rate": 0.0,
-    "avg_r": -1.0689,
-    "total_r": -6.41
-   },
-   "FILTERED": {
-    "blocked": 67,
-    "n": 67,
-    "win_rate": 0.716,
-    "avg_r": 0.3772,
-    "total_r": 25.27
+    "blocked": 2,
+    "n": 2,
+    "win_rate": 1.0,
+    "avg_r": 0.9404,
+    "total_r": 1.88
    },
    "GRADE A ONLY": {
-    "blocked": 4,
-    "n": 4,
-    "win_rate": 0.75,
-    "avg_r": 0.4292,
-    "total_r": 1.72
+    "blocked": 53,
+    "n": 53,
+    "win_rate": 0.792,
+    "avg_r": 0.5349,
+    "total_r": 28.35
+   },
+   "LIQUIDITY SWEEP": {
+    "blocked": 3,
+    "n": 3,
+    "win_rate": 0.333,
+    "avg_r": -0.3931,
+    "total_r": -1.18
    },
    "STOP TOO WIDE": {
     "blocked": 1,
     "n": 1,
     "win_rate": 0.0,
-    "avg_r": -1.0106,
-    "total_r": -1.01
-   },
-   "TARGET TOO SMALL FOR COSTS": {
-    "blocked": 2,
-    "n": 2,
-    "win_rate": 0.5,
-    "avg_r": -0.0627,
-    "total_r": -0.13
-   },
-   "TOO MANY SAME-SIDE CALLS": {
-    "blocked": 59,
-    "n": 57,
-    "win_rate": 0.667,
-    "avg_r": 0.285,
-    "total_r": 16.25
+    "avg_r": -1.0257,
+    "total_r": -1.03
    },
    "VOLUME WALL AHEAD": {
-    "blocked": 13,
-    "n": 12,
-    "win_rate": 0.583,
-    "avg_r": 0.1188,
-    "total_r": 1.43
+    "blocked": 10,
+    "n": 10,
+    "win_rate": 0.6,
+    "avg_r": 0.2184,
+    "total_r": 2.18
    }
   },
   "rejected_all": {
-   "blocked": 152,
-   "n": 149,
-   "win_rate": 0.651,
-   "avg_r": 0.2491,
-   "total_r": 37.11
+   "blocked": 69,
+   "n": 69,
+   "win_rate": 0.739,
+   "avg_r": 0.4378,
+   "total_r": 30.21
   }
  }
 }
